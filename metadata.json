@@ -1,0 +1,6 @@
+{
+  "name": "Smart Calculator Pro",
+  "description": "A modern and powerful calculator app with customizable themes and calculation history.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
