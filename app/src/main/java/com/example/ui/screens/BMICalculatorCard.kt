@@ -198,16 +198,19 @@ fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
                 else -> Color(0xFFF44336)
             }
             Box(modifier = Modifier
-                .fillMaxWidth().height(150.dp), contentAlignment = Alignment.BottomCenter) {
+                .fillMaxWidth().height(120.dp), contentAlignment = Alignment.BottomCenter) {
                 Canvas(modifier = Modifier
                 .fillMaxSize().padding(horizontal = 24.dp)) {
-                    val strokeWidth = 2.dp.toPx()
+                    val strokeWidth = 1.5.dp.toPx()
                     val radius = size.width / 2 - strokeWidth
                     val center = Offset(size.width / 2, size.height)
                     
                     // Draw Arcs
-                    // Total range: 10 to 50 (40 units). 180 degrees / 40 = 4.5 degrees per unit
-                    val angles = listOf(180f to 218.25f, 218.25f to 247.5f, 247.5f to 360f)
+                    // Total range: 10 to 40 (30 units). 180 degrees / 30 = 6 degrees per unit
+                    // Underweight: 10 to 18.5 (8.5 units * 6 = 51 deg) -> 180 to 231
+                    // Normal: 18.5 to 25 (6.5 units * 6 = 39 deg) -> 231 to 270
+                    // Overweight/Obese: 25 to 40 (15 units * 6 = 90 deg) -> 270 to 360
+                    val angles = listOf(180f to 231f, 231f to 270f, 270f to 360f)
                     val colors = listOf(Color(0xFF2196F3), Color(0xFF4CAF50), Color(0xFFF44336))
                     
                     for (i in angles.indices) {
@@ -220,13 +223,14 @@ fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
                             size = Size(radius * 2, radius * 2),
                             style = Stroke(
                                 width = strokeWidth,
-                                cap = if (i == 0 || i == angles.size - 1) StrokeCap.Round else StrokeCap.Butt
+                                cap = StrokeCap.Round
                             )
                         )
                     }
 
                     // Calculate Needle position
-                    val normalizedBmi = (bmiValue - 10f).coerceIn(0f, 40f) / 40f
+                    // Mapping BMI 10-40 to 0-180 degrees
+                    val normalizedBmi = (bmiValue - 10f).coerceIn(0f, 30f) / 30f
                     val needleAngle = 180f + (180f * normalizedBmi)
                     val needleAngleRad = Math.toRadians(needleAngle.toDouble())
                     
@@ -251,19 +255,19 @@ fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
             }
 
             Spacer(modifier = Modifier
-                .height(24.dp))
+                .height(16.dp))
 
             // BMI Range Table
             Row(modifier = Modifier
                 .fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("Category", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
-                Text("Difference", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                Text("BMI Range", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
             }
             Spacer(modifier = Modifier
-                .height(8.dp))
+                .height(4.dp))
             Divider(color = themeColors.displayText.copy(alpha=0.1f))
             Spacer(modifier = Modifier
-                .height(8.dp))
+                .height(4.dp))
             
             val categories = listOf(
                 "Very Severely Underweight" to "≤ 15.9",
