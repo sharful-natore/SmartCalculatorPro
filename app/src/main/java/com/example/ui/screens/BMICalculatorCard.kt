@@ -201,7 +201,7 @@ fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
                 .fillMaxWidth().height(150.dp), contentAlignment = Alignment.BottomCenter) {
                 Canvas(modifier = Modifier
                 .fillMaxSize().padding(horizontal = 24.dp)) {
-                    val strokeWidth = 4.dp.toPx()
+                    val strokeWidth = 3.dp.toPx()
                     val radius = size.width / 2 - strokeWidth
                     val center = Offset(size.width / 2, size.height)
                     
@@ -221,7 +221,10 @@ fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
                             useCenter = false,
                             topLeft = Offset(center.x - radius, center.y - radius),
                             size = Size(radius * 2, radius * 2),
-                            style = Stroke(width = strokeWidth, cap = StrokeCap.Butt)
+                            style = Stroke(
+                                width = strokeWidth,
+                                cap = if (i == 0 || i == angles.size - 1) StrokeCap.Round else StrokeCap.Butt
+                            )
                         )
                     }
 
@@ -230,7 +233,7 @@ fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
                     val needleAngle = 180f + (180f * normalizedBmi)
                     val needleAngleRad = Math.toRadians(needleAngle.toDouble())
                     
-                    val innerRadius = radius - strokeWidth/2
+                    val innerRadius = radius - strokeWidth / 2
                     val needleEnd = Offset(
                         x = center.x + (innerRadius * cos(needleAngleRad)).toFloat(),
                         y = center.y + (innerRadius * sin(needleAngleRad)).toFloat()
@@ -241,7 +244,8 @@ fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
                         bmiValue < 25f -> Color(0xFF4CAF50)
                         else -> Color(0xFFF44336)
                     }
-                    drawCircle(color = currentBmiColor, radius = 6.dp.toPx(), center = needleEnd)
+                    drawCircle(color = currentBmiColor, radius = 5.dp.toPx(), center = needleEnd)
+                    drawCircle(color = Color.White, radius = 2.dp.toPx(), center = needleEnd)
                 }
                 
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier
