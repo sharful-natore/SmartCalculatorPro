@@ -181,7 +181,6 @@ fun MainApp(viewModel: CalculatorViewModel) {
                 .fillMaxSize()
                 .background(themeColors.background)
                 .padding(innerPadding)
-                .imePadding()
         ) {
             HorizontalPager(
                 state = pagerState,

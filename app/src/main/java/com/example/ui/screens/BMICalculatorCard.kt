@@ -192,20 +192,25 @@ fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
 
             // Gauge Chart
             val bmiValue = viewModel.bmiResultValue.toFloatOrNull() ?: 0f
+            val currentBmiColorText = when {
+                bmiValue < 18.5f -> Color(0xFF2196F3)
+                bmiValue < 25f -> Color(0xFF4CAF50)
+                else -> Color(0xFFF44336)
+            }
             Box(modifier = Modifier
                 .fillMaxWidth().height(150.dp), contentAlignment = Alignment.BottomCenter) {
                 Canvas(modifier = Modifier
                 .fillMaxSize().padding(horizontal = 24.dp)) {
-                    val strokeWidth = 6.dp.toPx()
+                    val strokeWidth = 4.dp.toPx()
                     val radius = size.width / 2 - strokeWidth
                     val center = Offset(size.width / 2, size.height)
                     
                     // Draw Arcs
-                    // Total range: 10 to 50 (40 units). 180 degrees / 40 = 4.5 degrees per unit
-                    // Underweight: < 18.5 (10 to 18.5 = 8.5 units * 4.5 = 38.25 deg)
-                    // Normal: 18.5 to 25 (6.5 units * 4.5 = 29.25 deg)
-                    // Overweight/Obese: > 25 (25 units * 4.5 = 112.5 deg)
-                    val angles = listOf(180f to 218.25f, 218.25f to 247.5f, 247.5f to 360f)
+                    // Total range: 15 to 40 (25 units). 180 degrees / 25 = 7.2 degrees per unit
+                    // Underweight: 15 to 18.5 = 3.5 units * 7.2 = 25.2 deg
+                    // Normal: 18.5 to 25 = 6.5 units * 7.2 = 46.8 deg
+                    // Overweight/Obese: 25 to 40 = 15 units * 7.2 = 108 deg
+                    val angles = listOf(180f to 205.2f, 205.2f to 252f, 252f to 360f)
                     val colors = listOf(Color(0xFF2196F3), Color(0xFF4CAF50), Color(0xFFF44336))
                     
                     for (i in angles.indices) {
@@ -221,7 +226,7 @@ fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
                     }
 
                     // Calculate Needle position
-                    val normalizedBmi = (bmiValue - 10f).coerceIn(0f, 40f) / 40f
+                    val normalizedBmi = (bmiValue - 15f).coerceIn(0f, 25f) / 25f
                     val needleAngle = 180f + (180f * normalizedBmi)
                     val needleAngleRad = Math.toRadians(needleAngle.toDouble())
                     
@@ -239,12 +244,6 @@ fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
                     drawCircle(color = currentBmiColor, radius = 6.dp.toPx(), center = needleEnd)
                 }
                 
-                val currentBmiColorText = when {
-                    bmiValue < 18.5f -> Color(0xFF2196F3)
-                    bmiValue < 25f -> Color(0xFF4CAF50)
-                    else -> Color(0xFFF44336)
-                }
-
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier
                 .offset(y = (-16).dp)) {
                     Text(text = viewModel.bmiCategoryResult, color = currentBmiColorText, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
@@ -281,22 +280,20 @@ fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
                 "Obese Class III" to "≥ 40.0"
             )
 
-            val currentCategory = viewModel.bmiCategoryResult.split(" ")[0]
-
             categories.forEach { (cat, range) ->
-                val isCurrent = currentCategory.contains(cat) || (cat == "Normal" && currentCategory == "Normal")
+                val isCurrent = viewModel.bmiCategoryResult.contains(cat) || (cat == "Normal" && viewModel.bmiCategoryResult == "Normal")
                 Row(modifier = Modifier
                 .fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (isCurrent) {
-                            Text("▶ ", color = Color(0xFF6200EE), fontSize = 12.sp)
+                            Text("▶ ", color = currentBmiColorText, fontSize = 12.sp)
                         } else {
                             Spacer(modifier = Modifier
                 .width(14.dp))
                         }
-                        Text(cat, fontSize = 13.sp, color = if(isCurrent) Color(0xFF6200EE) else themeColors.displayText)
+                        Text(cat, fontSize = 13.sp, color = if(isCurrent) currentBmiColorText else themeColors.displayText)
                     }
-                    Text(range, fontSize = 13.sp, color = if(isCurrent) Color(0xFF6200EE) else themeColors.displayText)
+                    Text(range, fontSize = 13.sp, color = if(isCurrent) currentBmiColorText else themeColors.displayText)
                 }
             }
         }
