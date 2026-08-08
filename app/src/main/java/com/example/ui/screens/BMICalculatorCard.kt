@@ -196,12 +196,16 @@ fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
                 .fillMaxWidth().height(150.dp), contentAlignment = Alignment.BottomCenter) {
                 Canvas(modifier = Modifier
                 .fillMaxSize().padding(horizontal = 24.dp)) {
-                    val strokeWidth = 8.dp.toPx()
+                    val strokeWidth = 6.dp.toPx()
                     val radius = size.width / 2 - strokeWidth
                     val center = Offset(size.width / 2, size.height)
                     
                     // Draw Arcs
-                    val angles = listOf(180f to 231f, 231f to 270f, 270f to 360f)
+                    // Total range: 10 to 50 (40 units). 180 degrees / 40 = 4.5 degrees per unit
+                    // Underweight: < 18.5 (10 to 18.5 = 8.5 units * 4.5 = 38.25 deg)
+                    // Normal: 18.5 to 25 (6.5 units * 4.5 = 29.25 deg)
+                    // Overweight/Obese: > 25 (25 units * 4.5 = 112.5 deg)
+                    val angles = listOf(180f to 218.25f, 218.25f to 247.5f, 247.5f to 360f)
                     val colors = listOf(Color(0xFF2196F3), Color(0xFF4CAF50), Color(0xFFF44336))
                     
                     for (i in angles.indices) {
@@ -212,7 +216,7 @@ fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
                             useCenter = false,
                             topLeft = Offset(center.x - radius, center.y - radius),
                             size = Size(radius * 2, radius * 2),
-                            style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                            style = Stroke(width = strokeWidth, cap = StrokeCap.Butt)
                         )
                     }
 
@@ -227,16 +231,27 @@ fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
                         y = center.y + (innerRadius * sin(needleAngleRad)).toFloat()
                     )
                     
-                    drawCircle(color = Color(0xFF6200EE), radius = 10.dp.toPx(), center = needleEnd)
+                    val currentBmiColor = when {
+                        bmiValue < 18.5f -> Color(0xFF2196F3)
+                        bmiValue < 25f -> Color(0xFF4CAF50)
+                        else -> Color(0xFFF44336)
+                    }
+                    drawCircle(color = currentBmiColor, radius = 6.dp.toPx(), center = needleEnd)
                 }
                 
+                val currentBmiColorText = when {
+                    bmiValue < 18.5f -> Color(0xFF2196F3)
+                    bmiValue < 25f -> Color(0xFF4CAF50)
+                    else -> Color(0xFFF44336)
+                }
+
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier
                 .offset(y = (-16).dp)) {
-                    Text(text = viewModel.bmiCategoryResult, color = Color(0xFF6200EE), fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                    Text(text = viewModel.bmiCategoryResult, color = currentBmiColorText, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                     Spacer(modifier = Modifier
                 .height(8.dp))
                     Text(text = "BMI", fontSize = 12.sp, color = themeColors.displayText)
-                    Text(text = viewModel.bmiResultValue, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color(0xFF6200EE))
+                    Text(text = viewModel.bmiResultValue, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = currentBmiColorText)
                 }
             }
 
