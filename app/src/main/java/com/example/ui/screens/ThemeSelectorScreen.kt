@@ -349,13 +349,30 @@ fun CustomThemeEditorDialog(
     themeColors: CalculatorThemeColors
 ) {
     var name by remember { mutableStateOf(themeToEdit?.name ?: "") }
-    var primaryColor by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.buttonEqualBg ?: "#6366F1"))) }
-    var secondaryColor by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.buttonOperatorBg ?: "#E8DDFF"))) }
-    var accentColor by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.buttonFunctionBg ?: "#E8DDFF"))) }
-    var navBarColor by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.navBarBg ?: "#6366F1"))) }
-    var titleBarColor by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.titleBarBg ?: "#6366F1"))) }
-    var chipColor by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.chipBg ?: "#E8DDFF"))) }
     var isDark by remember { mutableStateOf(themeToEdit?.isDark ?: false) }
+
+    var background by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.background ?: (if (isDark) "#121212" else "#F8FAFC")))) }
+    var displayBackground by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.displayBackground ?: (if (isDark) "#1E293B" else "#FFFFFF")))) }
+    var displayText by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.displayText ?: (if (isDark) "#FFFFFF" else "#1E293B")))) }
+    var displayExpressionText by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.displayExpressionText ?: (if (isDark) "#94A3B8" else "#64748B")))) }
+    
+    var buttonNormalBg by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.buttonNormalBg ?: (if (isDark) "#1E293B" else "#FFFFFF")))) }
+    var buttonNormalText by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.buttonNormalText ?: (if (isDark) "#FFFFFF" else "#1E293B")))) }
+    
+    var buttonOperatorBg by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.buttonOperatorBg ?: "#E8DDFF"))) }
+    var buttonOperatorText by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.buttonOperatorText ?: "#6366F1"))) }
+    
+    var buttonFunctionBg by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.buttonFunctionBg ?: "#E8DDFF"))) }
+    var buttonFunctionText by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.buttonFunctionText ?: "#6366F1"))) }
+    
+    var buttonEqualBg by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.buttonEqualBg ?: "#6366F1"))) }
+    var buttonEqualText by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.buttonEqualText ?: "#FFFFFF"))) }
+    
+    var cardBg by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.cardBg ?: (if (isDark) "#1E293B" else "#FFFFFF")))) }
+    var unselectedItemText by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.unselectedItemText ?: (if (isDark) "#94A3B8" else "#64748B")))) }
+    var navBarBg by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.navBarBg ?: "#6366F1"))) }
+    var titleBarBg by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.titleBarBg ?: "#6366F1"))) }
+    var chipBg by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.chipBg ?: "#E8DDFF"))) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -386,45 +403,56 @@ fun CustomThemeEditorDialog(
                     Text(text = if (isBn) "ডার্ক মোড" else "Dark Mode")
                 }
 
-                ColorPickerRow(if (isBn) "প্রাইমারি কালার" else "Primary Color", primaryColor) { primaryColor = it }
-                ColorPickerRow(if (isBn) "সেকেন্ডারি কালার" else "Secondary Color", secondaryColor) { secondaryColor = it }
-                ColorPickerRow(if (isBn) "একসেন্ট কালার" else "Accent Color", accentColor) { accentColor = it }
-                ColorPickerRow(if (isBn) "ন্যাভবার কালার" else "Navbar Color", navBarColor) { navBarColor = it }
-                ColorPickerRow(if (isBn) "টাইটেল বার কালার" else "Title Bar Color", titleBarColor) { titleBarColor = it }
-                ColorPickerRow(if (isBn) "চিপ কালার" else "Chip Color", chipColor) { chipColor = it }
+                Text(text = if (isBn) "রংসমূহ (Theme Colors Structure)" else "Theme Colors Structure", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+
+                ColorPickerRow(if (isBn) "অ্যাপ ব্যাকগ্রাউন্ড (Background)" else "App Background", background) { background = it }
+                ColorPickerRow(if (isBn) "ডিসপ্লে ব্যাকগ্রাউন্ড (Display BG)" else "Display Background", displayBackground) { displayBackground = it }
+                ColorPickerRow(if (isBn) "ডিসপ্লে মূল টেক্সট (Display Text)" else "Display Main Text", displayText) { displayText = it }
+                ColorPickerRow(if (isBn) "ডিসপ্লে এক্সপ্রেশন টেক্সট (Expression Text)" else "Display Expression Text", displayExpressionText) { displayExpressionText = it }
+                
+                ColorPickerRow(if (isBn) "নরমাল বাটন ব্যাকগ্রাউন্ড (Normal Button BG)" else "Normal Button Background", buttonNormalBg) { buttonNormalBg = it }
+                ColorPickerRow(if (isBn) "নরমাল বাটন টেক্সট (Normal Button Text)" else "Normal Button Text", buttonNormalText) { buttonNormalText = it }
+                
+                ColorPickerRow(if (isBn) "অপারেটর বাটন ব্যাকগ্রাউন্ড (+, - ইত্যাদি)" else "Operator Button Background", buttonOperatorBg) { buttonOperatorBg = it }
+                ColorPickerRow(if (isBn) "অপারেটর বাটন টেক্সট" else "Operator Button Text", buttonOperatorText) { buttonOperatorText = it }
+                
+                ColorPickerRow(if (isBn) "ফাংশন বাটন ব্যাকগ্রাউন্ড (C, AC ইত্যাদি)" else "Function Button Background", buttonFunctionBg) { buttonFunctionBg = it }
+                ColorPickerRow(if (isBn) "ফাংশন বাটন টেক্সট" else "Function Button Text", buttonFunctionText) { buttonFunctionText = it }
+                
+                ColorPickerRow(if (isBn) "সমান/প্রাইমারি বাটন ব্যাকগ্রাউন্ড (=)" else "Equal Button Background", buttonEqualBg) { buttonEqualBg = it }
+                ColorPickerRow(if (isBn) "সমান বাটন টেক্সট" else "Equal Button Text", buttonEqualText) { buttonEqualText = it }
+                
+                ColorPickerRow(if (isBn) "কার্ড ব্যাকগ্রাউন্ড (Card BG)" else "Card Background", cardBg) { cardBg = it }
+                ColorPickerRow(if (isBn) "আনসিলেক্টেড টেক্সট (Unselected Text)" else "Unselected Item Text", unselectedItemText) { unselectedItemText = it }
+                ColorPickerRow(if (isBn) "ন্যাভবার ব্যাকগ্রাউন্ড (Navbar BG)" else "Navbar Background", navBarBg) { navBarBg = it }
+                ColorPickerRow(if (isBn) "টাইটেল বার ব্যাকগ্রাউন্ড (Title Bar BG)" else "Title Bar Background", titleBarBg) { titleBarBg = it }
+                ColorPickerRow(if (isBn) "চিপ ব্যাকগ্রাউন্ড (Chip BG)" else "Chip Background", chipBg) { chipBg = it }
             }
         },
         confirmButton = {
             Button(
                 onClick = {
                     if (name.isNotBlank()) {
-                        val background = if (isDark) "#121212" else "#F8FAFC"
-                        val displayBackground = background
-                        val displayText = if (isDark) "#FFFFFF" else "#1E293B"
-                        val displayExpressionText = if (isDark) "#94A3B8" else "#64748B"
-                        val btnNormalBg = if (isDark) "#1E293B" else "#FFFFFF"
-                        val btnNormalText = displayText
-                        
                         val newTheme = CustomTheme(
                             id = themeToEdit?.id ?: java.util.UUID.randomUUID().toString(),
                             name = name,
-                            background = background,
-                            displayBackground = displayBackground,
-                            displayText = displayText,
-                            displayExpressionText = displayExpressionText,
-                            buttonNormalBg = btnNormalBg,
-                            buttonNormalText = btnNormalText,
-                            buttonOperatorBg = secondaryColor.toHexString(),
-                            buttonOperatorText = if (isDark) "#38BDF8" else "#6366F1",
-                            buttonFunctionBg = accentColor.toHexString(),
-                            buttonFunctionText = if (isDark) "#94A3B8" else "#6366F1",
-                            buttonEqualBg = primaryColor.toHexString(),
-                            buttonEqualText = "#FFFFFF",
-                            cardBg = if (isDark) "#1E293B" else "#FFFFFF",
-                            unselectedItemText = displayExpressionText,
-                            navBarBg = navBarColor.toHexString(),
-                            titleBarBg = titleBarColor.toHexString(),
-                            chipBg = chipColor.toHexString(),
+                            background = background.toHexString(),
+                            displayBackground = displayBackground.toHexString(),
+                            displayText = displayText.toHexString(),
+                            displayExpressionText = displayExpressionText.toHexString(),
+                            buttonNormalBg = buttonNormalBg.toHexString(),
+                            buttonNormalText = buttonNormalText.toHexString(),
+                            buttonOperatorBg = buttonOperatorBg.toHexString(),
+                            buttonOperatorText = buttonOperatorText.toHexString(),
+                            buttonFunctionBg = buttonFunctionBg.toHexString(),
+                            buttonFunctionText = buttonFunctionText.toHexString(),
+                            buttonEqualBg = buttonEqualBg.toHexString(),
+                            buttonEqualText = buttonEqualText.toHexString(),
+                            cardBg = cardBg.toHexString(),
+                            unselectedItemText = unselectedItemText.toHexString(),
+                            navBarBg = navBarBg.toHexString(),
+                            titleBarBg = titleBarBg.toHexString(),
+                            chipBg = chipBg.toHexString(),
                             isDark = isDark
                         )
                         onSave(newTheme)

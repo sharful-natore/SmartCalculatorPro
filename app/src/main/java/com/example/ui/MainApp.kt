@@ -410,24 +410,16 @@ fun MainContent(
                             selected = isSelected,
                             onClick = { viewModel.activeTab = index },
                             icon = { 
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(50))
-                                        .background(if (isSelected) Color.White.copy(alpha = 0.22f) else Color.Transparent)
-                                        .padding(horizontal = 24.dp, vertical = 11.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = icon, 
-                                        contentDescription = label,
-                                        modifier = Modifier.size(24.dp)
-                                    ) 
-                                }
+                                Icon(
+                                    imageVector = icon, 
+                                    contentDescription = label,
+                                    modifier = Modifier.size(24.dp)
+                                ) 
                             },
                             alwaysShowLabel = false,
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = Color.White,
-                                indicatorColor = Color.Transparent,
+                                indicatorColor = Color.White.copy(alpha = 0.22f),
                                 unselectedIconColor = Color.White.copy(alpha = 0.6f)
                             ),
                             modifier = Modifier.testTag("tab_$label").weight(1f)
@@ -445,24 +437,16 @@ fun MainContent(
                             selected = isSelected,
                             onClick = { viewModel.activeTab = index },
                             icon = { 
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(50))
-                                        .background(if (isSelected) Color.White.copy(alpha = 0.22f) else Color.Transparent)
-                                        .padding(horizontal = 24.dp, vertical = 11.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = icon, 
-                                        contentDescription = label,
-                                        modifier = Modifier.size(24.dp)
-                                    ) 
-                                }
+                                Icon(
+                                    imageVector = icon, 
+                                    contentDescription = label,
+                                    modifier = Modifier.size(24.dp)
+                                ) 
                             },
                             alwaysShowLabel = false,
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = Color.White,
-                                indicatorColor = Color.Transparent,
+                                indicatorColor = Color.White.copy(alpha = 0.22f),
                                 unselectedIconColor = Color.White.copy(alpha = 0.6f)
                             ),
                             modifier = Modifier.testTag("tab_$label").weight(1f)
