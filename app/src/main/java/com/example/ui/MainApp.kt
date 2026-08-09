@@ -35,6 +35,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.shadow
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.TextRange
 import com.example.ui.screens.*
 import com.example.ui.theme.CalculatorThemeColors
 import com.example.ui.viewmodel.CalculatorViewModel
@@ -101,6 +117,10 @@ fun MainApp(viewModel: CalculatorViewModel) {
     val activity = context as? Activity
     BackHandler(enabled = true) {
         when {
+            // If AI Chat is showing, close it first
+            viewModel.showAiChat -> {
+                viewModel.showAiChat = false
+            }
             // If inside a specific converter detail screen
             viewModel.activeTab == 1 && viewModel.selectedConverterType != null -> {
                 viewModel.closeConverterDetail()
@@ -168,8 +188,9 @@ fun MainApp(viewModel: CalculatorViewModel) {
         )
     }
 
-    Scaffold(
-        topBar = {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
+            topBar = {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -318,7 +339,8 @@ fun MainApp(viewModel: CalculatorViewModel) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(themeColors.buttonEqualBg)
-                    .navigationBarsPadding()
+                    .navigationBarsPadding(),
+                contentAlignment = Alignment.Center
             ) {
                 NavigationBar(
                     containerColor = Color.Transparent,
@@ -335,30 +357,102 @@ fun MainApp(viewModel: CalculatorViewModel) {
                         Triple(3, Icons.Default.History, LanguageManager.getString("tab_history", viewModel.selectedLanguage))
                     )
                     
-                    tabs.forEach { (index, icon, label) ->
+                    // Left 2 tabs
+                    for (i in 0..1) {
+                        val (index, icon, label) = tabs[i]
+                        val isSelected = viewModel.activeTab == index
                         NavigationBarItem(
-                            selected = viewModel.activeTab == index,
+                            selected = isSelected,
                             onClick = { viewModel.activeTab = index },
                             icon = { 
-                                Icon(
-                                    imageVector = if (icon is ImageVector) icon else icon as ImageVector, 
-                                    contentDescription = label,
-                                    modifier = Modifier.size(24.dp)
-                                ) 
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(50))
+                                        .background(if (isSelected) Color.White.copy(alpha = 0.22f) else Color.Transparent)
+                                        .padding(horizontal = 24.dp, vertical = 11.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = icon, 
+                                        contentDescription = label,
+                                        modifier = Modifier.size(24.dp)
+                                    ) 
+                                }
                             },
                             alwaysShowLabel = false,
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = Color.White,
-                                indicatorColor = Color.White.copy(alpha = 0.22f),
+                                indicatorColor = Color.Transparent,
                                 unselectedIconColor = Color.White.copy(alpha = 0.6f)
                             ),
-                            modifier = Modifier.testTag("tab_$label")
+                            modifier = Modifier.testTag("tab_$label").weight(1f)
+                        )
+                    }
+                    
+                    // Middle spacer for FAB room
+                    Spacer(modifier = Modifier.weight(0.8f))
+                    
+                    // Right 2 tabs
+                    for (i in 2..3) {
+                        val (index, icon, label) = tabs[i]
+                        val isSelected = viewModel.activeTab == index
+                        NavigationBarItem(
+                            selected = isSelected,
+                            onClick = { viewModel.activeTab = index },
+                            icon = { 
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(50))
+                                        .background(if (isSelected) Color.White.copy(alpha = 0.22f) else Color.Transparent)
+                                        .padding(horizontal = 24.dp, vertical = 11.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = icon, 
+                                        contentDescription = label,
+                                        modifier = Modifier.size(24.dp)
+                                    ) 
+                                }
+                            },
+                            alwaysShowLabel = false,
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = Color.White,
+                                indicatorColor = Color.Transparent,
+                                unselectedIconColor = Color.White.copy(alpha = 0.6f)
+                            ),
+                            modifier = Modifier.testTag("tab_$label").weight(1f)
                         )
                     }
                 }
+                
+                // Floating Action Button in the center
+                Box(
+                    modifier = Modifier
+                        .offset(y = (-4).dp)
+                        .size(72.dp)
+                        .shadow(elevation = 8.dp, shape = CircleShape)
+                        .clip(CircleShape)
+                        .background(themeColors.cardBg)
+                        .border(
+                            width = 3.dp,
+                            color = themeColors.buttonEqualBg,
+                            shape = CircleShape
+                        )
+                        .clickable {
+                            viewModel.showAiChat = true
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.AutoAwesome,
+                        contentDescription = "AI Assistant",
+                        tint = themeColors.buttonEqualBg,
+                        modifier = Modifier.size(36.dp)
+                    )
+                }
             }
         },
-        contentWindowInsets = WindowInsets.systemBars,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
         Box(
@@ -415,23 +509,40 @@ fun MainApp(viewModel: CalculatorViewModel) {
                                 color = themeColors.displayText
                             )
                             Spacer(modifier = Modifier.height(8.dp))
-                            Row(
+                            Column(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                AppLanguage.values().forEach { lang ->
-                                    val isSelected = viewModel.selectedLanguage == lang
-                                    Button(
-                                        onClick = { viewModel.setLanguage(lang) },
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = if (isSelected) themeColors.buttonEqualBg else themeColors.cardBg,
-                                            contentColor = if (isSelected) Color.White else themeColors.displayText
-                                        ),
-                                        modifier = Modifier.weight(1f),
-                                        shape = RoundedCornerShape(8.dp),
-                                        border = if (!isSelected) androidx.compose.foundation.BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.2f)) else null
+                                val languagesList = AppLanguage.values().toList().chunked(2)
+                                for (pair in languagesList) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
-                                        Text("${lang.flag} ${lang.displayName}", fontSize = 13.sp)
+                                        for (lang in pair) {
+                                            val isSelected = viewModel.selectedLanguage == lang
+                                            Button(
+                                                onClick = { viewModel.setLanguage(lang) },
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = if (isSelected) themeColors.buttonEqualBg else themeColors.cardBg,
+                                                    contentColor = if (isSelected) Color.White else themeColors.displayText
+                                                ),
+                                                modifier = Modifier.weight(1f),
+                                                shape = RoundedCornerShape(8.dp),
+                                                border = if (!isSelected) androidx.compose.foundation.BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.2f)) else null,
+                                                contentPadding = PaddingValues(vertical = 8.dp)
+                                            ) {
+                                                Text(
+                                                    text = "${lang.flag} ${lang.displayName}",
+                                                    fontSize = 13.sp,
+                                                    maxLines = 1,
+                                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                                )
+                                            }
+                                        }
+                                        if (pair.size < 2) {
+                                            Spacer(modifier = Modifier.weight(1f))
+                                        }
                                     }
                                 }
                             }
@@ -703,4 +814,309 @@ fun MainApp(viewModel: CalculatorViewModel) {
             )
         }
     }
+
+    // --- Offline AI Chat Overlay ---
+    AnimatedVisibility(
+        visible = viewModel.showAiChat,
+        enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+        exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
+        modifier = Modifier.fillMaxSize()
+    ) {
+        androidx.activity.compose.BackHandler(enabled = viewModel.showAiChat) {
+            viewModel.showAiChat = false
+        }
+        AiChatDialog(
+            viewModel = viewModel,
+            themeColors = themeColors,
+            onDismiss = { viewModel.showAiChat = false }
+        )
+    }
 }
+}
+
+@Composable
+fun AiChatDialog(
+    viewModel: com.example.ui.viewmodel.CalculatorViewModel,
+    themeColors: com.example.ui.theme.CalculatorThemeColors,
+    onDismiss: () -> Unit
+) {
+    var textInput by remember { mutableStateOf("") }
+    val lazyListState = rememberLazyListState()
+    
+    val speechRecognizerLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            val data = result.data
+            val matches = data?.getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS)
+            if (!matches.isNullOrEmpty()) {
+                val recognizedText = matches[0]
+                viewModel.sendMessageToAi(recognizedText)
+            }
+        }
+    }
+    
+    // Auto scroll to bottom when a new message is received
+    LaunchedEffect(viewModel.aiChatMessages.size) {
+        if (viewModel.aiChatMessages.isNotEmpty()) {
+            lazyListState.animateScrollToItem(viewModel.aiChatMessages.size - 1)
+        }
+    }
+    
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(themeColors.background)
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .imePadding()
+    ) {
+            Column(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                // Header
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = onDismiss) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back",
+                            tint = themeColors.displayText
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.width(8.dp))
+                    
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = if (viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI) "এআই এ্যাসিস্ট্যান্ট" else "AI Assistant",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            color = themeColors.displayText
+                        )
+                        Text(
+                            text = if (viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI) "অনলাইন এবং অফলাইন" else "Online & Offline Supported",
+                            fontSize = 11.sp,
+                            color = themeColors.displayText.copy(alpha = 0.5f)
+                        )
+                    }
+                    
+                    IconButton(
+                        onClick = { viewModel.resetAiChat() }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Reset Chat",
+                            tint = themeColors.displayText
+                        )
+                    }
+                }
+                
+                // Divider
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(1.dp)
+                        .background(themeColors.displayText.copy(alpha = 0.08f))
+                )
+                
+                // Chat list
+                LazyColumn(
+                    state = lazyListState,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(vertical = 16.dp)
+                ) {
+                    items(viewModel.aiChatMessages) { msg ->
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = if (msg.isUser) Alignment.End else Alignment.Start
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(
+                                        RoundedCornerShape(
+                                            topStart = 16.dp,
+                                            topEnd = 16.dp,
+                                            bottomStart = if (msg.isUser) 16.dp else 4.dp,
+                                            bottomEnd = if (msg.isUser) 4.dp else 16.dp
+                                        )
+                                    )
+                                    .background(
+                                        if (msg.isUser) themeColors.buttonEqualBg else themeColors.cardBg
+                                    )
+                                    .padding(horizontal = 14.dp, vertical = 10.dp)
+                                    .widthIn(max = 280.dp)
+                            ) {
+                                Column {
+                                    Text(
+                                        text = msg.text,
+                                        color = if (msg.isUser) Color.White else themeColors.displayText,
+                                        fontSize = 14.sp,
+                                        lineHeight = 20.sp
+                                    )
+                                    
+                                    if (msg.actionType != null && msg.actionData != null) {
+                                        Button(
+                                            onClick = {
+                                                viewModel.performAiChatAction(msg.actionType, msg.actionData)
+                                            },
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = if (msg.isUser) Color.White.copy(alpha = 0.25f) else themeColors.buttonEqualBg
+                                            ),
+                                            shape = RoundedCornerShape(10.dp),
+                                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                                            modifier = Modifier
+                                                .padding(top = 8.dp)
+                                                .height(34.dp)
+                                        ) {
+                                            Text(
+                                                text = msg.actionLabel ?: "Execute",
+                                                color = Color.White,
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Icon(
+                                                imageVector = Icons.Default.ArrowForward,
+                                                contentDescription = null,
+                                                tint = Color.White,
+                                                modifier = Modifier.size(12.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            // Time
+                            Text(
+                                text = java.text.SimpleDateFormat("hh:mm a", java.util.Locale.getDefault()).format(java.util.Date(msg.timestamp)),
+                                fontSize = 9.sp,
+                                color = themeColors.displayText.copy(alpha = 0.4f),
+                                modifier = Modifier.padding(top = 3.dp, start = 4.dp, end = 4.dp)
+                            )
+                        }
+                    }
+                }
+                
+                // Suggestions
+                val suggestions = if (viewModel.selectedLanguage == AppLanguage.BENGALI) {
+                    listOf("৫ কিমি = কত মিটার?", "১০০ ডলার কত টাকা?", "বিএমআই হিসেব করো")
+                } else {
+                    listOf("5 km to meters", "100 usd to bdt", "Calculate BMI")
+                }
+                
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    suggestions.forEach { sugg ->
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(themeColors.cardBg)
+                                .border(
+                                    width = 1.dp,
+                                    color = themeColors.displayText.copy(alpha = 0.1f),
+                                    shape = RoundedCornerShape(16.dp)
+                                )
+                                .clickable {
+                                    viewModel.sendMessageToAi(sugg)
+                                }
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = sugg,
+                                color = themeColors.displayText.copy(alpha = 0.8f),
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+                }
+                
+                // Input bar
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = textInput,
+                        onValueChange = { textInput = it },
+                        placeholder = {
+                            Text(
+                                text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "এখানে লিখুন..." else "Type a message...",
+                                color = themeColors.displayText.copy(alpha = 0.4f),
+                                fontSize = 14.sp
+                            )
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .heightIn(min = 48.dp, max = 120.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = themeColors.displayText,
+                            unfocusedTextColor = themeColors.displayText,
+                            focusedBorderColor = themeColors.buttonEqualBg,
+                            unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.12f),
+                            focusedContainerColor = themeColors.cardBg.copy(alpha = 0.3f),
+                            unfocusedContainerColor = themeColors.cardBg.copy(alpha = 0.3f)
+                        ),
+                        shape = RoundedCornerShape(24.dp),
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+                        keyboardActions = KeyboardActions(
+                            onSend = {
+                                if (textInput.isNotBlank()) {
+                                    viewModel.sendMessageToAi(textInput)
+                                    textInput = ""
+                                }
+                            }
+                        )
+                    )
+                    
+                    Spacer(modifier = Modifier.width(8.dp))
+                    
+                    Box(
+                        modifier = Modifier
+                            .size(46.dp)
+                            .clip(CircleShape)
+                            .background(themeColors.buttonEqualBg)
+                            .clickable {
+                                if (textInput.isNotBlank()) {
+                                    viewModel.sendMessageToAi(textInput)
+                                    textInput = ""
+                                } else {
+                                    val intent = android.content.Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                                        putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL, android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                                        putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, if (viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI) "bn-BD" else "en-US")
+                                    }
+                                    try {
+                                        speechRecognizerLauncher.launch(intent)
+                                    } catch (e: Exception) {
+                                        // Ignore
+                                    }
+                                }
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = if (textInput.isNotBlank()) Icons.Default.Send else Icons.Default.Mic,
+                            contentDescription = if (textInput.isNotBlank()) "Send" else "Voice Input",
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }

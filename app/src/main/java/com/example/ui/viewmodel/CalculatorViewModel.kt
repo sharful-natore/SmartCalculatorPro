@@ -21,6 +21,12 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import com.squareup.moshi.JsonClass
+import retrofit2.Retrofit
+import retrofit2.converter.moshi.MoshiConverterFactory
+import retrofit2.http.POST
+import retrofit2.http.Body
+import retrofit2.http.Query
 import java.net.HttpURLConnection
 import java.net.URL
 import java.text.DecimalFormat
@@ -76,6 +82,728 @@ class CalculatorViewModel(
             }
             selectedHistoryIds = emptySet()
             isHistorySelectionMode = false
+        }
+    }
+
+    // --- Offline AI Chatbot States & Engine ---
+    var showAiChat by mutableStateOf(false)
+    var aiChatMessages by mutableStateOf(listOf<ChatMessage>())
+        private set
+
+    var isAiLoading by mutableStateOf(false)
+
+    fun resetAiChat() {
+        val isBn = selectedLanguage == AppLanguage.BENGALI
+        val welcomeText = if (isBn) {
+            """হ্যালো! আমি আপনার অফলাইন এআই সহকারী। 🤖
+
+আপনি আমাকে যেকোনো হিসেব, ইউনিট রূপান্তর বা অন্যান্য টুলের ব্যাপারে জিজ্ঞাসা করতে পারেন। যেমন:
+• ৫ কিলোমিটারে কত মিটার?
+• ১০০ ডলার কত টাকা?
+• ১৫০০ টাকার ২০% ডিসকাউন্ট কত?
+• আমার বয়স কত?
+• বিএমআই (BMI) হিসেব করো
+
+বলুন, আমি আপনাকে কিভাবে সাহায্য করতে পারি?"""
+        } else {
+            """Hello! I am your AI Assistant. 🤖
+
+Ask me any math calculation, unit conversion, or to set up custom calculations like BMI, Age, and Discount!
+
+How can I help you today?"""
+        }
+        aiChatMessages = listOf(ChatMessage(text = welcomeText, isUser = false))
+    }
+    private fun isNetworkAvailable(): Boolean {
+        return try {
+            val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+            val activeNetwork = cm.activeNetwork ?: return false
+            val capabilities = cm.getNetworkCapabilities(activeNetwork) ?: return false
+            capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI) ||
+                    capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_CELLULAR) ||
+                    capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_ETHERNET)
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    private suspend fun callGeminiApi(prompt: String, systemInstruction: String): String? = withContext(Dispatchers.IO) {
+        val apiKey = com.example.BuildConfig.GEMINI_API_KEY
+        if (apiKey.isBlank() || apiKey == "MY_GEMINI_API_KEY") return@withContext null
+        
+        try {
+            val request = GeminiRequest(
+                contents = listOf(GeminiContent(parts = listOf(GeminiPart(text = prompt)))),
+                systemInstruction = GeminiContent(parts = listOf(GeminiPart(text = systemInstruction)))
+            )
+            val response = geminiApiService.generateContent(apiKey, request)
+            response.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    private data class OfflineResult(
+        val replyText: String,
+        val actionType: String? = null,
+        val actionLabel: String? = null,
+        val actionData: String? = null
+    )
+
+    private fun detectLocalAction(normalized: String, isBn: Boolean): OfflineResult? {
+        val numberRegex = Regex("""\d+(\.\d+)?""")
+        val numbers = numberRegex.findAll(normalized).mapNotNull { it.value.toDoubleOrNull() }.toList()
+        val primaryNum = numbers.firstOrNull() ?: 1.0
+
+        return when {
+            normalized.contains("bmi") || normalized.contains("বিএমআই") || normalized.contains("body mass") -> {
+                if (numbers.size >= 2) {
+                    val height = numbers.find { it in 0.5..2.5 } ?: 1.7
+                    val weight = numbers.find { it in 30.0..250.0 } ?: 70.0
+                    OfflineResult(
+                        replyText = "",
+                        actionType = "bmi",
+                        actionLabel = if (isBn) "বিএমআই ক্যালকুলেটরে সেট করুন" else "Set in BMI Calculator",
+                        actionData = "$weight,$height"
+                    )
+                } else {
+                    OfflineResult(
+                        replyText = "",
+                        actionType = "navigate_tool",
+                        actionLabel = if (isBn) "বিএমআই ক্যালকুলেটরে যান" else "Go to BMI Calculator",
+                        actionData = "BMI"
+                    )
+                }
+            }
+            normalized.contains("discount") || normalized.contains("ডিসকাউন্ট") || normalized.contains("ছাড়") || normalized.contains("off") || normalized.contains("%") -> {
+                if (numbers.size >= 2) {
+                    val percentage = numbers.find { it in 1.0..99.0 } ?: 10.0
+                    val price = numbers.find { it > 99.0 || it != percentage } ?: 1000.0
+                    OfflineResult(
+                        replyText = "",
+                        actionType = "discount",
+                        actionLabel = if (isBn) "ডিসকাউন্ট ক্যালকুলেটরে সেট করুন" else "Set in Discount Calculator",
+                        actionData = "$price,$percentage"
+                    )
+                } else {
+                    OfflineResult(
+                        replyText = "",
+                        actionType = "navigate_tool",
+                        actionLabel = if (isBn) "ডিসকাউন্ট ক্যালকুলেটরে যান" else "Go to Discount Calculator",
+                        actionData = "DISCOUNT"
+                    )
+                }
+            }
+            normalized.contains("বয়স") || normalized.contains("age") || normalized.contains("birthday") || normalized.contains("জন্মদিন") -> {
+                OfflineResult(
+                    replyText = "",
+                    actionType = "navigate_tool",
+                    actionLabel = if (isBn) "বয়স ক্যালকুলেটরে যান" else "Go to Age Calculator",
+                    actionData = "AGE"
+                )
+            }
+            normalized.contains("বিদ্যুৎ") || normalized.contains("কারেন্ট") || normalized.contains("electricity") || normalized.contains("bill") || normalized.contains("বিল") -> {
+                OfflineResult(
+                    replyText = "",
+                    actionType = "navigate_tool",
+                    actionLabel = if (isBn) "বিদ্যুৎ বিল ক্যালকুলেটরে যান" else "Go to Electricity Bill",
+                    actionData = "ELECTRICITY_BILL"
+                )
+            }
+            normalized.contains("ঋণ") || normalized.contains("লোন") || normalized.contains("loan") || normalized.contains("emi") || normalized.contains("ইএমআই") -> {
+                OfflineResult(
+                    replyText = "",
+                    actionType = "navigate_tool",
+                    actionLabel = if (isBn) "লোন ক্যালকুলেটরে যান" else "Go to EMI Calculator",
+                    actionData = "EMI_LOAN"
+                )
+            }
+            normalized.contains("km") || normalized.contains("কিলোমিটার") || normalized.contains("কিমি") ||
+            normalized.contains("meter") || normalized.contains("মিটার") || normalized.contains(" সেমি") ||
+            normalized.contains("cm") || normalized.contains("সেন্টিমিটার") || normalized.contains("feet") ||
+            normalized.contains("ফুট") || normalized.contains("inch") || normalized.contains("ইঞ্চি") ||
+            normalized.contains("মাইল") || normalized.contains("mile") -> {
+                var fromU = "Kilometer"
+                var toU = "Meter"
+                when {
+                    normalized.contains("meter") || normalized.contains("মিটার") -> {
+                        if (normalized.contains("cm") || normalized.contains("সেন্টিমিটার") || normalized.contains("সেমি")) {
+                            fromU = "Meter"
+                            toU = "Centimeter"
+                        } else if (normalized.contains("km") || normalized.contains("কিলোমিটার") || normalized.contains("কিমি")) {
+                            fromU = "Meter"
+                            toU = "Kilometer"
+                        } else if (normalized.contains("feet") || normalized.contains("ফুট")) {
+                            fromU = "Meter"
+                            toU = "Feet"
+                        }
+                    }
+                    normalized.contains("feet") || normalized.contains("ফুট") -> {
+                        if (normalized.contains("inch") || normalized.contains("ইঞ্চি")) {
+                            fromU = "Feet"
+                            toU = "Inch"
+                        }
+                    }
+                    normalized.contains("mile") || normalized.contains("মাইল") -> {
+                        fromU = "Mile"
+                        toU = "Kilometer"
+                    }
+                }
+                OfflineResult(
+                    replyText = "",
+                    actionType = "converter",
+                    actionLabel = if (isBn) "$toU রূপান্তরে সরাসরি যান" else "Deep Link to $toU",
+                    actionData = "LENGTH,$fromU,$toU,$primaryNum"
+                )
+            }
+            normalized.contains("kg") || normalized.contains("কেজি") || normalized.contains("কিলোগ্রাম") ||
+            normalized.contains("gram") || normalized.contains("গ্রাম") || normalized.contains("পাউন্ড") ||
+            normalized.contains("pound") || normalized.contains("lb") -> {
+                var fromU = "Kilogram"
+                var toU = "Gram"
+                if (normalized.contains("gram") || normalized.contains("গ্রাম")) {
+                    if (normalized.contains("kg") || normalized.contains("কেজি") || normalized.contains("কিলোগ্রাম")) {
+                        fromU = "Gram"
+                        toU = "Kilogram"
+                    }
+                } else if (normalized.contains("pound") || normalized.contains("পাউন্ড") || normalized.contains("lb")) {
+                    fromU = "Kilogram"
+                    toU = "Pound"
+                }
+                OfflineResult(
+                    replyText = "",
+                    actionType = "converter",
+                    actionLabel = if (isBn) "$toU রূপান্তরে যান" else "Go to $toU Converter",
+                    actionData = "WEIGHT,$fromU,$toU,$primaryNum"
+                )
+            }
+            normalized.contains("dollar") || normalized.contains("ডলার") || normalized.contains("usd") ||
+            normalized.contains("taka") || normalized.contains("টাকা") || normalized.contains("bdt") ||
+            normalized.contains("euro") || normalized.contains("ইউরো") || normalized.contains("eur") ||
+            normalized.contains("rupee") || normalized.contains("রুপি") || normalized.contains("inr") -> {
+                var fromU = "USD - US Dollar"
+                var toU = "BDT - Bangladeshi Taka"
+                when {
+                    normalized.contains("taka") || normalized.contains("টাকা") || normalized.contains("bdt") -> {
+                        if (normalized.contains("usd") || normalized.contains("dollar") || normalized.contains("ডলার")) {
+                            fromU = "BDT - Bangladeshi Taka"
+                            toU = "USD - US Dollar"
+                        }
+                    }
+                    normalized.contains("euro") || normalized.contains("ইউরো") || normalized.contains("eur") -> {
+                        fromU = "EUR - Euro"
+                        toU = "BDT - Bangladeshi Taka"
+                    }
+                    normalized.contains("rupee") || normalized.contains("রুপি") || normalized.contains("inr") -> {
+                        fromU = "INR - Indian Rupee"
+                        toU = "BDT - Bangladeshi Taka"
+                    }
+                }
+                OfflineResult(
+                    replyText = "",
+                    actionType = "converter",
+                    actionLabel = if (isBn) "মুদ্রা রূপান্তরে সরাসরি যান" else "Open Currency Converter",
+                    actionData = "CURRENCY,$fromU,$toU,$primaryNum"
+                )
+            }
+            else -> null
+        }
+    }
+
+    private fun runOfflineModel(normalized: String, isBn: Boolean): OfflineResult {
+        val numberRegex = Regex("""\d+(\.\d+)?""")
+        val numbers = numberRegex.findAll(normalized).mapNotNull { it.value.toDoubleOrNull() }.toList()
+        val primaryNum = numbers.firstOrNull() ?: 1.0
+        
+        var replyText = ""
+        var actType: String? = null
+        var actLabel: String? = null
+        var actData: String? = null
+        
+        when {
+            // Greetings: Hello/Hi
+            normalized.contains("hello") || normalized.contains(" hi ") || normalized.startsWith("hi") || normalized.contains("hey") ||
+            normalized.contains("হ্যালো") || normalized.contains("হাই") || normalized.contains("সালাম") || normalized.contains("salam") || normalized.contains("আসসালামু আলাইকুম") -> {
+                replyText = if (isBn) {
+                    "আসসালামু আলাইকুম ও হ্যালো! 👋 আমি আপনার স্মার্ট ক্যালকুলেটর অফলাইন এআই সহকারী। আমি কিভাবে আপনাকে সাহায্য করতে পারি?"
+                } else {
+                    "Hello there! 👋 I am your Smart Calculator Offline AI Assistant. How can I help you today?"
+                }
+            }
+
+            // Who are you / Identity
+            normalized.contains("who are you") || normalized.contains("identity") || normalized.contains("তুমি কে") || normalized.contains("কে তুমি") || normalized.contains("আপনার পরিচয়") || normalized.contains("পরিচয়") -> {
+                replyText = if (isBn) {
+                    "আমি এই অ্যাপ্লিকেশনের একটি অন্তর্নির্মিত **অফলাইন এআই মডেল (Offline AI Model)**। 🤖 আমি সম্পূর্ণরূপে আপনার ফোনেই কাজ করি, কোনো ইন্টারনেট ছাড়াই!\n\nআমি আপনাকে বিভিন্ন গাণিতিক গণনা, ইউনিট রূপান্তর (যেমন কিমি থেকে মিটার) এবং বিএমআই বা ডিসকাউন্টের মতো বিশেষ টুল ব্যবহারে সাহায্য করি।"
+                } else {
+                    "I am the built-in **Offline AI Model** of this application. 🤖 I work 100% locally on your phone without any internet!\n\nI am designed to assist you with quick math calculations, unit conversions, and navigating or prepopulating smart calculators like BMI and Discount."
+                }
+            }
+
+            // Name
+            normalized.contains("your name") || normalized.contains("তোমার নাম কি") || normalized.contains("আপনার নাম কি") || normalized.contains("নাম কি") || normalized.contains("name") -> {
+                replyText = if (isBn) {
+                    "আমার নাম **স্মার্ট এআই সহকারী (Smart AI Assistant)**! 🤖 আমি এই স্মার্ট ক্যালকুলেটর অ্যাপেরই একটি অংশ।"
+                } else {
+                    "My name is **Smart AI Assistant**! 🤖 I am a built-in part of this Smart Calculator app."
+                }
+            }
+
+            // How are you / Well-being
+            normalized.contains("how are you") || normalized.contains("কেমন আছো") || normalized.contains("কেমন আছেন") || normalized.contains("কেমন আছ") || normalized.contains("ভালো আছো") -> {
+                replyText = if (isBn) {
+                    "আমি খুব ভালো আছি, ধন্যবাদ! 🥰 আমি আপনার ফোনের প্রসেসর ব্যবহার করে সম্পূর্ণরূপে অফলাইনে যেকোনো হিসেব করতে সর্বদা প্রস্তুত। আপনি কেমন আছেন? চলুন কিছু হিসেব করা যাক!"
+                } else {
+                    "I am doing great, thank you! 🥰 Running fully offline on your device's local processor, I'm always energized and ready to calculate. How are you doing? Let's do some math!"
+                }
+            }
+
+            // Capabilities / What can you do
+            normalized.contains("what can you do") || normalized.contains("কি করতে পারো") || normalized.contains("কাজ কি") || normalized.contains("সুবিধা") || normalized.contains("সাহায্য") || normalized.contains("help") || normalized.contains("features") || normalized.contains("কি কি করতে পারো") -> {
+                replyText = if (isBn) {
+                    "আমি অফলাইনে অত্যন্ত গতিতে নিচের কাজগুলো করতে পারি: \n\n" +
+                    "১. 📏 **ইউনিট রূপান্তর:** যেমন '৫ কিলোমিটারে কত মিটার?' বা '১০০ গ্রাম কত কেজি?'\n" +
+                    "২. 💵 **মুদ্রা রূপান্তর:** যেমন '১০০ ডলার কত টাকা?' বা '৫০০ রুপি কত টাকা?'\n" +
+                    "৩. 🧘 **বিএমআই হিসেব:** ওজন এবং উচ্চতা বললে বিএমআই হিসাব করা।\n" +
+                    "৪. 🏷️ **ডিসকাউন্ট হিসাব:** যেমন '১৫০০ টাকার ২০% ডিসকাউন্ট কত?'\n" +
+                    "৫. 🔢 **গণিত সমাধান:** সরাসরি যেকোনো সাধারণ গাণিতিক সমীকরণ সমাধান করা।\n" +
+                    "৬. 🚀 **টুল নেভিগেশন:** যেকোনো ক্যালকুলেটর যেমন বয়স বা বিদ্যুৎ বিল টুলে সরাসরি নেভিগেট করা!"
+                } else {
+                    "I can perform a variety of operations fully offline on your phone:\n\n" +
+                    "1. 📏 **Unit Conversions:** e.g., '5 km to meters' or '100g in kg'\n" +
+                    "2. 💵 **Currency Exchange:** e.g., '100 USD to BDT' or '500 INR to BDT'\n" +
+                    "3. 🧘 **BMI Calculation:** Give me your weight & height to compute your BMI.\n" +
+                    "4. 🏷️ **Discount Details:** e.g., '20% discount on 1500'\n" +
+                    "5. 🔢 **Math Equation Solver:** Paste any arithmetic expression to solve instantly.\n" +
+                    "6. 🚀 **Smart Deep Linking:** Direct navigation to Age, Electricity, or EMI calculators!"
+                }
+            }
+
+            // BMI
+            normalized.contains("bmi") || normalized.contains("বিএমআই") || normalized.contains("body mass") -> {
+                if (numbers.size >= 2) {
+                    val height = numbers.find { it in 0.5..2.5 } ?: 1.7
+                    val weight = numbers.find { it in 30.0..250.0 } ?: 70.0
+                    val bmi = weight / (height * height)
+                    val df = DecimalFormat("#.#")
+                    val bmiStr = df.format(bmi)
+                    
+                    val category = when {
+                        bmi < 18.5 -> if (isBn) "কম ওজন (Underweight)" else "Underweight"
+                        bmi in 18.5..24.9 -> if (isBn) "স্বাভাবিক ওজন (Normal)" else "Normal"
+                        bmi in 25.0..29.9 -> if (isBn) "অতিরিক্ত ওজন (Overweight)" else "Overweight"
+                        else -> if (isBn) "স্থূলতা (Obese)" else "Obese"
+                    }
+                    
+                    replyText = if (isBn) {
+                        "আপনার ওজন $weight কেজি এবং উচ্চতা $height মিটার অনুযায়ী:\n\n• বিএমআই (BMI): **$bmiStr**\n• ক্যাটাগরি: **$category**\n\nএটি একটি এআই হিসাব!"
+                    } else {
+                        "Based on your weight of $weight kg and height of $height m:\n\n• BMI: **$bmiStr**\n• Category: **$category**\n\nCalculated offline!"
+                    }
+                    actType = "bmi"
+                    actLabel = if (isBn) "বিএমআই ক্যালকুলেটরে সেট করুন" else "Set in BMI Calculator"
+                    actData = "$weight,$height"
+                } else {
+                    replyText = if (isBn) {
+                        "বিএমআই হিসাব করার জন্য দয়া করে ওজন (কেজি) এবং উচ্চতা (মিটার) উল্লেখ করুন। যেমন: 'আমার ওজন ৭০ কেজি, উচ্চতা ১.৭ মিটার' 🧘"
+                    } else {
+                        "Please provide your weight in kg and height in meters to calculate BMI. For example: 'weight 70 kg, height 1.7m' 🧘"
+                    }
+                    actType = "navigate_tool"
+                    actLabel = if (isBn) "বিএমআই ক্যালকুলেটরে যান" else "Go to BMI Calculator"
+                    actData = "BMI"
+                }
+            }
+            
+            // Discount
+            normalized.contains("discount") || normalized.contains("ডিসকাউন্ট") || normalized.contains("ছাড়") || normalized.contains("off") || normalized.contains("%") -> {
+                if (numbers.size >= 2) {
+                    val percentage = numbers.find { it in 1.0..99.0 } ?: 10.0
+                    val price = numbers.find { it > 99.0 || it != percentage } ?: 1000.0
+                    
+                    val savings = price * (percentage / 100.0)
+                    val finalPrice = price - savings
+                    val df = DecimalFormat("#.##")
+                    val savingsStr = df.format(savings)
+                    val finalPriceStr = df.format(finalPrice)
+                    
+                    replyText = if (isBn) {
+                        "💰 **ডিসকাউন্ট হিসাব:**\n• আসল মূল্য: ৳${df.format(price)}\n• ছাড়: $percentage%\n• সাশ্রয়: ৳$savingsStr\n• চূড়ান্ত মূল্য: **৳$finalPriceStr**"
+                    } else {
+                        "💰 **Discount Details:**\n• Original Price: $${df.format(price)}\n• Discount: $percentage%\n• Savings: $$savingsStr\n• Final Price: **$$finalPriceStr**"
+                    }
+                    actType = "discount"
+                    actLabel = if (isBn) "ডিসকাউন্ট ক্যালকুলেটরে সেট করুন" else "Set in Discount Calculator"
+                    actData = "$price,$percentage"
+                } else {
+                    replyText = if (isBn) {
+                        "ডিসকাউন্ট হিসাব করতে মূল্য এবং ডিসকাউন্ট পার্সেন্ট উল্লেখ করুন। যেমন: '১৫০০ টাকার ২০% ডিসকাউন্ট কত?' 🏷️"
+                    } else {
+                        "To calculate discount, please mention the original price and discount percentage. For example: '20% off on 1500' 🏷️"
+                    }
+                    actType = "navigate_tool"
+                    actLabel = if (isBn) "ডিসকাউন্ট ক্যালকুলেটরে যান" else "Go to Discount Calculator"
+                    actData = "DISCOUNT"
+                }
+            }
+            
+            // Age
+            normalized.contains("বয়স") || normalized.contains("age") || normalized.contains("birthday") || normalized.contains("জন্মদিন") -> {
+                replyText = if (isBn) {
+                    "আপনার নিখুঁত বয়স, পরবর্তী জন্মদিন এবং চমৎকার সময় পরিসংখ্যান দেখতে আমাদের 'বয়স ক্যালকুলেটর' টুলটি ব্যবহার করুন! 🎂"
+                } else {
+                    "To calculate your exact age, remaining days for next birthday, and deep time stats, use our 'Age & Birthday' tool! 🎂"
+                }
+                actType = "navigate_tool"
+                actLabel = if (isBn) "বয়স ক্যালকুলেটরে যান" else "Go to Age Calculator"
+                actData = "AGE"
+            }
+            
+            // Electricity Bill
+            normalized.contains("বিদ্যুৎ") || normalized.contains("কারেন্ট") || normalized.contains("electricity") || normalized.contains("bill") || normalized.contains("বিল") -> {
+                replyText = if (isBn) {
+                    "বিদ্যুৎ বিল হিসাব করতে এবং আপনার ইলেকট্রনিক ডিভাইসের আনুমানিক বিদ্যুৎ বিল দেখতে আমাদের 'বিদ্যুৎ বিল ক্যালকুলেটর' ব্যবহার করুন! ⚡"
+                } else {
+                    "To calculate electricity bills and estimation for home appliances, use our 'Electricity Bill Calculator'! ⚡"
+                }
+                actType = "navigate_tool"
+                actLabel = if (isBn) "বিদ্যুৎ বিল ক্যালকুলেটরে যান" else "Go to Electricity Bill"
+                actData = "ELECTRICITY_BILL"
+            }
+            
+            // EMI / Loan
+            normalized.contains("ঋণ") || normalized.contains("লোন") || normalized.contains("loan") || normalized.contains("emi") || normalized.contains("ইএমআই") -> {
+                replyText = if (isBn) {
+                    "ঋণের কিস্তি, মাসিক সুদের হার এবং মোট প্রদেয় টাকার হিসাব খুব সহজে করতে আমাদের 'ইএমআই ও লোন ক্যালকুলেটর' ব্যবহার করুন! 🏦"
+                } else {
+                    "Calculate home/car loans, monthly installments, interest rates, and total payable amounts with our 'EMI & Loan Calculator'! 🏦"
+                }
+                actType = "navigate_tool"
+                actLabel = if (isBn) "লোন ক্যালকুলেটরে যান" else "Go to EMI Calculator"
+                actData = "EMI_LOAN"
+            }
+            
+            // Unit conversions: Length
+            normalized.contains("km") || normalized.contains("কিলোমিটার") || normalized.contains("কিমি") ||
+            normalized.contains("meter") || normalized.contains("মিটার") || normalized.contains(" সেমি") ||
+            normalized.contains("cm") || normalized.contains("সেন্টিমিটার") || normalized.contains("feet") ||
+            normalized.contains("ফুট") || normalized.contains("inch") || normalized.contains("ইঞ্চি") ||
+            normalized.contains("মাইল") || normalized.contains("mile") -> {
+                
+                var fromU = "Kilometer"
+                var toU = "Meter"
+                var converted = primaryNum * 1000.0
+                
+                when {
+                    normalized.contains("meter") || normalized.contains("মিটার") -> {
+                        if (normalized.contains("cm") || normalized.contains("সেন্টিমিটার") || normalized.contains("সেমি")) {
+                            fromU = "Meter"
+                            toU = "Centimeter"
+                            converted = primaryNum * 100.0
+                        } else if (normalized.contains("km") || normalized.contains("কিলোমিটার") || normalized.contains("কিমি")) {
+                            fromU = "Meter"
+                            toU = "Kilometer"
+                            converted = primaryNum / 1000.0
+                        } else if (normalized.contains("feet") || normalized.contains("ফুট")) {
+                            fromU = "Meter"
+                            toU = "Feet"
+                            converted = primaryNum * 3.28084
+                        }
+                    }
+                    normalized.contains("feet") || normalized.contains("ফুট") -> {
+                        if (normalized.contains("inch") || normalized.contains("ইঞ্চি")) {
+                            fromU = "Feet"
+                            toU = "Inch"
+                            converted = primaryNum * 12.0
+                        }
+                    }
+                    normalized.contains("mile") || normalized.contains("মাইল") -> {
+                        fromU = "Mile"
+                        toU = "Kilometer"
+                        converted = primaryNum * 1.60934
+                    }
+                }
+                
+                val df = DecimalFormat("#.####")
+                val convStr = df.format(converted)
+                val priStr = df.format(primaryNum)
+                
+                replyText = if (isBn) {
+                    "📏 **দৈর্ঘ্য রূপান্তর:**\n• $priStr $fromU = **$convStr $toU**\n\nএটি একটি স্থানীয় এআই গণনা!"
+                } else {
+                    "📏 **Length Conversion:**\n• $priStr $fromU = **$convStr $toU**\n\nCalculated offline!"
+                }
+                actType = "converter"
+                actLabel = if (isBn) "$toU রূপান্তরে সরাসরি যান" else "Deep Link to $toU"
+                actData = "LENGTH,$fromU,$toU,$primaryNum"
+            }
+            
+            // Unit conversions: Weight
+            normalized.contains("kg") || normalized.contains("কেজি") || normalized.contains("কিলোগ্রাম") ||
+            normalized.contains("gram") || normalized.contains("গ্রাম") || normalized.contains("পাউন্ড") ||
+            normalized.contains("pound") || normalized.contains("lb") -> {
+                
+                var fromU = "Kilogram"
+                var toU = "Gram"
+                var converted = primaryNum * 1000.0
+                
+                if (normalized.contains("gram") || normalized.contains("গ্রাম")) {
+                    if (normalized.contains("kg") || normalized.contains("কেজি") || normalized.contains("কিলোগ্রাম")) {
+                        fromU = "Gram"
+                        toU = "Kilogram"
+                        converted = primaryNum / 1000.0
+                    }
+                } else if (normalized.contains("pound") || normalized.contains("পাউন্ড") || normalized.contains("lb")) {
+                    fromU = "Kilogram"
+                    toU = "Pound"
+                    converted = primaryNum * 2.20462
+                }
+                
+                val df = DecimalFormat("#.####")
+                val convStr = df.format(converted)
+                val priStr = df.format(primaryNum)
+                
+                replyText = if (isBn) {
+                    "⚖️ **ওজন রূপান্তর:**\n• $priStr $fromU = **$convStr $toU**\n\nহিসাবটি সম্পন্ন হয়েছে!"
+                } else {
+                    "⚖️ **Weight Conversion:**\n• $priStr $fromU = **$convStr $toU**\n\nCalculated offline!"
+                }
+                actType = "converter"
+                actLabel = if (isBn) "$toU রূপান্তরে যান" else "Go to $toU Converter"
+                actData = "WEIGHT,$fromU,$toU,$primaryNum"
+            }
+            
+            // Currency
+            normalized.contains("dollar") || normalized.contains("ডলার") || normalized.contains("usd") ||
+            normalized.contains("taka") || normalized.contains("টাকা") || normalized.contains("bdt") ||
+            normalized.contains("euro") || normalized.contains("ইউরো") || normalized.contains("eur") ||
+            normalized.contains("rupee") || normalized.contains("রুপি") || normalized.contains("inr") -> {
+                
+                var fromU = "USD - US Dollar"
+                var toU = "BDT - Bangladeshi Taka"
+                var rate = exchangeRates["BDT - Bangladeshi Taka"] ?: 120.0
+                
+                when {
+                    normalized.contains("taka") || normalized.contains("টাকা") || normalized.contains("bdt") -> {
+                        if (normalized.contains("usd") || normalized.contains("dollar") || normalized.contains("ডলার")) {
+                            fromU = "BDT - Bangladeshi Taka"
+                            toU = "USD - US Dollar"
+                            val usdRate = exchangeRates["BDT - Bangladeshi Taka"] ?: 120.0
+                            rate = 1.0 / usdRate
+                        }
+                    }
+                    normalized.contains("euro") || normalized.contains("ইউরো") || normalized.contains("eur") -> {
+                        fromU = "EUR - Euro"
+                        toU = "BDT - Bangladeshi Taka"
+                        val usdToBdt = exchangeRates["BDT - Bangladeshi Taka"] ?: 120.0
+                        val eurToUsd = exchangeRates["EUR - Euro"] ?: 0.92
+                        rate = if (eurToUsd > 0) usdToBdt / eurToUsd else 130.0
+                    }
+                    normalized.contains("rupee") || normalized.contains("রুপি") || normalized.contains("inr") -> {
+                        fromU = "INR - Indian Rupee"
+                        toU = "BDT - Bangladeshi Taka"
+                        val usdToBdt = exchangeRates["BDT - Bangladeshi Taka"] ?: 120.0
+                        val inrToUsd = exchangeRates["INR - Indian Rupee"] ?: 83.0
+                        rate = if (inrToUsd > 0) usdToBdt / inrToUsd else 1.45
+                    }
+                }
+                
+                val converted = primaryNum * rate
+                val df = DecimalFormat("#.##")
+                val convStr = df.format(converted)
+                val priStr = df.format(primaryNum)
+                
+                replyText = if (isBn) {
+                    "💵 **মুদ্রা রূপান্তর (অফলাইন রেট):**\n• $priStr $fromU = **$convStr $toU**\n\n*(নোট: সর্বশেষ লাইভ আপডেট অনুযায়ী অফলাইনে হিসাব করা হয়েছে)*"
+                } else {
+                    "💵 **Currency Exchange (Offline):**\n• $priStr $fromU = **$convStr $toU**\n\n*(Note: Calculated offline based on last sync exchange rates)*"
+                }
+                actType = "converter"
+                actLabel = if (isBn) "মুদ্রা রূপান্তরে সরাসরি যান" else "Open Currency Converter"
+                actData = "CURRENCY,$fromU,$toU,$primaryNum"
+            }
+            
+            // Basic math solver fallback
+            numbers.isNotEmpty() && (normalized.contains("+") || normalized.contains("-") || normalized.contains("*") || normalized.contains("/") || normalized.contains("x") || normalized.contains("÷") || normalized.contains("প্লাস") || normalized.contains("মাইনাস") || normalized.contains("গুণ") || normalized.contains("ভাগ")) -> {
+                var mathExpr = normalized
+                    .replace("যোগ", "+").replace("প্লাস", "+").replace("plus", "+")
+                    .replace("বিয়োগ", "-").replace("মাইনাস", "-").replace("minus", "-")
+                    .replace("গুণ", "*").replace("ইনটু", "*").replace("times", "*").replace("into", "*")
+                    .replace("ভাগ", "/").replace("ডিভাইডেড", "/").replace("divided by", "/").replace("divided", "/")
+                    .replace("x", "*").replace("÷", "/")
+                
+                mathExpr = mathExpr.filter { it.isDigit() || it in "+-*/.()" }
+                
+                if (mathExpr.isNotBlank()) {
+                    try {
+                        val evalResult = ExpressionEvaluator.evaluate(mathExpr)
+                        val df = DecimalFormat("#.######")
+                        val resultStr = df.format(evalResult)
+                        
+                        replyText = if (isBn) {
+                            "🔢 **গাণিতিক হিসেব:**\n• রাশিমালা: `$mathExpr`\n• ফলাফল: **$resultStr**\n\nসরাসরি সমাধান করা হয়েছে!"
+                        } else {
+                            "🔢 **Math Solution:**\n• Expression: `$mathExpr`\n• Result: **$resultStr**\n\nSolved offline instantly!"
+                        }
+                        actType = "calculate"
+                        actLabel = if (isBn) "ক্যালকুলেটরে পেস্ট করুন" else "Paste to Scientific Calc"
+                        actData = mathExpr
+                    } catch (e: Exception) {
+                        replyText = if (isBn) {
+                            "আমি গাণিতিক রাশিমালাটি সমাধান করতে পারিনি। দয়া করে সঠিক ফরম্যাটে লিখুন। যেমন: '২৫ + ৩৫ * ৪' 🧮"
+                        } else {
+                            "I couldn't evaluate that mathematical expression. Please write it clearly. E.g., '25 + 35 * 4' 🧮"
+                        }
+                    }
+                }
+            }
+            
+            else -> {
+                replyText = if (isBn) {
+                    "আমি আপনার অনুরোধটি ঠিক বুঝতে পারিনি। আমি একটি দ্রুত অফলাইন এআই সহকারী।\n\nআপনি আমাকে দৈর্ঘ্যের রূপান্তর (যেমন: ৫ কিমি সমান কত মিটার?), ওজন, কারেন্সি (যেমন: ১০০ ডলার কত টাকা?) অথবা ডিসকাউন্ট, বিএমআই এবং বয়সের মতো বিশেষ টুলস সহজে ওপেন বা হিসেব করার আদেশ দিতে পারেন! 😊"
+                } else {
+                    "I couldn't quite grasp that request. I am a fast offline AI helper.\n\nAsk me to convert length (e.g., '5 km to meters'), weight, currency ('100 USD to BDT'), or to quickly set up special tools like BMI, Age, and Discount calculations! 😊"
+                }
+            }
+        }
+        
+        return OfflineResult(replyText, actType, actLabel, actData)
+    }
+
+    fun sendMessageToAi(rawText: String) {
+        if (rawText.isBlank()) return
+        if (isAiLoading) return
+        
+        val userMsg = ChatMessage(text = rawText, isUser = true)
+        aiChatMessages = aiChatMessages + userMsg
+        
+        val normalized = rawText
+            .replace('০', '0').replace('১', '1').replace('২', '2').replace('৩', '3')
+            .replace('৪', '4').replace('৫', '5').replace('৬', '6').replace('৭', '7')
+            .replace('৮', '8').replace('৯', '9')
+            .replace('०', '0').replace('१', '1').replace('२', '2').replace('३', '3')
+            .replace('४', '4').replace('५', '5').replace('६', '6').replace('७', '7')
+            .replace('८', '8').replace('९', '9')
+            .lowercase()
+        
+        val isBn = selectedLanguage == AppLanguage.BENGALI
+        isAiLoading = true
+        
+        viewModelScope.launch {
+            var replyText = ""
+            var actType: String? = null
+            var actLabel: String? = null
+            var actData: String? = null
+            var usedOnlineModel = false
+            
+            if (isNetworkAvailable() && com.example.BuildConfig.GEMINI_API_KEY.isNotBlank() && com.example.BuildConfig.GEMINI_API_KEY != "MY_GEMINI_API_KEY") {
+                val systemInstruction = if (isBn) {
+                    "You are a helpful assistant for a Smart Calculator and Unit Converter app. Answer in Bengali cleanly and naturally. Keep it friendly and concise. Do not use markdown other than bold text. Suggest mathematical or unit conversions when appropriate."
+                } else {
+                    "You are a helpful assistant for a Smart Calculator and Unit Converter app. Answer in English cleanly and naturally. Keep it friendly and concise. Do not use markdown other than bold text. Suggest mathematical or unit conversions when appropriate."
+                }
+                
+                val onlineReply = callGeminiApi(rawText, systemInstruction)
+                if (onlineReply != null) {
+                    replyText = onlineReply
+                    usedOnlineModel = true
+                    
+                    val detectedAction = detectLocalAction(normalized, isBn)
+                    if (detectedAction != null) {
+                        actType = detectedAction.actionType
+                        actLabel = detectedAction.actionLabel
+                        actData = detectedAction.actionData
+                    }
+                }
+            }
+            
+            if (!usedOnlineModel) {
+                val offlineResult = runOfflineModel(normalized, isBn)
+                replyText = offlineResult.replyText
+                actType = offlineResult.actionType
+                actLabel = offlineResult.actionLabel
+                actData = offlineResult.actionData
+            }
+            
+            val aiReply = ChatMessage(
+                text = replyText,
+                isUser = false,
+                actionType = actType,
+                actionLabel = actLabel,
+                actionData = actData
+            )
+            
+            aiChatMessages = aiChatMessages + aiReply
+            isAiLoading = false
+        }
+    }
+    
+    fun performAiChatAction(actionType: String, actionData: String) {
+        if (actionData.isBlank()) return
+        showAiChat = false // Close chat when navigating
+        
+        try {
+            when (actionType) {
+                "bmi" -> {
+                    val parts = actionData.split(",")
+                    if (parts.size >= 2) {
+                        activeTab = 2
+                        openTool(com.example.data.model.ToolType.BMI)
+                        bmiWeightUnit = "kg"
+                        bmiHeightUnit = "cm"
+                        bmiWeight = parts[0]
+                        val heightM = parts[1].toDoubleOrNull() ?: 1.7
+                        bmiHeight = (heightM * 100.0).toInt().toString()
+                        calculateBMI()
+                    }
+                }
+                "discount" -> {
+                    val parts = actionData.split(",")
+                    if (parts.size >= 2) {
+                        activeTab = 2
+                        openTool(com.example.data.model.ToolType.DISCOUNT)
+                        originalPrice = parts[0]
+                        discountPercent = parts[1]
+                        taxPercent = "0"
+                        calculateDiscount()
+                    }
+                }
+                "navigate_tool" -> {
+                    activeTab = 2
+                    val tool = com.example.data.model.ToolType.valueOf(actionData)
+                    openTool(tool)
+                }
+                "calculate" -> {
+                    activeTab = 0
+                    expressionValue = TextFieldValue(actionData, selection = TextRange(actionData.length))
+                    evaluateExpression()
+                }
+                "converter" -> {
+                    val parts = actionData.split(",")
+                    if (parts.size >= 4) {
+                        activeTab = 1
+                        val catStr = parts[0]
+                        val fromU = parts[1]
+                        val toU = parts[2]
+                        val valueStr = parts[3]
+                        
+                        val type = com.example.data.model.ConverterType.valueOf(catStr)
+                        selectedConverterType = type
+                        
+                        // Set matching units
+                        val matchedFrom = type.units.find { it.contains(fromU, ignoreCase = true) } ?: type.units.first()
+                        val matchedTo = type.units.find { it.contains(toU, ignoreCase = true) } ?: type.units.last()
+                        
+                        fromUnit = matchedFrom
+                        toUnit = matchedTo
+                        converterInput = valueStr
+                        calculateConverter()
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
@@ -334,6 +1062,7 @@ class CalculatorViewModel(
         calculateAge()
         calculateDiscount()
         calculatePercentage()
+        resetAiChat()
     }
 
     // --- Calculator Logic ---
@@ -1010,6 +1739,19 @@ class CalculatorViewModel(
         val match = regex.find(str)
         return match?.value?.toDoubleOrNull()
     }
+
+    companion object {
+        private val retrofit by lazy {
+            Retrofit.Builder()
+                .baseUrl("https://generativelanguage.googleapis.com/")
+                .addConverterFactory(MoshiConverterFactory.create())
+                .build()
+        }
+        
+        private val geminiApiService by lazy {
+            retrofit.create(GeminiApiService::class.java)
+        }
+    }
 }
 
 class CalculatorViewModelFactory(
@@ -1023,4 +1765,46 @@ class CalculatorViewModelFactory(
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
+}
+
+data class ChatMessage(
+    val id: String = java.util.UUID.randomUUID().toString(),
+    val text: String,
+    val isUser: Boolean,
+    val timestamp: Long = System.currentTimeMillis(),
+    val actionType: String? = null,
+    val actionLabel: String? = null,
+    val actionData: String? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class GeminiPart(val text: String)
+
+@JsonClass(generateAdapter = true)
+data class GeminiContent(val parts: List<GeminiPart>)
+
+@JsonClass(generateAdapter = true)
+data class GeminiRequest(
+    val contents: List<GeminiContent>,
+    val systemInstruction: GeminiContent? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class GeminiPartResponse(val text: String?)
+
+@JsonClass(generateAdapter = true)
+data class GeminiContentResponse(val parts: List<GeminiPartResponse>?)
+
+@JsonClass(generateAdapter = true)
+data class GeminiCandidate(val content: GeminiContentResponse?)
+
+@JsonClass(generateAdapter = true)
+data class GeminiResponse(val candidates: List<GeminiCandidate>?)
+
+interface GeminiApiService {
+    @POST("v1beta/models/gemini-2.5-flash:generateContent")
+    suspend fun generateContent(
+        @Query("key") apiKey: String,
+        @Body request: GeminiRequest
+    ): GeminiResponse
 }

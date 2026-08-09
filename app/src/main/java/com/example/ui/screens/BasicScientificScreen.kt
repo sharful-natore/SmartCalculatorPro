@@ -10,6 +10,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -137,7 +138,12 @@ fun BasicScientificScreen(
                         )
                     }
                 )
-                .padding((16f - (6f * expansionFraction)).dp),
+                .padding((16f - (6f * expansionFraction)).dp)
+                .pointerInput(Unit) {
+                    detectHorizontalDragGestures { change, _ ->
+                        change.consume()
+                    }
+                },
             contentAlignment = Alignment.BottomEnd
         ) {
             val clipboardManager = LocalClipboardManager.current

@@ -180,8 +180,8 @@ object LanguageManager {
                 AppLanguage.CHINESE -> "全部"
             }
             "from" -> when (language) {
-                AppLanguage.ENGLISH -> "From"
-                AppLanguage.BENGALI -> "ফ্রম"
+                AppLanguage.ENGLISH -> "From Unit"
+                AppLanguage.BENGALI -> "ভিত্তি ইউনিট"
                 AppLanguage.HINDI -> "से (From)"
                 AppLanguage.ARABIC -> "من"
                 AppLanguage.FRENCH -> "De"
@@ -190,8 +190,8 @@ object LanguageManager {
                 AppLanguage.CHINESE -> "从"
             }
             "to" -> when (language) {
-                AppLanguage.ENGLISH -> "To"
-                AppLanguage.BENGALI -> "টু"
+                AppLanguage.ENGLISH -> "To Unit"
+                AppLanguage.BENGALI -> "রূপান্তরিত ইউনিট"
                 AppLanguage.HINDI -> "तक"
                 AppLanguage.ARABIC -> "إلى"
                 AppLanguage.FRENCH -> "À"
