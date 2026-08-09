@@ -174,8 +174,17 @@ fun HistoryScreen(
                                     maxLines = 1
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
+                                val displayResult = try {
+                                    val cleaned = entry.result.replace(",", "")
+                                    val doubleVal = cleaned.toDouble()
+                                    val precision = viewModel.decimalPrecision
+                                    val pattern = if (precision <= 0) "#" else "#." + "#".repeat(precision)
+                                    java.text.DecimalFormat(pattern).format(doubleVal)
+                                } catch (e: Exception) {
+                                    entry.result
+                                }
                                 Text(
-                                    text = "= ${entry.result}",
+                                    text = "= $displayResult",
                                     fontSize = 20.sp,
                                     fontFamily = FontFamily.Monospace,
                                     fontWeight = FontWeight.Bold,

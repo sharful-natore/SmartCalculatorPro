@@ -829,36 +829,6 @@ object LanguageManager {
                 AppLanguage.GERMAN -> "Nächster Geburtstag:"
                 AppLanguage.CHINESE -> "距离下个生日："
             }
-            "date_diff_title" -> when (language) {
-                AppLanguage.ENGLISH -> "Date Difference"
-                AppLanguage.BENGALI -> "তারিখের ব্যবধান"
-                AppLanguage.HINDI -> "तारीख का अंतर"
-                AppLanguage.ARABIC -> "الفرق بين التاريخين"
-                AppLanguage.FRENCH -> "Différence de dates"
-                AppLanguage.SPANISH -> "Diferencia de fechas"
-                AppLanguage.GERMAN -> "Datumsdifferenz"
-                AppLanguage.CHINESE -> "日期差计算"
-            }
-            "start_date" -> when (language) {
-                AppLanguage.ENGLISH -> "Start Date"
-                AppLanguage.BENGALI -> "শুরুর তারিখ"
-                AppLanguage.HINDI -> "प्रारंभ तिथि"
-                AppLanguage.ARABIC -> "تاريخ البدء"
-                AppLanguage.FRENCH -> "Date de début"
-                AppLanguage.SPANISH -> "Fecha de inicio"
-                AppLanguage.GERMAN -> "Startdatum"
-                AppLanguage.CHINESE -> "开始日期"
-            }
-            "end_date" -> when (language) {
-                AppLanguage.ENGLISH -> "End Date"
-                AppLanguage.BENGALI -> "শেষের তারিখ"
-                AppLanguage.HINDI -> "अंतिम तिथि"
-                AppLanguage.ARABIC -> "تاريخ الانتهاء"
-                AppLanguage.FRENCH -> "Date de fin"
-                AppLanguage.SPANISH -> "Fecha final"
-                AppLanguage.GERMAN -> "Enddatum"
-                AppLanguage.CHINESE -> "结束日期"
-            }
             "total_days" -> when (language) {
                 AppLanguage.ENGLISH -> "Total Duration:"
                 AppLanguage.BENGALI -> "মোট ব্যবধান:"
@@ -918,26 +888,6 @@ object LanguageManager {
                 AppLanguage.SPANISH -> "Calculadora de propinas y cuenta"
                 AppLanguage.GERMAN -> "Trinkgeld- und Rechnungsrechner"
                 AppLanguage.CHINESE -> "小费和账单 AA 计算器"
-            }
-            "bill_amount" -> when (language) {
-                AppLanguage.ENGLISH -> "Total Bill Amount"
-                AppLanguage.BENGALI -> "মোট বিলের পরিমাণ"
-                AppLanguage.HINDI -> "कुल बिल राशि"
-                AppLanguage.ARABIC -> "مبلغ الفاتورة الإجمالي"
-                AppLanguage.FRENCH -> "Montant total de la facture"
-                AppLanguage.SPANISH -> "Monto total de la cuenta"
-                AppLanguage.GERMAN -> "Gesamtrechnungsbetrag"
-                AppLanguage.CHINESE -> "账单总额"
-            }
-            "tip_percent" -> when (language) {
-                AppLanguage.ENGLISH -> "Tip (%)"
-                AppLanguage.BENGALI -> "টিপ (%)"
-                AppLanguage.HINDI -> "टिप (%)"
-                AppLanguage.ARABIC -> "الإكرامية (%)"
-                AppLanguage.FRENCH -> "Pourboire (%)"
-                AppLanguage.SPANISH -> "Propina (%)"
-                AppLanguage.GERMAN -> "Trinkgeld (%)"
-                AppLanguage.CHINESE -> "小费（%）"
             }
             "number_of_people" -> when (language) {
                 AppLanguage.ENGLISH -> "Number of People"
@@ -1059,36 +1009,6 @@ object LanguageManager {
                 AppLanguage.GERMAN -> "Monatliche Kosten:"
                 AppLanguage.CHINESE -> "每月花费："
             }
-            "battery_backup_title" -> when (language) {
-                AppLanguage.ENGLISH -> "Battery / IPS Backup Time"
-                AppLanguage.BENGALI -> "ব্যাটারি / আইপিএস ব্যাকআপ সময়"
-                AppLanguage.HINDI -> "बैटरी / आईपीएस बैकअप समय"
-                AppLanguage.ARABIC -> "وقت النسخ الاحتياطي للبطارية"
-                AppLanguage.FRENCH -> "Temps de secours batterie / IPS"
-                AppLanguage.SPANISH -> "Tiempo de respaldo de batería"
-                AppLanguage.GERMAN -> "Batterie-/IPS-Laufzeit"
-                AppLanguage.CHINESE -> "电池/IPS备用时间"
-            }
-            "battery_ah" -> when (language) {
-                AppLanguage.ENGLISH -> "Battery Capacity (Ah)"
-                AppLanguage.BENGALI -> "ব্যাটারি ক্ষমতা (Ah)"
-                AppLanguage.HINDI -> "बैटरी क्षमता (Ah)"
-                AppLanguage.ARABIC -> "سعة البطارية (أمبير ساعة)"
-                AppLanguage.FRENCH -> "Capacité de batterie (Ah)"
-                AppLanguage.SPANISH -> "Capacidad de batería (Ah)"
-                AppLanguage.GERMAN -> "Batteriekapazität (Ah)"
-                AppLanguage.CHINESE -> "电池容量（安时）"
-            }
-            "battery_volts" -> when (language) {
-                AppLanguage.ENGLISH -> "Voltage (V)"
-                AppLanguage.BENGALI -> "ভোল্টেজ (V)"
-                AppLanguage.HINDI -> "वोल्टेज (V)"
-                AppLanguage.ARABIC -> "الجهد (فولت)"
-                AppLanguage.FRENCH -> "Tension (V)"
-                AppLanguage.SPANISH -> "Voltaje (V)"
-                AppLanguage.GERMAN -> "Spannung (V)"
-                AppLanguage.CHINESE -> "电压（伏特）"
-            }
             "load_watts" -> when (language) {
                 AppLanguage.ENGLISH -> "Total Load Power (Watts)"
                 AppLanguage.BENGALI -> "মোট লোড (Watts)"
@@ -1108,26 +1028,6 @@ object LanguageManager {
                 AppLanguage.SPANISH -> "Tiempo de respaldo estimado:"
                 AppLanguage.GERMAN -> "Geschätzte Überbrückungszeit:"
                 AppLanguage.CHINESE -> "预计续航时间："
-            }
-            "fuel_cost_title" -> when (language) {
-                AppLanguage.ENGLISH -> "Fuel Cost Calculator"
-                AppLanguage.BENGALI -> "জ্বালানি খরচ ক্যালকুলেটর"
-                AppLanguage.HINDI -> "ईंधन लागत कैलकुलेटर"
-                AppLanguage.ARABIC -> "حاسبة تكلفة الوقود"
-                AppLanguage.FRENCH -> "Calculateur de coût de carburant"
-                AppLanguage.SPANISH -> "Calculadora de costo de combustible"
-                AppLanguage.GERMAN -> "Treibstoffkostenrechner"
-                AppLanguage.CHINESE -> "燃油成本计算器"
-            }
-            "distance_km" -> when (language) {
-                AppLanguage.ENGLISH -> "Distance (km)"
-                AppLanguage.BENGALI -> "দূরত্ব (কি.মি.)"
-                AppLanguage.HINDI -> "दूरी (किमी)"
-                AppLanguage.ARABIC -> "المسافة (كم)"
-                AppLanguage.FRENCH -> "Distance (km)"
-                AppLanguage.SPANISH -> "Distancia (km)"
-                AppLanguage.GERMAN -> "Entfernung (km)"
-                AppLanguage.CHINESE -> "距离（公里）"
             }
             "mileage_kpl" -> when (language) {
                 AppLanguage.ENGLISH -> "Mileage (km/Liter)"
@@ -1149,26 +1049,6 @@ object LanguageManager {
                 AppLanguage.GERMAN -> "Kraftstoffpreis (pro Liter)"
                 AppLanguage.CHINESE -> "油价（每升）"
             }
-            "fuel_needed" -> when (language) {
-                AppLanguage.ENGLISH -> "Fuel Needed:"
-                AppLanguage.BENGALI -> "প্রয়োজনীয় তেল:"
-                AppLanguage.HINDI -> "आवश्यक ईंधन:"
-                AppLanguage.ARABIC -> "الوقود المطلوب:"
-                AppLanguage.FRENCH -> "Carburant nécessaire :"
-                AppLanguage.SPANISH -> "Combustible necesario:"
-                AppLanguage.GERMAN -> "Benötigter Kraftstoff:"
-                AppLanguage.CHINESE -> "所需油量："
-            }
-            "total_fuel_cost" -> when (language) {
-                AppLanguage.ENGLISH -> "Total Fuel Cost:"
-                AppLanguage.BENGALI -> "মোট তেলের খরচ:"
-                AppLanguage.HINDI -> "कुल ईंधन लागत:"
-                AppLanguage.ARABIC -> "تكلفة الوقود الإجمالية:"
-                AppLanguage.FRENCH -> "Coût total du carburant :"
-                AppLanguage.SPANISH -> "Costo total de combustible:"
-                AppLanguage.GERMAN -> "Gesamte Treibstoffkosten:"
-                AppLanguage.CHINESE -> "燃油总成本："
-            }
             "speed_calc_title" -> when (language) {
                 AppLanguage.ENGLISH -> "Speed, Distance & Time"
                 AppLanguage.BENGALI -> "গতি, দূরত্ব ও সময়"
@@ -1188,16 +1068,6 @@ object LanguageManager {
                 AppLanguage.SPANISH -> "Velocidad (km/h)"
                 AppLanguage.GERMAN -> "Geschwindigkeit (km/h)"
                 AppLanguage.CHINESE -> "速度（公里/小时）"
-            }
-            "travel_time_hours" -> when (language) {
-                AppLanguage.ENGLISH -> "Time (Hours)"
-                AppLanguage.BENGALI -> "সময় (ঘণ্টা)"
-                AppLanguage.HINDI -> "समय (घंटे)"
-                AppLanguage.ARABIC -> "الالوقت (ساعات)"
-                AppLanguage.FRENCH -> "Temps (Heures)"
-                AppLanguage.SPANISH -> "Tiempo (Horas)"
-                AppLanguage.GERMAN -> "Zeit (Stunden)"
-                AppLanguage.CHINESE -> "时间（小时）"
             }
             "distance_result" -> when (language) {
                 AppLanguage.ENGLISH -> "Calculated Distance:"
@@ -1228,6 +1098,398 @@ object LanguageManager {
                 AppLanguage.SPANISH -> "Selecciona tu paleta de colores preferida"
                 AppLanguage.GERMAN -> "Wählen Sie Ihre bevorzugte Farbpalette"
                 AppLanguage.CHINESE -> "选择您喜爱的应用配色方案"
+            }
+            "add_vat" -> when (language) {
+                AppLanguage.BENGALI -> "ভ্যাট যোগ করুন"
+                else -> "Add VAT"
+            }
+            "remove_vat" -> when (language) {
+                AppLanguage.BENGALI -> "ভ্যাট বাদ দিন"
+                else -> "Remove VAT"
+            }
+            "amount_tk" -> when (language) {
+                AppLanguage.BENGALI -> "পরিমাণ (টাকা)"
+                else -> "Amount (৳)"
+            }
+            "annual_interest_rate" -> when (language) {
+                AppLanguage.BENGALI -> "বার্ষিক সুদের হার (%)"
+                else -> "Annual Interest Rate (%)"
+            }
+            "interest_rate_pct" -> when (language) {
+                AppLanguage.BENGALI -> "সুদের হার (%)"
+                else -> "Interest Rate (%)"
+            }
+            "tenure_years" -> when (language) {
+                AppLanguage.BENGALI -> "মেয়াদ (বছর)"
+                else -> "Tenure (Years)"
+            }
+            "total_interest_payable" -> when (language) {
+                AppLanguage.BENGALI -> "মোট প্রদেয় সুদ"
+                else -> "Total Interest Payable"
+            }
+            "total_payment" -> when (language) {
+                AppLanguage.BENGALI -> "মোট পরিশোধ"
+                else -> "Total Payment (Principal + Interest)"
+            }
+            "interest_simple" -> when (language) {
+                AppLanguage.BENGALI -> "সরল সুদ"
+                else -> "Simple"
+            }
+            "interest_compound" -> when (language) {
+                AppLanguage.BENGALI -> "চক্রবৃদ্ধি সুদ"
+                else -> "Compound"
+            }
+            "interest_title" -> when (language) {
+                AppLanguage.BENGALI -> "সুদ ক্যালকুলেটর"
+                else -> "Interest Calculator"
+            }
+            "electricity_title" -> when (language) {
+                AppLanguage.BENGALI -> "বিদ্যুৎ বিল ক্যালকুলেটর"
+                else -> "Electricity Bill Calculator"
+            }
+            "bill_per_person" -> when (language) {
+                AppLanguage.BENGALI -> "জনপ্রতি বিল:"
+                else -> "Bill per Person:"
+            }
+            "split_people" -> when (language) {
+                AppLanguage.BENGALI -> "বিভক্ত করুন (জনসংখ্যা)"
+                else -> "Split (Number of People)"
+            }
+            "grand_total_bill" -> when (language) {
+                AppLanguage.BENGALI -> "সর্বমোট বিল:"
+                else -> "Grand Total Bill:"
+            }
+            "tip_split_title" -> when (language) {
+                AppLanguage.BENGALI -> "টিপ ও বিল স্প্লিটার"
+                else -> "Tip & Bill Splitter"
+            }
+            "total_tip_amount" -> when (language) {
+                AppLanguage.BENGALI -> "মোট টিপ পরিমাণ:"
+                else -> "Total Tip Amount:"
+            }
+            "bill_amount" -> when (language) {
+                AppLanguage.BENGALI -> "বিলের পরিমাণ"
+                else -> "Bill Amount"
+            }
+            "tip_percent" -> when (language) {
+                AppLanguage.BENGALI -> "টিপ (%)"
+                else -> "Tip (%)"
+            }
+            "fuel_price_tk_l" -> when (language) {
+                AppLanguage.BENGALI -> "জ্বালানির দাম (টাকা/লিটার)"
+                else -> "Fuel Price (৳/Litre)"
+            }
+            "fuel_needed" -> when (language) {
+                AppLanguage.BENGALI -> "প্রয়োজনীয় জ্বালানি:"
+                else -> "Fuel Needed:"
+            }
+            "total_fuel_cost" -> when (language) {
+                AppLanguage.BENGALI -> "মোট জ্বালানি খরচ:"
+                else -> "Total Fuel Cost:"
+            }
+            "cost_per_km" -> when (language) {
+                AppLanguage.BENGALI -> "প্রতি কিমি খরচ:"
+                else -> "Cost per KM:"
+            }
+            "mileage_km_l" -> when (language) {
+                AppLanguage.BENGALI -> "মাইলেজ (কিমি/লিটার)"
+                else -> "Mileage (KM/Litre)"
+            }
+            "fuel_cost_title" -> when (language) {
+                AppLanguage.BENGALI -> "জ্বালানি খরচ ও দূরত্ব"
+                else -> "Fuel Cost & Distance"
+            }
+            "speed_dist_title" -> when (language) {
+                AppLanguage.BENGALI -> "গতিবেগ, দূরত্ব ও সময়"
+                else -> "Speed, Distance & Time"
+            }
+            "calc_speed" -> when (language) {
+                AppLanguage.BENGALI -> "গতিবেগ"
+                else -> "Speed"
+            }
+            "calc_distance" -> when (language) {
+                AppLanguage.BENGALI -> "দূরত্ব"
+                else -> "Distance"
+            }
+            "calc_time" -> when (language) {
+                AppLanguage.BENGALI -> "সময়"
+                else -> "Time"
+            }
+            "speed_kmh" -> when (language) {
+                AppLanguage.BENGALI -> "গতিবেগ (কিমি/ঘণ্টা)"
+                else -> "Speed (km/h)"
+            }
+            "distance_km" -> when (language) {
+                AppLanguage.BENGALI -> "দূরত্ব (কিমি)"
+                else -> "Distance (km)"
+            }
+            "time_hours" -> when (language) {
+                AppLanguage.BENGALI -> "সময় (ঘণ্টা)"
+                else -> "Time (Hours)"
+            }
+            "travel_time_hours" -> when (language) {
+                AppLanguage.BENGALI -> "ভ্রমণের সময় (ঘণ্টা)"
+                else -> "Travel Time (Hours)"
+            }
+            "speed_calc_res" -> when (language) {
+                AppLanguage.BENGALI -> "গণনাকৃত গতিবেগ"
+                else -> "Calculated Speed"
+            }
+            "distance_calc_res" -> when (language) {
+                AppLanguage.BENGALI -> "গণনাকৃত দূরত্ব"
+                else -> "Calculated Distance"
+            }
+            "time_calc_res" -> when (language) {
+                AppLanguage.BENGALI -> "গণনাকৃত সময়"
+                else -> "Calculated Time"
+            }
+            "appliance_title" -> when (language) {
+                AppLanguage.BENGALI -> "দৈনিক যন্ত্রপাতির বিদ্যুৎ খরচ"
+                else -> "Daily Appliance Energy Cost"
+            }
+            "wattage_watt" -> when (language) {
+                AppLanguage.BENGALI -> "ওয়াট (Watts)"
+                else -> "Wattage (Watts)"
+            }
+            "daily_hours_used" -> when (language) {
+                AppLanguage.BENGALI -> "দৈনিক ব্যবহারের ঘণ্টা"
+                else -> "Daily Hours Used"
+            }
+            "unit_flat_charge" -> when (language) {
+                AppLanguage.BENGALI -> "ফ্ল্যাট ইউনিট রেট (টাকা/kWh)"
+                else -> "Flat Unit Rate (৳/kWh)"
+            }
+            "daily_energy_cost" -> when (language) {
+                AppLanguage.BENGALI -> "দৈনিক বিদ্যুৎ খরচ:"
+                else -> "Daily Energy Cost:"
+            }
+            "monthly_energy_cost" -> when (language) {
+                AppLanguage.BENGALI -> "মাসিক বিদ্যুৎ খরচ:"
+                else -> "Monthly Energy Cost:"
+            }
+            "monthly_bill_amount" -> when (language) {
+                AppLanguage.BENGALI -> "মাসিক বিলের পরিমাণ:"
+                else -> "Monthly Bill Amount:"
+            }
+            "battery_backup_title" -> when (language) {
+                AppLanguage.BENGALI -> "ব্যাটারি ব্যাকআপ ও লোড"
+                else -> "Battery Backup & Load"
+            }
+            "load_watt" -> when (language) {
+                AppLanguage.BENGALI -> "মোট লোড (ওয়াট)"
+                else -> "Total Load (Watts)"
+            }
+            "battery_ah" -> when (language) {
+                AppLanguage.BENGALI -> "ব্যাটারি ক্যাপাসিটি (Ah)"
+                else -> "Battery Capacity (Ah)"
+            }
+            "battery_volts" -> when (language) {
+                AppLanguage.BENGALI -> "ব্যাটারি ভোল্টেজ (V)"
+                else -> "Battery Voltage (V)"
+            }
+            "inverter_efficiency" -> when (language) {
+                AppLanguage.BENGALI -> "ইনভার্টার দক্ষতা (%)"
+                else -> "Inverter Efficiency (%)"
+            }
+            "total_usable_wh" -> when (language) {
+                AppLanguage.BENGALI -> "মোট ব্যবহারযোগ্য ওয়াট-ঘণ্টা:"
+                else -> "Total Usable Watt-Hours:"
+            }
+            "est_backup_time" -> when (language) {
+                AppLanguage.BENGALI -> "আনুমানিক ব্যাকআপ সময়:"
+                else -> "Estimated Backup Time:"
+            }
+            "date_diff_title" -> when (language) {
+                AppLanguage.BENGALI -> "তারিখ ক্যালকুলেটর ও পার্থক্য"
+                else -> "Date Calculator & Difference"
+            }
+            "start_date" -> when (language) {
+                AppLanguage.BENGALI -> "শুরুর তারিখ"
+                else -> "Start Date"
+            }
+            "end_date" -> when (language) {
+                AppLanguage.BENGALI -> "শেষের তারিখ"
+                else -> "End Date"
+            }
+            "date_diff_result" -> when (language) {
+                AppLanguage.BENGALI -> "পার্থক্য:"
+                else -> "Difference:"
+            }
+            "total_est_days" -> when (language) {
+                AppLanguage.BENGALI -> "মোট দিন:"
+                else -> "Total Days:"
+            }
+            "year" -> when (language) {
+                AppLanguage.BENGALI -> "বছর"
+                else -> "Year"
+            }
+            "month" -> when (language) {
+                AppLanguage.BENGALI -> "মাস"
+                else -> "Month"
+            }
+            "day" -> when (language) {
+                AppLanguage.BENGALI -> "দিন"
+                else -> "Day"
+            }
+            "hours" -> when (language) {
+                AppLanguage.BENGALI -> "ঘণ্টা"
+                else -> "Hours"
+            }
+            "mins" -> when (language) {
+                AppLanguage.BENGALI -> "মিনিট"
+                else -> "Minutes"
+            }
+            "demand_charge" -> when (language) {
+                AppLanguage.BENGALI -> "ডিমান্ড চার্জ (টাকা)"
+                else -> "Demand Charge (৳)"
+            }
+            "demand_meter_charge" -> when (language) {
+                AppLanguage.BENGALI -> "মিটার ভাড়া ও অন্যান্য (টাকা)"
+                else -> "Meter Rent & Others (৳)"
+            }
+            "meter_rent" -> when (language) {
+                AppLanguage.BENGALI -> "মিটার ভাড়া (টাকা)"
+                else -> "Meter Rent (৳)"
+            }
+            "energy_charge" -> when (language) {
+                AppLanguage.BENGALI -> "বিদ্যুৎ রেট (টাকা/ইউনিট)"
+                else -> "Energy Charge (৳/Unit)"
+            }
+            "monthly_units_kwh" -> when (language) {
+                AppLanguage.BENGALI -> "মাসিক ইউনিট (kWh)"
+                else -> "Monthly Units (kWh)"
+            }
+            "estimated_total_bill" -> when (language) {
+                AppLanguage.BENGALI -> "আনুমানিক মোট বিল:"
+                else -> "Estimated Total Bill:"
+            }
+            "custom_tariff_settings" -> when (language) {
+                AppLanguage.BENGALI -> "কাস্টম ট্যারিফ সেটিংস"
+                else -> "Custom Tariff Settings"
+            }
+            "edit_rates" -> when (language) {
+                AppLanguage.BENGALI -> "রেট পরিবর্তন করুন"
+                else -> "Edit Rates"
+            }
+            "save_settings" -> when (language) {
+                AppLanguage.BENGALI -> "সংরক্ষণ করুন"
+                else -> "Save"
+            }
+            "close" -> when (language) {
+                AppLanguage.BENGALI -> "বন্ধ করুন"
+                else -> "Close"
+            }
+            "residential" -> when (language) {
+                AppLanguage.BENGALI -> "আবাসিক"
+                else -> "Residential"
+            }
+            "commercial" -> when (language) {
+                AppLanguage.BENGALI -> "বাণিজ্যিক"
+                else -> "Commercial"
+            }
+            "use_flat_rate" -> when (language) {
+                AppLanguage.BENGALI -> "ফ্ল্যাট ইউনিট রেট ব্যবহার করুন"
+                else -> "Use Flat Unit Rate"
+            }
+            "vat_rate_pct" -> when (language) {
+                AppLanguage.BENGALI -> "ভ্যাটের হার (%)"
+                else -> "VAT Rate (%)"
+            }
+            "gross_total" -> when (language) {
+                AppLanguage.BENGALI -> "সর্বমোট"
+                else -> "Gross Total"
+            }
+            "water_intake_title" -> when (language) {
+                AppLanguage.BENGALI -> "দৈনিক পানি পানের লক্ষ্যমাত্রা"
+                else -> "Daily Water Intake Goal"
+            }
+            "daily_exercise_mins" -> when (language) {
+                AppLanguage.BENGALI -> "দৈনিক ব্যায়ামের সময় (মিনিট)"
+                else -> "Daily Exercise (Minutes)"
+            }
+            "daily_water_req" -> when (language) {
+                AppLanguage.BENGALI -> "দৈনিক প্রয়োজনীয় পানি"
+                else -> "Recommended Daily Water Intake"
+            }
+            "total_interest_earned" -> when (language) {
+                AppLanguage.BENGALI -> "মোট অর্জিত সুদ:"
+                else -> "Total Interest Earned:"
+            }
+            "maturity_amount" -> when (language) {
+                AppLanguage.BENGALI -> "মেয়াদ শেষে মোট টাকা:"
+                else -> "Maturity Amount:"
+            }
+            "total_profit" -> when (language) {
+                AppLanguage.BENGALI -> "মোট লাভের পরিমাণ:"
+                else -> "Total Profit Amount:"
+            }
+            "total_loss" -> when (language) {
+                AppLanguage.BENGALI -> "মোট ক্ষতির পরিমাণ:"
+                else -> "Total Loss Amount:"
+            }
+            "profit_loss_percent" -> when (language) {
+                AppLanguage.BENGALI -> "লাভ/ক্ষতির শতকরা হার:"
+                else -> "Profit/Loss Percentage:"
+            }
+            "profit_margin_percent" -> when (language) {
+                AppLanguage.BENGALI -> "লাভ মার্জিনের শতকরা হার:"
+                else -> "Profit Margin Percentage:"
+            }
+            "total_distance_km" -> when (language) {
+                AppLanguage.BENGALI -> "মোট দূরত্ব (কিমি)"
+                else -> "Total Distance (km)"
+            }
+            "quantity" -> when (language) {
+                AppLanguage.BENGALI -> "পরিমাণ"
+                else -> "Quantity"
+            }
+            "quick_select" -> when (language) {
+                AppLanguage.BENGALI -> "সহজ বাছাই"
+                else -> "Quick Selection"
+            }
+            "glasses" -> when (language) {
+                AppLanguage.BENGALI -> "গ্লাস"
+                else -> "Glasses"
+            }
+            "emi_loan_title" -> when (language) {
+                AppLanguage.BENGALI -> "ইএমআই ও ঋণ ক্যালকুলেটর"
+                else -> "EMI & Loan Calculator"
+            }
+            "time_years" -> when (language) {
+                AppLanguage.BENGALI -> "সময় (বছর)"
+                else -> "Time (Years)"
+            }
+            "menu_settings" -> when (language) {
+                AppLanguage.BENGALI -> "সেটিংস"
+                else -> "Settings"
+            }
+            "menu_terms" -> when (language) {
+                AppLanguage.BENGALI -> "টার্মস কন্ডিশন"
+                else -> "Terms & Conditions"
+            }
+            "menu_privacy" -> when (language) {
+                AppLanguage.BENGALI -> "প্রাইভেসি পলিসি"
+                else -> "Privacy Policy"
+            }
+            "menu_about" -> when (language) {
+                AppLanguage.BENGALI -> "এবাউট অ্যাপ"
+                else -> "About App"
+            }
+            "settings_vibration" -> when (language) {
+                AppLanguage.BENGALI -> "ভাইব্রেশন ফিডব্যাক"
+                else -> "Vibration Feedback"
+            }
+            "settings_vibration_desc" -> when (language) {
+                AppLanguage.BENGALI -> "বাটন ক্লিকে হ্যাপটিক ফিডব্যাক চালু করুন"
+                else -> "Enable haptic feedback on button clicks"
+            }
+            "settings_precision" -> when (language) {
+                AppLanguage.BENGALI -> "দশমিক স্থান"
+                else -> "Decimal Precision"
+            }
+            "settings_precision_desc" -> when (language) {
+                AppLanguage.BENGALI -> "গণনায় দেখানোর জন্য দশমিক স্থান নির্ধারণ করুন"
+                else -> "Set decimal places to display in calculations"
             }
             else -> key
         }

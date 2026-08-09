@@ -110,6 +110,26 @@ class CalculatorViewModel(
         sharedPrefs.edit().putString("selected_language", language.name).apply()
     }
 
+    var vibrationEnabled by mutableStateOf(
+        sharedPrefs.getBoolean("vibration_enabled", true)
+    )
+        private set
+
+    fun updateVibrationEnabled(enabled: Boolean) {
+        vibrationEnabled = enabled
+        sharedPrefs.edit().putBoolean("vibration_enabled", enabled).apply()
+    }
+
+    var decimalPrecision by mutableStateOf(
+        sharedPrefs.getInt("decimal_precision", 3)
+    )
+        private set
+
+    fun updateDecimalPrecision(precision: Int) {
+        decimalPrecision = precision
+        sharedPrefs.edit().putInt("decimal_precision", precision).apply()
+    }
+
     // --- Currency Exchange Rates Engine ---
     private val defaultExchangeRates = mapOf(
         "USD" to 1.0,

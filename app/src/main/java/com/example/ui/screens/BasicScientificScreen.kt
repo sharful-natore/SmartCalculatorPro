@@ -17,6 +17,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.automirrored.filled.Backspace
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.outlined.Science
@@ -138,11 +140,52 @@ fun BasicScientificScreen(
                 .padding((16f - (6f * expansionFraction)).dp),
             contentAlignment = Alignment.BottomEnd
         ) {
+            val clipboardManager = LocalClipboardManager.current
+            Row(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(
+                    onClick = {
+                        val textToCopy = viewModel.expressionValue.text
+                        if (textToCopy.isNotEmpty()) {
+                            clipboardManager.setText(AnnotatedString(textToCopy))
+                        }
+                    },
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ContentCopy,
+                        contentDescription = "Copy Expression",
+                        tint = themeColors.displayText.copy(alpha = 0.5f),
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+
+                IconButton(
+                    onClick = {
+                        clipboardManager.getText()?.let { clipText ->
+                            viewModel.onPaste(clipText.text)
+                        }
+                    },
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ContentPaste,
+                        contentDescription = "Paste Expression",
+                        tint = themeColors.displayText.copy(alpha = 0.5f),
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
+
             Column(
                 horizontalAlignment = Alignment.End,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                val clipboardManager = LocalClipboardManager.current
                 val focusRequester = remember { FocusRequester() }
 
                 LaunchedEffect(Unit) {
