@@ -89,7 +89,7 @@ fun ConverterCategoriesView(
         modifier = Modifier
             .fillMaxSize()
             .background(themeColors.background)
-            .padding(16.dp)
+            .padding(horizontal = 16.dp, vertical = 2.dp)
             .verticalScroll(scrollState)
     ) {
         // Search TextField
@@ -373,7 +373,7 @@ fun ConverterDetailView(
         modifier = Modifier
             .fillMaxSize()
             .background(themeColors.background)
-            .padding(16.dp)
+            .padding(horizontal = 16.dp, vertical = 2.dp)
             .verticalScroll(scrollState)
     ) {
         // Back Header

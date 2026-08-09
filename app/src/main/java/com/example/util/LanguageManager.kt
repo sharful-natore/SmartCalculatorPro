@@ -131,7 +131,7 @@ object LanguageManager {
             }
             "update_rates" -> when (language) {
                 AppLanguage.ENGLISH -> "Update Exchange Rates"
-                AppLanguage.BENGALI -> "লাইভ এক্সচেঞ্জ রেট আপডেট করুন"
+                AppLanguage.BENGALI -> "আপডেট"
                 AppLanguage.HINDI -> "लाइव विनिमय दरें अपडेट करें"
                 AppLanguage.ARABIC -> "تحديث أسعار الصرف المباشرة"
                 AppLanguage.FRENCH -> "Actualiser les taux de change"

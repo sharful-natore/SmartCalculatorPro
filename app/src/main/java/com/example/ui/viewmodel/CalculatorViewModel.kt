@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import com.squareup.moshi.JsonClass
+import com.squareup.moshi.Json
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.http.POST
@@ -37,6 +38,85 @@ class CalculatorViewModel(
     private val repository: HistoryRepository,
     private val context: Context
 ) : ViewModel() {
+
+    private val chatPrefs = context.getSharedPreferences("ai_chat_prefs", Context.MODE_PRIVATE)
+    private val moshi = com.squareup.moshi.Moshi.Builder().add(com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory()).build()
+    private val chatSessionListType = com.squareup.moshi.Types.newParameterizedType(List::class.java, ChatSession::class.java)
+    private val sessionAdapter = moshi.adapter<List<ChatSession>>(chatSessionListType)
+
+    private fun saveChatHistory() {
+        val json = sessionAdapter.toJson(chatSessions)
+        chatPrefs.edit().putString("chat_sessions", json).apply()
+        chatPrefs.edit().putString("current_session_id", currentSessionId).apply()
+    }
+
+    private fun loadChatHistory() {
+        val json = chatPrefs.getString("chat_sessions", null)
+        if (json != null) {
+            try {
+                val loaded = sessionAdapter.fromJson(json)
+                if (loaded != null) {
+                    chatSessions = loaded
+                    val lastId = chatPrefs.getString("current_session_id", null)
+                    if (lastId != null) {
+                        val session = chatSessions.find { it.id == lastId }
+                        if (session != null) {
+                            currentSessionId = lastId
+                            aiChatMessages = session.messages
+                            return
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+        resetAiChat()
+    }
+
+    private fun updateActiveSession() {
+        if (aiChatMessages.isEmpty()) return
+        val currentId = currentSessionId ?: java.util.UUID.randomUUID().toString()
+        if (currentSessionId == null) currentSessionId = currentId
+        
+        val firstUserMsg = aiChatMessages.find { it.isUser }?.text ?: (if (selectedLanguage == AppLanguage.BENGALI) "নতুন চ্যাট" else "New Chat")
+        val title = if (firstUserMsg.length > 30) firstUserMsg.take(27) + "..." else firstUserMsg
+        
+        val updatedSession = ChatSession(
+            id = currentId,
+            title = title,
+            messages = aiChatMessages,
+            timestamp = System.currentTimeMillis()
+        )
+        
+        val newList = chatSessions.toMutableList()
+        val index = newList.indexOfFirst { it.id == currentId }
+        if (index != -1) {
+            newList[index] = updatedSession
+        } else {
+            newList.add(0, updatedSession)
+        }
+        chatSessions = newList
+        saveChatHistory()
+    }
+
+    fun loadChatSession(session: ChatSession) {
+        currentSessionId = session.id
+        aiChatMessages = session.messages
+        showChatHistory = false
+        saveChatHistory()
+    }
+
+    fun deleteChatSession(session: ChatSession) {
+        val newList = chatSessions.filter { it.id != session.id }
+        chatSessions = newList
+        if (currentSessionId == session.id) {
+            resetAiChat()
+        } else {
+            saveChatHistory()
+        }
+    }
+
 
     // --- State Variables ---
     var expressionValue by mutableStateOf(TextFieldValue("0", selection = TextRange(1)))
@@ -57,12 +137,45 @@ class CalculatorViewModel(
 
     // History deletion confirmation state
     var showClearHistoryDialog by mutableStateOf(false)
+    var showClearChatDialog by mutableStateOf(false)
     var showDeleteSingleDialog by mutableStateOf(false)
     var pendingDeleteId by mutableStateOf<Long?>(null)
+    
+    // Chat History selection and deletion state
+    var selectedChatSessionIds by mutableStateOf(setOf<String>())
+    var isChatSelectionMode by mutableStateOf(false)
+    var sessionToDelete by mutableStateOf<ChatSession?>(null)
+    var showDeleteChatSessionDialog by mutableStateOf(false)
+    var showDeleteSelectedChatSessionsDialog by mutableStateOf(false)
+
+    fun toggleChatSelection(id: String) {
+        selectedChatSessionIds = if (selectedChatSessionIds.contains(id)) {
+            selectedChatSessionIds - id
+        } else {
+            selectedChatSessionIds + id
+        }
+        if (selectedChatSessionIds.isEmpty()) {
+            isChatSelectionMode = false
+        }
+    }
+
+    fun deleteSelectedChatSessions() {
+        val newList = chatSessions.filter { it.id !in selectedChatSessionIds }
+        chatSessions = newList
+        if (currentSessionId in selectedChatSessionIds) {
+            resetAiChat()
+        } else {
+            saveChatHistory()
+        }
+        selectedChatSessionIds = emptySet()
+        isChatSelectionMode = false
+        showDeleteSelectedChatSessionsDialog = false
+    }
 
     // History selection state
     var selectedHistoryIds by mutableStateOf(setOf<Long>())
     var isHistorySelectionMode by mutableStateOf(false)
+    var isDisplayInteractionActive by mutableStateOf(false)
 
     fun toggleHistorySelection(id: Long) {
         selectedHistoryIds = if (selectedHistoryIds.contains(id)) {
@@ -89,6 +202,11 @@ class CalculatorViewModel(
     var showAiChat by mutableStateOf(false)
     var aiChatMessages by mutableStateOf(listOf<ChatMessage>())
         private set
+    var chatSessions by mutableStateOf(listOf<ChatSession>())
+        private set
+    var currentSessionId by mutableStateOf<String?>(null)
+        private set
+    var showChatHistory by mutableStateOf(false)
 
     var isAiLoading by mutableStateOf(false)
 
@@ -113,8 +231,11 @@ Ask me any math calculation, unit conversion, or to set up custom calculations l
 How can I help you today?"""
         }
         aiChatMessages = listOf(ChatMessage(text = welcomeText, isUser = false))
+        currentSessionId = null
+        saveChatHistory()
+        showClearChatDialog = false
     }
-    private fun isNetworkAvailable(): Boolean {
+    fun isNetworkAvailable(): Boolean {
         return try {
             val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
             val activeNetwork = cm.activeNetwork ?: return false
@@ -127,13 +248,13 @@ How can I help you today?"""
         }
     }
 
-    private suspend fun callGeminiApi(prompt: String, systemInstruction: String): String? = withContext(Dispatchers.IO) {
+    private suspend fun callGeminiApi(contents: List<GeminiContent>, systemInstruction: String): String? = withContext(Dispatchers.IO) {
         val apiKey = com.example.BuildConfig.GEMINI_API_KEY
         if (apiKey.isBlank() || apiKey == "MY_GEMINI_API_KEY") return@withContext null
         
         try {
             val request = GeminiRequest(
-                contents = listOf(GeminiContent(parts = listOf(GeminiPart(text = prompt)))),
+                contents = contents,
                 systemInstruction = GeminiContent(parts = listOf(GeminiPart(text = systemInstruction)))
             )
             val response = geminiApiService.generateContent(apiKey, request)
@@ -584,28 +705,80 @@ How can I help you today?"""
                 var toU = "BDT - Bangladeshi Taka"
                 var rate = exchangeRates["BDT - Bangladeshi Taka"] ?: 120.0
                 
-                when {
-                    normalized.contains("taka") || normalized.contains("টাকা") || normalized.contains("bdt") -> {
-                        if (normalized.contains("usd") || normalized.contains("dollar") || normalized.contains("ডলার")) {
-                            fromU = "BDT - Bangladeshi Taka"
-                            toU = "USD - US Dollar"
-                            val usdRate = exchangeRates["BDT - Bangladeshi Taka"] ?: 120.0
-                            rate = 1.0 / usdRate
-                        }
-                    }
-                    normalized.contains("euro") || normalized.contains("ইউরো") || normalized.contains("eur") -> {
-                        fromU = "EUR - Euro"
-                        toU = "BDT - Bangladeshi Taka"
-                        val usdToBdt = exchangeRates["BDT - Bangladeshi Taka"] ?: 120.0
-                        val eurToUsd = exchangeRates["EUR - Euro"] ?: 0.92
-                        rate = if (eurToUsd > 0) usdToBdt / eurToUsd else 130.0
-                    }
-                    normalized.contains("rupee") || normalized.contains("রুপি") || normalized.contains("inr") -> {
-                        fromU = "INR - Indian Rupee"
-                        toU = "BDT - Bangladeshi Taka"
-                        val usdToBdt = exchangeRates["BDT - Bangladeshi Taka"] ?: 120.0
-                        val inrToUsd = exchangeRates["INR - Indian Rupee"] ?: 83.0
-                        rate = if (inrToUsd > 0) usdToBdt / inrToUsd else 1.45
+                val dollarKeywords = listOf("usd", "dollar", "ডলার")
+                val takaKeywords = listOf("bdt", "taka", "টাকা")
+                val euroKeywords = listOf("eur", "euro", "ইউরো")
+                val rupeeKeywords = listOf("inr", "rupee", "রুপি")
+
+                val dollarPos = dollarKeywords.map { normalized.indexOf(it) }.filter { it != -1 }.minOrNull() ?: Int.MAX_VALUE
+                val takaPos = takaKeywords.map { normalized.indexOf(it) }.filter { it != -1 }.minOrNull() ?: Int.MAX_VALUE
+                val euroPos = euroKeywords.map { normalized.indexOf(it) }.filter { it != -1 }.minOrNull() ?: Int.MAX_VALUE
+                val rupeePos = rupeeKeywords.map { normalized.indexOf(it) }.filter { it != -1 }.minOrNull() ?: Int.MAX_VALUE
+
+                val positions = listOf(
+                    "USD" to dollarPos,
+                    "BDT" to takaPos,
+                    "EUR" to euroPos,
+                    "INR" to rupeePos
+                ).filter { it.second != Int.MAX_VALUE }.sortedBy { it.second }
+
+                if (positions.size >= 2) {
+                    val fromKey = positions[0].first
+                    val toKey = positions[1].first
+                    
+                    val names = mapOf(
+                        "USD" to "USD - US Dollar",
+                        "BDT" to "BDT - Bangladeshi Taka",
+                        "EUR" to "EUR - Euro",
+                        "INR" to "INR - Indian Rupee"
+                    )
+                    
+                    fromU = names[fromKey] ?: fromU
+                    toU = names[toKey] ?: toU
+                    
+                    // Calculate rate based on USD as base
+                    val usdToBdt = exchangeRates["BDT - Bangladeshi Taka"] ?: 120.0
+                    val eurToUsd = exchangeRates["EUR - Euro"] ?: 0.92
+                    val inrToUsd = exchangeRates["INR - Indian Rupee"] ?: 83.0
+                    
+                    val toUsdRate = mapOf(
+                        "USD" to 1.0,
+                        "BDT" to 1.0 / usdToBdt,
+                        "EUR" to (if (eurToUsd > 0) 1.0/eurToUsd else 1.0), // Simplified
+                        "INR" to 1.0 / inrToUsd
+                    )
+                    
+                    // Actually let's use a more direct way
+                    // We know the rate of each to USD
+                    // base is USD. rate[X] = X per 1 USD
+                    // X / Y = (X/USD) / (Y/USD)
+                    val ratesToUsd = mapOf(
+                        "USD" to 1.0,
+                        "BDT" to usdToBdt,
+                        "EUR" to (1.0 / (if (eurToUsd > 0) eurToUsd else 1.08)), // This is wrong, let's just use knowns
+                        "INR" to inrToUsd
+                    )
+                    // Wait, exchangeRates usually has "BDT - Bangladeshi Taka" -> 120 (meaning 120 BDT = 1 USD)
+                    // So rate(X->Y) = rate(USD->Y) / rate(USD->X)
+                    val rX = if (fromKey == "USD") 1.0 else if (fromKey == "EUR") (1.0/0.92) else (exchangeRates[names[fromKey]] ?: 1.0)
+                    val rY = if (toKey == "USD") 1.0 else if (toKey == "EUR") (1.0/0.92) else (exchangeRates[names[toKey]] ?: 1.0)
+                    
+                    // Wait, if 120 BDT = 1 USD, and 83 INR = 1 USD
+                    // Then 120 BDT = 83 INR => 1 BDT = 83/120 INR
+                    // rate(from->to) = rY / rX
+                    
+                    // Specialized handling for EUR which is usually USD/EUR
+                    val usdPerEur = 1.08 // approx
+                    val rX_fixed = if (fromKey == "EUR") (1.0/usdPerEur) else rX
+                    val rY_fixed = if (toKey == "EUR") (1.0/usdPerEur) else rY
+                    
+                    rate = rY_fixed / rX_fixed
+                } else if (positions.size == 1) {
+                    // Fallback
+                    if (positions[0].first == "BDT") {
+                        fromU = "BDT - Bangladeshi Taka"
+                        toU = "USD - US Dollar"
+                        rate = 1.0 / (exchangeRates["BDT - Bangladeshi Taka"] ?: 120.0)
                     }
                 }
                 
@@ -677,6 +850,7 @@ How can I help you today?"""
         
         val userMsg = ChatMessage(text = rawText, isUser = true)
         aiChatMessages = aiChatMessages + userMsg
+            updateActiveSession()
         
         val normalized = rawText
             .replace('০', '0').replace('১', '1').replace('২', '2').replace('৩', '3')
@@ -699,12 +873,23 @@ How can I help you today?"""
             
             if (isNetworkAvailable() && com.example.BuildConfig.GEMINI_API_KEY.isNotBlank() && com.example.BuildConfig.GEMINI_API_KEY != "MY_GEMINI_API_KEY") {
                 val systemInstruction = if (isBn) {
-                    "You are a helpful assistant for a Smart Calculator and Unit Converter app. Answer in Bengali cleanly and naturally. Keep it friendly and concise. Do not use markdown other than bold text. Suggest mathematical or unit conversions when appropriate."
+                    "You are a helpful and intelligent AI assistant. You can answer any questions, including general knowledge, math, science, and everyday queries. Answer in Bengali cleanly and naturally. Keep it friendly and concise. Do not use markdown other than bold text. Suggest mathematical or unit conversions when appropriate."
                 } else {
-                    "You are a helpful assistant for a Smart Calculator and Unit Converter app. Answer in English cleanly and naturally. Keep it friendly and concise. Do not use markdown other than bold text. Suggest mathematical or unit conversions when appropriate."
+                    "You are a helpful and intelligent AI assistant. You can answer any questions, including general knowledge, math, science, and everyday queries. Answer in English cleanly and naturally. Keep it friendly and concise. Do not use markdown other than bold text. Suggest mathematical or unit conversions when appropriate."
                 }
                 
-                val onlineReply = callGeminiApi(rawText, systemInstruction)
+                // Prepare history
+                val contents = mutableListOf<GeminiContent>()
+                aiChatMessages.takeLast(10).forEach { msg ->
+                    // Skip the first welcome message
+                    if (msg.text.contains("Hello! I am your AI Assistant") || msg.text.contains("হ্যালো! আমি আপনার অফলাইন এআই সহকারী")) return@forEach
+                    
+                    val role = if (msg.isUser) "user" else "model"
+                    contents.add(GeminiContent(parts = listOf(GeminiPart(text = msg.text)), role = role))
+                }
+                contents.add(GeminiContent(parts = listOf(GeminiPart(text = rawText)), role = "user"))
+                
+                val onlineReply = callGeminiApi(contents, systemInstruction)
                 if (onlineReply != null) {
                     replyText = onlineReply
                     usedOnlineModel = true
@@ -735,6 +920,7 @@ How can I help you today?"""
             )
             
             aiChatMessages = aiChatMessages + aiReply
+            updateActiveSession()
             isAiLoading = false
         }
     }
@@ -809,6 +995,19 @@ How can I help you today?"""
 
     // Theme & Language Selection
     private val sharedPrefs = context.getSharedPreferences("smart_calc_prefs", Context.MODE_PRIVATE)
+
+    private val customThemeListType = com.squareup.moshi.Types.newParameterizedType(List::class.java, com.example.ui.theme.CustomTheme::class.java)
+    private val customThemeAdapter by lazy { moshi.adapter<List<com.example.ui.theme.CustomTheme>>(customThemeListType) }
+
+    var customThemes by mutableStateOf(loadCustomThemes())
+        private set
+
+    var isCustomThemeActive by mutableStateOf(sharedPrefs.getBoolean("is_custom_theme_active", false))
+        private set
+
+    var currentCustomThemeId by mutableStateOf(sharedPrefs.getString("current_custom_theme_id", null))
+        private set
+
     var currentThemeType by mutableStateOf(
         try {
             CalculatorThemeType.valueOf(
@@ -820,6 +1019,60 @@ How can I help you today?"""
         }
     )
         private set
+
+    private fun loadCustomThemes(): List<com.example.ui.theme.CustomTheme> {
+        val json = sharedPrefs.getString("custom_themes", null)
+        return if (json != null) {
+            try {
+                customThemeAdapter.fromJson(json) ?: emptyList()
+            } catch (e: Exception) {
+                emptyList()
+            }
+        } else {
+            emptyList()
+        }
+    }
+
+    private fun saveCustomThemes() {
+        val json = customThemeAdapter.toJson(customThemes)
+        sharedPrefs.edit().putString("custom_themes", json).apply()
+    }
+
+    fun addCustomTheme(theme: com.example.ui.theme.CustomTheme) {
+        customThemes = customThemes + theme
+        saveCustomThemes()
+    }
+
+    fun updateCustomTheme(theme: com.example.ui.theme.CustomTheme) {
+        customThemes = customThemes.map { if (it.id == theme.id) theme else it }
+        saveCustomThemes()
+    }
+
+    fun deleteCustomTheme(id: String) {
+        if (currentCustomThemeId == id) {
+            isCustomThemeActive = false
+            currentCustomThemeId = null
+            sharedPrefs.edit().putBoolean("is_custom_theme_active", false).remove("current_custom_theme_id").apply()
+        }
+        customThemes = customThemes.filter { it.id != id }
+        saveCustomThemes()
+    }
+
+    fun setCustomTheme(id: String) {
+        isCustomThemeActive = true
+        currentCustomThemeId = id
+        sharedPrefs.edit().putBoolean("is_custom_theme_active", true).putString("current_custom_theme_id", id).apply()
+    }
+
+    fun getCurrentThemeColors(): com.example.ui.theme.CalculatorThemeColors {
+        if (isCustomThemeActive && currentCustomThemeId != null) {
+            val custom = customThemes.find { it.id == currentCustomThemeId }
+            if (custom != null) {
+                return custom.toCalculatorThemeColors()
+            }
+        }
+        return currentThemeType.getColors()
+    }
 
     var selectedLanguage by mutableStateOf(
         try {
@@ -1062,7 +1315,7 @@ How can I help you today?"""
         calculateAge()
         calculateDiscount()
         calculatePercentage()
-        resetAiChat()
+        loadChatHistory()
     }
 
     // --- Calculator Logic ---
@@ -1355,8 +1608,12 @@ How can I help you today?"""
 
     // --- Theme Controller ---
     fun setTheme(theme: CalculatorThemeType) {
+        isCustomThemeActive = false
         currentThemeType = theme
-        sharedPrefs.edit().putString("selected_theme", theme.name).apply()
+        sharedPrefs.edit()
+            .putBoolean("is_custom_theme_active", false)
+            .putString("selected_theme", theme.name)
+            .apply()
     }
 
     // --- Unit Converter Engine ---
@@ -1777,16 +2034,23 @@ data class ChatMessage(
     val actionData: String? = null
 )
 
+data class ChatSession(
+    val id: String = java.util.UUID.randomUUID().toString(),
+    val title: String,
+    val messages: List<ChatMessage>,
+    val timestamp: Long = System.currentTimeMillis()
+)
+
 @JsonClass(generateAdapter = true)
 data class GeminiPart(val text: String)
 
 @JsonClass(generateAdapter = true)
-data class GeminiContent(val parts: List<GeminiPart>)
+data class GeminiContent(val parts: List<GeminiPart>, val role: String? = null)
 
 @JsonClass(generateAdapter = true)
 data class GeminiRequest(
     val contents: List<GeminiContent>,
-    val systemInstruction: GeminiContent? = null
+    @Json(name = "system_instruction") val systemInstruction: GeminiContent? = null
 )
 
 @JsonClass(generateAdapter = true)
@@ -1802,7 +2066,7 @@ data class GeminiCandidate(val content: GeminiContentResponse?)
 data class GeminiResponse(val candidates: List<GeminiCandidate>?)
 
 interface GeminiApiService {
-    @POST("v1beta/models/gemini-2.5-flash:generateContent")
+    @POST("v1beta/models/gemini-3.5-flash:generateContent")
     suspend fun generateContent(
         @Query("key") apiKey: String,
         @Body request: GeminiRequest

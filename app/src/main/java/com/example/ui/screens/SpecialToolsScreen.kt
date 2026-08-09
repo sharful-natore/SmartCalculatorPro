@@ -83,7 +83,7 @@ fun ToolsCategoriesView(
         modifier = Modifier
             .fillMaxSize()
             .background(themeColors.background)
-            .padding(16.dp)
+            .padding(horizontal = 16.dp, vertical = 2.dp)
             .verticalScroll(scrollState)
     ) {
         // Search Bar
@@ -363,7 +363,7 @@ fun ToolDetailView(
         modifier = Modifier
             .fillMaxSize()
             .background(themeColors.background)
-            .padding(16.dp)
+            .padding(horizontal = 16.dp, vertical = 2.dp)
             .verticalScroll(scrollState)
     ) {
         // Back Header

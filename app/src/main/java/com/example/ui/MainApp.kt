@@ -37,6 +37,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -51,6 +54,14 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
+import kotlinx.coroutines.delay
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.Date
 import com.example.ui.screens.*
 import com.example.ui.theme.CalculatorThemeColors
 import com.example.ui.viewmodel.CalculatorViewModel
@@ -59,10 +70,32 @@ import com.example.util.LanguageManager
 
 @Composable
 fun MainApp(viewModel: CalculatorViewModel) {
-    val themeColors = viewModel.currentThemeType.getColors()
+    val themeColors = viewModel.getCurrentThemeColors()
     val focusManager = LocalFocusManager.current
     val context = LocalContext.current
 
+    var isSplashVisible by remember { mutableStateOf(true) }
+
+    LaunchedEffect(Unit) {
+        delay(1500)
+        isSplashVisible = false
+    }
+
+    if (isSplashVisible) {
+        SplashScreen(themeColors)
+    } else {
+        MainContent(viewModel, themeColors, focusManager, context)
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun MainContent(
+    viewModel: CalculatorViewModel,
+    themeColors: com.example.ui.theme.CalculatorThemeColors,
+    focusManager: androidx.compose.ui.focus.FocusManager,
+    context: android.content.Context
+) {
     // Update system bars color based on theme
     SideEffect {
         val window = (context as? Activity)?.window
@@ -203,32 +236,44 @@ fun MainApp(viewModel: CalculatorViewModel) {
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    AnimatedContent(
-                        targetState = viewModel.activeTab,
-                        transitionSpec = {
-                            if (targetState > initialState) {
-                                (slideInVertically { height -> height } + fadeIn(animationSpec = tween(220))) togetherWith
-                                        (slideOutVertically { height -> -height } + fadeOut(animationSpec = tween(180)))
-                            } else {
-                                (slideInVertically { height -> -height } + fadeIn(animationSpec = tween(220))) togetherWith
-                                        (slideOutVertically { height -> height } + fadeOut(animationSpec = tween(180)))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (viewModel.activeTab == 4) {
+                            IconButton(onClick = { viewModel.activeTab = 0 }) {
+                                Icon(
+                                    imageVector = Icons.Default.ArrowBack,
+                                    contentDescription = "Back",
+                                    tint = Color.White
+                                )
                             }
-                        },
-                        label = "TabTitleAnimation"
-                    ) { activeTab ->
-                        Text(
-                            text = when (activeTab) {
-                                0 -> LanguageManager.getString("app_title_calc", viewModel.selectedLanguage)
-                                1 -> LanguageManager.getString("app_title_conv", viewModel.selectedLanguage)
-                                2 -> LanguageManager.getString("app_title_tools", viewModel.selectedLanguage)
-                                3 -> LanguageManager.getString("app_title_history", viewModel.selectedLanguage)
-                                4 -> LanguageManager.getString("app_title_themes", viewModel.selectedLanguage)
-                                else -> LanguageManager.getString("app_title_calc", viewModel.selectedLanguage)
+                        }
+                        
+                        AnimatedContent(
+                            targetState = viewModel.activeTab,
+                            transitionSpec = {
+                                if (targetState > initialState) {
+                                    (slideInVertically { height -> height } + fadeIn(animationSpec = tween(220))) togetherWith
+                                            (slideOutVertically { height -> -height } + fadeOut(animationSpec = tween(180)))
+                                } else {
+                                    (slideInVertically { height -> -height } + fadeIn(animationSpec = tween(220))) togetherWith
+                                            (slideOutVertically { height -> height } + fadeOut(animationSpec = tween(180)))
+                                }
                             },
-                            color = Color.White,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                            label = "TabTitleAnimation"
+                        ) { activeTab ->
+                            Text(
+                                text = when (activeTab) {
+                                    0 -> LanguageManager.getString("app_title_calc", viewModel.selectedLanguage)
+                                    1 -> LanguageManager.getString("app_title_conv", viewModel.selectedLanguage)
+                                    2 -> LanguageManager.getString("app_title_tools", viewModel.selectedLanguage)
+                                    3 -> LanguageManager.getString("app_title_history", viewModel.selectedLanguage)
+                                    4 -> LanguageManager.getString("app_title_themes", viewModel.selectedLanguage)
+                                    else -> LanguageManager.getString("app_title_calc", viewModel.selectedLanguage)
+                                },
+                                color = Color.White,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         // Language Switcher Dropdown Button
@@ -338,7 +383,7 @@ fun MainApp(viewModel: CalculatorViewModel) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(themeColors.buttonEqualBg)
+                    .background(themeColors.navBarBg)
                     .navigationBarsPadding(),
                 contentAlignment = Alignment.Center
             ) {
@@ -428,16 +473,13 @@ fun MainApp(viewModel: CalculatorViewModel) {
                 // Floating Action Button in the center
                 Box(
                     modifier = Modifier
-                        .offset(y = (-4).dp)
-                        .size(72.dp)
-                        .shadow(elevation = 8.dp, shape = CircleShape)
-                        .clip(CircleShape)
+                        .offset(y = (-8).dp)
+                        .size(57.dp)
+                        .shadow(elevation = 8.dp, shape = androidx.compose.foundation.shape.CircleShape)
+                        .background(themeColors.navBarBg, androidx.compose.foundation.shape.CircleShape)
+                        .padding(2.5.dp)
+                        .clip(androidx.compose.foundation.shape.CircleShape)
                         .background(themeColors.cardBg)
-                        .border(
-                            width = 3.dp,
-                            color = themeColors.buttonEqualBg,
-                            shape = CircleShape
-                        )
                         .clickable {
                             viewModel.showAiChat = true
                         },
@@ -446,8 +488,8 @@ fun MainApp(viewModel: CalculatorViewModel) {
                     Icon(
                         imageVector = Icons.Default.AutoAwesome,
                         contentDescription = "AI Assistant",
-                        tint = themeColors.buttonEqualBg,
-                        modifier = Modifier.size(36.dp)
+                        tint = themeColors.navBarBg,
+                        modifier = Modifier.size(28.dp)
                     )
                 }
             }
@@ -469,7 +511,7 @@ fun MainApp(viewModel: CalculatorViewModel) {
                     state = pagerState,
                     modifier = Modifier.fillMaxSize(),
                     beyondViewportPageCount = 3,
-                    userScrollEnabled = true
+                    userScrollEnabled = !viewModel.isDisplayInteractionActive
                 ) { page ->
                     Box(modifier = Modifier.fillMaxSize()) {
                         when (page) {
@@ -764,11 +806,10 @@ fun MainApp(viewModel: CalculatorViewModel) {
                                 .background(themeColors.buttonEqualBg, shape = RoundedCornerShape(18.dp)),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Calculate,
+                            androidx.compose.foundation.Image(
+                                painter = androidx.compose.ui.res.painterResource(id = com.example.R.drawable.app_logo),
                                 contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(44.dp)
+                                modifier = Modifier.size(56.dp)
                             )
                         }
                         Spacer(modifier = Modifier.height(12.dp))
@@ -878,6 +919,7 @@ fun AiChatDialog(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .background(themeColors.titleBarBg)
                         .padding(horizontal = 8.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -885,33 +927,60 @@ fun AiChatDialog(
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = "Back",
-                            tint = themeColors.displayText
+                            tint = Color.White
                         )
                     }
                     
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
                     
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = if (viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI) "এআই এ্যাসিস্ট্যান্ট" else "AI Assistant",
                             fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp,
-                            color = themeColors.displayText
+                            fontSize = 17.sp,
+                            color = Color.White
                         )
-                        Text(
-                            text = if (viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI) "অনলাইন এবং অফলাইন" else "Online & Offline Supported",
-                            fontSize = 11.sp,
-                            color = themeColors.displayText.copy(alpha = 0.5f)
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            val isOnline = viewModel.isNetworkAvailable() && com.example.BuildConfig.GEMINI_API_KEY.isNotBlank() && com.example.BuildConfig.GEMINI_API_KEY != "MY_GEMINI_API_KEY"
+                            Box(
+                                modifier = Modifier
+                                    .size(7.dp)
+                                    .clip(androidx.compose.foundation.shape.CircleShape)
+                                    .background(if (isOnline) Color(0xFF4CAF50) else Color(0xFFFFC107))
+                                    .border(1.dp, Color.White, androidx.compose.foundation.shape.CircleShape)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = if (isOnline) {
+                                    if (viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI) "অনলাইন মডেল" else "Online Model"
+                                } else {
+                                    if (viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI) "অফলাইন মডেল" else "Offline Model"
+                                },
+                                fontSize = 10.sp,
+                                color = Color.White.copy(alpha = 0.9f)
+                            )
+                        }
                     }
                     
+                    // New Chat Button
                     IconButton(
                         onClick = { viewModel.resetAiChat() }
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = "Reset Chat",
-                            tint = themeColors.displayText
+                            imageVector = Icons.Default.AddComment,
+                            contentDescription = "New Chat",
+                            tint = Color.White
+                        )
+                    }
+
+                    // History Button
+                    IconButton(
+                        onClick = { viewModel.showChatHistory = true }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.History,
+                            contentDescription = "Chat History",
+                            tint = Color.White
                         )
                     }
                 }
@@ -921,7 +990,7 @@ fun AiChatDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(1.dp)
-                        .background(themeColors.displayText.copy(alpha = 0.08f))
+                        .background(Color.Transparent)
                 )
                 
                 // Chat list
@@ -950,7 +1019,7 @@ fun AiChatDialog(
                                         )
                                     )
                                     .background(
-                                        if (msg.isUser) themeColors.buttonEqualBg else themeColors.cardBg
+                                        if (msg.isUser) themeColors.buttonEqualBg.copy(alpha = 0.2f) else themeColors.cardBg
                                     )
                                     .padding(horizontal = 14.dp, vertical = 10.dp)
                                     .widthIn(max = 280.dp)
@@ -958,7 +1027,7 @@ fun AiChatDialog(
                                 Column {
                                     Text(
                                         text = msg.text,
-                                        color = if (msg.isUser) Color.White else themeColors.displayText,
+                                        color = themeColors.displayText,
                                         fontSize = 14.sp,
                                         lineHeight = 20.sp
                                     )
@@ -969,7 +1038,7 @@ fun AiChatDialog(
                                                 viewModel.performAiChatAction(msg.actionType, msg.actionData)
                                             },
                                             colors = ButtonDefaults.buttonColors(
-                                                containerColor = if (msg.isUser) Color.White.copy(alpha = 0.25f) else themeColors.buttonEqualBg
+                                                containerColor = if (msg.isUser) themeColors.buttonEqualBg.copy(alpha = 0.3f) else themeColors.buttonFunctionBg
                                             ),
                                             shape = RoundedCornerShape(10.dp),
                                             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
@@ -979,7 +1048,7 @@ fun AiChatDialog(
                                         ) {
                                             Text(
                                                 text = msg.actionLabel ?: "Execute",
-                                                color = Color.White,
+                                                color = if (msg.isUser) themeColors.displayText else themeColors.buttonFunctionText,
                                                 fontSize = 11.sp,
                                                 fontWeight = FontWeight.Bold
                                             )
@@ -987,7 +1056,7 @@ fun AiChatDialog(
                                             Icon(
                                                 imageVector = Icons.Default.ArrowForward,
                                                 contentDescription = null,
-                                                tint = Color.White,
+                                                tint = if (msg.isUser) themeColors.displayText else themeColors.buttonFunctionText,
                                                 modifier = Modifier.size(12.dp)
                                             )
                                         }
@@ -999,9 +1068,19 @@ fun AiChatDialog(
                             Text(
                                 text = java.text.SimpleDateFormat("hh:mm a", java.util.Locale.getDefault()).format(java.util.Date(msg.timestamp)),
                                 fontSize = 9.sp,
-                                color = themeColors.displayText.copy(alpha = 0.4f),
+                                color = themeColors.displayExpressionText,
                                 modifier = Modifier.padding(top = 3.dp, start = 4.dp, end = 4.dp)
                             )
+                        }
+                    }
+                    if (viewModel.isAiLoading) {
+                        item {
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalAlignment = Alignment.Start
+                            ) {
+                                AiTypingIndicator()
+                            }
                         }
                     }
                 }
@@ -1027,7 +1106,7 @@ fun AiChatDialog(
                                 .background(themeColors.cardBg)
                                 .border(
                                     width = 1.dp,
-                                    color = themeColors.displayText.copy(alpha = 0.1f),
+                                    color = themeColors.buttonNormalBg,
                                     shape = RoundedCornerShape(16.dp)
                                 )
                                 .clickable {
@@ -1037,7 +1116,7 @@ fun AiChatDialog(
                         ) {
                             Text(
                                 text = sugg,
-                                color = themeColors.displayText.copy(alpha = 0.8f),
+                                color = themeColors.displayText,
                                 fontSize = 11.sp
                             )
                         }
@@ -1048,6 +1127,7 @@ fun AiChatDialog(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .background(themeColors.background)
                         .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -1057,7 +1137,7 @@ fun AiChatDialog(
                         placeholder = {
                             Text(
                                 text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "এখানে লিখুন..." else "Type a message...",
-                                color = themeColors.displayText.copy(alpha = 0.4f),
+                                color = themeColors.displayExpressionText,
                                 fontSize = 14.sp
                             )
                         },
@@ -1068,9 +1148,9 @@ fun AiChatDialog(
                             focusedTextColor = themeColors.displayText,
                             unfocusedTextColor = themeColors.displayText,
                             focusedBorderColor = themeColors.buttonEqualBg,
-                            unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.12f),
-                            focusedContainerColor = themeColors.cardBg.copy(alpha = 0.3f),
-                            unfocusedContainerColor = themeColors.cardBg.copy(alpha = 0.3f)
+                            unfocusedBorderColor = themeColors.displayExpressionText,
+                            focusedContainerColor = themeColors.cardBg,
+                            unfocusedContainerColor = themeColors.cardBg
                         ),
                         shape = RoundedCornerShape(24.dp),
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
@@ -1085,12 +1165,11 @@ fun AiChatDialog(
                     )
                     
                     Spacer(modifier = Modifier.width(8.dp))
-                    
                     Box(
                         modifier = Modifier
                             .size(46.dp)
-                            .clip(CircleShape)
-                            .background(themeColors.buttonEqualBg)
+                            .clip(androidx.compose.foundation.shape.CircleShape)
+                            .background(if (textInput.isNotBlank()) Color(0xFF00BCD4) else Color(0xFF00BCD4).copy(alpha = 0.8f))
                             .clickable {
                                 if (textInput.isNotBlank()) {
                                     viewModel.sendMessageToAi(textInput)
@@ -1119,4 +1198,288 @@ fun AiChatDialog(
                 }
             }
         }
+
+        if (viewModel.showClearChatDialog) {
+            AlertDialog(
+                onDismissRequest = { viewModel.showClearChatDialog = false },
+                title = {
+                    Text(text = if (viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI) "চ্যাট ক্লিয়ার করুন" else "Clear Chat")
+                },
+                text = {
+                    Text(text = if (viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI) "আপনি কি নিশ্চিত যে আপনি সমস্ত চ্যাট হিস্টোরি ক্লিয়ার করতে চান?" else "Are you sure you want to clear all chat history?")
+                },
+                confirmButton = {
+                    TextButton(onClick = { viewModel.resetAiChat() }) {
+                        Text(text = if (viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI) "হ্যাঁ" else "Yes")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { viewModel.showClearChatDialog = false }) {
+                        Text(text = if (viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI) "না" else "No")
+                    }
+                }
+            )
+        }
+        ChatHistoryDialog(viewModel, themeColors)
     }
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun ChatHistoryDialog(viewModel: com.example.ui.viewmodel.CalculatorViewModel, themeColors: com.example.ui.theme.CalculatorThemeColors) {
+    if (viewModel.showChatHistory) {
+        val isBn = viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI
+        AlertDialog(
+            onDismissRequest = { viewModel.showChatHistory = false },
+            title = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = if (viewModel.isChatSelectionMode) {
+                            if (isBn) "${viewModel.selectedChatSessionIds.size} টি সিলেক্টেড" else "${viewModel.selectedChatSessionIds.size} Selected"
+                        } else {
+                            if (isBn) "চ্যাট হিস্টোরি" else "Chat History"
+                        },
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        color = themeColors.displayText
+                    )
+                    if (viewModel.isChatSelectionMode) {
+                        IconButton(onClick = { viewModel.showDeleteSelectedChatSessionsDialog = true }) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Delete Selected",
+                                tint = Color.Red
+                            )
+                        }
+                    }
+                }
+            },
+            text = {
+                if (viewModel.chatSessions.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 40.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (isBn) "কোনো চ্যাট হিস্টোরি পাওয়া যায়নি।" else "No chat history found.",
+                            color = Color.Gray,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 400.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                        contentPadding = PaddingValues(vertical = 8.dp)
+                    ) {
+                        items(viewModel.chatSessions) { session ->
+                            val isSelected = viewModel.selectedChatSessionIds.contains(session.id)
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .combinedClickable(
+                                        onClick = {
+                                            if (viewModel.isChatSelectionMode) {
+                                                viewModel.toggleChatSelection(session.id)
+                                            } else {
+                                                viewModel.loadChatSession(session)
+                                            }
+                                        },
+                                        onLongClick = {
+                                            if (!viewModel.isChatSelectionMode) {
+                                                viewModel.isChatSelectionMode = true
+                                                viewModel.toggleChatSelection(session.id)
+                                            }
+                                        }
+                                    ),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (isSelected) themeColors.buttonEqualBg.copy(alpha = 0.15f) else themeColors.cardBg
+                                ),
+                                border = if (isSelected) BorderStroke(1.dp, themeColors.buttonEqualBg) else null,
+                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(14.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    if (viewModel.isChatSelectionMode) {
+                                        Checkbox(
+                                            checked = isSelected,
+                                            onCheckedChange = { viewModel.toggleChatSelection(session.id) },
+                                            colors = CheckboxDefaults.colors(
+                                                checkedColor = themeColors.buttonEqualBg
+                                            ),
+                                            modifier = Modifier.padding(end = 8.dp)
+                                        )
+                                    }
+                                    
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = session.title,
+                                            fontWeight = FontWeight.Bold,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                            fontSize = 15.sp,
+                                            color = themeColors.displayText
+                                        )
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(
+                                            text = SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault()).format(Date(session.timestamp)),
+                                            fontSize = 11.sp,
+                                            color = themeColors.displayExpressionText
+                                        )
+                                    }
+                                    
+                                    if (!viewModel.isChatSelectionMode) {
+                                        IconButton(
+                                            onClick = { 
+                                                viewModel.sessionToDelete = session
+                                                viewModel.showDeleteChatSessionDialog = true
+                                            },
+                                            modifier = Modifier.size(36.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.DeleteOutline,
+                                                contentDescription = "Delete",
+                                                tint = Color.Red.copy(alpha = 0.7f),
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { 
+                    viewModel.showChatHistory = false 
+                    viewModel.isChatSelectionMode = false
+                    viewModel.selectedChatSessionIds = emptySet()
+                }) {
+                    Text(
+                        text = if (isBn) "বন্ধ করুন" else "Close",
+                        color = themeColors.buttonEqualBg,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            },
+            shape = RoundedCornerShape(24.dp),
+            containerColor = themeColors.background
+        )
+
+        // Confirmation Dialogs
+        if (viewModel.showDeleteChatSessionDialog && viewModel.sessionToDelete != null) {
+            AlertDialog(
+                onDismissRequest = { viewModel.showDeleteChatSessionDialog = false },
+                title = { Text(if (isBn) "চ্যাট ডিলিট করবেন?" else "Delete Chat?", color = themeColors.displayText) },
+                text = { Text(if (isBn) "আপনি কি নিশ্চিত যে আপনি এই চ্যাটটি ডিলিট করতে চান?" else "Are you sure you want to delete this chat?", color = themeColors.displayText) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        viewModel.deleteChatSession(viewModel.sessionToDelete!!)
+                        viewModel.showDeleteChatSessionDialog = false
+                        viewModel.sessionToDelete = null
+                    }) {
+                        Text(if (isBn) "হ্যাঁ" else "Yes", color = Color.Red)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { viewModel.showDeleteChatSessionDialog = false }) {
+                        Text(if (isBn) "না" else "No", color = themeColors.buttonEqualBg)
+                    }
+                },
+                shape = RoundedCornerShape(24.dp),
+                containerColor = themeColors.background
+            )
+        }
+
+        if (viewModel.showDeleteSelectedChatSessionsDialog) {
+            AlertDialog(
+                onDismissRequest = { viewModel.showDeleteSelectedChatSessionsDialog = false },
+                title = { Text(if (isBn) "সিলেক্টেড চ্যাট ডিলিট করবেন?" else "Delete Selected?", color = themeColors.displayText) },
+                text = { Text(if (isBn) "আপনি কি নিশ্চিত যে আপনি সিলেক্টেড চ্যাটগুলো ডিলিট করতে চান?" else "Are you sure you want to delete selected chats?", color = themeColors.displayText) },
+                confirmButton = {
+                    TextButton(onClick = { viewModel.deleteSelectedChatSessions() }) {
+                        Text(if (isBn) "হ্যাঁ" else "Yes", color = Color.Red)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { viewModel.showDeleteSelectedChatSessionsDialog = false }) {
+                        Text(if (isBn) "না" else "No", color = themeColors.buttonEqualBg)
+                    }
+                },
+                shape = RoundedCornerShape(24.dp),
+                containerColor = themeColors.background
+            )
+        }
+    }
+}
+
+@Composable
+fun AiTypingIndicator() {
+    val infiniteTransition = rememberInfiniteTransition()
+    val alpha1 by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = keyframes { durationMillis = 1000; 0.5f at 500 },
+            repeatMode = RepeatMode.Restart
+        )
+    )
+    val alpha2 by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = keyframes { durationMillis = 1000; 0f at 200; 0.5f at 700 },
+            repeatMode = RepeatMode.Restart
+        )
+    )
+    val alpha3 by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = keyframes { durationMillis = 1000; 0f at 400; 0.5f at 900 },
+            repeatMode = RepeatMode.Restart
+        )
+    )
+
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(16.dp, 16.dp, 16.dp, 4.dp))
+            .background(Color.White)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(modifier = Modifier.size(6.dp).clip(androidx.compose.foundation.shape.CircleShape).background(Color(0xFF0D47A1).copy(alpha = alpha1)))
+        Box(modifier = Modifier.size(6.dp).clip(androidx.compose.foundation.shape.CircleShape).background(Color(0xFF0D47A1).copy(alpha = alpha2)))
+        Box(modifier = Modifier.size(6.dp).clip(androidx.compose.foundation.shape.CircleShape).background(Color(0xFF0D47A1).copy(alpha = alpha3)))
+    }
+}
+
+@Composable
+fun SplashScreen(themeColors: com.example.ui.theme.CalculatorThemeColors) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(themeColors.background),
+        contentAlignment = Alignment.Center
+    ) {
+        androidx.compose.foundation.Image(
+            painter = androidx.compose.ui.res.painterResource(id = com.example.R.drawable.app_logo),
+            contentDescription = "Logo",
+            modifier = Modifier.size(160.dp)
+        )
+    }
+}

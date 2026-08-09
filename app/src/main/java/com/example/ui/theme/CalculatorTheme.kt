@@ -1,6 +1,8 @@
 package com.example.ui.theme
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import com.squareup.moshi.JsonClass
 
 data class CalculatorThemeColors(
     val background: Color,
@@ -17,10 +19,66 @@ data class CalculatorThemeColors(
     val buttonEqualText: Color,
     val cardBg: Color,
     val unselectedItemText: Color,
+    val navBarBg: Color,
+    val titleBarBg: Color,
+    val chipBg: Color,
     val isDark: Boolean,
     val themeName: String,
     val themeNameBn: String
 )
+
+@com.squareup.moshi.JsonClass(generateAdapter = true)
+data class CustomTheme(
+    val id: String = java.util.UUID.randomUUID().toString(),
+    val name: String,
+    val background: String,
+    val displayBackground: String,
+    val displayText: String,
+    val displayExpressionText: String,
+    val buttonNormalBg: String,
+    val buttonNormalText: String,
+    val buttonOperatorBg: String,
+    val buttonOperatorText: String,
+    val buttonFunctionBg: String,
+    val buttonFunctionText: String,
+    val buttonEqualBg: String,
+    val buttonEqualText: String,
+    val cardBg: String,
+    val unselectedItemText: String,
+    val navBarBg: String,
+    val titleBarBg: String,
+    val chipBg: String,
+    val isDark: Boolean
+) {
+    fun toCalculatorThemeColors(): CalculatorThemeColors {
+        return CalculatorThemeColors(
+            background = Color(android.graphics.Color.parseColor(background)),
+            displayBackground = Color(android.graphics.Color.parseColor(displayBackground)),
+            displayText = Color(android.graphics.Color.parseColor(displayText)),
+            displayExpressionText = Color(android.graphics.Color.parseColor(displayExpressionText)),
+            buttonNormalBg = Color(android.graphics.Color.parseColor(buttonNormalBg)),
+            buttonNormalText = Color(android.graphics.Color.parseColor(buttonNormalText)),
+            buttonOperatorBg = Color(android.graphics.Color.parseColor(buttonOperatorBg)),
+            buttonOperatorText = Color(android.graphics.Color.parseColor(buttonOperatorText)),
+            buttonFunctionBg = Color(android.graphics.Color.parseColor(buttonFunctionBg)),
+            buttonFunctionText = Color(android.graphics.Color.parseColor(buttonFunctionText)),
+            buttonEqualBg = Color(android.graphics.Color.parseColor(buttonEqualBg)),
+            buttonEqualText = Color(android.graphics.Color.parseColor(buttonEqualText)),
+            cardBg = Color(android.graphics.Color.parseColor(cardBg)),
+            unselectedItemText = Color(android.graphics.Color.parseColor(unselectedItemText)),
+            navBarBg = Color(android.graphics.Color.parseColor(navBarBg)),
+            titleBarBg = Color(android.graphics.Color.parseColor(titleBarBg)),
+            chipBg = Color(android.graphics.Color.parseColor(chipBg)),
+            isDark = isDark,
+            themeName = name,
+            themeNameBn = name
+        )
+    }
+}
+
+fun Color.toHexString(): String {
+    return String.format("#%08X", this.toArgb())
+}
 
 enum class CalculatorThemeType {
     INDIGO_ESSENCE,
@@ -54,6 +112,9 @@ enum class CalculatorThemeType {
                 buttonEqualText = Color(0xFFFFFFFF),
                 cardBg = Color(0xFFFFFFFF),
                 unselectedItemText = Color(0xFF64748B),
+                navBarBg = Color(0xFF6366F1),
+                titleBarBg = Color(0xFF6366F1),
+                chipBg = Color(0xFFE8DDFF),
                 isDark = false,
                 themeName = "Indigo Essence",
                 themeNameBn = "ইনডিগো এসেন্স"
@@ -73,6 +134,9 @@ enum class CalculatorThemeType {
                 buttonEqualText = Color(0xFFFFFFFF),
                 cardBg = Color(0xFF1E293B),
                 unselectedItemText = Color(0xFF94A3B8),
+                navBarBg = Color(0xFF0EA5E9),
+                titleBarBg = Color(0xFF0EA5E9),
+                chipBg = Color(0xFF334155),
                 isDark = true,
                 themeName = "Deep Ocean",
                 themeNameBn = "ডিপ ওশান"
@@ -92,6 +156,9 @@ enum class CalculatorThemeType {
                 buttonEqualText = Color(0xFFFFFFFF),
                 cardBg = Color(0xFFFFFFFF),
                 unselectedItemText = Color(0xFF636E72),
+                navBarBg = Color(0xFF4CAF50),
+                titleBarBg = Color(0xFF4CAF50),
+                chipBg = Color(0xFFE8F5E9),
                 isDark = false,
                 themeName = "Sage Garden",
                 themeNameBn = "সেজ গার্ডেন"
@@ -111,6 +178,9 @@ enum class CalculatorThemeType {
                 buttonEqualText = Color(0xFFFFFFFF),
                 cardBg = Color(0xFFFFFFFF),
                 unselectedItemText = Color(0xFF8D5D8D),
+                navBarBg = Color(0xFFE91E63),
+                titleBarBg = Color(0xFFE91E63),
+                chipBg = Color(0xFFFCE4EC),
                 isDark = false,
                 themeName = "Rose Petal",
                 themeNameBn = "রোজ পেটাল"
@@ -130,6 +200,9 @@ enum class CalculatorThemeType {
                 buttonEqualText = Color(0xFF000000),
                 cardBg = Color(0xFF1E1E1E),
                 unselectedItemText = Color(0xFF9E9E9E),
+                navBarBg = Color(0xFF1E1E1E),
+                titleBarBg = Color(0xFF1E1E1E),
+                chipBg = Color(0xFF2C2C2C),
                 isDark = true,
                 themeName = "Midnight Ash",
                 themeNameBn = "মিডনাইট অ্যাশ"
@@ -149,6 +222,9 @@ enum class CalculatorThemeType {
                 buttonEqualText = Color(0xFFFFFFFF),
                 cardBg = Color(0xFF334155),
                 unselectedItemText = Color(0xFF94A3B8),
+                navBarBg = Color(0xFF6366F1),
+                titleBarBg = Color(0xFF6366F1),
+                chipBg = Color(0xFF475569),
                 isDark = true,
                 themeName = "Slate Blue",
                 themeNameBn = "স্লিট ব্লু"
@@ -168,6 +244,9 @@ enum class CalculatorThemeType {
                 buttonEqualText = Color(0xFFFFFFFF),
                 cardBg = Color(0xFFFFFFFF),
                 unselectedItemText = Color(0xFF6366F1),
+                navBarBg = Color(0xFF818CF8),
+                titleBarBg = Color(0xFF818CF8),
+                chipBg = Color(0xFFE0E7FF),
                 isDark = false,
                 themeName = "Lavender Mist",
                 themeNameBn = "ল্যাভেন্ডার মিস্ট"
@@ -187,6 +266,9 @@ enum class CalculatorThemeType {
                 buttonEqualText = Color(0xFFFFFFFF),
                 cardBg = Color(0xFFFFFFFF),
                 unselectedItemText = Color(0xFF8D6E63),
+                navBarBg = Color(0xFF8D6E63),
+                titleBarBg = Color(0xFF8D6E63),
+                chipBg = Color(0xFFEFEBE9),
                 isDark = false,
                 themeName = "Coffee Cream",
                 themeNameBn = "কফি ক্রিম"
@@ -206,6 +288,9 @@ enum class CalculatorThemeType {
                 buttonEqualText = Color(0xFFFFFFFF),
                 cardBg = Color(0xFF1B331B),
                 unselectedItemText = Color(0xFF81C784),
+                navBarBg = Color(0xFF4CAF50),
+                titleBarBg = Color(0xFF4CAF50),
+                chipBg = Color(0xFF2E7D32),
                 isDark = true,
                 themeName = "Forest Night",
                 themeNameBn = "ফরেস্ট নাইট"
@@ -225,6 +310,9 @@ enum class CalculatorThemeType {
                 buttonEqualText = Color(0xFFFFFFFF),
                 cardBg = Color(0xFFFFFFFF),
                 unselectedItemText = Color(0xFF00ACC1),
+                navBarBg = Color(0xFF00BCD4),
+                titleBarBg = Color(0xFF00BCD4),
+                chipBg = Color(0xFFB2EBF2),
                 isDark = false,
                 themeName = "Sky Breeze",
                 themeNameBn = "স্কাই ব্রিজ"
@@ -244,6 +332,9 @@ enum class CalculatorThemeType {
                 buttonEqualText = Color(0xFF000000),
                 cardBg = Color(0xFFFFFFFF),
                 unselectedItemText = Color(0xFFFBC02D),
+                navBarBg = Color(0xFFFFD600),
+                titleBarBg = Color(0xFFFFD600),
+                chipBg = Color(0xFFFFF176),
                 isDark = false,
                 themeName = "Golden Sands",
                 themeNameBn = "গোল্ডেন স্যান্ডস"
@@ -263,6 +354,9 @@ enum class CalculatorThemeType {
                 buttonEqualText = Color(0xFFFFFFFF),
                 cardBg = Color(0xFFF5F5F5),
                 unselectedItemText = Color(0xFF757575),
+                navBarBg = Color(0xFF000000),
+                titleBarBg = Color(0xFF000000),
+                chipBg = Color(0xFFE0E0E0),
                 isDark = false,
                 themeName = "Pure Minimal",
                 themeNameBn = "পিওর মিনিমাল"
@@ -282,6 +376,9 @@ enum class CalculatorThemeType {
                 buttonEqualText = Color(0xFFFFFFFF),
                 cardBg = Color(0xFF121212),
                 unselectedItemText = Color(0xFFA1A1AA),
+                navBarBg = Color(0xFF0284C7),
+                titleBarBg = Color(0xFF0284C7),
+                chipBg = Color(0xFF27272A),
                 isDark = true,
                 themeName = "Pure Dark (AMOLED)",
                 themeNameBn = "পিওর ডার্ক (OLED)"

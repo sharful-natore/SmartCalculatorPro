@@ -17,6 +17,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.ContentPaste
@@ -108,7 +110,7 @@ fun BasicScientificScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(themeColors.background)
-            .padding(12.dp)
+            .padding(horizontal = 12.dp, vertical = 2.dp)
     ) {
         // 1. Calculator Display Screen
         Box(
@@ -139,6 +141,18 @@ fun BasicScientificScreen(
                     }
                 )
                 .padding((16f - (6f * expansionFraction)).dp)
+                .pointerInput(Unit) {
+                    awaitPointerEventScope {
+                        while (true) {
+                            val event = awaitPointerEvent(PointerEventPass.Initial)
+                            if (event.type == PointerEventType.Press) {
+                                viewModel.isDisplayInteractionActive = true
+                            } else if (event.type == PointerEventType.Release) {
+                                viewModel.isDisplayInteractionActive = false
+                            }
+                        }
+                    }
+                }
                 .pointerInput(Unit) {
                     detectHorizontalDragGestures { change, _ ->
                         change.consume()

@@ -40,7 +40,7 @@ fun HistoryScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(themeColors.background)
-            .padding(16.dp)
+            .padding(horizontal = 16.dp, vertical = 2.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
