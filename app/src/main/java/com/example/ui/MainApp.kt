@@ -177,20 +177,33 @@ fun MainApp(viewModel: CalculatorViewModel) {
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(
-                        text = when (viewModel.activeTab) {
-                            0 -> LanguageManager.getString("app_title_calc", viewModel.selectedLanguage)
-                            1 -> LanguageManager.getString("app_title_conv", viewModel.selectedLanguage)
-                            2 -> LanguageManager.getString("app_title_tools", viewModel.selectedLanguage)
-                            3 -> LanguageManager.getString("app_title_history", viewModel.selectedLanguage)
-                            4 -> LanguageManager.getString("app_title_themes", viewModel.selectedLanguage)
-                            else -> LanguageManager.getString("app_title_calc", viewModel.selectedLanguage)
+                    AnimatedContent(
+                        targetState = viewModel.activeTab,
+                        transitionSpec = {
+                            if (targetState > initialState) {
+                                (slideInVertically { height -> height } + fadeIn(animationSpec = tween(220))) togetherWith
+                                        (slideOutVertically { height -> -height } + fadeOut(animationSpec = tween(180)))
+                            } else {
+                                (slideInVertically { height -> -height } + fadeIn(animationSpec = tween(220))) togetherWith
+                                        (slideOutVertically { height -> height } + fadeOut(animationSpec = tween(180)))
+                            }
                         },
-                        color = Color.White,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.animateContentSize()
-                    )
+                        label = "TabTitleAnimation"
+                    ) { activeTab ->
+                        Text(
+                            text = when (activeTab) {
+                                0 -> LanguageManager.getString("app_title_calc", viewModel.selectedLanguage)
+                                1 -> LanguageManager.getString("app_title_conv", viewModel.selectedLanguage)
+                                2 -> LanguageManager.getString("app_title_tools", viewModel.selectedLanguage)
+                                3 -> LanguageManager.getString("app_title_history", viewModel.selectedLanguage)
+                                4 -> LanguageManager.getString("app_title_themes", viewModel.selectedLanguage)
+                                else -> LanguageManager.getString("app_title_calc", viewModel.selectedLanguage)
+                            },
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (viewModel.activeTab == 0) {
                             IconButton(onClick = { viewModel.isScientificExpanded = !viewModel.isScientificExpanded }) {
@@ -229,7 +242,7 @@ fun MainApp(viewModel: CalculatorViewModel) {
                                                 Spacer(modifier = Modifier.width(8.dp))
                                                 Text(
                                                     text = lang.displayName,
-                                                    color = if (viewModel.selectedLanguage == lang) Color(0xFF6366F1) else themeColors.displayText,
+                                                    color = if (viewModel.selectedLanguage == lang) themeColors.buttonEqualBg else themeColors.displayText,
                                                     fontWeight = if (viewModel.selectedLanguage == lang) FontWeight.Bold else FontWeight.Normal,
                                                     fontSize = 14.sp
                                                 )
@@ -288,7 +301,14 @@ fun MainApp(viewModel: CalculatorViewModel) {
                                     modifier = Modifier.size(24.dp)
                                 ) 
                             },
-                            label = null,
+                            label = {
+                                Text(
+                                    text = label,
+                                    fontSize = 11.sp,
+                                    fontWeight = if (viewModel.activeTab == index) FontWeight.Bold else FontWeight.Normal,
+                                    color = Color.White
+                                )
+                            },
                             alwaysShowLabel = false,
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = themeColors.buttonEqualBg,

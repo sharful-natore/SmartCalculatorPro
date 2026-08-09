@@ -55,11 +55,11 @@ fun CustomOutlinedTextField(
             unfocusedContainerColor = themeColors.cardBg,
             focusedTextColor = themeColors.displayText,
             unfocusedTextColor = themeColors.displayText,
-            focusedBorderColor = Color(0xFF6366F1),
+            focusedBorderColor = themeColors.buttonEqualBg,
             unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.35f),
-            focusedLabelColor = Color(0xFF6366F1),
+            focusedLabelColor = themeColors.buttonEqualBg,
             unfocusedLabelColor = themeColors.displayText.copy(alpha = 0.8f),
-            cursorColor = Color(0xFF6366F1)
+            cursorColor = themeColors.buttonEqualBg
         ),
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
         modifier = modifier,
@@ -71,8 +71,10 @@ fun CustomOutlinedTextField(
 // --- 1. Calorie / BMR Calculator ---
 @Composable
 fun BMRCalculatorCard(
+    viewModel: CalculatorViewModel,
     themeColors: CalculatorThemeColors
 ) {
+    val lang = viewModel.selectedLanguage
     var gender by remember { mutableStateOf("Male") }
     var age by remember { mutableStateOf("25") }
     var height by remember { mutableStateOf("170") } // cm
@@ -98,7 +100,7 @@ fun BMRCalculatorCard(
             .background(themeColors.cardBg, RoundedCornerShape(16.dp))
             .padding(16.dp)
     ) {
-        Text("ক্যালোরি ও BMR হিসাব", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+        Text(LanguageManager.getString("bmr_calc_title", lang), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
         Spacer(modifier = Modifier.height(12.dp))
 
         // Gender row
@@ -106,9 +108,9 @@ fun BMRCalculatorCard(
             FilterChip(
                 selected = gender == "Male",
                 onClick = { gender = "Male" },
-                label = { Text("পুরুষ (Male)", color = if (gender == "Male") Color.White else themeColors.displayText) },
+                label = { Text(LanguageManager.getString("male", lang), color = if (gender == "Male") Color.White else themeColors.displayText) },
                 colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = Color(0xFF6366F1),
+                    selectedContainerColor = themeColors.buttonEqualBg,
                     containerColor = themeColors.cardBg
                 ),
                 modifier = Modifier.weight(1f)
@@ -116,9 +118,9 @@ fun BMRCalculatorCard(
             FilterChip(
                 selected = gender == "Female",
                 onClick = { gender = "Female" },
-                label = { Text("নারী (Female)", color = if (gender == "Female") Color.White else themeColors.displayText) },
+                label = { Text(LanguageManager.getString("female", lang), color = if (gender == "Female") Color.White else themeColors.displayText) },
                 colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = Color(0xFF6366F1),
+                    selectedContainerColor = themeColors.buttonEqualBg,
                     containerColor = themeColors.cardBg
                 ),
                 modifier = Modifier.weight(1f)
@@ -131,21 +133,21 @@ fun BMRCalculatorCard(
             CustomOutlinedTextField(
                 value = age,
                 onValueChange = { age = it },
-                label = "বয়স (বছর)",
+                label = LanguageManager.getString("age_years", lang),
                 themeColors = themeColors,
                 modifier = Modifier.weight(1f)
             )
             CustomOutlinedTextField(
                 value = height,
                 onValueChange = { height = it },
-                label = "উচ্চতা (সেমি)",
+                label = LanguageManager.getString("height_cm", lang),
                 themeColors = themeColors,
                 modifier = Modifier.weight(1f)
             )
             CustomOutlinedTextField(
                 value = weight,
                 onValueChange = { weight = it },
-                label = "ওজন (কেজি)",
+                label = LanguageManager.getString("weight_kg", lang),
                 themeColors = themeColors,
                 modifier = Modifier.weight(1f)
             )
@@ -153,14 +155,14 @@ fun BMRCalculatorCard(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        Text("দৈনিক কায়িক পরিশ্রমের মাত্রা:", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+        Text(LanguageManager.getString("activity_level", lang), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
         Spacer(modifier = Modifier.height(6.dp))
 
         val activities = listOf(
-            "কম / বসে কাজ (1.2)" to 1.2,
-            "হালকা ব্যায়াম ১-৩ দিন (1.375)" to 1.375,
-            "মাঝারি ব্যায়াম ৩-৫ দিন (1.55)" to 1.55,
-            "কঠোর পরিশ্রম / ব্যায়াম (1.725)" to 1.725
+            LanguageManager.getString("activity_sedentary", lang) to 1.2,
+            LanguageManager.getString("activity_light", lang) to 1.375,
+            LanguageManager.getString("activity_moderate", lang) to 1.55,
+            LanguageManager.getString("activity_heavy", lang) to 1.725
         )
 
         activities.forEach { (label, value) ->
@@ -173,7 +175,8 @@ fun BMRCalculatorCard(
             ) {
                 RadioButton(
                     selected = activityMultiplier == value,
-                    onClick = { activityMultiplier = value }
+                    onClick = { activityMultiplier = value },
+                    colors = RadioButtonDefaults.colors(selectedColor = themeColors.buttonEqualBg)
                 )
                 Text(label, fontSize = 12.sp, color = themeColors.displayText)
             }
@@ -182,7 +185,7 @@ fun BMRCalculatorCard(
         Spacer(modifier = Modifier.height(14.dp))
 
         Card(
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF6366F1).copy(alpha = 0.1f)),
+            colors = CardDefaults.cardColors(containerColor = themeColors.buttonEqualBg.copy(alpha = 0.12f)),
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -191,15 +194,15 @@ fun BMRCalculatorCard(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("BMR (বেসাল মেটাবলিক রেট):", fontSize = 13.sp, color = themeColors.displayText)
-                    Text("${df.format(bmr.coerceAtLeast(0.0))} kcal", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF6366F1))
+                    Text(LanguageManager.getString("bmr_result", lang), fontSize = 13.sp, color = themeColors.displayText)
+                    Text("${df.format(bmr.coerceAtLeast(0.0))} kcal", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = themeColors.buttonEqualBg)
                 }
                 Spacer(modifier = Modifier.height(6.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("ওজন বজায় রাখতে প্রয়োজনীয় ক্যালোরি:", fontSize = 13.sp, color = themeColors.displayText)
+                    Text(LanguageManager.getString("tdee_maintain", lang), fontSize = 13.sp, color = themeColors.displayText)
                     Text("${df.format(tdee.coerceAtLeast(0.0))} kcal", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
                 }
                 Spacer(modifier = Modifier.height(6.dp))
@@ -207,7 +210,7 @@ fun BMRCalculatorCard(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("ওজন কমাতে (-500 kcal/দিন):", fontSize = 12.sp, color = Color(0xFF10B981))
+                    Text(LanguageManager.getString("weight_loss_goal", lang), fontSize = 12.sp, color = Color(0xFF10B981))
                     Text("${df.format((tdee - 500).coerceAtLeast(0.0))} kcal", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFF10B981))
                 }
                 Spacer(modifier = Modifier.height(4.dp))
@@ -215,7 +218,7 @@ fun BMRCalculatorCard(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("ওজন বাড়াতে (+500 kcal/দিন):", fontSize = 12.sp, color = Color(0xFFF59E0B))
+                    Text(LanguageManager.getString("weight_gain_goal", lang), fontSize = 12.sp, color = Color(0xFFF59E0B))
                     Text("${df.format((tdee + 500).coerceAtLeast(0.0))} kcal", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFFF59E0B))
                 }
             }
@@ -226,8 +229,10 @@ fun BMRCalculatorCard(
 // --- 2. Ideal Weight Calculator ---
 @Composable
 fun IdealWeightCalculatorCard(
+    viewModel: CalculatorViewModel,
     themeColors: CalculatorThemeColors
 ) {
+    val lang = viewModel.selectedLanguage
     var gender by remember { mutableStateOf("Male") }
     var heightFt by remember { mutableStateOf("5") }
     var heightIn by remember { mutableStateOf("7") }
@@ -255,20 +260,28 @@ fun IdealWeightCalculatorCard(
             .background(themeColors.cardBg, RoundedCornerShape(16.dp))
             .padding(16.dp)
     ) {
-        Text("আদর্শ ওজন ক্যালকুলেটর", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+        Text(LanguageManager.getString("ideal_weight_title", lang), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
         Spacer(modifier = Modifier.height(12.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
             FilterChip(
                 selected = gender == "Male",
                 onClick = { gender = "Male" },
-                label = { Text("পুরুষ (Male)") },
+                label = { Text(LanguageManager.getString("male", lang), color = if (gender == "Male") Color.White else themeColors.displayText) },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = themeColors.buttonEqualBg,
+                    containerColor = themeColors.cardBg
+                ),
                 modifier = Modifier.weight(1f)
             )
             FilterChip(
                 selected = gender == "Female",
                 onClick = { gender = "Female" },
-                label = { Text("নারী (Female)") },
+                label = { Text(LanguageManager.getString("female", lang), color = if (gender == "Female") Color.White else themeColors.displayText) },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = themeColors.buttonEqualBg,
+                    containerColor = themeColors.cardBg
+                ),
                 modifier = Modifier.weight(1f)
             )
         }
@@ -276,21 +289,19 @@ fun IdealWeightCalculatorCard(
         Spacer(modifier = Modifier.height(10.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            OutlinedTextField(
+            CustomOutlinedTextField(
                 value = heightFt,
                 onValueChange = { heightFt = it },
-                label = { Text("উচ্চতা (ফুট)") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f),
-                singleLine = true
+                label = LanguageManager.getString("height_ft", lang),
+                themeColors = themeColors,
+                modifier = Modifier.weight(1f)
             )
-            OutlinedTextField(
+            CustomOutlinedTextField(
                 value = heightIn,
                 onValueChange = { heightIn = it },
-                label = { Text("ইঞ্চি") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f),
-                singleLine = true
+                label = LanguageManager.getString("height_in", lang),
+                themeColors = themeColors,
+                modifier = Modifier.weight(1f)
             )
         }
 
@@ -317,8 +328,10 @@ fun IdealWeightCalculatorCard(
 // --- 3. Water Intake Tracker ---
 @Composable
 fun WaterIntakeTrackerCard(
+    viewModel: CalculatorViewModel,
     themeColors: CalculatorThemeColors
 ) {
+    val lang = viewModel.selectedLanguage
     var weight by remember { mutableStateOf("65") }
     var exerciseMins by remember { mutableStateOf("30") }
     var glassesDrunk by remember { mutableStateOf(3) }
@@ -339,32 +352,30 @@ fun WaterIntakeTrackerCard(
             .background(themeColors.cardBg, RoundedCornerShape(16.dp))
             .padding(16.dp)
     ) {
-        Text("পানি পান ট্র্যাকার", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+        Text(LanguageManager.getString("water_intake_title", lang), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
         Spacer(modifier = Modifier.height(12.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            OutlinedTextField(
+            CustomOutlinedTextField(
                 value = weight,
                 onValueChange = { weight = it },
-                label = { Text("ওজন (কেজি)") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f),
-                singleLine = true
+                label = LanguageManager.getString("weight_kg", lang),
+                themeColors = themeColors,
+                modifier = Modifier.weight(1f)
             )
-            OutlinedTextField(
+            CustomOutlinedTextField(
                 value = exerciseMins,
                 onValueChange = { exerciseMins = it },
-                label = { Text("দৈনিক ব্যায়াম (মিনিট)") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f),
-                singleLine = true
+                label = LanguageManager.getString("daily_exercise_mins", lang),
+                themeColors = themeColors,
+                modifier = Modifier.weight(1f)
             )
         }
 
         Spacer(modifier = Modifier.height(14.dp))
 
         Card(
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF0EA5E9).copy(alpha = 0.1f)),
+            colors = CardDefaults.cardColors(containerColor = themeColors.buttonEqualBg.copy(alpha = 0.12f)),
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -375,8 +386,8 @@ fun WaterIntakeTrackerCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text("দৈনিক প্রয়োজনীয় পানি:", fontSize = 12.sp, color = themeColors.displayText)
-                        Text("${df.format(totalLiters.coerceAtLeast(0.0))} লিটার ($totalGlasses গ্লাস)", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0EA5E9))
+                        Text(LanguageManager.getString("daily_water_req", lang), fontSize = 12.sp, color = themeColors.displayText)
+                        Text("${df.format(totalLiters.coerceAtLeast(0.0))} L ($totalGlasses ${LanguageManager.getString("glasses", lang)})", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = themeColors.buttonEqualBg)
                     }
 
                     // Interactive glass counter
@@ -394,7 +405,7 @@ fun WaterIntakeTrackerCard(
 
                         IconButton(
                             onClick = { glassesDrunk++ },
-                            modifier = Modifier.size(32.dp).clip(CircleShape).background(Color(0xFF0EA5E9))
+                            modifier = Modifier.size(32.dp).clip(CircleShape).background(themeColors.buttonEqualBg)
                         ) {
                             Text("+", fontWeight = FontWeight.Bold, color = Color.White)
                         }
@@ -406,7 +417,7 @@ fun WaterIntakeTrackerCard(
                 LinearProgressIndicator(
                     progress = { (glassesDrunk.toFloat() / totalGlasses.toFloat()).coerceIn(0f, 1f) },
                     modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
-                    color = Color(0xFF0EA5E9),
+                    color = themeColors.buttonEqualBg,
                     trackColor = themeColors.background
                 )
             }
@@ -417,8 +428,10 @@ fun WaterIntakeTrackerCard(
 // --- 4. EMI & Loan Calculator ---
 @Composable
 fun EmiLoanCalculatorCard(
+    viewModel: CalculatorViewModel,
     themeColors: CalculatorThemeColors
 ) {
+    val lang = viewModel.selectedLanguage
     var loanAmount by remember { mutableStateOf("500000") }
     var interestRate by remember { mutableStateOf("9.5") }
     var tenureYears by remember { mutableStateOf("5") }
@@ -445,59 +458,56 @@ fun EmiLoanCalculatorCard(
             .background(themeColors.cardBg, RoundedCornerShape(16.dp))
             .padding(16.dp)
     ) {
-        Text("ইএমআই ও ঋণ ক্যালকুলেটর", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+        Text(LanguageManager.getString("emi_loan_title", lang), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
         Spacer(modifier = Modifier.height(12.dp))
 
-        OutlinedTextField(
+        CustomOutlinedTextField(
             value = loanAmount,
             onValueChange = { loanAmount = it },
-            label = { Text("ঋণের পরিমাণ (৳)") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            label = LanguageManager.getString("loan_amount", lang),
+            themeColors = themeColors,
+            modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            OutlinedTextField(
+            CustomOutlinedTextField(
                 value = interestRate,
                 onValueChange = { interestRate = it },
-                label = { Text("বার্ষিক সুদের হার (%)") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f),
-                singleLine = true
+                label = LanguageManager.getString("annual_interest_rate", lang),
+                themeColors = themeColors,
+                modifier = Modifier.weight(1f)
             )
-            OutlinedTextField(
+            CustomOutlinedTextField(
                 value = tenureYears,
                 onValueChange = { tenureYears = it },
-                label = { Text("মেয়াদ (বছর)") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f),
-                singleLine = true
+                label = LanguageManager.getString("tenure_years", lang),
+                themeColors = themeColors,
+                modifier = Modifier.weight(1f)
             )
         }
 
         Spacer(modifier = Modifier.height(14.dp))
 
         Card(
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF6366F1).copy(alpha = 0.1f)),
+            colors = CardDefaults.cardColors(containerColor = themeColors.buttonEqualBg.copy(alpha = 0.12f)),
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("মাসিক কিস্তি (EMI):", fontSize = 13.sp, color = themeColors.displayText)
-                    Text("৳ ${df.format(emi.coerceAtLeast(0.0))}", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF6366F1))
+                    Text(LanguageManager.getString("monthly_emi", lang), fontSize = 13.sp, color = themeColors.displayText)
+                    Text("৳ ${df.format(emi.coerceAtLeast(0.0))}", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = themeColors.buttonEqualBg)
                 }
                 Spacer(modifier = Modifier.height(6.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("মোট প্রদেয় সুদ:", fontSize = 12.sp, color = themeColors.displayText)
+                    Text(LanguageManager.getString("total_interest_payable", lang), fontSize = 12.sp, color = themeColors.displayText)
                     Text("৳ ${df.format(totalInterest.coerceAtLeast(0.0))}", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFFEF4444))
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("সর্বমোট পরিশোধযোগ্য অর্থ:", fontSize = 12.sp, color = themeColors.displayText)
+                    Text(LanguageManager.getString("total_payment", lang), fontSize = 12.sp, color = themeColors.displayText)
                     Text("৳ ${df.format(totalPayment.coerceAtLeast(0.0))}", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
                 }
             }
@@ -508,8 +518,10 @@ fun EmiLoanCalculatorCard(
 // --- 5. Profit & Loss Margin ---
 @Composable
 fun ProfitLossMarginCard(
+    viewModel: CalculatorViewModel,
     themeColors: CalculatorThemeColors
 ) {
+    val lang = viewModel.selectedLanguage
     var costPrice by remember { mutableStateOf("1000") }
     var sellingPrice by remember { mutableStateOf("1250") }
     var quantity by remember { mutableStateOf("1") }
@@ -532,37 +544,34 @@ fun ProfitLossMarginCard(
             .background(themeColors.cardBg, RoundedCornerShape(16.dp))
             .padding(16.dp)
     ) {
-        Text("লাভ ও ক্ষতি মার্জিন", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+        Text(LanguageManager.getString("profit_loss_title", lang), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
         Spacer(modifier = Modifier.height(12.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            OutlinedTextField(
+            CustomOutlinedTextField(
                 value = costPrice,
                 onValueChange = { costPrice = it },
-                label = { Text("ক্রয়মূল্য (৳)") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f),
-                singleLine = true
+                label = LanguageManager.getString("cost_price", lang),
+                themeColors = themeColors,
+                modifier = Modifier.weight(1f)
             )
-            OutlinedTextField(
+            CustomOutlinedTextField(
                 value = sellingPrice,
                 onValueChange = { sellingPrice = it },
-                label = { Text("বিক্রয়মূল্য (৳)") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f),
-                singleLine = true
+                label = LanguageManager.getString("selling_price", lang),
+                themeColors = themeColors,
+                modifier = Modifier.weight(1f)
             )
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        OutlinedTextField(
+        CustomOutlinedTextField(
             value = quantity,
             onValueChange = { quantity = it },
-            label = { Text("পরিমাণ (সংখ্যা)") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            label = LanguageManager.getString("quantity", lang),
+            themeColors = themeColors,
+            modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(14.dp))
@@ -577,7 +586,7 @@ fun ProfitLossMarginCard(
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
                 Text(
-                    text = if (isProfit) "মোট লাভ (Profit):" else "মোট ক্ষতি (Loss):",
+                    text = if (isProfit) LanguageManager.getString("total_profit", lang) else LanguageManager.getString("total_loss", lang),
                     fontSize = 13.sp,
                     color = themeColors.displayText
                 )
@@ -591,12 +600,12 @@ fun ProfitLossMarginCard(
                 Spacer(modifier = Modifier.height(6.dp))
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("লাভ/ক্ষতির শতাংশ:", fontSize = 12.sp, color = themeColors.displayText)
+                    Text(LanguageManager.getString("profit_loss_percent", lang), fontSize = 12.sp, color = themeColors.displayText)
                     Text("${df.format(profitLossPercent)}%", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = resultColor)
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("প্রফিট মার্জিন (Margin):", fontSize = 12.sp, color = themeColors.displayText)
+                    Text(LanguageManager.getString("profit_margin_percent", lang), fontSize = 12.sp, color = themeColors.displayText)
                     Text("${df.format(marginPercent)}%", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
                 }
             }
@@ -607,8 +616,10 @@ fun ProfitLossMarginCard(
 // --- 6. VAT & Tax Calculator ---
 @Composable
 fun VatTaxCalculatorCard(
+    viewModel: CalculatorViewModel,
     themeColors: CalculatorThemeColors
 ) {
+    val lang = viewModel.selectedLanguage
     var amount by remember { mutableStateOf("1000") }
     var vatRate by remember { mutableStateOf("15") }
     var mode by remember { mutableStateOf("ADD") } // "ADD" or "REMOVE"
@@ -633,20 +644,28 @@ fun VatTaxCalculatorCard(
             .background(themeColors.cardBg, RoundedCornerShape(16.dp))
             .padding(16.dp)
     ) {
-        Text("ভ্যাট ও ট্যাক্স ক্যালকুলেটর", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+        Text(LanguageManager.getString("vat_tax_title", lang), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
         Spacer(modifier = Modifier.height(12.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
             FilterChip(
                 selected = mode == "ADD",
                 onClick = { mode = "ADD" },
-                label = { Text("ভ্যাট যোগ করুন (+VAT)") },
+                label = { Text(LanguageManager.getString("add_vat", lang), color = if (mode == "ADD") Color.White else themeColors.displayText) },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = themeColors.buttonEqualBg,
+                    containerColor = themeColors.cardBg
+                ),
                 modifier = Modifier.weight(1f)
             )
             FilterChip(
                 selected = mode == "REMOVE",
                 onClick = { mode = "REMOVE" },
-                label = { Text("ভ্যাট অন্তর্ভুক্ত (-VAT)") },
+                label = { Text(LanguageManager.getString("remove_vat", lang), color = if (mode == "REMOVE") Color.White else themeColors.displayText) },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = themeColors.buttonEqualBg,
+                    containerColor = themeColors.cardBg
+                ),
                 modifier = Modifier.weight(1f)
             )
         }
@@ -654,44 +673,42 @@ fun VatTaxCalculatorCard(
         Spacer(modifier = Modifier.height(10.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            OutlinedTextField(
+            CustomOutlinedTextField(
                 value = amount,
                 onValueChange = { amount = it },
-                label = { Text("টাকার পরিমাণ (৳)") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(2f),
-                singleLine = true
+                label = LanguageManager.getString("amount_tk", lang),
+                themeColors = themeColors,
+                modifier = Modifier.weight(2f)
             )
-            OutlinedTextField(
+            CustomOutlinedTextField(
                 value = vatRate,
                 onValueChange = { vatRate = it },
-                label = { Text("ভ্যাট হার (%)") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f),
-                singleLine = true
+                label = LanguageManager.getString("vat_rate_pct", lang),
+                themeColors = themeColors,
+                modifier = Modifier.weight(1f)
             )
         }
 
         Spacer(modifier = Modifier.height(14.dp))
 
         Card(
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF8B5CF6).copy(alpha = 0.1f)),
+            colors = CardDefaults.cardColors(containerColor = themeColors.buttonEqualBg.copy(alpha = 0.12f)),
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("মূল টাকা (Net Amount):", fontSize = 13.sp, color = themeColors.displayText)
+                    Text(LanguageManager.getString("net_amount", lang), fontSize = 13.sp, color = themeColors.displayText)
                     Text("৳ ${df.format(baseAmount)}", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
                 }
                 Spacer(modifier = Modifier.height(6.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("ভ্যাটের পরিমাণ (VAT Amount):", fontSize = 13.sp, color = themeColors.displayText)
-                    Text("৳ ${df.format(vatAmount)}", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF8B5CF6))
+                    Text(LanguageManager.getString("vat_amount", lang), fontSize = 13.sp, color = themeColors.displayText)
+                    Text("৳ ${df.format(vatAmount)}", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = themeColors.buttonEqualBg)
                 }
                 Spacer(modifier = Modifier.height(6.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("সর্বমোট টাকা (Gross Total):", fontSize = 13.sp, color = themeColors.displayText)
+                    Text(LanguageManager.getString("gross_total", lang), fontSize = 13.sp, color = themeColors.displayText)
                     Text("৳ ${df.format(totalAmount)}", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF10B981))
                 }
             }
@@ -702,8 +719,10 @@ fun VatTaxCalculatorCard(
 // --- 7. Simple & Compound Interest ---
 @Composable
 fun InterestCalculatorCard(
+    viewModel: CalculatorViewModel,
     themeColors: CalculatorThemeColors
 ) {
+    val lang = viewModel.selectedLanguage
     var principal by remember { mutableStateOf("100000") }
     var rate by remember { mutableStateOf("8.5") }
     var timeYears by remember { mutableStateOf("3") }
@@ -729,71 +748,76 @@ fun InterestCalculatorCard(
             .background(themeColors.cardBg, RoundedCornerShape(16.dp))
             .padding(16.dp)
     ) {
-        Text("সুদ হিসাব (সরল ও চক্রবৃদ্ধি)", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+        Text(LanguageManager.getString("interest_title", lang), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
         Spacer(modifier = Modifier.height(12.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
             FilterChip(
                 selected = isCompound,
                 onClick = { isCompound = true },
-                label = { Text("চক্রবৃদ্ধি (Compound)") },
+                label = { Text(LanguageManager.getString("interest_compound", lang), color = if (isCompound) Color.White else themeColors.displayText) },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = themeColors.buttonEqualBg,
+                    containerColor = themeColors.cardBg
+                ),
                 modifier = Modifier.weight(1f)
             )
             FilterChip(
                 selected = !isCompound,
                 onClick = { isCompound = false },
-                label = { Text("সরল (Simple)") },
+                label = { Text(LanguageManager.getString("interest_simple", lang), color = if (!isCompound) Color.White else themeColors.displayText) },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = themeColors.buttonEqualBg,
+                    containerColor = themeColors.cardBg
+                ),
                 modifier = Modifier.weight(1f)
             )
         }
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        OutlinedTextField(
+        CustomOutlinedTextField(
             value = principal,
             onValueChange = { principal = it },
-            label = { Text("মূলধন / আমানত (৳)") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            label = LanguageManager.getString("principal_amount", lang),
+            themeColors = themeColors,
+            modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            OutlinedTextField(
+            CustomOutlinedTextField(
                 value = rate,
                 onValueChange = { rate = it },
-                label = { Text("সুদের হার (%)") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f),
-                singleLine = true
+                label = LanguageManager.getString("interest_rate_pct", lang),
+                themeColors = themeColors,
+                modifier = Modifier.weight(1f)
             )
-            OutlinedTextField(
+            CustomOutlinedTextField(
                 value = timeYears,
                 onValueChange = { timeYears = it },
-                label = { Text("সময় (বছর)") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f),
-                singleLine = true
+                label = LanguageManager.getString("time_years", lang),
+                themeColors = themeColors,
+                modifier = Modifier.weight(1f)
             )
         }
 
         Spacer(modifier = Modifier.height(14.dp))
 
         Card(
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFF59E0B).copy(alpha = 0.1f)),
+            colors = CardDefaults.cardColors(containerColor = themeColors.buttonEqualBg.copy(alpha = 0.12f)),
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("মোট অর্জিত সুদ:", fontSize = 13.sp, color = themeColors.displayText)
-                    Text("৳ ${df.format(totalInterest.coerceAtLeast(0.0))}", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color(0xFFF59E0B))
+                    Text(LanguageManager.getString("total_interest_earned", lang), fontSize = 13.sp, color = themeColors.displayText)
+                    Text("৳ ${df.format(totalInterest.coerceAtLeast(0.0))}", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = themeColors.buttonEqualBg)
                 }
                 Spacer(modifier = Modifier.height(6.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("মেয়াদোত্তীর্ণ সর্বমোট অর্থ:", fontSize = 13.sp, color = themeColors.displayText)
+                    Text(LanguageManager.getString("maturity_amount", lang), fontSize = 13.sp, color = themeColors.displayText)
                     Text("৳ ${df.format(finalAmount.coerceAtLeast(0.0))}", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF10B981))
                 }
             }
@@ -804,8 +828,10 @@ fun InterestCalculatorCard(
 // --- 8. Date Difference ---
 @Composable
 fun DateDifferenceCard(
+    viewModel: CalculatorViewModel,
     themeColors: CalculatorThemeColors
 ) {
+    val lang = viewModel.selectedLanguage
     var startDay by remember { mutableStateOf("1") }
     var startMonth by remember { mutableStateOf("1") }
     var startYear by remember { mutableStateOf("2025") }
@@ -843,38 +869,40 @@ fun DateDifferenceCard(
             .background(themeColors.cardBg, RoundedCornerShape(16.dp))
             .padding(16.dp)
     ) {
-        Text("তারিখের ব্যবধান", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+        Text(LanguageManager.getString("date_diff_title", lang), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
         Spacer(modifier = Modifier.height(12.dp))
 
-        Text("প্রথম তারিখ (Start Date):", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+        Text(LanguageManager.getString("start_date", lang), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+        Spacer(modifier = Modifier.height(4.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
-            OutlinedTextField(value = startDay, onValueChange = { startDay = it }, label = { Text("দিন") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.weight(1f), singleLine = true)
-            OutlinedTextField(value = startMonth, onValueChange = { startMonth = it }, label = { Text("মাস") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.weight(1f), singleLine = true)
-            OutlinedTextField(value = startYear, onValueChange = { startYear = it }, label = { Text("বছর") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.weight(1.2f), singleLine = true)
+            CustomOutlinedTextField(value = startDay, onValueChange = { startDay = it }, label = LanguageManager.getString("day", lang), themeColors = themeColors, modifier = Modifier.weight(1f))
+            CustomOutlinedTextField(value = startMonth, onValueChange = { startMonth = it }, label = LanguageManager.getString("month", lang), themeColors = themeColors, modifier = Modifier.weight(1f))
+            CustomOutlinedTextField(value = startYear, onValueChange = { startYear = it }, label = LanguageManager.getString("year", lang), themeColors = themeColors, modifier = Modifier.weight(1.2f))
         }
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        Text("দ্বিতীয় তারিখ (End Date):", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+        Text(LanguageManager.getString("end_date", lang), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+        Spacer(modifier = Modifier.height(4.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
-            OutlinedTextField(value = endDay, onValueChange = { endDay = it }, label = { Text("দিন") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.weight(1f), singleLine = true)
-            OutlinedTextField(value = endMonth, onValueChange = { endMonth = it }, label = { Text("মাস") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.weight(1f), singleLine = true)
-            OutlinedTextField(value = endYear, onValueChange = { endYear = it }, label = { Text("বছর") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.weight(1.2f), singleLine = true)
+            CustomOutlinedTextField(value = endDay, onValueChange = { endDay = it }, label = LanguageManager.getString("day", lang), themeColors = themeColors, modifier = Modifier.weight(1f))
+            CustomOutlinedTextField(value = endMonth, onValueChange = { endMonth = it }, label = LanguageManager.getString("month", lang), themeColors = themeColors, modifier = Modifier.weight(1f))
+            CustomOutlinedTextField(value = endYear, onValueChange = { endYear = it }, label = LanguageManager.getString("year", lang), themeColors = themeColors, modifier = Modifier.weight(1.2f))
         }
 
         Spacer(modifier = Modifier.height(14.dp))
 
         Card(
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF0EA5E9).copy(alpha = 0.1f)),
+            colors = CardDefaults.cardColors(containerColor = themeColors.buttonEqualBg.copy(alpha = 0.12f)),
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
-                Text("তারিখ দুটির মধ্যকার ব্যবধান:", fontSize = 13.sp, color = themeColors.displayText)
-                Text("${diffYears.coerceAtLeast(0)} বছর, ${diffMonths.coerceAtLeast(0)} মাস, ${diffDays.coerceAtLeast(0)} দিন", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0EA5E9))
+                Text(LanguageManager.getString("date_diff_result", lang), fontSize = 13.sp, color = themeColors.displayText)
+                Text("${diffYears.coerceAtLeast(0)} ${LanguageManager.getString("year", lang)}, ${diffMonths.coerceAtLeast(0)} ${LanguageManager.getString("month", lang)}, ${diffDays.coerceAtLeast(0)} ${LanguageManager.getString("day", lang)}", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = themeColors.buttonEqualBg)
 
                 Spacer(modifier = Modifier.height(6.dp))
-                Text("মোট আনুমানিক দিন: ${totalEstDays.coerceAtLeast(0)} দিন", fontSize = 13.sp, color = themeColors.displayText)
+                Text("${LanguageManager.getString("total_est_days", lang)}: ${totalEstDays.coerceAtLeast(0)}", fontSize = 13.sp, color = themeColors.displayText)
             }
         }
     }
@@ -883,8 +911,10 @@ fun DateDifferenceCard(
 // --- 9. Tip Calculator ---
 @Composable
 fun TipCalculatorCard(
+    viewModel: CalculatorViewModel,
     themeColors: CalculatorThemeColors
 ) {
+    val lang = viewModel.selectedLanguage
     var billAmount by remember { mutableStateOf("1500") }
     var tipPercent by remember { mutableStateOf("10") }
     var peopleCount by remember { mutableStateOf("3") }
@@ -906,59 +936,56 @@ fun TipCalculatorCard(
             .background(themeColors.cardBg, RoundedCornerShape(16.dp))
             .padding(16.dp)
     ) {
-        Text("টিপ ও বিল ভাগ", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+        Text(LanguageManager.getString("tip_split_title", lang), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
         Spacer(modifier = Modifier.height(12.dp))
 
-        OutlinedTextField(
+        CustomOutlinedTextField(
             value = billAmount,
             onValueChange = { billAmount = it },
-            label = { Text("মোট বিলের পরিমাণ (৳)") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            label = LanguageManager.getString("bill_amount", lang),
+            themeColors = themeColors,
+            modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            OutlinedTextField(
+            CustomOutlinedTextField(
                 value = tipPercent,
                 onValueChange = { tipPercent = it },
-                label = { Text("টিপ শতাংশ (%)") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f),
-                singleLine = true
+                label = LanguageManager.getString("tip_percent", lang),
+                themeColors = themeColors,
+                modifier = Modifier.weight(1f)
             )
-            OutlinedTextField(
+            CustomOutlinedTextField(
                 value = peopleCount,
                 onValueChange = { peopleCount = it },
-                label = { Text("মানুষের সংখ্যা") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f),
-                singleLine = true
+                label = LanguageManager.getString("split_people", lang),
+                themeColors = themeColors,
+                modifier = Modifier.weight(1f)
             )
         }
 
         Spacer(modifier = Modifier.height(14.dp))
 
         Card(
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF10B981).copy(alpha = 0.1f)),
+            colors = CardDefaults.cardColors(containerColor = themeColors.buttonEqualBg.copy(alpha = 0.12f)),
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("প্রতিজনের মোট বিল:", fontSize = 13.sp, color = themeColors.displayText)
+                    Text(LanguageManager.getString("bill_per_person", lang), fontSize = 13.sp, color = themeColors.displayText)
                     Text("৳ ${df.format(perPersonTotal)}", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF10B981))
                 }
                 Spacer(modifier = Modifier.height(6.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("মোট টিপের পরিমাণ:", fontSize = 12.sp, color = themeColors.displayText)
-                    Text("৳ ${df.format(tipAmount)} (প্রতিজনে ৳ ${df.format(perPersonTip)})", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                    Text(LanguageManager.getString("total_tip_amount", lang), fontSize = 12.sp, color = themeColors.displayText)
+                    Text("৳ ${df.format(tipAmount)} (${df.format(perPersonTip)}/p)", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("সর্বমোট বিল (টিপসহ):", fontSize = 12.sp, color = themeColors.displayText)
+                    Text(LanguageManager.getString("grand_total_bill", lang), fontSize = 12.sp, color = themeColors.displayText)
                     Text("৳ ${df.format(totalBill)}", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
                 }
             }
@@ -972,6 +999,7 @@ fun ElectricityBillCalculatorCard(
     viewModel: CalculatorViewModel,
     themeColors: CalculatorThemeColors
 ) {
+    val lang = viewModel.selectedLanguage
     var units by remember { mutableStateOf("250") }
     var connectionType by remember { mutableStateOf("Residential") } // Residential / Commercial
     var isCustomizing by remember { mutableStateOf(false) }
@@ -1022,7 +1050,7 @@ fun ElectricityBillCalculatorCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = LanguageManager.getString("electricity_title", viewModel.selectedLanguage).ifEmpty { "বিদ্যুৎ বিল ক্যালকুলেটর" },
+                text = LanguageManager.getString("electricity_title", lang),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 color = themeColors.displayText
@@ -1030,7 +1058,7 @@ fun ElectricityBillCalculatorCard(
 
             TextButton(
                 onClick = { isCustomizing = !isCustomizing },
-                colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF6366F1))
+                colors = ButtonDefaults.textButtonColors(contentColor = themeColors.buttonEqualBg)
             ) {
                 Icon(
                     imageVector = if (isCustomizing) Icons.Default.Check else Icons.Default.Edit,
@@ -1039,7 +1067,7 @@ fun ElectricityBillCalculatorCard(
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = if (isCustomizing) "বন্ধ করুন" else "রেট এডিট করুন",
+                    text = if (isCustomizing) LanguageManager.getString("close", lang) else LanguageManager.getString("edit_rates", lang),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -1056,10 +1084,10 @@ fun ElectricityBillCalculatorCard(
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text(
-                        text = "কাস্টম চার্জ ও ট্যারিফ সেটিংস (সেভ থাকবে)",
+                        text = LanguageManager.getString("custom_tariff_settings", lang),
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF6366F1)
+                        color = themeColors.buttonEqualBg
                     )
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -1070,10 +1098,10 @@ fun ElectricityBillCalculatorCard(
                         Checkbox(
                             checked = useFlatRate,
                             onCheckedChange = { useFlatRate = it },
-                            colors = CheckboxDefaults.colors(checkedColor = Color(0xFF6366F1))
+                            colors = CheckboxDefaults.colors(checkedColor = themeColors.buttonEqualBg)
                         )
                         Text(
-                            text = "ফ্ল্যাট রেট ব্যবহার করুন (স্ল্যাব রেটের বদলে)",
+                            text = LanguageManager.getString("use_flat_rate", lang),
                             fontSize = 12.sp,
                             color = themeColors.displayText
                         )
@@ -1083,7 +1111,7 @@ fun ElectricityBillCalculatorCard(
                         CustomOutlinedTextField(
                             value = customRate,
                             onValueChange = { customRate = it },
-                            label = "ইউনিট প্রতি ফ্ল্যাট চার্জ (৳)",
+                            label = LanguageManager.getString("unit_flat_charge", lang),
                             themeColors = themeColors,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -1098,14 +1126,14 @@ fun ElectricityBillCalculatorCard(
                         CustomOutlinedTextField(
                             value = customDemand,
                             onValueChange = { customDemand = it },
-                            label = "ডিমান্ড চার্জ (৳)",
+                            label = LanguageManager.getString("demand_charge", lang),
                             themeColors = themeColors,
                             modifier = Modifier.weight(1f)
                         )
                         CustomOutlinedTextField(
                             value = customMeter,
                             onValueChange = { customMeter = it },
-                            label = "মিটার ভাড়া (৳)",
+                            label = LanguageManager.getString("meter_rent", lang),
                             themeColors = themeColors,
                             modifier = Modifier.weight(1f)
                         )
@@ -1116,7 +1144,7 @@ fun ElectricityBillCalculatorCard(
                     CustomOutlinedTextField(
                         value = customVat,
                         onValueChange = { customVat = it },
-                        label = "ভ্যাট হার (%)",
+                        label = LanguageManager.getString("vat_rate_pct", lang),
                         themeColors = themeColors,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -1128,13 +1156,13 @@ fun ElectricityBillCalculatorCard(
                             viewModel.updateElectricityRates(customRate, customDemand, customMeter, customVat)
                             isCustomizing = false
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
+                        colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(10.dp)
                     ) {
                         Icon(imageVector = Icons.Default.Save, contentDescription = "Save", modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("সেটিংস সেভ করুন (Save Settings)", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        Text(LanguageManager.getString("save_settings", lang), fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color.White)
                     }
                 }
             }
@@ -1146,9 +1174,9 @@ fun ElectricityBillCalculatorCard(
             FilterChip(
                 selected = connectionType == "Residential",
                 onClick = { connectionType = "Residential" },
-                label = { Text("আবাসিক (Residential)", color = if (connectionType == "Residential") Color.White else themeColors.displayText) },
+                label = { Text(LanguageManager.getString("residential", lang), color = if (connectionType == "Residential") Color.White else themeColors.displayText) },
                 colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = Color(0xFF6366F1),
+                    selectedContainerColor = themeColors.buttonEqualBg,
                     containerColor = themeColors.cardBg
                 ),
                 modifier = Modifier.weight(1f)
@@ -1156,9 +1184,9 @@ fun ElectricityBillCalculatorCard(
             FilterChip(
                 selected = connectionType == "Commercial",
                 onClick = { connectionType = "Commercial" },
-                label = { Text("বাণিজ্যিক (Commercial)", color = if (connectionType == "Commercial") Color.White else themeColors.displayText) },
+                label = { Text(LanguageManager.getString("commercial", lang), color = if (connectionType == "Commercial") Color.White else themeColors.displayText) },
                 colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = Color(0xFF6366F1),
+                    selectedContainerColor = themeColors.buttonEqualBg,
                     containerColor = themeColors.cardBg
                 ),
                 modifier = Modifier.weight(1f)
@@ -1170,7 +1198,7 @@ fun ElectricityBillCalculatorCard(
         CustomOutlinedTextField(
             value = units,
             onValueChange = { units = it },
-            label = "মাসিক ব্যবহৃত ইউনিট (kWh)",
+            label = LanguageManager.getString("monthly_units_kwh", lang),
             themeColors = themeColors,
             modifier = Modifier.fillMaxWidth()
         )
@@ -1178,29 +1206,29 @@ fun ElectricityBillCalculatorCard(
         Spacer(modifier = Modifier.height(14.dp))
 
         Card(
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFF59E0B).copy(alpha = 0.1f)),
+            colors = CardDefaults.cardColors(containerColor = themeColors.buttonEqualBg.copy(alpha = 0.12f)),
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("বিদ্যুৎ শক্তি চার্জ (Energy Charge):", fontSize = 12.sp, color = themeColors.displayText)
+                    Text(LanguageManager.getString("energy_charge", lang), fontSize = 12.sp, color = themeColors.displayText)
                     Text("৳ ${df.format(baseEnergy)}", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("ডিমান্ড ও মিটার চার্জ:", fontSize = 12.sp, color = themeColors.displayText)
+                    Text(LanguageManager.getString("demand_meter_charge", lang), fontSize = 12.sp, color = themeColors.displayText)
                     Text("৳ ${df.format(demandAndMeterFee)}", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("ভ্যাট (${customVat}% VAT):", fontSize = 12.sp, color = themeColors.displayText)
+                    Text("VAT (${customVat}%):", fontSize = 12.sp, color = themeColors.displayText)
                     Text("৳ ${df.format(vat)}", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("সর্বমোট আনুমানিক বিল:", fontSize = 13.sp, color = themeColors.displayText)
-                    Text("৳ ${df.format(totalBill)}", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFFF59E0B))
+                    Text(LanguageManager.getString("estimated_total_bill", lang), fontSize = 13.sp, color = themeColors.displayText)
+                    Text("৳ ${df.format(totalBill)}", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = themeColors.buttonEqualBg)
                 }
             }
         }
@@ -1210,8 +1238,10 @@ fun ElectricityBillCalculatorCard(
 // --- 11. Appliance Energy Cost ---
 @Composable
 fun ApplianceEnergyCostCard(
+    viewModel: CalculatorViewModel,
     themeColors: CalculatorThemeColors
 ) {
+    val lang = viewModel.selectedLanguage
     var wattage by remember { mutableStateOf("75") }
     var hoursPerDay by remember { mutableStateOf("8") }
     var unitRate by remember { mutableStateOf(7.50) }
@@ -1232,59 +1262,57 @@ fun ApplianceEnergyCostCard(
             .background(themeColors.cardBg, RoundedCornerShape(16.dp))
             .padding(16.dp)
     ) {
-        Text("সরঞ্জামের বিদ্যুৎ খরচ", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+        Text(LanguageManager.getString("appliance_title", lang), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
         Spacer(modifier = Modifier.height(10.dp))
 
         // Presets row
-        Text("দ্রুত নির্বাচন:", fontSize = 11.sp, color = themeColors.displayText.copy(alpha = 0.7f))
+        Text(LanguageManager.getString("quick_select", lang), fontSize = 11.sp, color = themeColors.displayText.copy(alpha = 0.7f))
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-            AssistChip(onClick = { wattage = "75" }, label = { Text("ফ্যান (75W)") })
-            AssistChip(onClick = { wattage = "1500" }, label = { Text("এসি (1500W)") })
-            AssistChip(onClick = { wattage = "200" }, label = { Text("ফ্রিজ (200W)") })
-            AssistChip(onClick = { wattage = "100" }, label = { Text("টিভি (100W)") })
+            AssistChip(onClick = { wattage = "75" }, label = { Text("Fan (75W)") })
+            AssistChip(onClick = { wattage = "1500" }, label = { Text("AC (1500W)") })
+            AssistChip(onClick = { wattage = "200" }, label = { Text("Fridge (200W)") })
+            AssistChip(onClick = { wattage = "100" }, label = { Text("TV (100W)") })
         }
 
         Spacer(modifier = Modifier.height(6.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            OutlinedTextField(
+            CustomOutlinedTextField(
                 value = wattage,
                 onValueChange = { wattage = it },
-                label = { Text("ওয়াট (Watt)") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f),
-                singleLine = true
+                label = LanguageManager.getString("wattage_watt", lang),
+                themeColors = themeColors,
+                modifier = Modifier.weight(1f)
             )
-            OutlinedTextField(
+            CustomOutlinedTextField(
                 value = hoursPerDay,
                 onValueChange = { hoursPerDay = it },
-                label = { Text("দৈনিক ব্যবহার (ঘণ্টা)") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f),
-                singleLine = true
+                label = LanguageManager.getString("daily_hours_used", lang),
+                themeColors = themeColors,
+                modifier = Modifier.weight(1f)
             )
         }
 
         Spacer(modifier = Modifier.height(14.dp))
 
         Card(
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF6366F1).copy(alpha = 0.1f)),
+            colors = CardDefaults.cardColors(containerColor = themeColors.buttonEqualBg.copy(alpha = 0.12f)),
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("দৈনিক বিদ্যুৎ খরচ:", fontSize = 12.sp, color = themeColors.displayText)
+                    Text(LanguageManager.getString("daily_energy_cost", lang), fontSize = 12.sp, color = themeColors.displayText)
                     Text("${df.format(dailyKwh)} kWh (৳ ${df.format(dailyCost)})", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
                 }
                 Spacer(modifier = Modifier.height(6.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("মাসিক বিদ্যুৎ খরচ (৩০ দিন):", fontSize = 13.sp, color = themeColors.displayText)
-                    Text("${df.format(monthlyKwh)} kWh", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF6366F1))
+                    Text(LanguageManager.getString("monthly_energy_cost", lang), fontSize = 13.sp, color = themeColors.displayText)
+                    Text("${df.format(monthlyKwh)} kWh", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = themeColors.buttonEqualBg)
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("মাসিক বিলের পরিমাণ:", fontSize = 13.sp, color = themeColors.displayText)
+                    Text(LanguageManager.getString("monthly_bill_amount", lang), fontSize = 13.sp, color = themeColors.displayText)
                     Text("৳ ${df.format(monthlyCost)}", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF10B981))
                 }
             }
@@ -1295,8 +1323,10 @@ fun ApplianceEnergyCostCard(
 // --- 12. Battery / Power Bank Backup ---
 @Composable
 fun BatteryBackupCard(
+    viewModel: CalculatorViewModel,
     themeColors: CalculatorThemeColors
 ) {
+    val lang = viewModel.selectedLanguage
     var loadWatts by remember { mutableStateOf("150") }
     var batteryAh by remember { mutableStateOf("150") }
     var batteryVolts by remember { mutableStateOf("12") }
@@ -1319,62 +1349,58 @@ fun BatteryBackupCard(
             .background(themeColors.cardBg, RoundedCornerShape(16.dp))
             .padding(16.dp)
     ) {
-        Text("ব্যাটারি / আইপিএস ব্যাকআপ", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+        Text(LanguageManager.getString("battery_backup_title", lang), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
         Spacer(modifier = Modifier.height(12.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            OutlinedTextField(
+            CustomOutlinedTextField(
                 value = loadWatts,
                 onValueChange = { loadWatts = it },
-                label = { Text("লোড (Watt)") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f),
-                singleLine = true
+                label = LanguageManager.getString("load_watt", lang),
+                themeColors = themeColors,
+                modifier = Modifier.weight(1f)
             )
-            OutlinedTextField(
+            CustomOutlinedTextField(
                 value = batteryAh,
                 onValueChange = { batteryAh = it },
-                label = { Text("ব্যাটারি Capacity (Ah)") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f),
-                singleLine = true
+                label = LanguageManager.getString("battery_ah", lang),
+                themeColors = themeColors,
+                modifier = Modifier.weight(1f)
             )
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            OutlinedTextField(
+            CustomOutlinedTextField(
                 value = batteryVolts,
                 onValueChange = { batteryVolts = it },
-                label = { Text("ভোল্টেজ (V, e.g. 12V)") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f),
-                singleLine = true
+                label = LanguageManager.getString("battery_volts", lang),
+                themeColors = themeColors,
+                modifier = Modifier.weight(1f)
             )
-            OutlinedTextField(
+            CustomOutlinedTextField(
                 value = efficiencyPct,
                 onValueChange = { efficiencyPct = it },
-                label = { Text("ইনভার্টার দক্ষতা (%)") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f),
-                singleLine = true
+                label = LanguageManager.getString("inverter_efficiency", lang),
+                themeColors = themeColors,
+                modifier = Modifier.weight(1f)
             )
         }
 
         Spacer(modifier = Modifier.height(14.dp))
 
         Card(
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF10B981).copy(alpha = 0.1f)),
+            colors = CardDefaults.cardColors(containerColor = themeColors.buttonEqualBg.copy(alpha = 0.12f)),
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
-                Text("আনুমানিক ব্যাকআপ সময়:", fontSize = 13.sp, color = themeColors.displayText)
-                Text("${hours.coerceAtLeast(0)} ঘণ্টা ${minutes.coerceAtLeast(0)} মিনিট", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF10B981))
+                Text(LanguageManager.getString("est_backup_time", lang), fontSize = 13.sp, color = themeColors.displayText)
+                Text("${hours.coerceAtLeast(0)} ${LanguageManager.getString("hours", lang)} ${minutes.coerceAtLeast(0)} ${LanguageManager.getString("mins", lang)}", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = themeColors.buttonEqualBg)
 
                 Spacer(modifier = Modifier.height(6.dp))
-                Text("মোট কার্যকরী শক্তি: ${storedWh.toInt()} Wh", fontSize = 12.sp, color = themeColors.displayText)
+                Text("${LanguageManager.getString("total_usable_wh", lang)}: ${storedWh.toInt()} Wh", fontSize = 12.sp, color = themeColors.displayText)
             }
         }
     }
@@ -1383,8 +1409,10 @@ fun BatteryBackupCard(
 // --- 13. Fuel Cost Calculator ---
 @Composable
 fun FuelCostCalculatorCard(
+    viewModel: CalculatorViewModel,
     themeColors: CalculatorThemeColors
 ) {
+    val lang = viewModel.selectedLanguage
     var distance by remember { mutableStateOf("120") }
     var mileage by remember { mutableStateOf("15") } // Km per Liter
     var fuelPrice by remember { mutableStateOf("130") } // Tk per Liter
@@ -1405,60 +1433,57 @@ fun FuelCostCalculatorCard(
             .background(themeColors.cardBg, RoundedCornerShape(16.dp))
             .padding(16.dp)
     ) {
-        Text("জ্বালানি খরচ ক্যালকুলেটর", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+        Text(LanguageManager.getString("fuel_cost_title", lang), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
         Spacer(modifier = Modifier.height(12.dp))
 
-        OutlinedTextField(
+        CustomOutlinedTextField(
             value = distance,
             onValueChange = { distance = it },
-            label = { Text("মোট দূরত্ব (কিলোমিটার)") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            label = LanguageManager.getString("total_distance_km", lang),
+            themeColors = themeColors,
+            modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            OutlinedTextField(
+            CustomOutlinedTextField(
                 value = mileage,
                 onValueChange = { mileage = it },
-                label = { Text("মাইলেজ (কিমি/লিটার)") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f),
-                singleLine = true
+                label = LanguageManager.getString("mileage_km_l", lang),
+                themeColors = themeColors,
+                modifier = Modifier.weight(1f)
             )
-            OutlinedTextField(
+            CustomOutlinedTextField(
                 value = fuelPrice,
                 onValueChange = { fuelPrice = it },
-                label = { Text("তৈলের দাম (৳/লিটার)") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f),
-                singleLine = true
+                label = LanguageManager.getString("fuel_price_tk_l", lang),
+                themeColors = themeColors,
+                modifier = Modifier.weight(1f)
             )
         }
 
         Spacer(modifier = Modifier.height(14.dp))
 
         Card(
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFEF4444).copy(alpha = 0.1f)),
+            colors = CardDefaults.cardColors(containerColor = themeColors.buttonEqualBg.copy(alpha = 0.12f)),
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("প্রয়োজনীয় জ্বালানি:", fontSize = 13.sp, color = themeColors.displayText)
-                    Text("${df.format(fuelNeeded)} লিটার", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                    Text(LanguageManager.getString("fuel_needed", lang), fontSize = 13.sp, color = themeColors.displayText)
+                    Text("${df.format(fuelNeeded)} L", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
                 }
                 Spacer(modifier = Modifier.height(6.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("সর্বমোট জ্বালানি খরচ:", fontSize = 13.sp, color = themeColors.displayText)
-                    Text("৳ ${df.format(totalCost)}", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFFEF4444))
+                    Text(LanguageManager.getString("total_fuel_cost", lang), fontSize = 13.sp, color = themeColors.displayText)
+                    Text("৳ ${df.format(totalCost)}", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = themeColors.buttonEqualBg)
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("প্রতি কিলোমিটার খরচ:", fontSize = 12.sp, color = themeColors.displayText)
-                    Text("৳ ${df.format(costPerKm)} / কিমি", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                    Text(LanguageManager.getString("cost_per_km", lang), fontSize = 12.sp, color = themeColors.displayText)
+                    Text("৳ ${df.format(costPerKm)} / km", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
                 }
             }
         }
@@ -1468,8 +1493,10 @@ fun FuelCostCalculatorCard(
 // --- 14. Speed, Distance & Time ---
 @Composable
 fun SpeedDistanceTimeCard(
+    viewModel: CalculatorViewModel,
     themeColors: CalculatorThemeColors
 ) {
+    val lang = viewModel.selectedLanguage
     var calcTarget by remember { mutableStateOf("Speed") } // Speed, Distance, Time
     var val1 by remember { mutableStateOf("60") } // Distance or Speed
     var val2 by remember { mutableStateOf("2") }  // Time or Distance
@@ -1482,18 +1509,18 @@ fun SpeedDistanceTimeCard(
             val speed = if (v2 > 0) v1 / v2 else 0.0
             val ms = speed / 3.6
             val mph = speed * 0.621371
-            Pair("গতিবেগ (Speed):", "${DecimalFormat("#,##0.00").format(speed)} km/h (${DecimalFormat("#,##0.00").format(ms)} m/s, ${DecimalFormat("#,##0.00").format(mph)} mph)")
+            Pair(LanguageManager.getString("speed_calc_res", lang), "${DecimalFormat("#,##0.00").format(speed)} km/h (${DecimalFormat("#,##0.00").format(ms)} m/s, ${DecimalFormat("#,##0.00").format(mph)} mph)")
         }
         "Distance" -> { // Distance = Speed * Time
             val distance = v1 * v2
             val miles = distance * 0.621371
-            Pair("দূরত্ব (Distance):", "${DecimalFormat("#,##0.00").format(distance)} km (${DecimalFormat("#,##0.00").format(miles)} miles)")
+            Pair(LanguageManager.getString("distance_calc_res", lang), "${DecimalFormat("#,##0.00").format(distance)} km (${DecimalFormat("#,##0.00").format(miles)} miles)")
         }
         else -> { // Time = Distance / Speed
             val hoursVal = if (v2 > 0) v1 / v2 else 0.0
             val h = hoursVal.toInt()
             val m = ((hoursVal - h) * 60).toInt()
-            Pair("ভ্রমণের সময় (Time):", "$h ঘণ্টা $m মিনিট (${DecimalFormat("#,##0.00").format(hoursVal)} hours)")
+            Pair(LanguageManager.getString("time_calc_res", lang), "$h ${LanguageManager.getString("hours", lang)} $m ${LanguageManager.getString("mins", lang)} (${DecimalFormat("#,##0.00").format(hoursVal)} hrs)")
         }
     }
 
@@ -1503,26 +1530,38 @@ fun SpeedDistanceTimeCard(
             .background(themeColors.cardBg, RoundedCornerShape(16.dp))
             .padding(16.dp)
     ) {
-        Text("গতি, দূরত্ব ও সময়", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+        Text(LanguageManager.getString("speed_dist_title", lang), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
         Spacer(modifier = Modifier.height(12.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
             FilterChip(
                 selected = calcTarget == "Speed",
                 onClick = { calcTarget = "Speed"; val1 = "120"; val2 = "2" },
-                label = { Text("গতি নির্ণয়") },
+                label = { Text(LanguageManager.getString("calc_speed", lang), color = if (calcTarget == "Speed") Color.White else themeColors.displayText) },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = themeColors.buttonEqualBg,
+                    containerColor = themeColors.cardBg
+                ),
                 modifier = Modifier.weight(1f)
             )
             FilterChip(
                 selected = calcTarget == "Distance",
                 onClick = { calcTarget = "Distance"; val1 = "60"; val2 = "2" },
-                label = { Text("দূরত্ব নির্ণয়") },
+                label = { Text(LanguageManager.getString("calc_distance", lang), color = if (calcTarget == "Distance") Color.White else themeColors.displayText) },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = themeColors.buttonEqualBg,
+                    containerColor = themeColors.cardBg
+                ),
                 modifier = Modifier.weight(1f)
             )
             FilterChip(
                 selected = calcTarget == "Time",
                 onClick = { calcTarget = "Time"; val1 = "120"; val2 = "60" },
-                label = { Text("সময় নির্ণয়") },
+                label = { Text(LanguageManager.getString("calc_time", lang), color = if (calcTarget == "Time") Color.White else themeColors.displayText) },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = themeColors.buttonEqualBg,
+                    containerColor = themeColors.cardBg
+                ),
                 modifier = Modifier.weight(1f)
             )
         }
@@ -1531,33 +1570,33 @@ fun SpeedDistanceTimeCard(
 
         when (calcTarget) {
             "Speed" -> {
-                OutlinedTextField(value = val1, onValueChange = { val1 = it }, label = { Text("দূরত্ব (কিমি)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth(), singleLine = true)
+                CustomOutlinedTextField(value = val1, onValueChange = { val1 = it }, label = LanguageManager.getString("distance_km", lang), themeColors = themeColors, modifier = Modifier.fillMaxWidth())
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(value = val2, onValueChange = { val2 = it }, label = { Text("সময় (ঘণ্টা)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth(), singleLine = true)
+                CustomOutlinedTextField(value = val2, onValueChange = { val2 = it }, label = LanguageManager.getString("time_hours", lang), themeColors = themeColors, modifier = Modifier.fillMaxWidth())
             }
             "Distance" -> {
-                OutlinedTextField(value = val1, onValueChange = { val1 = it }, label = { Text("গতিবেগ (কিমি/ঘণ্টা)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth(), singleLine = true)
+                CustomOutlinedTextField(value = val1, onValueChange = { val1 = it }, label = LanguageManager.getString("speed_kmh", lang), themeColors = themeColors, modifier = Modifier.fillMaxWidth())
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(value = val2, onValueChange = { val2 = it }, label = { Text("সময় (ঘণ্টা)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth(), singleLine = true)
+                CustomOutlinedTextField(value = val2, onValueChange = { val2 = it }, label = LanguageManager.getString("time_hours", lang), themeColors = themeColors, modifier = Modifier.fillMaxWidth())
             }
             "Time" -> {
-                OutlinedTextField(value = val1, onValueChange = { val1 = it }, label = { Text("দূরত্ব (কিমি)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth(), singleLine = true)
+                CustomOutlinedTextField(value = val1, onValueChange = { val1 = it }, label = LanguageManager.getString("distance_km", lang), themeColors = themeColors, modifier = Modifier.fillMaxWidth())
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(value = val2, onValueChange = { val2 = it }, label = { Text("গতিবেগ (কিমি/ঘণ্টা)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth(), singleLine = true)
+                CustomOutlinedTextField(value = val2, onValueChange = { val2 = it }, label = LanguageManager.getString("speed_kmh", lang), themeColors = themeColors, modifier = Modifier.fillMaxWidth())
             }
         }
 
         Spacer(modifier = Modifier.height(14.dp))
 
         Card(
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF6366F1).copy(alpha = 0.1f)),
+            colors = CardDefaults.cardColors(containerColor = themeColors.buttonEqualBg.copy(alpha = 0.12f)),
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
                 Text(resultText, fontSize = 13.sp, color = themeColors.displayText)
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(resultValueStr, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF6366F1))
+                Text(resultValueStr, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = themeColors.buttonEqualBg)
             }
         }
     }

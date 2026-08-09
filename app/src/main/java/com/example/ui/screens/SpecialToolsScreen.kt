@@ -118,7 +118,7 @@ fun ToolsCategoriesView(
             colors = OutlinedTextFieldDefaults.colors(
                 focusedContainerColor = themeColors.cardBg,
                 unfocusedContainerColor = themeColors.cardBg,
-                focusedBorderColor = Color(0xFF6366F1),
+                focusedBorderColor = themeColors.buttonEqualBg,
                 unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.15f),
                 focusedTextColor = themeColors.displayText,
                 unfocusedTextColor = themeColors.displayText
@@ -194,13 +194,13 @@ fun ToolsCategoriesView(
                             modifier = Modifier
                                 .size(28.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFF6366F1).copy(alpha = 0.15f)),
+                                .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = category.icon,
                                 contentDescription = category.titleEn,
-                                tint = Color(0xFF6366F1),
+                                tint = themeColors.buttonEqualBg,
                                 modifier = Modifier.size(16.dp)
                             )
                         }
@@ -256,7 +256,7 @@ fun ToolFilterChipItem(
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(12.dp))
-            .background(if (isSelected) Color(0xFF6366F1) else themeColors.cardBg)
+            .background(if (isSelected) themeColors.buttonEqualBg else themeColors.cardBg)
             .clickable(onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 8.dp),
         contentAlignment = Alignment.Center
@@ -310,13 +310,13 @@ fun ToolGridCardItem(
                     modifier = Modifier
                         .size(38.dp)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(Color(0xFF6366F1).copy(alpha = 0.12f)),
+                        .background(themeColors.buttonEqualBg.copy(alpha = 0.12f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = toolType.icon,
                         contentDescription = toolType.getTitle(viewModel.selectedLanguage),
-                        tint = Color(0xFF6366F1),
+                        tint = themeColors.buttonEqualBg,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -402,7 +402,7 @@ fun ToolDetailView(
                 Text(
                     text = toolType.category.getTitle(viewModel.selectedLanguage),
                     fontSize = 12.sp,
-                    color = Color(0xFF6366F1),
+                    color = themeColors.buttonEqualBg,
                     fontWeight = FontWeight.Medium
                 )
             }
@@ -411,23 +411,23 @@ fun ToolDetailView(
         // Selected Tool UI Composable
         when (toolType) {
             ToolType.BMI -> BMICalculatorCard(viewModel, themeColors)
-            ToolType.BMR -> BMRCalculatorCard(themeColors)
-            ToolType.IDEAL_WEIGHT -> IdealWeightCalculatorCard(themeColors)
-            ToolType.WATER_INTAKE -> WaterIntakeTrackerCard(themeColors)
-            ToolType.EMI_LOAN -> EmiLoanCalculatorCard(themeColors)
+            ToolType.BMR -> BMRCalculatorCard(viewModel, themeColors)
+            ToolType.IDEAL_WEIGHT -> IdealWeightCalculatorCard(viewModel, themeColors)
+            ToolType.WATER_INTAKE -> WaterIntakeTrackerCard(viewModel, themeColors)
+            ToolType.EMI_LOAN -> EmiLoanCalculatorCard(viewModel, themeColors)
             ToolType.DISCOUNT -> DiscountCalculatorCard(viewModel, themeColors)
-            ToolType.PROFIT_LOSS -> ProfitLossMarginCard(themeColors)
-            ToolType.VAT_TAX -> VatTaxCalculatorCard(themeColors)
-            ToolType.INTEREST -> InterestCalculatorCard(themeColors)
+            ToolType.PROFIT_LOSS -> ProfitLossMarginCard(viewModel, themeColors)
+            ToolType.VAT_TAX -> VatTaxCalculatorCard(viewModel, themeColors)
+            ToolType.INTEREST -> InterestCalculatorCard(viewModel, themeColors)
             ToolType.AGE -> AgeCalculatorCard(viewModel, themeColors)
-            ToolType.DATE_DIFF -> DateDifferenceCard(themeColors)
+            ToolType.DATE_DIFF -> DateDifferenceCard(viewModel, themeColors)
             ToolType.PERCENTAGE -> PercentageCalculatorCard(viewModel, themeColors)
-            ToolType.TIP -> TipCalculatorCard(themeColors)
+            ToolType.TIP -> TipCalculatorCard(viewModel, themeColors)
             ToolType.ELECTRICITY_BILL -> ElectricityBillCalculatorCard(viewModel, themeColors)
-            ToolType.APPLIANCE_COST -> ApplianceEnergyCostCard(themeColors)
-            ToolType.BATTERY_BACKUP -> BatteryBackupCard(themeColors)
-            ToolType.FUEL_COST -> FuelCostCalculatorCard(themeColors)
-            ToolType.SPEED_DISTANCE_TIME -> SpeedDistanceTimeCard(themeColors)
+            ToolType.APPLIANCE_COST -> ApplianceEnergyCostCard(viewModel, themeColors)
+            ToolType.BATTERY_BACKUP -> BatteryBackupCard(viewModel, themeColors)
+            ToolType.FUEL_COST -> FuelCostCalculatorCard(viewModel, themeColors)
+            ToolType.SPEED_DISTANCE_TIME -> SpeedDistanceTimeCard(viewModel, themeColors)
         }
     }
 }

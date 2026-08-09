@@ -119,7 +119,7 @@ fun DiscountCalculatorCard(viewModel: CalculatorViewModel, themeColors: Calculat
                         text = viewModel.finalPriceResult,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF6366F1),
+                        color = themeColors.buttonEqualBg,
                         modifier = Modifier.testTag("discount_final_price_text")
                     )
                 }
@@ -134,7 +134,7 @@ fun DiscountCalculatorCard(viewModel: CalculatorViewModel, themeColors: Calculat
                         text = viewModel.discountSavingsResult,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF6366F1),
+                        color = themeColors.buttonEqualBg,
                         modifier = Modifier.testTag("discount_savings_text")
                     )
                 }

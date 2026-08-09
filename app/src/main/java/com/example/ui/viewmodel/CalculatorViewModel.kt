@@ -84,11 +84,11 @@ class CalculatorViewModel(
     var currentThemeType by mutableStateOf(
         try {
             CalculatorThemeType.valueOf(
-                sharedPrefs.getString("selected_theme", CalculatorThemeType.INDIGO_ESSENCE.name)
-                    ?: CalculatorThemeType.INDIGO_ESSENCE.name
+                sharedPrefs.getString("selected_theme", CalculatorThemeType.SKY_BREEZE.name)
+                    ?: CalculatorThemeType.SKY_BREEZE.name
             )
         } catch (e: Exception) {
-            CalculatorThemeType.INDIGO_ESSENCE
+            CalculatorThemeType.SKY_BREEZE
         }
     )
         private set

@@ -95,7 +95,7 @@ fun AgeCalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
                         text = viewModel.ageYearsResult,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF6366F1),
+                        color = themeColors.buttonEqualBg,
                         modifier = Modifier.testTag("age_years_text")
                     )
                 }
@@ -110,7 +110,7 @@ fun AgeCalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
                         text = viewModel.ageMonthsResult,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF6366F1),
+                        color = themeColors.buttonEqualBg,
                         modifier = Modifier.testTag("age_months_text")
                     )
                 }
@@ -125,7 +125,7 @@ fun AgeCalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
                         text = viewModel.ageDaysResult,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF6366F1),
+                        color = themeColors.buttonEqualBg,
                         modifier = Modifier.testTag("age_days_text")
                     )
                 }
@@ -171,7 +171,7 @@ fun AgeCalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
                         text = viewModel.ageWhichBirthdayResult,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF6366F1),
+                        color = themeColors.buttonEqualBg,
                         modifier = Modifier.testTag("age_which_birthday_text")
                     )
                 }

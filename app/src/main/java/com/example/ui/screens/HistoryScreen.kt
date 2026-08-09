@@ -76,7 +76,7 @@ fun HistoryScreen(
                     Icon(
                         imageVector = Icons.Default.DeleteSweep,
                         contentDescription = "Clear All History",
-                        tint = Color(0xFF6366F1),
+                        tint = themeColors.buttonEqualBg,
                         modifier = Modifier.size(28.dp)
                     )
                 }
@@ -147,7 +147,7 @@ fun HistoryScreen(
                                 }
                             ),
                         colors = CardDefaults.elevatedCardColors(
-                            containerColor = if (isSelected) Color(0xFF6366F1).copy(alpha = 0.12f) else themeColors.cardBg
+                            containerColor = if (isSelected) themeColors.buttonEqualBg.copy(alpha = 0.12f) else themeColors.cardBg
                         ),
                         elevation = CardDefaults.elevatedCardElevation(defaultElevation = if (isSelected) 0.dp else 2.dp)
                     ) {
@@ -179,7 +179,7 @@ fun HistoryScreen(
                                     fontSize = 20.sp,
                                     fontFamily = FontFamily.Monospace,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF6366F1), // Higher contrast color
+                                    color = themeColors.buttonEqualBg, // Higher contrast color
                                     maxLines = 1
                                 )
                             }
@@ -188,7 +188,7 @@ fun HistoryScreen(
                                 Checkbox(
                                     checked = isSelected,
                                     onCheckedChange = { viewModel.toggleHistorySelection(entry.id) },
-                                    colors = CheckboxDefaults.colors(checkedColor = Color(0xFF6366F1))
+                                    colors = CheckboxDefaults.colors(checkedColor = themeColors.buttonEqualBg)
                                 )
                             } else {
                                 IconButton(
@@ -224,7 +224,7 @@ fun HistoryScreen(
                         viewModel.clearAllHistory()
                         viewModel.showClearHistoryDialog = false
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6366F1))
+                    colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg)
                 ) {
                     Text("Clear All", color = Color.White)
                 }
@@ -257,7 +257,7 @@ fun HistoryScreen(
                         viewModel.showDeleteSingleDialog = false
                         viewModel.pendingDeleteId = null
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6366F1))
+                    colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg)
                 ) {
                     Text("Delete", color = Color.White)
                 }

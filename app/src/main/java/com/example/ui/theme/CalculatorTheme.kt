@@ -34,7 +34,8 @@ enum class CalculatorThemeType {
     FOREST_NIGHT,
     SKY_BREEZE,
     GOLDEN_SANDS,
-    PURE_MINIMAL;
+    PURE_MINIMAL,
+    PURE_DARK;
 
     fun getColors(): CalculatorThemeColors {
         return when (this) {
@@ -265,6 +266,25 @@ enum class CalculatorThemeType {
                 isDark = false,
                 themeName = "Pure Minimal",
                 themeNameBn = "পিওর মিনিমাল"
+            )
+            PURE_DARK -> CalculatorThemeColors(
+                background = Color(0xFF000000),
+                displayBackground = Color(0xFF000000),
+                displayText = Color(0xFFFFFFFF),
+                displayExpressionText = Color(0xFFA1A1AA),
+                buttonNormalBg = Color(0xFF18181B),
+                buttonNormalText = Color(0xFFFFFFFF),
+                buttonOperatorBg = Color(0xFF27272A),
+                buttonOperatorText = Color(0xFF38BDF8),
+                buttonFunctionBg = Color(0xFF18181B),
+                buttonFunctionText = Color(0xFFA1A1AA),
+                buttonEqualBg = Color(0xFF0284C7),
+                buttonEqualText = Color(0xFFFFFFFF),
+                cardBg = Color(0xFF121212),
+                unselectedItemText = Color(0xFFA1A1AA),
+                isDark = true,
+                themeName = "Pure Dark (AMOLED)",
+                themeNameBn = "পিওর ডার্ক (OLED)"
             )
         }
     }

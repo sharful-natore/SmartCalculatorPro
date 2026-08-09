@@ -124,7 +124,7 @@ fun ConverterCategoriesView(
             colors = OutlinedTextFieldDefaults.colors(
                 focusedContainerColor = themeColors.cardBg,
                 unfocusedContainerColor = themeColors.cardBg,
-                focusedBorderColor = Color(0xFF6366F1),
+                focusedBorderColor = themeColors.buttonEqualBg,
                 unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.15f),
                 focusedTextColor = themeColors.displayText,
                 unfocusedTextColor = themeColors.displayText
@@ -200,13 +200,13 @@ fun ConverterCategoriesView(
                             modifier = Modifier
                                 .size(28.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFF6366F1).copy(alpha = 0.15f)),
+                                .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = category.icon,
                                 contentDescription = category.titleEn,
-                                tint = Color(0xFF6366F1),
+                                tint = themeColors.buttonEqualBg,
                                 modifier = Modifier.size(16.dp)
                             )
                         }
@@ -262,7 +262,7 @@ fun FilterChipItem(
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(12.dp))
-            .background(if (isSelected) Color(0xFF6366F1) else themeColors.cardBg)
+            .background(if (isSelected) themeColors.buttonEqualBg else themeColors.cardBg)
             .clickable(onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 8.dp),
         contentAlignment = Alignment.Center
@@ -316,13 +316,13 @@ fun ConverterCardItem(
                     modifier = Modifier
                         .size(38.dp)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(Color(0xFF6366F1).copy(alpha = 0.12f)),
+                        .background(themeColors.buttonEqualBg.copy(alpha = 0.12f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = converterType.icon,
                         contentDescription = converterType.getTitle(viewModel.selectedLanguage),
-                        tint = Color(0xFF6366F1),
+                        tint = themeColors.buttonEqualBg,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -412,7 +412,7 @@ fun ConverterDetailView(
                 Text(
                     text = converterType.category.getTitle(viewModel.selectedLanguage),
                     fontSize = 12.sp,
-                    color = Color(0xFF6366F1),
+                    color = themeColors.buttonEqualBg,
                     fontWeight = FontWeight.Medium
                 )
             }
@@ -462,7 +462,7 @@ fun ConverterDetailView(
                         onClick = { viewModel.fetchExchangeRates() },
                         enabled = !viewModel.isFetchingExchangeRates,
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF6366F1),
+                            containerColor = themeColors.buttonEqualBg,
                             contentColor = Color.White
                         ),
                         shape = RoundedCornerShape(10.dp),
@@ -571,7 +571,7 @@ fun ConverterDetailView(
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = Color.Transparent,
                         unfocusedContainerColor = Color.Transparent,
-                        focusedBorderColor = Color(0xFF6366F1),
+                        focusedBorderColor = themeColors.buttonEqualBg,
                         unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f),
                         focusedTextColor = themeColors.displayText,
                         unfocusedTextColor = themeColors.displayText
@@ -601,7 +601,7 @@ fun ConverterDetailView(
             FilledIconButton(
                 onClick = { viewModel.swapUnits() },
                 colors = IconButtonDefaults.filledIconButtonColors(
-                    containerColor = Color(0xFF6366F1),
+                    containerColor = themeColors.buttonEqualBg,
                     contentColor = Color.White
                 ),
                 modifier = Modifier
@@ -694,7 +694,7 @@ fun ConverterDetailView(
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = Color.Transparent,
                         unfocusedContainerColor = Color.Transparent,
-                        focusedBorderColor = Color(0xFF6366F1),
+                        focusedBorderColor = themeColors.buttonEqualBg,
                         unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f),
                         focusedTextColor = themeColors.displayText,
                         unfocusedTextColor = themeColors.displayText
@@ -733,7 +733,7 @@ fun ConverterDetailView(
                 Text(
                     text = "1 ${viewModel.fromUnit} =",
                     fontSize = 12.sp,
-                    color = Color(0xFF6366F1),
+                    color = themeColors.buttonEqualBg,
                     fontWeight = FontWeight.Medium,
                     modifier = Modifier.padding(vertical = 4.dp)
                 )

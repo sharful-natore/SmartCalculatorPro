@@ -1,5 +1,6 @@
 package com.example.ui.screens
 
+import com.example.util.LanguageManager
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -36,21 +37,27 @@ import kotlin.math.sin
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThemeColors) {
+    val lang = viewModel.selectedLanguage
+    val primaryAccent = themeColors.buttonEqualBg
+
     ElevatedCard(
         modifier = Modifier
-                .fillMaxWidth().padding(bottom = 16.dp),
+            .fillMaxWidth()
+            .padding(bottom = 16.dp),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.elevatedCardColors(containerColor = themeColors.cardBg),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp)
     ) {
-        Column(modifier = Modifier
-                .padding(16.dp)) {
+        Column(modifier = Modifier.padding(16.dp)) {
             // Top Row: Age and Height
-            Row(modifier = Modifier
-                .fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 // Age Input
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
-                    Text("Age", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                    Text(LanguageManager.getString("age_years", lang), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
                     Spacer(modifier = Modifier.height(4.dp))
                     Box(
                         modifier = Modifier
@@ -71,7 +78,7 @@ fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
                                 color = themeColors.displayText,
                                 fontWeight = FontWeight.Medium
                             ),
-                            cursorBrush = SolidColor(Color(0xFF6366F1)),
+                            cursorBrush = SolidColor(primaryAccent),
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -81,7 +88,7 @@ fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
 
                 // Height Input
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(2f)) {
-                    Text("Height", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                    Text(LanguageManager.getString("height_cm", lang), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
                     Spacer(modifier = Modifier.height(4.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (viewModel.bmiHeightUnit == "ft/in") {
@@ -104,7 +111,7 @@ fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
                                         color = themeColors.displayText,
                                         fontWeight = FontWeight.Medium
                                     ),
-                                    cursorBrush = SolidColor(Color(0xFF6366F1)),
+                                    cursorBrush = SolidColor(primaryAccent),
                                     modifier = Modifier.fillMaxWidth()
                                 )
                             }
@@ -128,7 +135,7 @@ fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
                                         color = themeColors.displayText,
                                         fontWeight = FontWeight.Medium
                                     ),
-                                    cursorBrush = SolidColor(Color(0xFF6366F1)),
+                                    cursorBrush = SolidColor(primaryAccent),
                                     modifier = Modifier.fillMaxWidth()
                                 )
                             }
@@ -153,7 +160,7 @@ fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
                                         color = themeColors.displayText,
                                         fontWeight = FontWeight.Medium
                                     ),
-                                    cursorBrush = SolidColor(Color(0xFF6366F1)),
+                                    cursorBrush = SolidColor(primaryAccent),
                                     modifier = Modifier.fillMaxWidth()
                                 )
                             }
@@ -163,46 +170,43 @@ fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
 
                 // Height Unit Dropdown
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier
-                .clickable { 
-                    viewModel.bmiHeightUnit = if(viewModel.bmiHeightUnit == "ft/in") "cm" else "ft/in"
-                    viewModel.calculateBMI()
-                }) {
-                    Text(text = viewModel.bmiHeightUnit, color = Color(0xFF6366F1), fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    .clickable { 
+                        viewModel.bmiHeightUnit = if(viewModel.bmiHeightUnit == "ft/in") "cm" else "ft/in"
+                        viewModel.calculateBMI()
+                    }) {
+                    Text(text = viewModel.bmiHeightUnit, color = primaryAccent, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                     Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = themeColors.displayText.copy(alpha=0.5f))
                 }
             }
             
-            Spacer(modifier = Modifier
-                .height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             
             // Middle Row: Gender and Weight
-            Row(modifier = Modifier
-                .fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Row(modifier = Modifier
-                .weight(1f), horizontalArrangement = Arrangement.Center) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.Center) {
                     Icon(
                         Icons.Default.Woman, 
                         contentDescription = "Female", 
-                        tint = if (viewModel.bmiGender == "Female") Color(0xFF6366F1) else themeColors.displayText.copy(alpha = 0.3f),
-                        modifier = Modifier
-                .size(32.dp).clickable { viewModel.bmiGender = "Female"; viewModel.calculateBMI() }
+                        tint = if (viewModel.bmiGender == "Female") primaryAccent else themeColors.displayText.copy(alpha = 0.3f),
+                        modifier = Modifier.size(32.dp).clickable { viewModel.bmiGender = "Female"; viewModel.calculateBMI() }
                     )
-                    Spacer(modifier = Modifier
-                .width(4.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
                     Icon(
                         Icons.Default.Man, 
                         contentDescription = "Male", 
-                        tint = if (viewModel.bmiGender == "Male") Color(0xFF6366F1) else themeColors.displayText.copy(alpha = 0.3f),
-                        modifier = Modifier
-                .size(32.dp).clickable { viewModel.bmiGender = "Male"; viewModel.calculateBMI() }
+                        tint = if (viewModel.bmiGender == "Male") primaryAccent else themeColors.displayText.copy(alpha = 0.3f),
+                        modifier = Modifier.size(32.dp).clickable { viewModel.bmiGender = "Male"; viewModel.calculateBMI() }
                     )
                 }
 
-                Spacer(modifier = Modifier
-                .width(8.dp))
+                Spacer(modifier = Modifier.width(8.dp))
 
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(2f)) {
-                    Text("Weight", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                    Text(LanguageManager.getString("weight_kg", lang), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
                     Spacer(modifier = Modifier.height(4.dp))
                     Box(
                         modifier = Modifier
@@ -223,7 +227,7 @@ fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
                                 color = themeColors.displayText,
                                 fontWeight = FontWeight.Medium
                             ),
-                            cursorBrush = SolidColor(Color(0xFF6366F1)),
+                            cursorBrush = SolidColor(primaryAccent),
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -231,10 +235,10 @@ fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
                 
                 // Weight Unit Dropdown
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier
-                .clickable { 
-                    viewModel.toggleBmiWeightUnit()
-                }) {
-                    Text(text = viewModel.bmiWeightUnit, color = Color(0xFF6366F1), fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    .clickable { 
+                        viewModel.toggleBmiWeightUnit()
+                    }) {
+                    Text(text = viewModel.bmiWeightUnit, color = primaryAccent, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                     Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = themeColors.displayText.copy(alpha=0.5f))
                 }
             }
@@ -332,7 +336,7 @@ fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
-                color = Color(0xFF6366F1).copy(alpha = 0.08f)
+                color = themeColors.buttonEqualBg.copy(alpha = 0.08f)
             ) {
                 Row(
                     modifier = Modifier.padding(16.dp),
@@ -351,7 +355,7 @@ fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
                             text = viewModel.bmiIdealWeightRange,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF6366F1)
+                            color = themeColors.buttonEqualBg
                         )
                     }
                 }
