@@ -249,10 +249,9 @@ fun BasicScientificScreen(
                                             AnimatedContent(
                                                 targetState = char,
                                                 transitionSpec = {
-                                                    // Animate if it's the last character or near the selection
-                                                    if (index >= text.length - 1 || index >= selectionStart - 1) {
-                                                        (scaleIn(animationSpec = spring(dampingRatio = 0.6f, stiffness = 400f)) + fadeIn())
-                                                            .togetherWith(scaleOut(animationSpec = spring(dampingRatio = 0.6f, stiffness = 800f)) + fadeOut())
+                                                    if (targetState != initialState) {
+                                                        (slideInVertically { it / 2 } + fadeIn(animationSpec = spring(stiffness = Spring.StiffnessLow)))
+                                                            .togetherWith(slideOutVertically { -it / 2 } + fadeOut())
                                                     } else {
                                                         EnterTransition.None togetherWith ExitTransition.None
                                                     }
@@ -306,23 +305,35 @@ fun BasicScientificScreen(
                 Spacer(modifier = Modifier.height((10f - (6f * expansionFraction)).dp))
 
                 // Calculated Result string (Click to copy)
-                Text(
-                    text = viewModel.result,
-                    color = resultColor,
-                    fontSize = resultSize.sp,
-                    fontFamily = FontFamily.Monospace,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.End,
-                    maxLines = 1,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            if (viewModel.result.isNotEmpty()) {
-                                clipboardManager.setText(AnnotatedString(viewModel.result))
-                            }
+                AnimatedContent(
+                    targetState = viewModel.result,
+                    transitionSpec = {
+                        if (targetState.length > initialState.length) {
+                            (slideInVertically { it / 2 } + fadeIn()).togetherWith(slideOutVertically { -it / 2 } + fadeOut())
+                        } else {
+                            fadeIn().togetherWith(fadeOut())
                         }
-                        .testTag("result_display")
-                )
+                    },
+                    label = "result_anim"
+                ) { targetResult ->
+                    Text(
+                        text = targetResult,
+                        color = resultColor,
+                        fontSize = resultSize.sp,
+                        fontFamily = FontFamily.Monospace,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.End,
+                        maxLines = 1,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                if (targetResult.isNotEmpty()) {
+                                    clipboardManager.setText(AnnotatedString(targetResult))
+                                }
+                            }
+                            .testTag("result_display")
+                    )
+                }
             }
         }
 
