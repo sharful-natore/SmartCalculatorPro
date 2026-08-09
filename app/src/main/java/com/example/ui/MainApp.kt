@@ -92,7 +92,7 @@ fun MainApp(viewModel: CalculatorViewModel) {
                     .fillMaxWidth()
                     .background(themeColors.buttonEqualBg)
                     .statusBarsPadding()
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -109,7 +109,7 @@ fun MainApp(viewModel: CalculatorViewModel) {
                             else -> "Smart Calculator"
                         },
                         color = Color.White,
-                        fontSize = 19.sp,
+                        fontSize = 17.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.animateContentSize()
                     )
@@ -146,7 +146,7 @@ fun MainApp(viewModel: CalculatorViewModel) {
                     tonalElevation = 0.dp,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(88.dp)
+                        .height(64.dp)
                         .testTag("bottom_nav_bar")
                 ) {
                     val tabs = listOf(
@@ -164,7 +164,7 @@ fun MainApp(viewModel: CalculatorViewModel) {
                                 Icon(
                                     imageVector = if (icon is ImageVector) icon else icon as ImageVector, 
                                     contentDescription = label,
-                                    modifier = Modifier.size(32.dp)
+                                    modifier = Modifier.size(24.dp)
                                 ) 
                             },
                             label = null,

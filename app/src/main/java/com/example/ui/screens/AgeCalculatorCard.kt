@@ -57,7 +57,7 @@ fun AgeCalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
                 value = viewModel.ageDob,
                 onValueChange = {},
                 readOnly = true,
-                label = { Text("Date of Birth", color = themeColors.displayText.copy(alpha = 0.7f)) },
+                label = { Text("Date of Birth", color = themeColors.displayText.copy(alpha = 0.7f), fontSize = 12.sp) },
                 trailingIcon = {
                     Icon(
                         imageVector = Icons.Default.CalendarMonth,
@@ -72,8 +72,10 @@ fun AgeCalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
                     focusedBorderColor = themeColors.buttonOperatorBg,
                     unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.15f)
                 ),
+                shape = RoundedCornerShape(10.dp),
                 modifier = Modifier
                     .fillMaxWidth()
+                    .heightIn(min = 48.dp)
                     .clickable { datePickerDialog.show() }
                     .testTag("age_dob_input")
             )

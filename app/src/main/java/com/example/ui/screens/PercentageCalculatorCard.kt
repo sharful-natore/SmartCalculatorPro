@@ -46,7 +46,7 @@ fun PercentageCalculatorCard(viewModel: CalculatorViewModel, themeColors: Calcul
                         viewModel.percentValueA = it
                         viewModel.calculatePercentage()
                     },
-                    label = { Text("% of", color = themeColors.displayText.copy(alpha = 0.7f)) },
+                    label = { Text("% of", color = themeColors.displayText.copy(alpha = 0.7f), fontSize = 12.sp) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = themeColors.displayText,
@@ -54,13 +54,15 @@ fun PercentageCalculatorCard(viewModel: CalculatorViewModel, themeColors: Calcul
                         focusedBorderColor = themeColors.buttonOperatorBg,
                         unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.15f)
                     ),
+                    shape = RoundedCornerShape(10.dp),
                     modifier = Modifier
                         .weight(1f)
+                        .heightIn(min = 48.dp)
                         .testTag("percentage_a_input")
                 )
                 Text(
                     text = "is what % of",
-                    fontSize = 14.sp,
+                    fontSize = 12.sp,
                     color = themeColors.displayText.copy(alpha = 0.7f)
                 )
                 OutlinedTextField(
@@ -69,7 +71,7 @@ fun PercentageCalculatorCard(viewModel: CalculatorViewModel, themeColors: Calcul
                         viewModel.percentValueB = it
                         viewModel.calculatePercentage()
                     },
-                    label = { Text("Value", color = themeColors.displayText.copy(alpha = 0.7f)) },
+                    label = { Text("Value", color = themeColors.displayText.copy(alpha = 0.7f), fontSize = 12.sp) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = themeColors.displayText,
@@ -77,8 +79,10 @@ fun PercentageCalculatorCard(viewModel: CalculatorViewModel, themeColors: Calcul
                         focusedBorderColor = themeColors.buttonOperatorBg,
                         unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.15f)
                     ),
+                    shape = RoundedCornerShape(10.dp),
                     modifier = Modifier
                         .weight(1f)
+                        .heightIn(min = 48.dp)
                         .testTag("percentage_b_input")
                 )
             }

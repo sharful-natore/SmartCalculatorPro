@@ -41,7 +41,7 @@ fun DiscountCalculatorCard(viewModel: CalculatorViewModel, themeColors: Calculat
                     viewModel.originalPrice = it
                     viewModel.calculateDiscount()
                 },
-                label = { Text("Original Price", color = themeColors.displayText.copy(alpha = 0.7f)) },
+                label = { Text("Original Price", color = themeColors.displayText.copy(alpha = 0.7f), fontSize = 12.sp) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = themeColors.displayText,
@@ -49,12 +49,14 @@ fun DiscountCalculatorCard(viewModel: CalculatorViewModel, themeColors: Calculat
                     focusedBorderColor = themeColors.buttonOperatorBg,
                     unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.15f)
                 ),
+                shape = RoundedCornerShape(10.dp),
                 modifier = Modifier
                     .fillMaxWidth()
+                    .heightIn(min = 48.dp)
                     .testTag("discount_price_input")
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -66,7 +68,7 @@ fun DiscountCalculatorCard(viewModel: CalculatorViewModel, themeColors: Calculat
                         viewModel.discountPercent = it
                         viewModel.calculateDiscount()
                     },
-                    label = { Text("Discount %", color = themeColors.displayText.copy(alpha = 0.7f)) },
+                    label = { Text("Discount %", color = themeColors.displayText.copy(alpha = 0.7f), fontSize = 12.sp) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = themeColors.displayText,
@@ -74,8 +76,10 @@ fun DiscountCalculatorCard(viewModel: CalculatorViewModel, themeColors: Calculat
                         focusedBorderColor = themeColors.buttonOperatorBg,
                         unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.15f)
                     ),
+                    shape = RoundedCornerShape(10.dp),
                     modifier = Modifier
                         .weight(1f)
+                        .heightIn(min = 48.dp)
                         .testTag("discount_percent_input")
                 )
                 OutlinedTextField(
@@ -84,7 +88,7 @@ fun DiscountCalculatorCard(viewModel: CalculatorViewModel, themeColors: Calculat
                         viewModel.taxPercent = it
                         viewModel.calculateDiscount()
                     },
-                    label = { Text("Tax %", color = themeColors.displayText.copy(alpha = 0.7f)) },
+                    label = { Text("Tax %", color = themeColors.displayText.copy(alpha = 0.7f), fontSize = 12.sp) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = themeColors.displayText,
@@ -92,8 +96,10 @@ fun DiscountCalculatorCard(viewModel: CalculatorViewModel, themeColors: Calculat
                         focusedBorderColor = themeColors.buttonOperatorBg,
                         unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.15f)
                     ),
+                    shape = RoundedCornerShape(10.dp),
                     modifier = Modifier
                         .weight(1f)
+                        .heightIn(min = 48.dp)
                         .testTag("discount_tax_input")
                 )
             }

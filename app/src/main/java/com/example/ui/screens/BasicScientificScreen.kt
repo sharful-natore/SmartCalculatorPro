@@ -96,9 +96,9 @@ fun BasicScientificScreen(
     val displayWeight = 1.15f - (0.30f * expansionFraction)
     val keypadWeight = 2.85f + (0.30f * expansionFraction)
 
-    val buttonPadding = (4f - (2f * expansionFraction)).dp
-    val rowSpacing = (8f - (4f * expansionFraction)).dp
-    val basicFontSize = (22f - (5f * expansionFraction)).toInt()
+    val buttonPadding = (2f - (1f * expansionFraction)).dp
+    val rowSpacing = (4f - (2f * expansionFraction)).dp
+    val basicFontSize = (23f - (4f * expansionFraction)).toInt()
     val scientificFontSize = (14f - (2f * expansionFraction)).toInt()
 
     Column(
@@ -184,6 +184,16 @@ fun BasicScientificScreen(
 
                 // Expression Field with custom cursor and copy/paste support
                 var showPasteMenu by remember { mutableStateOf(false) }
+                val exprScrollState = rememberScrollState()
+                val resultScrollState = rememberScrollState()
+
+                LaunchedEffect(viewModel.expressionValue.text, viewModel.expressionValue.selection) {
+                    exprScrollState.animateScrollTo(exprScrollState.maxValue)
+                }
+
+                LaunchedEffect(viewModel.result) {
+                    resultScrollState.animateScrollTo(resultScrollState.maxValue)
+                }
                 
                 // Cursor blinking logic
                 var cursorVisible by remember { mutableStateOf(true) }
@@ -225,15 +235,23 @@ fun BasicScientificScreen(
                         ),
                         cursorBrush = SolidColor(Color.Transparent), // Hide default cursor
                         decorationBox = { innerTextField ->
-                            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .horizontalScroll(exprScrollState),
+                                contentAlignment = Alignment.CenterEnd
+                            ) {
                                 // Animated characters layer with custom cursor
                                 Row(
-                                    modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.End,
                                     verticalAlignment = Alignment.Bottom
                                 ) {
                                     val text = viewModel.expressionValue.text
                                     val selectionStart = viewModel.expressionValue.selection.start
+                                    var prevTextLength by remember { mutableStateOf(text.length) }
+                                    
+                                    val maxLen = maxOf(text.length, prevTextLength)
+                                    SideEffect { prevTextLength = text.length }
                                     
                                     // Handle cursor at the very beginning
                                     Box(
@@ -243,30 +261,33 @@ fun BasicScientificScreen(
                                             .background(if (selectionStart == 0 && cursorVisible) themeColors.displayText else Color.Transparent)
                                     )
 
-                                    text.forEachIndexed { index, char ->
-                                        // Stable key for animation
-                                        key(index) { 
-                                            AnimatedContent(
-                                                targetState = char,
-                                                transitionSpec = {
-                                                    if (targetState != initialState) {
-                                                        (slideInVertically { it / 2 } + fadeIn(animationSpec = spring(stiffness = Spring.StiffnessLow)))
-                                                            .togetherWith(slideOutVertically { -it / 2 } + fadeOut())
-                                                    } else {
-                                                        EnterTransition.None togetherWith ExitTransition.None
-                                                    }
-                                                },
-                                                label = "char_anim"
-                                            ) { animatedChar ->
-                                                Text(
-                                                    text = animatedChar.toString(),
-                                                    color = exprColor,
-                                                    fontSize = exprSize.sp,
-                                                    fontFamily = FontFamily.Monospace,
-                                                    fontWeight = FontWeight.Medium,
-                                                    textAlign = TextAlign.End,
-                                                    modifier = Modifier.padding(horizontal = 0.5.dp)
-                                                )
+                                    (0 until maxLen).forEach { index ->
+                                        val char = text.getOrNull(index)
+                                        AnimatedVisibility(
+                                            visible = char != null,
+                                            enter = scaleIn(initialScale = 0.2f, animationSpec = spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessMedium)) + fadeIn(),
+                                            exit = scaleOut(targetScale = 0.2f, animationSpec = spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessMedium)) + fadeOut(),
+                                            label = "char_visibility"
+                                        ) {
+                                            if (char != null) {
+                                                AnimatedContent(
+                                                    targetState = char,
+                                                    transitionSpec = {
+                                                        (scaleIn(initialScale = 0.2f, animationSpec = spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessMedium)) + fadeIn())
+                                                            .togetherWith(scaleOut(targetScale = 0.2f, animationSpec = spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessMedium)) + fadeOut())
+                                                    },
+                                                    label = "char_anim"
+                                                ) { animatedChar ->
+                                                    Text(
+                                                        text = animatedChar.toString(),
+                                                        color = exprColor,
+                                                        fontSize = exprSize.sp,
+                                                        fontFamily = FontFamily.Monospace,
+                                                        fontWeight = FontWeight.Medium,
+                                                        textAlign = TextAlign.End,
+                                                        modifier = Modifier.padding(horizontal = 0.5.dp)
+                                                    )
+                                                }
                                             }
                                         }
                                         
@@ -305,19 +326,14 @@ fun BasicScientificScreen(
                 Spacer(modifier = Modifier.height((10f - (6f * expansionFraction)).dp))
 
                 // Calculated Result string (Click to copy)
-                AnimatedContent(
-                    targetState = viewModel.result,
-                    transitionSpec = {
-                        if (targetState.length > initialState.length) {
-                            (slideInVertically { it / 2 } + fadeIn()).togetherWith(slideOutVertically { -it / 2 } + fadeOut())
-                        } else {
-                            fadeIn().togetherWith(fadeOut())
-                        }
-                    },
-                    label = "result_anim"
-                ) { targetResult ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(resultScrollState),
+                    contentAlignment = Alignment.CenterEnd
+                ) {
                     Text(
-                        text = targetResult,
+                        text = viewModel.result,
                         color = resultColor,
                         fontSize = resultSize.sp,
                         fontFamily = FontFamily.Monospace,
@@ -325,10 +341,9 @@ fun BasicScientificScreen(
                         textAlign = TextAlign.End,
                         maxLines = 1,
                         modifier = Modifier
-                            .fillMaxWidth()
                             .clickable {
-                                if (targetResult.isNotEmpty()) {
-                                    clipboardManager.setText(AnnotatedString(targetResult))
+                                if (viewModel.result.isNotEmpty()) {
+                                    clipboardManager.setText(AnnotatedString(viewModel.result))
                                 }
                             }
                             .testTag("result_display")
@@ -618,7 +633,8 @@ fun BasicScientificScreen(
                                     text = "=",
                                     color = themeColors.buttonEqualText,
                                     fontSize = basicFontSize.sp,
-                                    fontWeight = FontWeight.SemiBold,
+                                    fontFamily = FontFamily.Monospace,
+                                    fontWeight = FontWeight.Bold,
                                     modifier = Modifier.align(Alignment.Center)
                                 )
                                 Icon(

@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -47,10 +48,13 @@ fun UnitConverterScreen(
     var isToDropdownExpanded by remember { mutableStateOf(false) }
     val availableUnits = viewModel.getUnitsForCategory(viewModel.unitCategory)
 
+    val mainScrollState = rememberScrollState()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(themeColors.background)
+            .verticalScroll(mainScrollState)
             .padding(16.dp)
     ) {
         // 1. Horizontal Scroll Category Chips (Icon & text styled like Tools page)
@@ -69,8 +73,8 @@ fun UnitConverterScreen(
 
                 Box(
                     modifier = Modifier
-                        .height(54.dp)
-                        .widthIn(min = 96.dp)
+                        .height(48.dp)
+                        .widthIn(min = 90.dp)
                         .clip(RoundedCornerShape(14.dp))
                         .background(if (isSelected) Color(0xFF6366F1) else themeColors.buttonNormalBg)
                         .clickable { viewModel.onUnitCategoryChange(category) }
@@ -86,7 +90,7 @@ fun UnitConverterScreen(
                             imageVector = icon,
                             contentDescription = label,
                             tint = if (isSelected) Color.White else themeColors.unselectedItemText,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
@@ -100,16 +104,16 @@ fun UnitConverterScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
         // 2. From Unit Panel Card
         ElevatedCard(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
+            shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.elevatedCardColors(containerColor = themeColors.cardBg),
-            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp)
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(14.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -117,7 +121,7 @@ fun UnitConverterScreen(
                 ) {
                     Text(
                         text = "From Unit",
-                        fontSize = 14.sp,
+                        fontSize = 13.sp,
                         color = themeColors.displayExpressionText,
                         fontWeight = FontWeight.Bold
                     )
@@ -127,17 +131,17 @@ fun UnitConverterScreen(
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
-                                .clip(RoundedCornerShape(12.dp))
+                                .clip(RoundedCornerShape(10.dp))
                                 .background(themeColors.background)
                                 .clickable { isFromDropdownExpanded = true }
-                                .padding(horizontal = 12.dp, vertical = 8.dp)
+                                .padding(horizontal = 10.dp, vertical = 6.dp)
                                 .testTag("from_unit_dropdown")
                         ) {
                             Text(
                                 text = viewModel.fromUnit,
                                 color = themeColors.buttonNormalText,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp
+                                fontSize = 13.sp
                             )
                             Icon(
                                 imageVector = Icons.Default.ArrowDropDown,
@@ -165,7 +169,7 @@ fun UnitConverterScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 // Numeric text field for user input underneath
                 OutlinedTextField(
@@ -186,15 +190,16 @@ fun UnitConverterScreen(
                         focusedTextColor = themeColors.displayText,
                         unfocusedTextColor = themeColors.displayText
                     ),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(10.dp),
                     textStyle = LocalTextStyle.current.copy(
-                        fontSize = 22.sp,
+                        fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         textAlign = androidx.compose.ui.text.style.TextAlign.End
                     ),
                     singleLine = true,
                     modifier = Modifier
                         .fillMaxWidth()
+                        .heightIn(min = 48.dp)
                         .testTag("converter_input_field")
                 )
             }
@@ -204,7 +209,7 @@ fun UnitConverterScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 12.dp),
+                .padding(vertical = 8.dp),
             contentAlignment = Alignment.Center
         ) {
             FilledIconButton(
@@ -214,13 +219,13 @@ fun UnitConverterScreen(
                     contentColor = Color.White
                 ),
                 modifier = Modifier
-                    .size(48.dp)
+                    .size(40.dp)
                     .testTag("swap_units_button")
             ) {
                 Icon(
                     imageVector = Icons.Default.SwapVert,
                     contentDescription = "Swap Units",
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }
@@ -228,11 +233,11 @@ fun UnitConverterScreen(
         // 4. To Unit Panel Card
         ElevatedCard(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
+            shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.elevatedCardColors(containerColor = themeColors.cardBg),
-            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp)
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(14.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -240,7 +245,7 @@ fun UnitConverterScreen(
                 ) {
                     Text(
                         text = "To Unit",
-                        fontSize = 14.sp,
+                        fontSize = 13.sp,
                         color = themeColors.displayExpressionText,
                         fontWeight = FontWeight.Bold
                     )
@@ -250,17 +255,17 @@ fun UnitConverterScreen(
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
-                                .clip(RoundedCornerShape(12.dp))
+                                .clip(RoundedCornerShape(10.dp))
                                 .background(themeColors.background)
                                 .clickable { isToDropdownExpanded = true }
-                                .padding(horizontal = 12.dp, vertical = 8.dp)
+                                .padding(horizontal = 10.dp, vertical = 6.dp)
                                 .testTag("to_unit_dropdown")
                         ) {
                             Text(
                                 text = viewModel.toUnit,
                                 color = themeColors.buttonNormalText,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp
+                                fontSize = 13.sp
                             )
                             Icon(
                                 imageVector = Icons.Default.ArrowDropDown,
@@ -288,7 +293,7 @@ fun UnitConverterScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 // Editable OutlinedTextField for To Unit output
                 OutlinedTextField(
@@ -309,15 +314,16 @@ fun UnitConverterScreen(
                         focusedTextColor = themeColors.displayText,
                         unfocusedTextColor = themeColors.displayText
                     ),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(10.dp),
                     textStyle = LocalTextStyle.current.copy(
-                        fontSize = 22.sp,
+                        fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         textAlign = androidx.compose.ui.text.style.TextAlign.End
                     ),
                     singleLine = true,
                     modifier = Modifier
                         .fillMaxWidth()
+                        .heightIn(min = 48.dp)
                         .testTag("converter_output_text")
                 )
             }

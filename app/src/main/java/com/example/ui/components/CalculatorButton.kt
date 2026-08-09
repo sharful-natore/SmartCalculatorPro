@@ -82,7 +82,8 @@ fun CalculatorButton(
                 text = text,
                 color = textColor,
                 fontSize = fontSize.sp,
-                fontWeight = FontWeight.SemiBold
+                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                fontWeight = FontWeight.Bold
             )
         }
     }
