@@ -28,11 +28,18 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
 import android.app.Activity
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.SideEffect
 import androidx.core.view.WindowCompat
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import com.example.ui.screens.*
 import com.example.ui.theme.CalculatorThemeColors
 import com.example.ui.viewmodel.CalculatorViewModel
+import com.example.util.AppLanguage
+import com.example.util.LanguageManager
 
 @Composable
 fun MainApp(viewModel: CalculatorViewModel) {
@@ -85,6 +92,77 @@ fun MainApp(viewModel: CalculatorViewModel) {
         }
     }
 
+    // Handle Back Press
+    val activity = context as? Activity
+    BackHandler(enabled = true) {
+        when {
+            // If inside a specific converter detail screen
+            viewModel.activeTab == 1 && viewModel.selectedConverterType != null -> {
+                viewModel.closeConverterDetail()
+            }
+            // If inside a specific tool detail screen
+            viewModel.activeTab == 2 && viewModel.selectedToolType != null -> {
+                viewModel.closeToolDetail()
+            }
+            // If on non-home tab (Converter, Tools, History, Themes)
+            viewModel.activeTab != 0 -> {
+                viewModel.activeTab = 0
+            }
+            // If on home tab (Calculator)
+            else -> {
+                viewModel.showExitDialog = true
+            }
+        }
+    }
+
+    // Exit Confirmation Dialog
+    if (viewModel.showExitDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.showExitDialog = false },
+            title = {
+                Text(
+                    text = LanguageManager.getString("exit_title", viewModel.selectedLanguage),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    color = themeColors.displayText
+                )
+            },
+            text = {
+                Text(
+                    text = LanguageManager.getString("exit_msg", viewModel.selectedLanguage),
+                    fontSize = 14.sp,
+                    color = themeColors.displayText.copy(alpha = 0.8f)
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.showExitDialog = false
+                        activity?.finish()
+                    }
+                ) {
+                    Text(
+                        text = LanguageManager.getString("exit_confirm", viewModel.selectedLanguage),
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFEF4444)
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { viewModel.showExitDialog = false }
+                ) {
+                    Text(
+                        text = LanguageManager.getString("exit_cancel", viewModel.selectedLanguage),
+                        color = themeColors.displayText
+                    )
+                }
+            },
+            containerColor = themeColors.cardBg,
+            shape = RoundedCornerShape(16.dp)
+        )
+    }
+
     Scaffold(
         topBar = {
             Box(
@@ -92,7 +170,7 @@ fun MainApp(viewModel: CalculatorViewModel) {
                     .fillMaxWidth()
                     .background(themeColors.buttonEqualBg)
                     .statusBarsPadding()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -101,15 +179,15 @@ fun MainApp(viewModel: CalculatorViewModel) {
                 ) {
                     Text(
                         text = when (viewModel.activeTab) {
-                            0 -> "Smart Calculator"
-                            1 -> "Unit Converter"
-                            2 -> "Special Tools"
-                            3 -> "History"
-                            4 -> "Themes"
-                            else -> "Smart Calculator"
+                            0 -> LanguageManager.getString("app_title_calc", viewModel.selectedLanguage)
+                            1 -> LanguageManager.getString("app_title_conv", viewModel.selectedLanguage)
+                            2 -> LanguageManager.getString("app_title_tools", viewModel.selectedLanguage)
+                            3 -> LanguageManager.getString("app_title_history", viewModel.selectedLanguage)
+                            4 -> LanguageManager.getString("app_title_themes", viewModel.selectedLanguage)
+                            else -> LanguageManager.getString("app_title_calc", viewModel.selectedLanguage)
                         },
                         color = Color.White,
-                        fontSize = 17.sp,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.animateContentSize()
                     )
@@ -123,6 +201,49 @@ fun MainApp(viewModel: CalculatorViewModel) {
                                 )
                             }
                         }
+
+                        // Language Switcher Dropdown Button
+                        var isLangMenuExpanded by remember { mutableStateOf(false) }
+                        Box {
+                        IconButton(
+                            onClick = { isLangMenuExpanded = true },
+                            modifier = Modifier.testTag("language_selector_button")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Translate,
+                                contentDescription = "Select Language",
+                                tint = Color.White
+                            )
+                        }
+
+                            DropdownMenu(
+                                expanded = isLangMenuExpanded,
+                                onDismissRequest = { isLangMenuExpanded = false },
+                                modifier = Modifier.background(themeColors.cardBg)
+                            ) {
+                                AppLanguage.values().forEach { lang ->
+                                    DropdownMenuItem(
+                                        text = {
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Text(text = lang.flag, fontSize = 16.sp)
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text(
+                                                    text = lang.displayName,
+                                                    color = if (viewModel.selectedLanguage == lang) Color(0xFF6366F1) else themeColors.displayText,
+                                                    fontWeight = if (viewModel.selectedLanguage == lang) FontWeight.Bold else FontWeight.Normal,
+                                                    fontSize = 14.sp
+                                                )
+                                            }
+                                        },
+                                        onClick = {
+                                            viewModel.setLanguage(lang)
+                                            isLangMenuExpanded = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+
                         IconButton(onClick = { viewModel.activeTab = 4 }) {
                             Icon(
                                 imageVector = Icons.Default.Palette,
@@ -150,10 +271,10 @@ fun MainApp(viewModel: CalculatorViewModel) {
                         .testTag("bottom_nav_bar")
                 ) {
                     val tabs = listOf(
-                        Triple(0, Icons.Default.Calculate, "Calc"),
-                        Triple(1, ImageVector.vectorResource(id = R.drawable.ic_convert_tab), "Conv"),
-                        Triple(2, Icons.Default.Widgets, "Tools"),
-                        Triple(3, Icons.Default.History, "History")
+                        Triple(0, Icons.Default.Calculate, LanguageManager.getString("tab_calc", viewModel.selectedLanguage)),
+                        Triple(1, ImageVector.vectorResource(id = R.drawable.ic_convert_tab), LanguageManager.getString("tab_conv", viewModel.selectedLanguage)),
+                        Triple(2, Icons.Default.Widgets, LanguageManager.getString("tab_tools", viewModel.selectedLanguage)),
+                        Triple(3, Icons.Default.History, LanguageManager.getString("tab_history", viewModel.selectedLanguage))
                     )
                     
                     tabs.forEach { (index, icon, label) ->

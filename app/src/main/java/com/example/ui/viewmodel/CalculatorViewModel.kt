@@ -12,11 +12,17 @@ import androidx.compose.ui.text.input.TextFieldValue
 import com.example.data.model.HistoryEntry
 import com.example.data.repository.HistoryRepository
 import com.example.ui.theme.CalculatorThemeType
+import com.example.util.AppLanguage
 import com.example.util.ExpressionEvaluator
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.json.JSONObject
+import java.net.HttpURLConnection
+import java.net.URL
 import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.*
@@ -73,7 +79,7 @@ class CalculatorViewModel(
         }
     }
 
-    // Theme Selection
+    // Theme & Language Selection
     private val sharedPrefs = context.getSharedPreferences("smart_calc_prefs", Context.MODE_PRIVATE)
     var currentThemeType by mutableStateOf(
         try {
@@ -87,6 +93,146 @@ class CalculatorViewModel(
     )
         private set
 
+    var selectedLanguage by mutableStateOf(
+        try {
+            AppLanguage.valueOf(
+                sharedPrefs.getString("selected_language", AppLanguage.ENGLISH.name)
+                    ?: AppLanguage.ENGLISH.name
+            )
+        } catch (e: Exception) {
+            AppLanguage.ENGLISH
+        }
+    )
+        private set
+
+    fun setLanguage(language: AppLanguage) {
+        selectedLanguage = language
+        sharedPrefs.edit().putString("selected_language", language.name).apply()
+    }
+
+    // --- Currency Exchange Rates Engine ---
+    private val defaultExchangeRates = mapOf(
+        "USD" to 1.0,
+        "BDT" to 121.5,
+        "EUR" to 0.92,
+        "GBP" to 0.78,
+        "INR" to 83.8,
+        "SAR" to 3.75,
+        "AED" to 3.67,
+        "MYR" to 4.42,
+        "SGD" to 1.34,
+        "CAD" to 1.37,
+        "AUD" to 1.52,
+        "JPY" to 147.5,
+        "CNY" to 7.17,
+        "PKR" to 278.5,
+        "LKR" to 302.0,
+        "TRY" to 33.5,
+        "RUB" to 88.0,
+        "KWD" to 0.31,
+        "BHD" to 0.38,
+        "OMR" to 0.38,
+        "QAR" to 3.64,
+        "THB" to 35.2,
+        "IDR" to 15800.0,
+        "KRW" to 1365.0,
+        "BRL" to 5.50,
+        "MXN" to 18.8,
+        "EGP" to 48.5,
+        "NGN" to 1600.0,
+        "CHF" to 0.86,
+        "NZD" to 1.66,
+        "ZAR" to 18.2
+    )
+
+    var exchangeRates by mutableStateOf<Map<String, Double>>(loadCachedExchangeRates())
+    var isFetchingExchangeRates by mutableStateOf(false)
+    var lastCurrencyUpdateTimestamp by mutableStateOf(
+        sharedPrefs.getString("last_currency_update_time", "Default Rates") ?: "Default Rates"
+    )
+    var currencyUpdateStatusMessage by mutableStateOf("")
+
+    private fun loadCachedExchangeRates(): Map<String, Double> {
+        val cachedJson = sharedPrefs.getString("cached_exchange_rates", null) ?: return defaultExchangeRates
+        return try {
+            val jsonObject = JSONObject(cachedJson)
+            val map = mutableMapOf<String, Double>()
+            val keys = jsonObject.keys()
+            while (keys.hasNext()) {
+                val key = keys.next()
+                map[key] = jsonObject.getDouble(key)
+            }
+            if (map.isNotEmpty()) map else defaultExchangeRates
+        } catch (e: Exception) {
+            defaultExchangeRates
+        }
+    }
+
+    private fun saveCachedExchangeRates(rates: Map<String, Double>, timestamp: String) {
+        try {
+            val jsonObject = JSONObject()
+            rates.forEach { (key, value) -> jsonObject.put(key, value) }
+            sharedPrefs.edit()
+                .putString("cached_exchange_rates", jsonObject.toString())
+                .putString("last_currency_update_time", timestamp)
+                .apply()
+        } catch (e: Exception) {
+            // SILENT
+        }
+    }
+
+    fun fetchExchangeRates() {
+        if (isFetchingExchangeRates) return
+        viewModelScope.launch(Dispatchers.IO) {
+            isFetchingExchangeRates = true
+            try {
+                val url = URL("https://open.er-api.com/v6/latest/USD")
+                val connection = url.openConnection() as HttpURLConnection
+                connection.requestMethod = "GET"
+                connection.connectTimeout = 6000
+                connection.readTimeout = 6000
+
+                if (connection.responseCode == 200) {
+                    val stream = connection.inputStream
+                    val responseText = stream.bufferedReader().use { it.readText() }
+                    val jsonObject = JSONObject(responseText)
+
+                    if (jsonObject.has("rates")) {
+                        val ratesObj = jsonObject.getJSONObject("rates")
+                        val newRates = defaultExchangeRates.toMutableMap()
+                        val keys = ratesObj.keys()
+                        while (keys.hasNext()) {
+                            val key = keys.next()
+                            newRates[key] = ratesObj.getDouble(key)
+                        }
+
+                        val timeStr = SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault()).format(Date())
+
+                        withContext(Dispatchers.Main) {
+                            exchangeRates = newRates
+                            lastCurrencyUpdateTimestamp = timeStr
+                            currencyUpdateStatusMessage = "Live rates updated successfully"
+                            saveCachedExchangeRates(newRates, timeStr)
+                            calculateConverter()
+                        }
+                    }
+                } else {
+                    withContext(Dispatchers.Main) {
+                        currencyUpdateStatusMessage = "Offline mode: Using cached rates"
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    currencyUpdateStatusMessage = "Offline mode: Using cached rates"
+                }
+            } finally {
+                withContext(Dispatchers.Main) {
+                    isFetchingExchangeRates = false
+                }
+            }
+        }
+    }
+
     // History list from Room Flow
     val historyList: StateFlow<List<HistoryEntry>> = repository.allHistory
         .stateIn(
@@ -96,11 +242,29 @@ class CalculatorViewModel(
         )
 
     // --- Unit Converter States ---
-    var unitCategory by mutableStateOf(UnitCategory.LENGTH)
+    var selectedConverterType by mutableStateOf<com.example.data.model.ConverterType?>(null)
+    var selectedCategoryFilter by mutableStateOf<com.example.data.model.ConverterCategory?>(null)
+    var converterSearchQuery by mutableStateOf("")
     var fromUnit by mutableStateOf("Meter")
-    var toUnit by mutableStateOf("Foot")
+    var toUnit by mutableStateOf("Feet")
     var converterInput by mutableStateOf("1")
     var converterOutput by mutableStateOf("3.2808")
+
+    // --- Special Tools States ---
+    var selectedToolType by mutableStateOf<com.example.data.model.ToolType?>(null)
+    var selectedToolCategoryFilter by mutableStateOf<com.example.data.model.ToolCategory?>(null)
+    var toolSearchQuery by mutableStateOf("")
+
+    fun openTool(type: com.example.data.model.ToolType) {
+        selectedToolType = type
+    }
+
+    fun closeToolDetail() {
+        selectedToolType = null
+    }
+
+    // Exit confirmation dialog state
+    var showExitDialog by mutableStateOf(false)
 
     // --- Special Calculators States ---
     // 1. BMI
@@ -141,6 +305,9 @@ class CalculatorViewModel(
     var percentageResultText by mutableStateOf("")
 
     init {
+        // Auto-fetch exchange rates when connected
+        fetchExchangeRates()
+
         // Trigger initial calculations
         calculateConverter()
         calculateBMI()
@@ -444,30 +611,16 @@ class CalculatorViewModel(
     }
 
     // --- Unit Converter Engine ---
-    enum class UnitCategory(val label: String, val labelBn: String) {
-        LENGTH("Length", "দৈর্ঘ্য"),
-        WEIGHT("Weight", "ওজন"),
-        AREA("Area", "ক্ষেত্রফল"),
-        VOLUME("Volume", "আয়তন"),
-        TEMPERATURE("Temperature", "তাপমাত্রা")
-    }
-
-    fun onUnitCategoryChange(category: UnitCategory) {
-        unitCategory = category
-        val units = getUnitsForCategory(category)
-        fromUnit = units.firstOrNull() ?: ""
-        toUnit = units.getOrNull(1) ?: fromUnit
+    fun openConverter(type: com.example.data.model.ConverterType) {
+        selectedConverterType = type
+        fromUnit = type.units.firstOrNull() ?: ""
+        toUnit = type.units.getOrNull(1) ?: fromUnit
+        converterInput = "1"
         calculateConverter()
     }
 
-    fun getUnitsForCategory(category: UnitCategory): List<String> {
-        return when (category) {
-            UnitCategory.LENGTH -> listOf("Meter", "Kilometer", "Centimeter", "Millimeter", "Mile", "Yard", "Foot", "Inch")
-            UnitCategory.WEIGHT -> listOf("Kilogram", "Gram", "Milligram", "Pound", "Ounce")
-            UnitCategory.AREA -> listOf("Square Meter", "Square Kilometer", "Acre", "Hectare", "Square Feet")
-            UnitCategory.VOLUME -> listOf("Liter", "Milliliter", "Gallon", "Quart", "Cup")
-            UnitCategory.TEMPERATURE -> listOf("Celsius", "Fahrenheit", "Kelvin")
-        }
+    fun closeConverterDetail() {
+        selectedConverterType = null
     }
 
     fun swapUnits() {
@@ -478,131 +631,27 @@ class CalculatorViewModel(
     }
 
     fun calculateConverter() {
+        val type = selectedConverterType ?: return
         val inputVal = converterInput.toDoubleOrNull() ?: 0.0
-        val outVal = convertUnits(unitCategory, fromUnit, toUnit, inputVal)
+        val outVal = if (type == com.example.data.model.ConverterType.CURRENCY) {
+            type.convert(fromUnit, toUnit, inputVal, customRates = exchangeRates)
+        } else {
+            type.convert(fromUnit, toUnit, inputVal)
+        }
         val df = DecimalFormat("#.######")
         converterOutput = df.format(outVal)
     }
 
     fun calculateConverterReverse() {
+        val type = selectedConverterType ?: return
         val outputVal = converterOutput.toDoubleOrNull() ?: 0.0
-        val inVal = convertUnits(unitCategory, toUnit, fromUnit, outputVal)
+        val inVal = if (type == com.example.data.model.ConverterType.CURRENCY) {
+            type.convert(toUnit, fromUnit, outputVal, customRates = exchangeRates)
+        } else {
+            type.convert(toUnit, fromUnit, outputVal)
+        }
         val df = DecimalFormat("#.######")
         converterInput = df.format(inVal)
-    }
-
-    private fun convertUnits(category: UnitCategory, from: String, to: String, value: Double): Double {
-        if (from == to) return value
-        return when (category) {
-            UnitCategory.LENGTH -> {
-                // Base unit: Meter
-                val inMeters = when (from) {
-                    "Meter" -> value
-                    "Kilometer" -> value * 1000.0
-                    "Centimeter" -> value / 100.0
-                    "Millimeter" -> value / 1000.0
-                    "Mile" -> value * 1609.344
-                    "Yard" -> value * 0.9144
-                    "Foot" -> value * 0.3048
-                    "Inch" -> value * 0.0254
-                    else -> value
-                }
-                when (to) {
-                    "Meter" -> inMeters
-                    "Kilometer" -> inMeters / 1000.0
-                    "Centimeter" -> inMeters * 100.0
-                    "Millimeter" -> inMeters * 1000.0
-                    "Mile" -> inMeters / 1609.344
-                    "Yard" -> inMeters / 0.9144
-                    "Foot" -> inMeters / 0.3048
-                    "Inch" -> inMeters / 0.0254
-                    else -> inMeters
-                }
-            }
-            UnitCategory.WEIGHT -> {
-                // Base unit: Gram
-                val inGrams = when (from) {
-                    "Gram" -> value
-                    "Kilogram" -> value * 1000.0
-                    "Milligram" -> value / 1000.0
-                    "Pound" -> value * 453.59237
-                    "Ounce" -> value * 28.34952
-                    else -> value
-                }
-                when (to) {
-                    "Gram" -> inGrams
-                    "Kilogram" -> inGrams / 1000.0
-                    "Milligram" -> inGrams * 1000.0
-                    "Pound" -> inGrams / 453.59237
-                    "Ounce" -> inGrams / 28.34952
-                    else -> inGrams
-                }
-            }
-            UnitCategory.AREA -> {
-                // Base unit: Square Meter
-                val inSqM = when (from) {
-                    "Square Meter" -> value
-                    "Square Kilometer" -> value * 1_000_000.0
-                    "Acre" -> value * 4046.856
-                    "Hectare" -> value * 10000.0
-                    "Square Feet" -> value * 0.092903
-                    else -> value
-                }
-                when (to) {
-                    "Square Meter" -> inSqM
-                    "Square Kilometer" -> inSqM / 1_000_000.0
-                    "Acre" -> inSqM / 4046.856
-                    "Hectare" -> inSqM / 10000.0
-                    "Square Feet" -> inSqM / 0.092903
-                    else -> inSqM
-                }
-            }
-            UnitCategory.VOLUME -> {
-                // Base unit: Liter
-                val inLiters = when (from) {
-                    "Liter" -> value
-                    "Milliliter" -> value / 1000.0
-                    "Gallon" -> value * 3.78541
-                    "Quart" -> value * 0.946353
-                    "Cup" -> value * 0.236588
-                    else -> value
-                }
-                when (to) {
-                    "Liter" -> inLiters
-                    "Milliliter" -> inLiters * 1000.0
-                    "Gallon" -> inLiters / 3.78541
-                    "Quart" -> inLiters / 0.946353
-                    "Cup" -> inLiters / 0.236588
-                    else -> inLiters
-                }
-            }
-            UnitCategory.TEMPERATURE -> {
-                when (from) {
-                    "Celsius" -> {
-                        when (to) {
-                            "Fahrenheit" -> (value * 9/5) + 32
-                            "Kelvin" -> value + 273.15
-                            else -> value
-                        }
-                    }
-                    "Fahrenheit" -> {
-                        when (to) {
-                            "Celsius" -> (value - 32) * 5/9
-                            "Kelvin" -> ((value - 32) * 5/9) + 273.15
-                            else -> value
-                        }
-                    }
-                    "Kelvin" -> {
-                        when (to) {
-                            "Celsius" -> value - 273.15
-                            "Fahrenheit" -> ((value - 273.15) * 9/5) + 32
-                            else -> value
-                        }
-                    }
-                    else -> value
-                }
-            }
-        }
     }
 
     // --- Special Tools Calculations ---
@@ -774,6 +823,172 @@ class CalculatorViewModel(
         val percentage = (valA / valB) * 100.0
         val df = DecimalFormat("#.##")
         percentageResultText = "$valA is ${df.format(percentage)}% of $valB"
+    }
+
+    // --- Persistent Customizable Tool Rates / Fees ---
+    var elecUnitRate by mutableStateOf(sharedPrefs.getString("custom_elec_rate", "6.50") ?: "6.50")
+        private set
+    var elecDemandCharge by mutableStateOf(sharedPrefs.getString("custom_elec_demand", "40.0") ?: "40.0")
+        private set
+    var elecMeterRent by mutableStateOf(sharedPrefs.getString("custom_elec_meter", "40.0") ?: "40.0")
+        private set
+    var elecVatPercent by mutableStateOf(sharedPrefs.getString("custom_elec_vat", "5.0") ?: "5.0")
+        private set
+
+    var fuelPricePerUnit by mutableStateOf(sharedPrefs.getString("custom_fuel_price", "125.0") ?: "125.0")
+        private set
+
+    var applianceKwhRate by mutableStateOf(sharedPrefs.getString("custom_appliance_kwh_rate", "7.50") ?: "7.50")
+        private set
+
+    fun updateElectricityRates(rate: String, demand: String, meter: String, vat: String) {
+        elecUnitRate = rate
+        elecDemandCharge = demand
+        elecMeterRent = meter
+        elecVatPercent = vat
+        sharedPrefs.edit()
+            .putString("custom_elec_rate", rate)
+            .putString("custom_elec_demand", demand)
+            .putString("custom_elec_meter", meter)
+            .putString("custom_elec_vat", vat)
+            .apply()
+    }
+
+    fun updateFuelPrice(price: String) {
+        fuelPricePerUnit = price
+        sharedPrefs.edit().putString("custom_fuel_price", price).apply()
+    }
+
+    fun updateApplianceKwhRate(rate: String) {
+        applianceKwhRate = rate
+        sharedPrefs.edit().putString("custom_appliance_kwh_rate", rate).apply()
+    }
+
+    // --- Smart Voice Command Processor ---
+    var isVoiceListening by mutableStateOf(false)
+
+    fun processVoiceCommand(rawInput: String) {
+        if (rawInput.isBlank()) return
+
+        // 1. Convert non-English digits to English digits
+        val normalizedDigits = rawInput
+            .replace('০', '0').replace('১', '1').replace('২', '2').replace('৩', '3')
+            .replace('৪', '4').replace('৫', '5').replace('৬', '6').replace('৭', '7')
+            .replace('৮', '8').replace('৯', '9')
+            .replace('०', '0').replace('१', '1').replace('२', '2').replace('३', '3')
+            .replace('४', '4').replace('५', '5').replace('६', '6').replace('७', '7')
+            .replace('८', '8').replace('९', '9')
+            .replace('٠', '0').replace('١', '1').replace('٢', '2').replace('٣', '3')
+            .replace('٤', '4').replace('٥', '5').replace('٦', '6').replace('٧', '7')
+            .replace('٨', '8').replace('٩', '9')
+
+        val textLower = normalizedDigits.lowercase()
+
+        // 2. Check for Currency queries (e.g. "1 dollar in taka", "১ ডলারে কত টাকা", "100 usd to bdt")
+        if (textLower.contains("dollar") || textLower.contains("ডলার") || textLower.contains("taka") ||
+            textLower.contains("টাকা") || textLower.contains("usd") || textLower.contains("bdt") ||
+            textLower.contains("rupee") || textLower.contains("রুপি") || textLower.contains("inr") ||
+            textLower.contains("euro") || textLower.contains("ইউরো") || textLower.contains("eur")
+        ) {
+            val numValue = extractNumberFromString(textLower) ?: 1.0
+            activeTab = 1
+            selectedConverterType = com.example.data.model.ConverterType.CURRENCY
+
+            if (textLower.contains("dollar") || textLower.contains("ডলার") || textLower.contains("usd")) {
+                fromUnit = "USD - US Dollar"
+                toUnit = if (textLower.contains("rupee") || textLower.contains("রুপি") || textLower.contains("inr")) {
+                    "INR - Indian Rupee"
+                } else {
+                    "BDT - Bangladeshi Taka"
+                }
+            } else if (textLower.contains("euro") || textLower.contains("ইউরো") || textLower.contains("eur")) {
+                fromUnit = "EUR - Euro"
+                toUnit = "BDT - Bangladeshi Taka"
+            } else {
+                fromUnit = "BDT - Bangladeshi Taka"
+                toUnit = "USD - US Dollar"
+            }
+
+            converterInput = if (numValue == numValue.toLong().toDouble()) numValue.toLong().toString() else numValue.toString()
+            calculateConverter()
+            return
+        }
+
+        // 3. Check for Unit Converter queries (e.g. "1 kg to gram", "১ কেজিতে কত গ্রাম", "1 meter to cm")
+        if (textLower.contains("kg") || textLower.contains("কেজি") || textLower.contains("gram") ||
+            textLower.contains("গ্রাম") || textLower.contains("pound") || textLower.contains("পাউন্ড")
+        ) {
+            val numValue = extractNumberFromString(textLower) ?: 1.0
+            activeTab = 1
+            selectedConverterType = com.example.data.model.ConverterType.WEIGHT
+            fromUnit = "Kilogram (kg)"
+            toUnit = "Gram (g)"
+            converterInput = if (numValue == numValue.toLong().toDouble()) numValue.toLong().toString() else numValue.toString()
+            calculateConverter()
+            return
+        }
+
+        if (textLower.contains("meter") || textLower.contains("মিটার") || textLower.contains("feet") ||
+            textLower.contains("ফুট") || textLower.contains("inch") || textLower.contains("ইঞ্চি") ||
+            textLower.contains("bigha") || textLower.contains("বিঘা")
+        ) {
+            val numValue = extractNumberFromString(textLower) ?: 1.0
+            activeTab = 1
+            selectedConverterType = if (textLower.contains("bigha") || textLower.contains("বিঘা")) {
+                com.example.data.model.ConverterType.AREA
+            } else {
+                com.example.data.model.ConverterType.LENGTH
+            }
+            if (selectedConverterType == com.example.data.model.ConverterType.LENGTH) {
+                fromUnit = "Meter (m)"
+                toUnit = if (textLower.contains("feet") || textLower.contains("ফুট")) "Foot (ft)" else "Centimeter (cm)"
+            }
+            converterInput = if (numValue == numValue.toLong().toDouble()) numValue.toLong().toString() else numValue.toString()
+            calculateConverter()
+            return
+        }
+
+        // 4. Check for Special Tools queries (e.g., "bmi", "বিএমআই", "বিদ্যুৎ বিল", "age")
+        if (textLower.contains("bmi") || textLower.contains("বিএমআই")) {
+            activeTab = 2
+            openTool(com.example.data.model.ToolType.BMI)
+            return
+        } else if (textLower.contains("age") || textLower.contains("বয়স")) {
+            activeTab = 2
+            openTool(com.example.data.model.ToolType.AGE)
+            return
+        } else if (textLower.contains("electricity") || textLower.contains("বিদ্যুৎ")) {
+            activeTab = 2
+            openTool(com.example.data.model.ToolType.ELECTRICITY_BILL)
+            return
+        } else if (textLower.contains("loan") || textLower.contains("emi") || textLower.contains("ইএমআই")) {
+            activeTab = 2
+            openTool(com.example.data.model.ToolType.EMI_LOAN)
+            return
+        }
+
+        // 5. Fallback: Parse Math Equation (support continuous multi-operation calculations)
+        var mathExpr = normalizedDigits
+            .replace("যোগ", "+").replace("প্লাস", "+").replace("плюс", "+").replace("plus", "+").replace("زائد", "+")
+            .replace("বিয়োগ", "-").replace("মাইনাস", "-").replace("minus", "-").replace("ناقص", "-")
+            .replace("গুণ", "*").replace("ইনটু", "*").replace("times", "*").replace("into", "*").replace("ضرب", "*")
+            .replace("ভাগ", "/").replace("ডিভাইডেড", "/").replace("ভাগফল", "/").replace("divided by", "/").replace("divided", "/").replace("قسمة", "/")
+            .replace("x", "*").replace("X", "*").replace("÷", "/")
+
+        // Sanitize math string keeping only numbers, operators, dots and parentheses
+        mathExpr = mathExpr.filter { it.isDigit() || it in "+-*/.()" }
+
+        if (mathExpr.isNotBlank()) {
+            activeTab = 0
+            expressionValue = TextFieldValue(mathExpr, selection = TextRange(mathExpr.length))
+            evaluateExpression()
+        }
+    }
+
+    private fun extractNumberFromString(str: String): Double? {
+        val regex = Regex("""\d+(\.\d+)?""")
+        val match = regex.find(str)
+        return match?.value?.toDoubleOrNull()
     }
 }
 
