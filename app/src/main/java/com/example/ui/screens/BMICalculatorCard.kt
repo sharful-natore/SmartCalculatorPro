@@ -46,73 +46,84 @@ fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
             Row(modifier = Modifier
                 .fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 // Age Input
-                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier
-                .weight(1f)) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
                     Text("Age", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                    Spacer(modifier = Modifier.height(4.dp))
                     OutlinedTextField(
                         value = viewModel.bmiAge,
                         onValueChange = { viewModel.bmiAge = it; viewModel.calculateBMI() },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier
-                .width(60.dp),
+                        modifier = Modifier.width(64.dp),
                         singleLine = true,
+                        shape = RoundedCornerShape(8.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color.Transparent,
-                            unfocusedBorderColor = Color.Transparent,
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent
+                            focusedTextColor = themeColors.displayText,
+                            unfocusedTextColor = themeColors.displayText,
+                            focusedBorderColor = Color(0xFF6366F1),
+                            unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f)
                         ),
-                        textStyle = LocalTextStyle.current.copy(textAlign = androidx.compose.ui.text.style.TextAlign.Center, fontSize = 16.sp, color = themeColors.displayText)
+                        textStyle = LocalTextStyle.current.copy(textAlign = androidx.compose.ui.text.style.TextAlign.Center, fontSize = 16.sp)
                     )
-                    Divider(color = themeColors.displayText.copy(alpha=0.1f), modifier = Modifier
-                .width(60.dp))
                 }
 
-                Spacer(modifier = Modifier
-                .width(8.dp))
+                Spacer(modifier = Modifier.width(8.dp))
 
                 // Height Input
-                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier
-                .weight(2f)) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(2f)) {
+                    Text("Height", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                    Spacer(modifier = Modifier.height(4.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (viewModel.bmiHeightUnit == "ft/in") {
                             OutlinedTextField(
                                 value = viewModel.bmiHeightFt,
                                 onValueChange = { viewModel.bmiHeightFt = it; viewModel.calculateBMI() },
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                modifier = Modifier
-                .width(50.dp),
+                                modifier = Modifier.width(50.dp),
                                 singleLine = true,
-                                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Color.Transparent, unfocusedBorderColor = Color.Transparent, focusedContainerColor = Color.Transparent, unfocusedContainerColor = Color.Transparent),
-                                textStyle = LocalTextStyle.current.copy(textAlign = androidx.compose.ui.text.style.TextAlign.Center, fontSize = 16.sp, color = themeColors.displayText)
+                                shape = RoundedCornerShape(8.dp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedTextColor = themeColors.displayText,
+                                    unfocusedTextColor = themeColors.displayText,
+                                    focusedBorderColor = Color(0xFF6366F1),
+                                    unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f)
+                                ),
+                                textStyle = LocalTextStyle.current.copy(textAlign = androidx.compose.ui.text.style.TextAlign.Center, fontSize = 16.sp)
                             )
-                            Text("'", fontSize = 16.sp, color = themeColors.displayText, fontWeight = FontWeight.Bold)
+                            Text("'", fontSize = 16.sp, color = themeColors.displayText, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 2.dp))
                             OutlinedTextField(
                                 value = viewModel.bmiHeightIn,
                                 onValueChange = { viewModel.bmiHeightIn = it; viewModel.calculateBMI() },
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                modifier = Modifier
-                .width(50.dp),
+                                modifier = Modifier.width(50.dp),
                                 singleLine = true,
-                                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Color.Transparent, unfocusedBorderColor = Color.Transparent, focusedContainerColor = Color.Transparent, unfocusedContainerColor = Color.Transparent),
-                                textStyle = LocalTextStyle.current.copy(textAlign = androidx.compose.ui.text.style.TextAlign.Center, fontSize = 16.sp, color = themeColors.displayText)
+                                shape = RoundedCornerShape(8.dp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedTextColor = themeColors.displayText,
+                                    unfocusedTextColor = themeColors.displayText,
+                                    focusedBorderColor = Color(0xFF6366F1),
+                                    unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f)
+                                ),
+                                textStyle = LocalTextStyle.current.copy(textAlign = androidx.compose.ui.text.style.TextAlign.Center, fontSize = 16.sp)
                             )
-                            Text("\"", fontSize = 16.sp, color = themeColors.displayText, fontWeight = FontWeight.Bold)
+                            Text("\"", fontSize = 16.sp, color = themeColors.displayText, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 2.dp))
                         } else {
                             OutlinedTextField(
                                 value = viewModel.bmiHeight,
                                 onValueChange = { viewModel.bmiHeight = it; viewModel.calculateBMI() },
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                modifier = Modifier
-                .width(70.dp),
+                                modifier = Modifier.width(80.dp),
                                 singleLine = true,
-                                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Color.Transparent, unfocusedBorderColor = Color.Transparent, focusedContainerColor = Color.Transparent, unfocusedContainerColor = Color.Transparent),
-                                textStyle = LocalTextStyle.current.copy(textAlign = androidx.compose.ui.text.style.TextAlign.Center, fontSize = 16.sp, color = themeColors.displayText)
+                                shape = RoundedCornerShape(8.dp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedTextColor = themeColors.displayText,
+                                    unfocusedTextColor = themeColors.displayText,
+                                    focusedBorderColor = Color(0xFF6366F1),
+                                    unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f)
+                                ),
+                                textStyle = LocalTextStyle.current.copy(textAlign = androidx.compose.ui.text.style.TextAlign.Center, fontSize = 16.sp)
                             )
                         }
                     }
-                    Divider(color = themeColors.displayText.copy(alpha=0.1f), modifier = Modifier
-                .width(120.dp))
                 }
 
                 // Height Unit Dropdown
@@ -121,7 +132,7 @@ fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
                     viewModel.bmiHeightUnit = if(viewModel.bmiHeightUnit == "ft/in") "cm" else "ft/in"
                     viewModel.calculateBMI()
                 }) {
-                    Text(text = viewModel.bmiHeightUnit, color = Color(0xFF6200EE), fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    Text(text = viewModel.bmiHeightUnit, color = Color(0xFF6366F1), fontSize = 14.sp, fontWeight = FontWeight.Bold)
                     Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = themeColors.displayText.copy(alpha=0.5f))
                 }
             }
@@ -137,7 +148,7 @@ fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
                     Icon(
                         Icons.Default.Woman, 
                         contentDescription = "Female", 
-                        tint = if (viewModel.bmiGender == "Female") Color(0xFF6200EE) else themeColors.displayText.copy(alpha = 0.3f),
+                        tint = if (viewModel.bmiGender == "Female") Color(0xFF6366F1) else themeColors.displayText.copy(alpha = 0.3f),
                         modifier = Modifier
                 .size(32.dp).clickable { viewModel.bmiGender = "Female"; viewModel.calculateBMI() }
                     )
@@ -146,7 +157,7 @@ fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
                     Icon(
                         Icons.Default.Man, 
                         contentDescription = "Male", 
-                        tint = if (viewModel.bmiGender == "Male") Color(0xFF6200EE) else themeColors.displayText.copy(alpha = 0.3f),
+                        tint = if (viewModel.bmiGender == "Male") Color(0xFF6366F1) else themeColors.displayText.copy(alpha = 0.3f),
                         modifier = Modifier
                 .size(32.dp).clickable { viewModel.bmiGender = "Male"; viewModel.calculateBMI() }
                     )
@@ -155,26 +166,24 @@ fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
                 Spacer(modifier = Modifier
                 .width(8.dp))
 
-                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier
-                .weight(2f)) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(2f)) {
                     Text("Weight", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                    Spacer(modifier = Modifier.height(4.dp))
                     OutlinedTextField(
                         value = viewModel.bmiWeight,
                         onValueChange = { viewModel.bmiWeight = it; viewModel.calculateBMI() },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier
-                .width(80.dp),
+                        modifier = Modifier.width(90.dp),
                         singleLine = true,
+                        shape = RoundedCornerShape(8.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color.Transparent,
-                            unfocusedBorderColor = Color.Transparent,
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent
+                            focusedTextColor = themeColors.displayText,
+                            unfocusedTextColor = themeColors.displayText,
+                            focusedBorderColor = Color(0xFF6366F1),
+                            unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f)
                         ),
-                        textStyle = LocalTextStyle.current.copy(textAlign = androidx.compose.ui.text.style.TextAlign.Center, fontSize = 16.sp, color = themeColors.displayText)
+                        textStyle = LocalTextStyle.current.copy(textAlign = androidx.compose.ui.text.style.TextAlign.Center, fontSize = 16.sp)
                     )
-                    Divider(color = themeColors.displayText.copy(alpha=0.1f), modifier = Modifier
-                .width(80.dp))
                 }
                 
                 // Weight Unit Dropdown
@@ -182,7 +191,7 @@ fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
                 .clickable { 
                     viewModel.toggleBmiWeightUnit()
                 }) {
-                    Text(text = viewModel.bmiWeightUnit, color = Color(0xFF6200EE), fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    Text(text = viewModel.bmiWeightUnit, color = Color(0xFF6366F1), fontSize = 14.sp, fontWeight = FontWeight.Bold)
                     Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = themeColors.displayText.copy(alpha=0.5f))
                 }
             }
@@ -193,25 +202,30 @@ fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
             // Gauge Chart
             val bmiValue = viewModel.bmiResultValue.toFloatOrNull() ?: 0f
             val currentBmiColorText = when {
-                bmiValue < 18.5f -> Color(0xFF2196F3)
-                bmiValue < 25f -> Color(0xFF4CAF50)
-                else -> Color(0xFFF44336)
+                bmiValue < 18.5f -> Color.Blue
+                bmiValue < 25f -> Color.Green
+                else -> Color(0xFFFF8C00)            // Deep Orange
             }
             Box(modifier = Modifier
-                .fillMaxWidth().height(120.dp), contentAlignment = Alignment.BottomCenter) {
+                .fillMaxWidth().height(140.dp), contentAlignment = Alignment.BottomCenter) {
                 Canvas(modifier = Modifier
-                .fillMaxSize().padding(horizontal = 24.dp)) {
-                    val strokeWidth = 1.5.dp.toPx()
-                    val radius = size.width / 2 - strokeWidth
+                    .fillMaxSize()
+                    .padding(horizontal = 24.dp, vertical = 8.dp)) {
+                    val strokeWidth = 14.dp.toPx()
+                    val radius = size.width / 2 - strokeWidth / 2
                     val center = Offset(size.width / 2, size.height)
                     
                     // Draw Arcs
-                    // Total range: 10 to 40 (30 units). 180 degrees / 30 = 6 degrees per unit
-                    // Underweight: 10 to 18.5 (8.5 units * 6 = 51 deg) -> 180 to 231
-                    // Normal: 18.5 to 25 (6.5 units * 6 = 39 deg) -> 231 to 270
-                    // Overweight/Obese: 25 to 40 (15 units * 6 = 90 deg) -> 270 to 360
-                    val angles = listOf(180f to 231f, 231f to 270f, 270f to 360f)
-                    val colors = listOf(Color(0xFF2196F3), Color(0xFF4CAF50), Color(0xFFF44336))
+                    // Total range: 40 - 15 = 25 units
+                    // Underweight: 15 to 18.5 (3.5 units) -> 14% of 180 deg = 25.2 deg
+                    // Normal: 18.5 to 25 (6.5 units) -> 26% of 180 deg = 46.8 deg
+                    // Overweight/Obese: 25 to 40 (15 units) -> 60% of 180 deg = 108 deg
+                    val angles = listOf(
+                        180f to 205.2f,    // Underweight (Blue)
+                        205.2f to 252f,    // Normal (Green)
+                        252f to 360f       // Overweight (Deep Orange)
+                    )
+                    val colors = listOf(Color.Blue, Color.Green, Color(0xFFFF8C00))
                     
                     for (i in angles.indices) {
                         drawArc(
@@ -223,14 +237,13 @@ fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
                             size = Size(radius * 2, radius * 2),
                             style = Stroke(
                                 width = strokeWidth,
-                                cap = StrokeCap.Round
+                                cap = StrokeCap.Butt
                             )
                         )
                     }
 
-                    // Calculate Needle position
-                    // Mapping BMI 10-40 to 0-180 degrees
-                    val normalizedBmi = (bmiValue - 10f).coerceIn(0f, 30f) / 30f
+                    // Calculate Needle position (Range 15 to 40)
+                    val normalizedBmi = (bmiValue - 15f).coerceIn(0f, 25f) / 25f
                     val needleAngle = 180f + (180f * normalizedBmi)
                     val needleAngleRad = Math.toRadians(needleAngle.toDouble())
                     
@@ -240,22 +253,68 @@ fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
                         y = center.y + (innerRadius * sin(needleAngleRad)).toFloat()
                     )
                     
-                    drawCircle(color = currentBmiColorText, radius = 4.dp.toPx(), center = needleEnd)
-                    drawCircle(color = Color.White, radius = 1.5.dp.toPx(), center = needleEnd)
+                    // Draw Arrow Pointer (Pointing Up)
+                    val arrowSize = 12.dp.toPx()
+                    val arrowPath = androidx.compose.ui.graphics.Path().apply {
+                        moveTo(needleEnd.x, needleEnd.y)
+                        // Calculate two points for the base of the triangle
+                        // The arrow should point along the needleAngle
+                        val angleLeft = needleAngleRad - Math.PI / 6 + Math.PI
+                        val angleRight = needleAngleRad + Math.PI / 6 + Math.PI
+                        lineTo(
+                            (needleEnd.x + arrowSize * cos(angleLeft)).toFloat(),
+                            (needleEnd.y + arrowSize * sin(angleLeft)).toFloat()
+                        )
+                        lineTo(
+                            (needleEnd.x + arrowSize * cos(angleRight)).toFloat(),
+                            (needleEnd.y + arrowSize * sin(angleRight)).toFloat()
+                        )
+                        close()
+                    }
+                    drawPath(path = arrowPath, color = currentBmiColorText)
+                    drawPath(path = arrowPath, color = Color.White, style = Stroke(width = 1.dp.toPx()))
                 }
                 
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier
-                .offset(y = (-8).dp)) {
+                    .offset(y = (-4).dp)) {
                     Text(text = viewModel.bmiCategoryResult, color = currentBmiColorText, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier
-                .height(4.dp))
-                    Text(text = viewModel.bmiResultValue, fontSize = 28.sp, fontWeight = FontWeight.ExtraBold, color = currentBmiColorText)
-                    Text(text = "BMI Score", fontSize = 11.sp, color = themeColors.displayText.copy(alpha = 0.6f))
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(text = viewModel.bmiResultValue, fontSize = 26.sp, fontWeight = FontWeight.ExtraBold, color = currentBmiColorText)
                 }
             }
 
-            Spacer(modifier = Modifier
-                .height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Healthy Weight Range Banner
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                color = Color(0xFF6366F1).copy(alpha = 0.08f)
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "Healthy Weight Range (BMI 18.5 - 24.9)",
+                            fontSize = 12.sp,
+                            color = themeColors.displayText.copy(alpha = 0.7f),
+                            fontWeight = FontWeight.Medium
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = viewModel.bmiIdealWeightRange,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF6366F1)
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             // BMI Range Table
             Row(modifier = Modifier

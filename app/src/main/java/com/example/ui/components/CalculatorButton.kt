@@ -1,7 +1,9 @@
 package com.example.ui.components
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -46,9 +48,15 @@ fun CalculatorButton(
     val isPressed by interactionSource.collectIsPressedAsState()
     
     val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.88f else 1.0f,
-        animationSpec = spring(dampingRatio = 0.6f, stiffness = 400f),
+        targetValue = if (isPressed) 0.80f else 1.0f, // Deeper scale down to 0.80f
+        animationSpec = spring(dampingRatio = 0.35f, stiffness = 4000f), // Even more reactive
         label = "btn_scale"
+    )
+
+    val backgroundColor by animateColorAsState(
+        targetValue = if (isPressed) bgColor.copy(alpha = 0.85f) else bgColor,
+        animationSpec = tween(durationMillis = 50),
+        label = "btn_color"
     )
     
     Box(
@@ -59,7 +67,7 @@ fun CalculatorButton(
             .then(if (aspectRatio != null) Modifier.aspectRatio(aspectRatio) else Modifier.fillMaxHeight())
             .scale(scale)
             .clip(RoundedCornerShape(24.dp))
-            .background(bgColor)
+            .background(backgroundColor)
             .combinedClickable(
                 interactionSource = interactionSource,
                 indication = ripple(bounded = true),

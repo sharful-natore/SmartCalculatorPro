@@ -7,6 +7,8 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
 import com.example.data.model.HistoryEntry
 import com.example.data.repository.HistoryRepository
 import com.example.ui.theme.CalculatorThemeType
@@ -25,8 +27,10 @@ class CalculatorViewModel(
 ) : ViewModel() {
 
     // --- State Variables ---
-    var expression by mutableStateOf("")
+    var expressionValue by mutableStateOf(TextFieldValue("0", selection = TextRange(1)))
         private set
+
+    val expression: String get() = expressionValue.text
 
     var result by mutableStateOf("")
         private set
@@ -44,13 +48,42 @@ class CalculatorViewModel(
     var showDeleteSingleDialog by mutableStateOf(false)
     var pendingDeleteId by mutableStateOf<Long?>(null)
 
+    // History selection state
+    var selectedHistoryIds by mutableStateOf(setOf<Long>())
+    var isHistorySelectionMode by mutableStateOf(false)
+
+    fun toggleHistorySelection(id: Long) {
+        selectedHistoryIds = if (selectedHistoryIds.contains(id)) {
+            selectedHistoryIds - id
+        } else {
+            selectedHistoryIds + id
+        }
+        if (selectedHistoryIds.isEmpty()) {
+            isHistorySelectionMode = false
+        }
+    }
+
+    fun deleteSelectedHistory() {
+        viewModelScope.launch {
+            selectedHistoryIds.forEach { id ->
+                repository.deleteHistoryById(id)
+            }
+            selectedHistoryIds = emptySet()
+            isHistorySelectionMode = false
+        }
+    }
+
     // Theme Selection
     private val sharedPrefs = context.getSharedPreferences("smart_calc_prefs", Context.MODE_PRIVATE)
     var currentThemeType by mutableStateOf(
-        CalculatorThemeType.valueOf(
-            sharedPrefs.getString("selected_theme", CalculatorThemeType.SLEEK_INTERFACE.name) 
-                ?: CalculatorThemeType.SLEEK_INTERFACE.name
-        )
+        try {
+            CalculatorThemeType.valueOf(
+                sharedPrefs.getString("selected_theme", CalculatorThemeType.INDIGO_ESSENCE.name)
+                    ?: CalculatorThemeType.INDIGO_ESSENCE.name
+            )
+        } catch (e: Exception) {
+            CalculatorThemeType.INDIGO_ESSENCE
+        }
     )
         private set
 
@@ -81,12 +114,16 @@ class CalculatorViewModel(
     var bmiAge by mutableStateOf("25")
     var bmiResultValue by mutableStateOf("")
     var bmiCategoryResult by mutableStateOf("")
+    var bmiIdealWeightRange by mutableStateOf("")
 
     // 2. Age
     var ageDob by mutableStateOf("1/1/2000")
     var ageYearsResult by mutableStateOf("0")
     var ageMonthsResult by mutableStateOf("0")
     var ageDaysResult by mutableStateOf("0")
+    var ageNextBirthdayResult by mutableStateOf("-")
+    var ageWhichBirthdayResult by mutableStateOf("-")
+    var ageCountdownResult by mutableStateOf("-")
     var birthDateString by mutableStateOf("2000-01-01")
     var targetDateString by mutableStateOf(SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()))
     var ageResultText by mutableStateOf("")
@@ -119,18 +156,7 @@ class CalculatorViewModel(
 
     fun processVoiceInput(text: String) {
         var processedText = text.lowercase(Locale.getDefault())
-        // Replace Bengali words with operators and English numbers
-        processedText = processedText.replace("যোগ", "+")
-            .replace("বিয়োগ", "−")
-            .replace("বিয়োগ", "−")
-            .replace("গুণ", "×")
-            .replace("গুন", "×")
-            .replace("ভাগ", "÷")
-            .replace("দশমিক", ".")
-            .replace("শতকরা", "%")
-            .replace("পয়েন্ট", ".")
-            .replace("পয়েন্ট", ".")
-
+        // ... (rest of processing)
         // Convert Bengali numerals to English numerals
         val bengaliToEnglishNumbers = mapOf(
             '০' to '0', '১' to '1', '২' to '2', '৩' to '3', '৪' to '4',
@@ -146,9 +172,29 @@ class CalculatorViewModel(
         processedText = processedText.replace(Regex("[^0-9\\+\\−\\×\\÷\\%\\.\\(\\)\\^]"), "")
 
         if (processedText.isNotEmpty()) {
-            expression = processedText
+            expressionValue = TextFieldValue(processedText, selection = TextRange(processedText.length))
             evaluateExpression()
         }
+    }
+
+    fun onExpressionValueChange(newValue: TextFieldValue) {
+        expressionValue = newValue
+        tryEvaluatePreview()
+    }
+
+    fun onPaste(pastedText: String) {
+        val currentText = expressionValue.text
+        val selection = expressionValue.selection
+        val newText = if (currentText == "0") {
+            pastedText
+        } else {
+            currentText.substring(0, selection.start) + pastedText + currentText.substring(selection.end)
+        }
+        expressionValue = TextFieldValue(
+            text = newText,
+            selection = TextRange(selection.start + pastedText.length)
+        )
+        tryEvaluatePreview()
     }
 
     fun onBtnClick(char: String) {
@@ -156,24 +202,37 @@ class CalculatorViewModel(
             if (char != "AC" && char != "C" && char != "=" && char != "DEG" && char != "RAD" && char != "±") {
                 if (isOperator(char)) {
                     // Continue from previous result
-                    expression = result
+                    expressionValue = TextFieldValue(result, selection = TextRange(result.length))
                 } else {
                     // Start new expression
-                    expression = ""
+                    expressionValue = TextFieldValue("")
                     result = ""
                 }
             }
             isEvaluated = false
         }
 
+        val currentText = expressionValue.text
+        val selection = expressionValue.selection
+        val before = currentText.substring(0, selection.start)
+        val after = currentText.substring(selection.end)
+
         when (char) {
             "AC" -> {
-                expression = ""
+                expressionValue = TextFieldValue("0", selection = TextRange(1))
                 result = ""
             }
             "C" -> {
-                if (expression.isNotEmpty()) {
-                    expression = expression.dropLast(1)
+                if (selection.collapsed) {
+                    if (before.isNotEmpty()) {
+                        val newText = (before.dropLast(1) + after).ifEmpty { "0" }
+                        val newPos = if (newText == "0" && before.length == 1) 1 else (before.length - 1).coerceAtLeast(0)
+                        expressionValue = TextFieldValue(newText, selection = TextRange(newPos))
+                    }
+                } else {
+                    val newText = (before + after).ifEmpty { "0" }
+                    val newPos = if (newText == "0") 1 else before.length
+                    expressionValue = TextFieldValue(newText, selection = TextRange(newPos))
                 }
                 tryEvaluatePreview()
             }
@@ -184,85 +243,112 @@ class CalculatorViewModel(
                 isDegreeMode = !isDegreeMode
                 tryEvaluatePreview()
             }
-            "sin", "cos", "tan", "ln", "log", "√", "antilog" -> {
-                expression += "$char("
-                tryEvaluatePreview()
-            }
-            "sin⁻¹", "cos⁻¹", "tan⁻¹" -> {
-                expression += "$char("
-                tryEvaluatePreview()
-            }
-            "log^10", "log10" -> {
-                expression += "log10("
-                tryEvaluatePreview()
-            }
-            "3√" -> {
-                expression += "3√("
+            "sin", "cos", "tan", "ln", "log", "√", "antilog", "sin⁻¹", "cos⁻¹", "tan⁻¹", "log10", "3√" -> {
+                val toAdd = if (char == "log10") "log10(" else if (char == "3√") "3√(" else "$char("
+                val newText = before + toAdd + after
+                expressionValue = TextFieldValue(newText, selection = TextRange(before.length + toAdd.length))
                 tryEvaluatePreview()
             }
             "x^y" -> {
-                expression += "^"
+                val newText = before + "^" + after
+                expressionValue = TextFieldValue(newText, selection = TextRange(before.length + 1))
                 tryEvaluatePreview()
             }
             "x²" -> {
-                expression += "^2"
+                val newText = before + "^2" + after
+                expressionValue = TextFieldValue(newText, selection = TextRange(before.length + 2))
                 tryEvaluatePreview()
             }
             "x³" -> {
-                expression += "^3"
+                val newText = before + "^3" + after
+                expressionValue = TextFieldValue(newText, selection = TextRange(before.length + 2))
                 tryEvaluatePreview()
             }
             "1/x" -> {
-                expression += "1÷"
+                val newText = before + "1÷" + after
+                expressionValue = TextFieldValue(newText, selection = TextRange(before.length + 2))
                 tryEvaluatePreview()
             }
             "e^x" -> {
-                expression += "e^"
+                val newText = before + "e^" + after
+                expressionValue = TextFieldValue(newText, selection = TextRange(before.length + 2))
                 tryEvaluatePreview()
             }
             "x!" -> {
-                expression += "!"
+                val newText = before + "!" + after
+                expressionValue = TextFieldValue(newText, selection = TextRange(before.length + 1))
                 tryEvaluatePreview()
             }
             "π", "e" -> {
-                expression += char
+                val newText = before + char + after
+                expressionValue = TextFieldValue(newText, selection = TextRange(before.length + 1))
                 tryEvaluatePreview()
             }
             "()" -> {
-                val tempExpr = expression
-                if (tempExpr.isEmpty()) {
-                    expression += "("
+                val toAdd: String
+                if (currentText.isEmpty()) {
+                    toAdd = "("
                 } else {
-                    val lastChar = tempExpr.last()
-                    val openCount = tempExpr.count { it == '(' }
-                    val closeCount = tempExpr.count { it == ')' }
+                    val lastChar = if (before.isNotEmpty()) before.last() else ' '
+                    val openCount = currentText.count { it == '(' }
+                    val closeCount = currentText.count { it == ')' }
                     
                     if (openCount > closeCount) {
                         if (lastChar in setOf('+', '−', '×', '÷', '(', '^', '-')) {
-                            expression += "("
+                            toAdd = "("
                         } else {
-                            expression += ")"
+                            toAdd = ")"
                         }
                     } else {
                         if (lastChar.isDigit() || lastChar == ')' || lastChar == 'e' || lastChar == 'π') {
-                            expression += "×("
+                            toAdd = "×("
                         } else {
-                            expression += "("
+                            toAdd = "("
                         }
                     }
                 }
+                val newText = before + toAdd + after
+                expressionValue = TextFieldValue(newText, selection = TextRange(before.length + toAdd.length))
                 tryEvaluatePreview()
             }
             "±" -> {
-                if (expression.startsWith("-")) {
-                    expression = expression.substring(1)
-                } else if (expression.isNotEmpty()) {
-                    expression = "-$expression"
+                if (currentText.startsWith("-")) {
+                    expressionValue = TextFieldValue(currentText.substring(1), selection = TextRange((selection.start - 1).coerceAtLeast(0)))
+                } else if (currentText.isNotEmpty()) {
+                    expressionValue = TextFieldValue("-$currentText", selection = TextRange(selection.start + 1))
+                }
+                tryEvaluatePreview()
+            }
+            "." -> {
+                val lastNumber = before.split(Regex("[+−×÷%^]")).lastOrNull() ?: ""
+                if (!lastNumber.contains(".")) {
+                    val toAdd = if (before.isEmpty() || isOperator(before.last().toString())) "0." else "."
+                    val newText = before + toAdd + after
+                    expressionValue = TextFieldValue(newText, selection = TextRange(before.length + toAdd.length))
                 }
                 tryEvaluatePreview()
             }
             else -> {
-                expression += char
+                val processedBefore = if (before == "0" && !isOperator(char) && char != ".") "" else before
+                if (isOperator(char)) {
+                    if (processedBefore.isNotEmpty() && processedBefore != "0") {
+                        val lastChar = processedBefore.last().toString()
+                        if (isOperator(lastChar)) {
+                            val newText = processedBefore.dropLast(1) + char + after
+                            expressionValue = TextFieldValue(newText, selection = TextRange(processedBefore.length))
+                        } else {
+                            val newText = processedBefore + char + after
+                            expressionValue = TextFieldValue(newText, selection = TextRange(processedBefore.length + 1))
+                        }
+                    } else if (char == "−" || char == "-") {
+                        val newText = "-" + after
+                        expressionValue = TextFieldValue(newText, selection = TextRange(1))
+                    }
+                } else {
+                    val newText = processedBefore + char + after
+                    val newPos = if (before == "0" && processedBefore == "") char.length else (before.length + char.length)
+                    expressionValue = TextFieldValue(newText, selection = TextRange(newPos))
+                }
                 tryEvaluatePreview()
             }
         }
@@ -334,7 +420,7 @@ class CalculatorViewModel(
     }
 
     fun selectHistoryItem(entry: HistoryEntry) {
-        expression = entry.expression
+        expressionValue = TextFieldValue(entry.expression, selection = TextRange(entry.expression.length))
         result = entry.result
         activeTab = 0 // Switch to calculator
     }
@@ -396,6 +482,13 @@ class CalculatorViewModel(
         val outVal = convertUnits(unitCategory, fromUnit, toUnit, inputVal)
         val df = DecimalFormat("#.######")
         converterOutput = df.format(outVal)
+    }
+
+    fun calculateConverterReverse() {
+        val outputVal = converterOutput.toDoubleOrNull() ?: 0.0
+        val inVal = convertUnits(unitCategory, toUnit, fromUnit, outputVal)
+        val df = DecimalFormat("#.######")
+        converterInput = df.format(inVal)
     }
 
     private fun convertUnits(category: UnitCategory, from: String, to: String, value: Double): Double {
@@ -563,6 +656,14 @@ class CalculatorViewModel(
             bmi in 35.0..39.9 -> "Obese Class II"
             else -> "Obese Class III"
         }
+
+        val minIdealKg = 18.5 * (hM * hM)
+        val maxIdealKg = 24.9 * (hM * hM)
+        bmiIdealWeightRange = if (bmiWeightUnit == "kg") {
+            String.format(Locale.US, "%.1f kg - %.1f kg", minIdealKg, maxIdealKg)
+        } else {
+            String.format(Locale.US, "%.1f lb - %.1f lb", minIdealKg / 0.453592, maxIdealKg / 0.453592)
+        }
     }
 
     // 2. Age Calculation
@@ -599,16 +700,48 @@ class CalculatorViewModel(
                     ageYearsResult = "0"
                     ageMonthsResult = "0"
                     ageDaysResult = "0"
+                    ageNextBirthdayResult = "-"
+                    ageWhichBirthdayResult = "-"
+                    ageCountdownResult = "-"
                 } else {
                     ageYearsResult = years.toString()
                     ageMonthsResult = months.toString()
                     ageDaysResult = days.toString()
+
+                    val nextBday = birthCalendar.clone() as Calendar
+                    nextBday.set(Calendar.YEAR, targetCalendar.get(Calendar.YEAR))
+                    if (nextBday.before(targetCalendar) || nextBday.timeInMillis == targetCalendar.timeInMillis) {
+                        nextBday.add(Calendar.YEAR, 1)
+                    }
+
+                    val nextAgeYears = nextBday.get(Calendar.YEAR) - birthCalendar.get(Calendar.YEAR)
+                    ageWhichBirthdayResult = "$nextAgeYears${getOrdinalSuffix(nextAgeYears)} Birthday"
+
+                    val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+                    ageNextBirthdayResult = dateFormat.format(nextBday.time)
+
+                    val diffInMillis = nextBday.timeInMillis - targetCalendar.timeInMillis
+                    val diffDays = (diffInMillis / (1000 * 60 * 60 * 24)).coerceAtLeast(0)
+                    ageCountdownResult = "$diffDays Days"
                 }
             }
         } catch (e: Exception) {
             ageYearsResult = "0"
             ageMonthsResult = "0"
             ageDaysResult = "0"
+            ageNextBirthdayResult = "-"
+            ageWhichBirthdayResult = "-"
+            ageCountdownResult = "-"
+        }
+    }
+
+    private fun getOrdinalSuffix(n: Int): String {
+        return when {
+            n % 100 in 11..13 -> "th"
+            n % 10 == 1 -> "st"
+            n % 10 == 2 -> "nd"
+            n % 10 == 3 -> "rd"
+            else -> "th"
         }
     }
 
@@ -640,8 +773,7 @@ class CalculatorViewModel(
 
         val percentage = (valA / valB) * 100.0
         val df = DecimalFormat("#.##")
-        percentageResultText = "$valA is ${df.format(percentage)}% of $valB\n" +
-                "($valA হলো $valB এর ${df.format(percentage)}%)"
+        percentageResultText = "$valA is ${df.format(percentage)}% of $valB"
     }
 }
 

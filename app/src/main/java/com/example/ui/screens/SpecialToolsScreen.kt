@@ -79,7 +79,7 @@ fun ToolTabButton(
         modifier = modifier
             .height(54.dp)
             .clip(RoundedCornerShape(14.dp))
-            .background(if (isSelected) Color(0xFF6200EE) else themeColors.buttonNormalBg)
+            .background(if (isSelected) Color(0xFF6366F1) else themeColors.buttonNormalBg)
             .clickable(onClick = onClick)
             .testTag("tool_tab_$label")
             .padding(horizontal = 8.dp),
@@ -89,7 +89,7 @@ fun ToolTabButton(
             Icon(
                 imageVector = icon,
                 contentDescription = label,
-                tint = if (isSelected) Color.White else themeColors.buttonNormalText,
+                tint = if (isSelected) Color.White else themeColors.unselectedItemText,
                 modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.height(2.dp))
@@ -97,7 +97,7 @@ fun ToolTabButton(
                 text = label,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
-                color = if (isSelected) Color.White else themeColors.buttonNormalText
+                color = if (isSelected) Color.White else themeColors.unselectedItemText
             )
         }
     }

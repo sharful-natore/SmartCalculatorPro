@@ -1,10 +1,10 @@
 package com.example.ui.screens
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -29,6 +29,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.ui.platform.LocalTextInputService
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.platform.testTag
 import kotlinx.coroutines.launch
 import android.app.Activity
@@ -46,6 +58,7 @@ import com.example.ui.components.CalculatorButton
 import com.example.ui.theme.CalculatorThemeColors
 import com.example.ui.viewmodel.CalculatorViewModel
 
+@OptIn(ExperimentalAnimationApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun BasicScientificScreen(
     viewModel: CalculatorViewModel,
@@ -129,27 +142,11 @@ fun BasicScientificScreen(
                 horizontalAlignment = Alignment.End,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                // Mode indicator (DEG/RAD)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Start,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = if (viewModel.isDegreeMode) "DEG" else "RAD",
-                        color = themeColors.buttonOperatorText,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(themeColors.buttonOperatorBg)
-                            .clickable { 
-                                viewModel.isDegreeMode = !viewModel.isDegreeMode
-                                viewModel.onBtnClick("DEG") // triggers logic evaluation with new mode
-                            }
-                            .padding(horizontal = 10.dp, vertical = 6.dp)
-                            .testTag("deg_rad_toggle")
-                    )
+                val clipboardManager = LocalClipboardManager.current
+                val focusRequester = remember { FocusRequester() }
+
+                LaunchedEffect(Unit) {
+                    focusRequester.requestFocus()
                 }
                 
                 // Animated sizes and colors for Google Calculator transition
@@ -185,25 +182,130 @@ fun BasicScientificScreen(
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                // Expression string
-                val exprScrollState = rememberScrollState()
-                Text(
-                    text = viewModel.expression.ifEmpty { "0" },
-                    color = exprColor,
-                    fontSize = exprSize.sp,
-                    fontFamily = FontFamily.Monospace,
-                    fontWeight = FontWeight.Medium,
-                    textAlign = TextAlign.End,
-                    maxLines = 1,
+                // Expression Field with custom cursor and copy/paste support
+                var showPasteMenu by remember { mutableStateOf(false) }
+                
+                // Cursor blinking logic
+                var cursorVisible by remember { mutableStateOf(true) }
+                LaunchedEffect(Unit) {
+                    while (true) {
+                        kotlinx.coroutines.delay(500)
+                        cursorVisible = !cursorVisible
+                    }
+                }
+
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .horizontalScroll(exprScrollState)
-                        .testTag("expression_display")
-                )
+                        .combinedClickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = { focusRequester.requestFocus() },
+                            onLongClick = { 
+                                if (clipboardManager.hasText()) {
+                                    showPasteMenu = true 
+                                }
+                            }
+                        )
+                ) {
+                    BasicTextField(
+                        value = viewModel.expressionValue,
+                        onValueChange = { viewModel.onExpressionValueChange(it) },
+                        readOnly = true, // Force read-only to prevent keyboard
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(focusRequester)
+                            .testTag("expression_display"),
+                        textStyle = TextStyle(
+                            color = Color.Transparent, // Text transparent, animated overlay below
+                            fontSize = exprSize.sp,
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.Medium,
+                            textAlign = TextAlign.End
+                        ),
+                        cursorBrush = SolidColor(Color.Transparent), // Hide default cursor
+                        decorationBox = { innerTextField ->
+                            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
+                                // Animated characters layer with custom cursor
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.End,
+                                    verticalAlignment = Alignment.Bottom
+                                ) {
+                                    val text = viewModel.expressionValue.text
+                                    val selectionStart = viewModel.expressionValue.selection.start
+                                    
+                                    // Handle cursor at the very beginning
+                                    Box(
+                                        modifier = Modifier
+                                            .width(2.dp)
+                                            .height((exprSize * 1.1f).dp)
+                                            .background(if (selectionStart == 0 && cursorVisible) themeColors.displayText else Color.Transparent)
+                                    )
+
+                                    text.forEachIndexed { index, char ->
+                                        // Stable key for animation
+                                        key(index) { 
+                                            AnimatedContent(
+                                                targetState = char,
+                                                transitionSpec = {
+                                                    // Animate if it's the last character or near the selection
+                                                    if (index >= text.length - 1 || index >= selectionStart - 1) {
+                                                        (scaleIn(animationSpec = spring(dampingRatio = 0.6f, stiffness = 400f)) + fadeIn())
+                                                            .togetherWith(scaleOut(animationSpec = spring(dampingRatio = 0.6f, stiffness = 800f)) + fadeOut())
+                                                    } else {
+                                                        EnterTransition.None togetherWith ExitTransition.None
+                                                    }
+                                                },
+                                                label = "char_anim"
+                                            ) { animatedChar ->
+                                                Text(
+                                                    text = animatedChar.toString(),
+                                                    color = exprColor,
+                                                    fontSize = exprSize.sp,
+                                                    fontFamily = FontFamily.Monospace,
+                                                    fontWeight = FontWeight.Medium,
+                                                    textAlign = TextAlign.End,
+                                                    modifier = Modifier.padding(horizontal = 0.5.dp)
+                                                )
+                                            }
+                                        }
+                                        
+                                        // Cursor after this character
+                                        Box(
+                                            modifier = Modifier
+                                                .width(2.dp)
+                                                .height((exprSize * 1.1f).dp)
+                                                .background(if (index + 1 == selectionStart && cursorVisible) themeColors.displayText else Color.Transparent)
+                                        )
+                                    }
+                                }
+                                // Hidden but present for focus/selection
+                                innerTextField()
+                            }
+                        }
+                    )
+
+                    DropdownMenu(
+                        expanded = showPasteMenu,
+                        onDismissRequest = { showPasteMenu = false },
+                        containerColor = themeColors.cardBg
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Paste", color = themeColors.displayText) },
+                            onClick = {
+                                clipboardManager.getText()?.let { clipText ->
+                                    viewModel.onPaste(clipText.text)
+                                }
+                                showPasteMenu = false
+                            }
+                        )
+                    }
+                }
 
                 Spacer(modifier = Modifier.height((10f - (6f * expansionFraction)).dp))
 
-                // Calculated Result string
+                // Calculated Result string (Click to copy)
                 Text(
                     text = viewModel.result,
                     color = resultColor,
@@ -214,6 +316,11 @@ fun BasicScientificScreen(
                     maxLines = 1,
                     modifier = Modifier
                         .fillMaxWidth()
+                        .clickable {
+                            if (viewModel.result.isNotEmpty()) {
+                                clipboardManager.setText(AnnotatedString(viewModel.result))
+                            }
+                        }
                         .testTag("result_display")
                 )
             }
@@ -345,7 +452,7 @@ fun BasicScientificScreen(
                         CalculatorButton("sin", themeColors.buttonFunctionBg, themeColors.buttonFunctionText, { viewModel.onBtnClick("sin") }, Modifier.weight(1f), fontSize = scientificFontSize, padding = buttonPadding)
                         CalculatorButton("cos", themeColors.buttonFunctionBg, themeColors.buttonFunctionText, { viewModel.onBtnClick("cos") }, Modifier.weight(1f), fontSize = scientificFontSize, padding = buttonPadding)
                         CalculatorButton("tan", themeColors.buttonFunctionBg, themeColors.buttonFunctionText, { viewModel.onBtnClick("tan") }, Modifier.weight(1f), fontSize = scientificFontSize, padding = buttonPadding)
-                        CalculatorButton("DEG", themeColors.buttonFunctionBg, themeColors.buttonOperatorBg, { viewModel.onBtnClick("DEG") }, Modifier.weight(1f), fontSize = scientificFontSize, padding = buttonPadding)
+                        CalculatorButton("DEG", themeColors.buttonFunctionBg, themeColors.buttonFunctionText, { viewModel.onBtnClick("DEG") }, Modifier.weight(1f), fontSize = scientificFontSize, padding = buttonPadding)
                         CalculatorButton("antilog", themeColors.buttonFunctionBg, themeColors.buttonFunctionText, { viewModel.onBtnClick("antilog") }, Modifier.weight(1f), fontSize = scientificFontSize, padding = buttonPadding)
                         CalculatorButton("x³", themeColors.buttonFunctionBg, themeColors.buttonFunctionText, { viewModel.onBtnClick("x³") }, Modifier.weight(1f), fontSize = scientificFontSize, padding = buttonPadding)
                     }
@@ -359,7 +466,7 @@ fun BasicScientificScreen(
                         CalculatorButton("sin⁻¹", themeColors.buttonFunctionBg, themeColors.buttonFunctionText, { viewModel.onBtnClick("sin⁻¹") }, Modifier.weight(1f), fontSize = scientificFontSize, padding = buttonPadding)
                         CalculatorButton("cos⁻¹", themeColors.buttonFunctionBg, themeColors.buttonFunctionText, { viewModel.onBtnClick("cos⁻¹") }, Modifier.weight(1f), fontSize = scientificFontSize, padding = buttonPadding)
                         CalculatorButton("tan⁻¹", themeColors.buttonFunctionBg, themeColors.buttonFunctionText, { viewModel.onBtnClick("tan⁻¹") }, Modifier.weight(1f), fontSize = scientificFontSize, padding = buttonPadding)
-                        CalculatorButton("RAD", themeColors.buttonFunctionBg, themeColors.buttonOperatorBg, { viewModel.onBtnClick("RAD") }, Modifier.weight(1f), fontSize = scientificFontSize, padding = buttonPadding)
+                        CalculatorButton("RAD", themeColors.buttonFunctionBg, themeColors.buttonFunctionText, { viewModel.onBtnClick("RAD") }, Modifier.weight(1f), fontSize = scientificFontSize, padding = buttonPadding)
                         CalculatorButton("√", themeColors.buttonFunctionBg, themeColors.buttonFunctionText, { viewModel.onBtnClick("√") }, Modifier.weight(1f), fontSize = scientificFontSize, padding = buttonPadding)
                         CalculatorButton("1/x", themeColors.buttonFunctionBg, themeColors.buttonFunctionText, { viewModel.onBtnClick("1/x") }, Modifier.weight(1f), fontSize = scientificFontSize, padding = buttonPadding)
                     }

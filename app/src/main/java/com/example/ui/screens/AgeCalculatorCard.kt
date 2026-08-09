@@ -80,7 +80,7 @@ fun AgeCalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Results Row
+            // Results Row (Years, Months, Days)
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Column {
                     Text(
@@ -93,7 +93,7 @@ fun AgeCalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
                         text = viewModel.ageYearsResult,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF6200EE),
+                        color = Color(0xFF6366F1),
                         modifier = Modifier.testTag("age_years_text")
                     )
                 }
@@ -108,7 +108,7 @@ fun AgeCalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
                         text = viewModel.ageMonthsResult,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF6200EE),
+                        color = Color(0xFF6366F1),
                         modifier = Modifier.testTag("age_months_text")
                     )
                 }
@@ -123,8 +123,71 @@ fun AgeCalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
                         text = viewModel.ageDaysResult,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF6200EE),
+                        color = Color(0xFF6366F1),
                         modifier = Modifier.testTag("age_days_text")
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Divider(color = themeColors.displayText.copy(alpha = 0.1f))
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Additional Info: Next Birthday, Which Birthday, Countdown
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Next Birthday",
+                        fontSize = 12.sp,
+                        color = themeColors.displayText.copy(alpha = 0.7f),
+                        fontWeight = FontWeight.Medium
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = viewModel.ageNextBirthdayResult,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.displayText,
+                        modifier = Modifier.testTag("age_next_birthday_text")
+                    )
+                }
+
+                Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "Upcoming",
+                        fontSize = 12.sp,
+                        color = themeColors.displayText.copy(alpha = 0.7f),
+                        fontWeight = FontWeight.Medium
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = viewModel.ageWhichBirthdayResult,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF6366F1),
+                        modifier = Modifier.testTag("age_which_birthday_text")
+                    )
+                }
+
+                Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.End) {
+                    Text(
+                        text = "Countdown",
+                        fontSize = 12.sp,
+                        color = themeColors.displayText.copy(alpha = 0.7f),
+                        fontWeight = FontWeight.Medium
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = viewModel.ageCountdownResult,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.displayText,
+                        modifier = Modifier.testTag("age_countdown_text")
                     )
                 }
             }

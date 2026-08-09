@@ -1,7 +1,7 @@
 package com.example.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -28,6 +28,7 @@ import com.example.ui.viewmodel.CalculatorViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun HistoryScreen(
     viewModel: CalculatorViewModel,
@@ -46,16 +47,28 @@ fun HistoryScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Tap on a history item to load it into the calculator",
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = themeColors.displayExpressionText
+                    text = if (viewModel.isHistorySelectionMode) "${viewModel.selectedHistoryIds.size} Selected" else "Calculation History",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = themeColors.displayText
                 )
             }
 
-            if (historyItems.isNotEmpty()) {
+            if (viewModel.isHistorySelectionMode) {
+                IconButton(
+                    onClick = { viewModel.deleteSelectedHistory() },
+                    modifier = Modifier.testTag("delete_selected_button")
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Delete Selected",
+                        tint = Color(0xFFD32F2F),
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            } else if (historyItems.isNotEmpty()) {
                 IconButton(
                     onClick = { viewModel.showClearHistoryDialog = true },
                     modifier = Modifier.testTag("clear_all_button")
@@ -63,7 +76,7 @@ fun HistoryScreen(
                     Icon(
                         imageVector = Icons.Default.DeleteSweep,
                         contentDescription = "Clear All History",
-                        tint = Color(0xFF6200EE),
+                        tint = Color(0xFF6366F1),
                         modifier = Modifier.size(28.dp)
                     )
                 }
@@ -113,15 +126,30 @@ fun HistoryScreen(
                 items(historyItems) { entry ->
                     val sdf = SimpleDateFormat("hh:mm a, dd MMM", Locale.getDefault())
                     val formattedTime = sdf.format(Date(entry.timestamp))
+                    val isSelected = viewModel.selectedHistoryIds.contains(entry.id)
 
                     ElevatedCard(
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag("history_item_${entry.id}")
                             .clip(RoundedCornerShape(16.dp))
-                            .clickable { viewModel.selectHistoryItem(entry) },
-                        colors = CardDefaults.elevatedCardColors(containerColor = themeColors.cardBg),
-                        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+                            .combinedClickable(
+                                onClick = {
+                                    if (viewModel.isHistorySelectionMode) {
+                                        viewModel.toggleHistorySelection(entry.id)
+                                    } else {
+                                        viewModel.selectHistoryItem(entry)
+                                    }
+                                },
+                                onLongClick = {
+                                    viewModel.isHistorySelectionMode = true
+                                    viewModel.toggleHistorySelection(entry.id)
+                                }
+                            ),
+                        colors = CardDefaults.elevatedCardColors(
+                            containerColor = if (isSelected) Color(0xFF6366F1).copy(alpha = 0.12f) else themeColors.cardBg
+                        ),
+                        elevation = CardDefaults.elevatedCardElevation(defaultElevation = if (isSelected) 0.dp else 2.dp)
                     ) {
                         Row(
                             modifier = Modifier
@@ -151,24 +179,32 @@ fun HistoryScreen(
                                     fontSize = 20.sp,
                                     fontFamily = FontFamily.Monospace,
                                     fontWeight = FontWeight.Bold,
-                                    color = themeColors.buttonOperatorBg,
+                                    color = Color(0xFF6366F1), // Higher contrast color
                                     maxLines = 1
                                 )
                             }
-
-                            IconButton(
-                                onClick = {
-                                    viewModel.pendingDeleteId = entry.id
-                                    viewModel.showDeleteSingleDialog = true
-                                },
-                                modifier = Modifier.testTag("delete_item_${entry.id}")
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Delete,
-                                    contentDescription = "Delete Item",
-                                    tint = themeColors.displayText.copy(alpha = 0.4f),
-                                    modifier = Modifier.size(20.dp)
+                            
+                            if (viewModel.isHistorySelectionMode) {
+                                Checkbox(
+                                    checked = isSelected,
+                                    onCheckedChange = { viewModel.toggleHistorySelection(entry.id) },
+                                    colors = CheckboxDefaults.colors(checkedColor = Color(0xFF6366F1))
                                 )
+                            } else {
+                                IconButton(
+                                    onClick = {
+                                        viewModel.pendingDeleteId = entry.id
+                                        viewModel.showDeleteSingleDialog = true
+                                    },
+                                    modifier = Modifier.testTag("delete_item_${entry.id}")
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = "Delete Item",
+                                        tint = themeColors.displayText.copy(alpha = 0.4f),
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
                             }
                         }
                     }
@@ -181,14 +217,14 @@ fun HistoryScreen(
         AlertDialog(
             onDismissRequest = { viewModel.showClearHistoryDialog = false },
             title = { Text("Clear All History", color = themeColors.displayText) },
-            text = { Text("Are you sure you want to delete your entire calculation history? This action cannot be undone.", color = themeColors.displayText) },
+            text = { Text("Are you sure you want to delete your entire calculation history?", color = themeColors.displayText) },
             confirmButton = {
                 Button(
                     onClick = {
                         viewModel.clearAllHistory()
                         viewModel.showClearHistoryDialog = false
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6200EE))
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6366F1))
                 ) {
                     Text("Clear All", color = Color.White)
                 }
@@ -221,7 +257,7 @@ fun HistoryScreen(
                         viewModel.showDeleteSingleDialog = false
                         viewModel.pendingDeleteId = null
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6200EE))
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6366F1))
                 ) {
                     Text("Delete", color = Color.White)
                 }

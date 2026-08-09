@@ -102,7 +102,7 @@ fun PercentageCalculatorCard(viewModel: CalculatorViewModel, themeColors: Calcul
                         text = viewModel.percentageResultText,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF6200EE),
+                        color = Color(0xFF6366F1),
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                         modifier = Modifier.testTag("percentage_result_text")
                     )

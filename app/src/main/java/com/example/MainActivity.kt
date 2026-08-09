@@ -9,6 +9,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModelProvider
 import com.example.data.database.CalculatorDatabase
 import com.example.data.repository.HistoryRepository
@@ -16,11 +17,19 @@ import com.example.ui.MainApp
 import com.example.ui.theme.MyApplicationTheme
 import com.example.ui.viewmodel.CalculatorViewModel
 import com.example.ui.viewmodel.CalculatorViewModelFactory
+import android.graphics.Color as AndroidColor
 
 class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     enableEdgeToEdge()
+
+    window.statusBarColor = AndroidColor.parseColor("#6366F1")
+    window.navigationBarColor = AndroidColor.parseColor("#6366F1")
+    WindowCompat.getInsetsController(window, window.decorView)?.apply {
+      isAppearanceLightStatusBars = false
+      isAppearanceLightNavigationBars = false
+    }
 
     // Initialize database and repository
     val database = CalculatorDatabase.getDatabase(this)

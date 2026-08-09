@@ -1,6 +1,7 @@
 package com.example.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -19,6 +20,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.theme.CalculatorThemeColors
@@ -69,7 +72,7 @@ fun UnitConverterScreen(
                         .height(54.dp)
                         .widthIn(min = 96.dp)
                         .clip(RoundedCornerShape(14.dp))
-                        .background(if (isSelected) Color(0xFF6200EE) else themeColors.buttonNormalBg)
+                        .background(if (isSelected) Color(0xFF6366F1) else themeColors.buttonNormalBg)
                         .clickable { viewModel.onUnitCategoryChange(category) }
                         .testTag("chip_${category.name.lowercase()}")
                         .padding(horizontal = 12.dp),
@@ -82,7 +85,7 @@ fun UnitConverterScreen(
                         Icon(
                             imageVector = icon,
                             contentDescription = label,
-                            tint = if (isSelected) Color.White else themeColors.buttonNormalText,
+                            tint = if (isSelected) Color.White else themeColors.unselectedItemText,
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.height(2.dp))
@@ -90,7 +93,7 @@ fun UnitConverterScreen(
                             text = label,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (isSelected) Color.White else themeColors.buttonNormalText
+                            color = if (isSelected) Color.White else themeColors.unselectedItemText
                         )
                     }
                 }
@@ -107,21 +110,19 @@ fun UnitConverterScreen(
             elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = "From",
-                    fontSize = 13.sp,
-                    color = themeColors.displayExpressionText,
-                    fontWeight = FontWeight.SemiBold
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    // Dropdown Trigger
+                    Text(
+                        text = "From Unit",
+                        fontSize = 14.sp,
+                        color = themeColors.displayExpressionText,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    // Dropdown Trigger on the right side
                     Box {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -136,7 +137,7 @@ fun UnitConverterScreen(
                                 text = viewModel.fromUnit,
                                 color = themeColors.buttonNormalText,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 15.sp
+                                fontSize = 14.sp
                             )
                             Icon(
                                 imageVector = Icons.Default.ArrowDropDown,
@@ -162,35 +163,40 @@ fun UnitConverterScreen(
                             }
                         }
                     }
-
-                    // Numeric text field for user input
-                    TextField(
-                        value = viewModel.converterInput,
-                        onValueChange = {
-                            viewModel.converterInput = it
-                            viewModel.calculateConverter()
-                        },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent,
-                            focusedTextColor = themeColors.displayText,
-                            unfocusedTextColor = themeColors.displayText,
-                            focusedIndicatorColor = themeColors.buttonOperatorBg,
-                            unfocusedIndicatorColor = themeColors.displayText.copy(alpha = 0.15f)
-                        ),
-                        textStyle = LocalTextStyle.current.copy(
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.End
-                        ),
-                        singleLine = true,
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(start = 16.dp)
-                            .testTag("converter_input_field")
-                    )
                 }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Numeric text field for user input underneath
+                OutlinedTextField(
+                    value = TextFieldValue(
+                        text = viewModel.converterInput,
+                        selection = TextRange(viewModel.converterInput.length)
+                    ),
+                    onValueChange = {
+                        viewModel.converterInput = it.text
+                        viewModel.calculateConverter()
+                    },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedBorderColor = Color(0xFF6366F1),
+                        unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f),
+                        focusedTextColor = themeColors.displayText,
+                        unfocusedTextColor = themeColors.displayText
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    textStyle = LocalTextStyle.current.copy(
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.End
+                    ),
+                    singleLine = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("converter_input_field")
+                )
             }
         }
 
@@ -204,8 +210,8 @@ fun UnitConverterScreen(
             FilledIconButton(
                 onClick = { viewModel.swapUnits() },
                 colors = IconButtonDefaults.filledIconButtonColors(
-                    containerColor = themeColors.buttonOperatorBg,
-                    contentColor = themeColors.buttonOperatorText
+                    containerColor = Color(0xFF6366F1),
+                    contentColor = Color.White
                 ),
                 modifier = Modifier
                     .size(48.dp)
@@ -227,21 +233,19 @@ fun UnitConverterScreen(
             elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = "To",
-                    fontSize = 13.sp,
-                    color = themeColors.displayExpressionText,
-                    fontWeight = FontWeight.SemiBold
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    // Dropdown Trigger
+                    Text(
+                        text = "To Unit",
+                        fontSize = 14.sp,
+                        color = themeColors.displayExpressionText,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    // Dropdown Trigger on the right side
                     Box {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -256,7 +260,7 @@ fun UnitConverterScreen(
                                 text = viewModel.toUnit,
                                 color = themeColors.buttonNormalText,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 15.sp
+                                fontSize = 14.sp
                             )
                             Icon(
                                 imageVector = Icons.Default.ArrowDropDown,
@@ -282,20 +286,40 @@ fun UnitConverterScreen(
                             }
                         }
                     }
-
-                    // Display Converted value
-                    Text(
-                        text = viewModel.converterOutput,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = themeColors.displayText,
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(start = 16.dp)
-                            .wrapContentWidth(Alignment.End)
-                            .testTag("converter_output_text")
-                    )
                 }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Editable OutlinedTextField for To Unit output
+                OutlinedTextField(
+                    value = TextFieldValue(
+                        text = viewModel.converterOutput,
+                        selection = TextRange(viewModel.converterOutput.length)
+                    ),
+                    onValueChange = {
+                        viewModel.converterOutput = it.text
+                        viewModel.calculateConverterReverse()
+                    },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedBorderColor = Color(0xFF6366F1),
+                        unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f),
+                        focusedTextColor = themeColors.displayText,
+                        unfocusedTextColor = themeColors.displayText
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    textStyle = LocalTextStyle.current.copy(
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.End
+                    ),
+                    singleLine = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("converter_output_text")
+                )
             }
         }
     }
