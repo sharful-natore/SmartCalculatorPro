@@ -2355,8 +2355,15 @@ How can I help you today?"""
 
     companion object {
         private val retrofit by lazy {
+            val okHttpClient = okhttp3.OkHttpClient.Builder()
+                .connectTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                .writeTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                .build()
+
             Retrofit.Builder()
                 .baseUrl("https://generativelanguage.googleapis.com/")
+                .client(okHttpClient)
                 .addConverterFactory(MoshiConverterFactory.create())
                 .build()
         }
@@ -2424,7 +2431,7 @@ data class GeminiCandidate(val content: GeminiContentResponse?)
 data class GeminiResponse(val candidates: List<GeminiCandidate>?)
 
 interface GeminiApiService {
-    @POST("v1beta/models/gemini-3.6-flash:generateContent")
+    @POST("v1beta/models/gemini-3.5-flash:generateContent")
     suspend fun generateContent(
         @Query("key") apiKey: String,
         @Body request: GeminiRequest
