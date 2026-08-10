@@ -120,6 +120,61 @@ fun BasicScientificScreen(
             .fillMaxSize()
             .background(themeColors.background)
             .offset { IntOffset(0, bounceAnimatable.value.roundToInt()) }
+            .pointerInput(viewModel.isScientificExpanded) {
+                if (!viewModel.isScientificExpanded) {
+                    awaitPointerEventScope {
+                        while (true) {
+                            val down = awaitFirstDown(pass = PointerEventPass.Initial, requireUnconsumed = false)
+                            var totalY = 0f
+                            var isDragging = false
+                            val pointerId = down.id
+
+                            while (true) {
+                                val event = awaitPointerEvent(pass = PointerEventPass.Initial)
+                                val change = event.changes.firstOrNull { it.id == pointerId } ?: break
+
+                                if (!change.pressed) {
+                                    if (isDragging && kotlin.math.abs(bounceAnimatable.value) > 0.5f) {
+                                        coroutineScope.launch {
+                                            bounceAnimatable.animateTo(
+                                                0f,
+                                                spring(
+                                                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                    stiffness = Spring.StiffnessLow
+                                                )
+                                            )
+                                        }
+                                    }
+                                    break
+                                }
+
+                                val posChange = change.positionChange()
+                                val deltaY = posChange.y
+                                val deltaX = posChange.x
+
+                                totalY += deltaY
+
+                                if (!isDragging) {
+                                    if (totalY < -12f && kotlin.math.abs(totalY) > kotlin.math.abs(deltaX)) {
+                                        isDragging = true
+                                    }
+                                }
+
+                                if (isDragging) {
+                                    if (deltaY < 0 || bounceAnimatable.value < 0f) {
+                                        change.consume()
+                                        coroutineScope.launch {
+                                            bounceAnimatable.snapTo(
+                                                (bounceAnimatable.value + (deltaY * 0.35f)).coerceIn(-150f, 0f)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
     ) {
         val screenHeight = maxHeight
         Column(
