@@ -492,7 +492,7 @@ fun MainContent(
                 val fabInteractionSource = remember { MutableInteractionSource() }
                 Box(
                     modifier = Modifier
-                        .offset(y = (-8).dp)
+                        .offset(y = (-11).dp)
                         .size(60.dp)
                         .shadow(elevation = 4.dp, shape = androidx.compose.foundation.shape.CircleShape)
                         .background(themeColors.navBarBg, androidx.compose.foundation.shape.CircleShape)
@@ -1052,6 +1052,24 @@ fun AiChatDialog(
     var textInput by remember { mutableStateOf("") }
     val lazyListState = rememberLazyListState()
     
+    var isInitiallyLoading by remember { mutableStateOf(true) }
+    var showOnlineErrorBanner by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(1000L)
+        isInitiallyLoading = false
+    }
+
+    LaunchedEffect(viewModel.lastOnlineError) {
+        if (viewModel.lastOnlineError != null) {
+            showOnlineErrorBanner = true
+            kotlinx.coroutines.delay(5000L)
+            showOnlineErrorBanner = false
+        } else {
+            showOnlineErrorBanner = false
+        }
+    }
+    
     val speechRecognizerLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
         contract = androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -1126,12 +1144,7 @@ fun AiChatDialog(
                             val statusText = if (isOnline) {
                                 if (isBn) "অনলাইন মডেল" else "Online Model"
                             } else {
-                                val errorDetail = viewModel.lastOnlineError ?: (if (isBn) "ইন্টারনেট সংযোগ বা API কি নেই" else "No internet or API key")
-                                if (isBn) {
-                                    "অফলাইন মডেল (কারণ: $errorDetail)"
-                                } else {
-                                    "Offline Model (Reason: $errorDetail)"
-                                }
+                                if (isBn) "অফলাইন মডেল" else "Offline Model"
                             }
                             Text(
                                 text = statusText,
@@ -1164,6 +1177,49 @@ fun AiChatDialog(
                             contentDescription = "Chat History",
                             tint = Color.White
                         )
+                    }
+                }
+                
+                // Warning Banner
+                if (showOnlineErrorBanner && viewModel.lastOnlineError != null) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFFFFF3CD)) // Warm warning yellow background
+                            .border(1.dp, Color(0xFFFFEBA5))
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Warning,
+                                contentDescription = "Warning",
+                                tint = Color(0xFF856404),
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = viewModel.lastOnlineError ?: "",
+                                color = Color(0xFF856404),
+                                fontSize = 12.sp,
+                                lineHeight = 16.sp
+                            )
+                        }
+                        IconButton(
+                            onClick = { showOnlineErrorBanner = false },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Close Banner",
+                                tint = Color(0xFF856404),
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
                     }
                 }
                 
@@ -1403,6 +1459,40 @@ fun AiChatDialog(
             )
         }
         ChatHistoryDialog(viewModel, themeColors)
+
+        // Loading Overlay
+        if (isInitiallyLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(themeColors.background),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    androidx.compose.foundation.Image(
+                        painter = androidx.compose.ui.res.painterResource(id = com.example.R.drawable.app_logo),
+                        contentDescription = "Loading Logo",
+                        modifier = Modifier.size(80.dp)
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    CircularProgressIndicator(
+                        color = themeColors.buttonEqualBg,
+                        strokeWidth = 3.dp,
+                        modifier = Modifier.size(36.dp)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = if (viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI) "এআই অ্যাসিস্ট্যান্ট লোড হচ্ছে..." else "Loading AI Assistant...",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = themeColors.displayText.copy(alpha = 0.7f)
+                    )
+                }
+            }
+        }
     }
 
 @OptIn(ExperimentalFoundationApi::class)

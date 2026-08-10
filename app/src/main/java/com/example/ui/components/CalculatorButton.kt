@@ -56,7 +56,7 @@ fun CalculatorButton(
         if (isPressed) {
             isPressedGuaranteed = true
         } else {
-            kotlinx.coroutines.delay(80)
+            kotlinx.coroutines.delay(150)
             isPressedGuaranteed = false
         }
     }
@@ -76,8 +76,8 @@ fun CalculatorButton(
     val scale by animateFloatAsState(
         targetValue = if (isPressedGuaranteed) 0.90f else 1.0f,
         animationSpec = spring(
-            dampingRatio = androidx.compose.animation.core.Spring.DampingRatioMediumBouncy,
-            stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow
+            dampingRatio = androidx.compose.animation.core.Spring.DampingRatioNoBouncy,
+            stiffness = androidx.compose.animation.core.Spring.StiffnessHigh
         ),
         label = "btn_scale"
     )

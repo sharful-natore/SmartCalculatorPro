@@ -235,7 +235,8 @@ fun BasicScientificScreen(
             Row(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .padding(4.dp),
+                    .offset(y = (-10).dp)
+                    .padding(start = 4.dp, top = 0.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -409,8 +410,8 @@ fun BasicScientificScreen(
                                         val style = styles.getOrNull(index) ?: DisplayStyle.NORMAL
                                         
                                         if (char != null && style != DisplayStyle.HIDDEN) {
-                                            val fontSizeFraction = if (style == DisplayStyle.SUPERSCRIPT) 0.65f else 1f
-                                            val offsetVal = if (style == DisplayStyle.SUPERSCRIPT) (- (exprSize * 0.35f)).dp else 0.dp
+                                            val fontSizeFraction = if (style == DisplayStyle.SUPERSCRIPT) 0.58f else 1f
+                                            val offsetVal = if (style == DisplayStyle.SUPERSCRIPT) (- (exprSize * 0.45f)).dp else 0.dp
                                             
                                             Text(
                                                 text = char.toString(),
@@ -535,7 +536,7 @@ fun BasicScientificScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(32.dp)
+                .height(20.dp)
                 .then(dragModifier)
                 .clickable {
                     coroutineScope.launch {
@@ -553,16 +554,17 @@ fun BasicScientificScreen(
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
-                    .width(72.dp)
-                    .height(24.dp)
-                    .clip(RoundedCornerShape(12.dp))
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .height(16.dp)
+                    .clip(RoundedCornerShape(8.dp))
                     .background(themeColors.displayText.copy(alpha = 0.08f))
             ) {
                 Icon(
                     imageVector = if (isExpanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
                     contentDescription = if (isExpanded) "Hide Scientific Mode" else "Show Scientific Mode",
                     tint = themeColors.displayText.copy(alpha = 0.7f),
-                    modifier = Modifier.size(22.dp)
+                    modifier = Modifier.size(18.dp)
                 )
             }
         }
@@ -624,7 +626,7 @@ fun BasicScientificScreen(
                         CalculatorButton("ln", themeColors.buttonFunctionBg, themeColors.buttonFunctionText, { viewModel.onBtnClick("ln") }, Modifier.weight(1f), fontSize = scientificFontSize, padding = buttonPadding)
                         CalculatorButton("log", themeColors.buttonFunctionBg, themeColors.buttonFunctionText, { viewModel.onBtnClick("log") }, Modifier.weight(1f), fontSize = scientificFontSize, padding = buttonPadding)
                         CalculatorButton("log^10", themeColors.buttonFunctionBg, themeColors.buttonFunctionText, { viewModel.onBtnClick("log^10") }, Modifier.weight(1f), fontSize = scientificFontSize, padding = buttonPadding)
-                        CalculatorButton("x^y", themeColors.buttonFunctionBg, themeColors.buttonFunctionText, { viewModel.onBtnClick("x^y") }, Modifier.weight(1f), fontSize = scientificFontSize, padding = buttonPadding)
+                        CalculatorButton("^", themeColors.buttonFunctionBg, themeColors.buttonFunctionText, { viewModel.onBtnClick("x^y") }, Modifier.weight(1f), fontSize = scientificFontSize, padding = buttonPadding)
                         CalculatorButton("x!", themeColors.buttonFunctionBg, themeColors.buttonFunctionText, { viewModel.onBtnClick("x!") }, Modifier.weight(1f), fontSize = scientificFontSize, padding = buttonPadding)
                         CalculatorButton("x²", themeColors.buttonFunctionBg, themeColors.buttonFunctionText, { viewModel.onBtnClick("x²") }, Modifier.weight(1f), fontSize = scientificFontSize, padding = buttonPadding)
                     }
