@@ -15,7 +15,8 @@ enum class ToolCategory(
     FINANCE("Finance & Business", "অর্থ ও ব্যবসা", Icons.Default.AccountBalance),
     UTILITY("Everyday Utility", "দৈনন্দিন ইউটিলিটি", Icons.Default.Widgets),
     ELECTRICITY("Electricity & Power", "বিদ্যুৎ ও শক্তি", Icons.Default.Bolt),
-    VEHICLE("Smart & Vehicle Tools", "স্মার্ট ও যানবাহন", Icons.Default.DirectionsCar);
+    VEHICLE("Smart & Vehicle Tools", "স্মার্ট ও যানবাহন", Icons.Default.DirectionsCar),
+    EDUCATION("Education & Results", "শিক্ষা ও ফলাফল", Icons.Default.School);
 
     fun getTitle(language: AppLanguage): String {
         return when (language) {
@@ -27,6 +28,7 @@ enum class ToolCategory(
                 UTILITY -> "दैनिक उपयोगिता"
                 ELECTRICITY -> "बिजली और ऊर्जा"
                 VEHICLE -> "वाहन उपकरण"
+                EDUCATION -> "शिक्षा और परिणाम"
             }
             AppLanguage.ARABIC -> when (this) {
                 HEALTH -> "الصحة واللياقة"
@@ -34,6 +36,7 @@ enum class ToolCategory(
                 UTILITY -> "أدوات يومية"
                 ELECTRICITY -> "الكهرباء والطاقة"
                 VEHICLE -> "أدوات المركبات"
+                EDUCATION -> "التعليم والنتائج"
             }
             AppLanguage.FRENCH -> when (this) {
                 HEALTH -> "Santé et Forme"
@@ -41,6 +44,7 @@ enum class ToolCategory(
                 UTILITY -> "Utilitaires du Quotidien"
                 ELECTRICITY -> "Électricité et Énergie"
                 VEHICLE -> "Outils Véhicule"
+                EDUCATION -> "Éducation et Résultats"
             }
             AppLanguage.SPANISH -> when (this) {
                 HEALTH -> "Salud y Bienestar"
@@ -48,6 +52,7 @@ enum class ToolCategory(
                 UTILITY -> "Utilidades Diarias"
                 ELECTRICITY -> "Electricidad y Energía"
                 VEHICLE -> "Herramientas de Vehículo"
+                EDUCATION -> "Educación y Resultados"
             }
             AppLanguage.GERMAN -> when (this) {
                 HEALTH -> "Gesundheit & Fitness"
@@ -55,6 +60,7 @@ enum class ToolCategory(
                 UTILITY -> "Alltags-Werkzeuge"
                 ELECTRICITY -> "Elektrizität & Strom"
                 VEHICLE -> "Fahrzeug-Tools"
+                EDUCATION -> "Bildung & Ergebnisse"
             }
             AppLanguage.CHINESE -> when (this) {
                 HEALTH -> "健康与健身"
@@ -62,6 +68,7 @@ enum class ToolCategory(
                 UTILITY -> "日常实用工具"
                 ELECTRICITY -> "电力与能源"
                 VEHICLE -> "车辆与出行"
+                EDUCATION -> "教育与成果"
             }
         }
     }
@@ -172,6 +179,23 @@ enum class ToolType(
         "Speed, Distance & Time", "গতি, দূরত্ব ও সময়",
         "গতিবেগ, দূরত্ব বা ভ্রমণের সময় বের করা",
         ToolCategory.VEHICLE, Icons.Default.Speed
+    ),
+
+    // 6. Education & Results
+    GPA(
+        "GPA Calculator", "জিপিএ ক্যালকুলেটর",
+        "বিষয়ভিত্তিক গ্রেড ও পয়েন্ট দিয়ে সেমিস্টার জিপিএ হিসাব",
+        ToolCategory.EDUCATION, Icons.Default.School
+    ),
+    CGPA(
+        "CGPA Calculator", "সিজিপিএ ক্যালকুলেটর",
+        "বিভিন্ন সেমিস্টারের ক্রেডিট ও এসজিপিএ দিয়ে মোট সিজিপিএ হিসাব",
+        ToolCategory.EDUCATION, Icons.Default.MenuBook
+    ),
+    TUITION_FEES(
+        "Tuition Fees Calculator", "টিউশন ফিস ক্যালকুলেটর",
+        "ক্রেডিট ফি, ওয়েভার ও কিস্তি অনুযায়ী মোট সেমিস্টার ফি হিসাব",
+        ToolCategory.EDUCATION, Icons.Default.Receipt
     );
 
     fun getTitle(language: AppLanguage): String {
@@ -204,6 +228,9 @@ enum class ToolType(
                 BATTERY_BACKUP -> "Calculate IPS / battery backup runtime in hours"
                 FUEL_COST -> "Calculate trip fuel cost based on distance and mileage"
                 SPEED_DISTANCE_TIME -> "Calculate travel speed, distance, or duration"
+                GPA -> "Calculate your semester GPA based on subjects and grades"
+                CGPA -> "Calculate cumulative GPA across multiple semesters"
+                TUITION_FEES -> "Calculate total semester tuition fees after waivers and other charges"
             }
         }
     }

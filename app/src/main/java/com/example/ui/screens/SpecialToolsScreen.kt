@@ -573,6 +573,9 @@ fun ToolDetailView(
             ToolType.BATTERY_BACKUP -> BatteryBackupCard(viewModel, themeColors)
             ToolType.FUEL_COST -> FuelCostCalculatorCard(viewModel, themeColors)
             ToolType.SPEED_DISTANCE_TIME -> SpeedDistanceTimeCard(viewModel, themeColors)
+            ToolType.GPA -> GpaCalculatorCard(viewModel, themeColors)
+            ToolType.CGPA -> CgpaCalculatorCard(viewModel, themeColors)
+            ToolType.TUITION_FEES -> TuitionFeesCalculatorCard(viewModel, themeColors)
         }
     }
 }

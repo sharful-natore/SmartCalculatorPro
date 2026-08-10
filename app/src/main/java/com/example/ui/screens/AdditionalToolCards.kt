@@ -77,18 +77,36 @@ fun BMRCalculatorCard(
     val lang = viewModel.selectedLanguage
     var gender by remember { mutableStateOf("Male") }
     var age by remember { mutableStateOf("25") }
-    var height by remember { mutableStateOf("170") } // cm
-    var weight by remember { mutableStateOf("70") } // kg
+    
+    var heightUnit by remember { mutableStateOf("cm") } // "cm" or "ft/in"
+    var weightUnit by remember { mutableStateOf("kg") } // "kg" or "lbs"
+    var heightCm by remember { mutableStateOf("170") }
+    var heightFt by remember { mutableStateOf("5") }
+    var heightIn by remember { mutableStateOf("7") }
+    var weightInput by remember { mutableStateOf("70") }
+    
     var activityMultiplier by remember { mutableStateOf(1.375) } // Lightly active default
 
     val ageVal = age.toDoubleOrNull() ?: 0.0
-    val heightVal = height.toDoubleOrNull() ?: 0.0
-    val weightVal = weight.toDoubleOrNull() ?: 0.0
+    
+    val weightValKg = if (weightUnit == "kg") {
+        weightInput.toDoubleOrNull() ?: 0.0
+    } else {
+        (weightInput.toDoubleOrNull() ?: 0.0) * 0.453592
+    }
+
+    val heightValCm = if (heightUnit == "cm") {
+        heightCm.toDoubleOrNull() ?: 0.0
+    } else {
+        val ft = heightFt.toDoubleOrNull() ?: 0.0
+        val inch = heightIn.toDoubleOrNull() ?: 0.0
+        ((ft * 12) + inch) * 2.54
+    }
 
     val bmr = if (gender == "Male") {
-        (10 * weightVal) + (6.25 * heightVal) - (5 * ageVal) + 5
+        (10 * weightValKg) + (6.25 * heightValCm) - (5 * ageVal) + 5
     } else {
-        (10 * weightVal) + (6.25 * heightVal) - (5 * ageVal) - 161
+        (10 * weightValKg) + (6.25 * heightValCm) - (5 * ageVal) - 161
     }
 
     val tdee = bmr * activityMultiplier
@@ -129,7 +147,71 @@ fun BMRCalculatorCard(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+        // Unit Toggles row
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Height unit toggle
+            Row(
+                modifier = Modifier.weight(1f).background(themeColors.background, RoundedCornerShape(8.dp)).padding(2.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                listOf("cm", "ft/in").forEach { unit ->
+                    val isSelected = heightUnit == unit
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(if (isSelected) themeColors.buttonEqualBg else Color.Transparent)
+                            .clickable { heightUnit = unit }
+                            .padding(vertical = 6.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (unit == "cm") "সেমি" else "ফুট/ইঞ্চি",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isSelected) Color.White else themeColors.displayText.copy(alpha = 0.7f)
+                        )
+                    }
+                }
+            }
+
+            // Weight unit toggle
+            Row(
+                modifier = Modifier.weight(1f).background(themeColors.background, RoundedCornerShape(8.dp)).padding(2.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                listOf("kg", "lbs").forEach { unit ->
+                    val isSelected = weightUnit == unit
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(if (isSelected) themeColors.buttonEqualBg else Color.Transparent)
+                            .clickable { weightUnit = unit }
+                            .padding(vertical = 6.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (unit == "kg") "কেজি" else "পাউন্ড",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isSelected) Color.White else themeColors.displayText.copy(alpha = 0.7f)
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Input Fields Row
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             CustomOutlinedTextField(
                 value = age,
                 onValueChange = { age = it },
@@ -137,17 +219,38 @@ fun BMRCalculatorCard(
                 themeColors = themeColors,
                 modifier = Modifier.weight(1f)
             )
+            
+            if (heightUnit == "cm") {
+                CustomOutlinedTextField(
+                    value = heightCm,
+                    onValueChange = { heightCm = it },
+                    label = "উচ্চতা (সেমি)",
+                    themeColors = themeColors,
+                    modifier = Modifier.weight(1f)
+                )
+            } else {
+                Row(modifier = Modifier.weight(1.2f), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    CustomOutlinedTextField(
+                        value = heightFt,
+                        onValueChange = { heightFt = it },
+                        label = "ফুট",
+                        themeColors = themeColors,
+                        modifier = Modifier.weight(1f)
+                    )
+                    CustomOutlinedTextField(
+                        value = heightIn,
+                        onValueChange = { heightIn = it },
+                        label = "ইঞ্চি",
+                        themeColors = themeColors,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+
             CustomOutlinedTextField(
-                value = height,
-                onValueChange = { height = it },
-                label = LanguageManager.getString("height_cm", lang),
-                themeColors = themeColors,
-                modifier = Modifier.weight(1f)
-            )
-            CustomOutlinedTextField(
-                value = weight,
-                onValueChange = { weight = it },
-                label = LanguageManager.getString("weight_kg", lang),
+                value = weightInput,
+                onValueChange = { weightInput = it },
+                label = if (weightUnit == "kg") "ওজন (কেজি)" else "ওজন (পাউন্ড)",
                 themeColors = themeColors,
                 modifier = Modifier.weight(1f)
             )
@@ -234,13 +337,21 @@ fun IdealWeightCalculatorCard(
 ) {
     val lang = viewModel.selectedLanguage
     var gender by remember { mutableStateOf("Male") }
+    var heightUnit by remember { mutableStateOf("ft/in") } // "ft/in" or "cm"
+    var heightCm by remember { mutableStateOf("170") }
     var heightFt by remember { mutableStateOf("5") }
     var heightIn by remember { mutableStateOf("7") }
 
-    val ft = heightFt.toDoubleOrNull() ?: 0.0
-    val inch = heightIn.toDoubleOrNull() ?: 0.0
-    val totalInches = (ft * 12) + inch
-    val totalMeters = totalInches * 0.0254
+    val heightValCm = if (heightUnit == "cm") {
+        heightCm.toDoubleOrNull() ?: 170.0
+    } else {
+        val ft = heightFt.toDoubleOrNull() ?: 0.0
+        val inch = heightIn.toDoubleOrNull() ?: 0.0
+        ((ft * 12) + inch) * 2.54
+    }
+
+    val totalInches = heightValCm / 2.54
+    val totalMeters = heightValCm / 100.0
 
     // Devine formula
     val devineKg = if (totalInches >= 60) {
@@ -288,21 +399,60 @@ fun IdealWeightCalculatorCard(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+        // Height unit toggle
+        Row(
+            modifier = Modifier.fillMaxWidth().background(themeColors.background, RoundedCornerShape(8.dp)).padding(2.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            listOf("cm", "ft/in").forEach { unit ->
+                val isSelected = heightUnit == unit
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(if (isSelected) themeColors.buttonEqualBg else Color.Transparent)
+                        .clickable { heightUnit = unit }
+                        .padding(vertical = 6.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = if (unit == "cm") "সেমি" else "ফুট/ইঞ্চি",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isSelected) Color.White else themeColors.displayText.copy(alpha = 0.7f)
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        if (heightUnit == "cm") {
             CustomOutlinedTextField(
-                value = heightFt,
-                onValueChange = { heightFt = it },
-                label = LanguageManager.getString("height_ft", lang),
+                value = heightCm,
+                onValueChange = { heightCm = it },
+                label = "উচ্চতা (সেমি)",
                 themeColors = themeColors,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.fillMaxWidth()
             )
-            CustomOutlinedTextField(
-                value = heightIn,
-                onValueChange = { heightIn = it },
-                label = LanguageManager.getString("height_in", lang),
-                themeColors = themeColors,
-                modifier = Modifier.weight(1f)
-            )
+        } else {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                CustomOutlinedTextField(
+                    value = heightFt,
+                    onValueChange = { heightFt = it },
+                    label = LanguageManager.getString("height_ft", lang),
+                    themeColors = themeColors,
+                    modifier = Modifier.weight(1f)
+                )
+                CustomOutlinedTextField(
+                    value = heightIn,
+                    onValueChange = { heightIn = it },
+                    label = LanguageManager.getString("height_in", lang),
+                    themeColors = themeColors,
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(14.dp))
@@ -332,14 +482,16 @@ fun WaterIntakeTrackerCard(
     themeColors: CalculatorThemeColors
 ) {
     val lang = viewModel.selectedLanguage
-    var weight by remember { mutableStateOf("65") }
+    var weightUnit by remember { mutableStateOf("kg") } // "kg" or "lbs"
+    var weightInput by remember { mutableStateOf("65") }
     var exerciseMins by remember { mutableStateOf("30") }
     var glassesDrunk by remember { mutableStateOf(3) }
 
-    val weightVal = weight.toDoubleOrNull() ?: 0.0
+    val weightVal = weightInput.toDoubleOrNull() ?: 0.0
+    val weightKgVal = if (weightUnit == "kg") weightVal else weightVal * 0.453592
     val exVal = exerciseMins.toDoubleOrNull() ?: 0.0
 
-    val baseLiters = weightVal * 0.033
+    val baseLiters = weightKgVal * 0.033
     val exLiters = (exVal / 30.0) * 0.35
     val totalLiters = baseLiters + exLiters
     val totalGlasses = (totalLiters * 1000 / 250).toInt().coerceAtLeast(1)
@@ -355,11 +507,40 @@ fun WaterIntakeTrackerCard(
         Text(LanguageManager.getString("water_intake_title", lang), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
         Spacer(modifier = Modifier.height(12.dp))
 
+        // Weight unit toggle
+        Row(
+            modifier = Modifier.fillMaxWidth().background(themeColors.background, RoundedCornerShape(8.dp)).padding(2.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            listOf("kg", "lbs").forEach { unit ->
+                val isSelected = weightUnit == unit
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(if (isSelected) themeColors.buttonEqualBg else Color.Transparent)
+                        .clickable { weightUnit = unit }
+                        .padding(vertical = 6.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = if (unit == "kg") "কেজি" else "পাউন্ড",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isSelected) Color.White else themeColors.displayText.copy(alpha = 0.7f)
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
             CustomOutlinedTextField(
-                value = weight,
-                onValueChange = { weight = it },
-                label = LanguageManager.getString("weight_kg", lang),
+                value = weightInput,
+                onValueChange = { weightInput = it },
+                label = if (weightUnit == "kg") "ওজন (কেজি)" else "ওজন (পাউন্ড)",
                 themeColors = themeColors,
                 modifier = Modifier.weight(1f)
             )

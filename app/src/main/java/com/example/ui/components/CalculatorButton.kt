@@ -18,6 +18,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,6 +50,16 @@ fun CalculatorButton(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
+    var isPressedGuaranteed by remember { mutableStateOf(false) }
+
+    androidx.compose.runtime.LaunchedEffect(isPressed) {
+        if (isPressed) {
+            isPressedGuaranteed = true
+        } else {
+            kotlinx.coroutines.delay(80)
+            isPressedGuaranteed = false
+        }
+    }
     
     if (repeatsOnLongPress) {
         androidx.compose.runtime.LaunchedEffect(isPressed) {
@@ -62,14 +74,17 @@ fun CalculatorButton(
     }
     
     val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.80f else 1.0f, // Deeper scale down to 0.80f
-        animationSpec = spring(dampingRatio = 0.35f, stiffness = 4000f), // Even more reactive
+        targetValue = if (isPressedGuaranteed) 0.90f else 1.0f,
+        animationSpec = spring(
+            dampingRatio = androidx.compose.animation.core.Spring.DampingRatioMediumBouncy,
+            stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow
+        ),
         label = "btn_scale"
     )
 
     val backgroundColor by animateColorAsState(
-        targetValue = if (isPressed) bgColor.copy(alpha = 0.85f) else bgColor,
-        animationSpec = tween(durationMillis = 50),
+        targetValue = if (isPressedGuaranteed) bgColor.copy(alpha = 0.82f) else bgColor,
+        animationSpec = tween(durationMillis = 100),
         label = "btn_color"
     )
     
