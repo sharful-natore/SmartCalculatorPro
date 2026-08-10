@@ -122,6 +122,20 @@ fun MainContent(
     LaunchedEffect(viewModel.activeTab) {
         focusManager.clearFocus()
     }
+
+    LaunchedEffect(Unit) {
+        try {
+            val prefs = context.getSharedPreferences("app_error_prefs", android.content.Context.MODE_PRIVATE)
+            val err = prefs.getString("last_error", null)
+            if (err != null) {
+                val stack = prefs.getString("last_stacktrace", "")
+                prefs.edit().clear().apply()
+                viewModel.reportError("⚠️ অ্যাপে পূর্ববর্তী একটি ত্রুটি ধরা পড়েছে (Previous error caught):\n$err\n\nStacktrace:\n$stack")
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
     val coroutineScope = rememberCoroutineScope()
     val pagerState = rememberPagerState(initialPage = viewModel.activeTab.coerceAtMost(3)) { 4 }
 
@@ -465,7 +479,12 @@ fun MainContent(
                         .clip(androidx.compose.foundation.shape.CircleShape)
                         .background(themeColors.cardBg)
                         .clickable {
-                            viewModel.showAiChat = true
+                            try {
+                                viewModel.showAiChat = true
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                                viewModel.reportError("AI Chat FAB error: ${e.localizedMessage ?: e.javaClass.simpleName}")
+                            }
                         },
                     contentAlignment = Alignment.Center
                 ) {
@@ -854,6 +873,33 @@ fun MainContent(
             viewModel = viewModel,
             themeColors = themeColors,
             onDismiss = { viewModel.showAiChat = false }
+        )
+    }
+
+    if (viewModel.showErrorDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.showErrorDialog = false },
+            title = {
+                Text(text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "⚠️ এরর মেসেজ (Error Details)" else "⚠️ Error Details")
+            },
+            text = {
+                Text(
+                    text = viewModel.currentErrorMessage ?: "Unknown error",
+                    color = themeColors.displayText,
+                    fontSize = 14.sp
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { viewModel.showErrorDialog = false }) {
+                    Text(
+                        text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "ঠিক আছে (OK)" else "OK",
+                        color = themeColors.buttonEqualBg,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            },
+            containerColor = themeColors.cardBg,
+            shape = RoundedCornerShape(16.dp)
         )
     }
 }

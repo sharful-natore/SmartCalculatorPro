@@ -40,20 +40,37 @@ class CalculatorViewModel(
 ) : ViewModel() {
 
     private val chatPrefs = context.getSharedPreferences("ai_chat_prefs", Context.MODE_PRIVATE)
-    private val moshi = com.squareup.moshi.Moshi.Builder().add(com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory()).build()
+    private val moshi = try {
+        com.squareup.moshi.Moshi.Builder().add(com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory()).build()
+    } catch (e: Exception) {
+        e.printStackTrace()
+        com.squareup.moshi.Moshi.Builder().build()
+    }
     private val chatSessionListType = com.squareup.moshi.Types.newParameterizedType(List::class.java, ChatSession::class.java)
-    private val sessionAdapter = moshi.adapter<List<ChatSession>>(chatSessionListType)
+    private val sessionAdapter = try {
+        moshi.adapter<List<ChatSession>>(chatSessionListType)
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
 
     private fun saveChatHistory() {
-        val json = sessionAdapter.toJson(chatSessions)
-        chatPrefs.edit().putString("chat_sessions", json).apply()
-        chatPrefs.edit().putString("current_session_id", currentSessionId).apply()
+        try {
+            if (sessionAdapter != null) {
+                val json = sessionAdapter.toJson(chatSessions)
+                chatPrefs.edit().putString("chat_sessions", json).apply()
+                chatPrefs.edit().putString("current_session_id", currentSessionId).apply()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            reportError("Save history error: ${e.localizedMessage ?: e.javaClass.simpleName}")
+        }
     }
 
     private fun loadChatHistory() {
-        val json = chatPrefs.getString("chat_sessions", null)
-        if (json != null) {
-            try {
+        try {
+            val json = chatPrefs.getString("chat_sessions", null)
+            if (json != null && sessionAdapter != null) {
                 val loaded = sessionAdapter.fromJson(json)
                 if (loaded != null) {
                     chatSessions = loaded
@@ -67,9 +84,10 @@ class CalculatorViewModel(
                         }
                     }
                 }
-            } catch (e: Exception) {
-                e.printStackTrace()
             }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            reportError("Load history error: ${e.localizedMessage ?: e.javaClass.simpleName}")
         }
         resetAiChat()
     }
@@ -209,6 +227,13 @@ class CalculatorViewModel(
     var showChatHistory by mutableStateOf(false)
 
     var isAiLoading by mutableStateOf(false)
+    var currentErrorMessage by mutableStateOf<String?>(null)
+    var showErrorDialog by mutableStateOf(false)
+
+    fun reportError(message: String) {
+        currentErrorMessage = message
+        showErrorDialog = true
+    }
 
     fun resetAiChat() {
         val isBn = selectedLanguage == AppLanguage.BENGALI
