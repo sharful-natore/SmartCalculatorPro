@@ -1,5 +1,12 @@
 package com.example.ui
 
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.foundation.LocalOverscrollConfiguration
+import androidx.compose.foundation.OverscrollConfiguration
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import com.example.util.scaleOnPress
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -96,8 +103,11 @@ fun MainContent(
     focusManager: androidx.compose.ui.focus.FocusManager,
     context: android.content.Context
 ) {
-    // Update system bars color based on theme
-    SideEffect {
+    CompositionLocalProvider(
+        LocalOverscrollConfiguration provides OverscrollConfiguration()
+    ) {
+        // Update system bars color based on theme
+        SideEffect {
         val window = (context as? Activity)?.window
         if (window != null) {
             val barColor = themeColors.buttonEqualBg
@@ -469,6 +479,7 @@ fun MainContent(
                 }
                 
                 // Floating Action Button in the center
+                val fabInteractionSource = remember { MutableInteractionSource() }
                 Box(
                     modifier = Modifier
                         .offset(y = (-8).dp)
@@ -478,7 +489,11 @@ fun MainContent(
                         .padding(2.5.dp)
                         .clip(androidx.compose.foundation.shape.CircleShape)
                         .background(themeColors.cardBg)
-                        .clickable {
+                        .scaleOnPress(fabInteractionSource)
+                        .clickable(
+                            interactionSource = fabInteractionSource,
+                            indication = null
+                        ) {
                             try {
                                 if (!viewModel.showAiChat) {
                                     viewModel.showAiChat = true
@@ -510,7 +525,9 @@ fun MainContent(
                 .consumeWindowInsets(innerPadding)
         ) {
             if (viewModel.activeTab == 4) {
-                ThemeSelectorScreen(viewModel, themeColors)
+                Box(modifier = Modifier.fillMaxSize()) {
+                    ThemeSelectorScreen(viewModel, themeColors)
+                }
             } else {
                 HorizontalPager(
                     state = pagerState,
@@ -901,6 +918,7 @@ fun MainContent(
             shape = RoundedCornerShape(16.dp)
         )
     }
+}
 }
 }
 
@@ -1314,10 +1332,14 @@ fun ChatHistoryDialog(viewModel: com.example.ui.viewmodel.CalculatorViewModel, t
                     ) {
                         items(viewModel.chatSessions) { session ->
                             val isSelected = viewModel.selectedChatSessionIds.contains(session.id)
+                            val sessionInteractionSource = remember { MutableInteractionSource() }
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
+                                    .scaleOnPress(sessionInteractionSource)
                                     .combinedClickable(
+                                        interactionSource = sessionInteractionSource,
+                                        indication = ripple(bounded = true),
                                         onClick = {
                                             if (viewModel.isChatSelectionMode) {
                                                 viewModel.toggleChatSelection(session.id)

@@ -1,8 +1,18 @@
 package com.example.ui.screens
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.ui.unit.IntOffset
+import kotlin.math.roundToInt
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -11,6 +21,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import com.example.util.scaleOnPress
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -71,6 +83,8 @@ fun ConverterCategoriesView(
 ) {
     val scrollState = rememberScrollState()
     val filterScrollState = rememberScrollState()
+    val coroutineScope = rememberCoroutineScope()
+    val bounceAnimatable = remember { Animatable(0f) }
 
     val allConverters = ConverterType.values()
     val searchQuery = viewModel.converterSearchQuery.lowercase().trim()
@@ -89,8 +103,28 @@ fun ConverterCategoriesView(
         modifier = Modifier
             .fillMaxSize()
             .background(themeColors.background)
-            .padding(horizontal = 16.dp, vertical = 2.dp)
+            .offset { IntOffset(0, bounceAnimatable.value.roundToInt()) }
+            .pointerInput(Unit) {
+                detectVerticalDragGestures(
+                    onVerticalDrag = { _, dragAmount ->
+                        coroutineScope.launch {
+                            bounceAnimatable.snapTo(bounceAnimatable.value + (dragAmount * 0.2f))
+                        }
+                    },
+                    onDragEnd = {
+                        coroutineScope.launch {
+                            bounceAnimatable.animateTo(0f, spring(stiffness = Spring.StiffnessLow))
+                        }
+                    },
+                    onDragCancel = {
+                        coroutineScope.launch {
+                            bounceAnimatable.animateTo(0f, spring(stiffness = Spring.StiffnessLow))
+                        }
+                    }
+                )
+            }
             .verticalScroll(scrollState)
+            .padding(horizontal = 16.dp, vertical = 2.dp)
     ) {
         // Search TextField
         OutlinedTextField(
@@ -292,11 +326,14 @@ fun ConverterCardItem(
     themeColors: CalculatorThemeColors,
     onClick: () -> Unit
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
     ElevatedCard(
         onClick = onClick,
+        interactionSource = interactionSource,
         modifier = Modifier
             .fillMaxWidth()
-            .testTag("card_${converterType.name.lowercase()}"),
+            .testTag("card_${converterType.name.lowercase()}")
+            .scaleOnPress(interactionSource),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.elevatedCardColors(
             containerColor = themeColors.cardBg
@@ -368,13 +405,35 @@ fun ConverterDetailView(
     val availableUnits = converterType.units
 
     val scrollState = rememberScrollState()
+    val coroutineScope = rememberCoroutineScope()
+    val bounceAnimatable = remember { Animatable(0f) }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(themeColors.background)
-            .padding(horizontal = 16.dp, vertical = 2.dp)
+            .offset { IntOffset(0, bounceAnimatable.value.roundToInt()) }
+            .pointerInput(Unit) {
+                detectVerticalDragGestures(
+                    onVerticalDrag = { _, dragAmount ->
+                        coroutineScope.launch {
+                            bounceAnimatable.snapTo(bounceAnimatable.value + (dragAmount * 0.2f))
+                        }
+                    },
+                    onDragEnd = {
+                        coroutineScope.launch {
+                            bounceAnimatable.animateTo(0f, spring(stiffness = Spring.StiffnessLow))
+                        }
+                    },
+                    onDragCancel = {
+                        coroutineScope.launch {
+                            bounceAnimatable.animateTo(0f, spring(stiffness = Spring.StiffnessLow))
+                        }
+                    }
+                )
+            }
             .verticalScroll(scrollState)
+            .padding(horizontal = 16.dp, vertical = 2.dp)
     ) {
         // Back Header
         Row(
@@ -514,13 +573,18 @@ fun ConverterDetailView(
                     )
 
                     // Dropdown Trigger on the right side
+                    val fromInteractionSource = remember { MutableInteractionSource() }
                     Box {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
                                 .clip(RoundedCornerShape(10.dp))
                                 .background(themeColors.background)
-                                .clickable { isFromDropdownExpanded = true }
+                                .scaleOnPress(fromInteractionSource)
+                                .clickable(
+                                    interactionSource = fromInteractionSource,
+                                    indication = null
+                                ) { isFromDropdownExpanded = true }
                                 .padding(horizontal = 10.dp, vertical = 6.dp)
                                 .testTag("from_unit_dropdown")
                         ) {
@@ -592,6 +656,7 @@ fun ConverterDetailView(
         }
 
         // Swap Floating Action Button
+        val swapInteractionSource = remember { MutableInteractionSource() }
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -600,12 +665,14 @@ fun ConverterDetailView(
         ) {
             FilledIconButton(
                 onClick = { viewModel.swapUnits() },
+                interactionSource = swapInteractionSource,
                 colors = IconButtonDefaults.filledIconButtonColors(
                     containerColor = themeColors.buttonEqualBg,
                     contentColor = Color.White
                 ),
                 modifier = Modifier
                     .size(44.dp)
+                    .scaleOnPress(swapInteractionSource)
                     .testTag("swap_units_button")
             ) {
                 Icon(
@@ -637,13 +704,18 @@ fun ConverterDetailView(
                     )
 
                     // Dropdown Trigger on the right side
+                    val toInteractionSource = remember { MutableInteractionSource() }
                     Box {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
                                 .clip(RoundedCornerShape(10.dp))
                                 .background(themeColors.background)
-                                .clickable { isToDropdownExpanded = true }
+                                .scaleOnPress(toInteractionSource)
+                                .clickable(
+                                    interactionSource = toInteractionSource,
+                                    indication = null
+                                ) { isToDropdownExpanded = true }
                                 .padding(horizontal = 10.dp, vertical = 6.dp)
                                 .testTag("to_unit_dropdown")
                         ) {

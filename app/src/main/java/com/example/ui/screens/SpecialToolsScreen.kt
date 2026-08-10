@@ -1,14 +1,26 @@
 package com.example.ui.screens
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.ui.unit.IntOffset
+import kotlin.math.roundToInt
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import com.example.util.scaleOnPress
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -65,6 +77,8 @@ fun ToolsCategoriesView(
 ) {
     val scrollState = rememberScrollState()
     val filterScrollState = rememberScrollState()
+    val coroutineScope = rememberCoroutineScope()
+    val bounceAnimatable = remember { Animatable(0f) }
 
     val allTools = ToolType.values()
     val searchQuery = viewModel.toolSearchQuery.lowercase().trim()
@@ -83,8 +97,28 @@ fun ToolsCategoriesView(
         modifier = Modifier
             .fillMaxSize()
             .background(themeColors.background)
-            .padding(horizontal = 16.dp, vertical = 2.dp)
+            .offset { IntOffset(0, bounceAnimatable.value.roundToInt()) }
+            .pointerInput(Unit) {
+                detectVerticalDragGestures(
+                    onVerticalDrag = { _, dragAmount ->
+                        coroutineScope.launch {
+                            bounceAnimatable.snapTo(bounceAnimatable.value + (dragAmount * 0.2f))
+                        }
+                    },
+                    onDragEnd = {
+                        coroutineScope.launch {
+                            bounceAnimatable.animateTo(0f, spring(stiffness = Spring.StiffnessLow))
+                        }
+                    },
+                    onDragCancel = {
+                        coroutineScope.launch {
+                            bounceAnimatable.animateTo(0f, spring(stiffness = Spring.StiffnessLow))
+                        }
+                    }
+                )
+            }
             .verticalScroll(scrollState)
+            .padding(horizontal = 16.dp, vertical = 2.dp)
     ) {
         // Search Bar
         OutlinedTextField(
@@ -253,11 +287,17 @@ fun ToolFilterChipItem(
     themeColors: CalculatorThemeColors,
     onClick: () -> Unit
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(12.dp))
             .background(if (isSelected) themeColors.buttonEqualBg else themeColors.cardBg)
-            .clickable(onClick = onClick)
+            .scaleOnPress(interactionSource)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = ripple(bounded = true),
+                onClick = onClick
+            )
             .padding(horizontal = 12.dp, vertical = 8.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -286,11 +326,14 @@ fun ToolGridCardItem(
     themeColors: CalculatorThemeColors,
     onClick: () -> Unit
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
     ElevatedCard(
         onClick = onClick,
+        interactionSource = interactionSource,
         modifier = Modifier
             .fillMaxWidth()
-            .testTag("tool_card_${toolType.name.lowercase()}"),
+            .testTag("tool_card_${toolType.name.lowercase()}")
+            .scaleOnPress(interactionSource),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.elevatedCardColors(
             containerColor = themeColors.cardBg
@@ -358,13 +401,35 @@ fun ToolDetailView(
     themeColors: CalculatorThemeColors
 ) {
     val scrollState = rememberScrollState()
+    val coroutineScope = rememberCoroutineScope()
+    val bounceAnimatable = remember { Animatable(0f) }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(themeColors.background)
-            .padding(horizontal = 16.dp, vertical = 2.dp)
+            .offset { IntOffset(0, bounceAnimatable.value.roundToInt()) }
+            .pointerInput(Unit) {
+                detectVerticalDragGestures(
+                    onVerticalDrag = { _, dragAmount ->
+                        coroutineScope.launch {
+                            bounceAnimatable.snapTo(bounceAnimatable.value + (dragAmount * 0.2f))
+                        }
+                    },
+                    onDragEnd = {
+                        coroutineScope.launch {
+                            bounceAnimatable.animateTo(0f, spring(stiffness = Spring.StiffnessLow))
+                        }
+                    },
+                    onDragCancel = {
+                        coroutineScope.launch {
+                            bounceAnimatable.animateTo(0f, spring(stiffness = Spring.StiffnessLow))
+                        }
+                    }
+                )
+            }
             .verticalScroll(scrollState)
+            .padding(horizontal = 16.dp, vertical = 2.dp)
     ) {
         // Back Header
         Row(
@@ -373,14 +438,17 @@ fun ToolDetailView(
                 .fillMaxWidth()
                 .padding(bottom = 16.dp)
         ) {
+            val backInteractionSource = remember { MutableInteractionSource() }
             FilledIconButton(
                 onClick = { viewModel.closeToolDetail() },
+                interactionSource = backInteractionSource,
                 colors = IconButtonDefaults.filledIconButtonColors(
                     containerColor = themeColors.cardBg,
                     contentColor = themeColors.displayText
                 ),
                 modifier = Modifier
                     .size(40.dp)
+                    .scaleOnPress(backInteractionSource)
                     .testTag("back_to_tools_list")
             ) {
                 Icon(

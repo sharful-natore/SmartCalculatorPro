@@ -9,11 +9,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.input.pointer.pointerInput
@@ -27,8 +26,11 @@ import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.outlined.Science
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.unit.IntOffset
+import kotlin.math.roundToInt
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -106,12 +108,54 @@ fun BasicScientificScreen(
     val basicFontSize = (23f - (4f * expansionFraction)).toInt()
     val scientificFontSize = (14f - (2f * expansionFraction)).toInt()
 
-    Column(
+    val bounceAnimatable = remember { Animatable(0f) }
+
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
             .background(themeColors.background)
-            .padding(horizontal = 12.dp, vertical = 2.dp)
+            .offset { IntOffset(0, bounceAnimatable.value.roundToInt()) }
+            .pointerInput(Unit) {
+                detectVerticalDragGestures(
+                    onVerticalDrag = { _, dragAmount ->
+                        if (!viewModel.isScientificExpanded) {
+                            if (dragAmount < 0) {
+                                coroutineScope.launch {
+                                    bounceAnimatable.snapTo(bounceAnimatable.value + (dragAmount * 0.2f))
+                                }
+                            } else if (dragAmount > 0) {
+                                viewModel.isScientificExpanded = true
+                            }
+                        } else {
+                            if (dragAmount < 0) {
+                                viewModel.isScientificExpanded = false
+                            } else if (dragAmount > 0) {
+                                coroutineScope.launch {
+                                    bounceAnimatable.snapTo(bounceAnimatable.value + (dragAmount * 0.2f))
+                                }
+                            }
+                        }
+                    },
+                    onDragEnd = {
+                        coroutineScope.launch {
+                            bounceAnimatable.animateTo(0f, spring(stiffness = Spring.StiffnessLow))
+                        }
+                    },
+                    onDragCancel = {
+                        coroutineScope.launch {
+                            bounceAnimatable.animateTo(0f, spring(stiffness = Spring.StiffnessLow))
+                        }
+                    }
+                )
+            }
     ) {
+        val screenHeight = maxHeight
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = screenHeight)
+                .padding(PaddingValues(horizontal = 12.dp, vertical = 12.dp))
+        ) {
         // 1. Calculator Display Screen
         Box(
             modifier = Modifier
@@ -324,36 +368,20 @@ fun BasicScientificScreen(
                                             .background(if (selectionStart == 0 && cursorVisible) themeColors.displayText else Color.Transparent)
                                     )
 
-                                    (0 until maxLen).forEach { index ->
+                                     (0 until maxLen).forEach { index ->
                                         val char = text.getOrNull(index)
-                                        AnimatedVisibility(
-                                            visible = char != null,
-                                            enter = scaleIn(initialScale = 0.2f, animationSpec = spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessMedium)) + fadeIn(),
-                                            exit = scaleOut(targetScale = 0.2f, animationSpec = spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessMedium)) + fadeOut(),
-                                            label = "char_visibility"
-                                        ) {
-                                            if (char != null) {
-                                                AnimatedContent(
-                                                    targetState = char,
-                                                    transitionSpec = {
-                                                        (scaleIn(initialScale = 0.2f, animationSpec = spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessMedium)) + fadeIn())
-                                                            .togetherWith(scaleOut(targetScale = 0.2f, animationSpec = spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessMedium)) + fadeOut())
-                                                    },
-                                                    label = "char_anim"
-                                                ) { animatedChar ->
-                                                    Text(
-                                                        text = animatedChar.toString(),
-                                                        color = exprColor,
-                                                        fontSize = exprSize.sp,
-                                                        fontFamily = FontFamily.Monospace,
-                                                        fontWeight = FontWeight.Medium,
-                                                        textAlign = TextAlign.End,
-                                                        modifier = Modifier.padding(horizontal = 0.5.dp)
-                                                    )
-                                                }
-                                            }
+                                        if (char != null) {
+                                            Text(
+                                                text = char.toString(),
+                                                color = exprColor,
+                                                fontSize = exprSize.sp,
+                                                fontFamily = FontFamily.Monospace,
+                                                fontWeight = FontWeight.Medium,
+                                                textAlign = TextAlign.End,
+                                                modifier = Modifier.padding(horizontal = 0.5.dp)
+                                            )
                                         }
-                                        
+
                                         // Cursor after this character
                                         Box(
                                             modifier = Modifier
@@ -716,4 +744,5 @@ fun BasicScientificScreen(
             }
         }
     }
+}
 }

@@ -1,6 +1,16 @@
 package com.example.ui.screens
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.ui.unit.IntOffset
+import kotlin.math.roundToInt
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.background
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -25,6 +35,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.theme.CalculatorThemeColors
 import com.example.ui.viewmodel.CalculatorViewModel
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import com.example.util.scaleOnPress
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -36,12 +50,40 @@ fun HistoryScreen(
 ) {
     val historyItems by viewModel.historyList.collectAsState()
 
-    Column(
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
             .background(themeColors.background)
-            .padding(horizontal = 16.dp, vertical = 2.dp)
     ) {
+        val screenHeight = maxHeight
+        val coroutineScope = rememberCoroutineScope()
+        val bounceAnimatable = remember { Animatable(0f) }
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = screenHeight)
+                .padding(horizontal = 16.dp, vertical = 2.dp)
+                .offset { IntOffset(0, bounceAnimatable.value.roundToInt()) }
+                .pointerInput(Unit) {
+                    detectVerticalDragGestures(
+                        onVerticalDrag = { _, dragAmount ->
+                            coroutineScope.launch {
+                                bounceAnimatable.snapTo(bounceAnimatable.value + (dragAmount * 0.2f))
+                            }
+                        },
+                        onDragEnd = {
+                            coroutineScope.launch {
+                                bounceAnimatable.animateTo(0f, spring(stiffness = Spring.StiffnessLow))
+                            }
+                        },
+                        onDragCancel = {
+                            coroutineScope.launch {
+                                bounceAnimatable.animateTo(0f, spring(stiffness = Spring.StiffnessLow))
+                            }
+                        }
+                    )
+                }
+        ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -119,21 +161,27 @@ fun HistoryScreen(
                 }
             }
         } else {
-            LazyColumn(
-                modifier = Modifier.weight(1f),
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                items(historyItems) { entry ->
+                historyItems.forEach { entry ->
                     val sdf = SimpleDateFormat("hh:mm a, dd MMM", Locale.getDefault())
                     val formattedTime = sdf.format(Date(entry.timestamp))
                     val isSelected = viewModel.selectedHistoryIds.contains(entry.id)
 
+                    val interactionSource = remember { MutableInteractionSource() }
                     ElevatedCard(
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag("history_item_${entry.id}")
                             .clip(RoundedCornerShape(16.dp))
+                            .scaleOnPress(interactionSource)
                             .combinedClickable(
+                                interactionSource = interactionSource,
+                                indication = androidx.compose.foundation.LocalIndication.current,
                                 onClick = {
                                     if (viewModel.isHistorySelectionMode) {
                                         viewModel.toggleHistorySelection(entry.id)
@@ -283,5 +331,6 @@ fun HistoryScreen(
             },
             containerColor = themeColors.cardBg
         )
+    }
     }
 }

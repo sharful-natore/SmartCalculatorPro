@@ -2091,8 +2091,8 @@ class CalculatorViewModelFactory(
 @JsonClass(generateAdapter = true)
 data class ChatMessage(
     val id: String = java.util.UUID.randomUUID().toString(),
-    val text: String,
-    val isUser: Boolean,
+    val text: String = "",
+    val isUser: Boolean = false,
     val timestamp: Long = System.currentTimeMillis(),
     val actionType: String? = null,
     val actionLabel: String? = null,
@@ -2102,8 +2102,8 @@ data class ChatMessage(
 @JsonClass(generateAdapter = true)
 data class ChatSession(
     val id: String = java.util.UUID.randomUUID().toString(),
-    val title: String,
-    val messages: List<ChatMessage>,
+    val title: String = "Chat",
+    val messages: List<ChatMessage> = emptyList(),
     val timestamp: Long = System.currentTimeMillis()
 )
 

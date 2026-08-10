@@ -1,5 +1,15 @@
 package com.example.ui.screens
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.ui.unit.IntOffset
+import kotlin.math.roundToInt
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
+
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -27,6 +37,8 @@ import com.example.ui.theme.*
 import com.example.ui.viewmodel.CalculatorViewModel
 import com.example.util.AppLanguage
 import com.example.util.LanguageManager
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import com.example.util.scaleOnPress
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,18 +48,46 @@ fun ThemeSelectorScreen(
 ) {
     val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
     val scrollState = rememberScrollState()
+    val coroutineScope = rememberCoroutineScope()
+    val bounceAnimatable = remember { Animatable(0f) }
     
     var showAddThemeDialog by remember { mutableStateOf(false) }
     var themeToEdit by remember { mutableStateOf<CustomTheme?>(null) }
     var showDeleteConfirmDialog by remember { mutableStateOf<String?>(null) }
 
-    Column(
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
             .background(themeColors.background)
             .verticalScroll(scrollState)
-            .padding(16.dp)
     ) {
+        val screenHeight = maxHeight
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = screenHeight)
+                .padding(16.dp)
+                .offset { IntOffset(0, bounceAnimatable.value.roundToInt()) }
+                .pointerInput(Unit) {
+                    detectVerticalDragGestures(
+                        onVerticalDrag = { _, dragAmount ->
+                            coroutineScope.launch {
+                                bounceAnimatable.snapTo(bounceAnimatable.value + (dragAmount * 0.2f))
+                            }
+                        },
+                        onDragEnd = {
+                            coroutineScope.launch {
+                                bounceAnimatable.animateTo(0f, spring(stiffness = Spring.StiffnessLow))
+                            }
+                        },
+                        onDragCancel = {
+                            coroutineScope.launch {
+                                bounceAnimatable.animateTo(0f, spring(stiffness = Spring.StiffnessLow))
+                            }
+                        }
+                    )
+                }
+        ) {
         // --- Preset Themes Section ---
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -208,6 +248,7 @@ fun ThemeSelectorScreen(
         }
         
         Spacer(modifier = Modifier.height(32.dp))
+        }
     }
 
     // --- Add/Edit Theme Dialog ---
@@ -262,11 +303,15 @@ fun ThemeCard(
     onLongClick: (() -> Unit)? = null,
     onEditClick: (() -> Unit)? = null
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
+            .scaleOnPress(interactionSource)
             .combinedClickable(
+                interactionSource = interactionSource,
+                indication = ripple(bounded = true),
                 onClick = onClick,
                 onLongClick = onLongClick
             ),
