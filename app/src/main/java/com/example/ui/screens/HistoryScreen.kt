@@ -8,8 +8,11 @@ import kotlin.math.roundToInt
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.background
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.unit.Velocity
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
@@ -25,6 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,6 +53,64 @@ fun HistoryScreen(
     themeColors: CalculatorThemeColors
 ) {
     val historyItems by viewModel.historyList.collectAsState()
+    val scrollState = rememberScrollState()
+    val coroutineScope = rememberCoroutineScope()
+    val bounceAnimatable = remember { Animatable(0f) }
+
+    val nestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                val currentValue = bounceAnimatable.value
+                if (currentValue != 0f) {
+                    if ((currentValue < 0f && available.y > 0f) || (currentValue > 0f && available.y < 0f)) {
+                        val newDelta = available.y * 0.35f
+                        val newValue = if (currentValue < 0f) {
+                            (currentValue + newDelta).coerceAtMost(0f)
+                        } else {
+                            (currentValue + newDelta).coerceAtLeast(0f)
+                        }
+                        coroutineScope.launch {
+                            bounceAnimatable.snapTo(newValue)
+                        }
+                        return Offset(0f, available.y)
+                    }
+                }
+                return Offset.Zero
+            }
+
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource
+            ): Offset {
+                if (available.y != 0f) {
+                    coroutineScope.launch {
+                        bounceAnimatable.snapTo((bounceAnimatable.value + available.y * 0.35f).coerceIn(-140f, 140f))
+                    }
+                }
+                return Offset.Zero
+            }
+
+            override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
+                bounceAnimatable.animateTo(
+                    0f,
+                    spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
+                )
+                return super.onPostFling(consumed, available)
+            }
+        }
+    }
+
+    LaunchedEffect(scrollState.isScrollInProgress) {
+        if (!scrollState.isScrollInProgress && bounceAnimatable.value != 0f) {
+            coroutineScope.launch {
+                bounceAnimatable.animateTo(
+                    0f,
+                    spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
+                )
+            }
+        }
+    }
 
     BoxWithConstraints(
         modifier = Modifier
@@ -56,33 +118,14 @@ fun HistoryScreen(
             .background(themeColors.background)
     ) {
         val screenHeight = maxHeight
-        val coroutineScope = rememberCoroutineScope()
-        val bounceAnimatable = remember { Animatable(0f) }
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = screenHeight)
-                .padding(horizontal = 16.dp, vertical = 2.dp)
+                .nestedScroll(nestedScrollConnection)
                 .offset { IntOffset(0, bounceAnimatable.value.roundToInt()) }
-                .pointerInput(Unit) {
-                    detectVerticalDragGestures(
-                        onVerticalDrag = { _, dragAmount ->
-                            coroutineScope.launch {
-                                bounceAnimatable.snapTo(bounceAnimatable.value + (dragAmount * 0.2f))
-                            }
-                        },
-                        onDragEnd = {
-                            coroutineScope.launch {
-                                bounceAnimatable.animateTo(0f, spring(stiffness = Spring.StiffnessLow))
-                            }
-                        },
-                        onDragCancel = {
-                            coroutineScope.launch {
-                                bounceAnimatable.animateTo(0f, spring(stiffness = Spring.StiffnessLow))
-                            }
-                        }
-                    )
-                }
+                .verticalScroll(scrollState)
+                .padding(horizontal = 16.dp, vertical = 2.dp)
         ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -163,8 +206,7 @@ fun HistoryScreen(
         } else {
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()),
+                    .fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 historyItems.forEach { entry ->

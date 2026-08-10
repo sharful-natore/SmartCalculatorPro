@@ -416,7 +416,7 @@ fun MainContent(
                     tonalElevation = 0.dp,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(64.dp)
+                        .height(72.dp)
                         .testTag("bottom_nav_bar")
                 ) {
                     val tabs = listOf(

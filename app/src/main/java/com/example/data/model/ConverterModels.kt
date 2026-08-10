@@ -99,6 +99,10 @@ enum class ConverterType(
         "Frequency", "ফ্রিকোয়েন্সি", ConverterCategory.TECHNOLOGY, Icons.Default.Waves,
         listOf("Hertz (Hz)", "Kilohertz (kHz)", "Megahertz (MHz)", "Gigahertz (GHz)")
     ),
+    NUMBER_SYSTEM(
+        "Number System", "সংখ্যা পদ্ধতি", ConverterCategory.TECHNOLOGY, Icons.Default.Code,
+        listOf("Decimal (10)", "Binary (2)", "Octal (8)", "Hexadecimal (16)")
+    ),
 
     // 4. Motion & Transport
     SPEED(
@@ -442,6 +446,9 @@ enum class ConverterType(
                     "Gigahertz (GHz)" -> inHz / 1_000_000_000.0
                     else -> inHz
                 }
+            }
+            NUMBER_SYSTEM -> {
+                value
             }
             SPEED -> {
                 val inMs = when (from) {

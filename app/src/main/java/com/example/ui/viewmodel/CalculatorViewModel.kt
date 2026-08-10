@@ -264,12 +264,17 @@ How can I help you today?"""
         return try {
             val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? android.net.ConnectivityManager
             if (cm == null) return false
+            @Suppress("DEPRECATION")
+            val activeInfo = cm.activeNetworkInfo
+            val isConnectedLegacy = activeInfo != null && activeInfo.isConnected
+            
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
                 val activeNetwork = cm.activeNetwork
                 if (activeNetwork != null) {
                     val capabilities = cm.getNetworkCapabilities(activeNetwork)
                     if (capabilities != null) {
-                        if (capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI) ||
+                        if (capabilities.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET) ||
+                            capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI) ||
                             capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_CELLULAR) ||
                             capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_ETHERNET) ||
                             capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_VPN)) {
@@ -278,12 +283,9 @@ How can I help you today?"""
                     }
                 }
             }
-            @Suppress("DEPRECATION")
-            val activeInfo = cm.activeNetworkInfo
-            @Suppress("DEPRECATION")
-            activeInfo != null && activeInfo.isConnected
+            isConnectedLegacy
         } catch (e: Exception) {
-            false
+            true // Fallback to attempting online call if check fails
         }
     }
 
@@ -1700,8 +1702,40 @@ How can I help you today?"""
         calculateConverter()
     }
 
+    fun convertNumberSystem(input: String, from: String, to: String): String {
+        if (input.isBlank()) return ""
+        val cleanInput = input.trim()
+        val fromRadix = when {
+            from.contains("Binary") || from.contains("2") -> 2
+            from.contains("Octal") || from.contains("8") -> 8
+            from.contains("Hexadecimal") || from.contains("16") -> 16
+            else -> 10
+        }
+        val toRadix = when {
+            to.contains("Binary") || to.contains("2") -> 2
+            to.contains("Octal") || to.contains("8") -> 8
+            to.contains("Hexadecimal") || to.contains("16") -> 16
+            else -> 10
+        }
+        return try {
+            val decimalVal = cleanInput.toLong(fromRadix)
+            when (toRadix) {
+                2 -> java.lang.Long.toBinaryString(decimalVal)
+                8 -> java.lang.Long.toOctalString(decimalVal)
+                16 -> java.lang.Long.toHexString(decimalVal).uppercase()
+                else -> decimalVal.toString()
+            }
+        } catch (e: Exception) {
+            "Invalid"
+        }
+    }
+
     fun calculateConverter() {
         val type = selectedConverterType ?: return
+        if (type == com.example.data.model.ConverterType.NUMBER_SYSTEM) {
+            converterOutput = convertNumberSystem(converterInput, fromUnit, toUnit)
+            return
+        }
         val inputVal = converterInput.toDoubleOrNull() ?: 0.0
         val outVal = if (type == com.example.data.model.ConverterType.CURRENCY) {
             type.convert(fromUnit, toUnit, inputVal, customRates = exchangeRates)
@@ -1714,6 +1748,10 @@ How can I help you today?"""
 
     fun calculateConverterReverse() {
         val type = selectedConverterType ?: return
+        if (type == com.example.data.model.ConverterType.NUMBER_SYSTEM) {
+            converterInput = convertNumberSystem(converterOutput, toUnit, fromUnit)
+            return
+        }
         val outputVal = converterOutput.toDoubleOrNull() ?: 0.0
         val inVal = if (type == com.example.data.model.ConverterType.CURRENCY) {
             type.convert(toUnit, fromUnit, outputVal, customRates = exchangeRates)

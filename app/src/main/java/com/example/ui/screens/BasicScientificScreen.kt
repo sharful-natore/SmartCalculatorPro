@@ -12,6 +12,9 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -116,37 +119,70 @@ fun BasicScientificScreen(
             .background(themeColors.background)
             .offset { IntOffset(0, bounceAnimatable.value.roundToInt()) }
             .pointerInput(Unit) {
-                detectVerticalDragGestures(
-                    onVerticalDrag = { _, dragAmount ->
-                        if (!viewModel.isScientificExpanded) {
-                            if (dragAmount < 0) {
-                                coroutineScope.launch {
-                                    bounceAnimatable.snapTo(bounceAnimatable.value + (dragAmount * 0.2f))
+                awaitPointerEventScope {
+                    while (true) {
+                        val down = awaitFirstDown(pass = PointerEventPass.Initial, requireUnconsumed = false)
+                        var totalY = 0f
+                        var isDragging = false
+                        val pointerId = down.id
+
+                        while (true) {
+                            val event = awaitPointerEvent(pass = PointerEventPass.Initial)
+                            val change = event.changes.firstOrNull { it.id == pointerId } ?: break
+
+                            if (!change.pressed) {
+                                if (isDragging) {
+                                    coroutineScope.launch {
+                                        bounceAnimatable.animateTo(
+                                            0f,
+                                            spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
+                                        )
+                                    }
                                 }
-                            } else if (dragAmount > 0) {
-                                viewModel.isScientificExpanded = true
+                                break
                             }
-                        } else {
-                            if (dragAmount < 0) {
-                                viewModel.isScientificExpanded = false
-                            } else if (dragAmount > 0) {
-                                coroutineScope.launch {
-                                    bounceAnimatable.snapTo(bounceAnimatable.value + (dragAmount * 0.2f))
+
+                            val posChange = change.positionChange()
+                            val deltaY = posChange.y
+                            val deltaX = posChange.x
+
+                            totalY += deltaY
+
+                            if (!isDragging) {
+                                if (kotlin.math.abs(totalY) > 12f && kotlin.math.abs(totalY) > kotlin.math.abs(deltaX)) {
+                                    isDragging = true
                                 }
                             }
-                        }
-                    },
-                    onDragEnd = {
-                        coroutineScope.launch {
-                            bounceAnimatable.animateTo(0f, spring(stiffness = Spring.StiffnessLow))
-                        }
-                    },
-                    onDragCancel = {
-                        coroutineScope.launch {
-                            bounceAnimatable.animateTo(0f, spring(stiffness = Spring.StiffnessLow))
+
+                            if (isDragging) {
+                                change.consume()
+                                if (!viewModel.isScientificExpanded) {
+                                    if (deltaY < 0 || bounceAnimatable.value < 0f) {
+                                        // Swiping UP when hidden -> Bounce UP
+                                        coroutineScope.launch {
+                                            bounceAnimatable.snapTo((bounceAnimatable.value + (deltaY * 0.35f)).coerceIn(-150f, 0f))
+                                        }
+                                    } else if (deltaY > 0 && totalY > 20f) {
+                                        // Swiping DOWN when hidden -> Show Scientific Mode
+                                        viewModel.isScientificExpanded = true
+                                        totalY = 0f
+                                    }
+                                } else {
+                                    if (deltaY > 0 || bounceAnimatable.value > 0f) {
+                                        // Swiping DOWN when expanded -> Bounce DOWN
+                                        coroutineScope.launch {
+                                            bounceAnimatable.snapTo((bounceAnimatable.value + (deltaY * 0.35f)).coerceIn(0f, 150f))
+                                        }
+                                    } else if (deltaY < 0 && totalY < -20f) {
+                                        // Swiping UP when expanded -> Hide Scientific Mode without bounce
+                                        viewModel.isScientificExpanded = false
+                                        totalY = 0f
+                                    }
+                                }
+                            }
                         }
                     }
-                )
+                }
             }
     ) {
         val screenHeight = maxHeight
@@ -154,7 +190,7 @@ fun BasicScientificScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = screenHeight)
-                .padding(PaddingValues(horizontal = 12.dp, vertical = 12.dp))
+                .padding(start = 12.dp, end = 12.dp, top = 12.dp, bottom = 17.dp)
         ) {
         // 1. Calculator Display Screen
         Box(
