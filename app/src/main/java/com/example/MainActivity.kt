@@ -19,6 +19,7 @@ import com.example.ui.viewmodel.CalculatorViewModel
 import com.example.ui.viewmodel.CalculatorViewModelFactory
 import android.graphics.Color as AndroidColor
 
+// Force rebuild to refresh emulator
 class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)

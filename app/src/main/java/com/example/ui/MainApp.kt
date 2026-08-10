@@ -503,17 +503,22 @@ fun MainContent(
                 
                 val glowingColors1 = remember {
                     listOf(
-                        Color(0xFFFF5E8E), Color(0xFFFF7EB3), Color(0xFFFF99CC), Color(0xFFE8B0FF),
-                        Color(0xFFD0A1FF), Color(0xFFB591FF), Color(0xFF9EA3FF), Color(0xFF8AB5FF),
-                        Color(0xFF7CC7FF), Color(0xFF6ED8FF), Color(0xFF6CF0FF), Color(0xFF75FFEC),
-                        Color(0xFF82FFD2), Color(0xFF9CFFB3), Color(0xFFB3FF99), Color(0xFFCDFF82),
-                        Color(0xFFE6FF6E), Color(0xFFFFF275), Color(0xFFFFDF70), Color(0xFFFFC66C),
-                        Color(0xFFFFA568), Color(0xFFFF856B), Color(0xFFFF6D7A), Color(0xFFFF5E8E) // Loop back
+                        Color(0xFFFF0000), Color(0xFFFF2200), Color(0xFFFF4400), Color(0xFFFF6600),
+                        Color(0xFFFF8800), Color(0xFFFFAA00), Color(0xFFFFCC00), Color(0xFFFFEE00),
+                        Color(0xFFDDFF00), Color(0xFFBBFF00), Color(0xFF99FF00), Color(0xFF77FF00),
+                        Color(0xFF55FF00), Color(0xFF33FF00), Color(0xFF11FF00), Color(0xFF00FF22),
+                        Color(0xFF00FF55), Color(0xFF00FF88), Color(0xFF00FFBB), Color(0xFF00FFEE),
+                        Color(0xFF00DDFF), Color(0xFF00BBFF), Color(0xFF0099FF), Color(0xFF0077FF),
+                        Color(0xFF0055FF), Color(0xFF0033FF), Color(0xFF0011FF), Color(0xFF2200FF),
+                        Color(0xFF4400FF), Color(0xFF6600FF), Color(0xFF8800FF), Color(0xFFAA00FF),
+                        Color(0xFFCC00FF), Color(0xFFEE00FF), Color(0xFFFF00DD), Color(0xFFFF00BB),
+                        Color(0xFFFF0099), Color(0xFFFF0077), Color(0xFFFF0055), Color(0xFFFF0022),
+                        Color(0xFFFF0000) // Loop back
                     )
                 }
-                val glowingColors2 = remember { glowingColors1.drop(12) + glowingColors1.take(12) + listOf(glowingColors1[12]) }
+                val glowingColors2 = remember { glowingColors1.drop(20) + glowingColors1.take(20) + listOf(glowingColors1[20]) }
 
-                val duration = 30000
+                val duration = 18000
 
                 val color1 by infiniteTransition.animateColor(
                     initialValue = glowingColors1.first(),
@@ -556,7 +561,7 @@ fun MainContent(
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
-                        .offset(y = (-13).dp) // 72 (nav) + 5 (outside) - 64 (fab) = 13 (so 5dp sticks out)
+                        .offset(y = (-18).dp) // 72 (nav) + 10 (outside) - 64 (fab) = 18 (so 10dp sticks out)
                         .size(64.dp)
                         .shadow(elevation = 6.dp, shape = androidx.compose.foundation.shape.CircleShape)
                         .background(Color.White, androidx.compose.foundation.shape.CircleShape)

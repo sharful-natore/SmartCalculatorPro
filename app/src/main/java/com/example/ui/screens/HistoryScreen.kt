@@ -382,9 +382,9 @@ fun HistoryScreen(
                 }
                 
                 @Composable
-                fun HighlightedText(text: String, query: String, color: Color, modifier: Modifier = Modifier, fontSize: androidx.compose.ui.unit.TextUnit, fontWeight: FontWeight? = null) {
+                fun HighlightedText(text: String, query: String, color: Color, modifier: Modifier = Modifier, fontSize: androidx.compose.ui.unit.TextUnit, fontWeight: FontWeight? = null, fontFamily: FontFamily? = null) {
                     if (query.isEmpty()) {
-                        Text(text = text, color = color, modifier = modifier, fontSize = fontSize, fontWeight = fontWeight, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                        Text(text = text, color = color, modifier = modifier, fontSize = fontSize, fontWeight = fontWeight, fontFamily = fontFamily, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                         return
                     }
                     val eng = listOf("0", "1", "2", "3", "4", "5", "6", "7", "8", "9")
@@ -400,14 +400,16 @@ fun HistoryScreen(
                     if (startIndex >= 0) {
                         val annotated = buildAnnotatedString {
                             append(text.substring(0, startIndex))
-                            withStyle(style = SpanStyle(background = Color.Yellow.copy(alpha = 0.5f), color = Color.Black)) {
-                                append(text.substring(startIndex, startIndex + query.length))
+                            withStyle(style = SpanStyle(background = Color.Yellow.copy(alpha = 0.6f), color = Color.Black)) {
+                                // Important: We need to append the EXACT MATCH from the original text
+                                // because the query might be English but original text might be Bengali
+                                append(text.substring(startIndex, startIndex + normalizedQuery.length))
                             }
-                            append(text.substring(startIndex + query.length))
+                            append(text.substring(startIndex + normalizedQuery.length))
                         }
-                        Text(text = annotated, color = color, modifier = modifier, fontSize = fontSize, fontWeight = fontWeight, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                        Text(text = annotated, color = color, modifier = modifier, fontSize = fontSize, fontWeight = fontWeight, fontFamily = fontFamily, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                     } else {
-                        Text(text = text, color = color, modifier = modifier, fontSize = fontSize, fontWeight = fontWeight, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                        Text(text = text, color = color, modifier = modifier, fontSize = fontSize, fontWeight = fontWeight, fontFamily = fontFamily, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                     }
                 }
 
@@ -466,8 +468,9 @@ fun HistoryScreen(
                                             color = themeColors.buttonEqualBg.copy(alpha = 0.15f),
                                             shape = RoundedCornerShape(4.dp)
                                         ) {
-                                            Text(
+                                            HighlightedText(
                                                 text = entry.customName,
+                                                query = searchQuery,
                                                 fontSize = 11.sp,
                                                 color = themeColors.buttonEqualBg,
                                                 fontWeight = FontWeight.Bold,
@@ -477,12 +480,12 @@ fun HistoryScreen(
                                     }
                                 }
                                 Spacer(modifier = Modifier.height(6.dp))
-                                Text(
+                                HighlightedText(
                                     text = entry.expression,
+                                    query = searchQuery,
                                     fontSize = 18.sp,
                                     fontFamily = FontFamily.Monospace,
-                                    color = themeColors.displayText,
-                                    maxLines = 1
+                                    color = themeColors.displayText
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
                                 val displayResult = try {

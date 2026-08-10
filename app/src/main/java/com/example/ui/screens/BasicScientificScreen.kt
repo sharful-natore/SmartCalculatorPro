@@ -564,9 +564,11 @@ fun BasicScientificScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 2.dp)
                 .then(dragModifier)
-                .clickable {
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) {
                     coroutineScope.launch {
                         if (viewModel.isScientificExpanded) {
                             expansionAnimatable.animateTo(0f)
@@ -579,21 +581,12 @@ fun BasicScientificScreen(
                 },
             contentAlignment = Alignment.Center
         ) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = buttonPadding)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(androidx.compose.ui.graphics.Color.Transparent)
-            ) {
-                Icon(
-                    imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                    contentDescription = if (isExpanded) "Hide Scientific Mode" else "Show Scientific Mode",
-                    tint = themeColors.displayText.copy(alpha = 0.7f),
-                    modifier = Modifier.size(28.dp)
-                )
-            }
+            Icon(
+                imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                contentDescription = if (isExpanded) "Hide Scientific Mode" else "Show Scientific Mode",
+                tint = themeColors.displayText.copy(alpha = 0.7f),
+                modifier = Modifier.size(28.dp)
+            )
         }
 
         // Keypad Container (Dynamically scaled, no scroll needed)
