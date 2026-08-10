@@ -50,6 +50,20 @@ import com.example.util.scaleOnPress
 import java.text.SimpleDateFormat
 import java.util.*
 
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Sort
+import androidx.compose.material.icons.filled.Close
+import com.example.util.AppLanguage
+
+
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun HistoryScreen(
@@ -57,6 +71,13 @@ fun HistoryScreen(
     themeColors: CalculatorThemeColors
 ) {
     val historyItems by viewModel.historyList.collectAsState()
+
+    val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
+
+    var searchQuery by remember { mutableStateOf("") }
+    var isSearchActive by remember { mutableStateOf(false) }
+    var isAscending by remember { mutableStateOf(false) }
+
     val scrollState = rememberScrollState()
     val coroutineScope = rememberCoroutineScope()
     val bounceAnimatable = remember { Animatable(0f) }
@@ -152,13 +173,42 @@ fun HistoryScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = if (viewModel.isHistorySelectionMode) "${viewModel.selectedHistoryIds.size} Selected" else "Calculation History",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = themeColors.displayText
+            if (isSearchActive) {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = { Text(if (isBn) "সার্চ করুন..." else "Search...") },
+                    modifier = Modifier.weight(1f).height(50.dp),
+                    textStyle = androidx.compose.ui.text.TextStyle(fontSize = 14.sp),
+                    singleLine = true,
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedIndicatorColor = themeColors.buttonEqualBg,
+                        unfocusedIndicatorColor = themeColors.displayText.copy(alpha = 0.5f),
+                        cursorColor = themeColors.buttonEqualBg
+                    ),
+                    trailingIcon = {
+                        IconButton(onClick = { 
+                            if (searchQuery.isNotEmpty()) {
+                                searchQuery = ""
+                            } else {
+                                isSearchActive = false 
+                            }
+                        }) {
+                            Icon(Icons.Default.Close, contentDescription = "Close Search", modifier = Modifier.size(20.dp))
+                        }
+                    }
                 )
+            } else {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = if (viewModel.isHistorySelectionMode) "${viewModel.selectedHistoryIds.size} Selected" else if (isBn) "হিস্টোরি" else "History",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.displayText
+                    )
+                }
             }
 
             if (viewModel.isHistorySelectionMode) {
@@ -178,6 +228,28 @@ fun HistoryScreen(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    if (!isSearchActive) {
+                        IconButton(
+                            onClick = { isSearchActive = true }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "Search",
+                                tint = themeColors.buttonEqualBg,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        IconButton(
+                            onClick = { isAscending = !isAscending }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Sort,
+                                contentDescription = "Sort",
+                                tint = if (isAscending) themeColors.buttonEqualBg else themeColors.buttonEqualBg.copy(alpha=0.5f),
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
                     // Backup Button
                     IconButton(
                         onClick = { viewModel.showBackupConfirmDialog = true },
@@ -263,7 +335,36 @@ fun HistoryScreen(
                     .fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                historyItems.forEach { entry ->
+                val filteredItems = historyItems.filter { 
+                    it.expression.contains(searchQuery, ignoreCase = true) || 
+                    it.result.contains(searchQuery, ignoreCase = true) || 
+                    (it.customName?.contains(searchQuery, ignoreCase = true) == true)
+                }.let { 
+                    if (isAscending) it.sortedBy { item -> item.timestamp } else it.sortedByDescending { item -> item.timestamp }
+                }
+                
+                @Composable
+                fun HighlightedText(text: String, query: String, color: Color, modifier: Modifier = Modifier, fontSize: androidx.compose.ui.unit.TextUnit, fontWeight: FontWeight? = null) {
+                    if (query.isEmpty()) {
+                        Text(text = text, color = color, modifier = modifier, fontSize = fontSize, fontWeight = fontWeight, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                        return
+                    }
+                    val startIndex = text.indexOf(query, ignoreCase = true)
+                    if (startIndex >= 0) {
+                        val annotated = buildAnnotatedString {
+                            append(text.substring(0, startIndex))
+                            withStyle(style = SpanStyle(background = Color.Yellow.copy(alpha = 0.5f))) {
+                                append(text.substring(startIndex, startIndex + query.length))
+                            }
+                            append(text.substring(startIndex + query.length))
+                        }
+                        Text(text = annotated, color = color, modifier = modifier, fontSize = fontSize, fontWeight = fontWeight, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                    } else {
+                        Text(text = text, color = color, modifier = modifier, fontSize = fontSize, fontWeight = fontWeight, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                    }
+                }
+
+                filteredItems.forEach { entry ->
                     val sdf = SimpleDateFormat("hh:mm a, dd MMM", Locale.getDefault())
                     val formattedTime = sdf.format(Date(entry.timestamp))
                     val isSelected = viewModel.selectedHistoryIds.contains(entry.id)

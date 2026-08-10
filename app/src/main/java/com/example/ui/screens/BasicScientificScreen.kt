@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.IntOffset
 import kotlin.math.roundToInt
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
@@ -253,13 +254,13 @@ fun BasicScientificScreen(
                                 clipboardManager.setText(AnnotatedString(textToCopy))
                             }
                         },
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier.size(34.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.ContentCopy,
                             contentDescription = "Copy Expression",
                             tint = themeColors.displayText.copy(alpha = 0.5f),
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(17.dp)
                         )
                     }
 
@@ -269,13 +270,13 @@ fun BasicScientificScreen(
                                 viewModel.onPaste(clipText.text)
                             }
                         },
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier.size(34.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.ContentPaste,
                             contentDescription = "Paste Expression",
                             tint = themeColors.displayText.copy(alpha = 0.5f),
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(17.dp)
                         )
                     }
                 }
@@ -289,14 +290,14 @@ fun BasicScientificScreen(
                     },
                     enabled = canSave,
                     modifier = Modifier
-                        .size(32.dp)
+                        .size(34.dp)
                         .offset(x = 8.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Save,
                         contentDescription = "Save Calculation",
                         tint = if (canSave) themeColors.displayText.copy(alpha = 0.5f) else themeColors.displayText.copy(alpha = 0.2f),
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(17.dp)
                     )
                 }
             }
@@ -582,7 +583,7 @@ fun BasicScientificScreen(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
+                    .padding(horizontal = buttonPadding)
                     .height(16.dp)
                     .clip(RoundedCornerShape(8.dp))
                     .background(themeColors.displayText.copy(alpha = 0.08f))
@@ -610,6 +611,21 @@ fun BasicScientificScreen(
                         .weight(4f * expansionFraction)
                         .graphicsLayer {
                             alpha = expansionFraction
+                            clip = true
+                        }
+                        .layout { measurable, constraints ->
+                            if (expansionFraction <= 0.01f) {
+                                val p = measurable.measure(constraints)
+                                layout(constraints.maxWidth, constraints.maxHeight) { p.placeRelative(0, 0) }
+                            } else {
+                                val targetHeight = (constraints.maxHeight / expansionFraction).toInt()
+                                val unconstrained = constraints.copy(minHeight = targetHeight, maxHeight = targetHeight)
+                                val p = measurable.measure(unconstrained)
+                                layout(constraints.maxWidth, constraints.maxHeight) {
+                                    val yOffset = constraints.maxHeight - p.height
+                                    p.placeRelative(0, yOffset)
+                                }
+                            }
                         },
                     verticalArrangement = Arrangement.spacedBy(rowSpacing)
                 ) {

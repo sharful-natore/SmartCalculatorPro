@@ -403,7 +403,7 @@ fun MainContent(
                     .fillMaxWidth()
                     .background(themeColors.navBarBg)
                     .navigationBarsPadding(),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.BottomCenter
             ) {
                 Row(
                     modifier = Modifier
@@ -496,163 +496,61 @@ fun MainContent(
                 // Floating Action Button in the center
                 val fabInteractionSource = remember { MutableInteractionSource() }
                 
-                val infiniteTransition = rememberInfiniteTransition(label = "ai_breathing")
+                val infiniteTransition = rememberInfiniteTransition(label = "ai_gradient")
                 
-                // 1. Outer Wave (Slowest, largest pulsing wave)
-                val outerScale by infiniteTransition.animateFloat(
-                    initialValue = 1.0f,
-                    targetValue = 1.8f,
+                val angle by infiniteTransition.animateFloat(
+                    initialValue = 0f,
+                    targetValue = 360f,
                     animationSpec = infiniteRepeatable(
-                        animation = tween(3200, easing = FastOutSlowInEasing),
+                        animation = tween(3000, easing = LinearEasing),
                         repeatMode = RepeatMode.Restart
                     ),
-                    label = "outer_scale"
+                    label = "angle"
                 )
-                val outerAlpha by infiniteTransition.animateFloat(
-                    initialValue = 0.45f,
-                    targetValue = 0.0f,
-                    animationSpec = infiniteRepeatable(
-                        animation = tween(3200, easing = FastOutSlowInEasing),
-                        repeatMode = RepeatMode.Restart
-                    ),
-                    label = "outer_alpha"
-                )
-
-                // 2. Middle Wave (Medium speed, medium size pulsing wave)
-                val middleScale by infiniteTransition.animateFloat(
-                    initialValue = 1.0f,
-                    targetValue = 1.45f,
-                    animationSpec = infiniteRepeatable(
-                        animation = tween(2400, easing = LinearOutSlowInEasing),
-                        repeatMode = RepeatMode.Restart
-                    ),
-                    label = "middle_scale"
-                )
-                val middleAlpha by infiniteTransition.animateFloat(
-                    initialValue = 0.6f,
-                    targetValue = 0.0f,
-                    animationSpec = infiniteRepeatable(
-                        animation = tween(2400, easing = LinearOutSlowInEasing),
-                        repeatMode = RepeatMode.Restart
-                    ),
-                    label = "middle_alpha"
-                )
-
-                // 3. Inner Wave (Fastest, closest to button wave)
-                val innerScale by infiniteTransition.animateFloat(
-                    initialValue = 0.95f,
-                    targetValue = 1.2f,
-                    animationSpec = infiniteRepeatable(
-                        animation = tween(1600, easing = FastOutSlowInEasing),
-                        repeatMode = RepeatMode.Restart
-                    ),
-                    label = "inner_scale"
-                )
-                val innerAlpha by infiniteTransition.animateFloat(
-                    initialValue = 0.7f,
-                    targetValue = 0.0f,
-                    animationSpec = infiniteRepeatable(
-                        animation = tween(1600, easing = FastOutSlowInEasing),
-                        repeatMode = RepeatMode.Restart
-                    ),
-                    label = "inner_alpha"
-                )
-
-                // 4. Button breathing scale (very gentle, reverse repeat)
-                val buttonScale by infiniteTransition.animateFloat(
-                    initialValue = 0.98f,
-                    targetValue = 1.04f,
-                    animationSpec = infiniteRepeatable(
-                        animation = tween(1500, easing = FastOutSlowInEasing),
-                        repeatMode = RepeatMode.Reverse
-                    ),
-                    label = "button_scale"
-                )
+                
+                val glowingColors = remember {
+                    listOf(
+                        Color(0xFFFF007F), Color(0xFFFF00FF), Color(0xFF8A2BE2), Color(0xFF4B0082),
+                        Color(0xFF0000FF), Color(0xFF1E90FF), Color(0xFF00BFFF), Color(0xFF00FFFF),
+                        Color(0xFF20B2AA), Color(0xFF00FF7F), Color(0xFF32CD32), Color(0xFFADFF2F),
+                        Color(0xFFFFFF00), Color(0xFFFFD700), Color(0xFFFFA500), Color(0xFFFF4500),
+                        Color(0xFFFF0000), Color(0xFFDC143C), Color(0xFFFF1493), Color(0xFFFF69B4),
+                        Color(0xFFFF007F) // Loop back
+                    )
+                }
 
                 Box(
                     modifier = Modifier
-                        .offset(y = (-11).dp)
-                        .size(76.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    // Outer Wave (Radial gradient fading to transparent for a soft blurred look)
-                    Box(
-                        modifier = Modifier
-                            .size(54.dp)
-                            .scale(outerScale)
-                            .drawBehind {
-                                drawCircle(
-                                    brush = Brush.radialGradient(
-                                        colors = listOf(
-                                            Color(0xFF4F46E5).copy(alpha = outerAlpha), // Indigo
-                                            Color(0xFF06B6D4).copy(alpha = outerAlpha * 0.5f), // Cyan
-                                            Color.Transparent
-                                        )
+                        .align(Alignment.BottomCenter)
+                        .offset(y = (-13).dp) // 72 (nav) + 5 (outside) - 64 (fab) = 13 (so 5dp sticks out)
+                        .size(64.dp)
+                        .shadow(elevation = 6.dp, shape = androidx.compose.foundation.shape.CircleShape)
+                        .background(themeColors.navBarBg, androidx.compose.foundation.shape.CircleShape)
+                        .padding(3.dp) // Border thickness
+                        .clip(androidx.compose.foundation.shape.CircleShape)
+                        .drawBehind {
+                            rotate(angle) {
+                                drawRect(
+                                    brush = Brush.sweepGradient(
+                                        colors = glowingColors,
+                                        center = Offset(size.width / 2f, size.height / 2f)
                                     ),
-                                    radius = size.minDimension / 2f
+                                    size = size
                                 )
                             }
-                    )
-
-                    // Middle Wave (Radial gradient fading to transparent for a soft blurred look)
-                    Box(
-                        modifier = Modifier
-                            .size(54.dp)
-                            .scale(middleScale)
-                            .drawBehind {
-                                drawCircle(
-                                    brush = Brush.radialGradient(
-                                        colors = listOf(
-                                            Color(0xFF8B5CF6).copy(alpha = middleAlpha), // Violet
-                                            Color(0xFFEC4899).copy(alpha = middleAlpha * 0.4f), // Pink
-                                            Color.Transparent
-                                        )
-                                    ),
-                                    radius = size.minDimension / 2f
-                                )
-                            }
-                    )
-
-                    // Inner Wave (Radial gradient fading to transparent for a soft blurred look)
-                    Box(
-                        modifier = Modifier
-                            .size(54.dp)
-                            .scale(innerScale)
-                            .drawBehind {
-                                drawCircle(
-                                    brush = Brush.radialGradient(
-                                        colors = listOf(
-                                            Color(0xFF3B82F6).copy(alpha = innerAlpha), // Blue
-                                            Color(0xFF10B981).copy(alpha = innerAlpha * 0.3f), // ChatGPT Green
-                                            Color.Transparent
-                                        )
-                                    ),
-                                    radius = size.minDimension / 2f
-                                )
-                            }
-                    )
-
-                    // Main FAB button with vibrant gradient
-                    Box(
-                        modifier = Modifier
-                            .size(54.dp)
-                            .scale(buttonScale)
-                            .shadow(elevation = 6.dp, shape = androidx.compose.foundation.shape.CircleShape)
-                            .clip(androidx.compose.foundation.shape.CircleShape)
-                            .background(
-                                Brush.linearGradient(
-                                    colors = listOf(
-                                        Color(0xFF4F46E5), // Indigo
-                                        Color(0xFF8B5CF6), // Purple
-                                        Color(0xFF06B6D4)  // Teal
-                                    )
+                            // Inner subtle glow/blur overlay
+                            drawCircle(
+                                brush = Brush.radialGradient(
+                                    colors = listOf(Color.White.copy(alpha=0.4f), Color.Transparent),
+                                    center = Offset(size.width / 2f, size.height / 2f),
+                                    radius = size.width / 2f
                                 )
                             )
-                            .scaleOnPress(fabInteractionSource)
-                            .clickable(
-                                interactionSource = fabInteractionSource,
-                                indication = null
-                            ) {
+                        }
+                        .clickable(
+                            interactionSource = fabInteractionSource,
+                            indication = ripple(bounded = false),
+                            onClick = {
                                 try {
                                     if (!viewModel.showAiChat) {
                                         viewModel.showAiChat = true
@@ -661,16 +559,16 @@ fun MainContent(
                                     e.printStackTrace()
                                     viewModel.reportError("AI Chat FAB error: ${e.localizedMessage ?: e.javaClass.simpleName}")
                                 }
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.AutoAwesome,
-                            contentDescription = "AI Assistant",
-                            tint = Color.White,
-                            modifier = Modifier.size(26.dp)
-                        )
-                    }
+                            }
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.AutoAwesome,
+                        contentDescription = "AI Assistant",
+                        tint = Color.White,
+                        modifier = Modifier.size(28.dp)
+                    )
                 }
             }
         },
