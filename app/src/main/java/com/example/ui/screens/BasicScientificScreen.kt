@@ -317,7 +317,8 @@ fun BasicScientificScreen(
                     targetValue = if (viewModel.isEvaluated) {
                         24f
                     } else {
-                        if (viewModel.expression.length > 12) 28f else 38f
+                        val baseSize = if (viewModel.expression.length > 12) 28f else 38f
+                        if (viewModel.isScientificExpanded) 28f else baseSize
                     },
                     animationSpec = androidx.compose.animation.core.spring(dampingRatio = 0.82f, stiffness = 250f),
                     label = "expr_size"
@@ -564,6 +565,7 @@ fun BasicScientificScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
+                .height(18.dp) // Reduced height for minimal padding
                 .then(dragModifier)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
@@ -585,7 +587,7 @@ fun BasicScientificScreen(
                 imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                 contentDescription = if (isExpanded) "Hide Scientific Mode" else "Show Scientific Mode",
                 tint = themeColors.displayText.copy(alpha = 0.7f),
-                modifier = Modifier.size(28.dp)
+                modifier = Modifier.size(22.dp)
             )
         }
 

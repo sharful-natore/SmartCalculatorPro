@@ -149,6 +149,8 @@ class CalculatorViewModel(
 
     var isScientificExpanded by mutableStateOf(false)
 
+    var showGlobalSearch by mutableStateOf(false)
+
     // Current Active Tab: 0 = Calculator, 1 = Converter, 2 = Special, 3 = History, 4 = Themes
     var activeTab by mutableStateOf(0)
     var isEvaluated by mutableStateOf(false)

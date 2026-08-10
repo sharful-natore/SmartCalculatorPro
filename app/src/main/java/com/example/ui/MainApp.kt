@@ -78,6 +78,7 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.Date
 import com.example.ui.screens.*
+import com.example.ui.components.GlobalSearchDialog
 import com.example.ui.theme.CalculatorThemeColors
 import com.example.ui.viewmodel.CalculatorViewModel
 import com.example.util.AppLanguage
@@ -297,6 +298,20 @@ fun MainContent(
                         }
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(
+                            onClick = { 
+                                viewModel.showGlobalSearch = true 
+                            },
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "Global Search",
+                                tint = Color.White,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+
                         // Language Switcher Dropdown Button
                         var isLangMenuExpanded by remember { mutableStateOf(false) }
                         Box {
@@ -561,11 +576,11 @@ fun MainContent(
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
-                        .offset(y = (-18).dp) // 72 (nav) + 10 (outside) - 64 (fab) = 18 (so 10dp sticks out)
-                        .size(64.dp)
+                        .offset(y = (-22).dp) // 72 (nav) + 10 (outside) - 60 (fab) = 22 (so 10dp sticks out)
+                        .size(60.dp)
                         .shadow(elevation = 6.dp, shape = androidx.compose.foundation.shape.CircleShape)
                         .background(Color.White, androidx.compose.foundation.shape.CircleShape)
-                        .padding(4.dp) // Border thickness
+                        .padding(3.4.dp) // Border thickness reduced by another 5% (from 3.6dp)
                         .clip(androidx.compose.foundation.shape.CircleShape)
                         .drawBehind {
                             drawRect(
@@ -1631,7 +1646,9 @@ fun AiChatDialog(
         }
         ChatHistoryDialog(viewModel, themeColors)
 
-        // Loading Overlay
+        GlobalSearchDialog(viewModel, themeColors)
+ 
+         // Loading Overlay
         if (isInitiallyLoading) {
             Box(
                 modifier = Modifier

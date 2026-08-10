@@ -568,6 +568,8 @@ fun ToolDetailView(
             ToolType.DATE_DIFF -> DateDifferenceCard(viewModel, themeColors)
             ToolType.PERCENTAGE -> PercentageCalculatorCard(viewModel, themeColors)
             ToolType.TIP -> TipCalculatorCard(viewModel, themeColors)
+            ToolType.TEXT_COUNTER -> TextCounterCard(viewModel, themeColors)
+            ToolType.PASSWORD_GENERATOR -> PasswordGeneratorCard(viewModel, themeColors)
             ToolType.ELECTRICITY_BILL -> ElectricityBillCalculatorCard(viewModel, themeColors)
             ToolType.APPLIANCE_COST -> ApplianceEnergyCostCard(viewModel, themeColors)
             ToolType.BATTERY_BACKUP -> BatteryBackupCard(viewModel, themeColors)
