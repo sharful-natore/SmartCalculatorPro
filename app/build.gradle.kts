@@ -1,4 +1,5 @@
 import com.google.gms.googleservices.GoogleServicesPlugin.MissingGoogleServicesStrategy
+import java.util.Properties
 
 plugins {
   alias(libs.plugins.android.application)
@@ -7,6 +8,41 @@ plugins {
   alias(libs.plugins.roborazzi)
   alias(libs.plugins.secrets)
   alias(libs.plugins.google.services)
+}
+
+val geminiApiKey: String = run {
+    // 1. Check system environment variables first
+    val envVal = System.getenv("GEMINI_API_KEY")
+    if (!envVal.isNullOrEmpty()) return@run envVal
+
+    // 2. Check .env file
+    val envFile = rootProject.file(".env")
+    if (envFile.exists()) {
+        val envProps = Properties()
+        envFile.inputStream().use { envProps.load(it) }
+        val pVal = envProps.getProperty("GEMINI_API_KEY")
+        if (!pVal.isNullOrEmpty()) return@run pVal
+    }
+
+    // 3. Check local.properties file
+    val localFile = rootProject.file("local.properties")
+    if (localFile.exists()) {
+        val localProps = Properties()
+        localFile.inputStream().use { localProps.load(it) }
+        val lVal = localProps.getProperty("GEMINI_API_KEY")
+        if (!lVal.isNullOrEmpty()) return@run lVal
+    }
+
+    // 4. Check .env.example
+    val exampleFile = rootProject.file(".env.example")
+    if (exampleFile.exists()) {
+        val exampleProps = Properties()
+        exampleFile.inputStream().use { exampleProps.load(it) }
+        val exVal = exampleProps.getProperty("GEMINI_API_KEY")
+        if (!exVal.isNullOrEmpty()) return@run exVal
+    }
+
+    ""
 }
 
 android {
@@ -21,6 +57,7 @@ android {
     versionName = "1.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
   }
 
   signingConfigs {
@@ -70,6 +107,7 @@ secrets {
   propertiesFileName = ".env"
   defaultPropertiesFileName = ".env.example"
   ignoreList.add("FIREBASE_APPCHECK_DEBUG_TOKEN")
+  ignoreList.add("GEMINI_API_KEY")
 }
 
 googleServices { missingGoogleServicesStrategy = MissingGoogleServicesStrategy.WARN }

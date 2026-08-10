@@ -378,7 +378,8 @@ fun BasicScientificScreen(
                                 // Animated characters layer with custom cursor
                                 Row(
                                     horizontalArrangement = Arrangement.End,
-                                    verticalAlignment = Alignment.Bottom
+                                    verticalAlignment = Alignment.Bottom,
+                                    modifier = Modifier.padding(top = (exprSize * 0.4f).dp)
                                 ) {
                                     val text = viewModel.expressionValue.text
                                     val selectionStart = viewModel.expressionValue.selection.start
@@ -386,6 +387,14 @@ fun BasicScientificScreen(
                                     
                                     val maxLen = maxOf(text.length, prevTextLength)
                                     SideEffect { prevTextLength = text.length }
+                                    
+                                    val styles = parseDisplayStyles(text)
+                                    val isCurrentCursorSuperscript = if (selectionStart > 0) {
+                                        val prevStyle = styles.getOrNull(selectionStart - 1)
+                                        prevStyle == DisplayStyle.SUPERSCRIPT || (selectionStart < styles.size && styles[selectionStart] == DisplayStyle.SUPERSCRIPT)
+                                    } else {
+                                        false
+                                    }
                                     
                                     // Handle cursor at the very beginning
                                     Box(
@@ -395,26 +404,38 @@ fun BasicScientificScreen(
                                             .background(if (selectionStart == 0 && cursorVisible) themeColors.displayText else Color.Transparent)
                                     )
 
-                                     (0 until maxLen).forEach { index ->
+                                    (0 until maxLen).forEach { index ->
                                         val char = text.getOrNull(index)
-                                        if (char != null) {
+                                        val style = styles.getOrNull(index) ?: DisplayStyle.NORMAL
+                                        
+                                        if (char != null && style != DisplayStyle.HIDDEN) {
+                                            val fontSizeFraction = if (style == DisplayStyle.SUPERSCRIPT) 0.65f else 1f
+                                            val offsetVal = if (style == DisplayStyle.SUPERSCRIPT) (- (exprSize * 0.35f)).dp else 0.dp
+                                            
                                             Text(
                                                 text = char.toString(),
                                                 color = exprColor,
-                                                fontSize = exprSize.sp,
+                                                fontSize = (exprSize * fontSizeFraction).sp,
                                                 fontFamily = FontFamily.Monospace,
                                                 fontWeight = FontWeight.Medium,
                                                 textAlign = TextAlign.End,
-                                                modifier = Modifier.padding(horizontal = 0.5.dp)
+                                                modifier = Modifier
+                                                    .offset(y = offsetVal)
+                                                    .padding(horizontal = 0.5.dp)
                                             )
                                         }
 
                                         // Cursor after this character
+                                        val isCursorAtThisPos = (index + 1 == selectionStart)
+                                        val cursorHeight = if (isCursorAtThisPos && isCurrentCursorSuperscript) (exprSize * 0.7f).dp else (exprSize * 1.1f).dp
+                                        val cursorOffset = if (isCursorAtThisPos && isCurrentCursorSuperscript) (- (exprSize * 0.35f)).dp else 0.dp
+                                        
                                         Box(
                                             modifier = Modifier
                                                 .width(2.dp)
-                                                .height((exprSize * 1.1f).dp)
-                                                .background(if (index + 1 == selectionStart && cursorVisible) themeColors.displayText else Color.Transparent)
+                                                .height(cursorHeight)
+                                                .offset(y = cursorOffset)
+                                                .background(if (isCursorAtThisPos && cursorVisible) themeColors.displayText else Color.Transparent)
                                         )
                                     }
                                 }
@@ -514,7 +535,7 @@ fun BasicScientificScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(30.dp)
+                .height(32.dp)
                 .then(dragModifier)
                 .clickable {
                     coroutineScope.launch {
@@ -529,27 +550,19 @@ fun BasicScientificScreen(
                 },
             contentAlignment = Alignment.Center
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
+            Box(
+                contentAlignment = Alignment.Center,
                 modifier = Modifier
+                    .width(72.dp)
+                    .height(24.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(themeColors.displayText.copy(alpha = 0.08f))
-                    .padding(horizontal = 14.dp, vertical = 3.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .width(28.dp)
-                        .height(4.dp)
-                        .clip(CircleShape)
-                        .background(themeColors.displayText.copy(alpha = 0.35f))
-                )
-                Spacer(modifier = Modifier.width(6.dp))
                 Icon(
                     imageVector = if (isExpanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
                     contentDescription = if (isExpanded) "Hide Scientific Mode" else "Show Scientific Mode",
                     tint = themeColors.displayText.copy(alpha = 0.7f),
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(22.dp)
                 )
             }
         }
@@ -762,4 +775,52 @@ fun BasicScientificScreen(
         }
     }
 }
+}
+
+private enum class DisplayStyle {
+    NORMAL,
+    SUPERSCRIPT,
+    HIDDEN
+}
+
+private fun parseDisplayStyles(text: String): List<DisplayStyle> {
+    val styles = MutableList(text.length) { DisplayStyle.NORMAL }
+    var i = 0
+    while (i < text.length) {
+        if (text[i] == '^') {
+            styles[i] = DisplayStyle.SUPERSCRIPT
+            i++
+            if (i < text.length) {
+                if (text[i] == '(') {
+                    styles[i] = DisplayStyle.SUPERSCRIPT
+                    var parenCount = 1
+                    i++
+                    while (i < text.length && parenCount > 0) {
+                        if (text[i] == '(') parenCount++
+                        if (text[i] == ')') parenCount--
+                        styles[i] = DisplayStyle.SUPERSCRIPT
+                        i++
+                    }
+                    continue
+                } else {
+                    var first = true
+                    while (i < text.length) {
+                        val c = text[i]
+                        val isExpChar = c.isLetterOrDigit() || c == '.' || c == 'π' || (first && (c == '-' || c == '−'))
+                        if (isExpChar) {
+                            styles[i] = DisplayStyle.SUPERSCRIPT
+                            first = false
+                            i++
+                        } else {
+                            break
+                        }
+                    }
+                    continue
+                }
+            }
+        } else {
+            i++
+        }
+    }
+    return styles
 }

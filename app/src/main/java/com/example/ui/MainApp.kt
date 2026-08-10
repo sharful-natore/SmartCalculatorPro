@@ -493,10 +493,10 @@ fun MainContent(
                 Box(
                     modifier = Modifier
                         .offset(y = (-8).dp)
-                        .size(57.dp)
+                        .size(60.dp)
                         .shadow(elevation = 4.dp, shape = androidx.compose.foundation.shape.CircleShape)
                         .background(themeColors.navBarBg, androidx.compose.foundation.shape.CircleShape)
-                        .padding(2.5.dp)
+                        .padding(3.5.dp)
                         .clip(androidx.compose.foundation.shape.CircleShape)
                         .background(Color.White)
                         .scaleOnPress(fabInteractionSource)
