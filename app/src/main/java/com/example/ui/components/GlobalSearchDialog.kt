@@ -25,6 +25,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.example.data.model.ConverterType
 import com.example.data.model.ToolType
 import com.example.ui.theme.CalculatorThemeColors
@@ -64,148 +66,153 @@ fun GlobalSearchDialog(
 ) {
     if (!viewModel.showGlobalSearch) return
 
-    androidx.activity.compose.BackHandler {
-        viewModel.showGlobalSearch = false
-    }
-
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = themeColors.background
+    Dialog(
+        onDismissRequest = { viewModel.showGlobalSearch = false },
+        properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
-        val language = viewModel.selectedLanguage
-        var searchQuery by remember { mutableStateOf("") }
-        val historyItems by viewModel.historyList.collectAsState()
-
-        val searchResults = remember(searchQuery, historyItems) {
-            if (searchQuery.isBlank()) emptyList<SearchResult>()
-            else {
-                val query = searchQuery.trim()
-                val results = mutableListOf<SearchResult>()
-
-                val eng = listOf("0", "1", "2", "3", "4", "5", "6", "7", "8", "9")
-                val ben = listOf("০", "১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯")
-                var normalizedQuery = query
-                for (i in 0..9) {
-                    normalizedQuery = normalizedQuery.replace(ben[i], eng[i])
-                }
-
-                // Search Converters
-                ConverterType.values().forEach { type ->
-                    if (type.titleEn.contains(query, ignoreCase = true) || type.titleBn.contains(query, ignoreCase = true)) {
-                        results.add(SearchResult.Converter(type, language) {
-                            viewModel.selectedConverterType = type
-                            viewModel.activeTab = 1
-                            viewModel.showGlobalSearch = false
-                        })
-                    }
-                }
-
-                // Search Tools
-                ToolType.values().forEach { type ->
-                    if (type.titleEn.contains(query, ignoreCase = true) || type.titleBn.contains(query, ignoreCase = true)) {
-                        results.add(SearchResult.Tool(type, language) {
-                            viewModel.selectedToolCategoryFilter = null
-                            viewModel.selectedToolType = type
-                            viewModel.activeTab = 2
-                            viewModel.showGlobalSearch = false
-                        })
-                    }
-                }
-
-                // Search History
-                historyItems.forEach { item ->
-                    var nExpr = item.expression
-                    var nRes = item.result
-                    for (i in 0..9) {
-                        nExpr = nExpr.replace(ben[i], eng[i])
-                        nRes = nRes.replace(ben[i], eng[i])
-                    }
-                    
-                    if (nExpr.contains(normalizedQuery, ignoreCase = true) || nRes.contains(normalizedQuery, ignoreCase = true)) {
-                        results.add(SearchResult.History(item.expression, item.result) {
-                            viewModel.selectHistoryItem(item)
-                            viewModel.activeTab = 0
-                            viewModel.showGlobalSearch = false
-                        })
-                    }
-                }
-
-                results
-            }
+        androidx.activity.compose.BackHandler {
+            viewModel.showGlobalSearch = false
         }
 
-        Column(modifier = Modifier.fillMaxSize()) {
-            // Search Header
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .statusBarsPadding()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = { viewModel.showGlobalSearch = false }) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = themeColors.displayText)
-                }
-                
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    modifier = Modifier.weight(1f),
-                    placeholder = { 
-                        Text(
-                            if (language == AppLanguage.BENGALI) "সার্চ করুন..." else "Search everything...",
-                            color = themeColors.displayText.copy(alpha = 0.5f)
-                        ) 
-                    },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = themeColors.displayText,
-                        unfocusedTextColor = themeColors.displayText,
-                        focusedBorderColor = themeColors.buttonEqualBg,
-                        unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.3f),
-                        cursorColor = themeColors.buttonEqualBg
-                    ),
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                    shape = RoundedCornerShape(24.dp),
-                    trailingIcon = {
-                        if (searchQuery.isNotEmpty()) {
-                            IconButton(onClick = { searchQuery = "" }) {
-                                Icon(Icons.Default.Close, contentDescription = "Clear", tint = themeColors.displayText)
-                            }
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = themeColors.background
+        ) {
+            val language = viewModel.selectedLanguage
+            var searchQuery by remember { mutableStateOf("") }
+            val historyItems by viewModel.historyList.collectAsState()
+
+            val searchResults = remember(searchQuery, historyItems) {
+                if (searchQuery.isBlank()) emptyList<SearchResult>()
+                else {
+                    val query = searchQuery.trim()
+                    val results = mutableListOf<SearchResult>()
+
+                    val eng = listOf("0", "1", "2", "3", "4", "5", "6", "7", "8", "9")
+                    val ben = listOf("০", "১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯")
+                    var normalizedQuery = query
+                    for (i in 0..9) {
+                        normalizedQuery = normalizedQuery.replace(ben[i], eng[i])
+                    }
+
+                    // Search Converters
+                    ConverterType.values().forEach { type ->
+                        if (type.titleEn.contains(query, ignoreCase = true) || type.titleBn.contains(query, ignoreCase = true)) {
+                            results.add(SearchResult.Converter(type, language) {
+                                viewModel.selectedConverterType = type
+                                viewModel.activeTab = 1
+                                viewModel.showGlobalSearch = false
+                            })
                         }
                     }
-                )
+
+                    // Search Tools
+                    ToolType.values().forEach { type ->
+                        if (type.titleEn.contains(query, ignoreCase = true) || type.titleBn.contains(query, ignoreCase = true)) {
+                            results.add(SearchResult.Tool(type, language) {
+                                viewModel.selectedToolCategoryFilter = null
+                                viewModel.selectedToolType = type
+                                viewModel.activeTab = 2
+                                viewModel.showGlobalSearch = false
+                            })
+                        }
+                    }
+
+                    // Search History
+                    historyItems.forEach { item ->
+                        var nExpr = item.expression
+                        var nRes = item.result
+                        for (i in 0..9) {
+                            nExpr = nExpr.replace(ben[i], eng[i])
+                            nRes = nRes.replace(ben[i], eng[i])
+                        }
+                        
+                        if (nExpr.contains(normalizedQuery, ignoreCase = true) || nRes.contains(normalizedQuery, ignoreCase = true)) {
+                            results.add(SearchResult.History(item.expression, item.result) {
+                                viewModel.selectHistoryItem(item)
+                                viewModel.activeTab = 0
+                                viewModel.showGlobalSearch = false
+                            })
+                        }
+                    }
+
+                    results
+                }
             }
 
-            // Results List
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                if (searchQuery.isBlank()) {
-                    item {
-                        Box(modifier = Modifier.fillMaxWidth().padding(top = 100.dp), contentAlignment = Alignment.Center) {
-                            Text(
-                                if (language == AppLanguage.BENGALI) "আপনার প্রয়োজনীয় কিছু খুঁজুন" else "Find what you need",
-                                color = themeColors.displayText.copy(alpha = 0.5f),
-                                fontSize = 18.sp
-                            )
-                        }
+            Column(modifier = Modifier.fillMaxSize()) {
+                // Search Header
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .statusBarsPadding()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = { viewModel.showGlobalSearch = false }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = themeColors.displayText)
                     }
-                } else if (searchResults.isEmpty()) {
-                    item {
-                        Box(modifier = Modifier.fillMaxWidth().padding(top = 100.dp), contentAlignment = Alignment.Center) {
+                    
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        modifier = Modifier.weight(1f),
+                        placeholder = { 
                             Text(
-                                if (language == AppLanguage.BENGALI) "কোনো ফলাফল পাওয়া যায়নি" else "No results found",
-                                color = themeColors.displayText.copy(alpha = 0.5f),
-                                fontSize = 18.sp
-                            )
+                                if (language == AppLanguage.BENGALI) "সার্চ করুন..." else "Search everything...",
+                                color = themeColors.displayText.copy(alpha = 0.5f)
+                            ) 
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = themeColors.displayText,
+                            unfocusedTextColor = themeColors.displayText,
+                            focusedBorderColor = themeColors.buttonEqualBg,
+                            unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.3f),
+                            cursorColor = themeColors.buttonEqualBg
+                        ),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        shape = RoundedCornerShape(24.dp),
+                        trailingIcon = {
+                            if (searchQuery.isNotEmpty()) {
+                                IconButton(onClick = { searchQuery = "" }) {
+                                    Icon(Icons.Default.Close, contentDescription = "Clear", tint = themeColors.displayText)
+                                }
+                            }
                         }
-                    }
-                } else {
-                    items(searchResults) { result ->
-                        SearchResultItem(result, searchQuery, themeColors)
+                    )
+                }
+
+                // Results List
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    if (searchQuery.isBlank()) {
+                        item {
+                            Box(modifier = Modifier.fillMaxWidth().padding(top = 100.dp), contentAlignment = Alignment.Center) {
+                                Text(
+                                    if (language == AppLanguage.BENGALI) "আপনার প্রয়োজনীয় কিছু খুঁজুন" else "Find what you need",
+                                    color = themeColors.displayText.copy(alpha = 0.5f),
+                                    fontSize = 18.sp
+                                )
+                            }
+                        }
+                    } else if (searchResults.isEmpty()) {
+                        item {
+                            Box(modifier = Modifier.fillMaxWidth().padding(top = 100.dp), contentAlignment = Alignment.Center) {
+                                Text(
+                                    if (language == AppLanguage.BENGALI) "কোনো ফলাফল পাওয়া যায়নি" else "No results found",
+                                    color = themeColors.displayText.copy(alpha = 0.5f),
+                                    fontSize = 18.sp
+                                )
+                            }
+                        }
+                    } else {
+                        items(searchResults) { result ->
+                            SearchResultItem(result, searchQuery, themeColors)
+                        }
                     }
                 }
             }

@@ -35,11 +35,17 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.unit.IntOffset
-import kotlin.math.roundToInt
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.IntOffset
+import kotlin.math.roundToInt
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.BaselineShift
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
@@ -71,6 +77,25 @@ import androidx.compose.ui.unit.sp
 import com.example.ui.components.CalculatorButton
 import com.example.ui.theme.CalculatorThemeColors
 import com.example.ui.viewmodel.CalculatorViewModel
+
+@Composable
+fun PillBadge(count: Int, themeColors: CalculatorThemeColors, modifier: Modifier = Modifier) {
+    if (count <= 0) return
+    Surface(
+        color = themeColors.buttonEqualBg.copy(alpha = 0.85f),
+        shape = RoundedCornerShape(12.dp),
+        tonalElevation = 4.dp,
+        modifier = modifier
+    ) {
+        Text(
+            text = count.toString(),
+            color = Color.White,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp)
+        )
+    }
+}
 
 @OptIn(ExperimentalAnimationApi::class, ExperimentalFoundationApi::class)
 @Composable
@@ -351,12 +376,39 @@ fun BasicScientificScreen(
                 val exprScrollState = rememberScrollState()
                 val resultScrollState = rememberScrollState()
 
+                var exprViewportWidth by remember { mutableStateOf(0) }
+                var resultViewportWidth by remember { mutableStateOf(0) }
+                var exprLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
+                var resultLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
+
+                val exprHiddenCount = remember(exprScrollState.value, exprLayoutResult, viewModel.expression) {
+                    val layout = exprLayoutResult ?: return@remember 0
+                    var count = 0
+                    for (i in 0 until viewModel.expression.length) {
+                        if (layout.getHorizontalPosition(i + 1, true) < exprScrollState.value) {
+                            count++
+                        }
+                    }
+                    count
+                }
+
+                val resultHiddenCount = remember(resultScrollState.value, resultLayoutResult, viewModel.result, resultViewportWidth) {
+                    val layout = resultLayoutResult ?: return@remember 0
+                    var count = 0
+                    for (i in 0 until viewModel.result.length) {
+                        if (layout.getHorizontalPosition(i, true) > resultScrollState.value + resultViewportWidth) {
+                            count++
+                        }
+                    }
+                    count
+                }
+
                 LaunchedEffect(viewModel.expressionValue.text, viewModel.expressionValue.selection) {
                     exprScrollState.animateScrollTo(exprScrollState.maxValue)
                 }
 
                 LaunchedEffect(viewModel.result) {
-                    resultScrollState.animateScrollTo(resultScrollState.maxValue)
+                    resultScrollState.animateScrollTo(0)
                 }
                 
                 // Cursor blinking logic
@@ -371,6 +423,7 @@ fun BasicScientificScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .onGloballyPositioned { exprViewportWidth = it.size.width }
                         .combinedClickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
@@ -382,6 +435,30 @@ fun BasicScientificScreen(
                             }
                         )
                 ) {
+                    // Hidden text for measurement
+                    val styles = parseDisplayStyles(viewModel.expression)
+                    val annotatedExpr = buildAnnotatedString {
+                        viewModel.expression.forEachIndexed { i, c ->
+                            val style = styles.getOrNull(i)
+                            if (style == DisplayStyle.SUPERSCRIPT) {
+                                withStyle(SpanStyle(baselineShift = BaselineShift.Superscript, fontSize = (exprSize * 0.58f).sp)) {
+                                    append(c)
+                                }
+                            } else {
+                                append(c)
+                            }
+                        }
+                    }
+
+                    Text(
+                        text = annotatedExpr,
+                        fontSize = exprSize.sp,
+                        fontFamily = FontFamily.Monospace,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.fillMaxWidth().graphicsLayer(alpha = 0f),
+                        onTextLayout = { exprLayoutResult = it }
+                    )
+
                     BasicTextField(
                         value = viewModel.expressionValue,
                         onValueChange = { viewModel.onExpressionValueChange(it) },
@@ -475,6 +552,15 @@ fun BasicScientificScreen(
                         }
                     )
 
+                    // Expression Badge (Left)
+                    Box(modifier = Modifier.matchParentSize(), contentAlignment = Alignment.CenterStart) {
+                        PillBadge(
+                            count = exprHiddenCount,
+                            themeColors = themeColors,
+                            modifier = Modifier.padding(start = 4.dp)
+                        )
+                    }
+
                     DropdownMenu(
                         expanded = showPasteMenu,
                         onDismissRequest = { showPasteMenu = false },
@@ -498,8 +584,9 @@ fun BasicScientificScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .onGloballyPositioned { resultViewportWidth = it.size.width }
                         .horizontalScroll(resultScrollState),
-                    contentAlignment = Alignment.CenterEnd
+                    contentAlignment = Alignment.CenterStart
                 ) {
                     Text(
                         text = viewModel.result,
@@ -509,6 +596,7 @@ fun BasicScientificScreen(
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.End,
                         maxLines = 1,
+                        onTextLayout = { resultLayoutResult = it },
                         modifier = Modifier
                             .clickable {
                                 if (viewModel.result.isNotEmpty()) {
@@ -516,6 +604,15 @@ fun BasicScientificScreen(
                                 }
                             }
                             .testTag("result_display")
+                    )
+                }
+
+                // Result Badge (Right)
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
+                    PillBadge(
+                        count = resultHiddenCount,
+                        themeColors = themeColors,
+                        modifier = Modifier.padding(end = 4.dp)
                     )
                 }
             }
