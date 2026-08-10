@@ -81,18 +81,7 @@ fun MainApp(viewModel: CalculatorViewModel) {
     val focusManager = LocalFocusManager.current
     val context = LocalContext.current
 
-    var isSplashVisible by remember { mutableStateOf(true) }
-
-    LaunchedEffect(Unit) {
-        delay(1500)
-        isSplashVisible = false
-    }
-
-    if (isSplashVisible) {
-        SplashScreen(themeColors)
-    } else {
-        MainContent(viewModel, themeColors, focusManager, context)
-    }
+    MainContent(viewModel, themeColors, focusManager, context)
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -1124,7 +1113,7 @@ fun AiChatDialog(
                             color = Color.White
                         )
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            val isOnline = viewModel.isNetworkAvailable() && com.example.BuildConfig.GEMINI_API_KEY.isNotBlank() && com.example.BuildConfig.GEMINI_API_KEY != "MY_GEMINI_API_KEY"
+                            val isOnline = viewModel.isNetworkAvailable() && com.example.BuildConfig.GEMINI_API_KEY.isNotBlank() && com.example.BuildConfig.GEMINI_API_KEY != "MY_GEMINI_API_KEY" && viewModel.lastOnlineError == null
                             Box(
                                 modifier = Modifier
                                     .size(7.dp)
@@ -1133,14 +1122,24 @@ fun AiChatDialog(
                                     .border(1.dp, Color.White, androidx.compose.foundation.shape.CircleShape)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = if (isOnline) {
-                                    if (viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI) "অনলাইন মডেল" else "Online Model"
+                            val isBn = viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI
+                            val statusText = if (isOnline) {
+                                if (isBn) "অনলাইন মডেল" else "Online Model"
+                            } else {
+                                val errorDetail = viewModel.lastOnlineError ?: (if (isBn) "ইন্টারনেট সংযোগ বা API কি নেই" else "No internet or API key")
+                                if (isBn) {
+                                    "অফলাইন মডেল (কারণ: $errorDetail)"
                                 } else {
-                                    if (viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI) "অফলাইন মডেল" else "Offline Model"
-                                },
-                                fontSize = 10.sp,
-                                color = Color.White.copy(alpha = 0.9f)
+                                    "Offline Model (Reason: $errorDetail)"
+                                }
+                            }
+                            Text(
+                                text = statusText,
+                                fontSize = 9.5.sp,
+                                color = Color.White.copy(alpha = 0.95f),
+                                maxLines = 2,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f, fill = false)
                             )
                         }
                     }

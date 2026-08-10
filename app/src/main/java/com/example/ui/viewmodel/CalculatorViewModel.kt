@@ -1012,6 +1012,52 @@ How can I help you today?"""
 
     // Online model load state & error dialog message
     var onlineModelErrorReason by mutableStateOf<String?>(null)
+    var lastOnlineError by mutableStateOf<String?>(null)
+
+    fun checkOnlineModelStatus() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val isBn = selectedLanguage == AppLanguage.BENGALI
+            val hasInternetPermission = context.checkSelfPermission(android.Manifest.permission.INTERNET) == android.content.pm.PackageManager.PERMISSION_GRANTED
+            val hasInternet = isNetworkAvailable()
+            val hasApiKey = com.example.BuildConfig.GEMINI_API_KEY.isNotBlank() && com.example.BuildConfig.GEMINI_API_KEY != "MY_GEMINI_API_KEY"
+
+            if (!hasInternetPermission) {
+                lastOnlineError = if (isBn) "অ্যাপে ইন্টারনেট পারমিশন (INTERNET Permission) অনুমোদিত নয়" else "INTERNET Permission is not granted in the app"
+                return@launch
+            }
+            if (!hasInternet) {
+                lastOnlineError = if (isBn) "ডিভাইসে ইন্টারনেট সংযোগ বন্ধ (ওয়াইফাই বা মোবাইল ডাটা অন করুন)" else "No active internet connection on device"
+                return@launch
+            }
+            if (!hasApiKey) {
+                lastOnlineError = if (isBn) "অনলাইন এআই API Key পাওয়া যায়নি বা সক্রিয় নয়" else "Online AI API Key missing or inactive"
+                return@launch
+            }
+
+            try {
+                val url = java.net.URL("https://generativelanguage.googleapis.com/")
+                val conn = url.openConnection() as java.net.HttpURLConnection
+                conn.connectTimeout = 5000
+                conn.readTimeout = 5000
+                conn.requestMethod = "GET"
+                val responseCode = conn.responseCode
+                lastOnlineError = null
+            } catch (e: Exception) {
+                e.printStackTrace()
+                val errMsg = when (e) {
+                    is java.net.UnknownHostException -> if (isBn) "ইন্টারনেট বা সার্ভারে সংযোগ করা যাচ্ছে না (DNS Error)" else "Unable to connect to server host (DNS error)"
+                    is java.net.SocketTimeoutException -> if (isBn) "ইন্টারনেট সংযোগ ধীরগতির কারণে টাইমআউট হয়েছে" else "Connection timed out"
+                    is javax.net.ssl.SSLHandshakeException -> if (isBn) "এসএসএল হ্যান্ডশেক ব্যর্থ হয়েছে (SSL Handshake Failed)" else "SSL Handshake Failed"
+                    is javax.net.ssl.SSLException -> if (isBn) "এসএসএল কানেকশন ত্রুটি ($e)" else "SSL connection error ($e)"
+                    else -> {
+                        val detail = e.localizedMessage ?: e.javaClass.simpleName
+                        if (isBn) "নেটওয়ার্ক সংযোগ ত্রুটি ($detail)" else "Network connection issue ($detail)"
+                    }
+                }
+                lastOnlineError = errMsg
+            }
+        }
+    }
 
     fun sendMessageToAi(rawText: String) {
         if (rawText.isBlank()) return
@@ -1113,11 +1159,14 @@ How can I help you today?"""
                     actData = offlineResult.actionData
                     
                     val reasonStr = onlineFailureReason ?: if (isBn) "অজানা ত্রুটি" else "Unknown error"
+                    lastOnlineError = reasonStr
                     onlineModelErrorReason = if (isBn) {
                         "⚠️ **অনলাইন এআই মডেল লোড করা যায়নি!**\n\n• **কারণ:** $reasonStr\n\n💡 **অফলাইন মডেল লোড করা হলো:**\nআপনার অনুরোধের উত্তর দিতে আমাদের সুপারফাস্ট বিল্ট-ইন অফলাইন এআই মডেল লোড করে ব্যবহার করা হয়েছে।"
                     } else {
                         "⚠️ **Failed to load Online AI Model!**\n\n• **Reason:** $reasonStr\n\n💡 **Offline Model Loaded:**\nSwitched to built-in smart offline AI model to process your request."
                     }
+                } else {
+                    lastOnlineError = null
                 }
                 
                 val aiReply = ChatMessage(
@@ -1133,6 +1182,7 @@ How can I help you today?"""
             } catch (e: Exception) {
                 e.printStackTrace()
                 val errReason = e.localizedMessage ?: e.javaClass.simpleName
+                lastOnlineError = errReason
                 val offlineResult = runOfflineModel(normalized, isBn)
                 
                 onlineModelErrorReason = if (isBn) {
@@ -1561,12 +1611,26 @@ How can I help you today?"""
         // Offload heavy IO/Network tasks to IO thread for maximum app opening speed
         viewModelScope.launch(Dispatchers.IO) {
             try {
+                // Initialize modern Security Provider for older Android devices like Oppo a5s
+                com.google.android.gms.security.ProviderInstaller.installIfNeeded(context)
+                android.util.Log.d("CalculatorViewModel", "Security provider installed successfully via ProviderInstaller")
+            } catch (e: Exception) {
+                e.printStackTrace()
+                android.util.Log.e("CalculatorViewModel", "Failed to install security provider: ${e.message}")
+            }
+
+            try {
                 loadChatHistory()
             } catch (e: Exception) {
                 e.printStackTrace()
             }
             try {
                 fetchExchangeRates()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            try {
+                checkOnlineModelStatus()
             } catch (e: Exception) {
                 e.printStackTrace()
             }
