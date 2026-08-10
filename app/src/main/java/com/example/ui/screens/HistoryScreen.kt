@@ -125,7 +125,7 @@ fun HistoryScreen(
                 .nestedScroll(nestedScrollConnection)
                 .offset { IntOffset(0, bounceAnimatable.value.roundToInt()) }
                 .verticalScroll(scrollState)
-                .padding(horizontal = 16.dp, vertical = 2.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
         Row(
             modifier = Modifier.fillMaxWidth(),

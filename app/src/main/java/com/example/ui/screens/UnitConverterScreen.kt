@@ -164,7 +164,7 @@ fun ConverterCategoriesView(
             .nestedScroll(nestedScrollConnection)
             .offset { IntOffset(0, bounceAnimatable.value.roundToInt()) }
             .verticalScroll(scrollState)
-            .padding(horizontal = 16.dp, vertical = 2.dp)
+            .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
         // Search TextField
         OutlinedTextField(
@@ -510,7 +510,7 @@ fun ConverterDetailView(
             .nestedScroll(nestedScrollConnection)
             .offset { IntOffset(0, bounceAnimatable.value.roundToInt()) }
             .verticalScroll(scrollState)
-            .padding(horizontal = 16.dp, vertical = 2.dp)
+            .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
         // Back Header
         Row(

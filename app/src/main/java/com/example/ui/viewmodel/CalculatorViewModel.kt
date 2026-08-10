@@ -484,6 +484,126 @@ How can I help you today?"""
         var actData: String? = null
         
         when {
+            // Story / Expense & Budget Tracker
+            (normalized.contains("কিনেছি") || normalized.contains("কিনলাম") || normalized.contains("দিলাম") || normalized.contains("খরচ") || 
+             normalized.contains("বাজার") || normalized.contains("অবশিষ্ট") || normalized.contains("কত টাকা") || normalized.contains("কাছে আছে") ||
+             normalized.contains("spent") || normalized.contains("bought") || normalized.contains("paid") || normalized.contains("left") || 
+             normalized.contains("remaining") || normalized.contains("shopping") || normalized.contains("দিলাম") || normalized.contains("টাকা নিয়ে")) && numbers.size >= 2 -> {
+                
+                val df = DecimalFormat("#,##0.##")
+                val initialAmount = numbers.first()
+                val expenses = numbers.drop(1)
+                val totalSpent = expenses.sum()
+                val remaining = initialAmount - totalSpent
+                val spentPercent = if (initialAmount > 0) (totalSpent / initialAmount) * 100.0 else 0.0
+                
+                val itemizedList = expenses.mapIndexed { idx, amt -> "  ${idx + 1}. ৳${df.format(amt)}" }.joinToString("\n")
+                
+                replyText = if (isBn) {
+                    "📊 **গল্প ও বাজেট আইটেম বিশ্লেষণ:**\n\n" +
+                    "• 💰 **শুরু/প্রাথমিক পরিমাণ:** ৳${df.format(initialAmount)}\n" +
+                    "• 🛒 **খরচ/লেনদেনের তালিকা ($expenses.size টি আইটেম):**\n$itemizedList\n" +
+                    "• 💸 **মোট খরচ হয়েছে:** ৳${df.format(totalSpent)} (${df.format(spentPercent)}%)\n" +
+                    "━━━━━━━━━━━━━━━━━━━━━\n" +
+                    "• 💵 **আপনার নিকট অবশিষ্ট আছে:** **৳${df.format(remaining)}**\n\n" +
+                    "*(অফলাইন এআই মডেল দ্বারা আপনার গল্প বিশ্লেষণ করে নিখুঁত গাণিতিক হিসাব বের করা হয়েছে)*"
+                } else {
+                    "📊 **Story & Budget Analysis:**\n\n" +
+                    "• 💰 **Initial Balance:** $${df.format(initialAmount)}\n" +
+                    "• 🛒 **Itemized Transactions (${expenses.size} items):**\n$itemizedList\n" +
+                    "• 💸 **Total Spent:** $${df.format(totalSpent)} (${df.format(spentPercent)}%)\n" +
+                    "━━━━━━━━━━━━━━━━━━━━━\n" +
+                    "• 💵 **Remaining Balance:** **$${df.format(remaining)}**\n\n" +
+                    "*(Parsed and calculated locally by Offline AI Model)*"
+                }
+                actType = "calculate"
+                actLabel = if (isBn) "ক্যালকুলেটরে অবশিষ্ট দেখান" else "Show in Calculator"
+                actData = "$remaining"
+            }
+
+            // Average / Sum Calculator
+            (normalized.contains("গড়") || normalized.contains("average") || normalized.contains("avg") || normalized.contains("সমষ্টি") || normalized.contains("যোগফল") || normalized.contains("sum")) && numbers.size >= 2 -> {
+                val df = DecimalFormat("#,##0.##")
+                val sumVal = numbers.sum()
+                val avgVal = numbers.average()
+                
+                replyText = if (isBn) {
+                    "📈 **পরিসংখ্যান হিসাব:**\n\n" +
+                    "• 🔢 **সংখ্যাসমূহ:** ${numbers.joinToString(", ") { df.format(it) }}\n" +
+                    "• ➕ **মোট সমষ্টি:** **${df.format(sumVal)}**\n" +
+                    "• 📊 **গড় মান (Average):** **${df.format(avgVal)}**\n" +
+                    "• 📌 **মোট সংখ্যার পরিমাণ:** ${numbers.size} টি"
+                } else {
+                    "📈 **Statistical Analysis:**\n\n" +
+                    "• 🔢 **Numbers:** ${numbers.joinToString(", ") { df.format(it) }}\n" +
+                    "• ➕ **Total Sum:** **${df.format(sumVal)}**\n" +
+                    "• 📊 **Average:** **${df.format(avgVal)}**\n" +
+                    "• 📌 **Total Count:** ${numbers.size}"
+                }
+                actType = "calculate"
+                actLabel = if (isBn) "গড় ক্যালকুলেটরে ব্যবহার করুন" else "Use in Calculator"
+                actData = "$avgVal"
+            }
+
+            // Profit & Loss
+            (normalized.contains("লাভ") || normalized.contains("ক্ষতি") || normalized.contains("profit") || normalized.contains("loss") || normalized.contains("বেচলাম") || normalized.contains("বিক্রি")) && numbers.size >= 2 -> {
+                val df = DecimalFormat("#,##0.##")
+                val cp = numbers[0]
+                val sp = numbers[1]
+                val diff = sp - cp
+                val pct = (diff / cp) * 100.0
+                
+                replyText = if (isBn) {
+                    if (diff >= 0) {
+                        "🟢 **লাভ হিসাব (Profit):**\n\n" +
+                        "• 🛒 **ক্রয়মূল্য (Cost Price):** ৳${df.format(cp)}\n" +
+                        "• 🏷️ **বিক্রয়মূল্য (Selling Price):** ৳${df.format(sp)}\n" +
+                        "• 💰 **মোট লাভ:** **৳${df.format(diff)}**\n" +
+                        "• 📈 **শতকরা লাভ:** **${df.format(pct)}%**"
+                    } else {
+                        "🔴 **ক্ষতি হিসাব (Loss):**\n\n" +
+                        "• 🛒 **ক্রয়মূল্য (Cost Price):** ৳${df.format(cp)}\n" +
+                        "• 🏷️ **বিক্রয়মূল্য (Selling Price):** ৳${df.format(sp)}\n" +
+                        "• 💸 **মোট ক্ষতি:** **৳${df.format(-diff)}**\n" +
+                        "• 📉 **শতকরা ক্ষতি:** **${df.format(-pct)}%**"
+                    }
+                } else {
+                    if (diff >= 0) {
+                        "🟢 **Profit Calculation:**\n\n" +
+                        "• 🛒 **Cost Price:** $${df.format(cp)}\n" +
+                        "• 🏷️ **Selling Price:** $${df.format(sp)}\n" +
+                        "• 💰 **Net Profit:** **$${df.format(diff)}**\n" +
+                        "• 📈 **Profit Margin:** **${df.format(pct)}%**"
+                    } else {
+                        "🔴 **Loss Calculation:**\n\n" +
+                        "• 🛒 **Cost Price:** $${df.format(cp)}\n" +
+                        "• 🏷️ **Selling Price:** $${df.format(sp)}\n" +
+                        "• 💸 **Net Loss:** **$${df.format(-diff)}**\n" +
+                        "• 📉 **Loss Margin:** **${df.format(-pct)}%**"
+                    }
+                }
+            }
+
+            // Split Bill
+            (normalized.contains("ভাগ") || normalized.contains("বিল") || normalized.contains("প্রত্যেকে") || normalized.contains("split") || normalized.contains("per person")) && numbers.size >= 2 -> {
+                val df = DecimalFormat("#,##0.##")
+                val totalBill = numbers.maxOrNull() ?: 100.0
+                val peopleCount = (numbers.minOrNull() ?: 2.0).coerceAtLeast(1.0)
+                val perPerson = totalBill / peopleCount
+                
+                replyText = if (isBn) {
+                    "🍕 **বিল ভাগ করে হিসাব (Split Bill):**\n\n" +
+                    "• 💵 **মোট বিল:** ৳${df.format(totalBill)}\n" +
+                    "• 👥 **মোট জনসংখ্যা:** ${peopleCount.toInt()} জন\n" +
+                    "• 👤 **প্রত্যেকে পরিশোধ করবে:** **৳${df.format(perPerson)}**"
+                } else {
+                    "🍕 **Split Bill Analysis:**\n\n" +
+                    "• 💵 **Total Bill:** $${df.format(totalBill)}\n" +
+                    "• 👥 **Total People:** ${peopleCount.toInt()}\n" +
+                    "• 👤 **Per Person Share:** **$${df.format(perPerson)}**"
+                }
+            }
+
             // Greetings: Hello/Hi
             normalized.contains("hello") || normalized.contains(" hi ") || normalized.startsWith("hi") || normalized.contains("hey") ||
             normalized.contains("হ্যালো") || normalized.contains("হাই") || normalized.contains("সালাম") || normalized.contains("salam") || normalized.contains("আসসালামু আলাইকুম") -> {
@@ -885,6 +1005,9 @@ How can I help you today?"""
         return OfflineResult(replyText, actType, actLabel, actData)
     }
 
+    // Online model load state & error dialog message
+    var onlineModelErrorReason by mutableStateOf<String?>(null)
+
     fun sendMessageToAi(rawText: String) {
         if (rawText.isBlank()) return
         if (isAiLoading) return
@@ -912,8 +1035,16 @@ How can I help you today?"""
                 var actLabel: String? = null
                 var actData: String? = null
                 var usedOnlineModel = false
+                var onlineFailureReason: String? = null
                 
-                if (isNetworkAvailable() && com.example.BuildConfig.GEMINI_API_KEY.isNotBlank() && com.example.BuildConfig.GEMINI_API_KEY != "MY_GEMINI_API_KEY") {
+                val hasInternet = isNetworkAvailable()
+                val hasApiKey = com.example.BuildConfig.GEMINI_API_KEY.isNotBlank() && com.example.BuildConfig.GEMINI_API_KEY != "MY_GEMINI_API_KEY"
+                
+                if (!hasInternet) {
+                    onlineFailureReason = if (isBn) "ইন্টারনেট সংযোগ চালু নেই" else "No internet connection available"
+                } else if (!hasApiKey) {
+                    onlineFailureReason = if (isBn) "অনলাইন এআই API Key পাওয়া যায়নি বা সক্রিয় নয়" else "Online AI API Key missing or inactive"
+                } else {
                     val systemInstruction = if (isBn) {
                         "You are a helpful and intelligent AI assistant. You can answer any questions, including general knowledge, math, science, and everyday queries. Answer in Bengali cleanly and naturally. Keep it friendly and concise. Do not use markdown other than bold text. Suggest mathematical or unit conversions when appropriate."
                     } else {
@@ -943,9 +1074,13 @@ How can I help you today?"""
                                 actLabel = detectedAction.actionLabel
                                 actData = detectedAction.actionData
                             }
+                        } else {
+                            onlineFailureReason = if (isBn) "অনলাইন এআই সার্ভার থেকে কোনো রেসপন্স পাওয়া যায়নি" else "No response received from online AI server"
                         }
                     } catch (netEx: Exception) {
                         netEx.printStackTrace()
+                        val errMsg = netEx.localizedMessage ?: netEx.javaClass.simpleName
+                        onlineFailureReason = if (isBn) "অনলাইন সংযোগ বা সার্ভার ত্রুটি ($errMsg)" else "Online network or server error ($errMsg)"
                     }
                 }
                 
@@ -955,6 +1090,13 @@ How can I help you today?"""
                     actType = offlineResult.actionType
                     actLabel = offlineResult.actionLabel
                     actData = offlineResult.actionData
+                    
+                    val reasonStr = onlineFailureReason ?: if (isBn) "অজানা ত্রুটি" else "Unknown error"
+                    onlineModelErrorReason = if (isBn) {
+                        "⚠️ **অনলাইন এআই মডেল লোড করা যায়নি!**\n\n• **কারণ:** $reasonStr\n\n💡 **অফলাইন মডেল লোড করা হলো:**\nআপনার অনুরোধের উত্তর দিতে আমাদের সুপারফাস্ট বিল্ট-ইন অফলাইন এআই মডেল লোড করে ব্যবহার করা হয়েছে।"
+                    } else {
+                        "⚠️ **Failed to load Online AI Model!**\n\n• **Reason:** $reasonStr\n\n💡 **Offline Model Loaded:**\nSwitched to built-in smart offline AI model to process your request."
+                    }
                 }
                 
                 val aiReply = ChatMessage(
@@ -970,14 +1112,16 @@ How can I help you today?"""
             } catch (e: Exception) {
                 e.printStackTrace()
                 val errReason = e.localizedMessage ?: e.javaClass.simpleName
-                val replyText = if (isBn) {
-                    "⚠️ দুঃখিত, একটি ত্রুটি ঘটেছে ($errReason)। তবে অফলাইন মোডে উত্তর দেওয়া হচ্ছে..."
-                } else {
-                    "⚠️ Sorry, an error occurred ($errReason). Falling back to offline mode..."
-                }
                 val offlineResult = runOfflineModel(normalized, isBn)
+                
+                onlineModelErrorReason = if (isBn) {
+                    "⚠️ **অনলাইন এআই মডেল লোড করা যায়নি!**\n\n• **কারণ:** $errReason\n\n💡 **অফলাইন মডেল লোড করা হলো:**\nআপনার অনুরোধের উত্তর দিতে আমাদের সুপারফাস্ট বিল্ট-ইন অফলাইন এআই মডেল লোড করে ব্যবহার করা হয়েছে।"
+                } else {
+                    "⚠️ **Failed to load Online AI Model!**\n\n• **Reason:** $errReason\n\n💡 **Offline Model Loaded:**\nSwitched to built-in smart offline AI model to process your request."
+                }
+
                 val aiReply = ChatMessage(
-                    text = "$replyText\n\n${offlineResult.replyText}",
+                    text = offlineResult.replyText,
                     isUser = false,
                     actionType = offlineResult.actionType,
                     actionLabel = offlineResult.actionLabel,
@@ -1104,14 +1248,24 @@ How can I help you today?"""
         sharedPrefs.edit().putString("custom_themes", json).apply()
     }
 
+    var themeVersion by mutableStateOf(0)
+        private set
+
     fun addCustomTheme(theme: com.example.ui.theme.CustomTheme) {
         customThemes = customThemes + theme
         saveCustomThemes()
+        setCustomTheme(theme.id)
     }
 
     fun updateCustomTheme(theme: com.example.ui.theme.CustomTheme) {
-        customThemes = customThemes.map { if (it.id == theme.id) theme else it }
+        val exists = customThemes.any { it.id == theme.id }
+        customThemes = if (exists) {
+            customThemes.map { if (it.id == theme.id) theme else it }
+        } else {
+            customThemes + theme
+        }
         saveCustomThemes()
+        setCustomTheme(theme.id)
     }
 
     fun deleteCustomTheme(id: String) {
@@ -1122,15 +1276,19 @@ How can I help you today?"""
         }
         customThemes = customThemes.filter { it.id != id }
         saveCustomThemes()
+        themeVersion++
     }
 
     fun setCustomTheme(id: String) {
         isCustomThemeActive = true
         currentCustomThemeId = id
         sharedPrefs.edit().putBoolean("is_custom_theme_active", true).putString("current_custom_theme_id", id).apply()
+        themeVersion++
     }
 
     fun getCurrentThemeColors(): com.example.ui.theme.CalculatorThemeColors {
+        @Suppress("UNUSED_VARIABLE")
+        val dummy = themeVersion
         if (isCustomThemeActive && currentCustomThemeId != null) {
             val custom = customThemes.find { it.id == currentCustomThemeId }
             if (custom != null) {
@@ -1372,16 +1530,26 @@ How can I help you today?"""
     var percentageResultText by mutableStateOf("")
 
     init {
-        // Auto-fetch exchange rates when connected
-        fetchExchangeRates()
-
-        // Trigger initial calculations
+        // Fast local calculations
         calculateConverter()
         calculateBMI()
         calculateAge()
         calculateDiscount()
         calculatePercentage()
-        loadChatHistory()
+
+        // Offload heavy IO/Network tasks to IO thread for maximum app opening speed
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                loadChatHistory()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            try {
+                fetchExchangeRates()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
     }
 
     // --- Calculator Logic ---
@@ -1680,6 +1848,7 @@ How can I help you today?"""
             .putBoolean("is_custom_theme_active", false)
             .putString("selected_theme", theme.name)
             .apply()
+        themeVersion++
     }
 
     // --- Unit Converter Engine ---

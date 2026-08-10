@@ -434,16 +434,26 @@ fun MainContent(
                             selected = isSelected,
                             onClick = { viewModel.activeTab = index },
                             icon = { 
-                                Icon(
-                                    imageVector = icon, 
-                                    contentDescription = label,
-                                    modifier = Modifier.size(24.dp)
-                                ) 
+                                Box(
+                                    modifier = Modifier
+                                        .height(38.dp)
+                                        .width(60.dp)
+                                        .clip(RoundedCornerShape(19.dp))
+                                        .background(if (isSelected) Color.White.copy(alpha = 0.25f) else Color.Transparent),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = icon, 
+                                        contentDescription = label,
+                                        modifier = Modifier.size(24.dp),
+                                        tint = if (isSelected) Color.White else Color.White.copy(alpha = 0.65f)
+                                    ) 
+                                }
                             },
                             alwaysShowLabel = false,
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = Color.White,
-                                indicatorColor = Color.White.copy(alpha = 0.22f),
+                                indicatorColor = Color.Transparent,
                                 unselectedIconColor = Color.White.copy(alpha = 0.6f)
                             ),
                             modifier = Modifier.testTag("tab_$label").weight(1f)
@@ -461,16 +471,26 @@ fun MainContent(
                             selected = isSelected,
                             onClick = { viewModel.activeTab = index },
                             icon = { 
-                                Icon(
-                                    imageVector = icon, 
-                                    contentDescription = label,
-                                    modifier = Modifier.size(24.dp)
-                                ) 
+                                Box(
+                                    modifier = Modifier
+                                        .height(38.dp)
+                                        .width(60.dp)
+                                        .clip(RoundedCornerShape(19.dp))
+                                        .background(if (isSelected) Color.White.copy(alpha = 0.25f) else Color.Transparent),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = icon, 
+                                        contentDescription = label,
+                                        modifier = Modifier.size(24.dp),
+                                        tint = if (isSelected) Color.White else Color.White.copy(alpha = 0.65f)
+                                    ) 
+                                }
                             },
                             alwaysShowLabel = false,
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = Color.White,
-                                indicatorColor = Color.White.copy(alpha = 0.22f),
+                                indicatorColor = Color.Transparent,
                                 unselectedIconColor = Color.White.copy(alpha = 0.6f)
                             ),
                             modifier = Modifier.testTag("tab_$label").weight(1f)
@@ -488,7 +508,7 @@ fun MainContent(
                         .background(themeColors.navBarBg, androidx.compose.foundation.shape.CircleShape)
                         .padding(2.5.dp)
                         .clip(androidx.compose.foundation.shape.CircleShape)
-                        .background(themeColors.cardBg)
+                        .background(Color.White)
                         .scaleOnPress(fabInteractionSource)
                         .clickable(
                             interactionSource = fabInteractionSource,
@@ -805,8 +825,71 @@ fun MainContent(
             )
         }
 
+        val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
+
+        // --- Online AI Model Error / Offline Fallback Dialog ---
+        if (viewModel.onlineModelErrorReason != null) {
+            AlertDialog(
+                onDismissRequest = { viewModel.onlineModelErrorReason = null },
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = null,
+                            tint = Color(0xFFF59E0B),
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = if (isBn) "এআই মডেল লোড স্ট্যাটাস" else "AI Model Load Status",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 17.sp,
+                            color = themeColors.displayText
+                        )
+                    }
+                },
+                text = {
+                    Text(
+                        text = viewModel.onlineModelErrorReason ?: "",
+                        fontSize = 13.sp,
+                        lineHeight = 19.sp,
+                        color = themeColors.displayText.copy(alpha = 0.9f)
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = { viewModel.onlineModelErrorReason = null }
+                    ) {
+                        Text(
+                            text = if (isBn) "ঠিক আছে" else "OK",
+                            color = themeColors.buttonEqualBg,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                },
+                containerColor = themeColors.cardBg,
+                shape = RoundedCornerShape(16.dp)
+            )
+        }
+
         // --- About App Dialog ---
         if (showAboutDialog) {
+            val context = androidx.compose.ui.platform.LocalContext.current
+            val realVersionName = remember {
+                try {
+                    context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.0.0"
+                } catch (e: Exception) {
+                    "1.0.0"
+                }
+            }
+            val realAppName = remember {
+                try {
+                    context.getString(com.example.R.string.app_name)
+                } catch (e: Exception) {
+                    "Smart Calculator Pro"
+                }
+            }
+
             AlertDialog(
                 onDismissRequest = { showAboutDialog = false },
                 title = {
@@ -819,7 +902,9 @@ fun MainContent(
                 },
                 text = {
                     Column(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState()),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Box(
@@ -836,29 +921,75 @@ fun MainContent(
                         }
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "স্মার্ট ইউটিলিটি ও ক্যালকুলেটর" else "Smart Utility & Calculator",
+                            text = realAppName,
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp,
-                            color = themeColors.displayText
+                            color = themeColors.displayText,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
                         )
                         Text(
-                            text = "Version 1.2.0",
+                            text = if (isBn) "ভার্সন $realVersionName" else "Version $realVersionName",
                             fontSize = 12.sp,
-                            color = themeColors.displayText.copy(alpha = 0.5f)
+                            color = themeColors.displayText.copy(alpha = 0.6f)
                         )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        val descText = if (viewModel.selectedLanguage == AppLanguage.BENGALI) {
-                            "এটি একটি বহুমুখী এবং আধুনিক গণনা সমাধান। এতে রয়েছে একটি বৈজ্ঞানিক ক্যালকুলেটর, বিভিন্ন ইউনিট কনভার্টার এবং দৈনন্দিন জীবনের সবরকম জরুরি হিসাব সম্পন্ন করার বিশেষ বিশেষ টুলস।"
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
+                        val descText = if (isBn) {
+                            "এটি একটি বহুমুখী এবং আধুনিক গণনা সমাধান। এতে রয়েছে একটি বৈজ্ঞানিক ক্যালকুলেটর, বিভিন্ন ইউনিট কনভার্টার, দৈনন্দিন জীবনের সবরকম জরুরি হিসাব সম্পন্ন করার বিশেষ বিশেষ টুলস এবং একটি স্মার্ট অফলাইন এআই সহকারী।"
                         } else {
-                            "A versatile and modern multi-tool solution. Features a comprehensive scientific calculator, robust unit converters, and high-quality utility tools for all daily computation needs."
+                            "A versatile and modern multi-tool solution. Features a comprehensive scientific calculator, robust unit converters, utility tools, and a smart offline AI assistant."
                         }
                         Text(
                             text = descText,
-                            fontSize = 13.sp,
-                            lineHeight = 18.sp,
+                            fontSize = 12.sp,
+                            lineHeight = 17.sp,
                             color = themeColors.displayText.copy(alpha = 0.8f),
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center
                         )
+                        
+                        Spacer(modifier = Modifier.height(16.dp))
+                        HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.12f))
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
+                        // Developer Info Card
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = themeColors.buttonEqualBg.copy(alpha = 0.08f)),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text(
+                                    text = if (isBn) "👨‍💻 ডেভেলপার তথ্য" else "👨‍💻 Developer Info",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp,
+                                    color = themeColors.buttonEqualBg
+                                )
+                                Text(
+                                    text = if (isBn) "ডেভেলপার: Md. Shariful Islam" else "Developer: Md. Shariful Islam",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = themeColors.displayText
+                                )
+                                Text(
+                                    text = "📧 Email: Connect.shariful@gmail.com",
+                                    fontSize = 12.sp,
+                                    color = themeColors.displayText.copy(alpha = 0.85f)
+                                )
+                                Text(
+                                    text = "🌐 FB: fb.com/shariful.uxd",
+                                    fontSize = 12.sp,
+                                    color = themeColors.displayText.copy(alpha = 0.85f)
+                                )
+                                Text(
+                                    text = "💬 WhatsApp: +8801768899599",
+                                    fontSize = 12.sp,
+                                    color = themeColors.displayText.copy(alpha = 0.85f)
+                                )
+                            }
+                        }
                     }
                 },
                 confirmButton = {
@@ -873,7 +1004,7 @@ fun MainContent(
                     }
                 },
                 containerColor = themeColors.cardBg,
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(20.dp)
             )
         }
     }
@@ -1220,7 +1351,7 @@ fun AiChatDialog(
                         modifier = Modifier
                             .size(46.dp)
                             .clip(androidx.compose.foundation.shape.CircleShape)
-                            .background(if (textInput.isNotBlank()) Color(0xFF00BCD4) else Color(0xFF00BCD4).copy(alpha = 0.8f))
+                            .background(if (textInput.isNotBlank()) themeColors.buttonEqualBg else themeColors.buttonEqualBg.copy(alpha = 0.85f))
                             .clickable {
                                 if (textInput.isNotBlank()) {
                                     viewModel.sendMessageToAi(textInput)

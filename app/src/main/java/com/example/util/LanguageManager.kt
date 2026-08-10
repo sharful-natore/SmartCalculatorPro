@@ -1472,7 +1472,7 @@ object LanguageManager {
                 else -> "Privacy Policy"
             }
             "menu_about" -> when (language) {
-                AppLanguage.BENGALI -> "এবাউট অ্যাপ"
+                AppLanguage.BENGALI -> "অ্যাপ সম্পর্কে"
                 else -> "About App"
             }
             "settings_vibration" -> when (language) {

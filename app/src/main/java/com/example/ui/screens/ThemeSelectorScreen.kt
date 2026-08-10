@@ -433,31 +433,31 @@ fun CustomThemeEditorDialog(
     isBn: Boolean,
     themeColors: CalculatorThemeColors
 ) {
-    var name by remember { mutableStateOf(themeToEdit?.name ?: "") }
-    var isDark by remember { mutableStateOf(themeToEdit?.isDark ?: false) }
+    var name by remember(themeToEdit) { mutableStateOf(themeToEdit?.name ?: "") }
+    var isDark by remember(themeToEdit) { mutableStateOf(themeToEdit?.isDark ?: false) }
 
-    var background by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.background ?: (if (isDark) "#121212" else "#F8FAFC")))) }
-    var displayBackground by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.displayBackground ?: (if (isDark) "#1E293B" else "#FFFFFF")))) }
-    var displayText by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.displayText ?: (if (isDark) "#FFFFFF" else "#1E293B")))) }
-    var displayExpressionText by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.displayExpressionText ?: (if (isDark) "#94A3B8" else "#64748B")))) }
+    var background by remember(themeToEdit) { mutableStateOf(safeParseColor(themeToEdit?.background, if (isDark) "#121212" else "#F8FAFC")) }
+    var displayBackground by remember(themeToEdit) { mutableStateOf(safeParseColor(themeToEdit?.displayBackground, if (isDark) "#1E293B" else "#FFFFFF")) }
+    var displayText by remember(themeToEdit) { mutableStateOf(safeParseColor(themeToEdit?.displayText, if (isDark) "#FFFFFF" else "#1E293B")) }
+    var displayExpressionText by remember(themeToEdit) { mutableStateOf(safeParseColor(themeToEdit?.displayExpressionText, if (isDark) "#94A3B8" else "#64748B")) }
     
-    var buttonNormalBg by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.buttonNormalBg ?: (if (isDark) "#1E293B" else "#FFFFFF")))) }
-    var buttonNormalText by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.buttonNormalText ?: (if (isDark) "#FFFFFF" else "#1E293B")))) }
+    var buttonNormalBg by remember(themeToEdit) { mutableStateOf(safeParseColor(themeToEdit?.buttonNormalBg, if (isDark) "#1E293B" else "#FFFFFF")) }
+    var buttonNormalText by remember(themeToEdit) { mutableStateOf(safeParseColor(themeToEdit?.buttonNormalText, if (isDark) "#FFFFFF" else "#1E293B")) }
     
-    var buttonOperatorBg by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.buttonOperatorBg ?: "#E8DDFF"))) }
-    var buttonOperatorText by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.buttonOperatorText ?: "#6366F1"))) }
+    var buttonOperatorBg by remember(themeToEdit) { mutableStateOf(safeParseColor(themeToEdit?.buttonOperatorBg, "#E8DDFF")) }
+    var buttonOperatorText by remember(themeToEdit) { mutableStateOf(safeParseColor(themeToEdit?.buttonOperatorText, "#6366F1")) }
     
-    var buttonFunctionBg by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.buttonFunctionBg ?: "#E8DDFF"))) }
-    var buttonFunctionText by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.buttonFunctionText ?: "#6366F1"))) }
+    var buttonFunctionBg by remember(themeToEdit) { mutableStateOf(safeParseColor(themeToEdit?.buttonFunctionBg, "#E8DDFF")) }
+    var buttonFunctionText by remember(themeToEdit) { mutableStateOf(safeParseColor(themeToEdit?.buttonFunctionText, "#6366F1")) }
     
-    var buttonEqualBg by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.buttonEqualBg ?: "#6366F1"))) }
-    var buttonEqualText by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.buttonEqualText ?: "#FFFFFF"))) }
+    var buttonEqualBg by remember(themeToEdit) { mutableStateOf(safeParseColor(themeToEdit?.buttonEqualBg, "#6366F1")) }
+    var buttonEqualText by remember(themeToEdit) { mutableStateOf(safeParseColor(themeToEdit?.buttonEqualText, "#FFFFFF")) }
     
-    var cardBg by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.cardBg ?: (if (isDark) "#1E293B" else "#FFFFFF")))) }
-    var unselectedItemText by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.unselectedItemText ?: (if (isDark) "#94A3B8" else "#64748B")))) }
-    var navBarBg by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.navBarBg ?: "#6366F1"))) }
-    var titleBarBg by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.titleBarBg ?: "#6366F1"))) }
-    var chipBg by remember { mutableStateOf(Color(android.graphics.Color.parseColor(themeToEdit?.chipBg ?: "#E8DDFF"))) }
+    var cardBg by remember(themeToEdit) { mutableStateOf(safeParseColor(themeToEdit?.cardBg, if (isDark) "#1E293B" else "#FFFFFF")) }
+    var unselectedItemText by remember(themeToEdit) { mutableStateOf(safeParseColor(themeToEdit?.unselectedItemText, if (isDark) "#94A3B8" else "#64748B")) }
+    var navBarBg by remember(themeToEdit) { mutableStateOf(safeParseColor(themeToEdit?.navBarBg, "#6366F1")) }
+    var titleBarBg by remember(themeToEdit) { mutableStateOf(safeParseColor(themeToEdit?.titleBarBg, "#6366F1")) }
+    var chipBg by remember(themeToEdit) { mutableStateOf(safeParseColor(themeToEdit?.chipBg, "#E8DDFF")) }
 
     AlertDialog(
         onDismissRequest = onDismiss,

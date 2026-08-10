@@ -124,6 +124,8 @@ fun BasicScientificScreen(
                         val down = awaitFirstDown(pass = PointerEventPass.Initial, requireUnconsumed = false)
                         var totalY = 0f
                         var isDragging = false
+                        var gestureTriggeredToggle = false
+                        val initialExpanded = viewModel.isScientificExpanded
                         val pointerId = down.id
 
                         while (true) {
@@ -131,7 +133,7 @@ fun BasicScientificScreen(
                             val change = event.changes.firstOrNull { it.id == pointerId } ?: break
 
                             if (!change.pressed) {
-                                if (isDragging) {
+                                if (isDragging && kotlin.math.abs(bounceAnimatable.value) > 0.5f) {
                                     coroutineScope.launch {
                                         bounceAnimatable.animateTo(
                                             0f,
@@ -156,27 +158,29 @@ fun BasicScientificScreen(
 
                             if (isDragging) {
                                 change.consume()
-                                if (!viewModel.isScientificExpanded) {
-                                    if (deltaY < 0 || bounceAnimatable.value < 0f) {
-                                        // Swiping UP when hidden -> Bounce UP
-                                        coroutineScope.launch {
-                                            bounceAnimatable.snapTo((bounceAnimatable.value + (deltaY * 0.35f)).coerceIn(-150f, 0f))
+                                if (!gestureTriggeredToggle) {
+                                    if (!initialExpanded) {
+                                        // Hidden Mode: Swipe UP = Bounce UP, Swipe DOWN = Show Scientific
+                                        if (deltaY < 0 || bounceAnimatable.value < 0f) {
+                                            coroutineScope.launch {
+                                                bounceAnimatable.snapTo((bounceAnimatable.value + (deltaY * 0.35f)).coerceIn(-150f, 0f))
+                                            }
+                                        } else if (deltaY > 0 && totalY > 25f) {
+                                            viewModel.isScientificExpanded = true
+                                            gestureTriggeredToggle = true
+                                            coroutineScope.launch { bounceAnimatable.snapTo(0f) }
                                         }
-                                    } else if (deltaY > 0 && totalY > 20f) {
-                                        // Swiping DOWN when hidden -> Show Scientific Mode
-                                        viewModel.isScientificExpanded = true
-                                        totalY = 0f
-                                    }
-                                } else {
-                                    if (deltaY > 0 || bounceAnimatable.value > 0f) {
-                                        // Swiping DOWN when expanded -> Bounce DOWN
-                                        coroutineScope.launch {
-                                            bounceAnimatable.snapTo((bounceAnimatable.value + (deltaY * 0.35f)).coerceIn(0f, 150f))
+                                    } else {
+                                        // Expanded Mode: Swipe DOWN = Bounce DOWN, Swipe UP = Hide Scientific
+                                        if (deltaY > 0 || bounceAnimatable.value > 0f) {
+                                            coroutineScope.launch {
+                                                bounceAnimatable.snapTo((bounceAnimatable.value + (deltaY * 0.35f)).coerceIn(0f, 150f))
+                                            }
+                                        } else if (deltaY < 0 && totalY < -25f) {
+                                            viewModel.isScientificExpanded = false
+                                            gestureTriggeredToggle = true
+                                            coroutineScope.launch { bounceAnimatable.snapTo(0f) }
                                         }
-                                    } else if (deltaY < 0 && totalY < -20f) {
-                                        // Swiping UP when expanded -> Hide Scientific Mode without bounce
-                                        viewModel.isScientificExpanded = false
-                                        totalY = 0f
                                     }
                                 }
                             }
@@ -727,6 +731,7 @@ fun BasicScientificScreen(
                         bgColor = themeColors.buttonNormalBg,
                         textColor = themeColors.buttonNormalText,
                         onClick = { viewModel.onBtnClick("C") },
+                        repeatsOnLongPress = true,
                         modifier = Modifier.weight(1f),
                         padding = buttonPadding,
                         icon = {

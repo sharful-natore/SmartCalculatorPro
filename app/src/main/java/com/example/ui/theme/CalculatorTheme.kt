@@ -27,6 +27,23 @@ data class CalculatorThemeColors(
     val themeNameBn: String
 )
 
+fun safeParseColor(colorStr: String?, defaultHex: String = "#6366F1"): Color {
+    if (colorStr.isNullOrBlank()) {
+        return try { Color(android.graphics.Color.parseColor(defaultHex)) } catch (e: Exception) { Color(0xFF6366F1) }
+    }
+    return try {
+        val clean = colorStr.trim()
+        val hex = if (clean.startsWith("#")) clean else "#$clean"
+        Color(android.graphics.Color.parseColor(hex))
+    } catch (e: Exception) {
+        try {
+            Color(android.graphics.Color.parseColor(defaultHex))
+        } catch (e2: Exception) {
+            Color(0xFF6366F1)
+        }
+    }
+}
+
 @com.squareup.moshi.JsonClass(generateAdapter = true)
 data class CustomTheme(
     val id: String = java.util.UUID.randomUUID().toString(),
@@ -52,23 +69,23 @@ data class CustomTheme(
 ) {
     fun toCalculatorThemeColors(): CalculatorThemeColors {
         return CalculatorThemeColors(
-            background = Color(android.graphics.Color.parseColor(background)),
-            displayBackground = Color(android.graphics.Color.parseColor(displayBackground)),
-            displayText = Color(android.graphics.Color.parseColor(displayText)),
-            displayExpressionText = Color(android.graphics.Color.parseColor(displayExpressionText)),
-            buttonNormalBg = Color(android.graphics.Color.parseColor(buttonNormalBg)),
-            buttonNormalText = Color(android.graphics.Color.parseColor(buttonNormalText)),
-            buttonOperatorBg = Color(android.graphics.Color.parseColor(buttonOperatorBg)),
-            buttonOperatorText = Color(android.graphics.Color.parseColor(buttonOperatorText)),
-            buttonFunctionBg = Color(android.graphics.Color.parseColor(buttonFunctionBg)),
-            buttonFunctionText = Color(android.graphics.Color.parseColor(buttonFunctionText)),
-            buttonEqualBg = Color(android.graphics.Color.parseColor(buttonEqualBg)),
-            buttonEqualText = Color(android.graphics.Color.parseColor(buttonEqualText)),
-            cardBg = Color(android.graphics.Color.parseColor(cardBg)),
-            unselectedItemText = Color(android.graphics.Color.parseColor(unselectedItemText)),
-            navBarBg = Color(android.graphics.Color.parseColor(navBarBg)),
-            titleBarBg = Color(android.graphics.Color.parseColor(titleBarBg)),
-            chipBg = Color(android.graphics.Color.parseColor(chipBg)),
+            background = safeParseColor(background, "#F8FAFC"),
+            displayBackground = safeParseColor(displayBackground, "#FFFFFF"),
+            displayText = safeParseColor(displayText, "#1E293B"),
+            displayExpressionText = safeParseColor(displayExpressionText, "#64748B"),
+            buttonNormalBg = safeParseColor(buttonNormalBg, "#FFFFFF"),
+            buttonNormalText = safeParseColor(buttonNormalText, "#1E293B"),
+            buttonOperatorBg = safeParseColor(buttonOperatorBg, "#E8DDFF"),
+            buttonOperatorText = safeParseColor(buttonOperatorText, "#6366F1"),
+            buttonFunctionBg = safeParseColor(buttonFunctionBg, "#E8DDFF"),
+            buttonFunctionText = safeParseColor(buttonFunctionText, "#6366F1"),
+            buttonEqualBg = safeParseColor(buttonEqualBg, "#6366F1"),
+            buttonEqualText = safeParseColor(buttonEqualText, "#FFFFFF"),
+            cardBg = safeParseColor(cardBg, "#FFFFFF"),
+            unselectedItemText = safeParseColor(unselectedItemText, "#64748B"),
+            navBarBg = safeParseColor(navBarBg, "#6366F1"),
+            titleBarBg = safeParseColor(titleBarBg, "#6366F1"),
+            chipBg = safeParseColor(chipBg, "#E8DDFF"),
             isDark = isDark,
             themeName = name,
             themeNameBn = name
