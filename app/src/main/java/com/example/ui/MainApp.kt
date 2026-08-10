@@ -21,6 +21,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.scale
+
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.drawBehind
@@ -498,26 +501,57 @@ fun MainContent(
                 
                 val infiniteTransition = rememberInfiniteTransition(label = "ai_gradient")
                 
-                val angle by infiniteTransition.animateFloat(
-                    initialValue = 0f,
-                    targetValue = 360f,
-                    animationSpec = infiniteRepeatable(
-                        animation = tween(3000, easing = LinearEasing),
-                        repeatMode = RepeatMode.Restart
-                    ),
-                    label = "angle"
-                )
-                
-                val glowingColors = remember {
+                val glowingColors1 = remember {
                     listOf(
-                        Color(0xFFFF007F), Color(0xFFFF00FF), Color(0xFF8A2BE2), Color(0xFF4B0082),
-                        Color(0xFF0000FF), Color(0xFF1E90FF), Color(0xFF00BFFF), Color(0xFF00FFFF),
-                        Color(0xFF20B2AA), Color(0xFF00FF7F), Color(0xFF32CD32), Color(0xFFADFF2F),
-                        Color(0xFFFFFF00), Color(0xFFFFD700), Color(0xFFFFA500), Color(0xFFFF4500),
-                        Color(0xFFFF0000), Color(0xFFDC143C), Color(0xFFFF1493), Color(0xFFFF69B4),
-                        Color(0xFFFF007F) // Loop back
+                        Color(0xFFFF5E8E), Color(0xFFFF7EB3), Color(0xFFFF99CC), Color(0xFFE8B0FF),
+                        Color(0xFFD0A1FF), Color(0xFFB591FF), Color(0xFF9EA3FF), Color(0xFF8AB5FF),
+                        Color(0xFF7CC7FF), Color(0xFF6ED8FF), Color(0xFF6CF0FF), Color(0xFF75FFEC),
+                        Color(0xFF82FFD2), Color(0xFF9CFFB3), Color(0xFFB3FF99), Color(0xFFCDFF82),
+                        Color(0xFFE6FF6E), Color(0xFFFFF275), Color(0xFFFFDF70), Color(0xFFFFC66C),
+                        Color(0xFFFFA568), Color(0xFFFF856B), Color(0xFFFF6D7A), Color(0xFFFF5E8E) // Loop back
                     )
                 }
+                val glowingColors2 = remember { glowingColors1.drop(12) + glowingColors1.take(12) + listOf(glowingColors1[12]) }
+
+                val duration = 30000
+
+                val color1 by infiniteTransition.animateColor(
+                    initialValue = glowingColors1.first(),
+                    targetValue = glowingColors1.last(),
+                    animationSpec = infiniteRepeatable(
+                        animation = keyframes {
+                            durationMillis = duration
+                            glowingColors1.forEachIndexed { index, color ->
+                                color at (duration * index / (glowingColors1.size - 1)) with LinearEasing
+                            }
+                        },
+                        repeatMode = RepeatMode.Restart
+                    ), label = "color1"
+                )
+                
+                val color2 by infiniteTransition.animateColor(
+                    initialValue = glowingColors2.first(),
+                    targetValue = glowingColors2.last(),
+                    animationSpec = infiniteRepeatable(
+                        animation = keyframes {
+                            durationMillis = duration
+                            glowingColors2.forEachIndexed { index, color ->
+                                color at (duration * index / (glowingColors2.size - 1)) with LinearEasing
+                            }
+                        },
+                        repeatMode = RepeatMode.Restart
+                    ), label = "color2"
+                )
+                
+                val iconScale by infiniteTransition.animateFloat(
+                    initialValue = 0.85f,
+                    targetValue = 1.15f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(2000, easing = LinearOutSlowInEasing),
+                        repeatMode = RepeatMode.Reverse
+                    ),
+                    label = "iconScale"
+                )
 
                 Box(
                     modifier = Modifier
@@ -525,23 +559,22 @@ fun MainContent(
                         .offset(y = (-13).dp) // 72 (nav) + 5 (outside) - 64 (fab) = 13 (so 5dp sticks out)
                         .size(64.dp)
                         .shadow(elevation = 6.dp, shape = androidx.compose.foundation.shape.CircleShape)
-                        .background(themeColors.navBarBg, androidx.compose.foundation.shape.CircleShape)
-                        .padding(3.dp) // Border thickness
+                        .background(Color.White, androidx.compose.foundation.shape.CircleShape)
+                        .padding(4.dp) // Border thickness
                         .clip(androidx.compose.foundation.shape.CircleShape)
                         .drawBehind {
-                            rotate(angle) {
-                                drawRect(
-                                    brush = Brush.sweepGradient(
-                                        colors = glowingColors,
-                                        center = Offset(size.width / 2f, size.height / 2f)
-                                    ),
-                                    size = size
-                                )
-                            }
-                            // Inner subtle glow/blur overlay
+                            drawRect(
+                                brush = Brush.linearGradient(
+                                    colors = listOf(color1, color2),
+                                    start = Offset(0f, 0f),
+                                    end = Offset(size.width, size.height)
+                                ),
+                                size = size
+                            )
+                            // Inner subtle glow/blur overlay to make it look smooth and blurry
                             drawCircle(
                                 brush = Brush.radialGradient(
-                                    colors = listOf(Color.White.copy(alpha=0.4f), Color.Transparent),
+                                    colors = listOf(Color.White.copy(alpha=0.3f), Color.Transparent),
                                     center = Offset(size.width / 2f, size.height / 2f),
                                     radius = size.width / 2f
                                 )
@@ -567,7 +600,10 @@ fun MainContent(
                         imageVector = Icons.Default.AutoAwesome,
                         contentDescription = "AI Assistant",
                         tint = Color.White,
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(28.dp).graphicsLayer(
+                            scaleX = iconScale,
+                            scaleY = iconScale
+                        )
                     )
                 }
             }
@@ -1840,7 +1876,7 @@ fun AiTypingIndicator() {
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
             animation = keyframes { durationMillis = 1000; 0.5f at 500 },
-            repeatMode = RepeatMode.Restart
+            repeatMode = RepeatMode.Reverse
         )
     )
     val alpha2 by infiniteTransition.animateFloat(
@@ -1848,7 +1884,7 @@ fun AiTypingIndicator() {
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
             animation = keyframes { durationMillis = 1000; 0f at 200; 0.5f at 700 },
-            repeatMode = RepeatMode.Restart
+            repeatMode = RepeatMode.Reverse
         )
     )
     val alpha3 by infiniteTransition.animateFloat(
@@ -1856,7 +1892,7 @@ fun AiTypingIndicator() {
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
             animation = keyframes { durationMillis = 1000; 0f at 400; 0.5f at 900 },
-            repeatMode = RepeatMode.Restart
+            repeatMode = RepeatMode.Reverse
         )
     )
 

@@ -564,7 +564,7 @@ fun BasicScientificScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(20.dp)
+                .padding(vertical = 2.dp)
                 .then(dragModifier)
                 .clickable {
                     coroutineScope.launch {
@@ -584,15 +584,14 @@ fun BasicScientificScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = buttonPadding)
-                    .height(16.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(themeColors.displayText.copy(alpha = 0.08f))
+                    .background(androidx.compose.ui.graphics.Color.Transparent)
             ) {
                 Icon(
                     imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                     contentDescription = if (isExpanded) "Hide Scientific Mode" else "Show Scientific Mode",
                     tint = themeColors.displayText.copy(alpha = 0.7f),
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(28.dp)
                 )
             }
         }

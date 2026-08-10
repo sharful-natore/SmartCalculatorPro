@@ -60,6 +60,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Sort
+
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material.icons.filled.Close
 import com.example.util.AppLanguage
 
@@ -77,6 +80,7 @@ fun HistoryScreen(
     var searchQuery by remember { mutableStateOf("") }
     var isSearchActive by remember { mutableStateOf(false) }
     var isAscending by remember { mutableStateOf(false) }
+    var showSortMenu by remember { mutableStateOf(false) }
 
     val scrollState = rememberScrollState()
     val coroutineScope = rememberCoroutineScope()
@@ -239,15 +243,37 @@ fun HistoryScreen(
                                 modifier = Modifier.size(24.dp)
                             )
                         }
-                        IconButton(
-                            onClick = { isAscending = !isAscending }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Sort,
-                                contentDescription = "Sort",
-                                tint = if (isAscending) themeColors.buttonEqualBg else themeColors.buttonEqualBg.copy(alpha=0.5f),
-                                modifier = Modifier.size(24.dp)
-                            )
+                        Box {
+                            IconButton(
+                                onClick = { showSortMenu = true }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Sort,
+                                    contentDescription = "Sort",
+                                    tint = themeColors.buttonEqualBg,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = showSortMenu,
+                                onDismissRequest = { showSortMenu = false },
+                                modifier = Modifier.background(themeColors.cardBg)
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text(if (isBn) "নতুন আগে" else "Newest First", color = themeColors.displayText) },
+                                    onClick = {
+                                        isAscending = false
+                                        showSortMenu = false
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text(if (isBn) "পুরোনো আগে" else "Oldest First", color = themeColors.displayText) },
+                                    onClick = {
+                                        isAscending = true
+                                        showSortMenu = false
+                                    }
+                                )
+                            }
                         }
                     }
                     // Backup Button
@@ -336,9 +362,21 @@ fun HistoryScreen(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 val filteredItems = historyItems.filter { 
-                    it.expression.contains(searchQuery, ignoreCase = true) || 
-                    it.result.contains(searchQuery, ignoreCase = true) || 
-                    (it.customName?.contains(searchQuery, ignoreCase = true) == true)
+                    val eng = listOf("0", "1", "2", "3", "4", "5", "6", "7", "8", "9")
+                    val ben = listOf("০", "১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯")
+                    var nExpr = it.expression
+                    var nRes = it.result
+                    var nTag = it.customName ?: ""
+                    var nQuery = searchQuery
+                    for (i in 0..9) {
+                        nExpr = nExpr.replace(ben[i], eng[i])
+                        nRes = nRes.replace(ben[i], eng[i])
+                        nTag = nTag.replace(ben[i], eng[i])
+                        nQuery = nQuery.replace(ben[i], eng[i])
+                    }
+                    nExpr.contains(nQuery, ignoreCase = true) || 
+                    nRes.contains(nQuery, ignoreCase = true) || 
+                    nTag.contains(nQuery, ignoreCase = true)
                 }.let { 
                     if (isAscending) it.sortedBy { item -> item.timestamp } else it.sortedByDescending { item -> item.timestamp }
                 }
@@ -349,11 +387,20 @@ fun HistoryScreen(
                         Text(text = text, color = color, modifier = modifier, fontSize = fontSize, fontWeight = fontWeight, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                         return
                     }
-                    val startIndex = text.indexOf(query, ignoreCase = true)
+                    val eng = listOf("0", "1", "2", "3", "4", "5", "6", "7", "8", "9")
+                    val ben = listOf("০", "১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯")
+                    var normalizedText = text
+                    var normalizedQuery = query
+                    for (i in 0..9) {
+                        normalizedText = normalizedText.replace(ben[i], eng[i])
+                        normalizedQuery = normalizedQuery.replace(ben[i], eng[i])
+                    }
+
+                    val startIndex = normalizedText.indexOf(normalizedQuery, ignoreCase = true)
                     if (startIndex >= 0) {
                         val annotated = buildAnnotatedString {
                             append(text.substring(0, startIndex))
-                            withStyle(style = SpanStyle(background = Color.Yellow.copy(alpha = 0.5f))) {
+                            withStyle(style = SpanStyle(background = Color.Yellow.copy(alpha = 0.5f), color = Color.Black)) {
                                 append(text.substring(startIndex, startIndex + query.length))
                             }
                             append(text.substring(startIndex + query.length))
