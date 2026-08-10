@@ -26,6 +26,8 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.automirrored.filled.Backspace
 import androidx.compose.material.icons.filled.Science
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.Science
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
@@ -118,76 +120,6 @@ fun BasicScientificScreen(
             .fillMaxSize()
             .background(themeColors.background)
             .offset { IntOffset(0, bounceAnimatable.value.roundToInt()) }
-            .pointerInput(Unit) {
-                awaitPointerEventScope {
-                    while (true) {
-                        val down = awaitFirstDown(pass = PointerEventPass.Initial, requireUnconsumed = false)
-                        var totalY = 0f
-                        var isDragging = false
-                        var gestureTriggeredToggle = false
-                        val initialExpanded = viewModel.isScientificExpanded
-                        val pointerId = down.id
-
-                        while (true) {
-                            val event = awaitPointerEvent(pass = PointerEventPass.Initial)
-                            val change = event.changes.firstOrNull { it.id == pointerId } ?: break
-
-                            if (!change.pressed) {
-                                if (isDragging && kotlin.math.abs(bounceAnimatable.value) > 0.5f) {
-                                    coroutineScope.launch {
-                                        bounceAnimatable.animateTo(
-                                            0f,
-                                            spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
-                                        )
-                                    }
-                                }
-                                break
-                            }
-
-                            val posChange = change.positionChange()
-                            val deltaY = posChange.y
-                            val deltaX = posChange.x
-
-                            totalY += deltaY
-
-                            if (!isDragging) {
-                                if (kotlin.math.abs(totalY) > 12f && kotlin.math.abs(totalY) > kotlin.math.abs(deltaX)) {
-                                    isDragging = true
-                                }
-                            }
-
-                            if (isDragging) {
-                                change.consume()
-                                if (!gestureTriggeredToggle) {
-                                    if (!initialExpanded) {
-                                        // Hidden Mode: Swipe UP = Bounce UP, Swipe DOWN = Show Scientific
-                                        if (deltaY < 0 || bounceAnimatable.value < 0f) {
-                                            coroutineScope.launch {
-                                                bounceAnimatable.snapTo((bounceAnimatable.value + (deltaY * 0.35f)).coerceIn(-150f, 0f))
-                                            }
-                                        } else if (deltaY > 0 && totalY > 25f) {
-                                            viewModel.isScientificExpanded = true
-                                            gestureTriggeredToggle = true
-                                            coroutineScope.launch { bounceAnimatable.snapTo(0f) }
-                                        }
-                                    } else {
-                                        // Expanded Mode: Swipe DOWN = Bounce DOWN, Swipe UP = Hide Scientific
-                                        if (deltaY > 0 || bounceAnimatable.value > 0f) {
-                                            coroutineScope.launch {
-                                                bounceAnimatable.snapTo((bounceAnimatable.value + (deltaY * 0.35f)).coerceIn(0f, 150f))
-                                            }
-                                        } else if (deltaY < 0 && totalY < -25f) {
-                                            viewModel.isScientificExpanded = false
-                                            gestureTriggeredToggle = true
-                                            coroutineScope.launch { bounceAnimatable.snapTo(0f) }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
     ) {
         val screenHeight = maxHeight
         Column(
@@ -483,47 +415,52 @@ fun BasicScientificScreen(
             }
         }
 
+        val isExpanded = viewModel.isScientificExpanded || expansionFraction > 0.5f
+
+        val dragModifier = Modifier.pointerInput(Unit) {
+            detectVerticalDragGestures(
+                onDragStart = {
+                    coroutineScope.launch { expansionAnimatable.stop() }
+                },
+                onDragEnd = {
+                    coroutineScope.launch {
+                        if (expansionAnimatable.value > 0.4f) {
+                            expansionAnimatable.animateTo(1f)
+                            viewModel.isScientificExpanded = true
+                        } else {
+                            expansionAnimatable.animateTo(0f)
+                            viewModel.isScientificExpanded = false
+                        }
+                    }
+                },
+                onDragCancel = {
+                    coroutineScope.launch {
+                        if (expansionAnimatable.value > 0.4f) {
+                            expansionAnimatable.animateTo(1f)
+                            viewModel.isScientificExpanded = true
+                        } else {
+                            expansionAnimatable.animateTo(0f)
+                            viewModel.isScientificExpanded = false
+                        }
+                    }
+                },
+                onVerticalDrag = { change, dragAmount ->
+                    change.consume()
+                    val delta = dragAmount / maxDragPx
+                    coroutineScope.launch {
+                        val target = (expansionAnimatable.value + delta).coerceIn(0f, 1f)
+                        expansionAnimatable.snapTo(target)
+                    }
+                }
+            )
+        }
+
         // Drag Handle / Visual cue for swiping
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = (4f - (2f * expansionFraction)).dp)
-                .pointerInput(Unit) {
-                    detectVerticalDragGestures(
-                        onDragStart = {
-                            coroutineScope.launch { expansionAnimatable.stop() }
-                        },
-                        onDragEnd = {
-                            coroutineScope.launch {
-                                if (expansionAnimatable.value > 0.5f) {
-                                    expansionAnimatable.animateTo(1f)
-                                    viewModel.isScientificExpanded = true
-                                } else {
-                                    expansionAnimatable.animateTo(0f)
-                                    viewModel.isScientificExpanded = false
-                                }
-                            }
-                        },
-                        onDragCancel = {
-                            coroutineScope.launch {
-                                if (expansionAnimatable.value > 0.5f) {
-                                    expansionAnimatable.animateTo(1f)
-                                    viewModel.isScientificExpanded = true
-                                } else {
-                                    expansionAnimatable.animateTo(0f)
-                                    viewModel.isScientificExpanded = false
-                                }
-                            }
-                        },
-                        onVerticalDrag = { change, dragAmount ->
-                            val delta = dragAmount / maxDragPx
-                            coroutineScope.launch {
-                                val target = (expansionAnimatable.value + delta).coerceIn(0f, 1f)
-                                expansionAnimatable.snapTo(target)
-                            }
-                        }
-                    )
-                }
+                .height(30.dp)
+                .then(dragModifier)
                 .clickable {
                     coroutineScope.launch {
                         if (viewModel.isScientificExpanded) {
@@ -537,56 +474,36 @@ fun BasicScientificScreen(
                 },
             contentAlignment = Alignment.Center
         ) {
-            Box(
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
                 modifier = Modifier
-                    .width(42.dp)
-                    .height(6.dp)
-                    .clip(CircleShape)
-                    .background(themeColors.displayText.copy(alpha = 0.25f))
-            )
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(themeColors.displayText.copy(alpha = 0.08f))
+                    .padding(horizontal = 14.dp, vertical = 3.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .width(28.dp)
+                        .height(4.dp)
+                        .clip(CircleShape)
+                        .background(themeColors.displayText.copy(alpha = 0.35f))
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Icon(
+                    imageVector = if (isExpanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
+                    contentDescription = if (isExpanded) "Hide Scientific Mode" else "Show Scientific Mode",
+                    tint = themeColors.displayText.copy(alpha = 0.7f),
+                    modifier = Modifier.size(20.dp)
+                )
+            }
         }
 
         // Keypad Container (Dynamically scaled, no scroll needed)
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(keypadWeight)
-                .pointerInput(Unit) {
-                    detectVerticalDragGestures(
-                        onDragStart = {
-                            coroutineScope.launch { expansionAnimatable.stop() }
-                        },
-                        onDragEnd = {
-                            coroutineScope.launch {
-                                if (expansionAnimatable.value > 0.5f) {
-                                    expansionAnimatable.animateTo(1f)
-                                    viewModel.isScientificExpanded = true
-                                } else {
-                                    expansionAnimatable.animateTo(0f)
-                                    viewModel.isScientificExpanded = false
-                                }
-                            }
-                        },
-                        onDragCancel = {
-                            coroutineScope.launch {
-                                if (expansionAnimatable.value > 0.5f) {
-                                    expansionAnimatable.animateTo(1f)
-                                    viewModel.isScientificExpanded = true
-                                } else {
-                                    expansionAnimatable.animateTo(0f)
-                                    viewModel.isScientificExpanded = false
-                                }
-                            }
-                        },
-                        onVerticalDrag = { change, dragAmount ->
-                            val delta = dragAmount / maxDragPx
-                            coroutineScope.launch {
-                                val target = (expansionAnimatable.value + delta).coerceIn(0f, 1f)
-                                expansionAnimatable.snapTo(target)
-                            }
-                        }
-                    )
-                },
+                .weight(keypadWeight),
             verticalArrangement = Arrangement.spacedBy(rowSpacing)
         ) {
             if (expansionFraction > 0.01f) {
@@ -603,7 +520,8 @@ fun BasicScientificScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .weight(1f),
+                            .weight(1f)
+                            .then(dragModifier),
                         horizontalArrangement = Arrangement.spacedBy(rowSpacing)
                     ) {
                         CalculatorButton("sin", themeColors.buttonFunctionBg, themeColors.buttonFunctionText, { viewModel.onBtnClick("sin") }, Modifier.weight(1f), fontSize = scientificFontSize, padding = buttonPadding)
@@ -617,7 +535,8 @@ fun BasicScientificScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .weight(1f),
+                            .weight(1f)
+                            .then(dragModifier),
                         horizontalArrangement = Arrangement.spacedBy(rowSpacing)
                     ) {
                         CalculatorButton("sin⁻¹", themeColors.buttonFunctionBg, themeColors.buttonFunctionText, { viewModel.onBtnClick("sin⁻¹") }, Modifier.weight(1f), fontSize = scientificFontSize, padding = buttonPadding)
@@ -669,7 +588,8 @@ fun BasicScientificScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f),
+                        .weight(1f)
+                        .then(dragModifier),
                     horizontalArrangement = Arrangement.spacedBy(rowSpacing)
                 ) {
                     CalculatorButton("AC", themeColors.buttonFunctionBg, themeColors.buttonFunctionText, { viewModel.onBtnClick("AC") }, Modifier.weight(1f), fontSize = basicFontSize, padding = buttonPadding)
@@ -682,7 +602,8 @@ fun BasicScientificScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f),
+                        .weight(1f)
+                        .then(dragModifier),
                     horizontalArrangement = Arrangement.spacedBy(rowSpacing)
                 ) {
                     CalculatorButton("7", themeColors.buttonNormalBg, themeColors.buttonNormalText, { viewModel.onBtnClick("7") }, Modifier.weight(1f), fontSize = basicFontSize, padding = buttonPadding)

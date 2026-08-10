@@ -411,13 +411,12 @@ fun MainContent(
                     .navigationBarsPadding(),
                 contentAlignment = Alignment.Center
             ) {
-                NavigationBar(
-                    containerColor = Color.Transparent,
-                    tonalElevation = 0.dp,
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(72.dp)
-                        .testTag("bottom_nav_bar")
+                        .testTag("bottom_nav_bar"),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     val tabs = listOf(
                         Triple(0, Icons.Default.Calculate, LanguageManager.getString("tab_calc", viewModel.selectedLanguage)),
@@ -430,34 +429,35 @@ fun MainContent(
                     for (i in 0..1) {
                         val (index, icon, label) = tabs[i]
                         val isSelected = viewModel.activeTab == index
-                        NavigationBarItem(
-                            selected = isSelected,
-                            onClick = { viewModel.activeTab = index },
-                            icon = { 
-                                Box(
-                                    modifier = Modifier
-                                        .height(38.dp)
-                                        .width(60.dp)
-                                        .clip(RoundedCornerShape(19.dp))
-                                        .background(if (isSelected) Color.White.copy(alpha = 0.25f) else Color.Transparent),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = icon, 
-                                        contentDescription = label,
-                                        modifier = Modifier.size(24.dp),
-                                        tint = if (isSelected) Color.White else Color.White.copy(alpha = 0.65f)
-                                    ) 
-                                }
-                            },
-                            alwaysShowLabel = false,
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = Color.White,
-                                indicatorColor = Color.Transparent,
-                                unselectedIconColor = Color.White.copy(alpha = 0.6f)
-                            ),
-                            modifier = Modifier.testTag("tab_$label").weight(1f)
-                        )
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .testTag("tab_$label"),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            val tabInteraction = remember { MutableInteractionSource() }
+                            Box(
+                                modifier = Modifier
+                                    .height(38.dp)
+                                    .width(60.dp)
+                                    .clip(RoundedCornerShape(19.dp))
+                                    .background(if (isSelected) Color.White.copy(alpha = 0.25f) else Color.Transparent)
+                                    .clickable(
+                                        interactionSource = tabInteraction,
+                                        indication = ripple(bounded = true, color = Color.White),
+                                        onClick = { viewModel.activeTab = index }
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = icon, 
+                                    contentDescription = label,
+                                    modifier = Modifier.size(24.dp),
+                                    tint = if (isSelected) Color.White else Color.White.copy(alpha = 0.65f)
+                                ) 
+                            }
+                        }
                     }
                     
                     // Middle spacer for FAB room
@@ -467,34 +467,35 @@ fun MainContent(
                     for (i in 2..3) {
                         val (index, icon, label) = tabs[i]
                         val isSelected = viewModel.activeTab == index
-                        NavigationBarItem(
-                            selected = isSelected,
-                            onClick = { viewModel.activeTab = index },
-                            icon = { 
-                                Box(
-                                    modifier = Modifier
-                                        .height(38.dp)
-                                        .width(60.dp)
-                                        .clip(RoundedCornerShape(19.dp))
-                                        .background(if (isSelected) Color.White.copy(alpha = 0.25f) else Color.Transparent),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = icon, 
-                                        contentDescription = label,
-                                        modifier = Modifier.size(24.dp),
-                                        tint = if (isSelected) Color.White else Color.White.copy(alpha = 0.65f)
-                                    ) 
-                                }
-                            },
-                            alwaysShowLabel = false,
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = Color.White,
-                                indicatorColor = Color.Transparent,
-                                unselectedIconColor = Color.White.copy(alpha = 0.6f)
-                            ),
-                            modifier = Modifier.testTag("tab_$label").weight(1f)
-                        )
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .testTag("tab_$label"),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            val tabInteraction = remember { MutableInteractionSource() }
+                            Box(
+                                modifier = Modifier
+                                    .height(38.dp)
+                                    .width(60.dp)
+                                    .clip(RoundedCornerShape(19.dp))
+                                    .background(if (isSelected) Color.White.copy(alpha = 0.25f) else Color.Transparent)
+                                    .clickable(
+                                        interactionSource = tabInteraction,
+                                        indication = ripple(bounded = true, color = Color.White),
+                                        onClick = { viewModel.activeTab = index }
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = icon, 
+                                    contentDescription = label,
+                                    modifier = Modifier.size(24.dp),
+                                    tint = if (isSelected) Color.White else Color.White.copy(alpha = 0.65f)
+                                ) 
+                            }
+                        }
                     }
                 }
                 

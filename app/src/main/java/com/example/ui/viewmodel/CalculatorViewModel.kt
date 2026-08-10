@@ -263,10 +263,13 @@ How can I help you today?"""
     fun isNetworkAvailable(): Boolean {
         return try {
             val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? android.net.ConnectivityManager
-            if (cm == null) return false
+            if (cm == null) return true
+            
             @Suppress("DEPRECATION")
             val activeInfo = cm.activeNetworkInfo
-            val isConnectedLegacy = activeInfo != null && activeInfo.isConnected
+            if (activeInfo != null && activeInfo.isConnected) {
+                return true
+            }
             
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
                 val activeNetwork = cm.activeNetwork
@@ -274,6 +277,7 @@ How can I help you today?"""
                     val capabilities = cm.getNetworkCapabilities(activeNetwork)
                     if (capabilities != null) {
                         if (capabilities.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET) ||
+                            capabilities.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED) ||
                             capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI) ||
                             capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_CELLULAR) ||
                             capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_ETHERNET) ||
@@ -283,27 +287,28 @@ How can I help you today?"""
                     }
                 }
             }
-            isConnectedLegacy
+            false
         } catch (e: Exception) {
             true // Fallback to attempting online call if check fails
         }
     }
 
-    private suspend fun callGeminiApi(contents: List<GeminiContent>, systemInstruction: String): String? = withContext(Dispatchers.IO) {
+    private suspend fun callGeminiApi(contents: List<GeminiContent>, systemInstruction: String): String = withContext(Dispatchers.IO) {
         val apiKey = com.example.BuildConfig.GEMINI_API_KEY
-        if (apiKey.isBlank() || apiKey == "MY_GEMINI_API_KEY") return@withContext null
-        
-        try {
-            val request = GeminiRequest(
-                contents = contents,
-                systemInstruction = GeminiContent(parts = listOf(GeminiPart(text = systemInstruction)))
-            )
-            val response = geminiApiService.generateContent(apiKey, request)
-            response.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
+        if (apiKey.isBlank() || apiKey == "MY_GEMINI_API_KEY") {
+            throw IllegalStateException("API Key missing or inactive")
         }
+        
+        val request = GeminiRequest(
+            contents = contents,
+            systemInstruction = GeminiContent(parts = listOf(GeminiPart(text = systemInstruction)))
+        )
+        val response = geminiApiService.generateContent(apiKey, request)
+        val text = response.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text
+        if (text.isNullOrBlank()) {
+            throw IllegalStateException("Empty response from AI model")
+        }
+        text
     }
 
     private data class OfflineResult(
@@ -1037,11 +1042,14 @@ How can I help you today?"""
                 var usedOnlineModel = false
                 var onlineFailureReason: String? = null
                 
+                val hasInternetPermission = context.checkSelfPermission(android.Manifest.permission.INTERNET) == android.content.pm.PackageManager.PERMISSION_GRANTED
                 val hasInternet = isNetworkAvailable()
                 val hasApiKey = com.example.BuildConfig.GEMINI_API_KEY.isNotBlank() && com.example.BuildConfig.GEMINI_API_KEY != "MY_GEMINI_API_KEY"
                 
-                if (!hasInternet) {
-                    onlineFailureReason = if (isBn) "ইন্টারনেট সংযোগ চালু নেই" else "No internet connection available"
+                if (!hasInternetPermission) {
+                    onlineFailureReason = if (isBn) "অ্যাপে ইন্টারনেট পারমিশন (INTERNET Permission) অনুমোদিত নয়" else "INTERNET Permission is not granted in the app"
+                } else if (!hasInternet) {
+                    onlineFailureReason = if (isBn) "ডিভাইসে ইন্টারনেট সংযোগ বন্ধ (ওয়াইফাই বা মোবাইল ডাটা অন করুন)" else "No active internet connection on device"
                 } else if (!hasApiKey) {
                     onlineFailureReason = if (isBn) "অনলাইন এআই API Key পাওয়া যায়নি বা সক্রিয় নয়" else "Online AI API Key missing or inactive"
                 } else {
@@ -1064,23 +1072,36 @@ How can I help you today?"""
                     
                     try {
                         val onlineReply = callGeminiApi(contents, systemInstruction)
-                        if (onlineReply != null) {
-                            replyText = onlineReply
-                            usedOnlineModel = true
-                            
-                            val detectedAction = detectLocalAction(normalized, isBn)
-                            if (detectedAction != null) {
-                                actType = detectedAction.actionType
-                                actLabel = detectedAction.actionLabel
-                                actData = detectedAction.actionData
-                            }
-                        } else {
-                            onlineFailureReason = if (isBn) "অনলাইন এআই সার্ভার থেকে কোনো রেসপন্স পাওয়া যায়নি" else "No response received from online AI server"
+                        replyText = onlineReply
+                        usedOnlineModel = true
+                        
+                        val detectedAction = detectLocalAction(normalized, isBn)
+                        if (detectedAction != null) {
+                            actType = detectedAction.actionType
+                            actLabel = detectedAction.actionLabel
+                            actData = detectedAction.actionData
                         }
                     } catch (netEx: Exception) {
                         netEx.printStackTrace()
-                        val errMsg = netEx.localizedMessage ?: netEx.javaClass.simpleName
-                        onlineFailureReason = if (isBn) "অনলাইন সংযোগ বা সার্ভার ত্রুটি ($errMsg)" else "Online network or server error ($errMsg)"
+                        val errMsg = when (netEx) {
+                            is java.net.UnknownHostException -> if (isBn) "ইন্টারনেট বা সার্ভারে সংযোগ করা যাচ্ছে না (Host resolution failed - DNS Error)" else "Unable to connect to server host (DNS error)"
+                            is java.net.SocketTimeoutException -> if (isBn) "ইন্টারনেট সংযোগ ধীরগতির কারণে টাইমআউট হয়েছে (Connection timeout)" else "Connection timed out"
+                            is retrofit2.HttpException -> {
+                                val code = netEx.code()
+                                if (code == 403 || code == 401) {
+                                    if (isBn) "এআই API Key অকার্যকর বা ব্লক করা হয়েছে (HTTP $code)" else "Invalid or blocked API Key (HTTP $code)"
+                                } else if (code == 429) {
+                                    if (isBn) "এআই রিকোয়েস্ট কোটা অতিক্রম করেছে (HTTP 429)" else "Quota limit exceeded (HTTP 429)"
+                                } else {
+                                    if (isBn) "এআই সার্ভার রেসপন্স ত্রুটি (HTTP $code)" else "AI Server error (HTTP $code)"
+                                }
+                            }
+                            else -> {
+                                val detail = netEx.localizedMessage ?: netEx.javaClass.simpleName
+                                if (isBn) "নেটওয়ার্ক বা সার্ভার সমস্যা ($detail)" else "Network or server issue ($detail)"
+                            }
+                        }
+                        onlineFailureReason = errMsg
                     }
                 }
                 
