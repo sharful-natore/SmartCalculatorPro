@@ -22,6 +22,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.automirrored.filled.Backspace
@@ -234,41 +235,67 @@ fun BasicScientificScreen(
             val clipboardManager = LocalClipboardManager.current
             Row(
                 modifier = Modifier
+                    .fillMaxWidth()
                     .align(Alignment.TopStart)
                     .offset(y = (-10).dp)
-                    .padding(start = 4.dp, top = 0.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    .padding(start = 0.dp, end = 0.dp, top = 0.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(
-                    onClick = {
-                        val textToCopy = viewModel.expressionValue.text
-                        if (textToCopy.isNotEmpty()) {
-                            clipboardManager.setText(AnnotatedString(textToCopy))
-                        }
-                    },
-                    modifier = Modifier.size(32.dp)
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.ContentCopy,
-                        contentDescription = "Copy Expression",
-                        tint = themeColors.displayText.copy(alpha = 0.5f),
-                        modifier = Modifier.size(16.dp)
-                    )
+                    IconButton(
+                        onClick = {
+                            val textToCopy = viewModel.expressionValue.text
+                            if (textToCopy.isNotEmpty()) {
+                                clipboardManager.setText(AnnotatedString(textToCopy))
+                            }
+                        },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ContentCopy,
+                            contentDescription = "Copy Expression",
+                            tint = themeColors.displayText.copy(alpha = 0.5f),
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+
+                    IconButton(
+                        onClick = {
+                            clipboardManager.getText()?.let { clipText ->
+                                viewModel.onPaste(clipText.text)
+                            }
+                        },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ContentPaste,
+                            contentDescription = "Paste Expression",
+                            tint = themeColors.displayText.copy(alpha = 0.5f),
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
                 }
 
+                val canSave = viewModel.expression.isNotBlank() && viewModel.expression != "0"
                 IconButton(
                     onClick = {
-                        clipboardManager.getText()?.let { clipText ->
-                            viewModel.onPaste(clipText.text)
+                        if (canSave) {
+                            viewModel.showSaveDialog = true
                         }
                     },
-                    modifier = Modifier.size(32.dp)
+                    enabled = canSave,
+                    modifier = Modifier
+                        .size(32.dp)
+                        .offset(x = 8.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.ContentPaste,
-                        contentDescription = "Paste Expression",
-                        tint = themeColors.displayText.copy(alpha = 0.5f),
+                        imageVector = Icons.Default.Save,
+                        contentDescription = "Save Calculation",
+                        tint = if (canSave) themeColors.displayText.copy(alpha = 0.5f) else themeColors.displayText.copy(alpha = 0.2f),
                         modifier = Modifier.size(16.dp)
                     )
                 }
@@ -561,7 +588,7 @@ fun BasicScientificScreen(
                     .background(themeColors.displayText.copy(alpha = 0.08f))
             ) {
                 Icon(
-                    imageVector = if (isExpanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
+                    imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                     contentDescription = if (isExpanded) "Hide Scientific Mode" else "Show Scientific Mode",
                     tint = themeColors.displayText.copy(alpha = 0.7f),
                     modifier = Modifier.size(18.dp)

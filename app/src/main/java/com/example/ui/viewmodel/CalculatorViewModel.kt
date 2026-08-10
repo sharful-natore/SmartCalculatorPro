@@ -158,6 +158,16 @@ class CalculatorViewModel(
     var showClearChatDialog by mutableStateOf(false)
     var showDeleteSingleDialog by mutableStateOf(false)
     var pendingDeleteId by mutableStateOf<Long?>(null)
+
+    // Calculation naming and custom save state
+    var showSaveDialog by mutableStateOf(false)
+    var saveNameInput by mutableStateOf("")
+
+    // Backup & Restore states
+    var showBackupConfirmDialog by mutableStateOf(false)
+    var showRestoreConfirmDialog by mutableStateOf(false)
+    var backupStatusMessage by mutableStateOf("")
+    var showBackupStatusDialog by mutableStateOf(false)
     
     // Chat History selection and deletion state
     var selectedChatSessionIds by mutableStateOf(setOf<String>())
@@ -1911,6 +1921,95 @@ How can I help you today?"""
         expressionValue = TextFieldValue(entry.expression, selection = TextRange(entry.expression.length))
         result = entry.result
         activeTab = 0 // Switch to calculator
+    }
+
+    fun saveNamedCalculation(name: String) {
+        viewModelScope.launch {
+            repository.insertHistory(
+                HistoryEntry(
+                    expression = expression,
+                    result = result,
+                    type = "Calculator",
+                    customName = name
+                )
+            )
+        }
+    }
+
+    fun backupHistoryToUri(uri: android.net.Uri) {
+        viewModelScope.launch {
+            try {
+                val entries = historyList.value
+                val moshiInstance = com.squareup.moshi.Moshi.Builder()
+                    .add(com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory())
+                    .build()
+                val listType = com.squareup.moshi.Types.newParameterizedType(List::class.java, HistoryEntry::class.java)
+                val adapter = moshiInstance.adapter<List<HistoryEntry>>(listType)
+                val jsonString = adapter.toJson(entries)
+                
+                context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                    outputStream.write(jsonString.toByteArray(Charsets.UTF_8))
+                }
+                val isBn = selectedLanguage == AppLanguage.BENGALI
+                backupStatusMessage = if (isBn) {
+                    "সফলভাবে ${entries.size}টি হিস্টোরি ব্যাকআপ করা হয়েছে!"
+                } else {
+                    "Successfully backed up ${entries.size} history items!"
+                }
+                showBackupStatusDialog = true
+            } catch (e: Exception) {
+                e.printStackTrace()
+                val isBn = selectedLanguage == AppLanguage.BENGALI
+                backupStatusMessage = if (isBn) {
+                    "ব্যাকআপ ব্যর্থ হয়েছে: ${e.localizedMessage}"
+                } else {
+                    "Backup failed: ${e.localizedMessage}"
+                }
+                showBackupStatusDialog = true
+            }
+        }
+    }
+
+    fun restoreHistoryFromUri(uri: android.net.Uri) {
+        viewModelScope.launch {
+            try {
+                val jsonString = context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                    inputStream.bufferedReader().use { it.readText() }
+                }
+                if (jsonString.isNullOrBlank()) {
+                    throw Exception("File is empty")
+                }
+                val moshiInstance = com.squareup.moshi.Moshi.Builder()
+                    .add(com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory())
+                    .build()
+                val listType = com.squareup.moshi.Types.newParameterizedType(List::class.java, HistoryEntry::class.java)
+                val adapter = moshiInstance.adapter<List<HistoryEntry>>(listType)
+                val entries = adapter.fromJson(jsonString)
+                if (entries != null) {
+                    entries.forEach { entry ->
+                        repository.insertHistory(entry.copy(id = 0))
+                    }
+                    val isBn = selectedLanguage == AppLanguage.BENGALI
+                    backupStatusMessage = if (isBn) {
+                        "সফলভাবে ${entries.size}টি হিস্টোরি রিস্টোর করা হয়েছে!"
+                    } else {
+                        "Successfully restored ${entries.size} history items!"
+                    }
+                } else {
+                    throw Exception("Invalid data format")
+                }
+                showBackupStatusDialog = true
+            } catch (e: Exception) {
+                e.printStackTrace()
+                val isBn = selectedLanguage == AppLanguage.BENGALI
+                backupStatusMessage = if (isBn) {
+                    "রিস্টোর ব্যর্থ হয়েছে: ${e.localizedMessage}"
+                } else {
+                    "Restore failed: ${e.localizedMessage}"
+                }
+                showBackupStatusDialog = true
+            }
+        }
     }
 
     fun deleteHistoryItem(id: Long) {

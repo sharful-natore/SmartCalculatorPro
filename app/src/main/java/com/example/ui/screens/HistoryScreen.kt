@@ -23,6 +23,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.filled.Upload
+import androidx.compose.material.icons.filled.Download
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
@@ -56,6 +60,22 @@ fun HistoryScreen(
     val scrollState = rememberScrollState()
     val coroutineScope = rememberCoroutineScope()
     val bounceAnimatable = remember { Animatable(0f) }
+
+    val backupLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        uri?.let {
+            viewModel.backupHistoryToUri(it)
+        }
+    }
+
+    val restoreLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        uri?.let {
+            viewModel.restoreHistoryFromUri(it)
+        }
+    }
 
     val nestedScrollConnection = remember {
         object : NestedScrollConnection {
@@ -153,17 +173,51 @@ fun HistoryScreen(
                         modifier = Modifier.size(24.dp)
                     )
                 }
-            } else if (historyItems.isNotEmpty()) {
-                IconButton(
-                    onClick = { viewModel.showClearHistoryDialog = true },
-                    modifier = Modifier.testTag("clear_all_button")
+            } else {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.DeleteSweep,
-                        contentDescription = "Clear All History",
-                        tint = themeColors.buttonEqualBg,
-                        modifier = Modifier.size(28.dp)
-                    )
+                    // Backup Button
+                    IconButton(
+                        onClick = { viewModel.showBackupConfirmDialog = true },
+                        modifier = Modifier.testTag("backup_button")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Upload,
+                            contentDescription = "Backup History",
+                            tint = themeColors.buttonEqualBg,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+
+                    // Restore Button
+                    IconButton(
+                        onClick = { viewModel.showRestoreConfirmDialog = true },
+                        modifier = Modifier.testTag("restore_button")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Download,
+                            contentDescription = "Restore History",
+                            tint = themeColors.buttonEqualBg,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+
+                    // Clear All Button (Only show if there are items)
+                    if (historyItems.isNotEmpty()) {
+                        IconButton(
+                            onClick = { viewModel.showClearHistoryDialog = true },
+                            modifier = Modifier.testTag("clear_all_button")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.DeleteSweep,
+                                contentDescription = "Clear All History",
+                                tint = themeColors.buttonEqualBg,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -249,12 +303,31 @@ fun HistoryScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = formattedTime,
-                                    fontSize = 11.sp,
-                                    color = themeColors.displayExpressionText,
-                                    fontWeight = FontWeight.SemiBold
-                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Text(
+                                        text = formattedTime,
+                                        fontSize = 11.sp,
+                                        color = themeColors.displayExpressionText,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                    if (!entry.customName.isNullOrBlank()) {
+                                        Surface(
+                                            color = themeColors.buttonEqualBg.copy(alpha = 0.15f),
+                                            shape = RoundedCornerShape(4.dp)
+                                        ) {
+                                            Text(
+                                                text = entry.customName,
+                                                fontSize = 11.sp,
+                                                color = themeColors.buttonEqualBg,
+                                                fontWeight = FontWeight.Bold,
+                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                            )
+                                        }
+                                    }
+                                }
                                 Spacer(modifier = Modifier.height(6.dp))
                                 Text(
                                     text = entry.expression,
@@ -369,6 +442,79 @@ fun HistoryScreen(
                     }
                 ) {
                     Text("Cancel", color = themeColors.displayText)
+                }
+            },
+            containerColor = themeColors.cardBg
+        )
+    }
+
+    val isBn = viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI
+
+    if (viewModel.showBackupConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.showBackupConfirmDialog = false },
+            title = { Text(if (isBn) "হিস্টোরি ব্যাকআপ করুন" else "Backup History", color = themeColors.displayText) },
+            text = { Text(if (isBn) "আপনি কি সম্পূর্ণ ক্যালকুলেশন হিস্টোরি একটি JSON ফাইল হিসেবে সংরক্ষণ করতে চান?" else "Do you want to export your complete calculation history to a JSON file?", color = themeColors.displayText) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.showBackupConfirmDialog = false
+                        backupLauncher.launch("calculator_history_backup.json")
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg)
+                ) {
+                    Text(if (isBn) "ব্যাকআপ করুন" else "Backup", color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { viewModel.showBackupConfirmDialog = false }
+                ) {
+                    Text(if (isBn) "বাতিল" else "Cancel", color = themeColors.displayText)
+                }
+            },
+            containerColor = themeColors.cardBg
+        )
+    }
+
+    if (viewModel.showRestoreConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.showRestoreConfirmDialog = false },
+            title = { Text(if (isBn) "হিস্টোরি রিস্টোর করুন" else "Restore History", color = themeColors.displayText) },
+            text = { Text(if (isBn) "আপনি কি একটি JSON ফাইল থেকে পূর্বের হিস্টোরি রিস্টোর করতে চান? এটি বর্তমান তালিকায় নতুন এন্ট্রিগুলো যুক্ত করবে।" else "Do you want to restore calculations from a JSON file? This will import and append them to your current list.", color = themeColors.displayText) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.showRestoreConfirmDialog = false
+                        restoreLauncher.launch(arrayOf("application/json", "application/octet-stream"))
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg)
+                ) {
+                    Text(if (isBn) "রিস্টোর করুন" else "Restore", color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { viewModel.showRestoreConfirmDialog = false }
+                ) {
+                    Text(if (isBn) "বাতিল" else "Cancel", color = themeColors.displayText)
+                }
+            },
+            containerColor = themeColors.cardBg
+        )
+    }
+
+    if (viewModel.showBackupStatusDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.showBackupStatusDialog = false },
+            title = { Text(if (isBn) "অবস্থা" else "Status", color = themeColors.displayText) },
+            text = { Text(viewModel.backupStatusMessage, color = themeColors.displayText) },
+            confirmButton = {
+                Button(
+                    onClick = { viewModel.showBackupStatusDialog = false },
+                    colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg)
+                ) {
+                    Text(if (isBn) "ঠিক আছে" else "OK", color = Color.White)
                 }
             },
             containerColor = themeColors.cardBg

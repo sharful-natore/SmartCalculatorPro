@@ -56,7 +56,7 @@ fun CalculatorButton(
         if (isPressed) {
             isPressedGuaranteed = true
         } else {
-            kotlinx.coroutines.delay(150)
+            kotlinx.coroutines.delay(100)
             isPressedGuaranteed = false
         }
     }
@@ -74,17 +74,17 @@ fun CalculatorButton(
     }
     
     val scale by animateFloatAsState(
-        targetValue = if (isPressedGuaranteed) 0.90f else 1.0f,
+        targetValue = if (isPressedGuaranteed || isPressed) 0.85f else 1.0f,
         animationSpec = spring(
             dampingRatio = androidx.compose.animation.core.Spring.DampingRatioNoBouncy,
-            stiffness = androidx.compose.animation.core.Spring.StiffnessHigh
+            stiffness = 30000f
         ),
         label = "btn_scale"
     )
 
     val backgroundColor by animateColorAsState(
-        targetValue = if (isPressedGuaranteed) bgColor.copy(alpha = 0.82f) else bgColor,
-        animationSpec = tween(durationMillis = 100),
+        targetValue = if (isPressedGuaranteed || isPressed) bgColor.copy(alpha = 0.82f) else bgColor,
+        animationSpec = tween(durationMillis = 50),
         label = "btn_color"
     )
     

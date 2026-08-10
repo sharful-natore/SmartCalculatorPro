@@ -9,5 +9,6 @@ data class HistoryEntry(
     val expression: String,
     val result: String,
     val timestamp: Long = System.currentTimeMillis(),
-    val type: String = "Basic"
+    val type: String = "Basic",
+    val customName: String? = null
 )

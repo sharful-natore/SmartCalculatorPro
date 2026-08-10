@@ -22,6 +22,11 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -490,37 +495,182 @@ fun MainContent(
                 
                 // Floating Action Button in the center
                 val fabInteractionSource = remember { MutableInteractionSource() }
+                
+                val infiniteTransition = rememberInfiniteTransition(label = "ai_breathing")
+                
+                // 1. Outer Wave (Slowest, largest pulsing wave)
+                val outerScale by infiniteTransition.animateFloat(
+                    initialValue = 1.0f,
+                    targetValue = 1.8f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(3200, easing = FastOutSlowInEasing),
+                        repeatMode = RepeatMode.Restart
+                    ),
+                    label = "outer_scale"
+                )
+                val outerAlpha by infiniteTransition.animateFloat(
+                    initialValue = 0.45f,
+                    targetValue = 0.0f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(3200, easing = FastOutSlowInEasing),
+                        repeatMode = RepeatMode.Restart
+                    ),
+                    label = "outer_alpha"
+                )
+
+                // 2. Middle Wave (Medium speed, medium size pulsing wave)
+                val middleScale by infiniteTransition.animateFloat(
+                    initialValue = 1.0f,
+                    targetValue = 1.45f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(2400, easing = LinearOutSlowInEasing),
+                        repeatMode = RepeatMode.Restart
+                    ),
+                    label = "middle_scale"
+                )
+                val middleAlpha by infiniteTransition.animateFloat(
+                    initialValue = 0.6f,
+                    targetValue = 0.0f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(2400, easing = LinearOutSlowInEasing),
+                        repeatMode = RepeatMode.Restart
+                    ),
+                    label = "middle_alpha"
+                )
+
+                // 3. Inner Wave (Fastest, closest to button wave)
+                val innerScale by infiniteTransition.animateFloat(
+                    initialValue = 0.95f,
+                    targetValue = 1.2f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(1600, easing = FastOutSlowInEasing),
+                        repeatMode = RepeatMode.Restart
+                    ),
+                    label = "inner_scale"
+                )
+                val innerAlpha by infiniteTransition.animateFloat(
+                    initialValue = 0.7f,
+                    targetValue = 0.0f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(1600, easing = FastOutSlowInEasing),
+                        repeatMode = RepeatMode.Restart
+                    ),
+                    label = "inner_alpha"
+                )
+
+                // 4. Button breathing scale (very gentle, reverse repeat)
+                val buttonScale by infiniteTransition.animateFloat(
+                    initialValue = 0.98f,
+                    targetValue = 1.04f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(1500, easing = FastOutSlowInEasing),
+                        repeatMode = RepeatMode.Reverse
+                    ),
+                    label = "button_scale"
+                )
+
                 Box(
                     modifier = Modifier
                         .offset(y = (-11).dp)
-                        .size(60.dp)
-                        .shadow(elevation = 4.dp, shape = androidx.compose.foundation.shape.CircleShape)
-                        .background(themeColors.navBarBg, androidx.compose.foundation.shape.CircleShape)
-                        .padding(3.5.dp)
-                        .clip(androidx.compose.foundation.shape.CircleShape)
-                        .background(Color.White)
-                        .scaleOnPress(fabInteractionSource)
-                        .clickable(
-                            interactionSource = fabInteractionSource,
-                            indication = null
-                        ) {
-                            try {
-                                if (!viewModel.showAiChat) {
-                                    viewModel.showAiChat = true
-                                }
-                            } catch (e: Throwable) {
-                                e.printStackTrace()
-                                viewModel.reportError("AI Chat FAB error: ${e.localizedMessage ?: e.javaClass.simpleName}")
-                            }
-                        },
+                        .size(76.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.AutoAwesome,
-                        contentDescription = "AI Assistant",
-                        tint = themeColors.navBarBg,
-                        modifier = Modifier.size(28.dp)
+                    // Outer Wave (Radial gradient fading to transparent for a soft blurred look)
+                    Box(
+                        modifier = Modifier
+                            .size(54.dp)
+                            .scale(outerScale)
+                            .drawBehind {
+                                drawCircle(
+                                    brush = Brush.radialGradient(
+                                        colors = listOf(
+                                            Color(0xFF4F46E5).copy(alpha = outerAlpha), // Indigo
+                                            Color(0xFF06B6D4).copy(alpha = outerAlpha * 0.5f), // Cyan
+                                            Color.Transparent
+                                        )
+                                    ),
+                                    radius = size.minDimension / 2f
+                                )
+                            }
                     )
+
+                    // Middle Wave (Radial gradient fading to transparent for a soft blurred look)
+                    Box(
+                        modifier = Modifier
+                            .size(54.dp)
+                            .scale(middleScale)
+                            .drawBehind {
+                                drawCircle(
+                                    brush = Brush.radialGradient(
+                                        colors = listOf(
+                                            Color(0xFF8B5CF6).copy(alpha = middleAlpha), // Violet
+                                            Color(0xFFEC4899).copy(alpha = middleAlpha * 0.4f), // Pink
+                                            Color.Transparent
+                                        )
+                                    ),
+                                    radius = size.minDimension / 2f
+                                )
+                            }
+                    )
+
+                    // Inner Wave (Radial gradient fading to transparent for a soft blurred look)
+                    Box(
+                        modifier = Modifier
+                            .size(54.dp)
+                            .scale(innerScale)
+                            .drawBehind {
+                                drawCircle(
+                                    brush = Brush.radialGradient(
+                                        colors = listOf(
+                                            Color(0xFF3B82F6).copy(alpha = innerAlpha), // Blue
+                                            Color(0xFF10B981).copy(alpha = innerAlpha * 0.3f), // ChatGPT Green
+                                            Color.Transparent
+                                        )
+                                    ),
+                                    radius = size.minDimension / 2f
+                                )
+                            }
+                    )
+
+                    // Main FAB button with vibrant gradient
+                    Box(
+                        modifier = Modifier
+                            .size(54.dp)
+                            .scale(buttonScale)
+                            .shadow(elevation = 6.dp, shape = androidx.compose.foundation.shape.CircleShape)
+                            .clip(androidx.compose.foundation.shape.CircleShape)
+                            .background(
+                                Brush.linearGradient(
+                                    colors = listOf(
+                                        Color(0xFF4F46E5), // Indigo
+                                        Color(0xFF8B5CF6), // Purple
+                                        Color(0xFF06B6D4)  // Teal
+                                    )
+                                )
+                            )
+                            .scaleOnPress(fabInteractionSource)
+                            .clickable(
+                                interactionSource = fabInteractionSource,
+                                indication = null
+                            ) {
+                                try {
+                                    if (!viewModel.showAiChat) {
+                                        viewModel.showAiChat = true
+                                    }
+                                } catch (e: Throwable) {
+                                    e.printStackTrace()
+                                    viewModel.reportError("AI Chat FAB error: ${e.localizedMessage ?: e.javaClass.simpleName}")
+                                }
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.AutoAwesome,
+                            contentDescription = "AI Assistant",
+                            tint = Color.White,
+                            modifier = Modifier.size(26.dp)
+                        )
+                    }
                 }
             }
         },
@@ -1032,6 +1182,88 @@ fun MainContent(
                         text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "ঠিক আছে (OK)" else "OK",
                         color = themeColors.buttonEqualBg,
                         fontWeight = FontWeight.Bold
+                    )
+                }
+            },
+            containerColor = themeColors.cardBg,
+            shape = RoundedCornerShape(16.dp)
+        )
+    }
+
+    if (viewModel.showSaveDialog) {
+        val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
+        AlertDialog(
+            onDismissRequest = { 
+                viewModel.showSaveDialog = false
+                viewModel.saveNameInput = ""
+            },
+            title = {
+                Text(
+                    text = if (isBn) "ক্যালকুলেশন সংরক্ষণ করুন" else "Save Calculation",
+                    color = themeColors.displayText,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        text = if (isBn) "এই ক্যালকুলেশনটি একটি নাম দিয়ে সংরক্ষণ করুন:" else "Save this calculation with a descriptive name:",
+                        color = themeColors.displayText.copy(alpha = 0.8f),
+                        fontSize = 14.sp
+                    )
+                    OutlinedTextField(
+                        value = viewModel.saveNameInput,
+                        onValueChange = { viewModel.saveNameInput = it },
+                        placeholder = {
+                            Text(
+                                text = if (isBn) "যেমন: বাড়ির বাজেট" else "e.g., Home Budget",
+                                color = themeColors.displayText.copy(alpha = 0.4f),
+                                fontSize = 14.sp
+                            )
+                        },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = themeColors.displayText,
+                            unfocusedTextColor = themeColors.displayText,
+                            focusedBorderColor = themeColors.buttonEqualBg,
+                            unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.3f),
+                            focusedLabelColor = themeColors.buttonEqualBg,
+                            cursorColor = themeColors.buttonEqualBg
+                        )
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val name = viewModel.saveNameInput.trim()
+                        if (name.isNotEmpty()) {
+                            viewModel.saveNamedCalculation(name)
+                            viewModel.showSaveDialog = false
+                            viewModel.saveNameInput = ""
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg)
+                ) {
+                    Text(
+                        text = if (isBn) "সংরক্ষণ করুন" else "Save",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.showSaveDialog = false
+                        viewModel.saveNameInput = ""
+                    }
+                ) {
+                    Text(
+                        text = if (isBn) "বাতিল" else "Cancel",
+                        color = themeColors.displayText.copy(alpha = 0.7f)
                     )
                 }
             },
