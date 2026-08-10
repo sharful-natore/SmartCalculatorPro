@@ -237,12 +237,26 @@ How can I help you today?"""
     }
     fun isNetworkAvailable(): Boolean {
         return try {
-            val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
-            val activeNetwork = cm.activeNetwork ?: return false
-            val capabilities = cm.getNetworkCapabilities(activeNetwork) ?: return false
-            capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI) ||
-                    capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_CELLULAR) ||
-                    capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_ETHERNET)
+            val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? android.net.ConnectivityManager
+            if (cm == null) return false
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                val activeNetwork = cm.activeNetwork
+                if (activeNetwork != null) {
+                    val capabilities = cm.getNetworkCapabilities(activeNetwork)
+                    if (capabilities != null) {
+                        if (capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI) ||
+                            capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_CELLULAR) ||
+                            capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_ETHERNET) ||
+                            capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_VPN)) {
+                            return true
+                        }
+                    }
+                }
+            }
+            @Suppress("DEPRECATION")
+            val activeInfo = cm.activeNetworkInfo
+            @Suppress("DEPRECATION")
+            activeInfo != null && activeInfo.isConnected
         } catch (e: Exception) {
             false
         }
@@ -850,7 +864,7 @@ How can I help you today?"""
         
         val userMsg = ChatMessage(text = rawText, isUser = true)
         aiChatMessages = aiChatMessages + userMsg
-            updateActiveSession()
+        updateActiveSession()
         
         val normalized = rawText
             .replace('০', '0').replace('১', '1').replace('২', '2').replace('৩', '3')
@@ -865,63 +879,88 @@ How can I help you today?"""
         isAiLoading = true
         
         viewModelScope.launch {
-            var replyText = ""
-            var actType: String? = null
-            var actLabel: String? = null
-            var actData: String? = null
-            var usedOnlineModel = false
-            
-            if (isNetworkAvailable() && com.example.BuildConfig.GEMINI_API_KEY.isNotBlank() && com.example.BuildConfig.GEMINI_API_KEY != "MY_GEMINI_API_KEY") {
-                val systemInstruction = if (isBn) {
-                    "You are a helpful and intelligent AI assistant. You can answer any questions, including general knowledge, math, science, and everyday queries. Answer in Bengali cleanly and naturally. Keep it friendly and concise. Do not use markdown other than bold text. Suggest mathematical or unit conversions when appropriate."
-                } else {
-                    "You are a helpful and intelligent AI assistant. You can answer any questions, including general knowledge, math, science, and everyday queries. Answer in English cleanly and naturally. Keep it friendly and concise. Do not use markdown other than bold text. Suggest mathematical or unit conversions when appropriate."
-                }
+            try {
+                var replyText = ""
+                var actType: String? = null
+                var actLabel: String? = null
+                var actData: String? = null
+                var usedOnlineModel = false
                 
-                // Prepare history
-                val contents = mutableListOf<GeminiContent>()
-                aiChatMessages.takeLast(10).forEach { msg ->
-                    // Skip the first welcome message
-                    if (msg.text.contains("Hello! I am your AI Assistant") || msg.text.contains("হ্যালো! আমি আপনার অফলাইন এআই সহকারী")) return@forEach
+                if (isNetworkAvailable() && com.example.BuildConfig.GEMINI_API_KEY.isNotBlank() && com.example.BuildConfig.GEMINI_API_KEY != "MY_GEMINI_API_KEY") {
+                    val systemInstruction = if (isBn) {
+                        "You are a helpful and intelligent AI assistant. You can answer any questions, including general knowledge, math, science, and everyday queries. Answer in Bengali cleanly and naturally. Keep it friendly and concise. Do not use markdown other than bold text. Suggest mathematical or unit conversions when appropriate."
+                    } else {
+                        "You are a helpful and intelligent AI assistant. You can answer any questions, including general knowledge, math, science, and everyday queries. Answer in English cleanly and naturally. Keep it friendly and concise. Do not use markdown other than bold text. Suggest mathematical or unit conversions when appropriate."
+                    }
                     
-                    val role = if (msg.isUser) "user" else "model"
-                    contents.add(GeminiContent(parts = listOf(GeminiPart(text = msg.text)), role = role))
-                }
-                contents.add(GeminiContent(parts = listOf(GeminiPart(text = rawText)), role = "user"))
-                
-                val onlineReply = callGeminiApi(contents, systemInstruction)
-                if (onlineReply != null) {
-                    replyText = onlineReply
-                    usedOnlineModel = true
+                    // Prepare history
+                    val contents = mutableListOf<GeminiContent>()
+                    aiChatMessages.takeLast(10).forEach { msg ->
+                        // Skip the first welcome message
+                        if (msg.text.contains("Hello! I am your AI Assistant") || msg.text.contains("হ্যালো! আমি আপনার অফলাইন এআই সহকারী")) return@forEach
+                        
+                        val role = if (msg.isUser) "user" else "model"
+                        contents.add(GeminiContent(parts = listOf(GeminiPart(text = msg.text)), role = role))
+                    }
+                    contents.add(GeminiContent(parts = listOf(GeminiPart(text = rawText)), role = "user"))
                     
-                    val detectedAction = detectLocalAction(normalized, isBn)
-                    if (detectedAction != null) {
-                        actType = detectedAction.actionType
-                        actLabel = detectedAction.actionLabel
-                        actData = detectedAction.actionData
+                    try {
+                        val onlineReply = callGeminiApi(contents, systemInstruction)
+                        if (onlineReply != null) {
+                            replyText = onlineReply
+                            usedOnlineModel = true
+                            
+                            val detectedAction = detectLocalAction(normalized, isBn)
+                            if (detectedAction != null) {
+                                actType = detectedAction.actionType
+                                actLabel = detectedAction.actionLabel
+                                actData = detectedAction.actionData
+                            }
+                        }
+                    } catch (netEx: Exception) {
+                        netEx.printStackTrace()
                     }
                 }
-            }
-            
-            if (!usedOnlineModel) {
+                
+                if (!usedOnlineModel) {
+                    val offlineResult = runOfflineModel(normalized, isBn)
+                    replyText = offlineResult.replyText
+                    actType = offlineResult.actionType
+                    actLabel = offlineResult.actionLabel
+                    actData = offlineResult.actionData
+                }
+                
+                val aiReply = ChatMessage(
+                    text = replyText,
+                    isUser = false,
+                    actionType = actType,
+                    actionLabel = actLabel,
+                    actionData = actData
+                )
+                
+                aiChatMessages = aiChatMessages + aiReply
+                updateActiveSession()
+            } catch (e: Exception) {
+                e.printStackTrace()
+                val errReason = e.localizedMessage ?: e.javaClass.simpleName
+                val replyText = if (isBn) {
+                    "⚠️ দুঃখিত, একটি ত্রুটি ঘটেছে ($errReason)। তবে অফলাইন মোডে উত্তর দেওয়া হচ্ছে..."
+                } else {
+                    "⚠️ Sorry, an error occurred ($errReason). Falling back to offline mode..."
+                }
                 val offlineResult = runOfflineModel(normalized, isBn)
-                replyText = offlineResult.replyText
-                actType = offlineResult.actionType
-                actLabel = offlineResult.actionLabel
-                actData = offlineResult.actionData
+                val aiReply = ChatMessage(
+                    text = "$replyText\n\n${offlineResult.replyText}",
+                    isUser = false,
+                    actionType = offlineResult.actionType,
+                    actionLabel = offlineResult.actionLabel,
+                    actionData = offlineResult.actionData
+                )
+                aiChatMessages = aiChatMessages + aiReply
+                updateActiveSession()
+            } finally {
+                isAiLoading = false
             }
-            
-            val aiReply = ChatMessage(
-                text = replyText,
-                isUser = false,
-                actionType = actType,
-                actionLabel = actLabel,
-                actionData = actData
-            )
-            
-            aiChatMessages = aiChatMessages + aiReply
-            updateActiveSession()
-            isAiLoading = false
         }
     }
     
