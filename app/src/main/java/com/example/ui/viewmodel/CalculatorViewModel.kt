@@ -41,8 +41,8 @@ class CalculatorViewModel(
 
     private val chatPrefs = context.getSharedPreferences("ai_chat_prefs", Context.MODE_PRIVATE)
     private val moshi = try {
-        com.squareup.moshi.Moshi.Builder().add(com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory()).build()
-    } catch (e: Exception) {
+        com.squareup.moshi.Moshi.Builder().build()
+    } catch (e: Throwable) {
         e.printStackTrace()
         com.squareup.moshi.Moshi.Builder().build()
     }
@@ -2088,6 +2088,7 @@ class CalculatorViewModelFactory(
     }
 }
 
+@JsonClass(generateAdapter = true)
 data class ChatMessage(
     val id: String = java.util.UUID.randomUUID().toString(),
     val text: String,
@@ -2098,6 +2099,7 @@ data class ChatMessage(
     val actionData: String? = null
 )
 
+@JsonClass(generateAdapter = true)
 data class ChatSession(
     val id: String = java.util.UUID.randomUUID().toString(),
     val title: String,

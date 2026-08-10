@@ -473,15 +473,17 @@ fun MainContent(
                     modifier = Modifier
                         .offset(y = (-8).dp)
                         .size(57.dp)
-                        .shadow(elevation = 8.dp, shape = androidx.compose.foundation.shape.CircleShape)
+                        .shadow(elevation = 4.dp, shape = androidx.compose.foundation.shape.CircleShape)
                         .background(themeColors.navBarBg, androidx.compose.foundation.shape.CircleShape)
                         .padding(2.5.dp)
                         .clip(androidx.compose.foundation.shape.CircleShape)
                         .background(themeColors.cardBg)
                         .clickable {
                             try {
-                                viewModel.showAiChat = true
-                            } catch (e: Exception) {
+                                if (!viewModel.showAiChat) {
+                                    viewModel.showAiChat = true
+                                }
+                            } catch (e: Throwable) {
                                 e.printStackTrace()
                                 viewModel.reportError("AI Chat FAB error: ${e.localizedMessage ?: e.javaClass.simpleName}")
                             }
@@ -860,20 +862,17 @@ fun MainContent(
     }
 
     // --- Offline AI Chat Overlay ---
-    AnimatedVisibility(
-        visible = viewModel.showAiChat,
-        enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-        exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
-        modifier = Modifier.fillMaxSize()
-    ) {
-        androidx.activity.compose.BackHandler(enabled = viewModel.showAiChat) {
-            viewModel.showAiChat = false
+    if (viewModel.showAiChat) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            androidx.activity.compose.BackHandler(enabled = viewModel.showAiChat) {
+                viewModel.showAiChat = false
+            }
+            AiChatDialog(
+                viewModel = viewModel,
+                themeColors = themeColors,
+                onDismiss = { viewModel.showAiChat = false }
+            )
         }
-        AiChatDialog(
-            viewModel = viewModel,
-            themeColors = themeColors,
-            onDismiss = { viewModel.showAiChat = false }
-        )
     }
 
     if (viewModel.showErrorDialog) {
@@ -929,8 +928,12 @@ fun AiChatDialog(
     
     // Auto scroll to bottom when a new message is received
     LaunchedEffect(viewModel.aiChatMessages.size) {
-        if (viewModel.aiChatMessages.isNotEmpty()) {
-            lazyListState.animateScrollToItem(viewModel.aiChatMessages.size - 1)
+        try {
+            if (viewModel.aiChatMessages.isNotEmpty()) {
+                lazyListState.animateScrollToItem(viewModel.aiChatMessages.size - 1)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
     

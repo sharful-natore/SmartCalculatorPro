@@ -12,10 +12,25 @@
 #   public *;
 #}
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Keep everything in our package to avoid R8 stripping needed classes
+-keep class com.example.** { *; }
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Moshi
+-keep class com.squareup.moshi.** { *; }
+-keep interface com.squareup.moshi.** { *; }
+-keepclassmembers class * {
+    @com.squareup.moshi.Json *;
+}
+
+# Retrofit
+-keep class retrofit2.** { *; }
+-keepattributes Signature, InnerClasses, EnclosingMethod
+-keepattributes RuntimeVisibleAnnotations, RuntimeVisibleParameterAnnotations
+-keepattributes AnnotationDefault
+-keep interface com.example.ui.viewmodel.GeminiApiService { *; }
+
+# Project Data Classes for Moshi
+-keep @com.squareup.moshi.JsonClass class *
+-keepclassmembers class * {
+    @com.squareup.moshi.Json *;
+}

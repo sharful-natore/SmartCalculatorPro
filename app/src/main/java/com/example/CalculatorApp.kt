@@ -20,8 +20,8 @@ class CalculatorApp : Application() {
                     .putString("last_error", throwable.localizedMessage ?: throwable.javaClass.simpleName)
                     .putString("last_stacktrace", stackTrace)
                     .putLong("error_time", System.currentTimeMillis())
-                    .apply()
-                Log.e("CalculatorApp", "Uncaught exception caught: $stackTrace", throwable)
+                    .commit() // Use commit() for crash saving
+                Log.e("CalculatorApp", "Uncaught exception saved to prefs")
             } catch (e: Exception) {
                 e.printStackTrace()
             }
