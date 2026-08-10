@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -78,6 +79,7 @@ fun GlobalSearchDialog(
             modifier = Modifier.fillMaxSize(),
             color = themeColors.background
         ) {
+            val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
             val language = viewModel.selectedLanguage
             var searchQuery by remember { mutableStateOf("") }
             val historyItems by viewModel.historyList.collectAsState()
@@ -172,6 +174,7 @@ fun GlobalSearchDialog(
                         ),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
                         shape = RoundedCornerShape(24.dp),
                         trailingIcon = {
                             if (searchQuery.isNotEmpty()) {

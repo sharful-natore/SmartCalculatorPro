@@ -383,10 +383,16 @@ fun BasicScientificScreen(
 
                 val exprHiddenCount = remember(exprScrollState.value, exprLayoutResult, viewModel.expression) {
                     val layout = exprLayoutResult ?: return@remember 0
+                    // Safety check: Ensure layout text matches expression to avoid out of bounds access with stale layout
+                    if (layout.layoutInput.text.text != viewModel.expression) return@remember 0
+                    
                     var count = 0
                     for (i in 0 until viewModel.expression.length) {
-                        if (layout.getHorizontalPosition(i + 1, true) < exprScrollState.value) {
-                            count++
+                        val offset = i + 1
+                        if (offset <= layout.layoutInput.text.length) {
+                            if (layout.getHorizontalPosition(offset, true) < exprScrollState.value) {
+                                count++
+                            }
                         }
                     }
                     count
@@ -394,10 +400,15 @@ fun BasicScientificScreen(
 
                 val resultHiddenCount = remember(resultScrollState.value, resultLayoutResult, viewModel.result, resultViewportWidth) {
                     val layout = resultLayoutResult ?: return@remember 0
+                    // Safety check: Ensure layout text matches result
+                    if (layout.layoutInput.text.text != viewModel.result) return@remember 0
+                    
                     var count = 0
                     for (i in 0 until viewModel.result.length) {
-                        if (layout.getHorizontalPosition(i, true) > resultScrollState.value + resultViewportWidth) {
-                            count++
+                        if (i < layout.layoutInput.text.length) {
+                            if (layout.getHorizontalPosition(i, true) > resultScrollState.value + resultViewportWidth) {
+                                count++
+                            }
                         }
                     }
                     count
@@ -455,7 +466,10 @@ fun BasicScientificScreen(
                         fontSize = exprSize.sp,
                         fontFamily = FontFamily.Monospace,
                         fontWeight = FontWeight.Medium,
-                        modifier = Modifier.fillMaxWidth().graphicsLayer(alpha = 0f),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = (exprSize * 0.4f).dp)
+                            .graphicsLayer(alpha = 0f),
                         onTextLayout = { exprLayoutResult = it }
                     )
 
@@ -553,7 +567,12 @@ fun BasicScientificScreen(
                     )
 
                     // Expression Badge (Left)
-                    Box(modifier = Modifier.matchParentSize(), contentAlignment = Alignment.CenterStart) {
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .padding(top = (exprSize * 0.4f).dp),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
                         PillBadge(
                             count = exprHiddenCount,
                             themeColors = themeColors,
@@ -581,39 +600,43 @@ fun BasicScientificScreen(
                 Spacer(modifier = Modifier.height((10f - (6f * expansionFraction)).dp))
 
                 // Calculated Result string (Click to copy)
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .onGloballyPositioned { resultViewportWidth = it.size.width }
-                        .horizontalScroll(resultScrollState),
-                    contentAlignment = Alignment.CenterStart
-                ) {
-                    Text(
-                        text = viewModel.result,
-                        color = resultColor,
-                        fontSize = resultSize.sp,
-                        fontFamily = FontFamily.Monospace,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.End,
-                        maxLines = 1,
-                        onTextLayout = { resultLayoutResult = it },
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    Box(
                         modifier = Modifier
-                            .clickable {
-                                if (viewModel.result.isNotEmpty()) {
-                                    clipboardManager.setText(AnnotatedString(viewModel.result))
+                            .fillMaxWidth()
+                            .onGloballyPositioned { resultViewportWidth = it.size.width }
+                            .horizontalScroll(resultScrollState),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        val density = LocalDensity.current
+                        Text(
+                            text = viewModel.result,
+                            color = resultColor,
+                            fontSize = resultSize.sp,
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.End,
+                            maxLines = 1,
+                            onTextLayout = { resultLayoutResult = it },
+                            modifier = Modifier
+                                .widthIn(min = with(density) { resultViewportWidth.toDp() })
+                                .clickable {
+                                    if (viewModel.result.isNotEmpty()) {
+                                        clipboardManager.setText(AnnotatedString(viewModel.result))
+                                    }
                                 }
-                            }
-                            .testTag("result_display")
-                    )
-                }
+                                .testTag("result_display")
+                        )
+                    }
 
-                // Result Badge (Right)
-                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
-                    PillBadge(
-                        count = resultHiddenCount,
-                        themeColors = themeColors,
-                        modifier = Modifier.padding(end = 4.dp)
-                    )
+                    // Result Badge (Right)
+                    Box(modifier = Modifier.matchParentSize(), contentAlignment = Alignment.CenterEnd) {
+                        PillBadge(
+                            count = resultHiddenCount,
+                            themeColors = themeColors,
+                            modifier = Modifier.padding(end = 4.dp)
+                        )
+                    }
                 }
             }
         }

@@ -1231,6 +1231,8 @@ fun MainContent(
             shape = RoundedCornerShape(16.dp)
         )
     }
+
+    GlobalSearchDialog(viewModel, themeColors)
 }
 }
 }
@@ -1652,8 +1654,6 @@ fun AiChatDialog(
         }
         ChatHistoryDialog(viewModel, themeColors)
 
-        GlobalSearchDialog(viewModel, themeColors)
- 
          // Loading Overlay
         if (isInitiallyLoading) {
             Box(
