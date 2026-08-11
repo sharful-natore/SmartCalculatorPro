@@ -518,43 +518,63 @@ fun MainContent(
                 
                 val rgbColors = remember {
                     listOf(
-                        Color(0xFFFF0000), // Pure Red
+                        Color(0xFFFF0000), // Red
                         Color(0xFFFF7F00), // Orange
                         Color(0xFFFFFF00), // Yellow
-                        Color(0xFF00FF00), // Pure Green
+                        Color(0xFF00FF00), // Green
                         Color(0xFF00FFFF), // Cyan
-                        Color(0xFF0000FF), // Pure Blue
-                        Color(0xFF8B00FF), // Violet
+                        Color(0xFF0000FF), // Blue
                         Color(0xFFFF00FF), // Magenta
-                        Color(0xFFFF0000)  // Loop Red
+                        Color(0xFFFF0000)  // Loop
                     )
                 }
 
-                val rotationAngle by infiniteTransition.animateFloat(
-                    initialValue = 0f,
-                    targetValue = 360f,
+                val duration = 7000
+
+                val color1 by infiniteTransition.animateColor(
+                    initialValue = rgbColors.first(),
+                    targetValue = rgbColors.last(),
                     animationSpec = infiniteRepeatable(
-                        animation = tween(3500, easing = LinearEasing),
+                        animation = keyframes {
+                            durationMillis = duration
+                            rgbColors.forEachIndexed { index, color ->
+                                color at (duration * index / (rgbColors.size - 1)) with LinearEasing
+                            }
+                        },
                         repeatMode = RepeatMode.Restart
-                    ),
-                    label = "rgb_rotation"
+                    ), label = "rgb_color1"
                 )
 
-                val pulseGlow by infiniteTransition.animateFloat(
-                    initialValue = 0.7f,
-                    targetValue = 1.0f,
+                val color2 by infiniteTransition.animateColor(
+                    initialValue = rgbColors[3],
+                    targetValue = rgbColors[3],
                     animationSpec = infiniteRepeatable(
-                        animation = tween(1500, easing = FastOutSlowInEasing),
+                        animation = keyframes {
+                            durationMillis = duration
+                            val shifted = rgbColors.drop(3) + rgbColors.take(3)
+                            shifted.forEachIndexed { index, color ->
+                                color at (duration * index / (shifted.size - 1)) with LinearEasing
+                            }
+                        },
+                        repeatMode = RepeatMode.Restart
+                    ), label = "rgb_color2"
+                )
+
+                val auraScale by infiniteTransition.animateFloat(
+                    initialValue = 0.88f,
+                    targetValue = 1.15f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(1600, easing = FastOutSlowInEasing),
                         repeatMode = RepeatMode.Reverse
                     ),
-                    label = "rgb_pulse"
+                    label = "auraScale"
                 )
 
                 val iconScale by infiniteTransition.animateFloat(
                     initialValue = 0.9f,
                     targetValue = 1.12f,
                     animationSpec = infiniteRepeatable(
-                        animation = tween(1800, easing = LinearOutSlowInEasing),
+                        animation = tween(1600, easing = LinearOutSlowInEasing),
                         repeatMode = RepeatMode.Reverse
                     ),
                     label = "iconScale"
@@ -564,24 +584,24 @@ fun MainContent(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .offset(y = (-20).dp)
-                        .size(72.dp),
+                        .size(80.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    // Outer Blurry RGB Glowing Aura
+                    // Expanded Outer Blurry RGB Ambient Glow
                     Box(
                         modifier = Modifier
-                            .size(72.dp)
+                            .size(78.dp)
                             .graphicsLayer {
-                                rotationZ = rotationAngle
-                                alpha = pulseGlow
+                                scaleX = auraScale
+                                scaleY = auraScale
+                                alpha = 0.85f
                             }
                             .drawBehind {
                                 drawCircle(
                                     brush = Brush.radialGradient(
                                         colors = listOf(
-                                            Color(0xFFFF0000).copy(alpha = 0.6f),
-                                            Color(0xFF00FF00).copy(alpha = 0.4f),
-                                            Color(0xFF0000FF).copy(alpha = 0.3f),
+                                            color1.copy(alpha = 0.8f),
+                                            color2.copy(alpha = 0.5f),
                                             Color.Transparent
                                         )
                                     )
@@ -589,35 +609,31 @@ fun MainContent(
                             }
                     )
 
-                    // FAB Button with Rotating RGB Sweep Gradient
+                    // FAB Button with Animated RGB Gradient (No clock rotation)
                     Box(
                         modifier = Modifier
                             .size(58.dp)
                             .shadow(elevation = 10.dp, shape = CircleShape)
                             .clip(CircleShape)
-                            .graphicsLayer {
-                                rotationZ = rotationAngle
-                            }
                             .drawBehind {
                                 drawRect(
-                                    brush = Brush.sweepGradient(colors = rgbColors)
-                                )
-                            }
-                    )
-
-                    // Inner White/Glass Center with AI Icon
-                    Box(
-                        modifier = Modifier
-                            .size(52.dp)
-                            .clip(CircleShape)
-                            .background(
-                                brush = Brush.radialGradient(
-                                    colors = listOf(
-                                        Color.White.copy(alpha = 0.35f),
-                                        Color.Black.copy(alpha = 0.25f)
+                                    brush = Brush.linearGradient(
+                                        colors = listOf(color1, color2),
+                                        start = Offset(0f, 0f),
+                                        end = Offset(size.width, size.height)
                                     )
                                 )
-                            )
+                                drawCircle(
+                                    brush = Brush.radialGradient(
+                                        colors = listOf(
+                                            Color.White.copy(alpha = 0.35f),
+                                            Color.Transparent
+                                        ),
+                                        center = Offset(size.width / 2f, size.height / 2f),
+                                        radius = size.width / 2f
+                                    )
+                                )
+                            }
                             .clickable(
                                 interactionSource = fabInteractionSource,
                                 indication = ripple(bounded = false, color = Color.White),

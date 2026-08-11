@@ -52,20 +52,26 @@ fun CalculatorButton(
     val isPressed by interactionSource.collectIsPressedAsState()
     var isPressedGuaranteed by remember { mutableStateOf(false) }
 
-    androidx.compose.runtime.LaunchedEffect(isPressed) {
-        if (isPressed) {
-            isPressedGuaranteed = true
-        } else {
-            kotlinx.coroutines.delay(100)
-            isPressedGuaranteed = false
+    androidx.compose.runtime.LaunchedEffect(interactionSource) {
+        interactionSource.interactions.collect { interaction ->
+            when (interaction) {
+                is androidx.compose.foundation.interaction.PressInteraction.Press -> {
+                    isPressedGuaranteed = true
+                }
+                is androidx.compose.foundation.interaction.PressInteraction.Release,
+                is androidx.compose.foundation.interaction.PressInteraction.Cancel -> {
+                    kotlinx.coroutines.delay(120)
+                    isPressedGuaranteed = false
+                }
+            }
         }
     }
     
     if (repeatsOnLongPress) {
-        androidx.compose.runtime.LaunchedEffect(isPressed) {
-            if (isPressed) {
+        androidx.compose.runtime.LaunchedEffect(isPressedGuaranteed || isPressed) {
+            if (isPressedGuaranteed || isPressed) {
                 kotlinx.coroutines.delay(350)
-                while (isPressed) {
+                while (isPressedGuaranteed || isPressed) {
                     onClick()
                     kotlinx.coroutines.delay(60)
                 }
@@ -77,7 +83,7 @@ fun CalculatorButton(
         targetValue = if (isPressedGuaranteed || isPressed) 0.85f else 1.0f,
         animationSpec = spring(
             dampingRatio = androidx.compose.animation.core.Spring.DampingRatioNoBouncy,
-            stiffness = 30000f
+            stiffness = 50000f
         ),
         label = "btn_scale"
     )

@@ -608,12 +608,28 @@ fun BasicScientificScreen(
                         }
                     )
 
-                    // Expression Badge (Left)
+                    // Left Edge Gradient Fade & Expression Badge (Left)
                     if (exprHiddenCount > 0) {
+                        val fadeBg = if (themeColors.background == themeColors.displayBackground) themeColors.cardBg else themeColors.displayBackground
                         Box(
                             modifier = Modifier
                                 .align(Alignment.CenterStart)
-                                .padding(start = 6.dp)
+                                .width(48.dp)
+                                .fillMaxHeight()
+                                .background(
+                                    brush = Brush.horizontalGradient(
+                                        colors = listOf(
+                                            fadeBg.copy(alpha = 0.95f),
+                                            fadeBg.copy(alpha = 0.6f),
+                                            Color.Transparent
+                                        )
+                                    )
+                                )
+                        )
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.CenterStart)
+                                .offset(x = (-4).dp)
                         ) {
                             PillBadge(
                                 count = exprHiddenCount,
@@ -701,12 +717,28 @@ fun BasicScientificScreen(
                         )
                     }
 
-                    // Result Badge (Right)
+                    // Right Edge Gradient Fade & Result Badge (Right)
                     if (resultHiddenCount > 0) {
+                        val fadeBg = if (themeColors.background == themeColors.displayBackground) themeColors.cardBg else themeColors.displayBackground
                         Box(
                             modifier = Modifier
                                 .align(Alignment.CenterEnd)
-                                .padding(end = 6.dp)
+                                .width(48.dp)
+                                .fillMaxHeight()
+                                .background(
+                                    brush = Brush.horizontalGradient(
+                                        colors = listOf(
+                                            Color.Transparent,
+                                            fadeBg.copy(alpha = 0.6f),
+                                            fadeBg.copy(alpha = 0.95f)
+                                        )
+                                    )
+                                )
+                        )
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.CenterEnd)
+                                .offset(x = 4.dp)
                         ) {
                             PillBadge(
                                 count = resultHiddenCount,

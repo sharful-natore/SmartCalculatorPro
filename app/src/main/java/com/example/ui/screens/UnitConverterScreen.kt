@@ -464,8 +464,9 @@ fun ConverterCardItem(
 
             Text(
                 text = converterType.units.take(3).map { converterType.getLocalizedUnitName(it, viewModel.selectedLanguage) }.joinToString(", ") + if (converterType.units.size > 3) "..." else "",
-                fontSize = 10.sp,
-                color = themeColors.displayText.copy(alpha = 0.45f),
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Medium,
+                color = themeColors.displayText.copy(alpha = 0.7f),
                 maxLines = 1
             )
         }
