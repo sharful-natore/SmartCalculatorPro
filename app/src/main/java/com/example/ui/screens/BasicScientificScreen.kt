@@ -599,25 +599,8 @@ fun BasicScientificScreen(
                         }
                     )
 
-                    // Left Edge Gradient Fade & Expression Badge (Left)
+                    // Expression Badge (Left)
                     if (exprHiddenCount > 0) {
-                        val fadeBg = themeColors.displayBackground
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.CenterStart)
-                                .width(40.dp)
-                                .fillMaxHeight()
-                                .background(
-                                    brush = Brush.horizontalGradient(
-                                        colors = listOf(
-                                            fadeBg,
-                                            fadeBg.copy(alpha = 0.8f),
-                                            fadeBg.copy(alpha = 0.3f),
-                                            Color.Transparent
-                                        )
-                                    )
-                                )
-                        )
                         Box(
                             modifier = Modifier
                                 .align(Alignment.CenterStart)
@@ -709,25 +692,8 @@ fun BasicScientificScreen(
                         )
                     }
 
-                    // Left Edge Gradient Fade & Result Badge (Left)
+                    // Result Badge (Left)
                     if (resultLeftHiddenCount > 0) {
-                        val fadeBg = themeColors.displayBackground
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.CenterStart)
-                                .width(40.dp)
-                                .fillMaxHeight()
-                                .background(
-                                    brush = Brush.horizontalGradient(
-                                        colors = listOf(
-                                            fadeBg,
-                                            fadeBg.copy(alpha = 0.8f),
-                                            fadeBg.copy(alpha = 0.3f),
-                                            Color.Transparent
-                                        )
-                                    )
-                                )
-                        )
                         Box(
                             modifier = Modifier
                                 .align(Alignment.CenterStart)
@@ -741,25 +707,8 @@ fun BasicScientificScreen(
                         }
                     }
 
-                    // Right Edge Gradient Fade & Result Badge (Right)
+                    // Result Badge (Right)
                     if (resultRightHiddenCount > 0) {
-                        val fadeBg = themeColors.displayBackground
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.CenterEnd)
-                                .width(40.dp)
-                                .fillMaxHeight()
-                                .background(
-                                    brush = Brush.horizontalGradient(
-                                        colors = listOf(
-                                            Color.Transparent,
-                                            fadeBg.copy(alpha = 0.3f),
-                                            fadeBg.copy(alpha = 0.8f),
-                                            fadeBg
-                                        )
-                                    )
-                                )
-                        )
                         Box(
                             modifier = Modifier
                                 .align(Alignment.CenterEnd)

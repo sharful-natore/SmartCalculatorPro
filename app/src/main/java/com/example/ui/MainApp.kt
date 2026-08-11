@@ -591,17 +591,20 @@ fun MainContent(
                     Box(
                         modifier = Modifier
                             .size(58.dp)
-                            .shadow(elevation = 8.dp, shape = CircleShape)
-                            .border(2.dp, Color.White, CircleShape)
+                            .shadow(
+                                elevation = 6.dp,
+                                shape = CircleShape,
+                                ambientColor = Color.Black.copy(alpha = 0.12f),
+                                spotColor = Color.Black.copy(alpha = 0.18f)
+                            )
                             .clip(CircleShape)
-                            .drawBehind {
-                                drawRect(
-                                    brush = Brush.linearGradient(
-                                        colors = listOf(color1, color2),
-                                        start = Offset(0f, 0f),
-                                        end = Offset(size.width, size.height)
-                                    )
+                            .background(
+                                brush = Brush.linearGradient(
+                                    colors = listOf(color1, color2)
                                 )
+                            )
+                            .border(2.dp, Color.White, CircleShape)
+                            .drawBehind {
                                 drawCircle(
                                     brush = Brush.radialGradient(
                                         colors = listOf(
