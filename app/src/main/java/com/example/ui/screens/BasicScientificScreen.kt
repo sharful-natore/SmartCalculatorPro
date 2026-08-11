@@ -84,16 +84,16 @@ import com.example.ui.viewmodel.CalculatorViewModel
 @Composable
 fun PillBadge(count: Int, themeColors: CalculatorThemeColors, isLeft: Boolean, modifier: Modifier = Modifier) {
     if (count <= 0) return
-    val text = if (isLeft) "${count}+" else "+${count}"
+    val text = if (isLeft) "+${count}" else "${count}+"
     Box(
         modifier = modifier
-            .background(themeColors.buttonEqualBg.copy(alpha = 0.15f), RoundedCornerShape(12.dp))
-            .padding(horizontal = 6.dp, vertical = 2.dp),
+            .background(themeColors.buttonEqualBg, CircleShape)
+            .padding(horizontal = 7.dp, vertical = 2.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = text,
-            color = themeColors.buttonEqualBg,
+            color = Color.White,
             fontSize = 10.sp,
             fontFamily = FontFamily.Monospace,
             fontWeight = FontWeight.Bold
@@ -411,36 +411,27 @@ fun BasicScientificScreen(
                     }
                 }
 
-                val resultHiddenCount = remember(resultScrollState.value, resultScrollState.maxValue, resultLayoutResult, viewModel.result, resultViewportWidth) {
-                    if (viewModel.result.isEmpty()) return@remember 0
-                    if (resultScrollState.maxValue <= 0) return@remember 0
-                    
-                    val viewportRight = resultScrollState.value + resultViewportWidth
-                    val totalWidth = resultScrollState.maxValue + resultViewportWidth
-                    if (viewportRight >= totalWidth - 1) return@remember 0
-                    
-                    val layout = resultLayoutResult
-                    val resLen = viewModel.result.length
-                    
-                    if (layout != null && layout.size.width > resultViewportWidth && resultViewportWidth > 0) {
-                        var count = 0
-                        for (i in 0 until resLen) {
-                            if (layout.getHorizontalPosition(i, true) >= viewportRight - 2f) {
-                                count++
-                            }
-                        }
-                        if (count == 0 && viewportRight < totalWidth) count = 1
-                        count
-                    } else {
-                        val hiddenWidth = totalWidth - viewportRight
-                        val hiddenRatio = hiddenWidth.toFloat() / totalWidth.toFloat()
-                        val count = (resLen * hiddenRatio).toInt()
-                        maxOf(1, count)
+                val resultLeftHiddenCount = remember(resultScrollState.value, resultScrollState.maxValue, viewModel.result, resultViewportWidth) {
+                    if (viewModel.result.isEmpty() || resultScrollState.maxValue <= 0) 0
+                    else if (resultScrollState.value <= 1f) 0
+                    else {
+                        val hiddenRatio = resultScrollState.value.toFloat() / (resultScrollState.maxValue + resultViewportWidth).toFloat()
+                        maxOf(1, (viewModel.result.length * hiddenRatio).toInt())
                     }
                 }
 
-                val exprPadding by animateDpAsState(targetValue = if (exprHiddenCount > 0) 38.dp else 0.dp, label = "exprPadding")
-                val resultPadding by animateDpAsState(targetValue = if (resultHiddenCount > 0) 38.dp else 0.dp, label = "resultPadding")
+                val resultRightHiddenCount = remember(resultScrollState.value, resultScrollState.maxValue, viewModel.result, resultViewportWidth) {
+                    if (viewModel.result.isEmpty() || resultScrollState.maxValue <= 0) 0
+                    else if (resultScrollState.value >= resultScrollState.maxValue - 1f) 0
+                    else {
+                        val hiddenRatio = (resultScrollState.maxValue - resultScrollState.value).toFloat() / (resultScrollState.maxValue + resultViewportWidth).toFloat()
+                        maxOf(1, (viewModel.result.length * hiddenRatio).toInt())
+                    }
+                }
+
+                val exprPadding by animateDpAsState(targetValue = if (exprHiddenCount > 0) 32.dp else 0.dp, label = "exprPadding")
+                val resultLeftPadding by animateDpAsState(targetValue = if (resultLeftHiddenCount > 0) 32.dp else 0.dp, label = "resultLeftPadding")
+                val resultRightPadding by animateDpAsState(targetValue = if (resultRightHiddenCount > 0) 32.dp else 0.dp, label = "resultRightPadding")
 
                 LaunchedEffect(viewModel.expressionValue.text, viewModel.expressionValue.selection, exprScrollState.maxValue) {
                     if (exprScrollState.maxValue > 0) {
@@ -610,17 +601,18 @@ fun BasicScientificScreen(
 
                     // Left Edge Gradient Fade & Expression Badge (Left)
                     if (exprHiddenCount > 0) {
-                        val fadeBg = if (themeColors.background == themeColors.displayBackground) themeColors.cardBg else themeColors.displayBackground
+                        val fadeBg = themeColors.displayBackground
                         Box(
                             modifier = Modifier
                                 .align(Alignment.CenterStart)
-                                .width(48.dp)
+                                .width(40.dp)
                                 .fillMaxHeight()
                                 .background(
                                     brush = Brush.horizontalGradient(
                                         colors = listOf(
-                                            fadeBg.copy(alpha = 0.95f),
-                                            fadeBg.copy(alpha = 0.6f),
+                                            fadeBg,
+                                            fadeBg.copy(alpha = 0.8f),
+                                            fadeBg.copy(alpha = 0.3f),
                                             Color.Transparent
                                         )
                                     )
@@ -629,7 +621,7 @@ fun BasicScientificScreen(
                         Box(
                             modifier = Modifier
                                 .align(Alignment.CenterStart)
-                                .offset(x = (-4).dp)
+                                .padding(start = 2.dp)
                         ) {
                             PillBadge(
                                 count = exprHiddenCount,
@@ -658,7 +650,7 @@ fun BasicScientificScreen(
 
                 Spacer(modifier = Modifier.height((10f - (6f * expansionFraction)).dp))
 
-                    // Calculated Result string (Click to copy)
+                // Calculated Result string (Click to copy)
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -690,7 +682,7 @@ fun BasicScientificScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(end = resultPadding)
+                            .padding(start = resultLeftPadding, end = resultRightPadding)
                             .horizontalScroll(resultScrollState)
                             .onGloballyPositioned { resultViewportWidth = it.size.width },
                         contentAlignment = Alignment.CenterEnd
@@ -717,20 +709,53 @@ fun BasicScientificScreen(
                         )
                     }
 
+                    // Left Edge Gradient Fade & Result Badge (Left)
+                    if (resultLeftHiddenCount > 0) {
+                        val fadeBg = themeColors.displayBackground
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.CenterStart)
+                                .width(40.dp)
+                                .fillMaxHeight()
+                                .background(
+                                    brush = Brush.horizontalGradient(
+                                        colors = listOf(
+                                            fadeBg,
+                                            fadeBg.copy(alpha = 0.8f),
+                                            fadeBg.copy(alpha = 0.3f),
+                                            Color.Transparent
+                                        )
+                                    )
+                                )
+                        )
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.CenterStart)
+                                .padding(start = 2.dp)
+                        ) {
+                            PillBadge(
+                                count = resultLeftHiddenCount,
+                                themeColors = themeColors,
+                                isLeft = true
+                            )
+                        }
+                    }
+
                     // Right Edge Gradient Fade & Result Badge (Right)
-                    if (resultHiddenCount > 0) {
-                        val fadeBg = if (themeColors.background == themeColors.displayBackground) themeColors.cardBg else themeColors.displayBackground
+                    if (resultRightHiddenCount > 0) {
+                        val fadeBg = themeColors.displayBackground
                         Box(
                             modifier = Modifier
                                 .align(Alignment.CenterEnd)
-                                .width(48.dp)
+                                .width(40.dp)
                                 .fillMaxHeight()
                                 .background(
                                     brush = Brush.horizontalGradient(
                                         colors = listOf(
                                             Color.Transparent,
-                                            fadeBg.copy(alpha = 0.6f),
-                                            fadeBg.copy(alpha = 0.95f)
+                                            fadeBg.copy(alpha = 0.3f),
+                                            fadeBg.copy(alpha = 0.8f),
+                                            fadeBg
                                         )
                                     )
                                 )
@@ -738,10 +763,10 @@ fun BasicScientificScreen(
                         Box(
                             modifier = Modifier
                                 .align(Alignment.CenterEnd)
-                                .offset(x = 4.dp)
+                                .padding(end = 2.dp)
                         ) {
                             PillBadge(
-                                count = resultHiddenCount,
+                                count = resultRightHiddenCount,
                                 themeColors = themeColors,
                                 isLeft = false
                             )

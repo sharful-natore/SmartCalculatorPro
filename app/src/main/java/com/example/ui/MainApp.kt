@@ -584,36 +584,15 @@ fun MainContent(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .offset(y = (-20).dp)
-                        .size(80.dp),
+                        .size(64.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    // Expanded Outer Blurry RGB Ambient Glow
-                    Box(
-                        modifier = Modifier
-                            .size(78.dp)
-                            .graphicsLayer {
-                                scaleX = auraScale
-                                scaleY = auraScale
-                                alpha = 0.85f
-                            }
-                            .drawBehind {
-                                drawCircle(
-                                    brush = Brush.radialGradient(
-                                        colors = listOf(
-                                            color1.copy(alpha = 0.8f),
-                                            color2.copy(alpha = 0.5f),
-                                            Color.Transparent
-                                        )
-                                    )
-                                )
-                            }
-                    )
-
-                    // FAB Button with Animated RGB Gradient (No clock rotation)
+                    // FAB Button with Animated RGB Gradient and White Border
                     Box(
                         modifier = Modifier
                             .size(58.dp)
-                            .shadow(elevation = 10.dp, shape = CircleShape)
+                            .shadow(elevation = 8.dp, shape = CircleShape)
+                            .border(2.dp, Color.White, CircleShape)
                             .clip(CircleShape)
                             .drawBehind {
                                 drawRect(
