@@ -511,69 +511,50 @@ fun MainContent(
                     }
                 }
                 
-                // Floating Action Button in the center
+                // Floating Action Button in the center with Professional Blurry RGB Glow
                 val fabInteractionSource = remember { MutableInteractionSource() }
                 
-                val infiniteTransition = rememberInfiniteTransition(label = "ai_gradient")
+                val infiniteTransition = rememberInfiniteTransition(label = "rgb_glowing_fab")
                 
-                val glowingColors1 = remember {
+                val rgbColors = remember {
                     listOf(
-                        Color(0xFFFF0000), // Red
+                        Color(0xFFFF0000), // Pure Red
+                        Color(0xFFFF7F00), // Orange
                         Color(0xFFFFFF00), // Yellow
-                        Color(0xFF00FF00), // Green
+                        Color(0xFF00FF00), // Pure Green
                         Color(0xFF00FFFF), // Cyan
-                        Color(0xFF0000FF), // Blue
+                        Color(0xFF0000FF), // Pure Blue
+                        Color(0xFF8B00FF), // Violet
                         Color(0xFFFF00FF), // Magenta
-                        Color(0xFFFF0000)  // Red (loop)
-                    )
-                }
-                val glowingColors2 = remember {
-                    listOf(
-                        Color(0xFF00FFFF), // Cyan
-                        Color(0xFF0000FF), // Blue
-                        Color(0xFFFF00FF), // Magenta
-                        Color(0xFFFF0000), // Red
-                        Color(0xFFFFFF00), // Yellow
-                        Color(0xFF00FF00), // Green
-                        Color(0xFF00FFFF)  // Cyan (loop)
+                        Color(0xFFFF0000)  // Loop Red
                     )
                 }
 
-                val duration = 12000
+                val rotationAngle by infiniteTransition.animateFloat(
+                    initialValue = 0f,
+                    targetValue = 360f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(3500, easing = LinearEasing),
+                        repeatMode = RepeatMode.Restart
+                    ),
+                    label = "rgb_rotation"
+                )
 
-                val color1 by infiniteTransition.animateColor(
-                    initialValue = glowingColors1.first(),
-                    targetValue = glowingColors1.last(),
+                val pulseGlow by infiniteTransition.animateFloat(
+                    initialValue = 0.7f,
+                    targetValue = 1.0f,
                     animationSpec = infiniteRepeatable(
-                        animation = keyframes {
-                            durationMillis = duration
-                            glowingColors1.forEachIndexed { index, color ->
-                                color at (duration * index / (glowingColors1.size - 1)) with LinearEasing
-                            }
-                        },
-                        repeatMode = RepeatMode.Restart
-                    ), label = "color1"
+                        animation = tween(1500, easing = FastOutSlowInEasing),
+                        repeatMode = RepeatMode.Reverse
+                    ),
+                    label = "rgb_pulse"
                 )
-                
-                val color2 by infiniteTransition.animateColor(
-                    initialValue = glowingColors2.first(),
-                    targetValue = glowingColors2.last(),
-                    animationSpec = infiniteRepeatable(
-                        animation = keyframes {
-                            durationMillis = duration
-                            glowingColors2.forEachIndexed { index, color ->
-                                color at (duration * index / (glowingColors2.size - 1)) with LinearEasing
-                            }
-                        },
-                        repeatMode = RepeatMode.Restart
-                    ), label = "color2"
-                )
-                
+
                 val iconScale by infiniteTransition.animateFloat(
-                    initialValue = 0.85f,
-                    targetValue = 1.15f,
+                    initialValue = 0.9f,
+                    targetValue = 1.12f,
                     animationSpec = infiniteRepeatable(
-                        animation = tween(2000, easing = LinearOutSlowInEasing),
+                        animation = tween(1800, easing = LinearOutSlowInEasing),
                         repeatMode = RepeatMode.Reverse
                     ),
                     label = "iconScale"
@@ -582,55 +563,89 @@ fun MainContent(
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
-                        .offset(y = (-22).dp) // 72 (nav) + 10 (outside) - 60 (fab) = 22 (so 10dp sticks out)
-                        .size(60.dp)
-                        .shadow(elevation = 6.dp, shape = androidx.compose.foundation.shape.CircleShape)
-                        .background(Color.White, androidx.compose.foundation.shape.CircleShape)
-                        .padding(3.4.dp) // Border thickness reduced by another 5% (from 3.6dp)
-                        .clip(androidx.compose.foundation.shape.CircleShape)
-                        .drawBehind {
-                            drawRect(
-                                brush = Brush.linearGradient(
-                                    colors = listOf(color1, color2),
-                                    start = Offset(0f, 0f),
-                                    end = Offset(size.width, size.height)
-                                ),
-                                size = size
-                            )
-                            // Inner subtle glow/blur overlay to make it look smooth and blurry
-                            drawCircle(
-                                brush = Brush.radialGradient(
-                                    colors = listOf(Color.White.copy(alpha=0.3f), Color.Transparent),
-                                    center = Offset(size.width / 2f, size.height / 2f),
-                                    radius = size.width / 2f
-                                )
-                            )
-                        }
-                        .clickable(
-                            interactionSource = fabInteractionSource,
-                            indication = ripple(bounded = false),
-                            onClick = {
-                                try {
-                                    if (!viewModel.showAiChat) {
-                                        viewModel.showAiChat = true
-                                    }
-                                } catch (e: Throwable) {
-                                    e.printStackTrace()
-                                    viewModel.reportError("AI Chat FAB error: ${e.localizedMessage ?: e.javaClass.simpleName}")
-                                }
-                            }
-                        ),
+                        .offset(y = (-20).dp)
+                        .size(72.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.AutoAwesome,
-                        contentDescription = "AI Assistant",
-                        tint = Color.White,
-                        modifier = Modifier.size(28.dp).graphicsLayer(
-                            scaleX = iconScale,
-                            scaleY = iconScale
-                        )
+                    // Outer Blurry RGB Glowing Aura
+                    Box(
+                        modifier = Modifier
+                            .size(72.dp)
+                            .graphicsLayer {
+                                rotationZ = rotationAngle
+                                alpha = pulseGlow
+                            }
+                            .drawBehind {
+                                drawCircle(
+                                    brush = Brush.radialGradient(
+                                        colors = listOf(
+                                            Color(0xFFFF0000).copy(alpha = 0.6f),
+                                            Color(0xFF00FF00).copy(alpha = 0.4f),
+                                            Color(0xFF0000FF).copy(alpha = 0.3f),
+                                            Color.Transparent
+                                        )
+                                    )
+                                )
+                            }
                     )
+
+                    // FAB Button with Rotating RGB Sweep Gradient
+                    Box(
+                        modifier = Modifier
+                            .size(58.dp)
+                            .shadow(elevation = 10.dp, shape = CircleShape)
+                            .clip(CircleShape)
+                            .graphicsLayer {
+                                rotationZ = rotationAngle
+                            }
+                            .drawBehind {
+                                drawRect(
+                                    brush = Brush.sweepGradient(colors = rgbColors)
+                                )
+                            }
+                    )
+
+                    // Inner White/Glass Center with AI Icon
+                    Box(
+                        modifier = Modifier
+                            .size(52.dp)
+                            .clip(CircleShape)
+                            .background(
+                                brush = Brush.radialGradient(
+                                    colors = listOf(
+                                        Color.White.copy(alpha = 0.35f),
+                                        Color.Black.copy(alpha = 0.25f)
+                                    )
+                                )
+                            )
+                            .clickable(
+                                interactionSource = fabInteractionSource,
+                                indication = ripple(bounded = false, color = Color.White),
+                                onClick = {
+                                    try {
+                                        if (!viewModel.showAiChat) {
+                                            viewModel.showAiChat = true
+                                        }
+                                    } catch (e: Throwable) {
+                                        e.printStackTrace()
+                                        viewModel.reportError("AI Chat FAB error: ${e.localizedMessage ?: e.javaClass.simpleName}")
+                                    }
+                                }
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.AutoAwesome,
+                            contentDescription = "AI Assistant",
+                            tint = Color.White,
+                            modifier = Modifier
+                                .size(28.dp)
+                                .graphicsLayer(
+                                    scaleX = iconScale,
+                                    scaleY = iconScale
+                                )
+                        )
+                    }
                 }
             }
         },

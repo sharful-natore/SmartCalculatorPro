@@ -1,5 +1,11 @@
 package com.example.ui.screens
 
+import android.content.Intent
+import android.speech.RecognizerIntent
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.animation.*
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
@@ -36,6 +42,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.util.AppLanguage
 import com.example.data.model.ToolCategory
 import com.example.data.model.ToolType
 import com.example.ui.theme.CalculatorThemeColors
@@ -142,6 +149,29 @@ fun ToolsCategoriesView(
     val searchQuery = viewModel.toolSearchQuery.lowercase().trim()
     val selectedFilter = viewModel.selectedToolCategoryFilter
 
+    val context = LocalContext.current
+    val speechLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            val spokenText = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()
+            if (!spokenText.isNullOrBlank()) {
+                viewModel.toolSearchQuery = spokenText
+            }
+        }
+    }
+    fun startVoiceSearch() {
+        try {
+            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                putExtra(RecognizerIntent.EXTRA_PROMPT, if (viewModel.selectedLanguage == AppLanguage.BENGALI) "কথা বলুন..." else "Speak now...")
+            }
+            speechLauncher.launch(intent)
+        } catch (e: Exception) {
+            Toast.makeText(context, "Voice search unavailable", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     val filteredTools = allTools.filter { tool ->
         val matchesCategory = selectedFilter == null || tool.category == selectedFilter
         val matchesSearch = searchQuery.isEmpty() ||
@@ -179,12 +209,21 @@ fun ToolsCategoriesView(
                 )
             },
             trailingIcon = {
-                if (viewModel.toolSearchQuery.isNotEmpty()) {
-                    IconButton(onClick = { viewModel.toolSearchQuery = "" }) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (viewModel.toolSearchQuery.isNotEmpty()) {
+                        IconButton(onClick = { viewModel.toolSearchQuery = "" }) {
+                            Icon(
+                                imageVector = Icons.Default.Clear,
+                                contentDescription = "Clear search",
+                                tint = themeColors.displayText.copy(alpha = 0.6f)
+                            )
+                        }
+                    }
+                    IconButton(onClick = { startVoiceSearch() }) {
                         Icon(
-                            imageVector = Icons.Default.Clear,
-                            contentDescription = "Clear search",
-                            tint = themeColors.displayText.copy(alpha = 0.6f)
+                            imageVector = Icons.Default.Mic,
+                            contentDescription = "Voice Input",
+                            tint = themeColors.buttonEqualBg
                         )
                     }
                 }

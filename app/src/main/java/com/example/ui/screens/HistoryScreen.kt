@@ -1,5 +1,10 @@
 package com.example.ui.screens
 
+import android.content.Intent
+import android.speech.RecognizerIntent
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -81,6 +86,30 @@ fun HistoryScreen(
     var isSearchActive by remember { mutableStateOf(false) }
     var isAscending by remember { mutableStateOf(false) }
     var showSortMenu by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+    val historySpeechLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            val spokenText = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()
+            if (!spokenText.isNullOrBlank()) {
+                searchQuery = spokenText
+                isSearchActive = true
+            }
+        }
+    }
+    fun startHistoryVoiceSearch() {
+        try {
+            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                putExtra(RecognizerIntent.EXTRA_PROMPT, if (isBn) "কথা বলুন..." else "Speak now...")
+            }
+            historySpeechLauncher.launch(intent)
+        } catch (e: Exception) {
+            Toast.makeText(context, "Voice search unavailable", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     val scrollState = rememberScrollState()
     val coroutineScope = rememberCoroutineScope()
@@ -193,14 +222,18 @@ fun HistoryScreen(
                         cursorColor = themeColors.buttonEqualBg
                     ),
                     trailingIcon = {
-                        IconButton(onClick = { 
+                        Row(verticalAlignment = Alignment.CenterVertically) {
                             if (searchQuery.isNotEmpty()) {
-                                searchQuery = ""
-                            } else {
-                                isSearchActive = false 
+                                IconButton(onClick = { searchQuery = "" }) {
+                                    Icon(Icons.Default.Close, contentDescription = "Clear Search", modifier = Modifier.size(20.dp))
+                                }
                             }
-                        }) {
-                            Icon(Icons.Default.Close, contentDescription = "Close Search", modifier = Modifier.size(20.dp))
+                            IconButton(onClick = { startHistoryVoiceSearch() }) {
+                                Icon(Icons.Default.Mic, contentDescription = "Voice Search", tint = themeColors.buttonEqualBg, modifier = Modifier.size(20.dp))
+                            }
+                            IconButton(onClick = { isSearchActive = false }) {
+                                Icon(Icons.Default.Close, contentDescription = "Close Search", modifier = Modifier.size(20.dp))
+                            }
                         }
                     }
                 )

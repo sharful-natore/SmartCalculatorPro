@@ -1,5 +1,11 @@
 package com.example.ui.screens
 
+import android.content.Intent
+import android.speech.RecognizerIntent
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.animation.*
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
@@ -41,6 +47,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.util.AppLanguage
 import com.example.data.model.ConverterCategory
 import com.example.data.model.ConverterType
 import com.example.ui.theme.CalculatorThemeColors
@@ -148,6 +155,29 @@ fun ConverterCategoriesView(
     val searchQuery = viewModel.converterSearchQuery.lowercase().trim()
     val selectedFilter = viewModel.selectedCategoryFilter
 
+    val context = LocalContext.current
+    val speechLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            val spokenText = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()
+            if (!spokenText.isNullOrBlank()) {
+                viewModel.converterSearchQuery = spokenText
+            }
+        }
+    }
+    fun startVoiceSearch() {
+        try {
+            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                putExtra(RecognizerIntent.EXTRA_PROMPT, if (viewModel.selectedLanguage == AppLanguage.BENGALI) "কথা বলুন..." else "Speak now...")
+            }
+            speechLauncher.launch(intent)
+        } catch (e: Exception) {
+            Toast.makeText(context, "Voice search unavailable", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     val filteredConverters = allConverters.filter { converter ->
         val matchesCategory = selectedFilter == null || converter.category == selectedFilter
         val matchesSearch = searchQuery.isEmpty() ||
@@ -185,12 +215,21 @@ fun ConverterCategoriesView(
                 )
             },
             trailingIcon = {
-                if (viewModel.converterSearchQuery.isNotEmpty()) {
-                    IconButton(onClick = { viewModel.converterSearchQuery = "" }) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (viewModel.converterSearchQuery.isNotEmpty()) {
+                        IconButton(onClick = { viewModel.converterSearchQuery = "" }) {
+                            Icon(
+                                imageVector = Icons.Default.Clear,
+                                contentDescription = "Clear search",
+                                tint = themeColors.displayText.copy(alpha = 0.6f)
+                            )
+                        }
+                    }
+                    IconButton(onClick = { startVoiceSearch() }) {
                         Icon(
-                            imageVector = Icons.Default.Clear,
-                            contentDescription = "Clear search",
-                            tint = themeColors.displayText.copy(alpha = 0.6f)
+                            imageVector = Icons.Default.Mic,
+                            contentDescription = "Voice Input",
+                            tint = themeColors.buttonEqualBg
                         )
                     }
                 }
@@ -424,7 +463,7 @@ fun ConverterCardItem(
             Spacer(modifier = Modifier.height(6.dp))
 
             Text(
-                text = converterType.units.take(3).joinToString(", ") + if (converterType.units.size > 3) "..." else "",
+                text = converterType.units.take(3).map { converterType.getLocalizedUnitName(it, viewModel.selectedLanguage) }.joinToString(", ") + if (converterType.units.size > 3) "..." else "",
                 fontSize = 10.sp,
                 color = themeColors.displayText.copy(alpha = 0.45f),
                 maxLines = 1
@@ -676,7 +715,7 @@ fun ConverterDetailView(
                                 .testTag("from_unit_dropdown")
                         ) {
                             Text(
-                                text = viewModel.fromUnit,
+                                text = converterType.getLocalizedUnitName(viewModel.fromUnit, viewModel.selectedLanguage),
                                 color = themeColors.buttonNormalText,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 13.sp
@@ -695,7 +734,7 @@ fun ConverterDetailView(
                         ) {
                             availableUnits.forEach { unit ->
                                 DropdownMenuItem(
-                                    text = { Text(text = unit, color = themeColors.displayText) },
+                                    text = { Text(text = converterType.getLocalizedUnitName(unit, viewModel.selectedLanguage), color = themeColors.displayText) },
                                     onClick = {
                                         viewModel.fromUnit = unit
                                         viewModel.calculateConverter()
@@ -807,7 +846,7 @@ fun ConverterDetailView(
                                 .testTag("to_unit_dropdown")
                         ) {
                             Text(
-                                text = viewModel.toUnit,
+                                text = converterType.getLocalizedUnitName(viewModel.toUnit, viewModel.selectedLanguage),
                                 color = themeColors.buttonNormalText,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 13.sp
@@ -826,7 +865,7 @@ fun ConverterDetailView(
                         ) {
                             availableUnits.forEach { unit ->
                                 DropdownMenuItem(
-                                    text = { Text(text = unit, color = themeColors.displayText) },
+                                    text = { Text(text = converterType.getLocalizedUnitName(unit, viewModel.selectedLanguage), color = themeColors.displayText) },
                                     onClick = {
                                         viewModel.toUnit = unit
                                         viewModel.calculateConverter()
@@ -890,7 +929,7 @@ fun ConverterDetailView(
                     color = themeColors.displayText
                 )
                 Text(
-                    text = "1 ${viewModel.fromUnit} =",
+                    text = "1 ${converterType.getLocalizedUnitName(viewModel.fromUnit, viewModel.selectedLanguage)} =",
                     fontSize = 12.sp,
                     color = themeColors.buttonEqualBg,
                     fontWeight = FontWeight.Medium,
@@ -919,7 +958,7 @@ fun ConverterDetailView(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = targetUnit,
+                            text = converterType.getLocalizedUnitName(targetUnit, viewModel.selectedLanguage),
                             fontSize = 13.sp,
                             color = themeColors.displayText.copy(alpha = 0.8f)
                         )

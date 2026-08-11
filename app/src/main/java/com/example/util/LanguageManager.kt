@@ -110,8 +110,8 @@ object LanguageManager {
                 AppLanguage.CHINESE -> "历史"
             }
             "search_tools" -> when (language) {
-                AppLanguage.ENGLISH -> "Search tools... (e.g. BMI, EMI, Bill, Age)"
-                AppLanguage.BENGALI -> "টুল খুঁজুন... (যেমন: BMI, EMI, বিদ্যুৎ বিল, বয়স)"
+                AppLanguage.ENGLISH -> "Search tools..."
+                AppLanguage.BENGALI -> "টুলস খুঁজুন..."
                 AppLanguage.HINDI -> "उपकरण खोजें... (जैसे BMI, EMI, बिल, आयु)"
                 AppLanguage.ARABIC -> "بحث عن أدوات... (مثل BMI, EMI, الفاتورة, العمر)"
                 AppLanguage.FRENCH -> "Rechercher des outils... (ex: IMC, EMI, Facture, Âge)"
@@ -120,8 +120,8 @@ object LanguageManager {
                 AppLanguage.CHINESE -> "搜索工具... (如 BMI, 房贷, 电费, 年龄)"
             }
             "search_converter" -> when (language) {
-                AppLanguage.ENGLISH -> "Search converters... (e.g. Length, Currency, Mass)"
-                AppLanguage.BENGALI -> "কনভার্টার খুঁজুন... (যেমন: Length, Currency, বিঘা)"
+                AppLanguage.ENGLISH -> "Search converters..."
+                AppLanguage.BENGALI -> "কনভার্টার খুঁজুন..."
                 AppLanguage.HINDI -> "कनवर्टर खोजें... (जैसे लंबाई, मुद्रा, द्रव्यमान)"
                 AppLanguage.ARABIC -> "بحث عن محولات... (مثل الطول, العملة, الكتلة)"
                 AppLanguage.FRENCH -> "Rechercher des convertisseurs... (ex: Longueur, Devise)"
@@ -1490,6 +1490,10 @@ object LanguageManager {
             "settings_precision_desc" -> when (language) {
                 AppLanguage.BENGALI -> "গণনায় দেখানোর জন্য দশমিক স্থান নির্ধারণ করুন"
                 else -> "Set decimal places to display in calculations"
+            }
+            "zakat_calc_title" -> when (language) {
+                AppLanguage.BENGALI -> "যাকাত ক্যালকুলেটর"
+                else -> "Zakat Calculator"
             }
             else -> key
         }

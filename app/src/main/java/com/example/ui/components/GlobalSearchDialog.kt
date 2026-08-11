@@ -1,5 +1,11 @@
 package com.example.ui.components
 
+import android.content.Intent
+import android.speech.RecognizerIntent
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -77,7 +83,7 @@ fun ConverterType.matchesConverterQuery(query: String): Boolean {
     if (q.isEmpty()) return false
     if (titleEn.lowercase().contains(q) || titleBn.lowercase().contains(q)) return true
     
-    if (units.any { it.lowercase().contains(q) }) return true
+    if (units.any { it.lowercase().contains(q) || q.contains(it.lowercase()) }) return true
 
     val extraKeywords = when (this) {
         ConverterType.LENGTH -> listOf("মিটার", "কিলোমিটার", "কিমি", "ফুট", "ইঞ্চি", "সেন্টিমিটার", "সেমি", "গজ", "মাইল", "meter", "kilometre", "kilometer", "feet", "foot", "inch", "cm", "yard", "mile")
@@ -111,7 +117,48 @@ fun ConverterType.matchesConverterQuery(query: String): Boolean {
         ConverterType.TIME_ZONE -> listOf("টাইম জোন", "সময়", "উটিসি", "বিএসটি", "utc", "bst", "ist", "gmt", "est", "pst")
     }
 
-    return extraKeywords.any { it.contains(q) }
+    return extraKeywords.any { it.contains(q) || q.contains(it) }
+}
+
+fun ToolType.matchesToolQuery(query: String, language: AppLanguage): Boolean {
+    val q = query.lowercase().trim()
+    if (q.isEmpty()) return false
+    if (titleEn.lowercase().contains(q) || titleBn.lowercase().contains(q)) return true
+    if (getDescription(language).lowercase().contains(q) || descriptionBn.lowercase().contains(q)) return true
+
+    val extraKeywords = when (this) {
+        ToolType.AGE -> listOf("বয়স", "বয়স", "জন্মদিন", "মাস", "দিন", "age", "birthday")
+        ToolType.BMI -> listOf("বিএমআই", "ওজন", "উচ্চতা", "bmi", "weight", "height")
+        ToolType.BMR -> listOf("ক্যালরি", "ক্যালোরি", "bmr", "calorie")
+        ToolType.IDEAL_WEIGHT -> listOf("আদর্শ ওজন", "ওজন", "ideal weight")
+        ToolType.WATER_INTAKE -> listOf("পানি", "জল", "water")
+        ToolType.PREGNANCY_DUE -> listOf("গর্ভধারণ", "ডিউ ডেট", "pregnancy")
+        ToolType.BLOOD_DONATION -> listOf("রক্ত", "রক্তদান", "blood", "donor")
+        ToolType.EMI_LOAN -> listOf("ঋণ", "লোন", "ইএমআই", "সুদ", "kist", "emi", "loan")
+        ToolType.DISCOUNT -> listOf("ছাড়", "ছাড়", "ডিসকাউন্ট", "অফার", "discount")
+        ToolType.PROFIT_LOSS -> listOf("লাভ", "ক্ষতি", "profit", "loss")
+        ToolType.VAT_TAX -> listOf("ভ্যাট", "ট্যাক্স", "কর", "vat", "tax", "gst")
+        ToolType.INTEREST -> listOf("সুদ", "মুনাফা", "interest")
+        ToolType.ZAKAT -> listOf("যাকাত", "যাকাতুল", "নিসাব", "zakat")
+        ToolType.SAVINGS_TARGET -> listOf("সঞ্চয়", "সেভিংস", "savings")
+        ToolType.DATE_DIFF -> listOf("তারিখ", "ব্যবধান", "date")
+        ToolType.PERCENTAGE -> listOf("শতকরা", "পার্সেন্ট", "পার্সেন্টেজ", "percentage", "percent")
+        ToolType.TIP -> listOf("টিপ", "বিল", "tip")
+        ToolType.TEXT_COUNTER -> listOf("শব্দ", "অক্ষর", "word", "character")
+        ToolType.PASSWORD_GENERATOR -> listOf("পাসওয়ার্ড", "পাসওয়ার্ড", "পিন", "password", "pin")
+        ToolType.ELECTRICITY_BILL -> listOf("বিদ্যুৎ", "কারেন্ট", "বিল", "ইউনিট", "bill", "electricity")
+        ToolType.APPLIANCE_COST -> listOf("সরঞ্জাম", "খরচ", "appliance")
+        ToolType.BATTERY_BACKUP -> listOf("ব্যাটারি", "আইপিএস", "battery", "ips")
+        ToolType.RESISTOR_CODE -> listOf("রেজিস্টর", "ওহম", "কালার কোড", "resistor", "color code")
+        ToolType.FUEL_COST -> listOf("তেল", "জ্বালানি", "অকটেন", "পেট্রোল", "ডিজেল", "গ্যাস", "fuel", "petrol", "octane", "diesel")
+        ToolType.SPEED_DISTANCE_TIME -> listOf("গতি", "দূরত্ব", "সময়", "স্পিড", "speed", "distance")
+        ToolType.GPA, ToolType.CGPA -> listOf("জিপিএ", "সিজিপিএ", "গ্রেড", "পয়েন্ট", "পয়েন্ট", "gpa", "cgpa", "result")
+        ToolType.TUITION_FEES -> listOf("টিউশন", "ফি", "tuition", "fee")
+        ToolType.COLOR_CONVERTER -> listOf("কালার", "রং", "রঙ", "হেক্স", "আরজিবি", "color", "hex", "rgb", "hsl")
+        else -> emptyList()
+    }
+
+    return extraKeywords.any { it.contains(q) || q.contains(it) }
 }
 
 @Composable
@@ -162,6 +209,29 @@ fun GlobalSearchDialog(
                 var searchQuery by remember { mutableStateOf("") }
                 val historyItems by viewModel.historyList.collectAsState()
 
+                val context = LocalContext.current
+                val globalSpeechLauncher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.StartActivityForResult()
+                ) { result ->
+                    if (result.resultCode == android.app.Activity.RESULT_OK) {
+                        val spokenText = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()
+                        if (!spokenText.isNullOrBlank()) {
+                            searchQuery = spokenText
+                        }
+                    }
+                }
+                fun startGlobalVoiceSearch() {
+                    try {
+                        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                            putExtra(RecognizerIntent.EXTRA_PROMPT, if (language == AppLanguage.BENGALI) "কথা বলুন..." else "Speak now...")
+                        }
+                        globalSpeechLauncher.launch(intent)
+                    } catch (e: Exception) {
+                        Toast.makeText(context, "Voice search unavailable", Toast.LENGTH_SHORT).show()
+                    }
+                }
+
                 val searchResults = remember(searchQuery, historyItems) {
                     if (searchQuery.isBlank()) emptyList<SearchResult>()
                     else {
@@ -188,10 +258,7 @@ fun GlobalSearchDialog(
 
                         // Search Tools
                         com.example.data.model.ToolType.values().forEach { type ->
-                            if (type.titleEn.contains(query, ignoreCase = true) || 
-                                type.titleBn.contains(query, ignoreCase = true) ||
-                                type.getDescription(language).contains(query, ignoreCase = true) ||
-                                type.descriptionBn.contains(query, ignoreCase = true)) {
+                            if (type.matchesToolQuery(query, language)) {
                                 results.add(SearchResult.Tool(type, language) {
                                     viewModel.selectedToolCategoryFilter = null
                                     viewModel.selectedToolType = type
@@ -280,7 +347,10 @@ fun GlobalSearchDialog(
                             .padding(horizontal = 16.dp),
                         contentAlignment = Alignment.CenterStart
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
                             Icon(
                                 imageVector = Icons.Default.Search,
                                 contentDescription = null,
@@ -292,7 +362,7 @@ fun GlobalSearchDialog(
                             BasicTextField(
                                 value = searchQuery,
                                 onValueChange = { searchQuery = it },
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier.weight(1f),
                                 textStyle = TextStyle(
                                     fontSize = 16.sp,
                                     color = themeColors.displayText,
@@ -313,6 +383,32 @@ fun GlobalSearchDialog(
                                     innerTextField()
                                 }
                             )
+
+                            if (searchQuery.isNotEmpty()) {
+                                IconButton(
+                                    onClick = { searchQuery = "" },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Clear",
+                                        tint = themeColors.displayText.copy(alpha = 0.6f),
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+
+                            IconButton(
+                                onClick = { startGlobalVoiceSearch() },
+                                modifier = Modifier.size(36.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Mic,
+                                    contentDescription = "Voice Search",
+                                    tint = themeColors.buttonEqualBg,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
                         }
                     }
 

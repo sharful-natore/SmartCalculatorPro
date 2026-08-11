@@ -41,7 +41,7 @@ enum class ConverterType(
     ),
     WEIGHT(
         "Weight & Mass", "ওজন", ConverterCategory.COMMON, Icons.Default.FitnessCenter,
-        listOf("Kilogram", "Gram", "Pound", "Ounce", "Ton", "Milligram")
+        listOf("Kilogram", "Gram", "Pound", "Ounce", "Ton", "Milligram", "Vori", "Anna", "Ratti")
     ),
     AREA(
         "Area", "ক্ষেত্রফল", ConverterCategory.COMMON, Icons.Default.AspectRatio,
@@ -202,6 +202,78 @@ enum class ConverterType(
         }
     }
 
+    fun getLocalizedUnitName(unit: String, language: AppLanguage): String {
+        if (language != AppLanguage.BENGALI) {
+            return when (unit) {
+                "শতাংশ/শতক" -> "Percent / Shatangsho"
+                "কাঠা" -> "Katha"
+                "বিঘা" -> "Bigha"
+                else -> unit
+            }
+        }
+        return when (unit) {
+            "Meter" -> "মিটার"
+            "Kilometer" -> "কিলোমিটার"
+            "Feet" -> "ফুট"
+            "Inch" -> "ইঞ্চি"
+            "Centimeter" -> "সেন্টিমিটার"
+            "Yard" -> "গজ"
+            "Mile" -> "মাইল"
+
+            "Kilogram" -> "কিলোগ্রাম (কেজি)"
+            "Gram" -> "গ্রাম"
+            "Pound" -> "পাউন্ড"
+            "Ounce" -> "আউন্স"
+            "Ton" -> "টন"
+            "Milligram" -> "মিলিগ্রাম"
+            "Vori" -> "ভরি"
+            "Anna" -> "আনা"
+            "Ratti" -> "রতি"
+
+            "Square Feet" -> "বর্গফুট"
+            "Square Meter" -> "বর্গমিটার"
+            "Acre" -> "একর"
+            "Hectare" -> "হেক্টর"
+            "শতাংশ/শতক" -> "শতাংশ/শতক"
+            "কাঠা" -> "কাঠা"
+            "বিঘা" -> "বিঘা"
+
+            "Celsius (°C)" -> "সেলসিয়াস (°C)"
+            "Fahrenheit (°F)" -> "ফারেনহাইট (°F)"
+            "Kelvin (K)" -> "কেলভিন (K)"
+
+            "Liter" -> "লিটার"
+            "Milliliter" -> "মিলিলিটার"
+            "Gallon" -> "গ্যালন"
+            "Cubic Meter" -> "ঘনমিটার"
+
+            "Second" -> "সেকেন্ড"
+            "Minute" -> "মিনিট"
+            "Hour" -> "ঘণ্টা"
+            "Day" -> "দিন"
+            "Week" -> "সপ্তাহ"
+            "Month" -> "মাস"
+            "Year" -> "বছর"
+
+            "Km/h" -> "কিমি/ঘণ্টা"
+            "Mph" -> "মাইল/ঘণ্টা"
+            "m/s" -> "মিটার/সেকেন্ড"
+            "Knot" -> "নট"
+
+            "USD - US Dollar" -> "USD - মার্কিন ডলার"
+            "BDT - Bangladeshi Taka" -> "BDT - বাংলাদেশী টাকা"
+            "EUR - Euro" -> "EUR - ইউরো"
+            "GBP - British Pound" -> "GBP - পাউন্ড"
+            "INR - Indian Rupee" -> "INR - ভারতীয় রুপি"
+            "SAR - Saudi Riyal" -> "SAR - সৌদি রিয়াল"
+            "AED - UAE Dirham" -> "AED - ইউএই দিরহাম"
+            "MYR - Malaysian Ringgit" -> "MYR - মালয়েশিয়ান রিঙ্গিত"
+            "SGD - Singapore Dollar" -> "SGD - সিঙ্গাপুর ডলার"
+
+            else -> unit
+        }
+    }
+
     fun convert(from: String, to: String, value: Double, customRates: Map<String, Double>? = null): Double {
         if (from == to) return value
         return when (this) {
@@ -229,21 +301,27 @@ enum class ConverterType(
             }
             WEIGHT -> {
                 val inGrams = when (from) {
-                    "Kilogram" -> value * 1000.0
-                    "Gram" -> value
-                    "Pound" -> value * 453.59237
-                    "Ounce" -> value * 28.349523125
-                    "Ton" -> value * 1000000.0
-                    "Milligram" -> value * 0.001
+                    "Kilogram", "কিলোগ্রাম (কেজি)" -> value * 1000.0
+                    "Gram", "গ্রাম" -> value
+                    "Pound", "পাউন্ড" -> value * 453.59237
+                    "Ounce", "আউন্স" -> value * 28.349523125
+                    "Ton", "টন" -> value * 1000000.0
+                    "Milligram", "মিলিগ্রাম" -> value * 0.001
+                    "Vori", "ভরি" -> value * 11.664
+                    "Anna", "আনা" -> value * (11.664 / 16.0)
+                    "Ratti", "রতি" -> value * (11.664 / 96.0)
                     else -> value
                 }
                 when (to) {
-                    "Kilogram" -> inGrams / 1000.0
-                    "Gram" -> inGrams
-                    "Pound" -> inGrams / 453.59237
-                    "Ounce" -> inGrams / 28.349523125
-                    "Ton" -> inGrams / 1000000.0
-                    "Milligram" -> inGrams / 0.001
+                    "Kilogram", "কিলোগ্রাম (কেজি)" -> inGrams / 1000.0
+                    "Gram", "গ্রাম" -> inGrams
+                    "Pound", "পাউন্ড" -> inGrams / 453.59237
+                    "Ounce", "আউন্স" -> inGrams / 28.349523125
+                    "Ton", "টন" -> inGrams / 1000000.0
+                    "Milligram", "মিলিগ্রাম" -> inGrams / 0.001
+                    "Vori", "ভরি" -> inGrams / 11.664
+                    "Anna", "আনা" -> inGrams / (11.664 / 16.0)
+                    "Ratti", "রতি" -> inGrams / (11.664 / 96.0)
                     else -> inGrams
                 }
             }

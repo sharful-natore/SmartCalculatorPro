@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import com.example.ui.theme.CalculatorThemeColors
 import com.example.ui.viewmodel.CalculatorViewModel
 import com.example.util.LanguageManager
+import com.example.util.AppLanguage
 import com.example.ui.components.CustomOutlinedTextField
 import java.text.DecimalFormat
 import java.text.SimpleDateFormat
@@ -41,23 +42,48 @@ fun ZakatCalculatorCard(
     themeColors: CalculatorThemeColors
 ) {
     val lang = viewModel.selectedLanguage
-    var goldAmount by remember { mutableStateOf("") }
-    var silverAmount by remember { mutableStateOf("") }
+    val isBn = lang == AppLanguage.BENGALI
+
+    var selectedGoldUnit by remember { mutableStateOf(if (isBn) "ভরি" else "Vori") }
+    var selectedRateUnit by remember { mutableStateOf(if (isBn) "প্রতি ভরি" else "Per Vori") }
+
+    var goldAmount by remember { mutableStateOf("1") } // Default 1 Vori
     var cashAmount by remember { mutableStateOf("") }
     var investmentAmount by remember { mutableStateOf("") }
     var debtsAmount by remember { mutableStateOf("") }
-    var goldPrice by remember { mutableStateOf("7000") } // Per gram (example)
+    var goldPrice by remember { mutableStateOf("125000") } // Per Vori default in BDT (~125,000 BDT)
+
+    val goldUnits = if (isBn) listOf("ভরি", "গ্রাম", "আনা", "রতি") else listOf("Vori", "Gram", "Anna", "Ratti")
+    val rateUnits = if (isBn) listOf("প্রতি ভরি", "প্রতি গ্রাম") else listOf("Per Vori", "Per Gram")
 
     val goldVal = goldAmount.toDoubleOrNull() ?: 0.0
-    val silverVal = silverAmount.toDoubleOrNull() ?: 0.0
     val cashVal = cashAmount.toDoubleOrNull() ?: 0.0
     val investVal = investmentAmount.toDoubleOrNull() ?: 0.0
     val debtVal = debtsAmount.toDoubleOrNull() ?: 0.0
     val priceVal = goldPrice.toDoubleOrNull() ?: 0.0
 
-    val totalAssets = (goldVal * priceVal) + cashVal + investVal
+    // Calculate price per gram
+    val pricePerGram = if (selectedRateUnit == "প্রতি ভরি" || selectedRateUnit == "Per Vori") {
+        priceVal / 11.664
+    } else {
+        priceVal
+    }
+
+    // Convert gold amount to grams
+    val goldGrams = when (selectedGoldUnit) {
+        "ভরি", "Vori" -> goldVal * 11.664
+        "গ্রাম", "Gram" -> goldVal
+        "আনা", "Anna" -> goldVal * (11.664 / 16.0)
+        "রতি", "Ratti" -> goldVal * (11.664 / 96.0)
+        else -> goldVal
+    }
+
+    val goldValue = goldGrams * pricePerGram
+    val totalAssets = goldValue + cashVal + investVal
     val netWealth = totalAssets - debtVal
-    val zakatPayable = if (netWealth >= (87.48 * priceVal)) netWealth * 0.025 else 0.0
+    val nisabThreshold = 87.48 * pricePerGram // 7.5 Vori = 87.48 Grams
+    val isNisabReached = netWealth >= nisabThreshold
+    val zakatPayable = if (isNisabReached) netWealth * 0.025 else 0.0
 
     val df = DecimalFormat("#,##0.##")
 
@@ -75,28 +101,107 @@ fun ZakatCalculatorCard(
         )
         Spacer(modifier = Modifier.height(12.dp))
 
-        CustomOutlinedTextField(
-            value = goldPrice,
-            onValueChange = { goldPrice = it },
-            label = "স্বর্ণের বাজারমূল্য (প্রতি গ্রাম)",
-            themeColors = themeColors,
-            modifier = Modifier.fillMaxWidth()
+        // Gold Rate Unit & Input
+        Text(
+            text = if (isBn) "সোনার বাজারমূল্য" else "Gold Market Price",
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = themeColors.displayText.copy(alpha = 0.8f)
         )
+        Spacer(modifier = Modifier.height(4.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            CustomOutlinedTextField(
+                value = goldPrice,
+                onValueChange = { goldPrice = it },
+                label = if (isBn) "মূল্য" else "Price",
+                themeColors = themeColors,
+                modifier = Modifier.weight(1.2f)
+            )
+            // Rate Unit Selector
+            Row(modifier = Modifier.weight(1.8f), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                rateUnits.forEach { unit ->
+                    val selected = selectedRateUnit == unit
+                    FilterChip(
+                        selected = selected,
+                        onClick = { selectedRateUnit = unit },
+                        label = { Text(unit, fontSize = 11.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = themeColors.buttonEqualBg,
+                            selectedLabelColor = Color.White,
+                            containerColor = themeColors.background,
+                            labelColor = themeColors.displayText
+                        ),
+                        modifier = Modifier.height(36.dp)
+                    )
+                }
+            }
+        }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        // Gold Quantity & Unit Selection
+        Text(
+            text = if (isBn) "সোনার পরিমাণ ও একক" else "Gold Quantity & Unit",
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = themeColors.displayText.copy(alpha = 0.8f)
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             CustomOutlinedTextField(
                 value = goldAmount,
                 onValueChange = { goldAmount = it },
-                label = "স্বর্ণ (গ্রাম)",
+                label = if (isBn) "পরিমাণ ($selectedGoldUnit)" else "Amount ($selectedGoldUnit)",
+                themeColors = themeColors,
+                modifier = Modifier.weight(1f)
+            )
+        }
+        Spacer(modifier = Modifier.height(6.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            goldUnits.forEach { unit ->
+                val selected = selectedGoldUnit == unit
+                FilterChip(
+                    selected = selected,
+                    onClick = { selectedGoldUnit = unit },
+                    label = { Text(unit, fontSize = 11.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal) },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = themeColors.buttonEqualBg,
+                        selectedLabelColor = Color.White,
+                        containerColor = themeColors.background,
+                        labelColor = themeColors.displayText
+                    ),
+                    modifier = Modifier.height(32.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Other Financial Fields
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            CustomOutlinedTextField(
+                value = cashAmount,
+                onValueChange = { cashAmount = it },
+                label = if (isBn) "নগদ টাকা" else "Cash & Savings",
                 themeColors = themeColors,
                 modifier = Modifier.weight(1f)
             )
             CustomOutlinedTextField(
-                value = cashAmount,
-                onValueChange = { cashAmount = it },
-                label = "নগদ টাকা",
+                value = investmentAmount,
+                onValueChange = { investmentAmount = it },
+                label = if (isBn) "বিনিয়োগ / শেয়ার" else "Investments",
                 themeColors = themeColors,
                 modifier = Modifier.weight(1f)
             )
@@ -104,22 +209,13 @@ fun ZakatCalculatorCard(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            CustomOutlinedTextField(
-                value = investmentAmount,
-                onValueChange = { investmentAmount = it },
-                label = "বিনিয়োগ/শেয়ার",
-                themeColors = themeColors,
-                modifier = Modifier.weight(1f)
-            )
-            CustomOutlinedTextField(
-                value = debtsAmount,
-                onValueChange = { debtsAmount = it },
-                label = "ঋণ/দেনা",
-                themeColors = themeColors,
-                modifier = Modifier.weight(1f)
-            )
-        }
+        CustomOutlinedTextField(
+            value = debtsAmount,
+            onValueChange = { debtsAmount = it },
+            label = if (isBn) "ঋণ / দেনা" else "Debts & Liabilities",
+            themeColors = themeColors,
+            modifier = Modifier.fillMaxWidth()
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -133,16 +229,36 @@ fun ZakatCalculatorCard(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("মোট যাকাতযোগ্য সম্পদ:", fontSize = 13.sp, color = themeColors.displayText)
-                    Text("৳ ${df.format(netWealth.coerceAtLeast(0.0))}", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                    Text(
+                        text = if (isBn) "মোট যাকাতযোগ্য সম্পদ:" else "Total Zakatably Wealth:",
+                        fontSize = 13.sp,
+                        color = themeColors.displayText
+                    )
+                    Text(
+                        text = "${if (isBn) "৳ " else "$ "}${df.format(netWealth.coerceAtLeast(0.0))}",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.displayText
+                    )
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("প্রদেয় যাকাত (২.৫%):", fontSize = 13.sp, color = themeColors.displayText)
-                    Text("৳ ${df.format(zakatPayable)}", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = themeColors.buttonEqualBg)
+                    Text(
+                        text = if (isBn) "প্রদেয় যাকাত (২.৫%):" else "Payable Zakat (2.5%):",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.displayText
+                    )
+                    Text(
+                        text = "${if (isBn) "৳ " else "$ "}${df.format(zakatPayable)}",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.buttonEqualBg
+                    )
                 }
             }
         }

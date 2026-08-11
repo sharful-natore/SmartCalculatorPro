@@ -385,36 +385,58 @@ fun BasicScientificScreen(
                 var exprLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
                 var resultLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
 
-                val exprHiddenCount = remember(exprScrollState.value, exprLayoutResult, viewModel.expression, exprViewportWidth) {
-                    val layout = exprLayoutResult ?: return@remember 0
-                    if (exprViewportWidth <= 0) return@remember 0
-                    if (layout.size.width <= exprViewportWidth + 2f) return@remember 0
+                val exprHiddenCount = remember(exprScrollState.value, exprScrollState.maxValue, exprLayoutResult, viewModel.expression, exprViewportWidth) {
+                    if (viewModel.expression.isEmpty()) return@remember 0
+                    if (exprScrollState.value <= 1) return@remember 0
                     
-                    var count = 0
-                    for (i in 0 until viewModel.expression.length) {
-                        if (layout.getHorizontalPosition(i + 1, true) < exprScrollState.value + 1f) {
-                            count++
+                    val layout = exprLayoutResult
+                    val exprLen = viewModel.expression.length
+                    
+                    if (layout != null && layout.size.width > exprViewportWidth && exprViewportWidth > 0) {
+                        var count = 0
+                        for (i in 0 until exprLen) {
+                            if (layout.getHorizontalPosition(i + 1, true) <= exprScrollState.value + 2f) {
+                                count++
+                            }
                         }
+                        if (count == 0 && exprScrollState.value > 1f) count = 1
+                        count
+                    } else if (exprScrollState.maxValue > 0) {
+                        val totalWidth = exprScrollState.maxValue + exprViewportWidth
+                        val hiddenRatio = exprScrollState.value.toFloat() / totalWidth.toFloat()
+                        val count = (exprLen * hiddenRatio).toInt()
+                        maxOf(1, count)
+                    } else {
+                        0
                     }
-                    if (count == 0 && exprScrollState.value > 1f) count = 1
-                    count
                 }
 
-                val resultHiddenCount = remember(resultScrollState.value, resultLayoutResult, viewModel.result, resultViewportWidth) {
-                    val layout = resultLayoutResult ?: return@remember 0
-                    if (resultViewportWidth <= 0) return@remember 0
-                    val textWidth = layout.size.width
-                    if (textWidth <= resultViewportWidth + 2f) return@remember 0
+                val resultHiddenCount = remember(resultScrollState.value, resultScrollState.maxValue, resultLayoutResult, viewModel.result, resultViewportWidth) {
+                    if (viewModel.result.isEmpty()) return@remember 0
+                    if (resultScrollState.maxValue <= 0) return@remember 0
                     
                     val viewportRight = resultScrollState.value + resultViewportWidth
-                    var count = 0
-                    for (i in 0 until viewModel.result.length) {
-                        if (layout.getHorizontalPosition(i, true) > viewportRight - 1f) {
-                            count++
+                    val totalWidth = resultScrollState.maxValue + resultViewportWidth
+                    if (viewportRight >= totalWidth - 1) return@remember 0
+                    
+                    val layout = resultLayoutResult
+                    val resLen = viewModel.result.length
+                    
+                    if (layout != null && layout.size.width > resultViewportWidth && resultViewportWidth > 0) {
+                        var count = 0
+                        for (i in 0 until resLen) {
+                            if (layout.getHorizontalPosition(i, true) >= viewportRight - 2f) {
+                                count++
+                            }
                         }
+                        if (count == 0 && viewportRight < totalWidth) count = 1
+                        count
+                    } else {
+                        val hiddenWidth = totalWidth - viewportRight
+                        val hiddenRatio = hiddenWidth.toFloat() / totalWidth.toFloat()
+                        val count = (resLen * hiddenRatio).toInt()
+                        maxOf(1, count)
                     }
-                    if (count == 0 && textWidth > resultViewportWidth + 2f && resultScrollState.value < resultScrollState.maxValue) count = 1
-                    count
                 }
 
                 val exprPadding by animateDpAsState(targetValue = if (exprHiddenCount > 0) 38.dp else 0.dp, label = "exprPadding")
@@ -478,7 +500,12 @@ fun BasicScientificScreen(
                             platformStyle = PlatformTextStyle(includeFontPadding = false)
                         ),
                         modifier = Modifier
-                            .wrapContentWidth(unbounded = true)
+                            .layout { measurable, constraints ->
+                                val placeable = measurable.measure(constraints.copy(maxWidth = androidx.compose.ui.unit.Constraints.Infinity))
+                                layout(placeable.width, placeable.height) {
+                                    placeable.placeRelative(0, 0)
+                                }
+                            }
                             .graphicsLayer(alpha = 0f),
                         onTextLayout = { exprLayoutResult = it },
                         maxLines = 1,
@@ -533,7 +560,7 @@ fun BasicScientificScreen(
                                     // Handle cursor at the very beginning
                                     Box(
                                         modifier = Modifier
-                                            .width(2.dp)
+                                            .width(if (selectionStart == 0) 2.dp else 0.dp)
                                             .height((exprSize * 1.1f).dp)
                                             .background(if (selectionStart == 0 && cursorVisible) themeColors.displayText else Color.Transparent)
                                     )
@@ -558,7 +585,6 @@ fun BasicScientificScreen(
                                                 ),
                                                 modifier = Modifier
                                                     .offset(y = offsetVal)
-                                                    .padding(horizontal = 0.5.dp)
                                             )
                                         }
 
@@ -569,7 +595,7 @@ fun BasicScientificScreen(
                                         
                                         Box(
                                             modifier = Modifier
-                                                .width(2.dp)
+                                                .width(if (isCursorAtThisPos) 2.dp else 0.dp)
                                                 .height(cursorHeight)
                                                 .offset(y = cursorOffset)
                                                 .background(if (isCursorAtThisPos && cursorVisible) themeColors.displayText else Color.Transparent)
@@ -633,7 +659,12 @@ fun BasicScientificScreen(
                             platformStyle = PlatformTextStyle(includeFontPadding = false)
                         ),
                         modifier = Modifier
-                            .wrapContentWidth(unbounded = true)
+                            .layout { measurable, constraints ->
+                                val placeable = measurable.measure(constraints.copy(maxWidth = androidx.compose.ui.unit.Constraints.Infinity))
+                                layout(placeable.width, placeable.height) {
+                                    placeable.placeRelative(0, 0)
+                                }
+                            }
                             .graphicsLayer(alpha = 0f),
                         onTextLayout = { resultLayoutResult = it },
                         maxLines = 1,
