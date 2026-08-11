@@ -1860,7 +1860,6 @@ How can I help you today?"""
             return
         }
         try {
-            // Check if there are unclosed parentheses and temporarily close them for preview
             var tempExpr = expression
             val openCount = tempExpr.count { it == '(' }
             val closeCount = tempExpr.count { it == ')' }
@@ -1868,13 +1867,21 @@ How can I help you today?"""
                 tempExpr += ")".repeat(openCount - closeCount)
             }
 
+            // Simple integer precision preservation: if it's just a long digit string, don't use evaluator
+            if (tempExpr.all { it.isDigit() } && tempExpr.length > 15) {
+                result = tempExpr
+                return
+            }
+
             val evalResult = ExpressionEvaluator.evaluate(tempExpr, isDegreeMode)
             if (!evalResult.isInfinite() && !evalResult.isNaN()) {
                 val df = DecimalFormat("#.########")
                 result = df.format(evalResult)
+            } else {
+                result = ""
             }
         } catch (e: Exception) {
-            // Silently keep previous or clear preview if invalid
+            result = ""
         }
     }
 
@@ -1886,6 +1893,14 @@ How can I help you today?"""
             val closeCount = finalExpr.count { it == ')' }
             if (openCount > closeCount) {
                 finalExpr += ")".repeat(openCount - closeCount)
+            }
+
+            // Integer precision preservation
+            if (finalExpr.all { it.isDigit() } && finalExpr.length > 15) {
+                result = finalExpr
+                isEvaluated = true
+                saveToHistory(expression, finalExpr)
+                return
             }
 
             val evalResult = ExpressionEvaluator.evaluate(finalExpr, isDegreeMode)
@@ -1903,19 +1918,22 @@ How can I help you today?"""
             result = formatted
             isEvaluated = true
 
-            // Save to database
-            viewModelScope.launch {
-                repository.insertHistory(
-                    HistoryEntry(
-                        expression = expression,
-                        result = formatted,
-                        type = "Calculator"
-                    )
-                )
-            }
+            saveToHistory(expression, formatted)
         } catch (e: Exception) {
             result = "Error"
             isEvaluated = true
+        }
+    }
+
+    private fun saveToHistory(expr: String, res: String) {
+        viewModelScope.launch {
+            repository.insertHistory(
+                HistoryEntry(
+                    expression = expr,
+                    result = res,
+                    type = "Calculator"
+                )
+            )
         }
     }
 
