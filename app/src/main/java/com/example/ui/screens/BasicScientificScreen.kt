@@ -1,5 +1,7 @@
 package com.example.ui.screens
 
+import androidx.compose.ui.unit.TextUnit
+
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -82,21 +84,30 @@ import com.example.ui.theme.CalculatorThemeColors
 import com.example.ui.viewmodel.CalculatorViewModel
 
 @Composable
-fun PillBadge(count: Int, themeColors: CalculatorThemeColors, isLeft: Boolean, modifier: Modifier = Modifier) {
+fun PillBadge(
+    count: Int,
+    themeColors: CalculatorThemeColors,
+    isLeft: Boolean,
+    modifier: Modifier = Modifier,
+    fontSize: TextUnit = 9.sp
+) {
     if (count <= 0) return
     val text = if (isLeft) "${count}+" else "+${count}"
     Box(
         modifier = modifier
             .background(themeColors.buttonEqualBg, CircleShape)
-            .padding(horizontal = 7.dp, vertical = 2.dp),
+            .padding(horizontal = 4.5.dp, vertical = 1.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = text,
             color = Color.White,
-            fontSize = 10.sp,
+            fontSize = fontSize,
             fontFamily = FontFamily.Monospace,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            style = TextStyle(
+                platformStyle = PlatformTextStyle(includeFontPadding = false)
+            )
         )
     }
 }
@@ -421,10 +432,10 @@ fun BasicScientificScreen(
                     }
                 }
 
-                val exprLeftPadding by animateDpAsState(targetValue = if (exprLeftHiddenCount > 0) 32.dp else 0.dp, label = "exprLeftPadding")
-                val exprRightPadding by animateDpAsState(targetValue = if (exprRightHiddenCount > 0) 32.dp else 0.dp, label = "exprRightPadding")
-                val resultLeftPadding by animateDpAsState(targetValue = if (resultLeftHiddenCount > 0) 32.dp else 0.dp, label = "resultLeftPadding")
-                val resultRightPadding by animateDpAsState(targetValue = if (resultRightHiddenCount > 0) 32.dp else 0.dp, label = "resultRightPadding")
+                val exprLeftPadding by animateDpAsState(targetValue = if (exprLeftHiddenCount > 0) 26.dp else 0.dp, label = "exprLeftPadding")
+                val exprRightPadding by animateDpAsState(targetValue = if (exprRightHiddenCount > 0) 26.dp else 0.dp, label = "exprRightPadding")
+                val resultLeftPadding by animateDpAsState(targetValue = if (resultLeftHiddenCount > 0) 26.dp else 0.dp, label = "resultLeftPadding")
+                val resultRightPadding by animateDpAsState(targetValue = if (resultRightHiddenCount > 0) 26.dp else 0.dp, label = "resultRightPadding")
 
                 LaunchedEffect(viewModel.expressionValue.text, viewModel.expressionValue.selection, exprScrollState.maxValue) {
                     if (exprScrollState.maxValue > 0) {
@@ -602,7 +613,8 @@ fun BasicScientificScreen(
                             PillBadge(
                                 count = exprLeftHiddenCount,
                                 themeColors = themeColors,
-                                isLeft = true
+                                isLeft = true,
+                                fontSize = (exprSize * 0.32f).coerceIn(8f, 10f).sp
                             )
                         }
                     }
@@ -617,7 +629,8 @@ fun BasicScientificScreen(
                             PillBadge(
                                 count = exprRightHiddenCount,
                                 themeColors = themeColors,
-                                isLeft = false
+                                isLeft = false,
+                                fontSize = (exprSize * 0.32f).coerceIn(8f, 10f).sp
                             )
                         }
                     }
@@ -710,7 +723,8 @@ fun BasicScientificScreen(
                             PillBadge(
                                 count = resultLeftHiddenCount,
                                 themeColors = themeColors,
-                                isLeft = true
+                                isLeft = true,
+                                fontSize = (resultSize * 0.32f).coerceIn(8f, 10f).sp
                             )
                         }
                     }
@@ -725,7 +739,8 @@ fun BasicScientificScreen(
                             PillBadge(
                                 count = resultRightHiddenCount,
                                 themeColors = themeColors,
-                                isLeft = false
+                                isLeft = false,
+                                fontSize = (resultSize * 0.32f).coerceIn(8f, 10f).sp
                             )
                         }
                     }
