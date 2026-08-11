@@ -184,6 +184,14 @@ enum class ConverterType(
             "NZD - New Zealand Dollar",
             "ZAR - South African Rand"
         )
+    ),
+    ROMAN_NUMERALS(
+        "Roman Numerals", "রোমান সংখ্যা", ConverterCategory.MISC, Icons.Default.Tag,
+        listOf("Integer", "Roman")
+    ),
+    TIME_ZONE(
+        "Time Zone", "টাইম জোন", ConverterCategory.MISC, Icons.Default.Public,
+        listOf("UTC", "BST (Bangladesh)", "IST (India)", "EST", "PST", "GMT", "CET", "JST")
     );
 
     fun getTitle(language: AppLanguage): String {
@@ -650,6 +658,8 @@ enum class ConverterType(
                 val inUsd = value / rateFrom
                 inUsd * rateTo
             }
+            ROMAN_NUMERALS -> value
+            TIME_ZONE -> value
         }
     }
 }

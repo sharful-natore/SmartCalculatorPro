@@ -554,6 +554,16 @@ fun ConverterDetailView(
             }
         }
 
+        // Special UI for Roman Numerals and Time Zone
+        if (converterType == ConverterType.ROMAN_NUMERALS) {
+            RomanNumeralsCard(viewModel, themeColors)
+            return@Column
+        }
+        if (converterType == ConverterType.TIME_ZONE) {
+            TimeZoneCard(viewModel, themeColors)
+            return@Column
+        }
+
         // Live Exchange Rates Status & Manual Update Banner for Currency
         if (converterType == ConverterType.CURRENCY) {
             ElevatedCard(

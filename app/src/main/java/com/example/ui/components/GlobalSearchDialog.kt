@@ -20,6 +20,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
@@ -108,9 +110,10 @@ fun GlobalSearchDialog(
                     .width(dialogWidth)
                     .height(dialogHeight)
                     .clickable(enabled = false) {},
-                shape = RoundedCornerShape(32.dp),
-                color = Color.White, // As per image design
-                tonalElevation = 8.dp
+                shape = RoundedCornerShape(28.dp),
+                color = themeColors.cardBg,
+                tonalElevation = 6.dp,
+                border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.1f))
             ) {
                 val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
                 val language = viewModel.selectedLanguage
@@ -131,7 +134,7 @@ fun GlobalSearchDialog(
                         }
 
                         // Search Converters
-                        ConverterType.values().forEach { type ->
+                        com.example.data.model.ConverterType.values().forEach { type ->
                             if (type.titleEn.contains(query, ignoreCase = true) || type.titleBn.contains(query, ignoreCase = true)) {
                                 results.add(SearchResult.Converter(type, language) {
                                     viewModel.selectedConverterType = type
@@ -142,7 +145,7 @@ fun GlobalSearchDialog(
                         }
 
                         // Search Tools
-                        ToolType.values().forEach { type ->
+                        com.example.data.model.ToolType.values().forEach { type ->
                             if (type.titleEn.contains(query, ignoreCase = true) || type.titleBn.contains(query, ignoreCase = true)) {
                                 results.add(SearchResult.Tool(type, language) {
                                     viewModel.selectedToolCategoryFilter = null
@@ -189,45 +192,46 @@ fun GlobalSearchDialog(
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = if (language == AppLanguage.BENGALI) "স্মার্ট অনুসন্ধান" else "Smart Search",
-                                fontSize = 28.sp,
+                                fontSize = 24.sp,
                                 fontWeight = FontWeight.ExtraBold,
-                                color = Color(0xFF2D3142),
+                                color = themeColors.displayText,
                                 fontFamily = FontFamily.SansSerif
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = if (language == AppLanguage.BENGALI) "সব তথ্য এক জায়গায় খুঁজুন" else "Find everything in one place",
-                                fontSize = 16.sp,
-                                color = Color.Gray,
+                                fontSize = 14.sp,
+                                color = themeColors.displayText.copy(alpha = 0.6f),
                                 fontFamily = FontFamily.SansSerif
                             )
                         }
                         
                         Box(
                             modifier = Modifier
-                                .size(42.dp)
+                                .size(36.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFFF1F3F9))
+                                .background(themeColors.background)
                                 .clickable { viewModel.showGlobalSearch = false },
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Close,
                                 contentDescription = "Close",
-                                tint = Color(0xFF4A4E69),
-                                modifier = Modifier.size(20.dp)
+                                tint = themeColors.displayText,
+                                modifier = Modifier.size(18.dp)
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
 
                     // Search Input Field
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(80.dp)
-                            .border(2.dp, Color(0xFF7A86E1).copy(alpha = 0.6f), RoundedCornerShape(20.dp))
+                            .height(64.dp)
+                            .background(themeColors.background, RoundedCornerShape(16.dp))
+                            .border(1.5.dp, themeColors.buttonEqualBg.copy(alpha = 0.4f), RoundedCornerShape(16.dp))
                             .padding(horizontal = 16.dp),
                         contentAlignment = Alignment.CenterStart
                     ) {
@@ -235,8 +239,8 @@ fun GlobalSearchDialog(
                             Icon(
                                 imageVector = Icons.Default.Search,
                                 contentDescription = null,
-                                tint = Color(0xFF7A86E1),
-                                modifier = Modifier.size(28.dp)
+                                tint = themeColors.buttonEqualBg,
+                                modifier = Modifier.size(24.dp)
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             
@@ -245,18 +249,19 @@ fun GlobalSearchDialog(
                                 onValueChange = { searchQuery = it },
                                 modifier = Modifier.fillMaxWidth(),
                                 textStyle = TextStyle(
-                                    fontSize = 18.sp,
-                                    color = Color(0xFF2D3142),
+                                    fontSize = 16.sp,
+                                    color = themeColors.displayText,
                                     fontWeight = FontWeight.Medium
                                 ),
+                                cursorBrush = SolidColor(themeColors.buttonEqualBg),
                                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                                 keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
                                 decorationBox = { innerTextField ->
                                     if (searchQuery.isEmpty()) {
                                         Text(
-                                            text = if (language == AppLanguage.BENGALI) "টুল, কনভার্টার বা হিস্ট্রি খুঁজুন..." else "Search tools, converters or history...",
-                                            fontSize = 18.sp,
-                                            color = Color.Gray.copy(alpha = 0.7f),
+                                            text = if (language == AppLanguage.BENGALI) "সার্চ করুন..." else "Search here...",
+                                            fontSize = 16.sp,
+                                            color = themeColors.displayText.copy(alpha = 0.4f),
                                             fontWeight = FontWeight.Medium
                                         )
                                     }
@@ -266,7 +271,7 @@ fun GlobalSearchDialog(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
 
                     // Content Area (Results or Empty State)
                     Box(modifier = Modifier.weight(1f)) {
@@ -277,18 +282,18 @@ fun GlobalSearchDialog(
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.Center
                             ) {
-                                AsyncImage(
-                                    model = R.drawable.ic_search_empty,
+                                Icon(
+                                    imageVector = Icons.Default.Search,
                                     contentDescription = null,
-                                    modifier = Modifier.size(140.dp),
-                                    contentScale = ContentScale.Fit
+                                    modifier = Modifier.size(100.dp).graphicsLayer(alpha = 0.15f),
+                                    tint = themeColors.displayText
                                 )
                                 Spacer(modifier = Modifier.height(24.dp))
                                 Text(
-                                    text = if (language == AppLanguage.BENGALI) "খুঁজতে টাইপ করুন..." else "Type to search...",
-                                    fontSize = 20.sp,
+                                    text = if (language == AppLanguage.BENGALI) "খুঁজতে টাইপ করুন" else "Type to search",
+                                    fontSize = 18.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color.Gray,
+                                    color = themeColors.displayText.copy(alpha = 0.5f),
                                     textAlign = TextAlign.Center
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
@@ -296,8 +301,8 @@ fun GlobalSearchDialog(
                                     text = if (language == AppLanguage.BENGALI) 
                                         "যেমন: হিস্ট্রি, বিএমআই, বা তাপমাত্রা" 
                                         else "Example: History, BMI, or Temperature",
-                                    fontSize = 14.sp,
-                                    color = Color.Gray.copy(alpha = 0.6f),
+                                    fontSize = 13.sp,
+                                    color = themeColors.displayText.copy(alpha = 0.4f),
                                     textAlign = TextAlign.Center
                                 )
                             }
@@ -312,12 +317,12 @@ fun GlobalSearchDialog(
                                     imageVector = Icons.Default.SearchOff,
                                     contentDescription = null,
                                     modifier = Modifier.size(80.dp),
-                                    tint = Color.Gray.copy(alpha = 0.3f)
+                                    tint = themeColors.displayText.copy(alpha = 0.2f)
                                 )
                                 Spacer(modifier = Modifier.height(16.dp))
                                 Text(
                                     text = if (language == AppLanguage.BENGALI) "কোনো ফলাফল পাওয়া যায়নি" else "No results found",
-                                    color = Color.Gray,
+                                    color = themeColors.displayText.copy(alpha = 0.5f),
                                     fontSize = 18.sp
                                 )
                             }
@@ -325,7 +330,7 @@ fun GlobalSearchDialog(
                             // Results List
                             LazyColumn(
                                 modifier = Modifier.fillMaxSize(),
-                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(10.dp),
                                 contentPadding = PaddingValues(bottom = 16.dp)
                             ) {
                                 items(searchResults) { result ->

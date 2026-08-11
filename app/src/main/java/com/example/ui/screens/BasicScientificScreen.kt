@@ -87,13 +87,13 @@ fun PillBadge(count: Int, themeColors: CalculatorThemeColors, isLeft: Boolean, m
     val text = if (isLeft) "${count}+" else "+${count}"
     Box(
         modifier = modifier
-            .background(Color.Transparent)
-            .border(1.2.dp, themeColors.displayText.copy(alpha = 0.4f), RoundedCornerShape(16.dp))
-            .padding(horizontal = 6.dp, vertical = 2.dp)
+            .background(themeColors.buttonEqualBg.copy(alpha = 0.15f), RoundedCornerShape(12.dp))
+            .padding(horizontal = 6.dp, vertical = 2.dp),
+        contentAlignment = Alignment.Center
     ) {
         Text(
             text = text,
-            color = themeColors.displayText.copy(alpha = 0.9f),
+            color = themeColors.buttonEqualBg,
             fontSize = 10.sp,
             fontFamily = FontFamily.Monospace,
             fontWeight = FontWeight.Bold
@@ -388,7 +388,7 @@ fun BasicScientificScreen(
                 val exprHiddenCount = remember(exprScrollState.value, exprLayoutResult, viewModel.expression, exprViewportWidth) {
                     val layout = exprLayoutResult ?: return@remember 0
                     if (exprViewportWidth <= 0) return@remember 0
-                    if (layout.size.width <= exprViewportWidth + 2) return@remember 0
+                    if (layout.size.width <= exprViewportWidth + 0.5f) return@remember 0
                     
                     var count = 0
                     for (i in 0 until viewModel.expression.length) {
@@ -396,7 +396,7 @@ fun BasicScientificScreen(
                             count++
                         }
                     }
-                    if (count == 0 && exprScrollState.value > 1f) count = 1
+                    if (count == 0 && exprScrollState.value > 0.5f) count = 1
                     count
                 }
 
@@ -404,7 +404,7 @@ fun BasicScientificScreen(
                     val layout = resultLayoutResult ?: return@remember 0
                     if (resultViewportWidth <= 0) return@remember 0
                     val textWidth = layout.size.width
-                    if (textWidth <= resultViewportWidth + 2) return@remember 0
+                    if (textWidth <= resultViewportWidth + 0.5f) return@remember 0
                     
                     val viewportRight = resultScrollState.value + resultViewportWidth
                     var count = 0
@@ -413,12 +413,12 @@ fun BasicScientificScreen(
                             count++
                         }
                     }
-                    if (count == 0 && textWidth > resultViewportWidth + 2) count = 1
+                    if (count == 0 && textWidth > resultViewportWidth + 0.5f) count = 1
                     count
                 }
 
-                val exprPadding by animateDpAsState(targetValue = if (exprHiddenCount > 0) 44.dp else 0.dp, label = "exprPadding")
-                val resultPadding by animateDpAsState(targetValue = if (resultHiddenCount > 0) 44.dp else 0.dp, label = "resultPadding")
+                val exprPadding by animateDpAsState(targetValue = if (exprHiddenCount > 0) 38.dp else 0.dp, label = "exprPadding")
+                val resultPadding by animateDpAsState(targetValue = if (resultHiddenCount > 0) 38.dp else 0.dp, label = "resultPadding")
 
                 LaunchedEffect(viewModel.expressionValue.text, viewModel.expressionValue.selection) {
                     exprScrollState.animateScrollTo(exprScrollState.maxValue)
