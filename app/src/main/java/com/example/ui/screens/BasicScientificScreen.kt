@@ -231,13 +231,13 @@ fun BasicScientificScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(displayWeight)
-                .clip(RoundedCornerShape(28.dp))
                 .background(
-                    if (themeColors.background == themeColors.displayBackground) {
+                    color = if (themeColors.background == themeColors.displayBackground) {
                         themeColors.cardBg.copy(alpha = 0.5f)
                     } else {
                         themeColors.displayBackground
-                    }
+                    },
+                    shape = RoundedCornerShape(28.dp)
                 )
                 .then(
                     if (!themeColors.isDark) {
@@ -254,7 +254,12 @@ fun BasicScientificScreen(
                         )
                     }
                 )
-                .padding((16f - (6f * expansionFraction)).dp)
+                .padding(
+                    start = 0.dp,
+                    end = 0.dp,
+                    top = (16f - (6f * expansionFraction)).dp,
+                    bottom = (16f - (6f * expansionFraction)).dp
+                )
                 .pointerInput(Unit) {
                     awaitPointerEventScope {
                         while (true) {
@@ -280,7 +285,11 @@ fun BasicScientificScreen(
                     .fillMaxWidth()
                     .align(Alignment.TopStart)
                     .offset(y = (-10).dp)
-                    .padding(start = 0.dp, end = 0.dp, top = 0.dp),
+                    .padding(
+                        start = (16f - (6f * expansionFraction)).dp,
+                        end = (16f - (6f * expansionFraction)).dp,
+                        top = 0.dp
+                    ),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -526,6 +535,10 @@ fun BasicScientificScreen(
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
+                                    .padding(
+                                        start = (30f - (6f * expansionFraction)).dp,
+                                        end = (30f - (6f * expansionFraction)).dp
+                                    )
                                     .horizontalScroll(exprScrollState)
                                     .onGloballyPositioned { exprViewportWidth = it.size.width },
                                 contentAlignment = Alignment.CenterEnd
@@ -606,7 +619,7 @@ fun BasicScientificScreen(
                         Box(
                             modifier = Modifier
                                 .align(Alignment.CenterStart)
-                                .padding(start = 2.dp)
+                                .offset(x = (-10).dp)
                         ) {
                             PillBadge(
                                 count = exprLeftHiddenCount,
@@ -622,7 +635,7 @@ fun BasicScientificScreen(
                         Box(
                             modifier = Modifier
                                 .align(Alignment.CenterEnd)
-                                .padding(end = 2.dp)
+                                .offset(x = 10.dp)
                         ) {
                             PillBadge(
                                 count = exprRightHiddenCount,
@@ -684,6 +697,10 @@ fun BasicScientificScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .padding(
+                                start = (30f - (6f * expansionFraction)).dp,
+                                end = (30f - (6f * expansionFraction)).dp
+                            )
                             .horizontalScroll(resultScrollState)
                             .onGloballyPositioned { resultViewportWidth = it.size.width },
                         contentAlignment = Alignment.CenterEnd
@@ -715,7 +732,7 @@ fun BasicScientificScreen(
                         Box(
                             modifier = Modifier
                                 .align(Alignment.CenterStart)
-                                .padding(start = 2.dp)
+                                .offset(x = (-10).dp)
                         ) {
                             PillBadge(
                                 count = resultLeftHiddenCount,
@@ -731,7 +748,7 @@ fun BasicScientificScreen(
                         Box(
                             modifier = Modifier
                                 .align(Alignment.CenterEnd)
-                                .padding(end = 2.dp)
+                                .offset(x = 10.dp)
                         ) {
                             PillBadge(
                                 count = resultRightHiddenCount,
