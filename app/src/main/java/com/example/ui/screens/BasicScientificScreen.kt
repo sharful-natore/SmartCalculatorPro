@@ -95,8 +95,9 @@ fun PillBadge(
     val text = if (isLeft) "${count}+" else "+${count}"
     Box(
         modifier = modifier
+            .defaultMinSize(minWidth = 20.dp, minHeight = 20.dp)
             .background(themeColors.buttonEqualBg, CircleShape)
-            .padding(horizontal = 4.5.dp, vertical = 1.dp),
+            .padding(horizontal = 4.dp, vertical = 1.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -398,16 +399,19 @@ fun BasicScientificScreen(
 
                 val exprLeftHiddenCount = remember(exprScrollState.value, exprScrollState.maxValue, viewModel.expression, exprViewportWidth) {
                     if (viewModel.expression.isEmpty() || exprScrollState.maxValue <= 0) 0
-                    else if (exprScrollState.value <= 1f) 0
+                    else if (exprScrollState.value <= 20f) 0
                     else {
                         val hiddenRatio = exprScrollState.value.toFloat() / (exprScrollState.maxValue + exprViewportWidth).toFloat()
                         maxOf(1, (viewModel.expression.length * hiddenRatio).toInt())
                     }
                 }
 
-                val exprRightHiddenCount = remember(exprScrollState.value, exprScrollState.maxValue, viewModel.expression, exprViewportWidth) {
+                val exprRightHiddenCount = remember(exprScrollState.value, exprScrollState.maxValue, viewModel.expression, exprViewportWidth, viewModel.expressionValue.selection) {
+                    val selStart = viewModel.expressionValue.selection.start
+                    val isCursorAtEnd = selStart == viewModel.expression.length
                     if (viewModel.expression.isEmpty() || exprScrollState.maxValue <= 0) 0
-                    else if (exprScrollState.value >= exprScrollState.maxValue - 1f) 0
+                    else if (isCursorAtEnd) 0 // When cursor is at the end, no hidden digits to the right
+                    else if (exprScrollState.value >= exprScrollState.maxValue - 20f) 0
                     else {
                         val hiddenRatio = (exprScrollState.maxValue - exprScrollState.value).toFloat() / (exprScrollState.maxValue + exprViewportWidth).toFloat()
                         maxOf(1, (viewModel.expression.length * hiddenRatio).toInt())
@@ -416,7 +420,7 @@ fun BasicScientificScreen(
 
                 val resultLeftHiddenCount = remember(resultScrollState.value, resultScrollState.maxValue, viewModel.result, resultViewportWidth) {
                     if (viewModel.result.isEmpty() || resultScrollState.maxValue <= 0) 0
-                    else if (resultScrollState.value <= 1f) 0
+                    else if (resultScrollState.value <= 20f) 0
                     else {
                         val hiddenRatio = resultScrollState.value.toFloat() / (resultScrollState.maxValue + resultViewportWidth).toFloat()
                         maxOf(1, (viewModel.result.length * hiddenRatio).toInt())
@@ -425,26 +429,21 @@ fun BasicScientificScreen(
 
                 val resultRightHiddenCount = remember(resultScrollState.value, resultScrollState.maxValue, viewModel.result, resultViewportWidth) {
                     if (viewModel.result.isEmpty() || resultScrollState.maxValue <= 0) 0
-                    else if (resultScrollState.value >= resultScrollState.maxValue - 1f) 0
+                    else if (resultScrollState.value >= resultScrollState.maxValue - 20f) 0
                     else {
                         val hiddenRatio = (resultScrollState.maxValue - resultScrollState.value).toFloat() / (resultScrollState.maxValue + resultViewportWidth).toFloat()
                         maxOf(1, (viewModel.result.length * hiddenRatio).toInt())
                     }
                 }
 
-                val exprLeftPadding by animateDpAsState(targetValue = if (exprLeftHiddenCount > 0) 26.dp else 0.dp, label = "exprLeftPadding")
-                val exprRightPadding by animateDpAsState(targetValue = if (exprRightHiddenCount > 0) 26.dp else 0.dp, label = "exprRightPadding")
-                val resultLeftPadding by animateDpAsState(targetValue = if (resultLeftHiddenCount > 0) 26.dp else 0.dp, label = "resultLeftPadding")
-                val resultRightPadding by animateDpAsState(targetValue = if (resultRightHiddenCount > 0) 26.dp else 0.dp, label = "resultRightPadding")
-
                 LaunchedEffect(viewModel.expressionValue.text, viewModel.expressionValue.selection, exprScrollState.maxValue) {
                     if (exprScrollState.maxValue > 0) {
-                        exprScrollState.animateScrollTo(exprScrollState.maxValue)
+                        exprScrollState.scrollTo(exprScrollState.maxValue)
                     }
                 }
 
                 LaunchedEffect(viewModel.result) {
-                    resultScrollState.animateScrollTo(0)
+                    resultScrollState.scrollTo(0)
                 }
                 
                 // Cursor blinking logic
@@ -527,7 +526,6 @@ fun BasicScientificScreen(
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(start = exprLeftPadding, end = exprRightPadding)
                                     .horizontalScroll(exprScrollState)
                                     .onGloballyPositioned { exprViewportWidth = it.size.width },
                                 contentAlignment = Alignment.CenterEnd
@@ -686,7 +684,6 @@ fun BasicScientificScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(start = resultLeftPadding, end = resultRightPadding)
                             .horizontalScroll(resultScrollState)
                             .onGloballyPositioned { resultViewportWidth = it.size.width },
                         contentAlignment = Alignment.CenterEnd

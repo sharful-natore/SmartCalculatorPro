@@ -1475,6 +1475,42 @@ object LanguageManager {
                 AppLanguage.BENGALI -> "অ্যাপ সম্পর্কে"
                 else -> "About App"
             }
+            "menu_update" -> when (language) {
+                AppLanguage.BENGALI -> "আপডেট চেক করুন"
+                else -> "Update App"
+            }
+            "update_title" -> when (language) {
+                AppLanguage.BENGALI -> "নতুন আপডেট সংস্করণ!"
+                else -> "New Update Available!"
+            }
+            "update_no_update" -> when (language) {
+                AppLanguage.BENGALI -> "আপনার অ্যাপটি লেটেস্ট ভার্সনে আছে।"
+                else -> "Your app is up to date."
+            }
+            "update_downloading" -> when (language) {
+                AppLanguage.BENGALI -> "আপডেট ডাউনলোড হচ্ছে..."
+                else -> "Downloading Update..."
+            }
+            "update_failed" -> when (language) {
+                AppLanguage.BENGALI -> "ডাউনলোড ব্যর্থ হয়েছে। আবার চেষ্টা করুন।"
+                else -> "Download failed. Please try again."
+            }
+            "update_install" -> when (language) {
+                AppLanguage.BENGALI -> "ইনস্টল করুন"
+                else -> "Install"
+            }
+            "update_checking" -> when (language) {
+                AppLanguage.BENGALI -> "আপডেট চেক করা হচ্ছে..."
+                else -> "Checking for updates..."
+            }
+            "update_cancel" -> when (language) {
+                AppLanguage.BENGALI -> "পরে"
+                else -> "Later"
+            }
+            "update_btn" -> when (language) {
+                AppLanguage.BENGALI -> "ডাউনলোড ও ইনস্টল"
+                else -> "Download & Install"
+            }
             "settings_vibration" -> when (language) {
                 AppLanguage.BENGALI -> "ভাইব্রেশন ফিডব্যাক"
                 else -> "Vibration Feedback"

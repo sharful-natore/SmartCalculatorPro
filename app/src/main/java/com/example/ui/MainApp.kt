@@ -74,6 +74,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.Date
@@ -83,6 +84,9 @@ import com.example.ui.theme.CalculatorThemeColors
 import com.example.ui.viewmodel.CalculatorViewModel
 import com.example.util.AppLanguage
 import com.example.util.LanguageManager
+import com.example.util.UpdateManager
+import android.widget.Toast
+import java.io.File
 
 @Composable
 fun MainApp(viewModel: CalculatorViewModel) {
@@ -151,6 +155,64 @@ fun MainContent(
     var showTermsDialog by remember { mutableStateOf(false) }
     var showPrivacyDialog by remember { mutableStateOf(false) }
     var showAboutDialog by remember { mutableStateOf(false) }
+
+    // --- App Update State ---
+    var showUpdateDialog by remember { mutableStateOf(false) }
+    var updateLatestVersion by remember { mutableStateOf("") }
+    var updateChangeLog by remember { mutableStateOf("") }
+    var updateDownloadUrl by remember { mutableStateOf("") }
+    var isCheckingForUpdate by remember { mutableStateOf(false) }
+    var isDownloadingUpdate by remember { mutableStateOf(false) }
+    var updateDownloadProgress by remember { mutableStateOf(0) }
+    var updateErrorMessage by remember { mutableStateOf<String?>(null) }
+    var isUpdateFailed by remember { mutableStateOf(false) }
+    var downloadedApkFile by remember { mutableStateOf<File?>(null) }
+
+    val performUpdateCheck: (Boolean) -> Unit = remember(context, viewModel.selectedLanguage) {
+        { isManual ->
+            if (isManual) {
+                isCheckingForUpdate = true
+                updateErrorMessage = null
+                isUpdateFailed = false
+            }
+            UpdateManager.checkForUpdates(
+                context = context,
+                onUpdateAvailable = { latestVersion, changeLog, downloadUrl ->
+                    isCheckingForUpdate = false
+                    updateLatestVersion = latestVersion
+                    updateChangeLog = changeLog
+                    updateDownloadUrl = downloadUrl
+                    showUpdateDialog = true
+                },
+                onNoUpdate = {
+                    isCheckingForUpdate = false
+                    if (isManual) {
+                        Toast.makeText(
+                            context,
+                            LanguageManager.getString("update_no_update", viewModel.selectedLanguage),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                },
+                onError = { err ->
+                    isCheckingForUpdate = false
+                    if (isManual) {
+                        Toast.makeText(
+                            context,
+                            "${LanguageManager.getString("update_failed", viewModel.selectedLanguage)}: ${err.message}",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+            )
+        }
+    }
+
+    // Auto-check for updates on app startup (silent)
+    LaunchedEffect(Unit) {
+        delay(1000) // Slight delay to let UI settle
+        performUpdateCheck(false)
+    }
 
     // Sync from pager state to ViewModel
     LaunchedEffect(pagerState.currentPage, pagerState.isScrollInProgress) {
@@ -399,6 +461,14 @@ fun MainContent(
                                     onClick = {
                                         isMoreMenuExpanded = false
                                         showPrivacyDialog = true
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text(LanguageManager.getString("menu_update", viewModel.selectedLanguage), color = themeColors.displayText) },
+                                    leadingIcon = { Icon(Icons.Default.SystemUpdate, contentDescription = null, tint = themeColors.buttonEqualBg) },
+                                    onClick = {
+                                        isMoreMenuExpanded = false
+                                        performUpdateCheck(true)
                                     }
                                 )
                                 DropdownMenuItem(
@@ -1098,6 +1168,185 @@ fun MainContent(
                             color = themeColors.buttonEqualBg,
                             fontWeight = FontWeight.Bold
                         )
+                    }
+                },
+                containerColor = themeColors.cardBg,
+                shape = RoundedCornerShape(20.dp)
+            )
+        }
+
+        // --- App Update Dialog ---
+        if (showUpdateDialog) {
+            AlertDialog(
+                onDismissRequest = { 
+                    if (!isDownloadingUpdate) {
+                        showUpdateDialog = false 
+                    }
+                },
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.SystemUpdate,
+                            contentDescription = null,
+                            tint = themeColors.buttonEqualBg,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = LanguageManager.getString("update_title", viewModel.selectedLanguage),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            color = themeColors.displayText
+                        )
+                    }
+                },
+                text = {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState()),
+                        horizontalAlignment = Alignment.Start
+                    ) {
+                        Text(
+                            text = if (isBn) "নতুন ভার্সন: $updateLatestVersion" else "New Version: $updateLatestVersion",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 14.sp,
+                            color = themeColors.displayText
+                        )
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = if (isBn) "পরিবর্তনসমূহ (Changelog):" else "Changelog:",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 13.sp,
+                            color = themeColors.displayText.copy(alpha = 0.8f)
+                        )
+                        
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = themeColors.buttonEqualBg.copy(alpha = 0.05f)),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text(
+                                text = updateChangeLog,
+                                fontSize = 12.sp,
+                                lineHeight = 16.sp,
+                                color = themeColors.displayText,
+                                modifier = Modifier.padding(10.dp)
+                            )
+                        }
+
+                        if (isDownloadingUpdate) {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "${LanguageManager.getString("update_downloading", viewModel.selectedLanguage)} (${updateDownloadProgress}%)",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = themeColors.buttonEqualBg
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            LinearProgressIndicator(
+                                progress = { updateDownloadProgress / 100f },
+                                modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
+                                color = themeColors.buttonEqualBg,
+                                trackColor = themeColors.buttonEqualBg.copy(alpha = 0.2f)
+                            )
+                        } else if (downloadedApkFile != null) {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircle,
+                                    contentDescription = null,
+                                    tint = Color(0xFF4CAF50),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = if (isBn) "ডাউনলোড সম্পন্ন হয়েছে!" else "Download complete!",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color(0xFF4CAF50)
+                                )
+                            }
+                        } else if (updateErrorMessage != null) {
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = updateErrorMessage ?: "",
+                                fontSize = 12.sp,
+                                color = Color.Red,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+                },
+                confirmButton = {
+                    if (downloadedApkFile != null) {
+                        Button(
+                            onClick = {
+                                val success = UpdateManager.installApk(context, downloadedApkFile!!)
+                                if (!success) {
+                                    Toast.makeText(context, "Error launching installation", Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg)
+                        ) {
+                            Text(
+                                text = LanguageManager.getString("update_install", viewModel.selectedLanguage),
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    } else if (!isDownloadingUpdate) {
+                        Button(
+                            onClick = {
+                                coroutineScope.launch {
+                                    isDownloadingUpdate = true
+                                    updateDownloadProgress = 0
+                                    updateErrorMessage = null
+                                    UpdateManager.downloadApk(
+                                        context = context,
+                                        url = updateDownloadUrl,
+                                        onProgress = { progress ->
+                                            updateDownloadProgress = progress
+                                        },
+                                        onSuccess = { file ->
+                                            isDownloadingUpdate = false
+                                            downloadedApkFile = file
+                                            // Auto-launch installation
+                                            UpdateManager.installApk(context, file)
+                                        },
+                                        onError = { err ->
+                                            isDownloadingUpdate = false
+                                            updateErrorMessage = err.localizedMessage ?: "Unknown error"
+                                        }
+                                    )
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg)
+                        ) {
+                            Text(
+                                text = LanguageManager.getString("update_btn", viewModel.selectedLanguage),
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                },
+                dismissButton = {
+                    if (!isDownloadingUpdate) {
+                        TextButton(
+                            onClick = { showUpdateDialog = false }
+                        ) {
+                            Text(
+                                text = LanguageManager.getString("update_cancel", viewModel.selectedLanguage),
+                                color = themeColors.displayText.copy(alpha = 0.6f),
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 },
                 containerColor = themeColors.cardBg,
