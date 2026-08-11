@@ -197,9 +197,17 @@ fun MainContent(
                 onError = { err ->
                     isCheckingForUpdate = false
                     if (isManual) {
+                        val errMsg = if (err.message?.contains("Firebase is not initialized") == true) {
+                            if (viewModel.selectedLanguage == AppLanguage.BENGALI) 
+                                "ফায়ারবেস কনফিগারেশন সেটআপ করা নেই।" 
+                            else 
+                                "Firebase configuration is not set up."
+                        } else {
+                            "${LanguageManager.getString("update_failed", viewModel.selectedLanguage)}: ${err.message}"
+                        }
                         Toast.makeText(
                             context,
-                            "${LanguageManager.getString("update_failed", viewModel.selectedLanguage)}: ${err.message}",
+                            errMsg,
                             Toast.LENGTH_LONG
                         ).show()
                     }
@@ -668,7 +676,7 @@ fun MainContent(
                                 ),
                                 shape = CircleShape
                             )
-                            .border(2.dp, Color.White, CircleShape)
+                            .border(3.dp, Color.White, CircleShape)
                             .clip(CircleShape)
                             .clickable(
                                 interactionSource = fabInteractionSource,

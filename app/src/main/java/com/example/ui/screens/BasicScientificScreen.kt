@@ -406,42 +406,69 @@ fun BasicScientificScreen(
                 var exprLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
                 var resultLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
 
-                val exprLeftHiddenCount = remember(exprScrollState.value, exprScrollState.maxValue, viewModel.expression, exprViewportWidth) {
-                    if (viewModel.expression.isEmpty() || exprScrollState.maxValue <= 0) 0
-                    else if (exprScrollState.value <= 20f) 0
+                val exprLeftHiddenCount = remember(exprScrollState.value, exprScrollState.maxValue, viewModel.expression, exprViewportWidth, exprLayoutResult) {
+                    val text = viewModel.expression
+                    val textLength = text.length
+                    if (textLength == 0 || exprScrollState.maxValue <= 0) 0
                     else {
-                        val hiddenRatio = exprScrollState.value.toFloat() / (exprScrollState.maxValue + exprViewportWidth).toFloat()
-                        maxOf(1, (viewModel.expression.length * hiddenRatio).toInt())
+                        val totalWidth = exprLayoutResult?.size?.width?.toFloat() ?: 0f
+                        if (totalWidth > 0f) {
+                            val charWidth = totalWidth / textLength
+                            val count = ((exprScrollState.value - 4f) / charWidth).toInt()
+                            maxOf(0, count)
+                        } else {
+                            0
+                        }
                     }
                 }
 
-                val exprRightHiddenCount = remember(exprScrollState.value, exprScrollState.maxValue, viewModel.expression, exprViewportWidth, viewModel.expressionValue.selection) {
-                    val selStart = viewModel.expressionValue.selection.start
-                    val isCursorAtEnd = selStart == viewModel.expression.length
-                    if (viewModel.expression.isEmpty() || exprScrollState.maxValue <= 0) 0
-                    else if (isCursorAtEnd) 0 // When cursor is at the end, no hidden digits to the right
-                    else if (exprScrollState.value >= exprScrollState.maxValue - 20f) 0
+                val exprRightHiddenCount = remember(exprScrollState.value, exprScrollState.maxValue, viewModel.expression, exprViewportWidth, exprLayoutResult) {
+                    val text = viewModel.expression
+                    val textLength = text.length
+                    if (textLength == 0 || exprScrollState.maxValue <= 0) 0
                     else {
-                        val hiddenRatio = (exprScrollState.maxValue - exprScrollState.value).toFloat() / (exprScrollState.maxValue + exprViewportWidth).toFloat()
-                        maxOf(1, (viewModel.expression.length * hiddenRatio).toInt())
+                        val totalWidth = exprLayoutResult?.size?.width?.toFloat() ?: 0f
+                        if (totalWidth > 0f) {
+                            val charWidth = totalWidth / textLength
+                            val remainingWidth = exprScrollState.maxValue - exprScrollState.value
+                            val count = ((remainingWidth - 4f) / charWidth).toInt()
+                            maxOf(0, count)
+                        } else {
+                            0
+                        }
                     }
                 }
 
-                val resultLeftHiddenCount = remember(resultScrollState.value, resultScrollState.maxValue, viewModel.result, resultViewportWidth) {
-                    if (viewModel.result.isEmpty() || resultScrollState.maxValue <= 0) 0
-                    else if (resultScrollState.value <= 20f) 0
+                val resultLeftHiddenCount = remember(resultScrollState.value, resultScrollState.maxValue, viewModel.result, resultViewportWidth, resultLayoutResult) {
+                    val text = viewModel.result
+                    val textLength = text.length
+                    if (textLength == 0 || resultScrollState.maxValue <= 0) 0
                     else {
-                        val hiddenRatio = resultScrollState.value.toFloat() / (resultScrollState.maxValue + resultViewportWidth).toFloat()
-                        maxOf(1, (viewModel.result.length * hiddenRatio).toInt())
+                        val totalWidth = resultLayoutResult?.size?.width?.toFloat() ?: 0f
+                        if (totalWidth > 0f) {
+                            val charWidth = totalWidth / textLength
+                            val count = ((resultScrollState.value - 4f) / charWidth).toInt()
+                            maxOf(0, count)
+                        } else {
+                            0
+                        }
                     }
                 }
 
-                val resultRightHiddenCount = remember(resultScrollState.value, resultScrollState.maxValue, viewModel.result, resultViewportWidth) {
-                    if (viewModel.result.isEmpty() || resultScrollState.maxValue <= 0) 0
-                    else if (resultScrollState.value >= resultScrollState.maxValue - 20f) 0
+                val resultRightHiddenCount = remember(resultScrollState.value, resultScrollState.maxValue, viewModel.result, resultViewportWidth, resultLayoutResult) {
+                    val text = viewModel.result
+                    val textLength = text.length
+                    if (textLength == 0 || resultScrollState.maxValue <= 0) 0
                     else {
-                        val hiddenRatio = (resultScrollState.maxValue - resultScrollState.value).toFloat() / (resultScrollState.maxValue + resultViewportWidth).toFloat()
-                        maxOf(1, (viewModel.result.length * hiddenRatio).toInt())
+                        val totalWidth = resultLayoutResult?.size?.width?.toFloat() ?: 0f
+                        if (totalWidth > 0f) {
+                            val charWidth = totalWidth / textLength
+                            val remainingWidth = resultScrollState.maxValue - resultScrollState.value
+                            val count = ((remainingWidth - 4f) / charWidth).toInt()
+                            maxOf(0, count)
+                        } else {
+                            0
+                        }
                     }
                 }
 

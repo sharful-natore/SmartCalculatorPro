@@ -60,6 +60,11 @@ object UpdateManager {
     ) {
         initFirebase(context)
         
+        if (FirebaseApp.getApps(context).isEmpty()) {
+            onError(Exception("Firebase is not initialized. Please set up FIREBASE_API_KEY, FIREBASE_APP_ID, and FIREBASE_PROJECT_ID in your environment/Secrets."))
+            return
+        }
+        
         try {
             val remoteConfig = FirebaseRemoteConfig.getInstance()
             val configSettings = FirebaseRemoteConfigSettings.Builder()
