@@ -10,18 +10,18 @@ plugins {
   alias(libs.plugins.google.services)
 }
 
-val geminiApiKey: String = run {
+fun findApiKey(keyName: String): String {
     // 1. Check system environment variables first
-    val envVal = System.getenv("GEMINI_API_KEY")
-    if (!envVal.isNullOrEmpty()) return@run envVal
+    val envVal = System.getenv(keyName)
+    if (!envVal.isNullOrEmpty()) return envVal
 
     // 2. Check .env file
     val envFile = rootProject.file(".env")
     if (envFile.exists()) {
         val envProps = Properties()
         envFile.inputStream().use { envProps.load(it) }
-        val pVal = envProps.getProperty("GEMINI_API_KEY")
-        if (!pVal.isNullOrEmpty()) return@run pVal
+        val pVal = envProps.getProperty(keyName)
+        if (!pVal.isNullOrEmpty()) return pVal
     }
 
     // 3. Check local.properties file
@@ -29,8 +29,8 @@ val geminiApiKey: String = run {
     if (localFile.exists()) {
         val localProps = Properties()
         localFile.inputStream().use { localProps.load(it) }
-        val lVal = localProps.getProperty("GEMINI_API_KEY")
-        if (!lVal.isNullOrEmpty()) return@run lVal
+        val lVal = localProps.getProperty(keyName)
+        if (!lVal.isNullOrEmpty()) return lVal
     }
 
     // 4. Check .env.example
@@ -38,11 +38,11 @@ val geminiApiKey: String = run {
     if (exampleFile.exists()) {
         val exampleProps = Properties()
         exampleFile.inputStream().use { exampleProps.load(it) }
-        val exVal = exampleProps.getProperty("GEMINI_API_KEY")
-        if (!exVal.isNullOrEmpty()) return@run exVal
+        val exVal = exampleProps.getProperty(keyName)
+        if (!exVal.isNullOrEmpty()) return exVal
     }
 
-    ""
+    return ""
 }
 
 android {
@@ -57,7 +57,10 @@ android {
     versionName = "1.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
+    buildConfigField("String", "GEMINI_API_KEY", "\"${findApiKey("GEMINI_API_KEY")}\"")
+    buildConfigField("String", "FIREBASE_API_KEY", "\"${findApiKey("FIREBASE_API_KEY")}\"")
+    buildConfigField("String", "FIREBASE_APP_ID", "\"${findApiKey("FIREBASE_APP_ID")}\"")
+    buildConfigField("String", "FIREBASE_PROJECT_ID", "\"${findApiKey("FIREBASE_PROJECT_ID")}\"")
   }
 
   signingConfigs {
@@ -108,6 +111,9 @@ secrets {
   defaultPropertiesFileName = ".env.example"
   ignoreList.add("FIREBASE_APPCHECK_DEBUG_TOKEN")
   ignoreList.add("GEMINI_API_KEY")
+  ignoreList.add("FIREBASE_API_KEY")
+  ignoreList.add("FIREBASE_APP_ID")
+  ignoreList.add("FIREBASE_PROJECT_ID")
 }
 
 googleServices { missingGoogleServicesStrategy = MissingGoogleServicesStrategy.WARN }
