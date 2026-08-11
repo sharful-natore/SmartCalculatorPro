@@ -190,6 +190,16 @@ enum class ToolType(
         "যেকোনো টেক্সট বা প্যারাগ্রাফের শব্দ, অক্ষর ও লাইন গণনা",
         ToolCategory.UTILITY, Icons.Default.FormatQuote
     ),
+    CLOTH_MEASUREMENT(
+        "Cloth Measurement (Gaj-Gira)", "কাপড়ের গজ-গিরা পরিমাপ",
+        "গজ, গিরা, হাত, ইঞ্চি ও মিটারের পারস্পরিক রূপান্তর",
+        ToolCategory.UTILITY, Icons.Default.Straighten
+    ),
+    GOLD_CALCULATOR(
+        "Gold & Silver Calculator", "স্বর্ণ ও রৌপ্য হিসাব",
+        "ভরি, আনা, রতি ও পয়েন্ট অনুযায়ী স্বর্ণের দাম নির্ধারণ",
+        ToolCategory.UTILITY, Icons.Default.AttachMoney
+    ),
     PASSWORD_GENERATOR(
         "Password Generator", "পাসওয়ার্ড জেনারেটর",
         "কাস্টমাইজড এবং সুরক্ষিত স্ট্রং পাসওয়ার্ড তৈরি করুন",
@@ -280,6 +290,8 @@ enum class ToolType(
                 PERCENTAGE -> "Calculate general percentage, ratio, and change"
                 TIP -> "Calculate bill split amount and tip per person"
                 TEXT_COUNTER -> "Count words, characters, and spaces in any text"
+                CLOTH_MEASUREMENT -> "Convert between traditional Bengali cloth units (Gaj, Gira, Haat, etc.) and metric units"
+                GOLD_CALCULATOR -> "Calculate gold and silver weight (Vori, Anna, Ratti, Point) and prices with carat rates"
                 PASSWORD_GENERATOR -> "Generate secure customized passwords"
                 ELECTRICITY_BILL -> "Calculate monthly electricity bill from kWh units and tariff"
                 APPLIANCE_COST -> "Calculate power consumption cost for AC, fan, TV, etc."

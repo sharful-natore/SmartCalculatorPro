@@ -155,6 +155,7 @@ fun MainContent(
     var showTermsDialog by remember { mutableStateOf(false) }
     var showPrivacyDialog by remember { mutableStateOf(false) }
     var showAboutDialog by remember { mutableStateOf(false) }
+    var showFeedbackDialog by remember { mutableStateOf(false) }
 
     // --- App Update State ---
     var showUpdateDialog by remember { mutableStateOf(false) }
@@ -401,7 +402,7 @@ fun MainContent(
                                 onDismissRequest = { isLangMenuExpanded = false },
                                 modifier = Modifier.background(themeColors.cardBg)
                             ) {
-                                AppLanguage.values().forEach { lang ->
+                                listOf(AppLanguage.ENGLISH, AppLanguage.BENGALI).forEach { lang ->
                                     DropdownMenuItem(
                                         text = {
                                             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -477,6 +478,14 @@ fun MainContent(
                                     onClick = {
                                         isMoreMenuExpanded = false
                                         performUpdateCheck(true)
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text(if (viewModel.selectedLanguage == AppLanguage.BENGALI) "রিপোর্ট ও ফিডব্যাক" else "Report & Feedback", color = themeColors.displayText) },
+                                    leadingIcon = { Icon(Icons.Default.Feedback, contentDescription = null, tint = themeColors.buttonEqualBg) },
+                                    onClick = {
+                                        isMoreMenuExpanded = false
+                                        showFeedbackDialog = true
                                     }
                                 )
                                 DropdownMenuItem(
@@ -772,7 +781,7 @@ fun MainContent(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                val languagesList = AppLanguage.values().toList().chunked(2)
+                                val languagesList = listOf(AppLanguage.ENGLISH, AppLanguage.BENGALI).chunked(2)
                                 for (pair in languagesList) {
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
@@ -1126,43 +1135,153 @@ fun MainContent(
                         HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.12f))
                         Spacer(modifier = Modifier.height(12.dp))
                         
-                        // Developer Info Card
+                        // Modern Interactive Developer Info Card
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             colors = CardDefaults.cardColors(containerColor = themeColors.buttonEqualBg.copy(alpha = 0.08f)),
-                            shape = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(16.dp)
                         ) {
                             Column(
-                                modifier = Modifier.padding(12.dp),
-                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                                modifier = Modifier.padding(14.dp),
+                                verticalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
                                 Text(
-                                    text = if (isBn) "👨‍💻 ডেভেলপার তথ্য" else "👨‍💻 Developer Info",
+                                    text = if (isBn) "👨‍💻 ডেভেলপার পরিচিতি" else "👨‍💻 Developer Info",
                                     fontWeight = FontWeight.Bold,
-                                    fontSize = 13.sp,
+                                    fontSize = 14.sp,
                                     color = themeColors.buttonEqualBg
                                 )
                                 Text(
                                     text = if (isBn) "ডেভেলপার: Md. Shariful Islam" else "Developer: Md. Shariful Islam",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold,
                                     color = themeColors.displayText
                                 )
+                                
                                 Text(
-                                    text = "📧 Email: Connect.shariful@gmail.com",
-                                    fontSize = 12.sp,
-                                    color = themeColors.displayText.copy(alpha = 0.85f)
+                                    text = if (isBn) "যোগাযোগ করতে নিচের যেকোনো একটিতে ট্যাপ করুন:" else "Tap below to redirect and connect instantly:",
+                                    fontSize = 11.sp,
+                                    color = themeColors.displayText.copy(alpha = 0.6f)
                                 )
-                                Text(
-                                    text = "🌐 FB: fb.com/shariful.uxd",
-                                    fontSize = 12.sp,
-                                    color = themeColors.displayText.copy(alpha = 0.85f)
-                                )
-                                Text(
-                                    text = "💬 WhatsApp: +8801768899599",
-                                    fontSize = 12.sp,
-                                    color = themeColors.displayText.copy(alpha = 0.85f)
-                                )
+
+                                HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.08f))
+
+                                // Email Action
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .clickable {
+                                            launchEmailSafely(context, "Connect.shariful@gmail.com", "Smart Calculator Pro - Connection")
+                                        }
+                                        .padding(vertical = 6.dp, horizontal = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Email,
+                                        contentDescription = "Email",
+                                        tint = themeColors.buttonEqualBg,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = if (isBn) "ইমেইল পাঠান" else "Email Support",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 12.sp,
+                                            color = themeColors.displayText
+                                        )
+                                        Text(
+                                            text = "Connect.shariful@gmail.com",
+                                            fontSize = 11.sp,
+                                            color = themeColors.displayText.copy(alpha = 0.6f)
+                                        )
+                                    }
+                                    Icon(
+                                        imageVector = Icons.Default.ChevronRight,
+                                        contentDescription = null,
+                                        tint = themeColors.displayText.copy(alpha = 0.3f),
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+
+                                // WhatsApp Action
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .clickable {
+                                            launchUriSafely(context, "https://wa.me/8801768899599")
+                                        }
+                                        .padding(vertical = 6.dp, horizontal = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Chat,
+                                        contentDescription = "WhatsApp",
+                                        tint = themeColors.buttonEqualBg,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = if (isBn) "হোয়াটসঅ্যাপে মেসেজ পাঠান" else "WhatsApp Chat",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 12.sp,
+                                            color = themeColors.displayText
+                                        )
+                                        Text(
+                                            text = "+8801768899599",
+                                            fontSize = 11.sp,
+                                            color = themeColors.displayText.copy(alpha = 0.6f)
+                                        )
+                                    }
+                                    Icon(
+                                        imageVector = Icons.Default.ChevronRight,
+                                        contentDescription = null,
+                                        tint = themeColors.displayText.copy(alpha = 0.3f),
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+
+                                // Facebook Action
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .clickable {
+                                            launchUriSafely(context, "https://facebook.com/shariful.uxd")
+                                        }
+                                        .padding(vertical = 6.dp, horizontal = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Link,
+                                        contentDescription = "Facebook",
+                                        tint = themeColors.buttonEqualBg,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = if (isBn) "ফেসবুক প্রোফাইল" else "Facebook Profile",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 12.sp,
+                                            color = themeColors.displayText
+                                        )
+                                        Text(
+                                            text = "fb.com/shariful.uxd",
+                                            fontSize = 11.sp,
+                                            color = themeColors.displayText.copy(alpha = 0.6f)
+                                        )
+                                    }
+                                    Icon(
+                                        imageVector = Icons.Default.ChevronRight,
+                                        contentDescription = null,
+                                        tint = themeColors.displayText.copy(alpha = 0.3f),
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
                             }
                         }
                     }
@@ -1176,6 +1295,149 @@ fun MainContent(
                             color = themeColors.buttonEqualBg,
                             fontWeight = FontWeight.Bold
                         )
+                    }
+                },
+                containerColor = themeColors.cardBg,
+                shape = RoundedCornerShape(20.dp)
+            )
+        }
+
+        // --- Report / Feedback Dialog ---
+        if (showFeedbackDialog) {
+            val context = androidx.compose.ui.platform.LocalContext.current
+            var feedbackText by remember { mutableStateOf("") }
+
+            AlertDialog(
+                onDismissRequest = { showFeedbackDialog = false },
+                title = {
+                    Text(
+                        text = if (isBn) "রিপোর্ট ও ফিডব্যাক" else "Report & Feedback",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = themeColors.displayText
+                    )
+                },
+                text = {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = if (isBn) {
+                                "আপনার মূল্যবান মতামত, পরামর্শ বা যেকোনো সমস্যার কথা আমাদের জানান। নিচে আপনার বার্তাটি লিখুন এবং সরাসরি ইমেইল বা হোয়াটসঅ্যাপের মাধ্যমে পাঠান।"
+                            } else {
+                                "Please share your valuable feedback, suggestions, or reports with us. Type your message below and send instantly via WhatsApp or Email."
+                            },
+                            fontSize = 12.sp,
+                            lineHeight = 17.sp,
+                            color = themeColors.displayText.copy(alpha = 0.8f)
+                        )
+
+                        OutlinedTextField(
+                            value = feedbackText,
+                            onValueChange = { feedbackText = it },
+                            placeholder = {
+                                Text(
+                                    text = if (isBn) "এখানে আপনার মতামত বা রিপোর্ট লিখুন..." else "Type your feedback or report here...",
+                                    color = themeColors.displayText.copy(alpha = 0.4f),
+                                    fontSize = 14.sp
+                                )
+                            },
+                            minLines = 3,
+                            maxLines = 6,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = themeColors.displayText,
+                                unfocusedTextColor = themeColors.displayText,
+                                focusedBorderColor = themeColors.buttonEqualBg,
+                                unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.3f),
+                                focusedLabelColor = themeColors.buttonEqualBg,
+                                cursorColor = themeColors.buttonEqualBg
+                            )
+                        )
+                    }
+                },
+                confirmButton = {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        // Email send button
+                        Button(
+                            onClick = {
+                                val msg = feedbackText.trim()
+                                launchEmailSafely(
+                                    context = context,
+                                    email = "Connect.shariful@gmail.com",
+                                    subject = "Smart Calculator Pro - Report/Feedback",
+                                    body = msg
+                                )
+                                showFeedbackDialog = false
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = themeColors.buttonEqualBg,
+                                contentColor = themeColors.buttonEqualText
+                            ),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Email,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = if (isBn) "ইমেইলের মাধ্যমে পাঠান" else "Send via Email",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp
+                            )
+                        }
+
+                        // WhatsApp send button
+                        Button(
+                            onClick = {
+                                val msg = feedbackText.trim()
+                                val finalMsg = if (msg.isEmpty()) "Hello! I want to share feedback." else msg
+                                launchUriSafely(
+                                    context = context,
+                                    uriString = "https://wa.me/8801768899599?text=${android.net.Uri.encode(finalMsg)}"
+                                )
+                                showFeedbackDialog = false
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF25D366), // Standard WhatsApp Green
+                                contentColor = Color.White
+                            ),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Chat,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = if (isBn) "হোয়াটসঅ্যাপে পাঠান" else "Send via WhatsApp",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp
+                            )
+                        }
+
+                        // Close button
+                        TextButton(
+                            onClick = { showFeedbackDialog = false },
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        ) {
+                            Text(
+                                text = if (isBn) "বাতিল" else "Cancel",
+                                color = themeColors.displayText.copy(alpha = 0.6f),
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
                     }
                 },
                 containerColor = themeColors.cardBg,
@@ -2205,5 +2467,43 @@ fun SplashScreen(themeColors: com.example.ui.theme.CalculatorThemeColors) {
             contentDescription = "Logo",
             modifier = Modifier.size(160.dp)
         )
+    }
+}
+
+private fun launchUriSafely(context: android.content.Context, uriString: String) {
+    try {
+        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(uriString)).apply {
+            addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        context.startActivity(intent)
+    } catch (e: Exception) {
+        try {
+            android.widget.Toast.makeText(context, "Could not open browser. Please visit manually.", android.widget.Toast.LENGTH_SHORT).show()
+        } catch (ex: Exception) {
+            ex.printStackTrace()
+        }
+    }
+}
+
+private fun launchEmailSafely(context: android.content.Context, email: String, subject: String, body: String = "") {
+    try {
+        val uriString = "mailto:$email?subject=${android.net.Uri.encode(subject)}&body=${android.net.Uri.encode(body)}"
+        val intent = android.content.Intent(android.content.Intent.ACTION_SENDTO, android.net.Uri.parse(uriString)).apply {
+            addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        context.startActivity(intent)
+    } catch (e: Exception) {
+        try {
+            val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                type = "plain/text"
+                putExtra(android.content.Intent.EXTRA_EMAIL, arrayOf(email))
+                putExtra(android.content.Intent.EXTRA_SUBJECT, subject)
+                putExtra(android.content.Intent.EXTRA_TEXT, body)
+                addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(android.content.Intent.createChooser(intent, "Send Email"))
+        } catch (ex: Exception) {
+            android.widget.Toast.makeText(context, "No email client found.", android.widget.Toast.LENGTH_SHORT).show()
+        }
     }
 }

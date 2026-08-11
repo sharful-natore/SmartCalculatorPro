@@ -145,6 +145,8 @@ fun ToolType.matchesToolQuery(query: String, language: AppLanguage): Boolean {
         ToolType.PERCENTAGE -> listOf("শতকরা", "পার্সেন্ট", "পার্সেন্টেজ", "percentage", "percent")
         ToolType.TIP -> listOf("টিপ", "বিল", "tip")
         ToolType.TEXT_COUNTER -> listOf("শব্দ", "অক্ষর", "word", "character")
+        ToolType.CLOTH_MEASUREMENT -> listOf("কাপড়", "কাপড়", "গজ", "গিরা", "হাত", "cloth", "gaj", "gira", "haat", "measurement")
+        ToolType.GOLD_CALCULATOR -> listOf("স্বর্ণ", "রুপা", "সোনা", "ভরি", "আনা", "রতি", "ক্যারেট", "gold", "silver", "vori", "carat")
         ToolType.PASSWORD_GENERATOR -> listOf("পাসওয়ার্ড", "পাসওয়ার্ড", "পিন", "password", "pin")
         ToolType.ELECTRICITY_BILL -> listOf("বিদ্যুৎ", "কারেন্ট", "বিল", "ইউনিট", "bill", "electricity")
         ToolType.APPLIANCE_COST -> listOf("সরঞ্জাম", "খরচ", "appliance")

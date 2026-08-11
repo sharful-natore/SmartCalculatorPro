@@ -1,5 +1,10 @@
 package com.example.ui.screens
 
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -34,6 +39,12 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 // Removed local CustomOutlinedTextField
+
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 
 // --- 1. Zakat Calculator ---
 @Composable
@@ -752,26 +763,35 @@ fun ColorConverterCard(
     viewModel: CalculatorViewModel,
     themeColors: CalculatorThemeColors
 ) {
+    val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
+    val cardTitle = if (isBn) "কালার কোড কনভার্টার" else "Color Code Converter"
+
     var hex by remember { mutableStateOf("FF5722") }
     var r by remember { mutableStateOf("255") }
     var g by remember { mutableStateOf("87") }
     var b by remember { mutableStateOf("34") }
 
     fun updateFromHex(newHex: String) {
-        hex = newHex
+        var cleanHex = newHex.replace("#", "").trim()
+        if (cleanHex.length > 6) {
+            cleanHex = cleanHex.take(6)
+        }
+        hex = cleanHex
         try {
-            val color = Color(android.graphics.Color.parseColor("#$newHex"))
-            r = (color.red * 255).toInt().toString()
-            g = (color.green * 255).toInt().toString()
-            b = (color.blue * 255).toInt().toString()
+            if (cleanHex.length == 6) {
+                val color = Color(android.graphics.Color.parseColor("#$cleanHex"))
+                r = (color.red * 255).toInt().toString()
+                g = (color.green * 255).toInt().toString()
+                b = (color.blue * 255).toInt().toString()
+            }
         } catch (e: Exception) {}
     }
 
     fun updateFromRgb() {
         try {
-            val ri = r.toInt().coerceIn(0, 255)
-            val gi = g.toInt().coerceIn(0, 255)
-            val bi = b.toInt().coerceIn(0, 255)
+            val ri = r.toIntOrNull()?.coerceIn(0, 255) ?: 0
+            val gi = g.toIntOrNull()?.coerceIn(0, 255) ?: 0
+            val bi = b.toIntOrNull()?.coerceIn(0, 255) ?: 0
             hex = String.format("%02X%02X%02X", ri, gi, bi)
         } catch (e: Exception) {}
     }
@@ -784,7 +804,7 @@ fun ColorConverterCard(
             .background(themeColors.cardBg, RoundedCornerShape(16.dp))
             .padding(16.dp)
     ) {
-        Text("কালার কোড কনভার্টার", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+        Text(cardTitle, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
         Spacer(modifier = Modifier.height(12.dp))
 
         Box(
@@ -795,15 +815,134 @@ fun ColorConverterCard(
                 .background(currentColor),
             contentAlignment = Alignment.Center
         ) {
-            Text("#$hex", color = if (currentColor.toArgb() == Color.White.toArgb()) Color.Black else Color.White, fontWeight = FontWeight.Bold)
+            Text(
+                text = "#$hex",
+                color = if (currentColor.toArgb() == Color.White.toArgb()) Color.Black else Color.White,
+                fontWeight = FontWeight.Bold
+            )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // --- Interactive Color Wheel ---
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .size(180.dp)
+                .pointerInput(Unit) {
+                    detectDragGestures { change, _ ->
+                        change.consume()
+                        val center = Offset(size.width / 2f, size.height / 2f)
+                        val touch = change.position
+                        val dx = touch.x - center.x
+                        val dy = touch.y - center.y
+                        val radius = size.width / 2f
+                        if (radius > 0) {
+                            val dist = Math.sqrt((dx * dx + dy * dy).toDouble()).toFloat()
+                            val angleRad = Math.atan2(dy.toDouble(), dx.toDouble()).toFloat()
+                            val angleDeg = Math.toDegrees(angleRad.toDouble()).toFloat()
+                            val hueVal = (angleDeg + 360f) % 360f
+                            val satVal = (dist / radius).coerceIn(0f, 1f)
+                            
+                            val colorInt = android.graphics.Color.HSVToColor(floatArrayOf(hueVal, satVal, 1f))
+                            val red = android.graphics.Color.red(colorInt)
+                            val green = android.graphics.Color.green(colorInt)
+                            val blue = android.graphics.Color.blue(colorInt)
+                            
+                            hex = String.format("%02X%02X%02X", red, green, blue)
+                            r = red.toString()
+                            g = green.toString()
+                            b = blue.toString()
+                        }
+                    }
+                }
+                .pointerInput(Unit) {
+                    detectTapGestures { touch ->
+                        val center = Offset(size.width / 2f, size.height / 2f)
+                        val dx = touch.x - center.x
+                        val dy = touch.y - center.y
+                        val radius = size.width / 2f
+                        if (radius > 0) {
+                            val dist = Math.sqrt((dx * dx + dy * dy).toDouble()).toFloat()
+                            val angleRad = Math.atan2(dy.toDouble(), dx.toDouble()).toFloat()
+                            val angleDeg = Math.toDegrees(angleRad.toDouble()).toFloat()
+                            val hueVal = (angleDeg + 360f) % 360f
+                            val satVal = (dist / radius).coerceIn(0f, 1f)
+                            
+                            val colorInt = android.graphics.Color.HSVToColor(floatArrayOf(hueVal, satVal, 1f))
+                            val red = android.graphics.Color.red(colorInt)
+                            val green = android.graphics.Color.green(colorInt)
+                            val blue = android.graphics.Color.blue(colorInt)
+                            
+                            hex = String.format("%02X%02X%02X", red, green, blue)
+                            r = red.toString()
+                            g = green.toString()
+                            b = blue.toString()
+                        }
+                    }
+                }
+        ) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val center = Offset(size.width / 2f, size.height / 2f)
+                val radius = size.width / 2f
+                
+                val sweepColors = listOf(
+                    Color.Red, Color.Yellow, Color.Green, Color.Cyan, Color.Blue, Color.Magenta, Color.Red
+                )
+                drawCircle(
+                    brush = androidx.compose.ui.graphics.Brush.sweepGradient(sweepColors, center),
+                    radius = radius
+                )
+                
+                drawCircle(
+                    brush = androidx.compose.ui.graphics.Brush.radialGradient(
+                        colors = listOf(Color.White, Color.Transparent),
+                        center = center,
+                        radius = radius
+                    ),
+                    radius = radius
+                )
+                
+                val hsv = FloatArray(3)
+                try {
+                    val ri = r.toIntOrNull() ?: 255
+                    val gi = g.toIntOrNull() ?: 87
+                    val bi = b.toIntOrNull() ?: 34
+                    android.graphics.Color.RGBToHSV(ri, gi, bi, hsv)
+                } catch (e: Exception) {}
+                
+                val currentHue = hsv[0]
+                val currentSat = hsv[1]
+                
+                val angleRad = Math.toRadians(currentHue.toDouble()).toFloat()
+                val dist = currentSat * radius
+                val thumbX = center.x + dist * Math.cos(angleRad.toDouble()).toFloat()
+                val thumbY = center.y + dist * Math.sin(angleRad.toDouble()).toFloat()
+                
+                drawCircle(
+                    color = Color.Black.copy(alpha = 0.3f),
+                    radius = 10.dp.toPx(),
+                    center = Offset(thumbX, thumbY + 1.dp.toPx())
+                )
+                drawCircle(
+                    color = Color.White,
+                    radius = 9.dp.toPx(),
+                    center = Offset(thumbX, thumbY)
+                )
+                drawCircle(
+                    color = currentColor,
+                    radius = 6.dp.toPx(),
+                    center = Offset(thumbX, thumbY)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
         CustomOutlinedTextField(
             value = hex,
             onValueChange = { updateFromHex(it) },
-            label = "HEX Code",
+            label = if (isBn) "হেক্স কোড (HEX)" else "HEX Code",
             themeColors = themeColors,
             modifier = Modifier.fillMaxWidth(),
             keyboardType = KeyboardType.Ascii
@@ -815,21 +954,21 @@ fun ColorConverterCard(
             CustomOutlinedTextField(
                 value = r,
                 onValueChange = { r = it; updateFromRgb() },
-                label = "Red (R)",
+                label = if (isBn) "লাল (Red)" else "Red (R)",
                 themeColors = themeColors,
                 modifier = Modifier.weight(1f)
             )
             CustomOutlinedTextField(
                 value = g,
                 onValueChange = { g = it; updateFromRgb() },
-                label = "Green (G)",
+                label = if (isBn) "সবুজ (Green)" else "Green (G)",
                 themeColors = themeColors,
                 modifier = Modifier.weight(1f)
             )
             CustomOutlinedTextField(
                 value = b,
                 onValueChange = { b = it; updateFromRgb() },
-                label = "Blue (B)",
+                label = if (isBn) "নীল (Blue)" else "Blue (B)",
                 themeColors = themeColors,
                 modifier = Modifier.weight(1f)
             )
@@ -1066,6 +1205,540 @@ fun TimeZoneDropdown(zones: List<Pair<String, String>>, selectedIndex: Int, onSe
                         expanded = false
                     }
                 )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ClothMeasurementCard(
+    viewModel: CalculatorViewModel,
+    themeColors: CalculatorThemeColors
+) {
+    val lang = viewModel.selectedLanguage
+    val isBn = lang == AppLanguage.BENGALI
+    val df = remember { DecimalFormat("#.####") }
+
+    // Mixed calculator state
+    var mixedGaj by remember { mutableStateOf("2") }
+    var mixedGira by remember { mutableStateOf("4") }
+
+    // Direct unit converter states (synchronous/reactive updates)
+    var gajVal by remember { mutableStateOf("1") }
+    var giraVal by remember { mutableStateOf("16") }
+    var haatVal by remember { mutableStateOf("2") }
+    var inchVal by remember { mutableStateOf("36") }
+    var meterVal by remember { mutableStateOf("0.9144") }
+
+    fun updateAllFromInches(inches: Double, sourceUnit: String) {
+        val calculatedGaj = inches / 36.0
+        val calculatedGira = inches / 2.25
+        val calculatedHaat = inches / 18.0
+        val calculatedMeter = inches * 0.0254
+
+        if (sourceUnit != "gaj") gajVal = if (inches == 0.0) "" else df.format(calculatedGaj)
+        if (sourceUnit != "gira") giraVal = if (inches == 0.0) "" else df.format(calculatedGira)
+        if (sourceUnit != "haat") haatVal = if (inches == 0.0) "" else df.format(calculatedHaat)
+        if (sourceUnit != "inch") inchVal = if (inches == 0.0) "" else df.format(inches)
+        if (sourceUnit != "meter") meterVal = if (inches == 0.0) "" else df.format(calculatedMeter)
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        // Section 1: Mixed Gaj & Gira
+        Text(
+            text = if (isBn) "গজ ও গিরা মিশ্রিত হিসাবকারী" else "Gaj & Gira Mixed Calculator",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            color = themeColors.displayText
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+            CustomOutlinedTextField(
+                value = mixedGaj,
+                onValueChange = {
+                    mixedGaj = it
+                },
+                label = if (isBn) "গজ" else "Gaj",
+                themeColors = themeColors,
+                modifier = Modifier.weight(1f).testTag("cloth_mixed_gaj")
+            )
+            CustomOutlinedTextField(
+                value = mixedGira,
+                onValueChange = {
+                    mixedGira = it
+                },
+                label = if (isBn) "গিরা" else "Gira",
+                themeColors = themeColors,
+                modifier = Modifier.weight(1f).testTag("cloth_mixed_gira")
+            )
+        }
+
+        val mGaj = mixedGaj.toDoubleOrNull() ?: 0.0
+        val mGira = mixedGira.toDoubleOrNull() ?: 0.0
+        val totalInches = (mGaj * 36.0) + (mGira * 2.25)
+        val totalHaat = totalInches / 18.0
+        val totalMeters = totalInches * 0.0254
+        val decimalGaj = totalInches / 36.0
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Card(
+            colors = CardDefaults.cardColors(containerColor = themeColors.buttonEqualBg.copy(alpha = 0.12f)),
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(12.dp)) {
+                Text(
+                    text = if (isBn) "মোট দৈর্ঘ্য রূপান্তর ফলাফল:" else "Total Length Conversions:",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = themeColors.displayText
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text(if (isBn) "ইঞ্চি (Inches):" else "Inches:", fontSize = 11.sp, color = themeColors.displayText.copy(alpha = 0.7f))
+                        Text("${df.format(totalInches)} Inch", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                    }
+                    Column {
+                        Text(if (isBn) "হাত (Haat):" else "Haat:", fontSize = 11.sp, color = themeColors.displayText.copy(alpha = 0.7f))
+                        Text("${df.format(totalHaat)} Haat", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text(if (isBn) "মিটার (Meters):" else "Meters:", fontSize = 11.sp, color = themeColors.displayText.copy(alpha = 0.7f))
+                        Text("${df.format(totalMeters)} m", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                    }
+                    Column {
+                        Text(if (isBn) "দশমিক গজ (Decimal Gaj):" else "Decimal Gaj:", fontSize = 11.sp, color = themeColors.displayText.copy(alpha = 0.7f))
+                        Text("${df.format(decimalGaj)} Gaj", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+        Divider(color = themeColors.displayText.copy(alpha = 0.15f))
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Section 2: Real-time Unit Grid Converter
+        Text(
+            text = if (isBn) "যেকোনো একক থেকে সরাসরি রূপান্তর" else "Real-time Direct Converter",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            color = themeColors.displayText
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        CustomOutlinedTextField(
+            value = gajVal,
+            onValueChange = {
+                gajVal = it
+                val d = it.toDoubleOrNull() ?: 0.0
+                updateAllFromInches(d * 36.0, "gaj")
+            },
+            label = if (isBn) "গজ (Gaj)" else "Gaj",
+            themeColors = themeColors,
+            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).testTag("cloth_gaj_input")
+        )
+
+        CustomOutlinedTextField(
+            value = giraVal,
+            onValueChange = {
+                giraVal = it
+                val d = it.toDoubleOrNull() ?: 0.0
+                updateAllFromInches(d * 2.25, "gira")
+            },
+            label = if (isBn) "গিরা (Gira)" else "Gira",
+            themeColors = themeColors,
+            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).testTag("cloth_gira_input")
+        )
+
+        CustomOutlinedTextField(
+            value = haatVal,
+            onValueChange = {
+                haatVal = it
+                val d = it.toDoubleOrNull() ?: 0.0
+                updateAllFromInches(d * 18.0, "haat")
+            },
+            label = if (isBn) "হাত (Haat)" else "Haat",
+            themeColors = themeColors,
+            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).testTag("cloth_haat_input")
+        )
+
+        CustomOutlinedTextField(
+            value = inchVal,
+            onValueChange = {
+                inchVal = it
+                val d = it.toDoubleOrNull() ?: 0.0
+                updateAllFromInches(d, "inch")
+            },
+            label = if (isBn) "ইঞ্চি (Inch)" else "Inch",
+            themeColors = themeColors,
+            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).testTag("cloth_inch_input")
+        )
+
+        CustomOutlinedTextField(
+            value = meterVal,
+            onValueChange = {
+                meterVal = it
+                val d = it.toDoubleOrNull() ?: 0.0
+                updateAllFromInches(d / 0.0254, "meter")
+            },
+            label = if (isBn) "মিটার (Meter)" else "Meter",
+            themeColors = themeColors,
+            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).testTag("cloth_meter_input")
+        )
+
+        val infoItems = if (isBn) {
+            listOf(
+                "১. দেশীয় গজের পরিমাপ" to "বাঙালি সংস্কৃতিতে কাপড় মাপার ঐতিহ্যবাহী গজ-গিরা ব্যবহৃত হয়।\n• ১ গজ = ৩৬ ইঞ্চি = ৩ ফুট\n• ১ গজ = ২ হাত (১ হাত = ১৮ ইঞ্চি)\n• ১ গজ = ১৬ গিরা",
+                "২. গিরা ও ইঞ্চি সম্পর্ক" to "• ১ গিরা = ২.২৫ ইঞ্চি (২ ১/৪ ইঞ্চি)\n• ২ গিরা = ৪.৫ ইঞ্চি\n• ৪ গিরা = ৯ ইঞ্চি (১/৪ গজ)\n• ৮ গিরা = ১৮ ইঞ্চি (১/২ গজ বা ১ হাত)\n• ১২ গিরা = ২৭ ইঞ্চি (৩/৪ গজ)"
+            )
+        } else {
+            listOf(
+                "1. Bengali Traditional Gaj Units" to "Gaj, Gira, and Haat are traditional South Asian units for measuring textiles.\n• 1 Gaj = 1 Yard = 36 Inches = 3 Feet\n• 1 Gaj = 2 Haat (1 Haat = 18 Inches)\n• 1 Gaj = 16 Gira",
+                "2. Gira to Inches breakdown" to "• 1 Gira = 2.25 Inches\n• 4 Gira = 9 Inches (1/4 Gaj)\n• 8 Gira = 18 Inches (1/2 Gaj or 1 Haat)\n• 12 Gira = 27 Inches (3/4 Gaj)\n• 16 Gira = 36 Inches (1 Gaj)"
+            )
+        }
+        CollapsibleInfoSection(
+            title = if (isBn) "প্রয়োজনীয় তথ্য জানুন" else "Learn Required Information",
+            infoItems = infoItems,
+            themeColors = themeColors
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun GoldCalculatorCard(
+    viewModel: CalculatorViewModel,
+    themeColors: CalculatorThemeColors
+) {
+    val lang = viewModel.selectedLanguage
+    val isBn = lang == AppLanguage.BENGALI
+    val df = remember { DecimalFormat("#.##") }
+    val dfFour = remember { DecimalFormat("#.####") }
+
+    var voriStr by remember { mutableStateOf("1") }
+    var annaStr by remember { mutableStateOf("0") }
+    var rattiStr by remember { mutableStateOf("0") }
+    var pointStr by remember { mutableStateOf("0") }
+
+    var selectedCarat by remember { mutableStateOf("22K") }
+    var goldPricePerVori by remember { mutableStateOf("125000") } // Default Price per Vori BDT
+    var makingChargeStr by remember { mutableStateOf("5000") } // Flat making charge in BDT
+    var vatPercentStr by remember { mutableStateOf("5") } // 5% standard VAT
+
+    val carats = listOf("22K", "21K", "18K", "Sanatan")
+
+    // Automatic rate suggest based on Carat relative to 22K rate
+    val rawBaseRate = goldPricePerVori.toDoubleOrNull() ?: 0.0
+    val derivedRate = when (selectedCarat) {
+        "22K" -> rawBaseRate
+        "21K" -> rawBaseRate * (21.0 / 22.0)
+        "18K" -> rawBaseRate * (18.0 / 22.0)
+        else -> rawBaseRate * 0.65 // Sanatan has ~65% pure gold rate
+    }
+
+    // Weight Calculation
+    val vori = voriStr.toDoubleOrNull() ?: 0.0
+    val anna = annaStr.toDoubleOrNull() ?: 0.0
+    val ratti = rattiStr.toDoubleOrNull() ?: 0.0
+    val point = pointStr.toDoubleOrNull() ?: 0.0
+
+    // 1 Vori = 16 Anna = 96 Ratti = 960 Point
+    val totalVori = vori + (anna / 16.0) + (ratti / 96.0) + (point / 960.0)
+    val totalGrams = totalVori * 11.664
+
+    // Price Calculations
+    val goldOnlyPrice = totalVori * derivedRate
+    val makingCharge = makingChargeStr.toDoubleOrNull() ?: 0.0
+    val vatPercent = vatPercentStr.toDoubleOrNull() ?: 0.0
+
+    val baseWithMaking = goldOnlyPrice + makingCharge
+    val vatAmount = baseWithMaking * (vatPercent / 100.0)
+    val totalPrice = baseWithMaking + vatAmount
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        Text(
+            text = if (isBn) "স্বর্ণ ও রৌপ্য মূল্য ক্যালকুলেটর" else "Gold & Silver Price Calculator",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            color = themeColors.displayText
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Weight Inputs (Vori, Anna, Ratti, Point)
+        Text(
+            text = if (isBn) "স্বর্ণের ওজন:" else "Gold Weight:",
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium,
+            color = themeColors.displayText.copy(alpha = 0.8f)
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+            CustomOutlinedTextField(
+                value = voriStr,
+                onValueChange = { voriStr = it },
+                label = if (isBn) "ভরি" else "Vori",
+                themeColors = themeColors,
+                modifier = Modifier.weight(1.0f).testTag("gold_vori_input")
+            )
+            CustomOutlinedTextField(
+                value = annaStr,
+                onValueChange = { annaStr = it },
+                label = if (isBn) "আনা" else "Anna",
+                themeColors = themeColors,
+                modifier = Modifier.weight(1.0f).testTag("gold_anna_input")
+            )
+            CustomOutlinedTextField(
+                value = rattiStr,
+                onValueChange = { rattiStr = it },
+                label = if (isBn) "রতি" else "Ratti",
+                themeColors = themeColors,
+                modifier = Modifier.weight(1.0f).testTag("gold_ratti_input")
+            )
+            CustomOutlinedTextField(
+                value = pointStr,
+                onValueChange = { pointStr = it },
+                label = if (isBn) "পয়েন্ট" else "Point",
+                themeColors = themeColors,
+                modifier = Modifier.weight(1.0f).testTag("gold_point_input")
+            )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Carat selection Row
+        Text(
+            text = if (isBn) "স্বর্ণের মান (ক্যারেট):" else "Gold Quality (Carat):",
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium,
+            color = themeColors.displayText.copy(alpha = 0.8f)
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            carats.forEach { carat ->
+                val isSelected = selectedCarat == carat
+                Button(
+                    onClick = { selectedCarat = carat },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (isSelected) themeColors.buttonEqualBg else themeColors.buttonNormalBg,
+                        contentColor = if (isSelected) themeColors.buttonEqualText else themeColors.buttonNormalText
+                    ),
+                    modifier = Modifier.weight(1f).height(36.dp),
+                    contentPadding = PaddingValues(0.dp),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(text = carat, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Price Input
+        CustomOutlinedTextField(
+            value = goldPricePerVori,
+            onValueChange = { goldPricePerVori = it },
+            label = if (isBn) "২২ ক্যারেট প্রতি ভরি মূল্য (৳)" else "22K Price Per Vori (৳)",
+            themeColors = themeColors,
+            modifier = Modifier.fillMaxWidth().testTag("gold_price_per_vori_input")
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+            CustomOutlinedTextField(
+                value = makingChargeStr,
+                onValueChange = { makingChargeStr = it },
+                label = if (isBn) "মজুরি (৳)" else "Making Charge (৳)",
+                themeColors = themeColors,
+                modifier = Modifier.weight(1f).testTag("gold_making_charge_input")
+            )
+            CustomOutlinedTextField(
+                value = vatPercentStr,
+                onValueChange = { vatPercentStr = it },
+                label = if (isBn) "ভ্যাট (%)" else "VAT (%)",
+                themeColors = themeColors,
+                modifier = Modifier.weight(1f).testTag("gold_vat_input")
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Results Card
+        Card(
+            colors = CardDefaults.cardColors(containerColor = themeColors.buttonEqualBg.copy(alpha = 0.12f)),
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(14.dp)) {
+                Text(
+                    text = if (isBn) "হিসাব বিবরণী" else "Calculated Details",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = themeColors.displayText
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(if (isBn) "মোট ওজন (ভরি):" else "Total Weight (Vori):", fontSize = 12.sp, color = themeColors.displayText.copy(alpha = 0.7f))
+                    Text("${dfFour.format(totalVori)} ভরি / Vori", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                }
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(if (isBn) "মোট ওজন (গ্রাম):" else "Total Weight (Grams):", fontSize = 12.sp, color = themeColors.displayText.copy(alpha = 0.7f))
+                    Text("${dfFour.format(totalGrams)} গ্রাম / Grams", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                }
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(if (isBn) "ধার্যকৃত প্রতি ভরি দর:" else "Effective Rate/Vori:", fontSize = 12.sp, color = themeColors.displayText.copy(alpha = 0.7f))
+                    Text("৳ ${df.format(derivedRate)} ($selectedCarat)", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                }
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(if (isBn) "স্বর্ণের প্রকৃত মূল্য:" else "Gold Value Only:", fontSize = 12.sp, color = themeColors.displayText.copy(alpha = 0.7f))
+                    Text("৳ ${df.format(goldOnlyPrice)}", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                }
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(if (isBn) "ভ্যাট পরিমাণ:" else "VAT Amount:", fontSize = 12.sp, color = themeColors.displayText.copy(alpha = 0.7f))
+                    Text("৳ ${df.format(vatAmount)}", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                }
+
+                Divider(modifier = Modifier.padding(vertical = 8.dp), color = themeColors.displayText.copy(alpha = 0.15f))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(if (isBn) "সর্বমোট প্রদেয় মূল্য:" else "Total Payable Price:", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                    Text("৳ ${df.format(totalPrice)}", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = themeColors.buttonEqualBg)
+                }
+            }
+        }
+
+        val infoItems = if (isBn) {
+            listOf(
+                "১. স্বর্ণ পরিমাপের ভরি-আনা-রতি" to "বাংলাদেশে সনাতন পদ্ধতিতে স্বর্ণ ও রৌপ্য পরিমাপ করা হয়:\n• ১ ভরি (Tola) = ১১.৬৬৪ গ্রাম\n• ১ ভরি = ১৬ আনা\n• ১ আনা = ৬ রতি\n• ১ রতি = ১০ পয়েন্ট\n• ১ ভরি = ৯৬ রতি = ৯৬০ পয়েন্ট",
+                "২. স্বর্ণের ক্যারেট (Carat) কি?" to "ক্যারেট স্বর্ণের বিশুদ্ধতা নির্দেশ করে:\n• ২২ ক্যারেট: ৯১.৬% বিশুদ্ধ স্বর্ণ (অলংকার তৈরির জন্য সেরা)\n• ২১ ক্যারেট: ৪৭.৫% বিশুদ্ধ স্বর্ণ\n• ১৮ ক্যারেট: ৭৫% বিশুদ্ধ স্বর্ণ\n• ২৪ ক্যারেট: ৯৯.৯% খাঁটি স্বর্ণ (খুব নরম, অলংকার করা যায় না)"
+            )
+        } else {
+            listOf(
+                "1. Traditional Gold Weights" to "Gold and silver in Bangladesh are measured in Vori, Anna, Ratti, and Point:\n• 1 Vori (Tola) = 11.664 Grams\n• 1 Vori = 16 Anna\n• 1 Anna = 6 Ratti\n• 1 Ratti = 10 Points\n• 1 Vori = 96 Ratti = 960 Points",
+                "2. Carat & Gold Purity" to "Carat measures the purity of gold:\n• 22 Carat: 91.6% pure gold (Ideal for high-end ornaments)\n• 21 Carat: 87.5% pure gold\n• 18 Carat: 75.0% pure gold\n• 24 Carat: 99.9% pure gold (Raw gold bar/coin, too soft for jewelry)"
+            )
+        }
+        CollapsibleInfoSection(
+            title = if (isBn) "প্রয়োজনীয় তথ্য জানুন" else "Learn Required Information",
+            infoItems = infoItems,
+            themeColors = themeColors
+        )
+    }
+}
+
+@Composable
+fun CollapsibleInfoSection(
+    title: String,
+    infoItems: List<Pair<String, String>>,
+    themeColors: CalculatorThemeColors
+) {
+    var isExpanded by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 16.dp)
+    ) {
+        Divider(color = themeColors.displayText.copy(alpha = 0.12f))
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp))
+                .clickable { isExpanded = !isExpanded }
+                .padding(vertical = 8.dp, horizontal = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.Info,
+                    contentDescription = null,
+                    tint = themeColors.buttonEqualBg,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = title,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = themeColors.displayText
+                )
+            }
+            Icon(
+                imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                contentDescription = "Collapse/Expand",
+                tint = themeColors.displayText.copy(alpha = 0.6f),
+                modifier = Modifier.size(20.dp)
+            )
+        }
+
+        AnimatedVisibility(
+            visible = isExpanded,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp, horizontal = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                infoItems.forEach { (subtitle, content) ->
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(themeColors.background.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
+                            .border(0.5.dp, themeColors.displayText.copy(alpha = 0.08f), RoundedCornerShape(8.dp))
+                            .padding(10.dp)
+                    ) {
+                        Text(
+                            text = subtitle,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = themeColors.buttonEqualBg
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = content,
+                            fontSize = 11.sp,
+                            lineHeight = 16.sp,
+                            color = themeColors.displayText.copy(alpha = 0.8f)
+                        )
+                    }
+                }
             }
         }
     }
