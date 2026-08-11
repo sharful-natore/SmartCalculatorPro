@@ -591,31 +591,15 @@ fun MainContent(
                     Box(
                         modifier = Modifier
                             .size(58.dp)
-                            .shadow(
-                                elevation = 6.dp,
-                                shape = CircleShape,
-                                ambientColor = Color.Black.copy(alpha = 0.12f),
-                                spotColor = Color.Black.copy(alpha = 0.18f)
-                            )
-                            .clip(CircleShape)
+                            .shadow(elevation = 6.dp, shape = CircleShape)
                             .background(
                                 brush = Brush.linearGradient(
                                     colors = listOf(color1, color2)
-                                )
+                                ),
+                                shape = CircleShape
                             )
                             .border(2.dp, Color.White, CircleShape)
-                            .drawBehind {
-                                drawCircle(
-                                    brush = Brush.radialGradient(
-                                        colors = listOf(
-                                            Color.White.copy(alpha = 0.35f),
-                                            Color.Transparent
-                                        ),
-                                        center = Offset(size.width / 2f, size.height / 2f),
-                                        radius = size.width / 2f
-                                    )
-                                )
-                            }
+                            .clip(CircleShape)
                             .clickable(
                                 interactionSource = fabInteractionSource,
                                 indication = ripple(bounded = false, color = Color.White),
