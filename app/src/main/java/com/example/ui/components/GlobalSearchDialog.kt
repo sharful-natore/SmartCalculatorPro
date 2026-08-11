@@ -1,11 +1,15 @@
 package com.example.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -17,17 +21,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import coil.compose.AsyncImage
+import com.example.R
 import com.example.data.model.ConverterType
 import com.example.data.model.ToolType
 import com.example.ui.theme.CalculatorThemeColors
@@ -67,154 +77,261 @@ fun GlobalSearchDialog(
 ) {
     if (!viewModel.showGlobalSearch) return
 
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+    val dialogWidth = (screenWidth * 0.92f).coerceAtMost(500.dp)
+    val dialogHeight = (configuration.screenHeightDp.dp * 0.85f)
+
     Dialog(
         onDismissRequest = { viewModel.showGlobalSearch = false },
-        properties = DialogProperties(usePlatformDefaultWidth = false)
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false
+        )
     ) {
         androidx.activity.compose.BackHandler {
             viewModel.showGlobalSearch = false
         }
 
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = themeColors.background
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.4f))
+                .clickable(
+                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                    indication = null
+                ) { viewModel.showGlobalSearch = false },
+            contentAlignment = Alignment.Center
         ) {
-            val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
-            val language = viewModel.selectedLanguage
-            var searchQuery by remember { mutableStateOf("") }
-            val historyItems by viewModel.historyList.collectAsState()
+            Surface(
+                modifier = Modifier
+                    .width(dialogWidth)
+                    .height(dialogHeight)
+                    .clickable(enabled = false) {},
+                shape = RoundedCornerShape(32.dp),
+                color = Color.White, // As per image design
+                tonalElevation = 8.dp
+            ) {
+                val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
+                val language = viewModel.selectedLanguage
+                var searchQuery by remember { mutableStateOf("") }
+                val historyItems by viewModel.historyList.collectAsState()
 
-            val searchResults = remember(searchQuery, historyItems) {
-                if (searchQuery.isBlank()) emptyList<SearchResult>()
-                else {
-                    val query = searchQuery.trim()
-                    val results = mutableListOf<SearchResult>()
+                val searchResults = remember(searchQuery, historyItems) {
+                    if (searchQuery.isBlank()) emptyList<SearchResult>()
+                    else {
+                        val query = searchQuery.trim()
+                        val results = mutableListOf<SearchResult>()
 
-                    val eng = listOf("0", "1", "2", "3", "4", "5", "6", "7", "8", "9")
-                    val ben = listOf("০", "১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯")
-                    var normalizedQuery = query
-                    for (i in 0..9) {
-                        normalizedQuery = normalizedQuery.replace(ben[i], eng[i])
-                    }
-
-                    // Search Converters
-                    ConverterType.values().forEach { type ->
-                        if (type.titleEn.contains(query, ignoreCase = true) || type.titleBn.contains(query, ignoreCase = true)) {
-                            results.add(SearchResult.Converter(type, language) {
-                                viewModel.selectedConverterType = type
-                                viewModel.activeTab = 1
-                                viewModel.showGlobalSearch = false
-                            })
-                        }
-                    }
-
-                    // Search Tools
-                    ToolType.values().forEach { type ->
-                        if (type.titleEn.contains(query, ignoreCase = true) || type.titleBn.contains(query, ignoreCase = true)) {
-                            results.add(SearchResult.Tool(type, language) {
-                                viewModel.selectedToolCategoryFilter = null
-                                viewModel.selectedToolType = type
-                                viewModel.activeTab = 2
-                                viewModel.showGlobalSearch = false
-                            })
-                        }
-                    }
-
-                    // Search History
-                    historyItems.forEach { item ->
-                        var nExpr = item.expression
-                        var nRes = item.result
+                        val eng = listOf("0", "1", "2", "3", "4", "5", "6", "7", "8", "9")
+                        val ben = listOf("০", "১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯")
+                        var normalizedQuery = query
                         for (i in 0..9) {
-                            nExpr = nExpr.replace(ben[i], eng[i])
-                            nRes = nRes.replace(ben[i], eng[i])
+                            normalizedQuery = normalizedQuery.replace(ben[i], eng[i])
+                        }
+
+                        // Search Converters
+                        ConverterType.values().forEach { type ->
+                            if (type.titleEn.contains(query, ignoreCase = true) || type.titleBn.contains(query, ignoreCase = true)) {
+                                results.add(SearchResult.Converter(type, language) {
+                                    viewModel.selectedConverterType = type
+                                    viewModel.activeTab = 1
+                                    viewModel.showGlobalSearch = false
+                                })
+                            }
+                        }
+
+                        // Search Tools
+                        ToolType.values().forEach { type ->
+                            if (type.titleEn.contains(query, ignoreCase = true) || type.titleBn.contains(query, ignoreCase = true)) {
+                                results.add(SearchResult.Tool(type, language) {
+                                    viewModel.selectedToolCategoryFilter = null
+                                    viewModel.selectedToolType = type
+                                    viewModel.activeTab = 2
+                                    viewModel.showGlobalSearch = false
+                                })
+                            }
+                        }
+
+                        // Search History
+                        historyItems.forEach { item ->
+                            var nExpr = item.expression
+                            var nRes = item.result
+                            for (i in 0..9) {
+                                nExpr = nExpr.replace(ben[i], eng[i])
+                                nRes = nRes.replace(ben[i], eng[i])
+                            }
+                            
+                            if (nExpr.contains(normalizedQuery, ignoreCase = true) || nRes.contains(normalizedQuery, ignoreCase = true)) {
+                                results.add(SearchResult.History(item.expression, item.result) {
+                                    viewModel.selectHistoryItem(item)
+                                    viewModel.activeTab = 0
+                                    viewModel.showGlobalSearch = false
+                                })
+                            }
+                        }
+
+                        results
+                    }
+                }
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp)
+                ) {
+                    // Header with Title and Close Button
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = if (language == AppLanguage.BENGALI) "স্মার্ট অনুসন্ধান" else "Smart Search",
+                                fontSize = 28.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = Color(0xFF2D3142),
+                                fontFamily = FontFamily.SansSerif
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = if (language == AppLanguage.BENGALI) "সব তথ্য এক জায়গায় খুঁজুন" else "Find everything in one place",
+                                fontSize = 16.sp,
+                                color = Color.Gray,
+                                fontFamily = FontFamily.SansSerif
+                            )
                         }
                         
-                        if (nExpr.contains(normalizedQuery, ignoreCase = true) || nRes.contains(normalizedQuery, ignoreCase = true)) {
-                            results.add(SearchResult.History(item.expression, item.result) {
-                                viewModel.selectHistoryItem(item)
-                                viewModel.activeTab = 0
-                                viewModel.showGlobalSearch = false
-                            })
+                        Box(
+                            modifier = Modifier
+                                .size(42.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFFF1F3F9))
+                                .clickable { viewModel.showGlobalSearch = false },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Close",
+                                tint = Color(0xFF4A4E69),
+                                modifier = Modifier.size(20.dp)
+                            )
                         }
                     }
 
-                    results
-                }
-            }
+                    Spacer(modifier = Modifier.height(24.dp))
 
-            Column(modifier = Modifier.fillMaxSize()) {
-                // Search Header
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .statusBarsPadding()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(onClick = { viewModel.showGlobalSearch = false }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = themeColors.displayText)
+                    // Search Input Field
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(80.dp)
+                            .border(2.dp, Color(0xFF7A86E1).copy(alpha = 0.6f), RoundedCornerShape(20.dp))
+                            .padding(horizontal = 16.dp),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = null,
+                                tint = Color(0xFF7A86E1),
+                                modifier = Modifier.size(28.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            
+                            BasicTextField(
+                                value = searchQuery,
+                                onValueChange = { searchQuery = it },
+                                modifier = Modifier.fillMaxWidth(),
+                                textStyle = TextStyle(
+                                    fontSize = 18.sp,
+                                    color = Color(0xFF2D3142),
+                                    fontWeight = FontWeight.Medium
+                                ),
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                                keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
+                                decorationBox = { innerTextField ->
+                                    if (searchQuery.isEmpty()) {
+                                        Text(
+                                            text = if (language == AppLanguage.BENGALI) "টুল, কনভার্টার বা হিস্ট্রি খুঁজুন..." else "Search tools, converters or history...",
+                                            fontSize = 18.sp,
+                                            color = Color.Gray.copy(alpha = 0.7f),
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    }
+                                    innerTextField()
+                                }
+                            )
+                        }
                     }
-                    
-                    OutlinedTextField(
-                        value = searchQuery,
-                        onValueChange = { searchQuery = it },
-                        modifier = Modifier.weight(1f),
-                        placeholder = { 
-                            Text(
-                                if (language == AppLanguage.BENGALI) "সার্চ করুন..." else "Search everything...",
-                                color = themeColors.displayText.copy(alpha = 0.5f)
-                            ) 
-                        },
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = themeColors.displayText,
-                            unfocusedTextColor = themeColors.displayText,
-                            focusedBorderColor = themeColors.buttonEqualBg,
-                            unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.3f),
-                            cursorColor = themeColors.buttonEqualBg
-                        ),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                        keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
-                        shape = RoundedCornerShape(24.dp),
-                        trailingIcon = {
-                            if (searchQuery.isNotEmpty()) {
-                                IconButton(onClick = { searchQuery = "" }) {
-                                    Icon(Icons.Default.Close, contentDescription = "Clear", tint = themeColors.displayText)
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Content Area (Results or Empty State)
+                    Box(modifier = Modifier.weight(1f)) {
+                        if (searchQuery.isBlank()) {
+                            // Initial Empty State
+                            Column(
+                                modifier = Modifier.fillMaxSize(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                AsyncImage(
+                                    model = R.drawable.ic_search_empty,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(140.dp),
+                                    contentScale = ContentScale.Fit
+                                )
+                                Spacer(modifier = Modifier.height(24.dp))
+                                Text(
+                                    text = if (language == AppLanguage.BENGALI) "খুঁজতে টাইপ করুন..." else "Type to search...",
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.Gray,
+                                    textAlign = TextAlign.Center
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = if (language == AppLanguage.BENGALI) 
+                                        "যেমন: হিস্ট্রি, বিএমআই, বা তাপমাত্রা" 
+                                        else "Example: History, BMI, or Temperature",
+                                    fontSize = 14.sp,
+                                    color = Color.Gray.copy(alpha = 0.6f),
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        } else if (searchResults.isEmpty()) {
+                            // No Results State
+                            Column(
+                                modifier = Modifier.fillMaxSize(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.SearchOff,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(80.dp),
+                                    tint = Color.Gray.copy(alpha = 0.3f)
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(
+                                    text = if (language == AppLanguage.BENGALI) "কোনো ফলাফল পাওয়া যায়নি" else "No results found",
+                                    color = Color.Gray,
+                                    fontSize = 18.sp
+                                )
+                            }
+                        } else {
+                            // Results List
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                                contentPadding = PaddingValues(bottom = 16.dp)
+                            ) {
+                                items(searchResults) { result ->
+                                    SearchResultItem(result, searchQuery, themeColors)
                                 }
                             }
-                        }
-                    )
-                }
-
-                // Results List
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    if (searchQuery.isBlank()) {
-                        item {
-                            Box(modifier = Modifier.fillMaxWidth().padding(top = 100.dp), contentAlignment = Alignment.Center) {
-                                Text(
-                                    if (language == AppLanguage.BENGALI) "আপনার প্রয়োজনীয় কিছু খুঁজুন" else "Find what you need",
-                                    color = themeColors.displayText.copy(alpha = 0.5f),
-                                    fontSize = 18.sp
-                                )
-                            }
-                        }
-                    } else if (searchResults.isEmpty()) {
-                        item {
-                            Box(modifier = Modifier.fillMaxWidth().padding(top = 100.dp), contentAlignment = Alignment.Center) {
-                                Text(
-                                    if (language == AppLanguage.BENGALI) "কোনো ফলাফল পাওয়া যায়নি" else "No results found",
-                                    color = themeColors.displayText.copy(alpha = 0.5f),
-                                    fontSize = 18.sp
-                                )
-                            }
-                        }
-                    } else {
-                        items(searchResults) { result ->
-                            SearchResultItem(result, searchQuery, themeColors)
                         }
                     }
                 }
