@@ -84,21 +84,19 @@ import com.example.ui.viewmodel.CalculatorViewModel
 @Composable
 fun PillBadge(count: Int, themeColors: CalculatorThemeColors, isLeft: Boolean, modifier: Modifier = Modifier) {
     if (count <= 0) return
-    val text = if (isLeft) "$count+" else "+$count"
-    Surface(
-        color = themeColors.background.copy(alpha = 0.95f),
-        shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.5.dp, themeColors.displayText.copy(alpha = 0.4f)),
-        shadowElevation = 2.dp,
+    val text = if (isLeft) "${count}+" else "+${count}"
+    Box(
         modifier = modifier
+            .background(themeColors.buttonEqualBg.copy(alpha = 0.15f), RoundedCornerShape(12.dp))
+            .padding(horizontal = 6.dp, vertical = 2.dp),
+        contentAlignment = Alignment.Center
     ) {
         Text(
             text = text,
-            color = themeColors.displayText.copy(alpha = 0.85f),
+            color = themeColors.buttonEqualBg,
             fontSize = 10.sp,
             fontFamily = FontFamily.Monospace,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp)
+            fontWeight = FontWeight.Bold
         )
     }
 }
@@ -390,11 +388,11 @@ fun BasicScientificScreen(
                 val exprHiddenCount = remember(exprScrollState.value, exprLayoutResult, viewModel.expression, exprViewportWidth) {
                     val layout = exprLayoutResult ?: return@remember 0
                     if (exprViewportWidth <= 0) return@remember 0
-                    if (layout.size.width <= exprViewportWidth + 1) return@remember 0
+                    if (layout.size.width <= exprViewportWidth + 2f) return@remember 0
                     
                     var count = 0
                     for (i in 0 until viewModel.expression.length) {
-                        if (layout.getHorizontalPosition(i + 1, true) < exprScrollState.value + 0.5f) {
+                        if (layout.getHorizontalPosition(i + 1, true) < exprScrollState.value + 1f) {
                             count++
                         }
                     }
@@ -405,24 +403,27 @@ fun BasicScientificScreen(
                 val resultHiddenCount = remember(resultScrollState.value, resultLayoutResult, viewModel.result, resultViewportWidth) {
                     val layout = resultLayoutResult ?: return@remember 0
                     if (resultViewportWidth <= 0) return@remember 0
-                    if (layout.size.width <= resultViewportWidth + 1) return@remember 0
+                    val textWidth = layout.size.width
+                    if (textWidth <= resultViewportWidth + 2f) return@remember 0
                     
                     val viewportRight = resultScrollState.value + resultViewportWidth
                     var count = 0
                     for (i in 0 until viewModel.result.length) {
-                        if (layout.getHorizontalPosition(i, true) > viewportRight + 0.5f) {
+                        if (layout.getHorizontalPosition(i, true) > viewportRight - 1f) {
                             count++
                         }
                     }
-                    if (count == 0) count = 1
+                    if (count == 0 && textWidth > resultViewportWidth + 2f && resultScrollState.value < resultScrollState.maxValue) count = 1
                     count
                 }
 
-                val exprPadding by animateDpAsState(targetValue = if (exprHiddenCount > 0) 44.dp else 0.dp, label = "exprPadding")
-                val resultPadding by animateDpAsState(targetValue = if (resultHiddenCount > 0) 44.dp else 0.dp, label = "resultPadding")
+                val exprPadding by animateDpAsState(targetValue = if (exprHiddenCount > 0) 38.dp else 0.dp, label = "exprPadding")
+                val resultPadding by animateDpAsState(targetValue = if (resultHiddenCount > 0) 38.dp else 0.dp, label = "resultPadding")
 
-                LaunchedEffect(viewModel.expressionValue.text, viewModel.expressionValue.selection) {
-                    exprScrollState.animateScrollTo(exprScrollState.maxValue)
+                LaunchedEffect(viewModel.expressionValue.text, viewModel.expressionValue.selection, exprScrollState.maxValue) {
+                    if (exprScrollState.maxValue > 0) {
+                        exprScrollState.animateScrollTo(exprScrollState.maxValue)
+                    }
                 }
 
                 LaunchedEffect(viewModel.result) {
@@ -477,7 +478,7 @@ fun BasicScientificScreen(
                             platformStyle = PlatformTextStyle(includeFontPadding = false)
                         ),
                         modifier = Modifier
-                            .fillMaxWidth()
+                            .wrapContentWidth(unbounded = true)
                             .graphicsLayer(alpha = 0f),
                         onTextLayout = { exprLayoutResult = it },
                         maxLines = 1,
@@ -622,6 +623,23 @@ fun BasicScientificScreen(
                         .onGloballyPositioned { /* Measured on inner scrollable box */ },
                     contentAlignment = Alignment.CenterEnd
                 ) {
+                    // Hidden result text for measurement
+                    Text(
+                        text = viewModel.result,
+                        fontSize = resultSize.sp,
+                        fontFamily = FontFamily.Monospace,
+                        fontWeight = FontWeight.Bold,
+                        style = TextStyle(
+                            platformStyle = PlatformTextStyle(includeFontPadding = false)
+                        ),
+                        modifier = Modifier
+                            .wrapContentWidth(unbounded = true)
+                            .graphicsLayer(alpha = 0f),
+                        onTextLayout = { resultLayoutResult = it },
+                        maxLines = 1,
+                        softWrap = false
+                    )
+
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()

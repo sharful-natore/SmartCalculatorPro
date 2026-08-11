@@ -25,48 +25,8 @@ import androidx.compose.ui.unit.sp
 import com.example.ui.theme.CalculatorThemeColors
 import com.example.ui.viewmodel.CalculatorViewModel
 import com.example.util.LanguageManager
+import com.example.ui.components.CustomOutlinedTextField
 import java.text.DecimalFormat
-
-// Custom OutlinedTextField with explicit high contrast theme colors for pristine text visibility
-@Composable
-fun CustomOutlinedTextField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    label: String,
-    themeColors: CalculatorThemeColors,
-    modifier: Modifier = Modifier,
-    keyboardType: KeyboardType = KeyboardType.Number,
-    singleLine: Boolean = true,
-    trailingIcon: @Composable (() -> Unit)? = null
-) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = {
-            Text(
-                text = label,
-                color = themeColors.displayText.copy(alpha = 0.85f),
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium
-            )
-        },
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = themeColors.cardBg,
-            unfocusedContainerColor = themeColors.cardBg,
-            focusedTextColor = themeColors.displayText,
-            unfocusedTextColor = themeColors.displayText,
-            focusedBorderColor = themeColors.buttonEqualBg,
-            unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.35f),
-            focusedLabelColor = themeColors.buttonEqualBg,
-            unfocusedLabelColor = themeColors.displayText.copy(alpha = 0.8f),
-            cursorColor = themeColors.buttonEqualBg
-        ),
-        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-        modifier = modifier,
-        singleLine = singleLine,
-        trailingIcon = trailingIcon
-    )
-}
 
 // --- 1. Calorie / BMR Calculator ---
 @Composable

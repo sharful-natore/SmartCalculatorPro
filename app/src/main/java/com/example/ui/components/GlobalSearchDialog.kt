@@ -1,11 +1,15 @@
 package com.example.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -16,18 +20,26 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import coil.compose.AsyncImage
+import com.example.R
 import com.example.data.model.ConverterType
 import com.example.data.model.ToolType
 import com.example.ui.theme.CalculatorThemeColors
@@ -42,13 +54,13 @@ sealed class SearchResult(
 ) {
     class Converter(val type: ConverterType, language: AppLanguage, val onAction: () -> Unit) : SearchResult(
         title = if (language == AppLanguage.BENGALI) type.titleBn else type.titleEn,
-        subTitle = if (language == AppLanguage.BENGALI) "কনভার্টার" else "Converter",
+        subTitle = if (language == AppLanguage.BENGALI) "কনভার্টার • ${type.units.take(6).joinToString(", ")}" else "Converter • ${type.units.take(6).joinToString(", ")}",
         icon = type.icon,
         onClick = onAction
     )
     class Tool(val type: ToolType, language: AppLanguage, val onAction: () -> Unit) : SearchResult(
         title = if (language == AppLanguage.BENGALI) type.titleBn else type.titleEn,
-        subTitle = if (language == AppLanguage.BENGALI) "টুল" else "Tool",
+        subTitle = type.getDescription(language),
         icon = type.icon,
         onClick = onAction
     )
@@ -60,6 +72,48 @@ sealed class SearchResult(
     )
 }
 
+fun ConverterType.matchesConverterQuery(query: String): Boolean {
+    val q = query.lowercase().trim()
+    if (q.isEmpty()) return false
+    if (titleEn.lowercase().contains(q) || titleBn.lowercase().contains(q)) return true
+    
+    if (units.any { it.lowercase().contains(q) }) return true
+
+    val extraKeywords = when (this) {
+        ConverterType.LENGTH -> listOf("মিটার", "কিলোমিটার", "কিমি", "ফুট", "ইঞ্চি", "সেন্টিমিটার", "সেমি", "গজ", "মাইল", "meter", "kilometre", "kilometer", "feet", "foot", "inch", "cm", "yard", "mile")
+        ConverterType.WEIGHT -> listOf("ওজন", "কেজি", "কিলোগ্রাম", "গ্রাম", "পাউন্ড", "আউন্স", "টন", "মিলিগ্রাম", "kg", "gram", "pound", "ounce", "ton", "mg")
+        ConverterType.AREA -> listOf("ক্ষেত্রফল", "বিঘা", "কাঠা", "শতক", "শতাংশ", "একর", "একোর", "হেক্টর", "স্কয়ার ফিট", "বর্গফুট", "বর্গমিটার", "bigha", "katha", "shotok", "acre", "sqft")
+        ConverterType.TEMPERATURE -> listOf("তাপমাত্রা", "সেলসিয়াস", "ফারেনহাইট", "কেলভিন", "ডিগ্রি", "ডিগ্রী", "celsius", "fahrenheit", "kelvin", "degree")
+        ConverterType.VOLUME -> listOf("আয়তন", "আয়তন", "লিটার", "মিলিলিটার", "গ্যালন", "ঘনমিটার", "liter", "litre", "ml", "gallon", "cubic")
+        ConverterType.PRESSURE -> listOf("চাপ", "বার", "প্যাসকেল", "বায়ুমণ্ডল", "bar", "pascal", "psi", "atmosphere")
+        ConverterType.POWER -> listOf("ক্ষমতা", "ওয়াট", "ওয়াট", "কিলোওয়াট", "কিলোওয়াট", "অশ্বক্ষমতা", "এইচপি", "watt", "kilowatt", "hp", "horsepower")
+        ConverterType.ENERGY -> listOf("শক্তি", "জুল", "কিলোজুল", "ক্যালরি", "ক্যালোরি", "joule", "calorie", "kcal")
+        ConverterType.FORCE -> listOf("বল", "নিউটন", "ডাইন", "newton", "dyne")
+        ConverterType.TORQUE -> listOf("টর্ক", "নিউটন-মিটার", "torque", "nm")
+        ConverterType.DENSITY -> listOf("ঘনত্ব", "kg/m3", "density")
+        ConverterType.ANGLE -> listOf("কোণ", "ডিগ্রি", "ডিগ্রী", "রেডিয়ান", "angle", "degree", "radian")
+        ConverterType.DIGITAL_STORAGE -> listOf("ডেটা", "বাইট", "কেবি", "এমবি", "জিবি", "টেরাবাইট", "byte", "kb", "mb", "gb", "tb")
+        ConverterType.DATA_TRANSFER -> listOf("স্পিড", "স্পীড", "এমবিপিএস", "mbps", "gbps", "mb/s")
+        ConverterType.FREQUENCY -> listOf("ফ্রিকোয়েন্সি", "হার্টজ", "হার্জ", "hertz", "hz", "khz", "mhz", "ghz")
+        ConverterType.NUMBER_SYSTEM -> listOf("সংখ্যা", "ডেসিমেল", "বাইনারি", "অক্টাল", "হেক্সাডেসিমেল", "decimal", "binary", "octal", "hex")
+        ConverterType.SPEED -> listOf("গতি", "গতিবেগ", "কিমি/ঘন্টা", "মাইল/ঘন্টা", "নট", "speed", "kmh", "mph", "knot")
+        ConverterType.TIME -> listOf("সময়", "সময়", "সেকেন্ড", "মিনিট", "ঘন্টা", "ঘণ্টা", "দিন", "সপ্তাহ", "মাস", "বছর", "বৎসর", "second", "minute", "hour", "day", "week", "month", "year")
+        ConverterType.FUEL_CONSUMPTION -> listOf("জ্বালানি", "মাইলেজ", "km/l", "mpg", "mileage")
+        ConverterType.ACCELERATION -> listOf("ত্বরণ", "acceleration", "g-force")
+        ConverterType.ELECTRIC_CURRENT -> listOf("বিদ্যুৎ", "কারেন্ট", "অ্যাম্পিয়ার", "এম্পিয়ার", "ampere", "amp")
+        ConverterType.VOLTAGE -> listOf("ভোল্টেজ", "ভোল্ট", "volt", "voltage")
+        ConverterType.RESISTANCE -> listOf("রোধ", "ওহম", "ওম", "ohm", "kiloohm")
+        ConverterType.ELECTRIC_CHARGE -> listOf("চার্জ", "কুলম্ব", "এমএএইচ", "mah", "coulomb")
+        ConverterType.COOKING -> listOf("রান্না", "চা চামচ", "টেবিল চামচ", "কাপ", "teaspoon", "tablespoon", "cup")
+        ConverterType.TYPOGRAPHY -> listOf("পিক্সেল", "পয়েন্ট", "pixel", "px", "pt", "rem", "em")
+        ConverterType.CURRENCY -> listOf("মুদ্রা", "টাকা", "ডলার", "ইউরো", "পাউন্ড", "রুপি", "রিয়াল", "দিরহাম", "রিঙ্গিত", "ইয়েন", "ইউয়ান", "লিরা", "রুবল", "দিনার", "taka", "dollar", "euro", "pound", "rupee", "riyal", "dirham", "yen", "yuan", "bdt", "usd", "inr", "eur")
+        ConverterType.ROMAN_NUMERALS -> listOf("রোমান", "সংখ্যা", "roman", "integer")
+        ConverterType.TIME_ZONE -> listOf("টাইম জোন", "সময়", "উটিসি", "বিএসটি", "utc", "bst", "ist", "gmt", "est", "pst")
+    }
+
+    return extraKeywords.any { it.contains(q) }
+}
+
 @Composable
 fun GlobalSearchDialog(
     viewModel: CalculatorViewModel,
@@ -67,154 +121,267 @@ fun GlobalSearchDialog(
 ) {
     if (!viewModel.showGlobalSearch) return
 
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+    val dialogWidth = (screenWidth * 0.92f).coerceAtMost(500.dp)
+    val dialogHeight = (configuration.screenHeightDp.dp * 0.85f)
+
     Dialog(
         onDismissRequest = { viewModel.showGlobalSearch = false },
-        properties = DialogProperties(usePlatformDefaultWidth = false)
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false
+        )
     ) {
         androidx.activity.compose.BackHandler {
             viewModel.showGlobalSearch = false
         }
 
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = themeColors.background
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.4f))
+                .clickable(
+                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                    indication = null
+                ) { viewModel.showGlobalSearch = false },
+            contentAlignment = Alignment.Center
         ) {
-            val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
-            val language = viewModel.selectedLanguage
-            var searchQuery by remember { mutableStateOf("") }
-            val historyItems by viewModel.historyList.collectAsState()
+            Surface(
+                modifier = Modifier
+                    .width(dialogWidth)
+                    .height(dialogHeight)
+                    .clickable(enabled = false) {},
+                shape = RoundedCornerShape(28.dp),
+                color = themeColors.cardBg,
+                tonalElevation = 6.dp,
+                border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.1f))
+            ) {
+                val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
+                val language = viewModel.selectedLanguage
+                var searchQuery by remember { mutableStateOf("") }
+                val historyItems by viewModel.historyList.collectAsState()
 
-            val searchResults = remember(searchQuery, historyItems) {
-                if (searchQuery.isBlank()) emptyList<SearchResult>()
-                else {
-                    val query = searchQuery.trim()
-                    val results = mutableListOf<SearchResult>()
+                val searchResults = remember(searchQuery, historyItems) {
+                    if (searchQuery.isBlank()) emptyList<SearchResult>()
+                    else {
+                        val query = searchQuery.trim()
+                        val results = mutableListOf<SearchResult>()
 
-                    val eng = listOf("0", "1", "2", "3", "4", "5", "6", "7", "8", "9")
-                    val ben = listOf("০", "১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯")
-                    var normalizedQuery = query
-                    for (i in 0..9) {
-                        normalizedQuery = normalizedQuery.replace(ben[i], eng[i])
-                    }
-
-                    // Search Converters
-                    ConverterType.values().forEach { type ->
-                        if (type.titleEn.contains(query, ignoreCase = true) || type.titleBn.contains(query, ignoreCase = true)) {
-                            results.add(SearchResult.Converter(type, language) {
-                                viewModel.selectedConverterType = type
-                                viewModel.activeTab = 1
-                                viewModel.showGlobalSearch = false
-                            })
-                        }
-                    }
-
-                    // Search Tools
-                    ToolType.values().forEach { type ->
-                        if (type.titleEn.contains(query, ignoreCase = true) || type.titleBn.contains(query, ignoreCase = true)) {
-                            results.add(SearchResult.Tool(type, language) {
-                                viewModel.selectedToolCategoryFilter = null
-                                viewModel.selectedToolType = type
-                                viewModel.activeTab = 2
-                                viewModel.showGlobalSearch = false
-                            })
-                        }
-                    }
-
-                    // Search History
-                    historyItems.forEach { item ->
-                        var nExpr = item.expression
-                        var nRes = item.result
+                        val eng = listOf("0", "1", "2", "3", "4", "5", "6", "7", "8", "9")
+                        val ben = listOf("০", "১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯")
+                        var normalizedQuery = query
                         for (i in 0..9) {
-                            nExpr = nExpr.replace(ben[i], eng[i])
-                            nRes = nRes.replace(ben[i], eng[i])
+                            normalizedQuery = normalizedQuery.replace(ben[i], eng[i])
+                        }
+
+                        // Search Converters
+                        com.example.data.model.ConverterType.values().forEach { type ->
+                            if (type.matchesConverterQuery(query)) {
+                                results.add(SearchResult.Converter(type, language) {
+                                    viewModel.selectedConverterType = type
+                                    viewModel.activeTab = 1
+                                    viewModel.showGlobalSearch = false
+                                })
+                            }
+                        }
+
+                        // Search Tools
+                        com.example.data.model.ToolType.values().forEach { type ->
+                            if (type.titleEn.contains(query, ignoreCase = true) || 
+                                type.titleBn.contains(query, ignoreCase = true) ||
+                                type.getDescription(language).contains(query, ignoreCase = true) ||
+                                type.descriptionBn.contains(query, ignoreCase = true)) {
+                                results.add(SearchResult.Tool(type, language) {
+                                    viewModel.selectedToolCategoryFilter = null
+                                    viewModel.selectedToolType = type
+                                    viewModel.activeTab = 2
+                                    viewModel.showGlobalSearch = false
+                                })
+                            }
+                        }
+
+                        // Search History
+                        historyItems.forEach { item ->
+                            var nExpr = item.expression
+                            var nRes = item.result
+                            for (i in 0..9) {
+                                nExpr = nExpr.replace(ben[i], eng[i])
+                                nRes = nRes.replace(ben[i], eng[i])
+                            }
+                            
+                            if (nExpr.contains(normalizedQuery, ignoreCase = true) || nRes.contains(normalizedQuery, ignoreCase = true)) {
+                                results.add(SearchResult.History(item.expression, item.result) {
+                                    viewModel.selectHistoryItem(item)
+                                    viewModel.activeTab = 0
+                                    viewModel.showGlobalSearch = false
+                                })
+                            }
+                        }
+
+                        results
+                    }
+                }
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp)
+                ) {
+                    // Header with Title and Close Button
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = if (language == AppLanguage.BENGALI) "স্মার্ট অনুসন্ধান" else "Smart Search",
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = themeColors.displayText,
+                                fontFamily = FontFamily.SansSerif
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = if (language == AppLanguage.BENGALI) "সব তথ্য এক জায়গায় খুঁজুন" else "Find everything in one place",
+                                fontSize = 14.sp,
+                                color = themeColors.displayText.copy(alpha = 0.6f),
+                                fontFamily = FontFamily.SansSerif
+                            )
                         }
                         
-                        if (nExpr.contains(normalizedQuery, ignoreCase = true) || nRes.contains(normalizedQuery, ignoreCase = true)) {
-                            results.add(SearchResult.History(item.expression, item.result) {
-                                viewModel.selectHistoryItem(item)
-                                viewModel.activeTab = 0
-                                viewModel.showGlobalSearch = false
-                            })
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(themeColors.background)
+                                .clickable { viewModel.showGlobalSearch = false },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Close",
+                                tint = themeColors.displayText,
+                                modifier = Modifier.size(18.dp)
+                            )
                         }
                     }
 
-                    results
-                }
-            }
+                    Spacer(modifier = Modifier.height(20.dp))
 
-            Column(modifier = Modifier.fillMaxSize()) {
-                // Search Header
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .statusBarsPadding()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(onClick = { viewModel.showGlobalSearch = false }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = themeColors.displayText)
+                    // Search Input Field
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(64.dp)
+                            .background(themeColors.background, RoundedCornerShape(16.dp))
+                            .border(1.5.dp, themeColors.buttonEqualBg.copy(alpha = 0.4f), RoundedCornerShape(16.dp))
+                            .padding(horizontal = 16.dp),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = null,
+                                tint = themeColors.buttonEqualBg,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            
+                            BasicTextField(
+                                value = searchQuery,
+                                onValueChange = { searchQuery = it },
+                                modifier = Modifier.fillMaxWidth(),
+                                textStyle = TextStyle(
+                                    fontSize = 16.sp,
+                                    color = themeColors.displayText,
+                                    fontWeight = FontWeight.Medium
+                                ),
+                                cursorBrush = SolidColor(themeColors.buttonEqualBg),
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                                keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
+                                decorationBox = { innerTextField ->
+                                    if (searchQuery.isEmpty()) {
+                                        Text(
+                                            text = if (language == AppLanguage.BENGALI) "সার্চ করুন..." else "Search here...",
+                                            fontSize = 16.sp,
+                                            color = themeColors.displayText.copy(alpha = 0.4f),
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    }
+                                    innerTextField()
+                                }
+                            )
+                        }
                     }
-                    
-                    OutlinedTextField(
-                        value = searchQuery,
-                        onValueChange = { searchQuery = it },
-                        modifier = Modifier.weight(1f),
-                        placeholder = { 
-                            Text(
-                                if (language == AppLanguage.BENGALI) "সার্চ করুন..." else "Search everything...",
-                                color = themeColors.displayText.copy(alpha = 0.5f)
-                            ) 
-                        },
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = themeColors.displayText,
-                            unfocusedTextColor = themeColors.displayText,
-                            focusedBorderColor = themeColors.buttonEqualBg,
-                            unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.3f),
-                            cursorColor = themeColors.buttonEqualBg
-                        ),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                        keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
-                        shape = RoundedCornerShape(24.dp),
-                        trailingIcon = {
-                            if (searchQuery.isNotEmpty()) {
-                                IconButton(onClick = { searchQuery = "" }) {
-                                    Icon(Icons.Default.Close, contentDescription = "Clear", tint = themeColors.displayText)
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    // Content Area (Results or Empty State)
+                    Box(modifier = Modifier.weight(1f)) {
+                        if (searchQuery.isBlank()) {
+                            // Initial Empty State
+                            Column(
+                                modifier = Modifier.fillMaxSize(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Search,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(100.dp).graphicsLayer(alpha = 0.15f),
+                                    tint = themeColors.displayText
+                                )
+                                Spacer(modifier = Modifier.height(24.dp))
+                                Text(
+                                    text = if (language == AppLanguage.BENGALI) "খুঁজতে টাইপ করুন" else "Type to search",
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.displayText.copy(alpha = 0.5f),
+                                    textAlign = TextAlign.Center
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = if (language == AppLanguage.BENGALI) 
+                                        "যেমন: হিস্ট্রি, বিএমআই, বা তাপমাত্রা" 
+                                        else "Example: History, BMI, or Temperature",
+                                    fontSize = 13.sp,
+                                    color = themeColors.displayText.copy(alpha = 0.4f),
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        } else if (searchResults.isEmpty()) {
+                            // No Results State
+                            Column(
+                                modifier = Modifier.fillMaxSize(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.SearchOff,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(80.dp),
+                                    tint = themeColors.displayText.copy(alpha = 0.2f)
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(
+                                    text = if (language == AppLanguage.BENGALI) "কোনো ফলাফল পাওয়া যায়নি" else "No results found",
+                                    color = themeColors.displayText.copy(alpha = 0.5f),
+                                    fontSize = 18.sp
+                                )
+                            }
+                        } else {
+                            // Results List
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                verticalArrangement = Arrangement.spacedBy(10.dp),
+                                contentPadding = PaddingValues(bottom = 16.dp)
+                            ) {
+                                items(searchResults) { result ->
+                                    SearchResultItem(result, searchQuery, themeColors)
                                 }
                             }
-                        }
-                    )
-                }
-
-                // Results List
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    if (searchQuery.isBlank()) {
-                        item {
-                            Box(modifier = Modifier.fillMaxWidth().padding(top = 100.dp), contentAlignment = Alignment.Center) {
-                                Text(
-                                    if (language == AppLanguage.BENGALI) "আপনার প্রয়োজনীয় কিছু খুঁজুন" else "Find what you need",
-                                    color = themeColors.displayText.copy(alpha = 0.5f),
-                                    fontSize = 18.sp
-                                )
-                            }
-                        }
-                    } else if (searchResults.isEmpty()) {
-                        item {
-                            Box(modifier = Modifier.fillMaxWidth().padding(top = 100.dp), contentAlignment = Alignment.Center) {
-                                Text(
-                                    if (language == AppLanguage.BENGALI) "কোনো ফলাফল পাওয়া যায়নি" else "No results found",
-                                    color = themeColors.displayText.copy(alpha = 0.5f),
-                                    fontSize = 18.sp
-                                )
-                            }
-                        }
-                    } else {
-                        items(searchResults) { result ->
-                            SearchResultItem(result, searchQuery, themeColors)
                         }
                     }
                 }
