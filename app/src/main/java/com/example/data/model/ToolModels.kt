@@ -16,9 +16,7 @@ enum class ToolCategory(
     UTILITY("Everyday Utility", "দৈনন্দিন ইউটিলিটি", Icons.Default.Widgets),
     ELECTRICITY("Electricity & Power", "বিদ্যুৎ ও শক্তি", Icons.Default.Bolt),
     VEHICLE("Smart & Vehicle Tools", "স্মার্ট ও যানবাহন", Icons.Default.DirectionsCar),
-    EDUCATION("Education & Results", "শিক্ষা ও ফলাফল", Icons.Default.School),
-    DEVELOPER("Developer Tools", "ডেভেলপার টুলস", Icons.Default.Code),
-    ENGINEERING("Engineering", "ইঞ্জিনিয়ারিং", Icons.Default.SettingsInputComponent);
+    EDUCATION("Education & Results", "শিক্ষা ও ফলাফল", Icons.Default.School);
 
     fun getTitle(language: AppLanguage): String {
         return when (language) {
@@ -31,8 +29,6 @@ enum class ToolCategory(
                 ELECTRICITY -> "बिजली और ऊर्जा"
                 VEHICLE -> "वाहन उपकरण"
                 EDUCATION -> "शिक्षा और परिणाम"
-                DEVELOPER -> "डेवलपर टूल्स"
-                ENGINEERING -> "इंजीनियरिंग"
             }
             AppLanguage.ARABIC -> when (this) {
                 HEALTH -> "الصحة واللياقة"
@@ -41,8 +37,6 @@ enum class ToolCategory(
                 ELECTRICITY -> "الكهرباء والطاقة"
                 VEHICLE -> "أدوات المركبات"
                 EDUCATION -> "التعليم والنتائج"
-                DEVELOPER -> "أدوات المطور"
-                ENGINEERING -> "الهندسة"
             }
             AppLanguage.FRENCH -> when (this) {
                 HEALTH -> "Santé et Forme"
@@ -51,8 +45,6 @@ enum class ToolCategory(
                 ELECTRICITY -> "Électricité et Énergie"
                 VEHICLE -> "Outils Véhicule"
                 EDUCATION -> "Éducation et Résultats"
-                DEVELOPER -> "Outils Développeur"
-                ENGINEERING -> "Ingénierie"
             }
             AppLanguage.SPANISH -> when (this) {
                 HEALTH -> "Salud y Bienestar"
@@ -61,8 +53,6 @@ enum class ToolCategory(
                 ELECTRICITY -> "Electricidad y Energía"
                 VEHICLE -> "Herramientas de Vehículo"
                 EDUCATION -> "Educación y Resultados"
-                DEVELOPER -> "Herramientas de Desarrollador"
-                ENGINEERING -> "Ingeniería"
             }
             AppLanguage.GERMAN -> when (this) {
                 HEALTH -> "Gesundheit & Fitness"
@@ -71,8 +61,6 @@ enum class ToolCategory(
                 ELECTRICITY -> "Elektrizität & Strom"
                 VEHICLE -> "Fahrzeug-Tools"
                 EDUCATION -> "Bildung & Ergebnisse"
-                DEVELOPER -> "Entwickler-Tools"
-                ENGINEERING -> "Ingenieurwesen"
             }
             AppLanguage.CHINESE -> when (this) {
                 HEALTH -> "健康与健身"
@@ -81,8 +69,6 @@ enum class ToolCategory(
                 ELECTRICITY -> "电力与能源"
                 VEHICLE -> "车辆与出行"
                 EDUCATION -> "教育与成果"
-                DEVELOPER -> "开发者工具"
-                ENGINEERING -> "工程"
             }
         }
     }
@@ -116,16 +102,6 @@ enum class ToolType(
         "দৈনিক কত গ্লাস পানি পান করা প্রয়োজন",
         ToolCategory.HEALTH, Icons.Default.Opacity
     ),
-    PREGNANCY_DUE(
-        "Pregnancy Due Date", "প্রেগনেন্সি ডিউ ডেট",
-        "সম্ভাব্য প্রসবের তারিখ এবং বর্তমান সপ্তাহ গণনা",
-        ToolCategory.HEALTH, Icons.Default.ChildCare
-    ),
-    BLOOD_DONATION(
-        "Blood Donation Tracker", "রক্তদান ট্র্যাকার",
-        "সর্বশেষ রক্তদানের তারিখ দিয়ে পরবর্তী রক্তদানের সময় বের করা",
-        ToolCategory.HEALTH, Icons.Default.Bloodtype
-    ),
 
     // 2. Finance & Business
     EMI_LOAN(
@@ -152,16 +128,6 @@ enum class ToolType(
         "Simple & Compound Interest", "সুদ হিসাব (সরল ও চক্রবৃদ্ধি)",
         "সাধারণ ও চক্রবৃদ্ধি সুদের হিসাব",
         ToolCategory.FINANCE, Icons.Default.TrendingUp
-    ),
-    ZAKAT(
-        "Zakat Calculator", "যাকাত ক্যালকুলেটর",
-        "সম্পদ ও নিসাব অনুযায়ী যাকাতের পরিমাণ হিসাব",
-        ToolCategory.FINANCE, Icons.Default.VolunteerActivism
-    ),
-    SAVINGS_TARGET(
-        "Savings Target", "সেভিংস টার্গেট",
-        "নির্দিষ্ট লক্ষ্য অর্জনে মাসিক কত সঞ্চয় প্রয়োজন তার হিসাব",
-        ToolCategory.FINANCE, Icons.Default.Savings
     ),
 
     // 3. Everyday Utility
@@ -193,7 +159,7 @@ enum class ToolType(
     PASSWORD_GENERATOR(
         "Password Generator", "পাসওয়ার্ড জেনারেটর",
         "কাস্টমাইজড এবং সুরক্ষিত স্ট্রং পাসওয়ার্ড তৈরি করুন",
-        ToolCategory.DEVELOPER, Icons.Default.Password
+        ToolCategory.UTILITY, Icons.Default.Password
     ),
 
     // 4. Electricity & Power
@@ -211,11 +177,6 @@ enum class ToolType(
         "Battery / Power Bank Backup", "ব্যাটারি/আইপিএস ব্যাকআপ",
         "ওয়াট এবং ব্যাটারির Capacity দিয়ে ব্যাটারি কতক্ষণ চলবে বের করার হিসাব",
         ToolCategory.ELECTRICITY, Icons.Default.BatteryChargingFull
-    ),
-    RESISTOR_CODE(
-        "Resistor Color Code", "রেজিস্টর কালার কোড",
-        "কালার ব্যান্ড দেখে রেজিস্ট্যান্স (Ohm) মান বের করা",
-        ToolCategory.ENGINEERING, Icons.Default.SettingsInputComponent
     ),
 
     // 5. Smart & Vehicle Tools
@@ -245,13 +206,6 @@ enum class ToolType(
         "Tuition Fees Calculator", "টিউশন ফিস ক্যালকুলেটর",
         "ক্রেডিট ফি, ওয়েভার ও কিস্তি অনুযায়ী মোট সেমিস্টার ফি হিসাব",
         ToolCategory.EDUCATION, Icons.Default.Receipt
-    ),
-
-    // 7. Developer Tools
-    COLOR_CONVERTER(
-        "Color Converter", "কালার কোড কনভার্টার",
-        "HEX, RGB এবং HSL কালার কোডের মধ্যে রূপান্তর",
-        ToolCategory.DEVELOPER, Icons.Default.Palette
     );
 
     fun getTitle(language: AppLanguage): String {
@@ -289,12 +243,6 @@ enum class ToolType(
                 GPA -> "Calculate your semester GPA based on subjects and grades"
                 CGPA -> "Calculate cumulative GPA across multiple semesters"
                 TUITION_FEES -> "Calculate total semester tuition fees after waivers and other charges"
-                PREGNANCY_DUE -> "Calculate estimated due date and current pregnancy week"
-                BLOOD_DONATION -> "Track your blood donation eligibility and next donation date"
-                ZAKAT -> "Calculate payable zakat based on your assets and current nisab"
-                SAVINGS_TARGET -> "Calculate monthly savings needed to reach your financial goal"
-                RESISTOR_CODE -> "Calculate resistance value and tolerance from color bands"
-                COLOR_CONVERTER -> "Convert colors between HEX, RGB, and HSL formats"
             }
         }
     }

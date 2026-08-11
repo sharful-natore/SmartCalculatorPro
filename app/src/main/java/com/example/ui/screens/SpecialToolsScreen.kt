@@ -578,12 +578,6 @@ fun ToolDetailView(
             ToolType.GPA -> GpaCalculatorCard(viewModel, themeColors)
             ToolType.CGPA -> CgpaCalculatorCard(viewModel, themeColors)
             ToolType.TUITION_FEES -> TuitionFeesCalculatorCard(viewModel, themeColors)
-            ToolType.ZAKAT -> ZakatCalculatorCard(viewModel, themeColors)
-            ToolType.SAVINGS_TARGET -> SavingsTargetCard(viewModel, themeColors)
-            ToolType.PREGNANCY_DUE -> PregnancyDueDateCard(viewModel, themeColors)
-            ToolType.BLOOD_DONATION -> BloodDonationTrackerCard(viewModel, themeColors)
-            ToolType.RESISTOR_CODE -> ResistorColorCodeCard(viewModel, themeColors)
-            ToolType.COLOR_CONVERTER -> ColorConverterCard(viewModel, themeColors)
         }
     }
 }
