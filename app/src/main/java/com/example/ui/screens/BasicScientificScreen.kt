@@ -84,18 +84,20 @@ import com.example.ui.viewmodel.CalculatorViewModel
 @Composable
 fun PillBadge(count: Int, themeColors: CalculatorThemeColors, isLeft: Boolean, modifier: Modifier = Modifier) {
     if (count <= 0) return
-    val text = if (isLeft) "+${count}" else "${count}+"
+    val text = if (isLeft) "${count}+" else "+${count}"
     Box(
         modifier = modifier
-            .background(themeColors.buttonEqualBg, CircleShape)
-            .padding(horizontal = 7.dp, vertical = 2.dp),
+            .defaultMinSize(minWidth = 26.dp, minHeight = 26.dp)
+            .background(themeColors.displayText.copy(alpha = 0.08f), CircleShape)
+            .border(1.2.dp, themeColors.displayText.copy(alpha = 0.4f), CircleShape)
+            .padding(horizontal = 5.dp, vertical = 2.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = text,
-            color = Color.White,
-            fontSize = 10.sp,
-            fontFamily = FontFamily.Monospace,
+            color = themeColors.displayText.copy(alpha = 0.85f),
+            fontSize = 10.5.sp,
+            fontFamily = FontFamily.SansSerif,
             fontWeight = FontWeight.Bold
         )
     }
@@ -385,7 +387,7 @@ fun BasicScientificScreen(
                 var exprLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
                 var resultLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
 
-                val exprHiddenCount = remember(exprScrollState.value, exprScrollState.maxValue, exprLayoutResult, viewModel.expression, exprViewportWidth) {
+                val exprLeftHiddenCount = remember(exprScrollState.value, exprScrollState.maxValue, exprLayoutResult, viewModel.expression, exprViewportWidth) {
                     if (viewModel.expression.isEmpty()) return@remember 0
                     if (exprScrollState.value <= 1) return@remember 0
                     
@@ -411,6 +413,15 @@ fun BasicScientificScreen(
                     }
                 }
 
+                val exprRightHiddenCount = remember(exprScrollState.value, exprScrollState.maxValue, viewModel.expression, exprViewportWidth) {
+                    if (viewModel.expression.isEmpty() || exprScrollState.maxValue <= 0) 0
+                    else if (exprScrollState.value >= exprScrollState.maxValue - 1f) 0
+                    else {
+                        val hiddenRatio = (exprScrollState.maxValue - exprScrollState.value).toFloat() / (exprScrollState.maxValue + exprViewportWidth).toFloat()
+                        maxOf(1, (viewModel.expression.length * hiddenRatio).toInt())
+                    }
+                }
+
                 val resultLeftHiddenCount = remember(resultScrollState.value, resultScrollState.maxValue, viewModel.result, resultViewportWidth) {
                     if (viewModel.result.isEmpty() || resultScrollState.maxValue <= 0) 0
                     else if (resultScrollState.value <= 1f) 0
@@ -429,9 +440,9 @@ fun BasicScientificScreen(
                     }
                 }
 
-                val exprPadding by animateDpAsState(targetValue = if (exprHiddenCount > 0) 32.dp else 0.dp, label = "exprPadding")
-                val resultLeftPadding by animateDpAsState(targetValue = if (resultLeftHiddenCount > 0) 32.dp else 0.dp, label = "resultLeftPadding")
-                val resultRightPadding by animateDpAsState(targetValue = if (resultRightHiddenCount > 0) 32.dp else 0.dp, label = "resultRightPadding")
+                val exprPadding = 0.dp
+                val resultLeftPadding = 0.dp
+                val resultRightPadding = 0.dp
 
                 LaunchedEffect(viewModel.expressionValue.text, viewModel.expressionValue.selection, exprScrollState.maxValue) {
                     if (exprScrollState.maxValue > 0) {
@@ -599,17 +610,70 @@ fun BasicScientificScreen(
                         }
                     )
 
-                    // Expression Badge (Left)
-                    if (exprHiddenCount > 0) {
+                    // Expression Badge (Left) with Seamless Gradient Fade
+                    if (exprLeftHiddenCount > 0) {
+                        val fadeBg = themeColors.displayBackground
                         Box(
                             modifier = Modifier
                                 .align(Alignment.CenterStart)
-                                .padding(start = 2.dp)
+                                .width(50.dp)
+                                .fillMaxHeight()
+                                .background(
+                                    brush = Brush.horizontalGradient(
+                                        colors = listOf(
+                                            fadeBg,
+                                            fadeBg,
+                                            fadeBg.copy(alpha = 0.9f),
+                                            fadeBg.copy(alpha = 0.5f),
+                                            fadeBg.copy(alpha = 0.15f),
+                                            Color.Transparent
+                                        )
+                                    )
+                                )
+                        )
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.CenterStart)
+                                .padding(start = 4.dp)
                         ) {
                             PillBadge(
-                                count = exprHiddenCount,
+                                count = exprLeftHiddenCount,
                                 themeColors = themeColors,
                                 isLeft = true
+                            )
+                        }
+                    }
+
+                    // Expression Badge (Right) with Seamless Gradient Fade
+                    if (exprRightHiddenCount > 0) {
+                        val fadeBg = themeColors.displayBackground
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.CenterEnd)
+                                .width(50.dp)
+                                .fillMaxHeight()
+                                .background(
+                                    brush = Brush.horizontalGradient(
+                                        colors = listOf(
+                                            Color.Transparent,
+                                            fadeBg.copy(alpha = 0.15f),
+                                            fadeBg.copy(alpha = 0.5f),
+                                            fadeBg.copy(alpha = 0.9f),
+                                            fadeBg,
+                                            fadeBg
+                                        )
+                                    )
+                                )
+                        )
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.CenterEnd)
+                                .padding(end = 4.dp)
+                        ) {
+                            PillBadge(
+                                count = exprRightHiddenCount,
+                                themeColors = themeColors,
+                                isLeft = false
                             )
                         }
                     }
@@ -692,12 +756,31 @@ fun BasicScientificScreen(
                         )
                     }
 
-                    // Result Badge (Left)
+                    // Result Badge (Left) with Seamless Gradient Fade
                     if (resultLeftHiddenCount > 0) {
+                        val fadeBg = themeColors.displayBackground
                         Box(
                             modifier = Modifier
                                 .align(Alignment.CenterStart)
-                                .padding(start = 2.dp)
+                                .width(50.dp)
+                                .fillMaxHeight()
+                                .background(
+                                    brush = Brush.horizontalGradient(
+                                        colors = listOf(
+                                            fadeBg,
+                                            fadeBg,
+                                            fadeBg.copy(alpha = 0.9f),
+                                            fadeBg.copy(alpha = 0.5f),
+                                            fadeBg.copy(alpha = 0.15f),
+                                            Color.Transparent
+                                        )
+                                    )
+                                )
+                        )
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.CenterStart)
+                                .padding(start = 4.dp)
                         ) {
                             PillBadge(
                                 count = resultLeftHiddenCount,
@@ -707,12 +790,31 @@ fun BasicScientificScreen(
                         }
                     }
 
-                    // Result Badge (Right)
+                    // Result Badge (Right) with Seamless Gradient Fade
                     if (resultRightHiddenCount > 0) {
+                        val fadeBg = themeColors.displayBackground
                         Box(
                             modifier = Modifier
                                 .align(Alignment.CenterEnd)
-                                .padding(end = 2.dp)
+                                .width(50.dp)
+                                .fillMaxHeight()
+                                .background(
+                                    brush = Brush.horizontalGradient(
+                                        colors = listOf(
+                                            Color.Transparent,
+                                            fadeBg.copy(alpha = 0.15f),
+                                            fadeBg.copy(alpha = 0.5f),
+                                            fadeBg.copy(alpha = 0.9f),
+                                            fadeBg,
+                                            fadeBg
+                                        )
+                                    )
+                                )
+                        )
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.CenterEnd)
+                                .padding(end = 4.dp)
                         ) {
                             PillBadge(
                                 count = resultRightHiddenCount,
