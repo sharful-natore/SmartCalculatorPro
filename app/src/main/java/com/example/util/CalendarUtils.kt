@@ -49,8 +49,12 @@ object CalendarUtils {
 
         // English Date String
         val enDayName = if (isBn) BENGALI_DAYS[dayOfWeek] else SimpleDateFormat("EEEE", Locale.ENGLISH).format(calendar.time)
-        val monthSdf = SimpleDateFormat("MMMM", if (isBn) Locale("bn") else Locale.ENGLISH)
-        val enMonthName = monthSdf.format(calendar.time)
+        val enMonthName = if (isBn) {
+            val bnMonths = listOf("জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল", "মে", "জুন", "জুলাই", "আগস্ট", "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর")
+            bnMonths[gMonth]
+        } else {
+            SimpleDateFormat("MMMM", Locale.ENGLISH).format(calendar.time)
+        }
         val enFormattedDate = if (isBn) "${toBengaliDigits(gDay)} $enMonthName ${toBengaliDigits(gYear)}" else "$gDay $enMonthName $gYear"
 
         // Bengali Calendar Calculation
@@ -74,7 +78,7 @@ object CalendarUtils {
         )
     }
 
-    private fun getBengaliDateComponents(calendar: Calendar): Triple<Int, Int, Int> {
+    fun getBengaliDateComponents(calendar: Calendar): Triple<Int, Int, Int> {
         val year = calendar.get(Calendar.YEAR)
         val month = calendar.get(Calendar.MONTH) // 0..11
         val day = calendar.get(Calendar.DAY_OF_MONTH)
@@ -114,7 +118,7 @@ object CalendarUtils {
         return Triple(bDay, bMonthIdx.coerceIn(0, 11), bYear)
     }
 
-    private fun getHijriDateComponents(calendar: Calendar): Triple<Int, Int, Int> {
+    fun getHijriDateComponents(calendar: Calendar): Triple<Int, Int, Int> {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             try {
                 val localDate = LocalDate.of(

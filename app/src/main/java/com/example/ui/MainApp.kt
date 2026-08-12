@@ -505,9 +505,9 @@ fun MainContent(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     val tabs = listOf(
+                        Triple(2, Icons.Default.Widgets, LanguageManager.getString("tab_tools", viewModel.selectedLanguage)),
                         Triple(0, Icons.Default.Calculate, LanguageManager.getString("tab_calc", viewModel.selectedLanguage)),
                         Triple(1, ImageVector.vectorResource(id = R.drawable.ic_convert_tab), LanguageManager.getString("tab_conv", viewModel.selectedLanguage)),
-                        Triple(2, Icons.Default.Widgets, LanguageManager.getString("tab_tools", viewModel.selectedLanguage)),
                         Triple(3, Icons.Default.History, LanguageManager.getString("tab_history", viewModel.selectedLanguage))
                     )
                     
@@ -670,45 +670,30 @@ fun MainContent(
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
-                        .offset(y = (-20).dp)
-                        .size(64.dp),
+                        .offset(y = (-18).dp)
+                        .size(60.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    // Center Navigation Search Button with Animated RGB Gradient and White Border
                     Box(
                         modifier = Modifier
-                            .size(58.dp)
+                            .size(56.dp)
                             .shadow(elevation = 8.dp, shape = CircleShape)
-                            .background(
-                                brush = Brush.linearGradient(
-                                    colors = listOf(color1, color2, color3)
-                                ),
-                                shape = CircleShape
-                            )
-                            .border(3.dp, Color.White.copy(alpha = 0.9f), CircleShape)
+                            .background(Color.White, shape = CircleShape)
                             .clip(CircleShape)
-                            .combinedClickable(
+                            .clickable(
                                 interactionSource = fabInteractionSource,
-                                indication = ripple(bounded = false, color = Color.White),
+                                indication = ripple(bounded = false, color = themeColors.buttonEqualBg),
                                 onClick = {
                                     viewModel.showGlobalSearch = true
-                                },
-                                onLongClick = {
-                                    showFabGradientEditor = true
                                 }
                             ),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.Search,
-                            contentDescription = "Global Search",
-                            tint = Color.White,
-                            modifier = Modifier
-                                .size(28.dp)
-                                .graphicsLayer(
-                                    scaleX = iconScale,
-                                    scaleY = iconScale
-                                )
+                            contentDescription = "Search",
+                            tint = themeColors.buttonEqualBg,
+                            modifier = Modifier.size(28.dp)
                         )
                     }
                 }
@@ -754,7 +739,7 @@ fun MainContent(
                 }
             }
 
-            // Floating Animated Google AI Button on right side (all screens EXCEPT Calculator tab)
+            // Floating Pill AI Button with Animated Rainbow Border on left side (all screens EXCEPT Calculator tab)
             if (viewModel.activeTab != 0) {
                 val aiInfiniteRotation = rememberInfiniteTransition(label = "gemini_border_rotation")
                 val aiRotationAngle by aiInfiniteRotation.animateFloat(
@@ -779,21 +764,21 @@ fun MainContent(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(end = 16.dp, bottom = 86.dp),
+                        .padding(end = 16.dp, bottom = 8.dp),
                     contentAlignment = Alignment.BottomEnd
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(56.dp)
-                            .shadow(10.dp, CircleShape)
-                            .clip(CircleShape)
+                            .height(40.dp)
+                            .shadow(elevation = 6.dp, shape = RoundedCornerShape(20.dp))
+                            .clip(RoundedCornerShape(20.dp))
                             .clickable { viewModel.showAiChat = true },
                         contentAlignment = Alignment.Center
                     ) {
-                        // Rotating Sweep Gradient Border
+                        // Rotating Sweep Gradient for Border Effect
                         Box(
                             modifier = Modifier
-                                .fillMaxSize()
+                                .size(width = 110.dp, height = 110.dp)
                                 .graphicsLayer { rotationZ = aiRotationAngle }
                                 .background(
                                     brush = Brush.sweepGradient(geminiColors),
@@ -801,19 +786,28 @@ fun MainContent(
                                 )
                         )
 
-                        // Inner Button Container
-                        Box(
+                        // Inner Pill Container [✦ AI]
+                        Row(
                             modifier = Modifier
-                                .size(48.dp)
-                                .clip(CircleShape)
-                                .background(themeColors.cardBg),
-                            contentAlignment = Alignment.Center
+                                .padding(2.dp)
+                                .height(36.dp)
+                                .clip(RoundedCornerShape(18.dp))
+                                .background(Color(0xFFE8EAF6)) // Soft lavender/blue tint matching screenshot
+                                .padding(horizontal = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
                                 imageVector = Icons.Default.AutoAwesome,
-                                contentDescription = "AI Assistant",
-                                tint = themeColors.buttonEqualBg,
-                                modifier = Modifier.size(26.dp)
+                                contentDescription = "AI",
+                                tint = Color(0xFF3F51B5),
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "AI",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
+                                color = Color(0xFF3F51B5)
                             )
                         }
                     }

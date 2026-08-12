@@ -192,43 +192,59 @@ fun ToolsCategoriesView(
             .verticalScroll(scrollState)
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
-        // Multi-Date Greeting Header Banner
+        // Time-based Greeting & Multi-Date Header Banner
         val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
         val dateInfo = remember { com.example.util.CalendarUtils.getMultiDateInfo(java.util.Calendar.getInstance(), isBn) }
+
+        val currentHour = remember { java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY) }
+        val greetingText = remember(currentHour, isBn) {
+            when (currentHour) {
+                in 5..11 -> if (isBn) "শুভ সকাল ☀️" else "Good Morning ☀️"
+                in 12..15 -> if (isBn) "শুভ দুপুর 🌤️" else "Good Afternoon 🌤️"
+                in 16..17 -> if (isBn) "শুভ বিকেল 🍃" else "Good Afternoon 🍃"
+                in 18..20 -> if (isBn) "শুভ সন্ধ্যা 🌆" else "Good Evening 🌆"
+                else -> if (isBn) "শুভ রাত্রি 🌙" else "Good Night 🌙"
+            }
+        }
 
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 12.dp)
+                .padding(bottom = 14.dp)
                 .clickable { viewModel.openTool(ToolType.MULTI_CALENDAR) },
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
         ) {
-            Column(modifier = Modifier.padding(14.dp)) {
+            Column(modifier = Modifier.padding(16.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = if (isBn) "আজকের তারিখ ও বার" else "Today's Dates & Day",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
-                            color = themeColors.buttonEqualBg
-                        )
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = greetingText,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 18.sp,
+                        color = themeColors.displayText
+                    )
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(themeColors.buttonEqualBg.copy(alpha = 0.12f))
+                            .clickable { viewModel.openTool(ToolType.MULTI_CALENDAR) }
+                            .padding(horizontal = 10.dp, vertical = 5.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Icon(
                             imageVector = Icons.Default.CalendarMonth,
-                            contentDescription = "Open Calendar",
+                            contentDescription = "Calendar",
                             tint = themeColors.buttonEqualBg,
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = if (isBn) "ক্যালেন্ডার ➔" else "Calendar ➔",
+                            text = if (isBn) "ক্যালেন্ডার" else "Calendar",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             color = themeColors.buttonEqualBg
@@ -236,33 +252,48 @@ fun ToolsCategoriesView(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
                     text = "${dateInfo.englishDayName}, ${dateInfo.englishDate}",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = themeColors.displayText
+                    color = themeColors.displayText.copy(alpha = 0.9f)
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Text(
-                        text = "🌾 ${dateInfo.bengaliDate}",
-                        fontSize = 12.sp,
-                        color = themeColors.displayText.copy(alpha = 0.8f),
-                        fontWeight = FontWeight.Medium
-                    )
-                    Text(
-                        text = "🌙 ${dateInfo.hijriDate}",
-                        fontSize = 12.sp,
-                        color = themeColors.displayText.copy(alpha = 0.8f),
-                        fontWeight = FontWeight.Medium
-                    )
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(themeColors.displayText.copy(alpha = 0.05f))
+                            .padding(horizontal = 10.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = "🌾 ${dateInfo.bengaliDate}",
+                            fontSize = 12.sp,
+                            color = themeColors.displayText.copy(alpha = 0.85f),
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(themeColors.displayText.copy(alpha = 0.05f))
+                            .padding(horizontal = 10.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = "🌙 ${dateInfo.hijriDate}",
+                            fontSize = 12.sp,
+                            color = themeColors.displayText.copy(alpha = 0.85f),
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
                 }
             }
         }
