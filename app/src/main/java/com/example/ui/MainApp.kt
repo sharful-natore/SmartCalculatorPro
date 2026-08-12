@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import com.example.data.model.ToolType
@@ -234,15 +235,10 @@ fun MainContent(
     // Guard variable to ensure launch initialization forces Dashboard (Tab 0) first
     var isAppInitialized by remember { mutableStateOf(false) }
 
-    // Default page setup on app launch - ALWAYS start on Dashboard (Tab 0)
+    // Default page setup on app launch - sync pagerState with viewModel.activeTab
     LaunchedEffect(Unit) {
-        // Reset ViewModel's activeTab to 0 on fresh launch
-        viewModel.activeTab = 0
-        viewModel.setCalculatorNavigationReason("User tapped Calculator tab", "ইউজার ক্যালকুলেটর ট্যাব ট্যাপ করেছেন")
-        
-        // Immediately snap to Dashboard, ignoring any restored state
-        if (pagerState.currentPage != 0) {
-            pagerState.scrollToPage(0)
+        if (pagerState.currentPage != viewModel.activeTab) {
+            pagerState.scrollToPage(viewModel.activeTab)
         }
         
         // Wait for page state to stabilize

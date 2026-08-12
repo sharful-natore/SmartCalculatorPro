@@ -63,8 +63,14 @@ class MainActivity : ComponentActivity() {
         val targetTab = intent?.getStringExtra("target_tab")
         if (targetTab != null) {
             when (targetTab) {
-                "dashboard" -> viewModel.activeTab = 0
-                "converter" -> viewModel.activeTab = 1
+                "dashboard" -> {
+                    viewModel.activeTab = 0
+                    viewModel.setCalculatorNavigationReason("Opened via Dashboard Shortcut", "ড্যাশবোর্ড শর্টকাট থেকে খোলা হয়েছে")
+                }
+                "converter" -> {
+                    viewModel.activeTab = 1
+                    viewModel.setCalculatorNavigationReason("Opened via Converter Shortcut", "কনভার্টার শর্টকাট থেকে খোলা হয়েছে")
+                }
                 "calculator" -> {
                     viewModel.changeActiveTab(
                         2,
@@ -72,13 +78,18 @@ class MainActivity : ComponentActivity() {
                         "লঞ্চার শর্টকাট ইন্টেন্ট থেকে ক্যালকুলেটর খোলা হয়েছে"
                     )
                 }
-                "history" -> viewModel.activeTab = 3
+                "history" -> {
+                    viewModel.activeTab = 3
+                    viewModel.setCalculatorNavigationReason("Opened via History Shortcut", "হিস্ট্রি শর্টকাট থেকে খোলা হয়েছে")
+                }
             }
             intent.removeExtra("target_tab")
+            setIntent(Intent())
         } else {
             // ALWAYS default to Dashboard (0) on app launch
             viewModel.activeTab = 0
-            viewModel.setCalculatorNavigationReason("User tapped Calculator tab", "ইউজার ক্যালকুলেটর ট্যাব ট্যাপ করেছেন")
+            viewModel.setCalculatorNavigationReason("User tapped Dashboard tab", "ইউজার ড্যাশবোর্ড ট্যাব ট্যাপ করেছেন")
+            intent?.removeExtra("target_tab")
         }
     }
 }
