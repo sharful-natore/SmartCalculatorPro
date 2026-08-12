@@ -17,35 +17,57 @@ import com.example.ui.MainApp
 import com.example.ui.theme.MyApplicationTheme
 import com.example.ui.viewmodel.CalculatorViewModel
 import com.example.ui.viewmodel.CalculatorViewModelFactory
+import android.content.Intent
 import android.graphics.Color as AndroidColor
 
 // Force rebuild to refresh emulator
 class MainActivity : ComponentActivity() {
-  override fun onCreate(savedInstanceState: Bundle?) {
-    super.onCreate(savedInstanceState)
-    enableEdgeToEdge()
 
-    window.statusBarColor = AndroidColor.parseColor("#6366F1")
-    window.navigationBarColor = AndroidColor.parseColor("#6366F1")
-    WindowCompat.getInsetsController(window, window.decorView)?.apply {
-      isAppearanceLightStatusBars = false
-      isAppearanceLightNavigationBars = false
+    private lateinit var viewModel: CalculatorViewModel
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+
+        window.statusBarColor = AndroidColor.parseColor("#6366F1")
+        window.navigationBarColor = AndroidColor.parseColor("#6366F1")
+        WindowCompat.getInsetsController(window, window.decorView)?.apply {
+            isAppearanceLightStatusBars = false
+            isAppearanceLightNavigationBars = false
+        }
+
+        // Initialize database and repository
+        val database = CalculatorDatabase.getDatabase(this)
+        val repository = HistoryRepository(database.historyDao())
+
+        // Create ViewModel
+        val viewModelFactory = CalculatorViewModelFactory(repository, this)
+        viewModel = ViewModelProvider(this, viewModelFactory)[CalculatorViewModel::class.java]
+
+        handleShortcutIntent(intent)
+
+        setContent {
+            MyApplicationTheme {
+                MainApp(viewModel = viewModel)
+            }
+        }
     }
 
-    // Initialize database and repository
-    val database = CalculatorDatabase.getDatabase(this)
-    val repository = HistoryRepository(database.historyDao())
-    
-    // Create ViewModel
-    val viewModelFactory = CalculatorViewModelFactory(repository, this)
-    val viewModel = ViewModelProvider(this, viewModelFactory)[CalculatorViewModel::class.java]
-
-    setContent {
-      MyApplicationTheme {
-        MainApp(viewModel = viewModel)
-      }
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleShortcutIntent(intent)
     }
-  }
+
+    private fun handleShortcutIntent(intent: Intent?) {
+        val targetTab = intent?.getStringExtra("target_tab") ?: return
+        when (targetTab) {
+            "dashboard" -> viewModel.activeTab = 2
+            "calculator" -> viewModel.activeTab = 0
+            "history" -> viewModel.activeTab = 3
+            "favorites" -> viewModel.activeTab = 2
+        }
+    }
 }
 
 @Composable

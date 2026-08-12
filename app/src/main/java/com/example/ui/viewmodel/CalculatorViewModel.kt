@@ -151,8 +151,8 @@ class CalculatorViewModel(
 
     var showGlobalSearch by mutableStateOf(false)
 
-    // Current Active Tab: 0 = Calculator, 1 = Converter, 2 = Special, 3 = History, 4 = Themes
-    var activeTab by mutableStateOf(0)
+    // Current Active Tab: 0 = Calculator, 1 = Converter, 2 = Special (Smart Tools Dashboard), 3 = History, 4 = Themes
+    var activeTab by mutableStateOf(2)
     var isEvaluated by mutableStateOf(false)
 
     // History deletion confirmation state

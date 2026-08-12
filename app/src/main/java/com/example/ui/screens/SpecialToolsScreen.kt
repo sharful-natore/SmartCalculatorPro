@@ -192,6 +192,81 @@ fun ToolsCategoriesView(
             .verticalScroll(scrollState)
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
+        // Multi-Date Greeting Header Banner
+        val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
+        val dateInfo = remember { com.example.util.CalendarUtils.getMultiDateInfo(java.util.Calendar.getInstance(), isBn) }
+
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 12.dp)
+                .clickable { viewModel.openTool(ToolType.MULTI_CALENDAR) },
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(modifier = Modifier.padding(14.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = if (isBn) "আজকের তারিখ ও বার" else "Today's Dates & Day",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            color = themeColors.buttonEqualBg
+                        )
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.CalendarMonth,
+                            contentDescription = "Open Calendar",
+                            tint = themeColors.buttonEqualBg,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = if (isBn) "ক্যালেন্ডার ➔" else "Calendar ➔",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = themeColors.buttonEqualBg
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "${dateInfo.englishDayName}, ${dateInfo.englishDate}",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = themeColors.displayText
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "🌾 ${dateInfo.bengaliDate}",
+                        fontSize = 12.sp,
+                        color = themeColors.displayText.copy(alpha = 0.8f),
+                        fontWeight = FontWeight.Medium
+                    )
+                    Text(
+                        text = "🌙 ${dateInfo.hijriDate}",
+                        fontSize = 12.sp,
+                        color = themeColors.displayText.copy(alpha = 0.8f),
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+        }
+
         // Search Bar
         OutlinedTextField(
             value = viewModel.toolSearchQuery,
@@ -245,6 +320,113 @@ fun ToolsCategoriesView(
                 .padding(bottom = 12.dp)
                 .testTag("tool_search_input")
         )
+
+        // AI Assistant Hero Spotlight Banner
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp)
+                .clickable { viewModel.showAiChat = true },
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = themeColors.buttonEqualBg)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.2f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.AutoAwesome,
+                        contentDescription = "AI",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "এআই স্মার্ট অ্যাসিস্ট্যান্ট" else "AI Smart Assistant",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = Color.White
+                    )
+                    Text(
+                        text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "যেকোনো হিসাব বা সমাধান এআই-কে জিজ্ঞেস করুন..." else "Solve math, finance, or converter questions step-by-step",
+                        fontSize = 12.sp,
+                        color = Color.White.copy(alpha = 0.85f)
+                    )
+                }
+
+                Icon(
+                    imageVector = Icons.Default.ChevronRight,
+                    contentDescription = "Open AI",
+                    tint = Color.White,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+        }
+
+        // Favorites / Quick Access Rail (If user has favorite tools)
+        if (viewModel.favoriteTools.isNotEmpty()) {
+            Text(
+                text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "আপনার ফেভারিট টুলস" else "Your Favorite Tools",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = themeColors.displayText,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .padding(bottom = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                viewModel.favoriteTools.forEach { toolName ->
+                    val favTool = try { ToolType.valueOf(toolName) } catch (e: Exception) { null }
+                    if (favTool != null) {
+                        Surface(
+                            onClick = { viewModel.openTool(favTool) },
+                            shape = RoundedCornerShape(12.dp),
+                            color = themeColors.cardBg,
+                            tonalElevation = 2.dp,
+                            modifier = Modifier.width(130.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(10.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Icon(
+                                    imageVector = favTool.icon,
+                                    contentDescription = null,
+                                    tint = themeColors.buttonEqualBg,
+                                    modifier = Modifier.size(28.dp)
+                                )
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    text = favTool.getTitle(viewModel.selectedLanguage),
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.displayText,
+                                    maxLines = 1
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         // Category Filter Chips
         Row(
@@ -683,6 +865,14 @@ fun ToolDetailView(
             ToolType.COLOR_CONVERTER -> ColorConverterCard(viewModel, themeColors)
             ToolType.CLOTH_MEASUREMENT -> ClothMeasurementCard(viewModel, themeColors)
             ToolType.GOLD_CALCULATOR -> GoldCalculatorCard(viewModel, themeColors)
+            ToolType.STOPWATCH_TIMER -> StopwatchTimerCard(viewModel, themeColors)
+            ToolType.NOTES_CHECKLIST -> NotesChecklistCard(viewModel, themeColors)
+            ToolType.WORLD_CLOCK -> WorldClockCard(viewModel, themeColors)
+            ToolType.UNIT_PRICE_COMPARER -> UnitPriceComparerCard(viewModel, themeColors)
+            ToolType.SIMPLE_COMPASS -> SimpleCompassCard(viewModel, themeColors)
+            ToolType.ASPECT_RATIO -> AspectRatioCard(viewModel, themeColors)
+            ToolType.RANDOM_NUMBER_PICKER -> RandomPickerCard(viewModel, themeColors)
+            ToolType.MULTI_CALENDAR -> MultiCalendarCard(viewModel, themeColors)
         }
     }
 }
@@ -1010,5 +1200,6 @@ private fun getToolInfoItems(toolType: ToolType, isBn: Boolean): List<Pair<Strin
                 "1. Semester Tuition Fees Breakdown" to "Total fees include: credit hour tuition charges, semester admission/registration fees, laboratory or activity costs, and library charges."
             )
         }
+        else -> emptyList()
     }
 }

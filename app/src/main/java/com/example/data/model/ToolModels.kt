@@ -262,6 +262,48 @@ enum class ToolType(
         "Color Converter", "কালার কোড কনভার্টার",
         "HEX, RGB এবং HSL কালার কোডের মধ্যে রূপান্তর",
         ToolCategory.DEVELOPER, Icons.Default.Palette
+    ),
+
+    // 8. Everyday Smart Tools
+    STOPWATCH_TIMER(
+        "Stopwatch & Timer", "স্টপওয়াচ ও টাইমার",
+        "কাউন্টডাউন টাইমার ও ল্যাপ সহ নির্ভুল স্টপওয়াচ",
+        ToolCategory.UTILITY, Icons.Default.Timer
+    ),
+    NOTES_CHECKLIST(
+        "Quick Notes & Memo", "কুইক নোটস ও মেমো",
+        "জরুরি হিসাব, নোট ও মেমো সংরক্ষণ করার টুল",
+        ToolCategory.UTILITY, Icons.Default.EditNote
+    ),
+    WORLD_CLOCK(
+        "World Clock", "ওয়ার্ল্ড ক্লক",
+        "বিশ্বের বিভিন্ন দেশের বর্তমান সময় ও টাইমজোন",
+        ToolCategory.UTILITY, Icons.Default.Schedule
+    ),
+    UNIT_PRICE_COMPARER(
+        "Unit Price Comparer", "একক দাম তুলনা",
+        "দুইটি পণ্যের সাইজ ও দাম তুলনা করে সেরা ডিল নির্বাচন",
+        ToolCategory.UTILITY, Icons.Default.Compare
+    ),
+    SIMPLE_COMPASS(
+        "Digital Compass", "ডিজিটাল কম্পাস",
+        "অ্যানালগ-ডিজিটাল দিক নির্ণায়ক ও লেভেলিং মিটার",
+        ToolCategory.UTILITY, Icons.Default.Explore
+    ),
+    ASPECT_RATIO(
+        "Aspect Ratio", "অ্যাসপেক্ট রেশিও",
+        "ছবি, ডিসপ্লে ও ভিডিওর দৈর্ঘ্য-প্রস্থ অনুপাত নির্ণয়",
+        ToolCategory.UTILITY, Icons.Default.AspectRatio
+    ),
+    RANDOM_NUMBER_PICKER(
+        "Random Picker & Dice", "র্যান্ডম নাম্বার ও ডাইস",
+        "লটারি নাম্বার, র‍্যান্ডম চয়েস, কয়েন ফ্লিপ ও ডাইস রোল",
+        ToolCategory.UTILITY, Icons.Default.Casino
+    ),
+    MULTI_CALENDAR(
+        "Smart Multi-Calendar", "ট্রিপল ক্যালেন্ডার",
+        "ইংরেজি, বাংলা ও আরবি (হিজরী) ফুল ফিচার্ড ক্যালেন্ডার",
+        ToolCategory.UTILITY, Icons.Default.CalendarMonth
     );
 
     fun getTitle(language: AppLanguage): String {
@@ -307,6 +349,14 @@ enum class ToolType(
                 SAVINGS_TARGET -> "Calculate monthly savings needed to reach your financial goal"
                 RESISTOR_CODE -> "Calculate resistance value and tolerance from color bands"
                 COLOR_CONVERTER -> "Convert colors between HEX, RGB, and HSL formats"
+                STOPWATCH_TIMER -> "Precision stopwatch with laps and countdown timer"
+                NOTES_CHECKLIST -> "Quick notepad and memo checklist manager"
+                WORLD_CLOCK -> "Live clock and timezone converter across world cities"
+                UNIT_PRICE_COMPARER -> "Compare unit prices to find the best value deal"
+                SIMPLE_COMPASS -> "Digital orientation compass and spirit level"
+                ASPECT_RATIO -> "Calculate screen, video, and image aspect ratios"
+                RANDOM_NUMBER_PICKER -> "Random number generator, dice roller, and coin flipper"
+                MULTI_CALENDAR -> "Gregorian, Bengali, and Hijri multi-calendar"
             }
         }
     }

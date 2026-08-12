@@ -674,7 +674,7 @@ fun MainContent(
                         .size(64.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    // FAB Button with Animated RGB Gradient and White Border
+                    // Center Navigation Search Button with Animated RGB Gradient and White Border
                     Box(
                         modifier = Modifier
                             .size(58.dp)
@@ -691,14 +691,7 @@ fun MainContent(
                                 interactionSource = fabInteractionSource,
                                 indication = ripple(bounded = false, color = Color.White),
                                 onClick = {
-                                    try {
-                                        if (!viewModel.showAiChat) {
-                                            viewModel.showAiChat = true
-                                        }
-                                    } catch (e: Throwable) {
-                                        e.printStackTrace()
-                                        viewModel.reportError("AI Chat FAB error: ${e.localizedMessage ?: e.javaClass.simpleName}")
-                                    }
+                                    viewModel.showGlobalSearch = true
                                 },
                                 onLongClick = {
                                     showFabGradientEditor = true
@@ -707,8 +700,8 @@ fun MainContent(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Default.AutoAwesome,
-                            contentDescription = "AI Assistant",
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Global Search",
                             tint = Color.White,
                             modifier = Modifier
                                 .size(28.dp)
@@ -756,6 +749,72 @@ fun MainContent(
                             1 -> UnitConverterScreen(viewModel, themeColors)
                             2 -> SpecialToolsScreen(viewModel, themeColors)
                             3 -> HistoryScreen(viewModel, themeColors)
+                        }
+                    }
+                }
+            }
+
+            // Floating Animated Google AI Button on right side (all screens EXCEPT Calculator tab)
+            if (viewModel.activeTab != 0) {
+                val aiInfiniteRotation = rememberInfiniteTransition(label = "gemini_border_rotation")
+                val aiRotationAngle by aiInfiniteRotation.animateFloat(
+                    initialValue = 0f,
+                    targetValue = 360f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(3500, easing = LinearEasing),
+                        repeatMode = RepeatMode.Restart
+                    ),
+                    label = "aiRotationAngle"
+                )
+
+                val geminiColors = listOf(
+                    Color(0xFF4285F4),
+                    Color(0xFF9B51E0),
+                    Color(0xFFEA4335),
+                    Color(0xFFFBBC05),
+                    Color(0xFF34A853),
+                    Color(0xFF4285F4)
+                )
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(end = 16.dp, bottom = 86.dp),
+                    contentAlignment = Alignment.BottomEnd
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(56.dp)
+                            .shadow(10.dp, CircleShape)
+                            .clip(CircleShape)
+                            .clickable { viewModel.showAiChat = true },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        // Rotating Sweep Gradient Border
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .graphicsLayer { rotationZ = aiRotationAngle }
+                                .background(
+                                    brush = Brush.sweepGradient(geminiColors),
+                                    shape = CircleShape
+                                )
+                        )
+
+                        // Inner Button Container
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(CircleShape)
+                                .background(themeColors.cardBg),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AutoAwesome,
+                                contentDescription = "AI Assistant",
+                                tint = themeColors.buttonEqualBg,
+                                modifier = Modifier.size(26.dp)
+                            )
                         }
                     }
                 }
