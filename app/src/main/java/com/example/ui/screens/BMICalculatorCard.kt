@@ -250,7 +250,7 @@ fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
             val bmiValue = viewModel.bmiResultValue.toFloatOrNull() ?: 0f
             val currentBmiColorText = when {
                 bmiValue < 18.5f -> Color(0xFF29B6F6) // Light Blue
-                bmiValue < 25f -> Color(0xFF2E7D32)   // Deep Green
+                bmiValue < 25f -> Color(0xFF34C759)   // Vibrant Green
                 else -> Color(0xFFE65100)              // Deep Orange
             }
             Box(modifier = Modifier
@@ -269,10 +269,10 @@ fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
                     // Overweight/Obese: 25 to 40 (15 units) -> 60% of 180 deg = 108 deg
                     val angles = listOf(
                         180f to 205.2f,    // Underweight (Light Blue)
-                        205.2f to 252f,    // Normal (Deep Green)
+                        205.2f to 252f,    // Normal (Vibrant Green)
                         252f to 360f       // Overweight (Deep Orange)
                     )
-                    val colors = listOf(Color(0xFF29B6F6), Color(0xFF2E7D32), Color(0xFFE65100))
+                    val colors = listOf(Color(0xFF29B6F6), Color(0xFF34C759), Color(0xFFE65100))
                     
                     for (i in angles.indices) {
                         drawArc(
@@ -298,6 +298,27 @@ fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
                     val needleEnd = Offset(
                         x = center.x + (innerRadius * cos(needleAngleRad)).toFloat(),
                         y = center.y + (innerRadius * sin(needleAngleRad)).toFloat()
+                    )
+                    
+                    // Draw Needle Line
+                    drawLine(
+                        color = currentBmiColorText,
+                        start = center,
+                        end = needleEnd,
+                        strokeWidth = 3.dp.toPx(),
+                        cap = StrokeCap.Round
+                    )
+
+                    // Draw Pivot Circle
+                    drawCircle(
+                        color = currentBmiColorText,
+                        radius = 8.dp.toPx(),
+                        center = center
+                    )
+                    drawCircle(
+                        color = Color.White,
+                        radius = 3.dp.toPx(),
+                        center = center
                     )
                     
                     // Draw Arrow Pointer (Pointing Up)
@@ -387,7 +408,7 @@ fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
             )
 
             categories.forEach { (cat, range) ->
-                val isCurrent = viewModel.bmiCategoryResult.contains(cat) || (cat == "Normal" && viewModel.bmiCategoryResult == "Normal")
+                val isCurrent = viewModel.bmiCategoryResult == cat
                 Row(modifier = Modifier
                 .fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Row(verticalAlignment = Alignment.CenterVertically) {

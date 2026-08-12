@@ -339,15 +339,16 @@ fun ConverterCategoriesView(
                     ) {
                         categoryConverters.chunked(2).forEach { rowItems ->
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
                                 horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
                                 rowItems.forEach { type ->
-                                    Box(modifier = Modifier.weight(1f)) {
+                                    Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
                                         ConverterCardItem(
                                             converterType = type,
                                             viewModel = viewModel,
                                             themeColors = themeColors,
+                                            modifier = Modifier.fillMaxHeight(),
                                             onClick = { viewModel.openConverter(type) }
                                         )
                                     }
@@ -403,13 +404,14 @@ fun ConverterCardItem(
     converterType: ConverterType,
     viewModel: CalculatorViewModel,
     themeColors: CalculatorThemeColors,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     ElevatedCard(
         onClick = onClick,
         interactionSource = interactionSource,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .testTag("card_${converterType.name.lowercase()}")
             .scaleOnPress(interactionSource),
@@ -420,45 +422,54 @@ fun ConverterCardItem(
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
     ) {
         Column(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.fillMaxHeight().padding(12.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(38.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(themeColors.buttonEqualBg.copy(alpha = 0.12f)),
-                    contentAlignment = Alignment.Center
+            Column {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Icon(
-                        imageVector = converterType.icon,
-                        contentDescription = converterType.getTitle(viewModel.selectedLanguage),
-                        tint = themeColors.buttonEqualBg,
-                        modifier = Modifier.size(20.dp)
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(themeColors.buttonEqualBg.copy(alpha = 0.12f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = converterType.icon,
+                            contentDescription = converterType.getTitle(viewModel.selectedLanguage),
+                            tint = themeColors.buttonEqualBg,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    val isFavorite = viewModel.favoriteConverters.contains(converterType.name)
+                    IconButton(
+                        onClick = { viewModel.toggleFavoriteConverter(converterType.name) },
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                            contentDescription = "Favorite",
+                            tint = if (isFavorite) Color.Red.copy(alpha = 0.8f) else themeColors.displayText.copy(alpha = 0.3f),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
-                Icon(
-                    imageVector = Icons.Default.ChevronRight,
-                    contentDescription = "Open",
-                    tint = themeColors.displayText.copy(alpha = 0.3f),
-                    modifier = Modifier.size(18.dp)
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Text(
+                    text = converterType.getTitle(viewModel.selectedLanguage),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = themeColors.displayText,
+                    maxLines = 2,
+                    lineHeight = 17.sp
                 )
             }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Text(
-                text = converterType.getTitle(viewModel.selectedLanguage),
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                color = themeColors.displayText,
-                maxLines = 1
-            )
 
             Spacer(modifier = Modifier.height(6.dp))
 
@@ -482,6 +493,7 @@ fun ConverterDetailView(
 ) {
     var isFromDropdownExpanded by remember { mutableStateOf(false) }
     var isToDropdownExpanded by remember { mutableStateOf(false) }
+    var showConverterInfo by remember { mutableStateOf(false) }
     val availableUnits = converterType.units
 
     val scrollState = rememberScrollState()
@@ -590,6 +602,46 @@ fun ConverterDetailView(
                     fontSize = 12.sp,
                     color = themeColors.buttonEqualBg,
                     fontWeight = FontWeight.Medium
+                )
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                val isFavorite = viewModel.favoriteConverters.contains(converterType.name)
+                IconButton(
+                    onClick = { viewModel.toggleFavoriteConverter(converterType.name) },
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                        contentDescription = "Favorite",
+                        tint = if (isFavorite) Color.Red.copy(alpha = 0.8f) else themeColors.displayText.copy(alpha = 0.3f),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+                com.example.ui.components.InfoToggleButton(
+                    isExpanded = showConverterInfo,
+                    onToggle = { showConverterInfo = !showConverterInfo },
+                    themeColors = themeColors
+                )
+            }
+        }
+
+        AnimatedVisibility(
+            visible = showConverterInfo,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically()
+        ) {
+            val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
+            val infoTitle = if (isBn) "প্রয়োজনীয় তথ্য ও গাইডলাইন" else "Helpful Information & Guidelines"
+            val infoItems = getConverterInfoItems(converterType, isBn)
+            if (infoItems.isNotEmpty()) {
+                com.example.ui.components.ToolInfoSection(
+                    title = infoTitle,
+                    infoItems = infoItems,
+                    themeColors = themeColors,
+                    modifier = Modifier.padding(bottom = 16.dp)
                 )
             }
         }
@@ -924,54 +976,446 @@ fun ConverterDetailView(
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
                 Text(
-                    text = LanguageManager.getString("quick_table", viewModel.selectedLanguage),
+                    text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "সমমান রূপান্তর চার্ট" else "Equivalent Conversion Chart",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     color = themeColors.displayText
                 )
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "1 ${converterType.getLocalizedUnitName(viewModel.fromUnit, viewModel.selectedLanguage)} =",
-                    fontSize = 12.sp,
-                    color = themeColors.buttonEqualBg,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.padding(vertical = 4.dp)
+                    text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "১ থেকে ৫ মানের জন্য সকল এককে সমমান তালিকা" else "Equivalent values for input 1 to 5 across units",
+                    fontSize = 11.sp,
+                    color = themeColors.displayText.copy(alpha = 0.6f),
+                    modifier = Modifier.padding(bottom = 8.dp)
                 )
 
                 HorizontalDivider(
                     color = themeColors.displayText.copy(alpha = 0.1f),
-                    modifier = Modifier.padding(vertical = 6.dp)
+                    modifier = Modifier.padding(bottom = 12.dp)
                 )
 
-                val df = DecimalFormat("#.######")
-                val otherUnits = availableUnits.filter { it != viewModel.fromUnit }
-
-                otherUnits.forEach { targetUnit ->
-                    val equivalentValue = if (converterType == ConverterType.CURRENCY) {
-                        converterType.convert(viewModel.fromUnit, targetUnit, 1.0, customRates = viewModel.exchangeRates)
+                if (converterType == ConverterType.NUMBER_SYSTEM) {
+                    // Dedicated Number System table
+                    val numberSystemRows = listOf(1, 2, 3, 4, 5)
+                    val columns = if (viewModel.selectedLanguage == AppLanguage.BENGALI) {
+                        listOf("ডেসিমেল (Decimal)", "বাইনারি (Binary)", "অক্টাল (Octal)", "হেক্সাডেসিমেল (Hex)")
                     } else {
-                        converterType.convert(viewModel.fromUnit, targetUnit, 1.0)
+                        listOf("Decimal", "Binary", "Octal", "Hexadecimal")
                     }
-                    Row(
+
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                            .horizontalScroll(rememberScrollState())
+                            .border(1.dp, themeColors.displayText.copy(alpha = 0.12f), RoundedCornerShape(8.dp))
                     ) {
-                        Text(
-                            text = converterType.getLocalizedUnitName(targetUnit, viewModel.selectedLanguage),
-                            fontSize = 13.sp,
-                            color = themeColors.displayText.copy(alpha = 0.8f)
-                        )
-                        Text(
-                            text = df.format(equivalentValue),
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = themeColors.displayText
-                        )
+                        Column {
+                            // Header Row
+                            Row(
+                                modifier = Modifier
+                                    .background(themeColors.buttonNormalBg.copy(alpha = 0.12f))
+                                    .padding(vertical = 10.dp)
+                            ) {
+                                columns.forEach { header ->
+                                    Box(
+                                        modifier = Modifier
+                                            .width(130.dp)
+                                            .padding(horizontal = 8.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = header,
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = themeColors.buttonEqualBg
+                                        )
+                                    }
+                                }
+                            }
+
+                            // Data Rows
+                            numberSystemRows.forEachIndexed { index, decimalVal ->
+                                val rowBg = if (index % 2 == 1) themeColors.buttonNormalBg.copy(alpha = 0.05f) else Color.Transparent
+                                Row(
+                                    modifier = Modifier
+                                        .background(rowBg)
+                                        .padding(vertical = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    val cellValues = listOf(
+                                        decimalVal.toString(),
+                                        java.lang.Long.toBinaryString(decimalVal.toLong()),
+                                        java.lang.Long.toOctalString(decimalVal.toLong()),
+                                        java.lang.Long.toHexString(decimalVal.toLong()).uppercase()
+                                    )
+
+                                    cellValues.forEach { valStr ->
+                                        Box(
+                                            modifier = Modifier
+                                                .width(130.dp)
+                                                .padding(horizontal = 8.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = valStr,
+                                                fontSize = 13.sp,
+                                                fontWeight = FontWeight.Medium,
+                                                color = themeColors.displayText
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    // Other Converters table
+                    val rowValues = listOf(1.0, 2.0, 3.0, 4.0, 5.0)
+                    val currentFromUnit = viewModel.fromUnit
+                    val unitsToConvert = availableUnits // Show all available units!
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState())
+                            .border(1.dp, themeColors.displayText.copy(alpha = 0.12f), RoundedCornerShape(8.dp))
+                    ) {
+                        Column {
+                            // Header Row
+                            Row(
+                                modifier = Modifier
+                                    .background(themeColors.buttonNormalBg.copy(alpha = 0.12f))
+                                    .padding(vertical = 10.dp)
+                            ) {
+                                unitsToConvert.forEach { unit ->
+                                    val isFromUnit = unit == currentFromUnit
+                                    Box(
+                                        modifier = Modifier
+                                            .width(130.dp)
+                                            .padding(horizontal = 8.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = converterType.getLocalizedUnitName(unit, viewModel.selectedLanguage),
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (isFromUnit) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.8f)
+                                        )
+                                    }
+                                }
+                            }
+
+                            // Data Rows
+                            val df = java.text.DecimalFormat("#.######")
+                            rowValues.forEachIndexed { rowIndex, baseVal ->
+                                val rowBg = if (rowIndex % 2 == 1) themeColors.buttonNormalBg.copy(alpha = 0.05f) else Color.Transparent
+                                Row(
+                                    modifier = Modifier
+                                        .background(rowBg)
+                                        .padding(vertical = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    unitsToConvert.forEach { targetUnit ->
+                                        val isFromUnit = targetUnit == currentFromUnit
+                                        val convertedVal = if (isFromUnit) {
+                                            baseVal
+                                        } else {
+                                            if (converterType == ConverterType.CURRENCY) {
+                                                converterType.convert(currentFromUnit, targetUnit, baseVal, customRates = viewModel.exchangeRates)
+                                            } else {
+                                                converterType.convert(currentFromUnit, targetUnit, baseVal)
+                                            }
+                                        }
+
+                                        Box(
+                                            modifier = Modifier
+                                                .width(130.dp)
+                                                .padding(horizontal = 8.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = df.format(convertedVal),
+                                                fontSize = 13.sp,
+                                                fontWeight = if (isFromUnit) FontWeight.Bold else FontWeight.Medium,
+                                                color = if (isFromUnit) themeColors.buttonEqualBg else themeColors.displayText
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
+    }
+}
+
+private fun getConverterInfoItems(converterType: ConverterType, isBn: Boolean): List<Pair<String, String>> {
+    return when (converterType) {
+        ConverterType.LENGTH -> if (isBn) {
+            listOf(
+                "১. দৈর্ঘ্য রূপান্তর" to "দৈর্ঘ্য হলো এক বিন্দু থেকে অন্য বিন্দুর দূরত্ব। আন্তর্জাতিক মান অনুযায়ী মিটার ও কিলোমিটার ব্যবহার করা হয়। আর দেশীয় ও ব্রিটিশ নিয়মে ইঞ্চি, ফুট, গজ ও মাইল বহুল ব্যবহৃত।",
+                "২. কিছু দরকারি সম্পর্ক" to "• ১ মিটার = ৩৯.৩৭ ইঞ্চি = ৩.২৮ ফুট\n• ১ কিলোমিটার = ০.৬২ মাইল\n• ১ গজ = ৩ ফুট = ৩৬ ইঞ্চি"
+            )
+        } else {
+            listOf(
+                "1. Length Conversion Basics" to "Length is the measurement of distance from end to end. Common metric units are Meters and Kilometers, while imperial units include Inches, Feet, Yards, and Miles.",
+                "2. Handy Relations" to "• 1 Meter = 39.37 Inches = 3.28 Feet\n• 1 Kilometer = 0.62 Miles\n• 1 Yard = 3 Feet = 36 Inches"
+            )
+        }
+        ConverterType.WEIGHT -> if (isBn) {
+            listOf(
+                "১. ভর ও ওজন রূপান্তর" to "ভর হলো কোনো বস্তুতে মোট পদার্থের পরিমাণ। ভর মাপার আদর্শ একক হলো কেজি ও গ্রাম। আর ব্রিটিশ পদ্ধতিতে পাউন্ড ও আউন্স ব্যবহৃত হয়। এছাড়া স্বর্ণ ও মূল্যবান জিনিস মাপতে ভরি, আনা ও রতি ব্যবহৃত হয়।",
+                "২. দরকারি মানসমূহ" to "• ১ কেজি = ২.২০৪ পাউন্ড\n• ১ ভরি = ১১.৬৬৪ গ্রাম\n• ১ আউন্স = ২৮.৩৫ গ্রাম"
+            )
+        } else {
+            listOf(
+                "1. Weight & Mass Basics" to "Mass represents the amount of matter in an object, while weight is the gravitational force acting on it. Units include Kilograms, Grams, Pounds, Ounces, Tons, and traditional South Asian units like Vori, Anna, and Ratti.",
+                "2. Purity & Benchmarks" to "• 1 Kilogram = 2.204 Pounds\n• 1 Vori = 11.664 Grams\n• 1 Ounce = 28.35 Grams"
+            )
+        }
+        ConverterType.AREA -> if (isBn) {
+            listOf(
+                "১. ক্ষেত্রফল রূপান্তর" to "ক্ষেত্রফল হলো কোনো দ্বিমাত্রিক তলের পরিমাপ। বৈশ্বিক পরিমাপে বর্গফুট ও বর্গমিটার ব্যবহার করা হয়। বাংলাদেশে জমি কেনাবেচা ও পরিমাপে শতাংশ, কাঠা, বিঘা এবং একর ব্যবহৃত হয়।",
+                "২. জমি পরিমাপের নিয়ম" to "• ১ একর = ১০০ শতাংশ = ৪৩,৫৬০ বর্গফুট\n• ১ কাঠা = ৭২০ বর্গফুট\n• ১ বিঘা = ২০ কাঠা = ৩৩ শতাংশ"
+            )
+        } else {
+            listOf(
+                "1. Area Measurement Units" to "Area measures the size of a two-dimensional surface. Standard units are Square Meters and Square Feet, alongside traditional land measurement units like Acre, Hectare, Shotangsho, Katha, and Bigha.",
+                "2. Traditional Land Units" to "• 1 Acre = 43,560 Square Feet = 100 Shotangsho\n• 1 Katha = 720 Square Feet\n• 1 Bigha = 20 Katha = 33 Shotangsho (standard in Bangladesh)"
+            )
+        }
+        ConverterType.TEMPERATURE -> if (isBn) {
+            listOf(
+                "১. তাপমাত্রা রূপান্তর" to "तापমাত্রা পরিমাপের প্রধান তিনটি একক হলো সেলসিয়াস, ফারেনহাইট ও কেলভিন। আবহাওয়া পরিমাপে সেলসিয়াস এবং মানুষের শরীরের তাপমাত্রা প্রকাশে ফারেনহাইট ব্যবহৃত হয়।",
+                "২. গাণিতিক সূত্র" to "• ফারেনহাইট = (সেলসিয়াস × ৯/৫) + ৩২\n• কেলভিন = সেলসিয়াস + ২৭৩.১৫"
+            )
+        } else {
+            listOf(
+                "1. Temperature Scales" to "Celsius (°C) is used globally for weather. Fahrenheit (°F) is common in the US and for body temperature. Kelvin (K) is the scientific absolute standard.",
+                "2. Formulas" to "• °F = (°C × 9/5) + 32\n• K = °C + 273.15"
+            )
+        }
+        ConverterType.VOLUME -> if (isBn) {
+            listOf(
+                "১. আয়তন রূপান্তর" to "কোনো বস্তু বা তরল যতটুকু ত্রিমাত্রিক স্থান দখল করে তা-ই তার আয়তন। প্রধান এককগুলো হলো লিটার, মিলিলিটার, গ্যালন এবং ঘনমিটার।",
+                "২. গুরুত্বপূর্ণ মান" to "• ১ লিটার = ১০০০ মিলিলিটার\n• ১ গ্যালন (ইউএস) = ৩.৭৮৫ লিটার"
+            )
+        } else {
+            listOf(
+                "1. Volume Conversion" to "Volume measures the 3D space occupied by liquid, gas, or solid. Units include Liters, Milliliters, Gallons, and Cubic Meters.",
+                "2. Relations" to "• 1 Liter = 1000 Milliliters\n• 1 Gallon (US) = 3.785 Liters"
+            )
+        }
+        ConverterType.PRESSURE -> if (isBn) {
+            listOf(
+                "১. চাপ রূপান্তর" to "প্রতি একক ক্ষেত্রফলের ওপর লম্বভাবে প্রযুক্ত বলকে চাপ বলে। প্রধান এককগুলো হলো প্যাসকেল, বার, পিএসআই (PSI) এবং অ্যাটমোস্ফিয়ার (Atm)।",
+                "২. দরকারি সম্পর্ক" to "• ১ বার = ১০০,০০০ প্যাসকেল\n• ১ অ্যাটমোস্ফিয়ার = ১৪.৬৯৬ পিএসআই"
+            )
+        } else {
+            listOf(
+                "1. Pressure Basics" to "Pressure is force applied perpendicular to a surface per unit area. Common units are Pascal, Bar, PSI, and Atmosphere.",
+                "2. Relations" to "• 1 Bar = 100,000 Pascals\n• 1 Atmosphere = 14.696 PSI"
+            )
+        }
+        ConverterType.POWER -> if (isBn) {
+            listOf(
+                "১. ক্ষমতা রূপান্তর" to "কাজ করার হার বা শক্তি স্থানান্তরের হারকে ক্ষমতা বলে। বৈদ্যুতিক যন্ত্রের রেটিং ওয়াট বা কিলোওয়াটে এবং মোটরের শক্তি হর্সপাওয়ারে (HP) মাপা হয়।",
+                "২. দরকারি সম্পর্ক" to "• ১ কিলোওয়াট = ১০০০ ওয়াট\n• ১ হর্সপাওয়ার (HP) = ৭৪৬ ওয়াট"
+            )
+        } else {
+            listOf(
+                "1. Power Units" to "Power is the rate at which work is done or energy is transferred. Units include Watts, Kilowatts, and Horsepower (HP).",
+                "2. Relations" to "• 1 Kilowatt = 1000 Watts\n• 1 Horsepower (HP) = 746 Watts"
+            )
+        }
+        ConverterType.ENERGY -> if (isBn) {
+            listOf(
+                "১. শক্তি রূপান্তর" to "কাজ করার সামর্থ্যকে শক্তি বলে। পদার্থবিদ্যায় জুল ব্যবহৃত হয় এবং খাদ্য ও পুষ্টিবিজ্ঞানে ক্যালোরি বা কিলোকেলরি (Kcal) ব্যবহৃত হয়।",
+                "২. দরকারি সম্পর্ক" to "• ১ ক্যালোরি = ৪.১৮৪ জুল\n• ১ কিলোকেলরি = ১০০০ ক্যালোরি"
+            )
+        } else {
+            listOf(
+                "1. Energy Conversion" to "Energy is the quantitative property transferred to perform work or heat. Units are Joules, Kilojoules, Calories, and Kilocalories.",
+                "2. Relations" to "• 1 Calorie = 4.184 Joules\n• 1 Kilocalorie (food calorie) = 1000 Calories"
+            )
+        }
+        ConverterType.FORCE -> if (isBn) {
+            listOf(
+                "১. বল রূপান্তর" to "যা কোনো স্থির বস্তুকে গতিশীল করে বা গতির পরিবর্তন ঘটায় তাকে বল বলে। এসআই একক হলো নিউটন।"
+            )
+        } else {
+            listOf(
+                "1. Force Conversion" to "Force is an influence that changes the motion of an object. Standard SI unit is Newton, alongside Dyne and Pound-force."
+            )
+        }
+        ConverterType.TORQUE -> if (isBn) {
+            listOf(
+                "১. টর্ক রূপান্তর" to "কোনো বস্তুকে অক্ষের চারদিকে ঘোরাতে যে বল প্রয়োগ করতে হয় তাকে টর্ক বলে। গাড়ি ও ইঞ্জিনের শক্তিতে এটি গুরুত্বপূর্ণ।"
+            )
+        } else {
+            listOf(
+                "1. Torque Conversion" to "Torque measures the rotational force acting on an object. Common units are Newton-meter and Pound-foot."
+            )
+        }
+        ConverterType.DENSITY -> if (isBn) {
+            listOf(
+                "১. ঘনত্ব রূপান্তর" to "ঘনত্ব হলো কোনো পদার্থের একক আয়তনের ভর। বহুল ব্যবহৃত একক হলো কেজি/ঘনমিটার বা গ্রাম/ঘনসেন্টিমিটার।"
+            )
+        } else {
+            listOf(
+                "1. Density Conversion" to "Density measures mass per unit volume of a substance. Commonly written in kg/m³ or g/cm³."
+            )
+        }
+        ConverterType.ANGLE -> if (isBn) {
+            listOf(
+                "১. কোণ রূপান্তর" to "কোণ পরিমাপের প্রধান একক দুটি হলো ডিগ্রি ও রেডিয়ান। সম্পূর্ণ বৃত্তের কোণ হলো ৩৬০ ডিগ্রি বা ২π রেডিয়ান।"
+            )
+        } else {
+            listOf(
+                "1. Angle Conversion" to "Angles are measured in Degrees (360° for a full circle) or Radians (2π for a full circle) used in trigonometry."
+            )
+        }
+        ConverterType.DIGITAL_STORAGE -> if (isBn) {
+            listOf(
+                "১. ডেটা স্টোরেজ রূপান্তর" to "কম্পিউটার বা ফোনের মেমোরি বা ফাইল সাইজ পরিমাপে এটি ব্যবহৃত হয়। ১ বাইট = ৮ বিট।",
+                "২. দরকারি সম্পর্ক" to "• ১ কিলোবাইট (KB) = ১০২৪ বাইট\n• ১ মেগাবাইট (MB) = ১০২৪ KB\n• ১ গিগাবাইট (GB) = ১০২৪ MB"
+            )
+        } else {
+            listOf(
+                "1. Digital Data Conversion" to "Digital storage measures memory capacity. 1 Byte = 8 Bits. Standard progression is in factors of 1024.",
+                "2. Relations" to "• 1 Kilobyte (KB) = 1024 Bytes\n• 1 Megabyte (MB) = 1024 KB\n• 1 Gigabyte (GB) = 1024 MB"
+            )
+        }
+        ConverterType.DATA_TRANSFER -> if (isBn) {
+            listOf(
+                "১. ডেটা স্পিড রূপান্তর" to "ইন্টারনেটের গতি বা ফাইল স্থানান্তরের গতি পরিমাপ করতে এটি ব্যবহৃত হয়।",
+                "২. দরকারি পার্থক্য" to "• Mbps হলো ব্যান্ডউইথ বা নেট স্পিড (বিট)।\n• MB/s হলো প্রকৃত ফাইল ডাউনলোড স্পিড (বাইট)।\n• ১ MB/s = ৮ Mbps"
+            )
+        } else {
+            listOf(
+                "1. Internet Speed Basics" to "Data transfer rates measure network speeds. Usually written in Mbps (megabits per second) or MB/s (megabytes per second).",
+                "2. Key difference" to "• Mbps is internet bandwidth speed (bits).\n• MB/s is the actual file downloading speed (bytes).\n• 1 MB/s = 8 Mbps"
+            )
+        }
+        ConverterType.FREQUENCY -> if (isBn) {
+            listOf(
+                "১. ফ্রিকোয়েন্সি রূপান্তর" to "প্রতি সেকেন্ডে কোনো তরঙ্গের পূর্ণ কম্পন সংখ্যাকে ফ্রিকোয়েন্সি বা কম্পাঙ্ক বলে। এর একক হলো হার্টজ (Hz)।"
+            )
+        } else {
+            listOf(
+                "1. Frequency Basics" to "Frequency is the number of occurrences of a repeating event per unit of time. Measured in Hertz (Hz), kHz, MHz, and GHz."
+            )
+        }
+        ConverterType.NUMBER_SYSTEM -> if (isBn) {
+            listOf(
+                "১. সংখ্যা পদ্ধতি" to "ডিজিটাল ডিভাইসে ব্যবহৃত সংখ্যা পদ্ধতির মধ্যে রয়েছে বাইনারি (ভিত্তি ২), দশমিক (ভিত্তি ১০), অক্টাল (ভিত্তি ৮) এবং হেক্সাডেসিমেল (ভিত্তি ১৬)।"
+            )
+        } else {
+            listOf(
+                "1. Number Systems" to "Computers use Binary (base-2). Standard systems are Decimal (base-10), Octal (base-8), and Hexadecimal (base-16)."
+            )
+        }
+        ConverterType.SPEED -> if (isBn) {
+            listOf(
+                "১. গতিবেগ রূপান্তর" to "গতিবেগ হলো নির্দিষ্ট সময়ে অতিক্রান্ত দূরত্ব। প্রধান এককগুলো হলো কিমি/ঘণ্টা, মাইল/ঘণ্টা এবং নট (নৌযান ও বিমানের গতি পরিমাপের একক)।"
+            )
+        } else {
+            listOf(
+                "1. Speed Conversion" to "Speed is distance traveled per unit time. Standard units are Km/h (globally), Mph (US/UK), and Knots (for aviation/marine navigation)."
+            )
+        }
+        ConverterType.TIME -> if (isBn) {
+            listOf(
+                "১. সময় রূপান্তর" to "সেকেন্ড, মিনিট, ঘণ্টা, দিন, সপ্তাহ, মাস এবং বছরের মধ্যে পারস্পরিক নিখুঁত রূপান্তর করা যায়।"
+            )
+        } else {
+            listOf(
+                "1. Time Conversions" to "Time units are historical and astronomical. 1 Day = 24 Hours, 1 Hour = 60 Minutes, 1 Minute = 60 Seconds."
+            )
+        }
+        ConverterType.FUEL_CONSUMPTION -> if (isBn) {
+            listOf(
+                "১. জ্বালানি খরচ রূপান্তর" to "যানবাহনের জ্বালানি দক্ষতা পরিমাপের একক। যেমন: প্রতি লিটারে কত কিমি যায় (km/L) অথবা প্রতি ১০০ কিমিতে কত লিটার লাগে (L/100km)।"
+            )
+        } else {
+            listOf(
+                "1. Fuel Efficiency Metrics" to "Measures how far a car goes per volume of fuel: km/L, MPG (Miles Per Gallon), or L/100km (Liters per 100 Kilometers)."
+            )
+        }
+        ConverterType.ACCELERATION -> if (isBn) {
+            listOf(
+                "১. ত্বরণ রূপান্তর" to "সময়ের সাথে বেগের পরিবর্তনের হারকে ত্বরণ বলে। এর একক মিটার/সেকেন্ড স্কয়ার (m/s²)।"
+            )
+        } else {
+            listOf(
+                "1. Acceleration Conversion" to "The rate of change of speed with time. Commonly measured in m/s² or g-force."
+            )
+        }
+        ConverterType.ELECTRIC_CURRENT -> if (isBn) {
+            listOf(
+                "১. বিদ্যুৎ প্রবাহ রূপান্তর" to "কোনো পরিবাহীর মধ্য দিয়ে বৈদ্যুতিক চার্জ প্রবাহের হারকে কারেন্ট বলে। এর আন্তর্জাতিক একক হলো অ্যাম্পিয়ার (A)।"
+            )
+        } else {
+            listOf(
+                "1. Electric Current Units" to "Current is the rate of flow of electric charge. Standard unit is Ampere (A)."
+            )
+        }
+        ConverterType.VOLTAGE -> if (isBn) {
+            listOf(
+                "১. ভোল্টেজ রূপান্তর" to "বৈদ্যুতিক বিভব পার্থক্য যা পরিবাহীর মধ্য দিয়ে কারেন্টকে চালিত করে। এর একক হলো ভোল্ট (V)।"
+            )
+        } else {
+            listOf(
+                "1. Voltage Basics" to "Voltage is the electrical potential difference that drives current. Units are Volt, Kilovolt, and Millivolt."
+            )
+        }
+        ConverterType.RESISTANCE -> if (isBn) {
+            listOf(
+                "১. রোধ রূপান্তর" to "পরিবাহীর যে ধর্মের জন্য এর মধ্য দিয়ে বিদ্যুৎ প্রবাহ বাধাগ্রস্ত হয় তাকে রোধ বা রেজিস্ট্যান্স বলে। এর একক ওহম (Ω)।"
+            )
+        } else {
+            listOf(
+                "1. Resistance Basics" to "Electrical resistance opposes current flow. Measured in Ohms (Ω), Kiloohms, and Megaohms."
+            )
+        }
+        ConverterType.ELECTRIC_CHARGE -> if (isBn) {
+            listOf(
+                "১. বৈদ্যুতিক চার্জ রূপান্তর" to "ব্যাটারির ধারণক্ষমতা বা সঞ্চিত চার্জ মাপা হয় মিলিঅ্যাম্পিয়ার-আওয়ার (mAh) বা অ্যাম্পিয়ার-আওয়ার (Ah) দিয়ে।"
+            )
+        } else {
+            listOf(
+                "1. Electric Charge Units" to "Measures total electricity stored or transferred. Units include Coulomb, Ah, and mAh (common for phone batteries)."
+            )
+        }
+        ConverterType.COOKING -> if (isBn) {
+            listOf(
+                "১. রন্ধনশিল্প পরিমাপ" to "রান্না বা বেকিংয়ের রেসিপিতে ব্যবহৃত চা-চামচ (Teaspoon), টেবিল-চামচ (Tablespoon) ও কাপের পরিমাপ নির্ভুল করতে এটি ব্যবহৃত হয়।"
+            )
+        } else {
+            listOf(
+                "1. Kitchen Measurements" to "Converts volume recipes between Teaspoons, Tablespoons, Cups, and Fluid Ounces for precise baking."
+            )
+        }
+        ConverterType.TYPOGRAPHY -> if (isBn) {
+            listOf(
+                "১. টাইপোগ্রাফি রূপান্তর" to "ওয়েবসাইট ও স্ক্রিন ডিজাইনে পিক্সেল (Pixel), পয়েন্ট (Point) এবং রিলেティブ ইউনিট যেমন EM ও REM এর রূপান্তর।"
+            )
+        } else {
+            listOf(
+                "1. Web Design Typography" to "Pixels (px) are fixed screen dots. Points (pt) are for print. EM and REM are relative to the font scale of the web page."
+            )
+        }
+        ConverterType.CURRENCY -> if (isBn) {
+            listOf(
+                "১. মুদ্রা রূপান্তর" to "দেশী-বিদেশী বিভিন্ন দেশের টাকার মান (যেমন: ডলার, ইউরো, রুপি, রিয়াল ইত্যাদি) বাংলাদেশী টাকায় বা অন্য যেকোনো মুদ্রায় রূপান্তর করা যায়।"
+            )
+        } else {
+            listOf(
+                "1. Exchange Rate Conversions" to "Allows converting money between USD, BDT, EUR, GBP, INR, and SAR. Uses live online rates if connected."
+            )
+        }
+        else -> emptyList()
     }
 }

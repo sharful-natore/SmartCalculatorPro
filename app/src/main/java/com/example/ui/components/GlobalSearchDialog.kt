@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.view.WindowCompat
 import coil.compose.AsyncImage
 import com.example.R
 import com.example.data.model.ConverterType
@@ -169,6 +170,31 @@ fun GlobalSearchDialog(
     themeColors: CalculatorThemeColors
 ) {
     if (!viewModel.showGlobalSearch) return
+
+    val view = androidx.compose.ui.platform.LocalView.current
+    DisposableEffect(view, themeColors.isDark) {
+        var parent = view.parent
+        var dialog: android.app.Dialog? = null
+        while (parent != null) {
+            val context = (parent as? android.view.View)?.context
+            if (context is android.app.Dialog) {
+                dialog = context
+                break
+            }
+            parent = parent.parent
+        }
+        
+        val window = dialog?.window ?: (view.context as? android.app.Activity)?.window
+        if (window != null) {
+            window.statusBarColor = android.graphics.Color.TRANSPARENT
+            window.navigationBarColor = android.graphics.Color.TRANSPARENT
+            WindowCompat.getInsetsController(window, window.decorView).apply {
+                isAppearanceLightStatusBars = !themeColors.isDark
+                isAppearanceLightNavigationBars = !themeColors.isDark
+            }
+        }
+        onDispose {}
+    }
 
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp

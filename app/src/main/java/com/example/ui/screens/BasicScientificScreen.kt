@@ -563,8 +563,8 @@ fun BasicScientificScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(
-                                        start = (30f - (6f * expansionFraction)).dp,
-                                        end = (30f - (6f * expansionFraction)).dp
+                                        start = (7.5f - (1.5f * expansionFraction)).dp,
+                                        end = (7.5f - (1.5f * expansionFraction)).dp
                                     )
                                     .horizontalScroll(exprScrollState)
                                     .onGloballyPositioned { exprViewportWidth = it.size.width },
@@ -725,8 +725,8 @@ fun BasicScientificScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(
-                                start = (30f - (6f * expansionFraction)).dp,
-                                end = (30f - (6f * expansionFraction)).dp
+                                start = (7.5f - (1.5f * expansionFraction)).dp,
+                                end = (7.5f - (1.5f * expansionFraction)).dp
                             )
                             .horizontalScroll(resultScrollState)
                             .onGloballyPositioned { resultViewportWidth = it.size.width },

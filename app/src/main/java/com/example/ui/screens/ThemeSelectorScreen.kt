@@ -12,6 +12,14 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.Velocity
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextStyle
 
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
@@ -112,6 +120,7 @@ fun ThemeSelectorScreen(
     var showAddThemeDialog by remember { mutableStateOf(false) }
     var themeToEdit by remember { mutableStateOf<CustomTheme?>(null) }
     var showDeleteConfirmDialog by remember { mutableStateOf<String?>(null) }
+    var showCustomThemeOptionsDialog by remember { mutableStateOf<CustomTheme?>(null) }
 
     BoxWithConstraints(
         modifier = Modifier
@@ -272,7 +281,7 @@ fun ThemeSelectorScreen(
                                 isSelected = isSelected,
                                 currentThemeColors = themeColors,
                                 onClick = { viewModel.setCustomTheme(customTheme.id) },
-                                onLongClick = { showDeleteConfirmDialog = customTheme.id },
+                                onLongClick = { showCustomThemeOptionsDialog = customTheme },
                                 onEditClick = {
                                     themeToEdit = customTheme
                                     showAddThemeDialog = true
@@ -328,6 +337,52 @@ fun ThemeSelectorScreen(
                     Text(text = if (isBn) "বাতিল" else "Cancel")
                 }
             }
+        )
+    }
+
+    // --- Custom Theme Long-Press Options Dialog (Edit/Delete) ---
+    if (showCustomThemeOptionsDialog != null) {
+        val customTheme = showCustomThemeOptionsDialog!!
+        AlertDialog(
+            onDismissRequest = { showCustomThemeOptionsDialog = null },
+            title = {
+                Text(
+                    text = if (isBn) "থিম পরিবর্তন" else "Manage Custom Theme",
+                    fontWeight = FontWeight.Bold,
+                    color = themeColors.displayText
+                )
+            },
+            text = {
+                Text(
+                    text = if (isBn) "আপনি কি '${customTheme.name}' থিমটি এডিট অথবা ডিলিট করতে চান?" else "Do you want to edit or delete the custom theme '${customTheme.name}'?",
+                    color = themeColors.displayText.copy(alpha = 0.8f)
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        themeToEdit = customTheme
+                        showAddThemeDialog = true
+                        showCustomThemeOptionsDialog = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg)
+                ) {
+                    Text(text = if (isBn) "এডিট করুন" else "Edit Theme", color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteConfirmDialog = customTheme.id
+                        showCustomThemeOptionsDialog = null
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = Color.Red)
+                ) {
+                    Text(text = if (isBn) "ডিলিট করুন" else "Delete Theme")
+                }
+            },
+            containerColor = themeColors.cardBg,
+            shape = RoundedCornerShape(16.dp)
         )
     }
 }
@@ -616,19 +671,44 @@ fun AdvancedColorPickerDialog(
     var alpha by remember { mutableStateOf(initialColor.alpha) }
     
     val currentColor = Color.hsv(hsv.first, hsv.second, hsv.third, alpha)
+    
+    val clipboardManager = LocalClipboardManager.current
+    var hexTextState by remember { mutableStateOf(currentColor.toHexString().uppercase().replace("#FF", "#")) }
+    
+    LaunchedEffect(currentColor) {
+        val currentHex = currentColor.toHexString().uppercase().replace("#FF", "#")
+        val parsed = try {
+            val cleanHex = hexTextState.trim().removePrefix("#")
+            if (cleanHex.length == 6) {
+                Color(android.graphics.Color.parseColor("#FF$cleanHex"))
+            } else if (cleanHex.length == 8) {
+                Color(android.graphics.Color.parseColor("#$cleanHex"))
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            null
+        }
+        if (parsed != currentColor) {
+            hexTextState = currentHex
+        }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         modifier = Modifier.fillMaxWidth().padding(16.dp),
         properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
-        title = { Text("Pick Color", fontWeight = FontWeight.Bold) },
+        title = { Text("Pick Color / রং নির্বাচন করুন", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                // Preview
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // Color Preview
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(60.dp)
+                        .height(54.dp)
                         .clip(RoundedCornerShape(12.dp))
                         .background(currentColor)
                         .border(1.dp, Color.Gray.copy(alpha = 0.3f), RoundedCornerShape(12.dp)),
@@ -641,37 +721,175 @@ fun AdvancedColorPickerDialog(
                         fontSize = 14.sp
                     )
                 }
-                
-                // Hue Slider
-                Text("Hue: ${hsv.first.toInt()}°", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                Slider(
-                    value = hsv.first,
-                    onValueChange = { hsv = hsv.copy(first = it) },
-                    valueRange = 0f..360f,
-                    colors = SliderDefaults.colors(
-                        thumbColor = Color.hsv(hsv.first, 1f, 1f),
-                        activeTrackColor = Color.hsv(hsv.first, 1f, 1f).copy(alpha = 0.5f)
+
+                // Copy / Paste / Direct Input hex row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = hexTextState,
+                        onValueChange = { input ->
+                            hexTextState = input
+                            try {
+                                val cleanHex = input.trim().removePrefix("#")
+                                val parsed = if (cleanHex.length == 6) {
+                                    Color(android.graphics.Color.parseColor("#FF$cleanHex"))
+                                } else if (cleanHex.length == 8) {
+                                    Color(android.graphics.Color.parseColor("#$cleanHex"))
+                                } else {
+                                    null
+                                }
+                                if (parsed != null) {
+                                    val hsvArr = FloatArray(3)
+                                    android.graphics.Color.colorToHSV(parsed.toArgb(), hsvArr)
+                                    hsv = Triple(hsvArr[0], hsvArr[1], hsvArr[2])
+                                    alpha = parsed.alpha
+                                }
+                            } catch (e: Exception) {
+                                // Keep typing
+                            }
+                        },
+                        label = { Text("Hex Code") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        textStyle = TextStyle(fontSize = 14.sp, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace),
+                        shape = RoundedCornerShape(10.dp)
                     )
-                )
-                
-                // Saturation Slider
-                Text("Saturation: ${(hsv.second * 100).toInt()}%", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                Slider(
-                    value = hsv.second,
-                    onValueChange = { hsv = hsv.copy(second = it) },
-                    valueRange = 0f..1f
-                )
-                
-                // Value (Brightness) Slider
-                Text("Brightness: ${(hsv.third * 100).toInt()}%", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+
+                    IconButton(
+                        onClick = {
+                            clipboardManager.setText(AnnotatedString(currentColor.toHexString().uppercase()))
+                        },
+                        modifier = Modifier.size(44.dp)
+                    ) {
+                        Icon(imageVector = Icons.Default.ContentCopy, contentDescription = "Copy")
+                    }
+
+                    IconButton(
+                        onClick = {
+                            clipboardManager.getText()?.let { clip ->
+                                val text = clip.text.trim()
+                                try {
+                                    val cleanHex = text.removePrefix("#")
+                                    val parsed = if (cleanHex.length == 6) {
+                                        Color(android.graphics.Color.parseColor("#FF$cleanHex"))
+                                    } else if (cleanHex.length == 8) {
+                                        Color(android.graphics.Color.parseColor("#$cleanHex"))
+                                    } else {
+                                        null
+                                    }
+                                    if (parsed != null) {
+                                        val hsvArr = FloatArray(3)
+                                        android.graphics.Color.colorToHSV(parsed.toArgb(), hsvArr)
+                                        hsv = Triple(hsvArr[0], hsvArr[1], hsvArr[2])
+                                        alpha = parsed.alpha
+                                        hexTextState = text
+                                    }
+                                } catch (e: Exception) {
+                                    // Invalid hex
+                                }
+                            }
+                        },
+                        modifier = Modifier.size(44.dp)
+                    ) {
+                        Icon(imageVector = Icons.Default.ContentPaste, contentDescription = "Paste")
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // Premium Color Wheel
+                Box(
+                    modifier = Modifier
+                        .size(170.dp)
+                        .align(Alignment.CenterHorizontally)
+                ) {
+                    Canvas(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .pointerInput(Unit) {
+                                awaitEachGesture {
+                                    val down = awaitFirstDown()
+                                    val radius = size.width / 2f
+                                    val center = Offset(radius, radius)
+                                    
+                                    fun updateFromOffset(offset: Offset) {
+                                        val d = offset - center
+                                        val r = Math.sqrt((d.x * d.x + d.y * d.y).toDouble()).toFloat()
+                                        val sat = (r / radius).coerceIn(0f, 1f)
+                                        
+                                        var angleDeg = Math.toDegrees(Math.atan2(d.y.toDouble(), d.x.toDouble())).toFloat()
+                                        if (angleDeg < 0) angleDeg += 360f
+                                        
+                                        hsv = Triple(angleDeg, sat, hsv.third)
+                                    }
+                                    
+                                    updateFromOffset(down.position)
+                                    
+                                    while (true) {
+                                        val event = awaitPointerEvent()
+                                        val drag = event.changes.firstOrNull { it.pressed } ?: break
+                                        updateFromOffset(drag.position)
+                                        drag.consume()
+                                    }
+                                }
+                            }
+                    ) {
+                        val radius = size.width / 2f
+                        val center = Offset(radius, radius)
+                        
+                        // Hue Sweep
+                        val hues = (0..360).map { Color.hsv(it.toFloat(), 1f, 1f) }
+                        drawCircle(
+                            brush = Brush.sweepGradient(hues, center),
+                            radius = radius
+                        )
+                        
+                        // Saturation Fade (White in center)
+                        drawCircle(
+                            brush = Brush.radialGradient(
+                                colors = listOf(Color.White, Color.Transparent),
+                                center = center,
+                                radius = radius
+                            ),
+                            radius = radius
+                        )
+                        
+                        // Selection handle
+                        val angleRad = Math.toRadians(hsv.first.toDouble())
+                        val distance = hsv.second * radius
+                        val handleX = center.x + (distance * Math.cos(angleRad)).toFloat()
+                        val handleY = center.y + (distance * Math.sin(angleRad)).toFloat()
+                        
+                        drawCircle(
+                            color = Color.Black,
+                            radius = 9.dp.toPx(),
+                            center = Offset(handleX, handleY),
+                            style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.dp.toPx())
+                        )
+                        drawCircle(
+                            color = Color.White,
+                            radius = 7.dp.toPx(),
+                            center = Offset(handleX, handleY),
+                            style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.dp.toPx())
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // Brightness Slider
+                Text("Brightness (উজ্জ্বলতা): ${(hsv.third * 100).toInt()}%", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 Slider(
                     value = hsv.third,
                     onValueChange = { hsv = hsv.copy(third = it) },
                     valueRange = 0f..1f
                 )
                 
-                // Alpha Slider
-                Text("Transparency: ${(alpha * 100).toInt()}%", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                // Transparency (Alpha) Slider
+                Text("Transparency (স্বচ্ছতা): ${(alpha * 100).toInt()}%", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 Slider(
                     value = alpha,
                     onValueChange = { alpha = it },
@@ -684,12 +902,12 @@ fun AdvancedColorPickerDialog(
                 onClick = { onColorSelected(currentColor) },
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Select")
+                Text("Select / নির্বাচন করুন")
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text("Cancel / বাতিল")
             }
         }
     )

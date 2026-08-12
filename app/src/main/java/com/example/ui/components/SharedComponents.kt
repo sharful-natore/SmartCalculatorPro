@@ -5,6 +5,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -68,7 +69,7 @@ fun InfoToggleButton(
         modifier = modifier
     ) {
         Icon(
-            imageVector = androidx.compose.material.icons.Icons.Default.Info,
+            imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.Info,
             contentDescription = "Toggle Info",
             tint = if (isExpanded) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.6f)
         )

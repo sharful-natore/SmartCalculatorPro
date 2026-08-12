@@ -20,6 +20,15 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.ui.draw.blur
+import com.example.data.model.ToolType
+import com.example.data.model.ConverterType
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.scale
@@ -383,46 +392,25 @@ fun MainContent(
                             )
                         }
 
-                        // Language Switcher Dropdown Button
-                        var isLangMenuExpanded by remember { mutableStateOf(false) }
-                        Box {
-                            IconButton(
-                                onClick = { isLangMenuExpanded = true },
-                                modifier = Modifier.testTag("language_selector_button")
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Translate,
-                                    contentDescription = "Select Language",
-                                    tint = Color.White
-                                )
-                            }
+                        // Favorites Button
+                        var showFavoritesDialog by remember { mutableStateOf(false) }
+                        IconButton(
+                            onClick = { showFavoritesDialog = true },
+                            modifier = Modifier.testTag("favorites_button")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Favorite,
+                                contentDescription = "Favorites",
+                                tint = Color.White
+                            )
+                        }
 
-                            DropdownMenu(
-                                expanded = isLangMenuExpanded,
-                                onDismissRequest = { isLangMenuExpanded = false },
-                                modifier = Modifier.background(themeColors.cardBg)
-                            ) {
-                                listOf(AppLanguage.ENGLISH, AppLanguage.BENGALI).forEach { lang ->
-                                    DropdownMenuItem(
-                                        text = {
-                                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                                Text(text = lang.flag, fontSize = 16.sp)
-                                                Spacer(modifier = Modifier.width(8.dp))
-                                                Text(
-                                                    text = lang.displayName,
-                                                    color = if (viewModel.selectedLanguage == lang) themeColors.buttonEqualBg else themeColors.displayText,
-                                                    fontWeight = if (viewModel.selectedLanguage == lang) FontWeight.Bold else FontWeight.Normal,
-                                                    fontSize = 14.sp
-                                                )
-                                            }
-                                        },
-                                        onClick = {
-                                            viewModel.setLanguage(lang)
-                                            isLangMenuExpanded = false
-                                        }
-                                    )
-                                }
-                            }
+                        if (showFavoritesDialog) {
+                            FavoritesDialog(
+                                viewModel = viewModel,
+                                themeColors = themeColors,
+                                onDismiss = { showFavoritesDialog = false }
+                            )
                         }
 
                         IconButton(onClick = { viewModel.activeTab = 4 }) {
@@ -603,29 +591,31 @@ fun MainContent(
                 
                 val infiniteTransition = rememberInfiniteTransition(label = "rgb_glowing_fab")
                 
-                val rgbColors = remember {
-                    listOf(
-                        Color(0xFFFF0000), // Red
-                        Color(0xFFFF7F00), // Orange
-                        Color(0xFFFFFF00), // Yellow
-                        Color(0xFF00FF00), // Green
-                        Color(0xFF00FFFF), // Cyan
-                        Color(0xFF0000FF), // Blue
-                        Color(0xFFFF00FF), // Magenta
-                        Color(0xFFFF0000)  // Loop
-                    )
+                var showFabGradientEditor by remember { mutableStateOf(false) }
+
+                val hexColors = viewModel.fabGradientHexColors
+                val rgbColors = remember(hexColors) {
+                    hexColors.map { hex ->
+                        try {
+                            Color(android.graphics.Color.parseColor(hex))
+                        } catch (e: Exception) {
+                            Color.Gray
+                        }
+                    }
                 }
 
                 val duration = 7000
 
                 val color1 by infiniteTransition.animateColor(
-                    initialValue = rgbColors.first(),
-                    targetValue = rgbColors.last(),
+                    initialValue = rgbColors.firstOrNull() ?: Color.Red,
+                    targetValue = rgbColors.lastOrNull() ?: Color.Red,
                     animationSpec = infiniteRepeatable(
                         animation = keyframes {
                             durationMillis = duration
-                            rgbColors.forEachIndexed { index, color ->
-                                color at (duration * index / (rgbColors.size - 1)) with LinearEasing
+                            if (rgbColors.isNotEmpty()) {
+                                rgbColors.forEachIndexed { index, color ->
+                                    color at (duration * index / Math.max(1, rgbColors.size - 1)) with LinearEasing
+                                }
                             }
                         },
                         repeatMode = RepeatMode.Restart
@@ -633,25 +623,46 @@ fun MainContent(
                 )
 
                 val color2 by infiniteTransition.animateColor(
-                    initialValue = rgbColors[3],
-                    targetValue = rgbColors[3],
+                    initialValue = rgbColors.getOrNull(rgbColors.size / 2) ?: Color.Blue,
+                    targetValue = rgbColors.getOrNull(rgbColors.size / 2) ?: Color.Blue,
                     animationSpec = infiniteRepeatable(
                         animation = keyframes {
                             durationMillis = duration
-                            val shifted = rgbColors.drop(3) + rgbColors.take(3)
-                            shifted.forEachIndexed { index, color ->
-                                color at (duration * index / (shifted.size - 1)) with LinearEasing
+                            if (rgbColors.isNotEmpty()) {
+                                val half = rgbColors.size / 2
+                                val shifted = rgbColors.drop(half) + rgbColors.take(half)
+                                shifted.forEachIndexed { index, color ->
+                                    color at (duration * index / Math.max(1, shifted.size - 1)) with LinearEasing
+                                }
                             }
                         },
                         repeatMode = RepeatMode.Restart
                     ), label = "rgb_color2"
                 )
 
-                val auraScale by infiniteTransition.animateFloat(
-                    initialValue = 0.88f,
-                    targetValue = 1.15f,
+                val color3 by infiniteTransition.animateColor(
+                    initialValue = rgbColors.getOrNull(rgbColors.size / 3) ?: Color.Yellow,
+                    targetValue = rgbColors.getOrNull(rgbColors.size / 3) ?: Color.Yellow,
                     animationSpec = infiniteRepeatable(
-                        animation = tween(1600, easing = FastOutSlowInEasing),
+                        animation = keyframes {
+                            durationMillis = duration
+                            if (rgbColors.isNotEmpty()) {
+                                val third = rgbColors.size / 3
+                                val shifted = rgbColors.drop(third) + rgbColors.take(third)
+                                shifted.forEachIndexed { index, color ->
+                                    color at (duration * index / Math.max(1, shifted.size - 1)) with LinearEasing
+                                }
+                            }
+                        },
+                        repeatMode = RepeatMode.Restart
+                    ), label = "rgb_color3"
+                )
+
+                val auraScale by infiniteTransition.animateFloat(
+                    initialValue = 1.0f,
+                    targetValue = 1.35f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(2500, easing = FastOutSlowInEasing),
                         repeatMode = RepeatMode.Reverse
                     ),
                     label = "auraScale"
@@ -671,23 +682,41 @@ fun MainContent(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .offset(y = (-20).dp)
-                        .size(64.dp),
+                        .size(72.dp),
                     contentAlignment = Alignment.Center
                 ) {
+                    // Soft Blended Aura
+                    Box(
+                        modifier = Modifier
+                            .size(58.dp)
+                            .graphicsLayer {
+                                scaleX = auraScale
+                                scaleY = auraScale
+                                alpha = 0.6f
+                            }
+                            .blur(20.dp, edgeTreatment = androidx.compose.ui.draw.BlurredEdgeTreatment.Unbounded)
+                            .background(
+                                brush = Brush.sweepGradient(
+                                    colors = listOf(color1, color2, color3, color1)
+                                ),
+                                shape = CircleShape
+                            )
+                    )
+
                     // FAB Button with Animated RGB Gradient and White Border
                     Box(
                         modifier = Modifier
                             .size(58.dp)
-                            .shadow(elevation = 6.dp, shape = CircleShape)
+                            .shadow(elevation = 8.dp, shape = CircleShape)
                             .background(
                                 brush = Brush.linearGradient(
-                                    colors = listOf(color1, color2)
+                                    colors = listOf(color1, color2, color3)
                                 ),
                                 shape = CircleShape
                             )
-                            .border(3.dp, Color.White, CircleShape)
+                            .border(3.dp, Color.White.copy(alpha = 0.9f), CircleShape)
                             .clip(CircleShape)
-                            .clickable(
+                            .combinedClickable(
                                 interactionSource = fabInteractionSource,
                                 indication = ripple(bounded = false, color = Color.White),
                                 onClick = {
@@ -699,6 +728,9 @@ fun MainContent(
                                         e.printStackTrace()
                                         viewModel.reportError("AI Chat FAB error: ${e.localizedMessage ?: e.javaClass.simpleName}")
                                     }
+                                },
+                                onLongClick = {
+                                    showFabGradientEditor = true
                                 }
                             ),
                         contentAlignment = Alignment.Center
@@ -715,6 +747,14 @@ fun MainContent(
                                 )
                         )
                     }
+                }
+                
+                if (showFabGradientEditor) {
+                    FabGradientEditorDialog(
+                        viewModel = viewModel,
+                        themeColors = themeColors,
+                        onDismiss = { showFabGradientEditor = false }
+                    )
                 }
             }
         },
@@ -847,6 +887,68 @@ fun MainContent(
                             )
                         }
 
+                        HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.1f))
+
+                        // Language Selector
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "ভাষা (Language)" else "Language",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    color = themeColors.displayText
+                                )
+                                Text(
+                                    text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "আপনার পছন্দের ভাষা নির্বাচন করুন" else "Select your preferred language",
+                                    fontSize = 11.sp,
+                                    color = themeColors.displayText.copy(alpha = 0.6f)
+                                )
+                            }
+                            Box {
+                                var isSettingsLangExpanded by remember { mutableStateOf(false) }
+                                TextButton(
+                                    onClick = { isSettingsLangExpanded = true }
+                                ) {
+                                    Text(
+                                        text = "${viewModel.selectedLanguage.flag} ${viewModel.selectedLanguage.displayName}",
+                                        color = themeColors.buttonEqualBg,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = themeColors.buttonEqualBg)
+                                }
+                                DropdownMenu(
+                                    expanded = isSettingsLangExpanded,
+                                    onDismissRequest = { isSettingsLangExpanded = false },
+                                    modifier = Modifier.background(themeColors.cardBg)
+                                ) {
+                                    listOf(AppLanguage.ENGLISH, AppLanguage.BENGALI).forEach { lang ->
+                                        DropdownMenuItem(
+                                            text = {
+                                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                                    Text(text = lang.flag, fontSize = 16.sp)
+                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                    Text(
+                                                        text = lang.displayName,
+                                                        color = if (viewModel.selectedLanguage == lang) themeColors.buttonEqualBg else themeColors.displayText,
+                                                        fontWeight = if (viewModel.selectedLanguage == lang) FontWeight.Bold else FontWeight.Normal,
+                                                        fontSize = 14.sp
+                                                    )
+                                                }
+                                            },
+                                            onClick = {
+                                                viewModel.setLanguage(lang)
+                                                isSettingsLangExpanded = false
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
                         HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.1f))
 
                         // Decimal Precision option
@@ -1773,7 +1875,7 @@ fun AiChatDialog(
     LaunchedEffect(viewModel.lastOnlineError) {
         if (viewModel.lastOnlineError != null) {
             showOnlineErrorBanner = true
-            kotlinx.coroutines.delay(5000L)
+            kotlinx.coroutines.delay(10000L)
             showOnlineErrorBanner = false
         } else {
             showOnlineErrorBanner = false
@@ -2485,6 +2587,138 @@ private fun launchUriSafely(context: android.content.Context, uriString: String)
     }
 }
 
+@Composable
+fun FavoritesDialog(
+    viewModel: CalculatorViewModel,
+    themeColors: CalculatorThemeColors,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(20.dp),
+            color = themeColors.background,
+            modifier = Modifier.fillMaxWidth().fillMaxHeight(0.7f).padding(16.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "আপনার ফেভারিটস" else "Your Favorites",
+                    color = themeColors.displayText,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                androidx.compose.foundation.lazy.LazyColumn(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    if (viewModel.favoriteConverters.isEmpty() && viewModel.favoriteTools.isEmpty()) {
+                        item {
+                            Text(
+                                text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "কোনো ফেভারিট পাওয়া যায়নি।" else "No favorites added yet.",
+                                color = themeColors.displayText.copy(alpha = 0.6f),
+                                modifier = Modifier.padding(16.dp)
+                            )
+                        }
+                    }
+
+                    if (viewModel.favoriteConverters.isNotEmpty()) {
+                        item {
+                            Text(
+                                text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "কনভার্টার" else "Converters",
+                                color = themeColors.buttonEqualBg,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            )
+                        }
+                        items(viewModel.favoriteConverters.toList()) { convName ->
+                            val converter = try { ConverterType.valueOf(convName) } catch (e: Exception) { null }
+                            if (converter != null) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 8.dp)
+                                        .clickable {
+                                            viewModel.activeTab = 1
+                                            viewModel.openConverter(converter)
+                                            onDismiss()
+                                        },
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = converter.icon,
+                                        contentDescription = null,
+                                        tint = themeColors.displayText,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(16.dp))
+                                    Text(
+                                        text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) converter.titleBn else converter.titleEn,
+                                        color = themeColors.displayText,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    IconButton(onClick = { viewModel.toggleFavoriteConverter(convName) }) {
+                                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red.copy(alpha = 0.8f))
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (viewModel.favoriteTools.isNotEmpty()) {
+                        item {
+                            Text(
+                                text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "টুলস" else "Tools",
+                                color = themeColors.buttonEqualBg,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            )
+                        }
+                        items(viewModel.favoriteTools.toList()) { toolName ->
+                            val tool = try { ToolType.valueOf(toolName) } catch (e: Exception) { null }
+                            if (tool != null) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 8.dp)
+                                        .clickable {
+                                            viewModel.activeTab = 2
+                                            viewModel.openTool(tool)
+                                            onDismiss()
+                                        },
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = tool.icon,
+                                        contentDescription = null,
+                                        tint = themeColors.displayText,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(16.dp))
+                                    Text(
+                                        text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) tool.titleBn else tool.titleEn,
+                                        color = themeColors.displayText,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    IconButton(onClick = { viewModel.toggleFavoriteTool(toolName) }) {
+                                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red.copy(alpha = 0.8f))
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.align(Alignment.End).padding(top = 8.dp)
+                ) {
+                    Text(if (viewModel.selectedLanguage == AppLanguage.BENGALI) "বন্ধ করুন" else "Close", color = themeColors.buttonEqualBg)
+                }
+            }
+        }
+    }
+}
+
 private fun launchEmailSafely(context: android.content.Context, email: String, subject: String, body: String = "") {
     try {
         val uriString = "mailto:$email?subject=${android.net.Uri.encode(subject)}&body=${android.net.Uri.encode(body)}"
@@ -2504,6 +2738,184 @@ private fun launchEmailSafely(context: android.content.Context, email: String, s
             context.startActivity(android.content.Intent.createChooser(intent, "Send Email"))
         } catch (ex: Exception) {
             android.widget.Toast.makeText(context, "No email client found.", android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
+}
+
+@Composable
+fun FabGradientEditorDialog(
+    viewModel: CalculatorViewModel,
+    themeColors: CalculatorThemeColors,
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+    var colors by remember { mutableStateOf(viewModel.fabGradientHexColors.toList()) }
+    var selectedIndex by remember { mutableStateOf(0) }
+    var currentHsv by remember { 
+        mutableStateOf(Triple(0f, 1f, 1f))
+    }
+    
+    // Convert hex to HSV when selection changes
+    LaunchedEffect(selectedIndex, colors) {
+        if (selectedIndex in colors.indices) {
+            try {
+                val hex = colors[selectedIndex]
+                val hsvArr = FloatArray(3)
+                android.graphics.Color.colorToHSV(android.graphics.Color.parseColor(hex), hsvArr)
+                currentHsv = Triple(hsvArr[0], hsvArr[1], hsvArr[2])
+            } catch (e: Exception) {}
+        }
+    }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(20.dp),
+            color = themeColors.background,
+            modifier = Modifier.fillMaxWidth().padding(16.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "এআই বোতামের রং পরিবর্তন" else "Edit AI Button Colors",
+                    color = themeColors.displayText,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                // List of colors
+                androidx.compose.foundation.lazy.LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp)
+                ) {
+                    items(colors.size) { index ->
+                        val hex = colors[index]
+                        val isSelected = index == selectedIndex
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    try { Color(android.graphics.Color.parseColor(hex)) } catch (e: Exception) { Color.Gray }
+                                )
+                                .border(
+                                    width = if (isSelected) 3.dp else 1.dp,
+                                    color = if (isSelected) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.2f),
+                                    shape = CircleShape
+                                )
+                                .clickable { selectedIndex = index }
+                        )
+                    }
+                }
+
+                // Premium Color Wheel
+                Box(
+                    modifier = Modifier
+                        .size(170.dp)
+                        .align(Alignment.CenterHorizontally)
+                ) {
+                    Canvas(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .pointerInput(Unit) {
+                                awaitEachGesture {
+                                    val down = awaitFirstDown()
+                                    val bounds = this.size
+                                    val radius = bounds.width / 2f
+                                    val center = Offset(radius, radius)
+                                    
+                                    fun updateFromOffset(offset: Offset) {
+                                        val d = offset - center
+                                        val r = Math.sqrt((d.x * d.x + d.y * d.y).toDouble()).toFloat()
+                                        val sat = (r / radius).coerceIn(0f, 1f)
+                                        
+                                        var angleDeg = Math.toDegrees(Math.atan2(d.y.toDouble(), d.x.toDouble())).toFloat()
+                                        if (angleDeg < 0) angleDeg += 360f
+                                        
+                                        currentHsv = Triple(angleDeg, sat, currentHsv.third)
+                                        val updatedColor = Color.hsv(angleDeg, sat, currentHsv.third)
+                                        val hexStr = String.format("#%06X", 0xFFFFFF and updatedColor.toArgb())
+                                        val mutColors = colors.toMutableList()
+                                        if (selectedIndex in mutColors.indices) {
+                                            mutColors[selectedIndex] = hexStr
+                                            colors = mutColors
+                                        }
+                                    }
+                                    
+                                    updateFromOffset(down.position)
+                                    
+                                    while (true) {
+                                        val event = awaitPointerEvent()
+                                        val drag = event.changes.firstOrNull { it.pressed } ?: break
+                                        updateFromOffset(drag.position)
+                                        drag.consume()
+                                    }
+                                }
+                            }
+                    ) {
+                        val canvasBounds = this.size
+                        val radius = canvasBounds.width / 2f
+                        val center = Offset(radius, radius)
+                        
+                        // Hue Sweep
+                        val hues = (0..360).map { Color.hsv(it.toFloat(), 1f, 1f) }
+                        drawCircle(
+                            brush = Brush.sweepGradient(hues, center),
+                            radius = radius
+                        )
+                        
+                        // Saturation Fade (White in center)
+                        drawCircle(
+                            brush = Brush.radialGradient(
+                                colors = listOf(Color.White, Color.Transparent),
+                                center = center,
+                                radius = radius
+                            ),
+                            radius = radius
+                        )
+                        
+                        // Indicator
+                        val angleRad = Math.toRadians(currentHsv.first.toDouble())
+                        val r = (currentHsv.second * radius).toDouble()
+                        val ix = center.x + (r * Math.cos(angleRad)).toFloat()
+                        val iy = center.y + (r * Math.sin(angleRad)).toFloat()
+                        
+                        drawCircle(
+                            color = Color.White,
+                            radius = 24f,
+                            center = Offset(ix, iy)
+                        )
+                        drawCircle(
+                            color = Color.Black,
+                            radius = 24f,
+                            center = Offset(ix, iy),
+                            style = androidx.compose.ui.graphics.drawscope.Stroke(width = 6f)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text(if (viewModel.selectedLanguage == AppLanguage.BENGALI) "বাতিল" else "Cancel", color = themeColors.displayText.copy(alpha = 0.6f))
+                    }
+                    Button(
+                        onClick = {
+                            viewModel.updateFabColors(colors)
+                            onDismiss()
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg)
+                    ) {
+                        Text(if (viewModel.selectedLanguage == AppLanguage.BENGALI) "সংরক্ষণ করুন" else "Save", color = themeColors.buttonEqualText)
+                    }
+                }
+            }
         }
     }
 }

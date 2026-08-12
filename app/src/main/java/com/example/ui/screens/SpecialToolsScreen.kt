@@ -335,15 +335,16 @@ fun ToolsCategoriesView(
                     ) {
                         categoryTools.chunked(2).forEach { rowItems ->
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
                                 horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
                                 rowItems.forEach { tool ->
-                                    Box(modifier = Modifier.weight(1f)) {
+                                    Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
                                         ToolGridCardItem(
                                             toolType = tool,
                                             viewModel = viewModel,
                                             themeColors = themeColors,
+                                            modifier = Modifier.fillMaxHeight(),
                                             onClick = { viewModel.openTool(tool) }
                                         )
                                     }
@@ -405,13 +406,14 @@ fun ToolGridCardItem(
     toolType: ToolType,
     viewModel: CalculatorViewModel,
     themeColors: CalculatorThemeColors,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     ElevatedCard(
         onClick = onClick,
         interactionSource = interactionSource,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .testTag("tool_card_${toolType.name.lowercase()}")
             .scaleOnPress(interactionSource),
@@ -422,45 +424,54 @@ fun ToolGridCardItem(
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
     ) {
         Column(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.fillMaxHeight().padding(12.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(38.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(themeColors.buttonEqualBg.copy(alpha = 0.12f)),
-                    contentAlignment = Alignment.Center
+            Column {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Icon(
-                        imageVector = toolType.icon,
-                        contentDescription = toolType.getTitle(viewModel.selectedLanguage),
-                        tint = themeColors.buttonEqualBg,
-                        modifier = Modifier.size(20.dp)
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(themeColors.buttonEqualBg.copy(alpha = 0.12f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = toolType.icon,
+                            contentDescription = toolType.getTitle(viewModel.selectedLanguage),
+                            tint = themeColors.buttonEqualBg,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    val isFavorite = viewModel.favoriteTools.contains(toolType.name)
+                    IconButton(
+                        onClick = { viewModel.toggleFavoriteTool(toolType.name) },
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                            contentDescription = "Favorite",
+                            tint = if (isFavorite) Color.Red.copy(alpha = 0.8f) else themeColors.displayText.copy(alpha = 0.3f),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
-                Icon(
-                    imageVector = Icons.Default.ChevronRight,
-                    contentDescription = "Open",
-                    tint = themeColors.displayText.copy(alpha = 0.3f),
-                    modifier = Modifier.size(18.dp)
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Text(
+                    text = toolType.getTitle(viewModel.selectedLanguage),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = themeColors.displayText,
+                    maxLines = 2,
+                    lineHeight = 17.sp
                 )
             }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Text(
-                text = toolType.getTitle(viewModel.selectedLanguage),
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                color = themeColors.displayText,
-                maxLines = 1
-            )
 
             Spacer(modifier = Modifier.height(4.dp))
 
@@ -599,7 +610,19 @@ fun ToolDetailView(
                     )
                 }
 
-                if (toolType != ToolType.CLOTH_MEASUREMENT && toolType != ToolType.GOLD_CALCULATOR) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    val isFavorite = viewModel.favoriteTools.contains(toolType.name)
+                    IconButton(
+                        onClick = { viewModel.toggleFavoriteTool(toolType.name) },
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                            contentDescription = "Favorite",
+                            tint = if (isFavorite) Color.Red.copy(alpha = 0.8f) else themeColors.displayText.copy(alpha = 0.3f),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                     InfoToggleButton(
                         isExpanded = showToolInfo,
                         onToggle = { showToolInfo = !showToolInfo },
@@ -610,7 +633,7 @@ fun ToolDetailView(
         }
 
         AnimatedVisibility(
-            visible = showToolInfo && toolType != ToolType.CLOTH_MEASUREMENT && toolType != ToolType.GOLD_CALCULATOR,
+            visible = showToolInfo,
             enter = fadeIn() + expandVertically(),
             exit = fadeOut() + shrinkVertically()
         ) {
@@ -666,32 +689,48 @@ fun ToolDetailView(
 
 private fun getToolInfoItems(toolType: ToolType, isBn: Boolean): List<Pair<String, String>> {
     return when (toolType) {
-        ToolType.ZAKAT -> if (isBn) {
+        ToolType.BMI -> if (isBn) {
             listOf(
-                "১. যাকাত কেন ফরজ?" to "যাকাত ইসলামের অন্যতম ফরজ স্তম্ভ। নিساب পরিমাণ (সাড়ে ৭ ভরি সোনা বা সাড়ে ৫২ ভরি রুপা বা সমমূল্যের নগদ অর্থ) বছর শেষে থাকলে ২.৫% হারে যাকাত দেওয়া বাধ্যতামূলক। এটি সম্পদ পবিত্র করে এবং অভাবীদের সাহায্য করে।",
-                "২. কোন কোন সম্পদের যাকাত দিতে হবে?" to "• নগদ টাকা ও ব্যাংকে জমানো অর্থ\n• সোনা ও রুপা (ব্যবহার্য বা অলংকার)\n• ব্যবসায়িক পণ্য বা স্টক\n• শেয়ার বা স্টক মার্কেটে বিনিয়োগ\n• উসুলযোগ্য পাওনা ঋণ",
-                "৩. কি কি যাকাতের আওতামুক্ত?" to "• নিজের বসবাসের ঘরবাড়ি ও ব্যবহারের গাড়ি\n• পরিধেয় পোশাক ও নিত্য ব্যবহার্য আসবাবপত্র\n• পেশাগত কাজের প্রয়োজনীয় যন্ত্রপাতি\n• নিساب পরিমাণের কম সোনা বা রুপা\n• পরিশোধযোগ্য ব্যক্তিগত দেনা বা দায়সমূহ",
-                "৪. যাকাত পাওয়ার যোগ্য খাতসমূহ" to "পবিত্র কুরআনে নির্ধারিত ৮টি প্রধান খাত:\n• ফকির ও মিসকিন (অভাবী ও নিঃস্ব)\n• যাকাত আদায়ে নিয়োজিত কর্মচারী\n• ইসলামের প্রতি আকৃষ্ট ব্যক্তি\n• দাস বা বন্দী মুক্তি\n• ঋণগ্রস্ত ব্যক্তি\n• আল্লাহর সন্তুষ্টির পথে ও জনকল্যাণে\n• মুসাফির বা অসহায় পথিক"
+                "১. বিএমআই (BMI) কী?" to "বডি মাস ইনডেক্স বা বিএমআই হলো আপনার শরীরের চর্বির একটি সাধারণ অনুপাত, যা উচ্চতা ও ওজনের সাহায্যে নির্ণয় করা হয়। সূত্র: ওজন (কেজি) / উচ্চতা (মিটার) স্কয়ার।",
+                "২. স্বাস্থ্য ঝুঁকি ও ক্যাটাগরি" to "• কম ওজন (<১৮.৫): পুষ্টিহীনতা ও কম রোগ প্রতিরোধ ক্ষমতার ঝুঁকি।\n• স্বাভাবিক ওজন (১৮.৫ - ২৪.৯): আদর্শ স্বাস্থ্যকর অবস্থা।\n• অতিরিক্ত ওজন (২৫ - ২৯.৯): ডায়াবেটিস ও উচ্চ রক্তচাপের ঝুঁকি।\n• স্থূলতা (৩০ বা বেশি): হৃদরোগ ও স্ট্রোকের তীব্র ঝুঁকি।"
             )
         } else {
             listOf(
-                "1. Why is Zakat mandatory?" to "Zakat is one of the pillars of Islam. It is compulsory for every Muslim whose wealth exceeds the Nisab threshold (equivalent to 87.48g of gold or 612.36g of silver) for a lunar year. It purifies wealth and guarantees social security for the poor.",
-                "2. What assets require Zakat?" to "• Cash on hand or savings in bank accounts\n• Gold and silver ornaments/investments\n• Business stock and merchandise\n• Shares, mutual funds, or stock investments\n• Receivables/strong debts owed to you",
-                "3. What assets are exempt?" to "• Personal residence and primary vehicles\n• Daily wear clothes and home furniture\n• Tools used for professional trade/work\n• Gold or silver below the Nisab threshold\n• Payable personal debts and liabilities",
-                "4. Eligible Recipients (Asnaf)" to "The 8 categories defined in the Holy Quran:\n• Al-Fuqara (the extremely poor) & Al-Masakin (the needy)\n• Zakat administrators/collectors\n• Those whose hearts are to be reconciled\n• Freeing captives/slaves\n• Debt-ridden individuals\n• In the cause of Allah (social/educational benefits)\n• Stranded travelers in need"
+                "1. What is BMI?" to "Body Mass Index (BMI) is a medical screening tool that estimates your body fat category based on your height and weight. Formula: BMI = weight (kg) / height (m²).",
+                "2. Health Risk & Categories" to "• Underweight (<18.5): Risk of nutritional deficiency.\n• Normal (18.5-24.9): Optimal health, lowest risk.\n• Overweight (25-29.9): Increased risk of heart disease and diabetes.\n• Obese (30+): High risk of chronic metabolic conditions."
             )
         }
-        ToolType.BMI, ToolType.BMR, ToolType.IDEAL_WEIGHT -> if (isBn) {
+        ToolType.BMR -> if (isBn) {
             listOf(
-                "১. বিএমআই (BMI) কি ও স্বাস্থ্য ঝুঁকি?" to "বডি মাস ইনডেক্স বা বিএমআই হলো আপনার উচ্চতা এবং ওজনের অনুপাত, যা দিয়ে আপনার শরীর অতিরিক্ত ওজন, স্বাভাবিক নাকি কম ওজন তা নির্ণয় করা হয়।\n• ১৮.৫ এর নিচে: কম ওজন (পুষ্টিহীনতা ও রোগ প্রতিরোধ ক্ষমতা কম)\n• ১৮.৫ - ২৪.৯: স্বাভাবিক ওজন (আদর্শ ও স্বাস্থ্যকর)\n• ২৫ - ২৯.৯: অতিরিক্ত ওজন (হৃদরোগ ও ডায়াবেটিসের ঝুঁকি বৃদ্ধি)\n• ৩০ বা বেশি: স্থূলতা (উচ্চ রক্তচাপ, কোলেস্টেরল ও হৃদরোগের তীব্র ঝুঁকি)",
-                "২. বিএমআর (BMR) এবং ক্যালোরি কি?" to "বিএমআর (Basal Metabolic Rate) হলো আপনি যখন সম্পূর্ণ বিশ্রামে থাকেন তখন শরীরকে সচল রাখতে যে পরিমাণ ন্যূনতম ক্যালোরি প্রয়োজন। আর প্রতিদিনের কাজের ওপর ভিত্তি করে মোট কত ক্যালোরি প্রয়োজন তা টিডিইই (TDEE - Total Daily Energy Expenditure) দিয়ে বের করা হয়।",
-                "৩. ওজন নিয়ন্ত্রণ ও ক্যালোরির হিসাব" to "• ওজন কমাতে: আপনার প্রতিদিনের টিডিইই (TDEE) থেকে ৩০০-৫০০ ক্যালোরি কম গ্রহণ করুন (Caloric Deficit)।\n• ওজন বাড়াতে: আপনার দৈনিক টিডিইই এর থেকে ৩০০-৫০০ ক্যালোরি বেশি গ্রহণ করুন (Caloric Surplus)।\n• ওজন বজায় রাখতে: ঠিক যতটুকু ক্যালোরি ক্ষয় হয় ততটুকু সমপরিমাণ ক্যালোরির খাবার খান।"
+                "১. বিএমআর (BMR) কী?" to "বেসাল মেটাবলিক রেট বা বিএমআর হলো আপনি যখন সম্পূর্ণ বিশ্রামে থাকেন তখন শরীরকে সচল ও বাঁচিয়ে রাখতে যে পরিমাণ ন্যূনতম ক্যালোরি প্রয়োজন।",
+                "২. টিডিইই (TDEE) কী?" to "টোটাল DAILY এনার্জি এক্সপেন্ডিচার হলো সারাদিনের শারীরিক কার্যকলাপসহ আপনার মোট ক্যালরি ক্ষয়ের পরিমাণ। ওজন হ্রাস বা বৃদ্ধির জন্য এটি অত্যন্ত কার্যকরী।"
             )
         } else {
             listOf(
-                "1. BMI Ranges & Health Risks" to "Body Mass Index (BMI) evaluates health categories based on height & weight:\n• Underweight (< 18.5): Risk of nutrient deficiency and weak immunity.\n• Normal (18.5 – 24.9): Optimal healthy category.\n• Overweight (25.0 – 29.9): Elevated risk of heart issues and type-2 diabetes.\n• Obese (30.0 or Above): High risk of chronic cardiovascular and metabolic illnesses.",
-                "2. What is BMR and Daily Calories?" to "Basal Metabolic Rate (BMR) is the number of calories your body needs to perform basic life-sustaining functions at rest. Daily Calorie Need (TDEE) factors in physical activity level.",
-                "3. Diet Planning & Caloric Goals" to "• To Lose Weight: Consume 300–500 kcal less than your daily TDEE (Caloric Deficit).\n• To Gain Weight: Consume 300–500 kcal more than your daily TDEE (Caloric Surplus).\n• To Maintain Weight: Consume calories equal to your TDEE."
+                "1. What is BMR?" to "Basal Metabolic Rate (BMR) represents the minimum amount of energy (calories) your body needs to survive and function while at complete rest (breathing, circulating blood, cellular recovery).",
+                "2. What is TDEE?" to "Total Daily Energy Expenditure (TDEE) is the total calories you burn daily including physical exercise. It determines the calories needed to lose, gain, or maintain weight."
+            )
+        }
+        ToolType.IDEAL_WEIGHT -> if (isBn) {
+            listOf(
+                "১. আদর্শ ওজন কী?" to "আদর্শ ওজন (IBW) হলো একটি গাণিতিক হিসাব (ডিভাইন বা রবিনসন ফর্মুলা) যা আপনার উচ্চতা ও লিঙ্গের ওপর ভিত্তি করে আপনার জন্য স্বাস্থ্যকর সর্বোচ্চ ও সর্বনিম্ন ওজনসীমা নির্ধারণ করে।",
+                "২. এটি জানা কেন জরুরী?" to "আদর্শ ওজনসীমা বজায় রাখলে আপনার হাড়ের জোড়া, ফুসফুস ও হৃদপিণ্ডের ওপর অতিরিক্ত চাপ পড়ে না এবং দীর্ঘায়ু লাভে সাহায্য করে।"
+            )
+        } else {
+            listOf(
+                "1. What is Ideal Body Weight?" to "Ideal Body Weight (IBW) uses standard formulas (Devine, Robinson, or Miller) to estimate a healthy target weight range based on your biological gender and height.",
+                "2. How is it calculated?" to "For men, it starts from a baseline at 5 feet and adds a set weight per inch of height. Maintaining this range prevents excessive strain on joints and organs."
+            )
+        }
+        ToolType.WATER_INTAKE -> if (isBn) {
+            listOf(
+                "১. দৈনিক পানি পানের লক্ষ্য" to "আমাদের দেহের প্রায় ৬০% পানি। একজন প্রাপ্তবয়স্ক মানুষের দৈনিক কমপক্ষে ২ থেকে ৩ লিটার (৮-১২ গ্লাস) পানি পান করা প্রয়োজন।",
+                "২. পানি পানের উপকারিতা" to "পর্যাপ্ত পানি পান করলে হজমশক্তি বাড়ে, ত্বক সতেজ থাকে, কিডনি সচল থাকে এবং শরীর থেকে টক্সিন বা ক্ষতিকর উপাদান বের হয়ে যায়।"
+            )
+        } else {
+            listOf(
+                "1. Daily Hydration Target" to "Your body is about 60% water. Generally, a sedentary adult needs around 2 to 3 liters (8-12 glasses) of water daily to maintain proper hydration.",
+                "2. Factors affecting water needs" to "Hot weather, physical exercise, pregnancy, and high-sodium diets increase your water demand. Drink water before feeling excessively thirsty."
             )
         }
         ToolType.PREGNANCY_DUE -> if (isBn) {
@@ -707,6 +746,32 @@ private fun getToolInfoItems(toolType: ToolType, isBn: Boolean): List<Pair<Strin
                 "2. The Three Trimesters of Pregnancy" to "• First Trimester (Weeks 1-12): Core baby organs form. Common symptoms include fatigue, nausea (morning sickness), and breast tenderness.\n• Second Trimester (Weeks 13-26): Known as the golden period. Baby's movements are often felt (weeks 18-20). Energy levels return.\n• Third Trimester (Weeks 27-40): Baby grows rapidly. High pressure on the bladder, backaches, and pre-labor Braxton Hicks contractions may occur.",
                 "3. Essential Advice & Nutrition" to "• Supplementation: Take Folic Acid and Iron under medical supervision to prevent neural tube defects and anemia.\n• Balanced Diet: Eat protein-rich foods, leafy greens, dairy, eggs, and fresh fruits.\n• Rest & Sleep: Aim for 8 hours of night sleep and 2 hours of afternoon rest.\n• Hydration: Drink at least 3 liters of water daily.",
                 "4. Pregnancy Danger Signs" to "Contact a doctor immediately if you experience:\n• Vaginal bleeding or fluid leakage\n• Severe abdominal pain or persistent headache\n• Sudden swelling of face, hands, or feet\n• Reduced or absent baby movements\n• High fever or uncontrolled vomiting"
+            )
+        }
+        ToolType.BLOOD_DONATION -> if (isBn) {
+            listOf(
+                "১. রক্তদানের সময়সীমা" to "একজন সুস্থ পুরুষ প্রতি ৩ মাস (৯০ দিন) পর পর এবং একজন সুস্থ নারী প্রতি ৪ মাস (১২০ দিন) পর পর নিরাপদভাবে রক্তদান করতে পারেন।",
+                "২. রক্তদানের যোগ্যতা" to "• বয়স: ১৮ থেকে ৬০ বছর\n• ওজন: কমপক্ষে ৪৫ থেকে ৫০ কেজি\n• শারীরিক অবস্থা: রক্তচাপ স্বাভাবিক থাকতে হবে এবং কোনো সংক্রামক রোগ থাকা যাবে না।"
+            )
+        } else {
+            listOf(
+                "1. Blood Donation Interval" to "Healthy adults can donate whole blood every 90 days (3 months) for men and 120 days (4 months) for women to allow iron levels to replenish.",
+                "2. Eligibility Requirements" to "• Age: 18 - 60 years old\n• Weight: At least 45 - 50 kg\n• Health: Normal blood pressure, no active infections, and hemogloblin level above 12.5 g/dL."
+            )
+        }
+        ToolType.ZAKAT -> if (isBn) {
+            listOf(
+                "১. যাকাত কেন ফরজ?" to "যাকাত ইসলামের অন্যতম ফরজ স্তম্ভ। নিساب পরিমাণ (সাড়ে ৭ ভরি সোনা বা সাড়ে ৫২ ভরি রুপা বা সমমূল্যের নগদ অর্থ) বছর শেষে থাকলে ২.৫% হারে যাকাত দেওয়া বাধ্যতামূলক। এটি সম্পদ পবিত্র করে এবং অভাবীদের সাহায্য করে।",
+                "২. কোন কোন সম্পদের যাকাত দিতে হবে?" to "• নগদ টাকা ও ব্যাংকে জমানো অর্থ\n• সোনা ও রুপা (ব্যবহার্য বা অলংকার)\n• ব্যবসায়িক পণ্য বা স্টক\n• শেয়ার বা স্টক মার্কেটে বিনিয়োগ\n• উসুলযোগ্য পাওনা ঋণ",
+                "৩. কি কি যাকাতের আওতামুক্ত?" to "• নিজের বসবাসের ঘরবাড়ি ও ব্যবহারের গাড়ি\n• পরিধেয় পোশাক ও নিত্য ব্যবহার্য আসবাবপত্র\n• পেশাগত কাজের প্রয়োজনীয় যন্ত্রপাতি\n• নিساب পরিমাণের কম সোনা বা রুপা\n• পরিশোধযোগ্য ব্যক্তিগত দেনা বা দায়সমূহ",
+                "৪. যাকাত পাওয়ার যোগ্য খাতসমূহ" to "পবিত্র কুরআনে নির্ধারিত ৮টি প্রধান খাত:\n• ফকির ও মিসকিন (অভাবী ও নিঃস্ব)\n• যাকাত আদায়ে নিয়োজিত কর্মচারী\n• ইসলামের প্রতি আকৃষ্ট ব্যক্তি\n• দাস বা বন্দী মুক্তি\n• ঋণগ্রস্ত ব্যক্তি\n• আল্লাহর সন্তুষ্টির পথে ও জনকল্যাণে\n• মুসাফির বা অসহায় পথিক"
+            )
+        } else {
+            listOf(
+                "1. Why is Zakat mandatory?" to "Zakat is one of the pillars of Islam. It is compulsory for every Muslim whose wealth exceeds the Nisab threshold (equivalent to 87.48g of gold or 612.36g of silver) for a lunar year. It purifies wealth and guarantees social security for the poor.",
+                "2. What assets require Zakat?" to "• Cash on hand or savings in bank accounts\n• Gold and silver ornaments/investments\n• Business stock and merchandise\n• Shares, mutual funds, or stock investments\n• Receivables/strong debts owed to you",
+                "3. What assets are exempt?" to "• Personal residence and primary vehicles\n• Daily wear clothes and home furniture\n• Tools used for professional trade/work\n• Gold or silver below the Nisab threshold\n• Payable personal debts and liabilities",
+                "4. Eligible Recipients (Asnaf)" to "The 8 categories defined in the Holy Quran:\n• Al-Fuqara (the extremely poor) & Al-Masakin (the needy)\n• Zakat administrators/collectors\n• Those whose hearts are to be reconciled\n• Freeing captives/slaves\n• Debt-ridden individuals\n• In the cause of Allah (social/educational benefits)\n• Stranded travelers in need"
             )
         }
         ToolType.CLOTH_MEASUREMENT -> if (isBn) {
@@ -731,48 +796,218 @@ private fun getToolInfoItems(toolType: ToolType, isBn: Boolean): List<Pair<Strin
                 "2. Carat & Gold Purity" to "Carat measures the purity of gold:\n• 22 Carat: 91.6% pure gold (Ideal for high-end ornaments)\n• 21 Carat: 87.5% pure gold\n• 18 Carat: 75.0% pure gold\n• 24 Carat: 99.9% pure gold (Raw gold bar/coin, too soft for jewelry)"
             )
         }
-        ToolType.EMI_LOAN, ToolType.INTEREST, ToolType.SAVINGS_TARGET -> if (isBn) {
+        ToolType.EMI_LOAN -> if (isBn) {
             listOf(
-                "১. ইএমআই (EMI) কিভাবে কাজ করে?" to "EMI (Equated Monthly Installment) হলো সমপরিমাণ মাসিক কিস্তি যা প্রতি মাসে ঋণ পরিশোধে দিতে হয়। এটি মূল টাকা এবং সুদের সমন্বয়ে গঠিত।",
-                "২. মাসিক কিস্তি হিসাবের ফর্মুলা" to "ফর্মুলা: `EMI = [P x R x (1+R)^N]/[(1+R)^N - 1]`, যেখানে P = ঋণের পরিমাণ, R = মাসিক সুদের হার, N = কিস্তির সংখ্যা (মাস)।",
-                "৩. ঋণের খরচ কমানোর উপায়" to "মেয়াদ কম রাখলে বা সুদের হার কম পেলে মোট অতিরিক্ত সুদের খরচ অনেক হ্রাস পায়। সম্ভব হলে ঋণের কিছু অংশ অগ্রিম পরিশোধ করুন।"
+                "১. ইএমআই (EMI) কী?" to "ইএমআই হলো প্রতি মাসে ব্যাংক বা ঋণদাতাকে পরিশোধ করা একটি নির্দিষ্ট কিস্তি। এর মাধ্যমে মূল টাকা এবং ঋণের সুদ ধীরে ধীরে শোধ করা হয়।",
+                "২. কিস্তির হিসাবের ফর্মুলা" to "EMI = [P x R x (1+R)^N]/[(1+R)^N - 1] যেখানে P হলো লোনের পরিমাণ, R হলো মাসিক সুদের হার এবং N হলো মোট মাসের संख्या।"
             )
         } else {
             listOf(
-                "1. How does EMI work?" to "EMI stands for Equated Monthly Installment. It is a fixed payment made by a borrower to a lender at a specified date each calendar month. EMIs consist of both principal and interest components.",
-                "2. Monthly EMI Formula" to "Formula: `EMI = [P x R x (1+R)^N]/[(1+R)^N - 1]` where P is Principal loan amount, R is monthly interest rate, and N is monthly tenure.",
-                "3. Tips to Reduce Interest Cost" to "Choosing a shorter loan tenure or securing a lower interest rate significantly reduces the total interest payable. Making prepayments also helps lower the burden."
+                "1. Equated Monthly Installment (EMI)" to "EMI is a fixed payment amount made by a borrower to a lender at a specified date each month. It repays both the principal loan amount and accrued interest.",
+                "2. Monthly EMI Formula" to "EMI = [P x R x (1+R)^N]/[(1+R)^N - 1] where P is the Loan Amount, R is the monthly interest rate (annual rate / 12 / 100), and N is the loan tenure in months."
             )
         }
-        ToolType.ELECTRICITY_BILL, ToolType.APPLIANCE_COST, ToolType.BATTERY_BACKUP -> if (isBn) {
+        ToolType.INTEREST -> if (isBn) {
             listOf(
-                "১. বিদ্যুৎ বিল কিভাবে হিসাব করা হয়?" to "বিদ্যুৎ বিল ব্যবহারের পরিমাণ (ইউনিট বা কিলোওয়াট-ঘণ্টা) অনুযায়ী করা হয়। ১ ইউনিট = ১০০০ ওয়াট ক্ষমতার কোনো যন্ত্রপাতি ১ ঘণ্টা চললে যে শক্তি ব্যয় হয়।",
-                "২. ব্যাটারি ব্যাকআপ কিভাবে হিসাব করে?" to "ব্যাকআপ সময় = (ব্যাটারির আহ * ব্যাটারির ভোল্টেজ * দক্ষতা) / লোড (ওয়াট)। যেমন: ১৫০Ah ১২V ব্যাটারি দিয়ে ৩০০ ওয়াট লোডে প্রায় ৪-৫ ঘণ্টা ব্যাকআপ পাওয়া যায়।"
+                "১. সরল বনাম চক্রবৃদ্ধি সুদ" to "• সরল সুদ: শুধুমাত্র মূল টাকার ওপর নির্দিষ্ট হারে সুদ ধার্য করা হয়।\n• চক্রবৃদ্ধি সুদ: পূর্ববর্তী সময়ের সুদের ওপরও পুনরায় সুদ হিসাব করা হয় (সুদ-আসল)।",
+                "২. চক্রবৃদ্ধির সময়কাল" to "সুদ যত ঘন ঘন চক্রবৃদ্ধি (মাসিক, ত্রৈমাসিক বা বার্ষিক) হবে, মেয়াদ শেষে প্রাপ্ত মোট লভ্যাংশ বা সুদের পরিমাণ তত বৃদ্ধি পাবে।"
+            )
+        } else {
+            listOf(
+                "1. Simple vs Compound Interest" to "• Simple: Computed only on the principal amount.\n• Compound: 'Interest on interest' - calculated on principal plus previously accumulated interest over intervals.",
+                "2. Frequency of Compounding" to "The more frequently interest is compounded (annually, monthly, daily), the higher the total return will be over time."
+            )
+        }
+        ToolType.SAVINGS_TARGET -> if (isBn) {
+            listOf(
+                "১. লক্ষ্যভিত্তিক সঞ্চয়" to "একটি নির্দিষ্ট লক্ষ্য (যেমন: গাড়ি কেনা বা পড়াশোনা) অর্জনের জন্য প্রতি মাসে কত টাকা করে জমানো উচিত তা বের করাই হলো সেভিংস টার্গেটের কাজ।",
+                "২. মূল্যস্ফীতি বিবেচনা" to "দীর্ঘমেয়াদী কোনো লক্ষ্য থাকলে ভবিষ্যতের সম্ভাব্য মূল্যবৃদ্ধির বিষয়টি মাথায় রেখে সঞ্চয়ের লক্ষ্যমাত্রা কিছুটা বাড়িয়ে রাখা সুবিধা দেবে।"
+            )
+        } else {
+            listOf(
+                "1. Goal-Oriented Savings" to "A savings target calculator determines how much you must put aside regularly (weekly/monthly) to reach a specific financial goal within a timeframe.",
+                "2. Adjusting for Inflation" to "When planning long-term goals (like buying a house in 10 years), factor in price increases to ensure your target is sufficient."
+            )
+        }
+        ToolType.ELECTRICITY_BILL -> if (isBn) {
+            listOf(
+                "১. বিদ্যুৎ বিল কীভাবে হিসাব করা হয়?" to "বিদ্যুৎ বিল ব্যবহারের পরিমাণ (ইউনিট বা কিলোওয়াট-ঘণ্টা) অনুযায়ী করা হয়। ১ ইউনিট = ১০০০ ওয়াট ক্ষমতার কোনো যন্ত্রপাতি ১ ঘণ্টা চললে যে শক্তি ব্যয় হয়।",
+                "২. ট্যারিফ স্ল্যাব ও বিলিং" to "বিদ্যুৎ ব্যবহারের পরিমাণের ওপর ভিত্তি করে স্ল্যাব রেট পরিবর্তিত হয়। ফলে বেশি ইউনিট ব্যবহার করলে প্রতি ইউনিটের মূল্য বেড়ে যায়।"
             )
         } else {
             listOf(
                 "1. How is Electricity Bill calculated?" to "Bills are calculated based on energy consumption in kilowatt-hours (kWh), where 1 unit = 1000W of electrical power consumed for 1 hour.",
-                "2. How is Battery Backup calculated?" to "Backup Time (Hours) = (Battery Ah * Battery Voltage * Efficiency) / Load in Watts. Efficiency is typically assumed to be around 0.8."
+                "2. Tariff Slabs & Demand Charge" to "Many regions use progressive step tariffs (slabs) where the unit rate increases with higher usage, alongside fixed demand charges."
             )
         }
-        ToolType.COLOR_CONVERTER, ToolType.RESISTOR_CODE -> if (isBn) {
+        ToolType.APPLIANCE_COST -> if (isBn) {
             listOf(
-                "১. কালার কোড কনভার্টার কি?" to "এটি হেক্স কোড (যেমন #FF5722), আরজিবি (Red, Green, Blue) মান এবং এইচএসএল ফরম্যাটের মধ্যে পারস্পরিক রূপান্তর করতে ব্যবহৃত হয়।",
-                "২. কালার হুইল কিভাবে ব্যবহার করবেন?" to "কালার হুইলে বা চাকাতে স্পর্শ করে বা ড্র্যাগ করে আপনার পছন্দের কালারটি সরাসরি নির্বাচন করতে পারেন এবং এর হেক্স কোড বা আরজিবি মান দেখতে পারেন।"
+                "১. নির্দিষ্ট যন্ত্রের বিদ্যুৎ খরচ" to "যেকোনো যন্ত্রের খরচ বের করার সূত্র: `খরচ = (ওয়াট * দৈনিক ব্যবহারের ঘণ্টা * ইউনিট রেট) / ১০০০`। এর মাধ্যমে কোন ডিভাইসে বেশি কারেন্ট পুড়ছে তা জানা যায়।",
+                "২. ইনভার্টার প্রযুক্তির সুবিধা" to "ইনভার্টার সমৃদ্ধ ফ্রিজ বা এসি মোটর গতি নিয়ন্ত্রণ করার মাধ্যমে সাধারণ মোটরের চেয়ে প্রায় ৩০-৫০% বিদ্যুৎ সাশ্রয় করতে পারে।"
             )
         } else {
             listOf(
-                "1. What is the Color Code Converter?" to "It translates colors between different formats like HEX (e.g., #FF5722), RGB (Red, Green, Blue), and HSL (Hue, Saturation, Lightness).",
-                "2. How to use the Color Wheel?" to "Simply touch or drag on the circular Color Wheel to pick and view any color interactively. The corresponding HEX and RGB values update automatically."
+                "1. Calculating Individual Energy Cost" to "To find an appliance's cost: `Cost = (Watts * Hours * Unit Rate) / 1000`. This helps identify which appliances are draining the most electricity.",
+                "2. Energy Star Ratings" to "Modern appliances with high energy efficiency ratings (like 5-star ACs or inverter fridges) use significantly less power."
             )
         }
-        else -> if (isBn) {
+        ToolType.BATTERY_BACKUP -> if (isBn) {
             listOf(
-                "১. এই ক্যালকুলেটর কিভাবে কাজ করে?" to "প্রয়োজনীয় ইনপুট ফিল্ডগুলোতে সঠিক সংখ্যা প্রদান করুন। মান পরিবর্তনের সাথে সাথে আউটপুট স্বয়ংক্রিয়ভাবে নিচে রিয়েল-টাইমে আপডেট হয়ে যাবে।"
+                "১. ব্যাটারি ব্যাকআপ সময়কাল" to "ব্যাটারির ধারণক্ষমতা মাপা হয় এম্পিয়ার-আওয়ার (Ah) দিয়ে। আইপিএস বা ব্যাটারির স্থায়িত্ব বের করার সূত্র: `ব্যাকআপ সময় = (Ah * ভোল্টেজ * দক্ষতা) / মোট লোড ওয়াট`।",
+                "২. ব্যাটারির আয়ু বাড়ানোর উপায়" to "ব্যাটারি সম্পূর্ণ খালি (০%) হওয়া এড়াতে হবে। নিয়মিত পানি চেক করা এবং সঠিক ভোল্টেজে চার্জ করা ব্যাটারির দীর্ঘস্থায়িত্ব নিশ্চিত করে।"
             )
         } else {
             listOf(
-                "1. How does this calculator work?" to "Fill in the required input fields with valid numbers. The results will calculate and display at the bottom in real-time as you type."
+                "1. Battery Runtime & Capacity" to "Battery capacity is measured in Ampere-Hours (Ah). Runtime depends on load size: `Backup (Hours) = (Battery Ah * Voltage * Efficiency) / Load (W)`.",
+                "2. Preserving Battery Health" to "To extend lifespan, avoid draining lead-acid or lithium batteries to 0%. Maintain shallow discharge cycles and check water levels in IPS batteries."
+            )
+        }
+        ToolType.COLOR_CONVERTER -> if (isBn) {
+            listOf(
+                "১. কালার কোডের প্রকারভেদ" to "• HEX: ওয়েবসাইট ডিজাইনে ব্যবহৃত ৬ অক্ষরের কোড (যেমন: #FFFFFF)।\n• RGB: লাল, সবুজ ও নীল রঙের তীব্রতার অনুপাত (০-২৫৫)।\n• HSL: হিউ বা রঙ (০-৩৬০°), স্যাচুরেশন (০-১০০%) এবং উজ্জ্বলতা (০-১০০%)।"
+            )
+        } else {
+            listOf(
+                "1. Color Models Explained" to "• HEX: Standard 6-character code (e.g., #FFFFFF) used in CSS and web design.\n• RGB: Represents Red, Green, and Blue intensities from 0 to 255.\n• HSL: Focuses on Hue (0-360°), Saturation (0-100%), and Lightness (0-100%)."
+            )
+        }
+        ToolType.RESISTOR_CODE -> if (isBn) {
+            listOf(
+                "১. রেজিস্টর কালার কোড ডিকোডিং" to "রেজিস্টর বা রোধক বিদ্যুৎ প্রবাহকে নিয়ন্ত্রণ করে। রেজিস্টরের গায়ের রঙিন ব্যান্ডগুলো যথাক্রমে সংখ্যা, গুণক এবং সহনশীলতা (Tolerance) নির্দেশ করে।"
+            )
+        } else {
+            listOf(
+                "1. Decoding Resistor Bands" to "Resistors limit electric current flow. The color bands represent digits, multipliers, and tolerance (accuracy level) specified by standard EIA-RS-279."
+            )
+        }
+        ToolType.DISCOUNT -> if (isBn) {
+            listOf(
+                "১. ডিসকাউন্ট ও সাশ্রয়" to "ডিসকাউন্ট হলো মূল দামের ওপর নির্দিষ্ট পরিমাণ ছাড়। কত শতাংশ ছাড় দেওয়া হলো তা বের করে সহজে সাশ্রয়ের পরিমাণ হিসাব করা যায়।"
+            )
+        } else {
+            listOf(
+                "1. Discount & Savings Rate" to "Discounts represent a deduction from the original price of goods. Calculating the savings percentage helps evaluate the true bargain of a deal."
+            )
+        }
+        ToolType.PROFIT_LOSS -> if (isBn) {
+            listOf(
+                "১. লাভ ও ক্ষতি মার্জিন" to "ব্যবসায়ের ক্রয়মূল্য এবং বিক্রয়মূল্যের পার্থক্য থেকে লাভ বা ক্ষতি নির্ধারিত হয়। লাভ বা ক্ষতির হার বা মার্জিন দিয়ে ব্যবসার কার্যকারিতা মাপা হয়।"
+            )
+        } else {
+            listOf(
+                "1. Profit & Loss Margin" to "Profit Margin determines how much money a business makes relative to its cost. Markup is the percentage added to cost to determine the selling price."
+            )
+        }
+        ToolType.VAT_TAX -> if (isBn) {
+            listOf(
+                "১. মূল্য সংযোজন কর (ভ্যাট)" to "ভ্যাট হলো ভোগ বা সেবার ওপর আরোপিত কর। কোনো পণ্যের উৎপাদন ও বিক্রয়ের প্রতিটি ধাপে যে মূল্য যুক্ত হয় তার ওপর এটি ধার্য করা হয়।"
+            )
+        } else {
+            listOf(
+                "1. Value Added Tax (VAT)" to "VAT is a consumption tax placed on a product whenever value is added at each stage of production and at final point of retail."
+            )
+        }
+        ToolType.AGE -> if (isBn) {
+            listOf(
+                "১. সুনির্দিষ্ট বয়স নির্ণয়" to "জন্মতারিখ থেকে বর্তমান সময়ের মধ্যকার সময়কে বছর, মাস ও দিনে রূপান্তর করে আপনার নিখুঁত বয়স বের করা হয়।",
+                "২. পরবর্তী জন্মদিন" to "আপনার পরবর্তী জন্মদিনে পৌঁছাতে আর কত মাস ও দিন বাকি আছে এবং সেই দিনটি কী বার হবে তা নিখুঁতভাবে হিসেব করে।"
+            )
+        } else {
+            listOf(
+                "1. Age Calculation Details" to "Age is counted as the total elapsed time since birth. This tool breaks down your age into years, months, and days for exact precision.",
+                "2. Next Birthday Countdown" to "It calculates the exact number of months and days remaining until your next birthday and shows the weekday on which it will fall."
+            )
+        }
+        ToolType.DATE_DIFF -> if (isBn) {
+            listOf(
+                "১. তারিখের ব্যবধান" to "যেকোনো দুটি ক্যালেন্ডার তারিখের মধ্যবর্তী মোট দিন, সপ্তাহ এবং মাসের সুনির্দিষ্ট ব্যবধান বের করতে এটি ব্যবহৃত হয়।"
+            )
+        } else {
+            listOf(
+                "1. Date Interval Analysis" to "This tool calculates the absolute span between two selected calendar dates, highlighting the total elapsed days, weeks, or months."
+            )
+        }
+        ToolType.PERCENTAGE -> if (isBn) {
+            listOf(
+                "১. শতকরা বা পার্সেন্টেজ" to "শতকরা বা পার্সেন্টেজ হলো ১০০ ভাগের একটি অংশ। দৈনন্দিন হিসাব, ছাড়, কর, এবং বিজ্ঞান গবেষণায় এটি বহুল ব্যবহৃত।"
+            )
+        } else {
+            listOf(
+                "1. Understanding Percentages" to "Percentage represents a rate or number out of 100. It is essential for tax calculations, scientific data, and performance comparisons."
+            )
+        }
+        ToolType.TIP -> if (isBn) {
+            listOf(
+                "১. রেস্তোরাঁ টিপস ও বিল বণ্টন" to "টিপস হলো রেস্তোরাঁর কর্মীদের ভালো সেবার জন্য খুশি হয়ে দেওয়া অতিরিক্ত অর্থ। সাধারণত মোট বিলের ১০% থেকে ১৫% টিপ দেওয়া হয়।",
+                "২. বিল ভাগ করা" to "বন্ধুদের নিয়ে খাওয়া-দাওয়ার পর কর (Tax) এবং টিপসসহ মোট বিলটি সবার মাঝে সমানভাগে ভাগ করতে এই ক্যালকুলেটরটি সাহায্য করে।"
+            )
+        } else {
+            listOf(
+                "1. Restaurant Etiquette & Gratuity" to "Tipping is a gesture of appreciation for services rendered. Customary tipping rates range between 10% to 20% of the total bill.",
+                "2. Splitting Bills Fairly" to "When dining with friends, this tool splits the total cost (including taxes and custom tip percentages) equally among the specified group."
+            )
+        }
+        ToolType.TEXT_COUNTER -> if (isBn) {
+            listOf(
+                "১. শব্দ ও অক্ষর সংখ্যা সীমা" to "সামাজিক যোগাযোগ মাধ্যম বা বিভিন্ন চাকুরির আবেদনে প্যারাগ্রাফ বা লেখার একটি নির্দিষ্ট অক্ষর ও শব্দ সীমা থাকে, যা বজায় রাখা দরকার।"
+            )
+        } else {
+            listOf(
+                "1. Word & Character Limits" to "Many platforms (Twitter, academic papers, online job applications) impose strict character or word limits. Tracking text length is crucial."
+            )
+        }
+        ToolType.PASSWORD_GENERATOR -> if (isBn) {
+            listOf(
+                "১. শক্তিশালী পাসওয়ার্ডের শর্ত" to "একটি নিরাপদ পাসওয়ার্ডে কমপক্ষে ১২-১৬টি অক্ষর থাকা উচিত, যেখানে বড় ও ছোট হাতের অক্ষর, সংখ্যা এবং বিশেষ প্রতীক (@, #, $) মিশ্রিত থাকবে।"
+            )
+        } else {
+            listOf(
+                "1. Password Strength Criteria" to "A strong password contains at least 12-16 characters, combining uppercase and lowercase letters, numbers, and special symbols."
+            )
+        }
+        ToolType.FUEL_COST -> if (isBn) {
+            listOf(
+                "১. ভ্রমণের জ্বালানি খরচ হিসাব" to "আপনার ট্রিপের জ্বালানি খরচ বের করতে মোট দূরত্ব, গাড়ির মাইলেজ (প্রতি লিটারে কত কিমি যায়) এবং জ্বালানির বর্তমান লিটার প্রতি মূল্য প্রয়োজন।"
+            )
+        } else {
+            listOf(
+                "1. Trip Fuel Estimation" to "Calculating fuel cost requires: Total Distance, Vehicle's Fuel Efficiency (mileage), and current fuel price per liter."
+            )
+        }
+        ToolType.SPEED_DISTANCE_TIME -> if (isBn) {
+            listOf(
+                "১. গতি, দূরত্ব ও সময় সম্পর্ক" to "গতির মূল সূত্র হলো: `দূরত্ব = গতিবেগ * সময়`। যেকোনো দুটি মান জানা থাকলে খুব সহজে অপর মানটি নির্ভুলভাবে বের করা যায়।"
+            )
+        } else {
+            listOf(
+                "1. The Motion Triangle" to "Relates three fundamental values of motion: `Distance = Speed x Time`. Knowing any two allows you to calculate the third accurately."
+            )
+        }
+        ToolType.GPA -> if (isBn) {
+            listOf(
+                "১. জিপিএ (GPA) গণনা" to "জিপিএ হলো এক সেমিস্টার বা বিষয়ের একাডেমিক অর্জনের গড় হার। মোট অর্জিত গ্রেড পয়েন্টকে মোট ক্রেডিট দিয়ে ভাগ করে জিপিএ বের করা হয়।"
+            )
+        } else {
+            listOf(
+                "1. Grade Point Average (GPA)" to "GPA measures academic achievement for a single term or semester. It divides total grade points earned by the total credits attempted."
+            )
+        }
+        ToolType.CGPA -> if (isBn) {
+            listOf(
+                "১. সিজিপিএ (CGPA) গণনা" to "সিজিপিএ হলো একাধিক সেমিস্টার বা শিক্ষাবর্ষের অর্জিত জিপিএ-র গড় মান। এটি আপনার পুরো শিক্ষা জীবনের সামগ্রিক মেধার প্রতিফলন দেখায়।"
+            )
+        } else {
+            listOf(
+                "1. Cumulative GPA (CGPA)" to "CGPA calculates your overall academic performance across multiple semesters. It weighs each semester's GPA by its credit hours."
+            )
+        }
+        ToolType.TUITION_FEES -> if (isBn) {
+            listOf(
+                "১. সেমিস্টার টিউশন ফি" to "মোট সেমিস্টার ফি সাধারণত ক্রেডিট প্রতি ফি, রেজিস্ট্রেশন চার্জ, ল্যাব বা লাইব্রেরি ফি এবং অন্যান্য আনুসাঙ্গিক খরচের সমষ্টি।"
+            )
+        } else {
+            listOf(
+                "1. Semester Tuition Fees Breakdown" to "Total fees include: credit hour tuition charges, semester admission/registration fees, laboratory or activity costs, and library charges."
             )
         }
     }

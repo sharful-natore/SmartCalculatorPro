@@ -1289,6 +1289,47 @@ How can I help you today?"""
     // Theme & Language Selection
     private val sharedPrefs = context.getSharedPreferences("smart_calc_prefs", Context.MODE_PRIVATE)
 
+    var fabGradientHexColors by mutableStateOf(loadFabColors())
+        private set
+        
+    private fun loadFabColors(): List<String> {
+        val str = sharedPrefs.getString("fab_colors", null)
+        return if (str != null) str.split(",")
+        else listOf("#6B11FF", "#8B5CF6", "#EC4899", "#F43F5E", "#F59E0B", "#3B82F6", "#2563EB", "#6B11FF")
+    }
+    
+    fun updateFabColors(colors: List<String>) {
+        fabGradientHexColors = colors
+        sharedPrefs.edit().putString("fab_colors", colors.joinToString(",")).apply()
+    }
+
+    var favoriteTools by mutableStateOf(loadFavorites("favorite_tools"))
+        private set
+    var favoriteConverters by mutableStateOf(loadFavorites("favorite_converters"))
+        private set
+
+    private fun loadFavorites(key: String): Set<String> {
+        return sharedPrefs.getStringSet(key, emptySet()) ?: emptySet()
+    }
+
+    fun toggleFavoriteTool(toolName: String) {
+        favoriteTools = if (favoriteTools.contains(toolName)) {
+            favoriteTools - toolName
+        } else {
+            favoriteTools + toolName
+        }
+        sharedPrefs.edit().putStringSet("favorite_tools", favoriteTools).apply()
+    }
+    
+    fun toggleFavoriteConverter(converterName: String) {
+        favoriteConverters = if (favoriteConverters.contains(converterName)) {
+            favoriteConverters - converterName
+        } else {
+            favoriteConverters + converterName
+        }
+        sharedPrefs.edit().putStringSet("favorite_converters", favoriteConverters).apply()
+    }
+
     private val customThemeListType = com.squareup.moshi.Types.newParameterizedType(List::class.java, com.example.ui.theme.CustomTheme::class.java)
     private val customThemeAdapter by lazy { moshi.adapter<List<com.example.ui.theme.CustomTheme>>(customThemeListType) }
 
