@@ -70,7 +70,7 @@ fun MultiCalendarCard(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
         shape = RoundedCornerShape(20.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.5.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             // Header Title Bar
@@ -281,6 +281,7 @@ fun MultiCalendarCard(
                                         cellCal.get(Calendar.DAY_OF_MONTH) == selectedCalendar.get(Calendar.DAY_OF_MONTH)
 
                                 val isWeekend = col == 5 || col == 6 // Fri or Sat
+                                val hasOccasion = CalendarUtils.hasSpecialOccasion(cellCal)
 
                                 val (bDay, _, _) = CalendarUtils.getBengaliDateComponents(cellCal)
                                 val (hDay, _, _) = CalendarUtils.getHijriDateComponents(cellCal)
@@ -291,13 +292,19 @@ fun MultiCalendarCard(
                                         .height(54.dp)
                                         .clip(RoundedCornerShape(8.dp))
                                         .background(
-                                            if (isToday) themeColors.buttonEqualBg
-                                            else if (isSelected) themeColors.buttonEqualBg.copy(alpha = 0.18f)
-                                            else themeColors.displayText.copy(alpha = 0.04f)
+                                            when {
+                                                isToday -> themeColors.buttonEqualBg
+                                                isSelected -> themeColors.buttonEqualBg.copy(alpha = 0.18f)
+                                                hasOccasion -> Color(0xFF6366F1).copy(alpha = 0.15f)
+                                                else -> themeColors.displayText.copy(alpha = 0.04f)
+                                            }
                                         )
                                         .then(
-                                            if (isSelected && !isToday) Modifier.border(1.5.dp, themeColors.buttonEqualBg, RoundedCornerShape(8.dp))
-                                            else Modifier
+                                            when {
+                                                isSelected && !isToday -> Modifier.border(1.5.dp, themeColors.buttonEqualBg, RoundedCornerShape(8.dp))
+                                                hasOccasion && !isToday -> Modifier.border(1.dp, Color(0xFF6366F1).copy(alpha = 0.4f), RoundedCornerShape(8.dp))
+                                                else -> Modifier
+                                            }
                                         )
                                         .clickable {
                                             selectedCalendar = cellCal
@@ -305,6 +312,15 @@ fun MultiCalendarCard(
                                         .padding(vertical = 3.dp),
                                     contentAlignment = Alignment.Center
                                 ) {
+                                    if (hasOccasion && !isToday) {
+                                        Box(
+                                            modifier = Modifier
+                                                .align(Alignment.TopEnd)
+                                                .padding(3.dp)
+                                                .size(5.dp)
+                                                .background(Color(0xFF6366F1), CircleShape)
+                                        )
+                                    }
                                     Column(
                                         horizontalAlignment = Alignment.CenterHorizontally,
                                         verticalArrangement = Arrangement.Center

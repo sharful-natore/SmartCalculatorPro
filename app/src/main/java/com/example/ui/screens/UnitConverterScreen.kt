@@ -51,6 +51,7 @@ import com.example.util.AppLanguage
 import com.example.data.model.ConverterCategory
 import com.example.data.model.ConverterType
 import com.example.ui.theme.CalculatorThemeColors
+import com.example.ui.theme.themeCardShadow
 import com.example.ui.viewmodel.CalculatorViewModel
 import com.example.util.LanguageManager
 import java.text.DecimalFormat
@@ -414,12 +415,13 @@ fun ConverterCardItem(
         modifier = modifier
             .fillMaxWidth()
             .testTag("card_${converterType.name.lowercase()}")
-            .scaleOnPress(interactionSource),
+            .scaleOnPress(interactionSource)
+            .themeCardShadow(themeColors, elevation = 1.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.elevatedCardColors(
             containerColor = themeColors.cardBg
         ),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxHeight().padding(12.dp),

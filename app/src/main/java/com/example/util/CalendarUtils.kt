@@ -134,7 +134,13 @@ object CalendarUtils {
         when (hMonthIdx) {
             0 -> { // Muharram
                 if (hDay == 1) events.add(if (isBn) "🌙 পহেলা মহররম (হিজরী নববর্ষ)" else "🌙 Hijri New Year")
+                if (hDay == 9) events.add(if (isBn) "🕌 পবিত্র তাসু'আ (৯ মহররম রোজা)" else "🕌 Holy Tasu'a")
                 if (hDay == 10) events.add(if (isBn) "🕌 পবিত্র আশুরা" else "🕌 Holy Ashura")
+            }
+            1 -> { // Safar
+                if (hDay == 27 || hDay == 28 || (dayOfWeek == Calendar.WEDNESDAY && hDay in 24..29)) {
+                    events.add(if (isBn) "🕌 পবিত্র আখেরি চাহার শোম্বা" else "🕌 Holy Akhari Chahar Shamba")
+                }
             }
             2 -> { // Rabiul Awwal
                 if (hDay == 12) events.add(if (isBn) "🕌 পবিত্র ঈদে মিলাদুন্নবী (সা.)" else "🕌 Holy Eid-e-Miladunnabi")
@@ -147,6 +153,7 @@ object CalendarUtils {
             }
             8 -> { // Ramadan
                 if (hDay == 1) events.add(if (isBn) "🌙 পবিত্র মাহে রমজান শুরু" else "🌙 First Day of Ramadan")
+                if (hDay == 17) events.add(if (isBn) "⚔️ ঐতিহাসিক বদর দিবস" else "⚔️ Historic Badr Day")
                 if (hDay == 27) events.add(if (isBn) "🕌 পবিত্র শবে কদর" else "🕌 Holy Shab-e-Qadr")
             }
             9 -> { // Shawwal
@@ -163,8 +170,19 @@ object CalendarUtils {
         if (bMonthIdx == 0 && bDay == 1 && !events.any { it.contains("পহেলা বৈশাখ") || it.contains("Baishakh") }) {
             events.add(if (isBn) "🌾 পহেলা বৈশাখ (বাংলা নববর্ষ)" else "🌾 Bengali New Year")
         }
+        if (bMonthIdx == 0 && bDay == 25) {
+            events.add(if (isBn) "📜 কবিগুরু রবীন্দ্রনাথ ঠাকুরের জন্মজয়ন্তী" else "📜 Rabindra Jayanti")
+        }
+        if (bMonthIdx == 1 && bDay == 11) {
+            events.add(if (isBn) "📜 জাতীয় কবি কাজী নজরুল ইসলামের জন্মজয়ন্তী" else "📜 Nazrul Jayanti")
+        }
 
         return events
+    }
+
+    fun hasSpecialOccasion(calendar: Calendar): Boolean {
+        val events = getSpecialEvents(calendar, true)
+        return events.any { !it.contains("সাপ্তাহিক ছুটি") }
     }
 
     fun getBengaliDateComponents(calendar: Calendar): Triple<Int, Int, Int> {

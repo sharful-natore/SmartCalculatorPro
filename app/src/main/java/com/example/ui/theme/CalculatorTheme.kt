@@ -1,5 +1,11 @@
 package com.example.ui.theme
 
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import com.squareup.moshi.JsonClass
@@ -403,3 +409,16 @@ enum class CalculatorThemeType {
         }
     }
 }
+
+fun Modifier.themeCardShadow(
+    themeColors: CalculatorThemeColors,
+    elevation: Dp = 1.dp,
+    shape: Shape = RoundedCornerShape(16.dp)
+): Modifier = this.shadow(
+    elevation = elevation,
+    shape = shape,
+    clip = false,
+    ambientColor = themeColors.buttonEqualBg.copy(alpha = 0.12f),
+    spotColor = themeColors.buttonEqualBg.copy(alpha = 0.22f)
+)
+

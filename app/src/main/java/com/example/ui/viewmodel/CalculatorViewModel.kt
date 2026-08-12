@@ -1255,14 +1255,14 @@ How can I help you today?"""
                     openTool(tool)
                 }
                 "calculate" -> {
-                    activeTab = 1
+                    activeTab = 2
                     expressionValue = TextFieldValue(actionData, selection = TextRange(actionData.length))
                     evaluateExpression()
                 }
                 "converter" -> {
                     val parts = actionData.split(",")
                     if (parts.size >= 4) {
-                        activeTab = 2
+                        activeTab = 1
                         val catStr = parts[0]
                         val fromU = parts[1]
                         val toU = parts[2]
@@ -1308,6 +1308,15 @@ How can I help you today?"""
         private set
     var favoriteConverters by mutableStateOf(loadFavorites("favorite_converters"))
         private set
+
+    var weatherLocation by mutableStateOf(sharedPrefs.getString("weather_location", "") ?: "")
+        private set
+
+    fun updateWeatherLocation(location: String) {
+        val trimmed = location.trim()
+        weatherLocation = trimmed
+        sharedPrefs.edit().putString("weather_location", trimmed).apply()
+    }
 
     private fun loadFavorites(key: String): Set<String> {
         return sharedPrefs.getStringSet(key, emptySet()) ?: emptySet()
@@ -1983,7 +1992,7 @@ How can I help you today?"""
     fun selectHistoryItem(entry: HistoryEntry) {
         expressionValue = TextFieldValue(entry.expression, selection = TextRange(entry.expression.length))
         result = entry.result
-        activeTab = 1 // Switch to calculator
+        activeTab = 2 // Switch to calculator
     }
 
     fun saveNamedCalculation(name: String) {
@@ -2105,7 +2114,7 @@ How can I help you today?"""
         toUnit = type.units.getOrNull(1) ?: fromUnit
         converterInput = "1"
         calculateConverter()
-        activeTab = 2
+        activeTab = 1
     }
 
     fun closeConverterDetail() {
@@ -2416,7 +2425,7 @@ How can I help you today?"""
             textLower.contains("euro") || textLower.contains("ইউরো") || textLower.contains("eur")
         ) {
             val numValue = extractNumberFromString(textLower) ?: 1.0
-            activeTab = 2
+            activeTab = 1
             selectedConverterType = com.example.data.model.ConverterType.CURRENCY
 
             if (textLower.contains("dollar") || textLower.contains("ডলার") || textLower.contains("usd")) {
@@ -2444,7 +2453,7 @@ How can I help you today?"""
             textLower.contains("গ্রাম") || textLower.contains("pound") || textLower.contains("পাউন্ড")
         ) {
             val numValue = extractNumberFromString(textLower) ?: 1.0
-            activeTab = 2
+            activeTab = 1
             selectedConverterType = com.example.data.model.ConverterType.WEIGHT
             fromUnit = "Kilogram (kg)"
             toUnit = "Gram (g)"
@@ -2458,7 +2467,7 @@ How can I help you today?"""
             textLower.contains("bigha") || textLower.contains("বিঘা")
         ) {
             val numValue = extractNumberFromString(textLower) ?: 1.0
-            activeTab = 2
+            activeTab = 1
             selectedConverterType = if (textLower.contains("bigha") || textLower.contains("বিঘা")) {
                 com.example.data.model.ConverterType.AREA
             } else {
@@ -2504,7 +2513,7 @@ How can I help you today?"""
         mathExpr = mathExpr.filter { it.isDigit() || it in "+-*/.()" }
 
         if (mathExpr.isNotBlank()) {
-            activeTab = 1
+            activeTab = 2
             expressionValue = TextFieldValue(mathExpr, selection = TextRange(mathExpr.length))
             evaluateExpression()
         }

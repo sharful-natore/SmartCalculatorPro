@@ -63,8 +63,8 @@ class MainActivity : ComponentActivity() {
         val targetTab = intent?.getStringExtra("target_tab") ?: return
         when (targetTab) {
             "dashboard" -> viewModel.activeTab = 0
-            "calculator" -> viewModel.activeTab = 1
-            "converter" -> viewModel.activeTab = 2
+            "converter" -> viewModel.activeTab = 1
+            "calculator" -> viewModel.activeTab = 2
             "history" -> viewModel.activeTab = 3
             "favorites" -> {
                 viewModel.activeTab = 0

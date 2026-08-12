@@ -18,6 +18,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import com.example.data.model.ToolType
@@ -226,17 +227,25 @@ fun MainContent(
         }
     }
 
-    // Default page setup on app launch
+    // Guard variable to ensure launch initialization forces Dashboard (Tab 0) first
+    var isAppInitialized by remember { mutableStateOf(false) }
+
+    // Default page setup on app launch - ALWAYS start on Dashboard (Tab 0)
     LaunchedEffect(Unit) {
         viewModel.activeTab = 0
         pagerState.scrollToPage(0)
+        // Wait until pagerState.currentPage actually settles to 0 before marking initialization complete
+        while (pagerState.currentPage != 0) {
+            delay(16)
+        }
+        isAppInitialized = true
         delay(1000) // Slight delay to let UI settle before update check
         performUpdateCheck(false)
     }
 
     // Sync from pager state to ViewModel
     LaunchedEffect(pagerState.currentPage, pagerState.isScrollInProgress) {
-        if (!pagerState.isScrollInProgress) {
+        if (isAppInitialized && !pagerState.isScrollInProgress) {
             if (viewModel.activeTab < 4) {
                 viewModel.activeTab = pagerState.currentPage
             }
@@ -259,7 +268,7 @@ fun MainContent(
                 viewModel.showAiChat = false
             }
             // If inside a specific converter detail screen
-            viewModel.activeTab == 2 && viewModel.selectedConverterType != null -> {
+            viewModel.activeTab == 1 && viewModel.selectedConverterType != null -> {
                 viewModel.closeConverterDetail()
             }
             // If inside a specific tool detail screen
@@ -508,8 +517,8 @@ fun MainContent(
                 ) {
                     val tabs = listOf(
                         Triple(0, Icons.Default.Dashboard, LanguageManager.getString("tab_tools", viewModel.selectedLanguage)),
-                        Triple(1, Icons.Default.Calculate, LanguageManager.getString("tab_calc", viewModel.selectedLanguage)),
-                        Triple(2, ImageVector.vectorResource(id = R.drawable.ic_convert_tab), LanguageManager.getString("tab_conv", viewModel.selectedLanguage)),
+                        Triple(1, ImageVector.vectorResource(id = R.drawable.ic_convert_tab), LanguageManager.getString("tab_conv", viewModel.selectedLanguage)),
+                        Triple(2, Icons.Default.Calculate, LanguageManager.getString("tab_calc", viewModel.selectedLanguage)),
                         Triple(3, Icons.Default.History, LanguageManager.getString("tab_history", viewModel.selectedLanguage))
                     )
                     
@@ -679,7 +688,7 @@ fun MainContent(
                     Box(
                         modifier = Modifier
                             .size(56.dp)
-                            .shadow(elevation = 8.dp, shape = CircleShape)
+                            .shadow(elevation = 2.dp, shape = CircleShape)
                             .background(Color.White, shape = CircleShape)
                             .border(2.dp, themeColors.buttonEqualBg, CircleShape)
                             .clip(CircleShape)
@@ -734,8 +743,8 @@ fun MainContent(
                     Box(modifier = Modifier.fillMaxSize()) {
                         when (page) {
                             0 -> SpecialToolsScreen(viewModel, themeColors)
-                            1 -> BasicScientificScreen(viewModel, themeColors)
-                            2 -> UnitConverterScreen(viewModel, themeColors)
+                            1 -> UnitConverterScreen(viewModel, themeColors)
+                            2 -> BasicScientificScreen(viewModel, themeColors)
                             3 -> HistoryScreen(viewModel, themeColors)
                         }
                     }
@@ -743,7 +752,7 @@ fun MainContent(
             }
 
             // Floating Pill AI Button with 2dp Animated Rotating Gemini Border on Right Side (Hides on Calculator tab with smooth enter/exit animation)
-            val isAiFabVisible = !viewModel.showAiChat && viewModel.activeTab != 1
+            val isAiFabVisible = !viewModel.showAiChat && viewModel.activeTab != 2
 
             Box(
                 modifier = Modifier
@@ -793,7 +802,7 @@ fun MainContent(
 
                     Box(
                         modifier = Modifier
-                            .shadow(elevation = 6.dp, shape = RoundedCornerShape(22.dp))
+                            .shadow(elevation = 2.dp, shape = RoundedCornerShape(22.dp))
                             .clip(RoundedCornerShape(22.dp))
                             .drawWithContent {
                                 drawContent()
@@ -2763,7 +2772,7 @@ fun FavoritesDialog(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .clickable {
-                                                viewModel.activeTab = 2
+                                                viewModel.activeTab = 1
                                                 viewModel.openConverter(converter)
                                                 onDismiss()
                                             }

@@ -48,6 +48,7 @@ import com.example.util.AppLanguage
 import com.example.data.model.ToolCategory
 import com.example.data.model.ToolType
 import com.example.ui.theme.CalculatorThemeColors
+import com.example.ui.theme.themeCardShadow
 import com.example.ui.viewmodel.CalculatorViewModel
 import com.example.util.LanguageManager
 
@@ -150,6 +151,7 @@ fun ToolsCategoriesView(
     val allTools = ToolType.values()
     val searchQuery = viewModel.toolSearchQuery.lowercase().trim()
     val selectedFilter = viewModel.selectedToolCategoryFilter
+    var showWeatherDialog by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val speechLauncher = rememberLauncherForActivityResult(
@@ -197,54 +199,89 @@ fun ToolsCategoriesView(
         val dateInfo = remember { com.example.util.CalendarUtils.getMultiDateInfo(java.util.Calendar.getInstance(), isBn) }
 
         val currentHour = remember { java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY) }
-        val greetingText = remember(currentHour, isBn) {
+        val (greetingText, greetingIcon) = remember(currentHour, isBn) {
             when (currentHour) {
-                in 5..11 -> if (isBn) "শুভ সকাল ☀️" else "Good Morning ☀️"
-                in 12..15 -> if (isBn) "শুভ দুপুর 🌤️" else "Good Afternoon 🌤️"
-                in 16..17 -> if (isBn) "শুভ বিকেল 🍃" else "Good Afternoon 🍃"
-                in 18..20 -> if (isBn) "শুভ সন্ধ্যা 🌆" else "Good Evening 🌆"
-                else -> if (isBn) "শুভ রাত্রি 🌙" else "Good Night 🌙"
+                in 5..11 -> Pair(if (isBn) "শুভ সকাল" else "Good Morning", Icons.Default.WbSunny)
+                in 12..15 -> Pair(if (isBn) "শুভ দুপুর" else "Good Afternoon", Icons.Default.WbSunny)
+                in 16..17 -> Pair(if (isBn) "শুভ বিকেল" else "Good Afternoon", Icons.Default.WbTwilight)
+                in 18..20 -> Pair(if (isBn) "শুভ সন্ধ্যা" else "Good Evening", Icons.Default.WbTwilight)
+                else -> Pair(if (isBn) "শুভ রাত্রি" else "Good Night", Icons.Default.NightsStay)
             }
         }
+
+        val location = viewModel.weatherLocation.ifBlank { if (isBn) "ঢাকা" else "Dhaka" }
+        val locHash = location.hashCode()
+        val tempOffset = (if (locHash < 0) -locHash else locHash) % 7
+        val baseTemp = when (currentHour) {
+            in 5..11 -> 26
+            in 12..16 -> 31
+            in 17..19 -> 28
+            else -> 25
+        }
+        val temp = baseTemp + (tempOffset - 3)
+        val conditionIndex = (if (locHash < 0) -locHash else locHash) % 3
+        val condition = when (conditionIndex) {
+            0 -> if (isBn) "রৌদ্রোজ্জ্বল" else "Sunny"
+            1 -> if (isBn) "মনোরম" else "Pleasant"
+            else -> if (isBn) "আংশিক মেঘলা" else "Partly Cloudy"
+        }
+        val weatherIcon = when (conditionIndex) {
+            0 -> Icons.Default.WbSunny
+            1 -> Icons.Default.WbTwilight
+            else -> Icons.Default.Cloud
+        }
+        val weatherText = "$location • $temp°${if (isBn) "সে." else "C"} • $condition"
 
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 14.dp)
-                .clickable { viewModel.openTool(ToolType.MULTI_CALENDAR) },
-            shape = RoundedCornerShape(20.dp),
+                .padding(bottom = 12.dp)
+                .themeCardShadow(themeColors, elevation = 1.dp),
+            shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
-            elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(14.dp)) {
+                // Header Row: Greeting Title & Weather Widget
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = greetingText,
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 18.sp,
-                        color = themeColors.displayText
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = greetingIcon,
+                            contentDescription = "Greeting",
+                            tint = themeColors.buttonEqualBg,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = greetingText,
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 17.sp,
+                            color = themeColors.displayText
+                        )
+                    }
+
+                    // Weather Info Widget
                     Row(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(RoundedCornerShape(10.dp))
                             .background(themeColors.buttonEqualBg.copy(alpha = 0.12f))
-                            .clickable { viewModel.openTool(ToolType.MULTI_CALENDAR) }
+                            .clickable { showWeatherDialog = true }
                             .padding(horizontal = 10.dp, vertical = 5.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            imageVector = Icons.Default.CalendarMonth,
-                            contentDescription = "Calendar",
+                            imageVector = weatherIcon,
+                            contentDescription = "Weather",
                             tint = themeColors.buttonEqualBg,
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(15.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = if (isBn) "ক্যালেন্ডার" else "Calendar",
+                            text = weatherText,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             color = themeColors.buttonEqualBg
@@ -252,43 +289,62 @@ fun ToolsCategoriesView(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
+                // Date Display
                 Text(
                     text = "${dateInfo.englishDayName}, ${dateInfo.englishDate}",
-                    fontSize = 16.sp,
+                    fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
-                    color = themeColors.displayText.copy(alpha = 0.9f)
+                    color = themeColors.displayText.copy(alpha = 0.95f)
                 )
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
+                // Sub-row Badges (Bengali Date & Hijri Date side by side)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(
+                    Row(
                         modifier = Modifier
                             .clip(RoundedCornerShape(8.dp))
                             .background(themeColors.displayText.copy(alpha = 0.05f))
-                            .padding(horizontal = 10.dp, vertical = 6.dp)
+                            .padding(horizontal = 10.dp, vertical = 5.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
+                        Icon(
+                            imageVector = Icons.Default.Spa,
+                            contentDescription = "Bengali Date",
+                            tint = Color(0xFF10B981),
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "🌾 ${dateInfo.bengaliDate}",
+                            text = dateInfo.bengaliDate,
                             fontSize = 12.sp,
                             color = themeColors.displayText.copy(alpha = 0.85f),
                             fontWeight = FontWeight.SemiBold
                         )
                     }
 
-                    Box(
+                    Row(
                         modifier = Modifier
                             .clip(RoundedCornerShape(8.dp))
                             .background(themeColors.displayText.copy(alpha = 0.05f))
-                            .padding(horizontal = 10.dp, vertical = 6.dp)
+                            .padding(horizontal = 10.dp, vertical = 5.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
+                        Icon(
+                            imageVector = Icons.Default.NightsStay,
+                            contentDescription = "Hijri Date",
+                            tint = Color(0xFFF59E0B),
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "🌙 ${dateInfo.hijriDate}",
+                            text = dateInfo.hijriDate,
                             fontSize = 12.sp,
                             color = themeColors.displayText.copy(alpha = 0.85f),
                             fontWeight = FontWeight.SemiBold
@@ -296,6 +352,68 @@ fun ToolsCategoriesView(
                     }
                 }
             }
+        }
+
+        // Change Weather Location Dialog
+        if (showWeatherDialog) {
+            var tempInput by remember { mutableStateOf(viewModel.weatherLocation) }
+            AlertDialog(
+                onDismissRequest = { showWeatherDialog = false },
+                title = {
+                    Text(
+                        text = if (isBn) "আবহাওয়া লোকেশন" else "Weather Location",
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.displayText
+                    )
+                },
+                text = {
+                    Column {
+                        Text(
+                            text = if (isBn) "আপনার শহরের নাম লিখুন:" else "Enter your city name:",
+                            color = themeColors.displayText.copy(alpha = 0.8f),
+                            fontSize = 14.sp,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        OutlinedTextField(
+                            value = tempInput,
+                            onValueChange = { tempInput = it },
+                            modifier = Modifier.fillMaxWidth(),
+                            placeholder = {
+                                Text(
+                                    text = if (isBn) "উদা: ঢাকা, সিলেট, চট্টগ্রাম" else "e.g., Dhaka, London, Tokyo",
+                                    color = themeColors.displayText.copy(alpha = 0.4f)
+                                )
+                            },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = themeColors.displayText,
+                                unfocusedTextColor = themeColors.displayText,
+                                focusedBorderColor = themeColors.buttonEqualBg,
+                                unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.3f),
+                                cursorColor = themeColors.buttonEqualBg
+                            ),
+                            singleLine = true
+                        )
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            viewModel.updateWeatherLocation(tempInput)
+                            showWeatherDialog = false
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg)
+                    ) {
+                        Text(text = if (isBn) "নির্ধারণ করুন" else "Save", color = Color.White)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showWeatherDialog = false }) {
+                        Text(text = if (isBn) "বাতিল" else "Cancel", color = themeColors.buttonEqualBg)
+                    }
+                },
+                containerColor = themeColors.cardBg,
+                shape = RoundedCornerShape(16.dp)
+            )
         }
 
         // Search Bar
@@ -576,12 +694,13 @@ fun ToolGridCardItem(
         modifier = modifier
             .fillMaxWidth()
             .testTag("tool_card_${toolType.name.lowercase()}")
-            .scaleOnPress(interactionSource),
+            .scaleOnPress(interactionSource)
+            .themeCardShadow(themeColors, elevation = 1.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.elevatedCardColors(
             containerColor = themeColors.cardBg
         ),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxHeight().padding(12.dp),

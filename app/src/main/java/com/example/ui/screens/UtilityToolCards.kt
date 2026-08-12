@@ -41,7 +41,7 @@ fun TextCounterCard(viewModel: CalculatorViewModel, themeColors: CalculatorTheme
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
@@ -179,7 +179,7 @@ fun PasswordGeneratorCard(viewModel: CalculatorViewModel, themeColors: Calculato
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(

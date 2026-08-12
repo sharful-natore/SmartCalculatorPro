@@ -70,7 +70,7 @@ fun StopwatchTimerCard(viewModel: CalculatorViewModel, themeColors: CalculatorTh
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             // Tab Selector
@@ -319,7 +319,7 @@ fun NotesChecklistCard(viewModel: CalculatorViewModel, themeColors: CalculatorTh
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
@@ -433,7 +433,7 @@ fun WorldClockCard(viewModel: CalculatorViewModel, themeColors: CalculatorThemeC
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
@@ -503,7 +503,7 @@ fun UnitPriceComparerCard(viewModel: CalculatorViewModel, themeColors: Calculato
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
@@ -626,7 +626,7 @@ fun SimpleCompassCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -698,7 +698,7 @@ fun AspectRatioCard(viewModel: CalculatorViewModel, themeColors: CalculatorTheme
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
@@ -772,7 +772,7 @@ fun RandomPickerCard(viewModel: CalculatorViewModel, themeColors: CalculatorThem
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
