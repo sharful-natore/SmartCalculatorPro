@@ -265,6 +265,11 @@ enum class ToolType(
     ),
 
     // 8. Everyday Smart Tools
+    WEATHER(
+        "Weather Forecast", "আবহাওয়া বার্তা",
+        "বর্তমান আবহাওয়া, ৭ দিনের পূর্বাভাস এবং বিস্তারিত তথ্য",
+        ToolCategory.UTILITY, Icons.Default.Cloud
+    ),
     STOPWATCH_TIMER(
         "Stopwatch & Timer", "স্টপওয়াচ ও টাইমার",
         "কাউন্টডাউন টাইমার ও ল্যাপ সহ নির্ভুল স্টপওয়াচ",
@@ -357,6 +362,7 @@ enum class ToolType(
                 ASPECT_RATIO -> "Calculate screen, video, and image aspect ratios"
                 RANDOM_NUMBER_PICKER -> "Random number generator, dice roller, and coin flipper"
                 MULTI_CALENDAR -> "Gregorian, Bengali, and Hijri multi-calendar"
+                WEATHER -> "Check current weather and 7-day forecast"
             }
         }
     }

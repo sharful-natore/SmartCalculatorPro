@@ -95,34 +95,48 @@ object CalendarUtils {
         // 2. Fixed Gregorian Special Days / National Holidays
         when (gMonth) {
             0 -> { // January
-                if (gDay == 1) events.add(if (isBn) "🌟 ইংরেজি নববর্ষ" else "🌟 New Year's Day")
+                if (gDay == 1) events.add(if (isBn) "🎆 ইংরেজি নববর্ষ" else "🎆 New Year's Day")
+                if (gDay == 10) events.add(if (isBn) "🇧🇩 বঙ্গবন্ধুর স্বদেশ প্রত্যাবর্তন দিবস" else "🇧🇩 Bangabandhu's Homecoming Day")
             }
             1 -> { // February
                 if (gDay == 14) events.add(if (isBn) "💖 বিশ্ব ভালোবাসা দিবস" else "💖 Valentine's Day")
                 if (gDay == 21) events.add(if (isBn) "🌺 আন্তর্জাতিক মাতৃভাষা দিবস ও শহীদ দিবস" else "🌺 International Mother Language Day")
             }
             2 -> { // March
+                if (gDay == 7) events.add(if (isBn) "📜 ঐতিহাসিক ৭ই মার্চ ভাষণ দিবস" else "📜 Historic March 7th Speech Day")
                 if (gDay == 8) events.add(if (isBn) "👩 আন্তর্জাতিক নারী দিবস" else "👩 International Women's Day")
-                if (gDay == 17) events.add(if (isBn) "👶 জাতির পিতার জন্মবার্ষিকী ও জাতীয় শিশু দিবস" else "👶 Children's Day")
+                if (gDay == 17) events.add(if (isBn) "👶 জাতির পিতার জন্মবার্ষিকী ও জাতীয় শিশু দিবস" else "👶 Bangabandhu's Birthday")
                 if (gDay == 26) events.add(if (isBn) "🇧🇩 মহান স্বাধীনতা ও জাতীয় দিবস" else "🇧🇩 Independence Day")
             }
             3 -> { // April
                 if (gDay == 14) events.add(if (isBn) "🌾 পহেলা বৈশাখ (বাংলা নববর্ষ)" else "🌾 Pahela Baishakh (Bengali New Year)")
+                if (gDay == 17) events.add(if (isBn) "📜 ঐতিহাসিক মুজিবনগর দিবস" else "📜 Historic Mujibnagar Day")
             }
             4 -> { // May
                 if (gDay == 1) events.add(if (isBn) "🛠️ মে দিবস (আন্তর্জাতিক শ্রমিক দিবস)" else "🛠️ May Day (Labor Day)")
             }
+            5 -> { // June
+                if (gDay == 5) events.add(if (isBn) "🌍 বিশ্ব পরিবেশ দিবস" else "🌍 World Environment Day")
+                if (gDay == 7) events.add(if (isBn) "📜 ঐতিহাসিক ৬ দফা দিবস" else "📜 Historic Six-Point Day")
+                if (gDay == 23) events.add(if (isBn) "🏛️ আওয়ামী লীগের প্রতিষ্ঠা দিবস" else "🏛️ Awami League Founding Day")
+            }
             7 -> { // August
+                if (gDay == 5) events.add(if (isBn) "🎂 শেখ কামালের জন্মদিন" else "🎂 Sheikh Kamal's Birthday")
+                if (gDay == 8) events.add(if (isBn) "💐 বেগম ফজিলাতুন্নেছা মুজিবের জন্মদিন" else "💐 Begum Fazilatunnesa Mujib's Birthday")
                 if (gDay == 12) events.add(if (isBn) "🌟 আন্তর্জাতিক যুব দিবস" else "🌟 International Youth Day")
                 if (gDay == 15) events.add(if (isBn) "🖤 জাতীয় শোক দিবস" else "🖤 National Mourning Day")
             }
             9 -> { // October
+                if (gDay == 18) events.add(if (isBn) "🧒 শেখ রাসেল দিবস" else "🧒 Sheikh Russel Day")
                 if (gDay == 24) events.add(if (isBn) "🌐 জাতিসংঘ দিবস" else "🌐 United Nations Day")
             }
             10 -> { // November
+                if (gDay == 3) events.add(if (isBn) "🖤 জেল হত্যা দিবস" else "🖤 Jail Killing Day")
+                if (gDay == 10) events.add(if (isBn) "✊ শহীদ নূর হোসেন দিবস" else "✊ Shaheed Noor Hossain Day")
                 if (gDay == 21) events.add(if (isBn) "🪖 সশস্ত্র বাহিনী দিবস" else "🪖 Armed Forces Day")
             }
             11 -> { // December
+                if (gDay == 14) events.add(if (isBn) "🖤 শহীদ বুদ্ধিজীবী দিবস" else "🖤 Martyred Intellectuals Day")
                 if (gDay == 16) events.add(if (isBn) "🇧🇩 মহান বিজয় দিবস" else "🇧🇩 Victory Day")
                 if (gDay == 25) events.add(if (isBn) "🎄 শুভ বড়দিন (ক্রিসমাস)" else "🎄 Christmas Day")
                 if (gDay == 31) events.add(if (isBn) "🎆 ৩১st নাইট / বছরের শেষ দিন" else "🎆 New Year's Eve")
@@ -138,7 +152,7 @@ object CalendarUtils {
                 if (hDay == 10) events.add(if (isBn) "🕌 পবিত্র আশুরা" else "🕌 Holy Ashura")
             }
             1 -> { // Safar
-                if (hDay == 27 || hDay == 28 || (dayOfWeek == Calendar.WEDNESDAY && hDay in 24..29)) {
+                if (dayOfWeek == Calendar.WEDNESDAY && hDay >= 24) {
                     events.add(if (isBn) "🕌 পবিত্র আখেরি চাহার শোম্বা" else "🕌 Holy Akhari Chahar Shamba")
                 }
             }

@@ -18,7 +18,31 @@ enum class AppLanguage(
 
 object LanguageManager {
     fun getString(key: String, language: AppLanguage): String {
+        val isBn = language == AppLanguage.BENGALI
         return when (key) {
+            "title_calculator" -> if (isBn) "ক্যালকুলেটর" else "Calculator"
+            "title_converter" -> if (isBn) "ইউনিট কনভার্টার" else "Unit Converter"
+            "title_history" -> if (isBn) "ইতিহাস" else "History"
+            "app_title_dashboard" -> when (language) {
+                AppLanguage.ENGLISH -> "ToolMate Dashboard"
+                AppLanguage.BENGALI -> "টুলমেট ড্যাশবোর্ড"
+                AppLanguage.HINDI -> "टूलमेट डैशबोर्ड"
+                AppLanguage.ARABIC -> "لوحة تحكم ToolMate"
+                AppLanguage.FRENCH -> "Tableau de bord ToolMate"
+                AppLanguage.SPANISH -> "Panel de ToolMate"
+                AppLanguage.GERMAN -> "ToolMate Dashboard"
+                AppLanguage.CHINESE -> "ToolMate 仪表板"
+            }
+            "app_title_main" -> when (language) {
+                AppLanguage.ENGLISH -> "ToolMate"
+                AppLanguage.BENGALI -> "টুলমেট"
+                AppLanguage.HINDI -> "टूलमेट"
+                AppLanguage.ARABIC -> "تول ميت"
+                AppLanguage.FRENCH -> "ToolMate"
+                AppLanguage.SPANISH -> "ToolMate"
+                AppLanguage.GERMAN -> "ToolMate"
+                AppLanguage.CHINESE -> "ToolMate"
+            }
             "app_title_calc" -> when (language) {
                 AppLanguage.ENGLISH -> "Smart Calculator"
                 AppLanguage.BENGALI -> "স্মার্ট ক্যালকুলেটর"

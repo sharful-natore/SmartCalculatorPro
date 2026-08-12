@@ -169,6 +169,7 @@ fun MainContent(
     var showFeedbackDialog by remember { mutableStateOf(false) }
     var showStartButtonCustomizer by remember { mutableStateOf(false) }
     var showAiFabCustomizer by remember { mutableStateOf(false) }
+    var showCenterSearchFabCustomizer by remember { mutableStateOf(false) }
 
     // --- App Update State ---
     var showUpdateDialog by remember { mutableStateOf(false) }
@@ -233,12 +234,21 @@ fun MainContent(
     // Guard variable to ensure launch initialization forces Dashboard (Tab 0) first
     var isAppInitialized by remember { mutableStateOf(false) }
 
-    // Default page setup on app launch - ALWAYS start on the correct activeTab (including shortcuts/intents)
+    // Default page setup on app launch - ALWAYS start on Dashboard (Tab 0)
     LaunchedEffect(Unit) {
-        // Immediately snap to the correct active tab, ignoring any restored saved state
-        pagerState.scrollToPage(viewModel.activeTab.coerceIn(0, 3))
+        // Reset ViewModel's activeTab to 0 on fresh launch
+        viewModel.activeTab = 0
+        
+        // Immediately snap to Dashboard, ignoring any restored state
+        if (pagerState.currentPage != 0) {
+            pagerState.scrollToPage(0)
+        }
+        
+        // Wait for page state to stabilize
+        delay(800) 
         isAppInitialized = true
-        delay(1000) // Slight delay to let UI settle before update check
+        
+        delay(200) // Remaining delay to let UI settle before update check
         performUpdateCheck(false)
     }
 
@@ -360,9 +370,9 @@ fun MainContent(
                         }
                         
                         AnimatedContent(
-                            targetState = viewModel.activeTab,
+                            targetState = Pair(viewModel.activeTab, viewModel.selectedToolType),
                             transitionSpec = {
-                                if (targetState > initialState) {
+                                if (targetState.first > initialState.first) {
                                     (slideInVertically { height -> height } + fadeIn(animationSpec = tween(220))) togetherWith
                                             (slideOutVertically { height -> -height } + fadeOut(animationSpec = tween(180)))
                                 } else {
@@ -371,15 +381,14 @@ fun MainContent(
                                 }
                             },
                             label = "TabTitleAnimation"
-                        ) { activeTab ->
+                        ) { (activeTab, selectedTool) ->
                             Text(
-                                text = when (activeTab) {
-                                    0 -> LanguageManager.getString("app_title_tools", viewModel.selectedLanguage)
-                                    1 -> LanguageManager.getString("app_title_conv", viewModel.selectedLanguage)
-                                    2 -> LanguageManager.getString("app_title_calc", viewModel.selectedLanguage)
-                                    3 -> LanguageManager.getString("app_title_history", viewModel.selectedLanguage)
-                                    4 -> LanguageManager.getString("app_title_themes", viewModel.selectedLanguage)
-                                    else -> LanguageManager.getString("app_title_tools", viewModel.selectedLanguage)
+                                text = when {
+                                    activeTab == 0 && selectedTool == null -> LanguageManager.getString("app_title_dashboard", viewModel.selectedLanguage)
+                                    activeTab == 1 -> LanguageManager.getString("title_converter", viewModel.selectedLanguage)
+                                    activeTab == 2 -> LanguageManager.getString("title_calculator", viewModel.selectedLanguage)
+                                    activeTab == 3 -> LanguageManager.getString("title_history", viewModel.selectedLanguage)
+                                    else -> LanguageManager.getString("app_title_main", viewModel.selectedLanguage)
                                 },
                                 color = Color.White,
                                 fontSize = 16.sp,
@@ -704,18 +713,39 @@ fun MainContent(
                         .size(60.dp),
                     contentAlignment = Alignment.Center
                 ) {
+                    val searchBgColor = remember(viewModel.centerSearchFabBgColorHex, themeColors.buttonEqualBg) {
+                        if (viewModel.centerSearchFabBgColorHex.isNotEmpty()) {
+                            try { Color(android.graphics.Color.parseColor(viewModel.centerSearchFabBgColorHex)) } catch (e: Exception) { Color.White }
+                        } else Color.White
+                    }
+                    
+                    val searchBorderColor = remember(viewModel.centerSearchFabBorderColorHex, themeColors.buttonEqualBg) {
+                        if (viewModel.centerSearchFabBorderColorHex.isNotEmpty()) {
+                            try { Color(android.graphics.Color.parseColor(viewModel.centerSearchFabBorderColorHex)) } catch (e: Exception) { themeColors.buttonEqualBg }
+                        } else themeColors.buttonEqualBg
+                    }
+                    
+                    val searchIconColor = remember(viewModel.centerSearchFabIconColorHex, themeColors.buttonEqualBg) {
+                        if (viewModel.centerSearchFabIconColorHex.isNotEmpty()) {
+                            try { Color(android.graphics.Color.parseColor(viewModel.centerSearchFabIconColorHex)) } catch (e: Exception) { themeColors.buttonEqualBg }
+                        } else themeColors.buttonEqualBg
+                    }
+
                     Box(
                         modifier = Modifier
                             .size(56.dp)
                             .shadow(elevation = 2.dp, shape = CircleShape)
-                            .background(Color.White, shape = CircleShape)
-                            .border(2.dp, themeColors.buttonEqualBg, CircleShape)
+                            .background(searchBgColor, shape = CircleShape)
+                            .border(2.dp, searchBorderColor, CircleShape)
                             .clip(CircleShape)
-                            .clickable(
+                            .combinedClickable(
                                 interactionSource = fabInteractionSource,
                                 indication = ripple(bounded = false, color = themeColors.buttonEqualBg),
                                 onClick = {
                                     viewModel.showGlobalSearch = true
+                                },
+                                onLongClick = {
+                                    showCenterSearchFabCustomizer = true
                                 }
                             ),
                         contentAlignment = Alignment.Center
@@ -723,7 +753,7 @@ fun MainContent(
                         Icon(
                             imageVector = Icons.Default.Search,
                             contentDescription = "Search",
-                            tint = themeColors.buttonEqualBg,
+                            tint = searchIconColor,
                             modifier = Modifier.size(28.dp)
                         )
                     }
@@ -750,7 +780,7 @@ fun MainContent(
         ) {
             if (viewModel.activeTab == 4) {
                 Box(modifier = Modifier.fillMaxSize()) {
-                    ThemeSelectorScreen(viewModel, themeColors)
+                    VisualThemesScreen(viewModel, themeColors)
                 }
             } else {
                 HorizontalPager(
@@ -761,10 +791,10 @@ fun MainContent(
                 ) { page ->
                     Box(modifier = Modifier.fillMaxSize()) {
                         when (page) {
-                            0 -> SpecialToolsScreen(viewModel, themeColors)
-                            1 -> UnitConverterScreen(viewModel, themeColors)
-                            2 -> BasicScientificScreen(viewModel, themeColors)
-                            3 -> HistoryScreen(viewModel, themeColors)
+                            0 -> DashboardScreen(viewModel, themeColors)
+                            1 -> SmartConverterScreen(viewModel, themeColors)
+                            2 -> CalculatorScreen(viewModel, themeColors)
+                            3 -> HistoryLogsScreen(viewModel, themeColors)
                         }
                     }
                 }
@@ -1657,6 +1687,14 @@ fun MainContent(
                 viewModel = viewModel,
                 themeColors = themeColors,
                 onDismiss = { showAiFabCustomizer = false }
+            )
+        }
+        
+        if (showCenterSearchFabCustomizer) {
+            CenterSearchFabCustomizerDialog(
+                viewModel = viewModel,
+                themeColors = themeColors,
+                onDismiss = { showCenterSearchFabCustomizer = false }
             )
         }
 
@@ -3146,23 +3184,176 @@ fun FabGradientEditorDialog(
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    TextButton(onClick = onDismiss) {
-                        Text(if (viewModel.selectedLanguage == AppLanguage.BENGALI) "বাতিল" else "Cancel", color = themeColors.displayText.copy(alpha = 0.6f))
+                    TextButton(
+                        onClick = {
+                            viewModel.updateFabColors(listOf("#4285F4", "#9B51E0", "#EA4335", "#FBBC05", "#34A853"))
+                            onDismiss()
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "রিসেট করুন" else "Reset",
+                            color = Color(0xFFD32F2F)
+                        )
                     }
                     Button(
                         onClick = {
                             viewModel.updateFabColors(colors)
                             onDismiss()
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg)
+                        colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
+                        modifier = Modifier.weight(1f)
                     ) {
                         Text(if (viewModel.selectedLanguage == AppLanguage.BENGALI) "সংরক্ষণ করুন" else "Save", color = themeColors.buttonEqualText)
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+fun CenterSearchFabCustomizerDialog(
+    viewModel: CalculatorViewModel,
+    themeColors: CalculatorThemeColors,
+    onDismiss: () -> Unit
+) {
+    val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
+    var showColorWheelFor by remember { mutableStateOf<String?>(null) } // "bg", "border", "icon"
+    
+    val bgHex = viewModel.centerSearchFabBgColorHex
+    val borderHex = viewModel.centerSearchFabBorderColorHex
+    val iconHex = viewModel.centerSearchFabIconColorHex
+    
+    val defaultBg = Color.White
+    val defaultBorder = themeColors.buttonEqualBg
+    val defaultIcon = themeColors.buttonEqualBg
+    
+    val currentBgColor = remember(bgHex) {
+        if (bgHex.isNotEmpty()) {
+            try { Color(android.graphics.Color.parseColor(bgHex)) } catch (e: Exception) { defaultBg }
+        } else { defaultBg }
+    }
+    
+    val currentBorderColor = remember(borderHex) {
+        if (borderHex.isNotEmpty()) {
+            try { Color(android.graphics.Color.parseColor(borderHex)) } catch (e: Exception) { defaultBorder }
+        } else { defaultBorder }
+    }
+    
+    val currentIconColor = remember(iconHex) {
+        if (iconHex.isNotEmpty()) {
+            try { Color(android.graphics.Color.parseColor(iconHex)) } catch (e: Exception) { defaultIcon }
+        } else { defaultIcon }
+    }
+    
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = themeColors.background,
+            tonalElevation = 6.dp,
+            modifier = Modifier.fillMaxWidth().padding(16.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = if (isBn) "সার্চ বাটন কাস্টমাইজ" else "Customize Search Button",
+                    color = themeColors.displayText,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                
+                Divider(color = themeColors.displayText.copy(alpha = 0.1f))
+                
+                // Color Selectors
+                ColorRowOption(
+                    label = if (isBn) "ব্যাকগ্রাউন্ড কালার" else "Background Color",
+                    color = currentBgColor,
+                    onClick = { showColorWheelFor = "bg" },
+                    themeColors = themeColors
+                )
+                
+                ColorRowOption(
+                    label = if (isBn) "বর্ডার কালার" else "Border Color",
+                    color = currentBorderColor,
+                    onClick = { showColorWheelFor = "border" },
+                    themeColors = themeColors
+                )
+                
+                ColorRowOption(
+                    label = if (isBn) "আইকন কালার" else "Icon Color",
+                    color = currentIconColor,
+                    onClick = { showColorWheelFor = "icon" },
+                    themeColors = themeColors
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    TextButton(
+                        onClick = {
+                            viewModel.updateCenterSearchFabColors("", "", "")
+                            onDismiss()
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = if (isBn) "রিসেট করুন" else "Reset",
+                            color = Color(0xFFD32F2F)
+                        )
+                    }
+                    
+                    Button(
+                        onClick = onDismiss,
+                        colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = if (isBn) "সম্পন্ন" else "Done",
+                            color = Color.White
+                        )
+                    }
+                }
+            }
+        }
+    }
+    
+    if (showColorWheelFor != null) {
+        val target = showColorWheelFor!!
+        val title = when (target) {
+            "bg" -> if (isBn) "ব্যাকগ্রাউন্ড কালার নির্বাচন" else "Select Background Color"
+            "border" -> if (isBn) "বর্ডার কালার নির্বাচন" else "Select Border Color"
+            else -> if (isBn) "আইকন কালার নির্বাচন" else "Select Icon Color"
+        }
+        val initial = when (target) {
+            "bg" -> currentBgColor
+            "border" -> currentBorderColor
+            else -> currentIconColor
+        }
+        
+        com.example.ui.components.ColorWheelPickerDialog(
+            title = title,
+            initialColor = initial,
+            onColorSelected = { color ->
+                val hex = String.format("#%06X", 0xFFFFFF and color.toArgb())
+                when (target) {
+                    "bg" -> viewModel.updateCenterSearchFabColors(hex, borderHex, iconHex)
+                    "border" -> viewModel.updateCenterSearchFabColors(bgHex, hex, iconHex)
+                    "icon" -> viewModel.updateCenterSearchFabColors(bgHex, borderHex, hex)
+                }
+            },
+            onDismiss = { showColorWheelFor = null },
+            themeColors = themeColors,
+            isBn = isBn
+        )
     }
 }
 
@@ -3222,8 +3413,6 @@ fun NavbarStartButtonCustomizerDialog(
                 
                 Divider(color = themeColors.displayText.copy(alpha = 0.1f))
                 
-                // Color Selectors
-                // 1. Background
                 ColorRowOption(
                     label = if (isBn) "ব্যাকগ্রাউন্ড কালার" else "Background Color",
                     color = currentBgColor,
@@ -3231,7 +3420,6 @@ fun NavbarStartButtonCustomizerDialog(
                     themeColors = themeColors
                 )
                 
-                // 2. Border
                 ColorRowOption(
                     label = if (isBn) "বর্ডার কালার" else "Border Color",
                     color = if (borderHex.isNotEmpty()) currentBorderColor else Color.Transparent,
@@ -3240,7 +3428,6 @@ fun NavbarStartButtonCustomizerDialog(
                     showNone = borderHex.isEmpty()
                 )
                 
-                // 3. Icon
                 ColorRowOption(
                     label = if (isBn) "আইকন কালার" else "Icon Color",
                     color = currentIconColor,
@@ -3250,7 +3437,6 @@ fun NavbarStartButtonCustomizerDialog(
                 
                 Spacer(modifier = Modifier.height(8.dp))
                 
-                // Action Buttons
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -3375,7 +3561,6 @@ fun AiFabCustomizerDialog(
                 
                 Divider(color = themeColors.displayText.copy(alpha = 0.1f))
                 
-                // Color Option 1: Background
                 ColorRowOption(
                     label = if (isBn) "ব্যাকগ্রাউন্ড কালার" else "Background Color",
                     color = currentBgColor,
@@ -3383,7 +3568,6 @@ fun AiFabCustomizerDialog(
                     themeColors = themeColors
                 )
                 
-                // Color Option 2: Icon Color
                 ColorRowOption(
                     label = if (isBn) "আইকন কালার" else "Icon Color",
                     color = currentIconColor,
@@ -3401,7 +3585,6 @@ fun AiFabCustomizerDialog(
                     modifier = Modifier.align(Alignment.Start)
                 )
                 
-                // Show the 5 gradient color options
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -3428,7 +3611,6 @@ fun AiFabCustomizerDialog(
                 
                 Spacer(modifier = Modifier.height(12.dp))
                 
-                // Action Buttons
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -3489,18 +3671,13 @@ fun AiFabCustomizerDialog(
                 val hex = String.format("#%06X", 0xFFFFFF and color.toArgb())
                 if (isGrad) {
                     val newList = gradientColorsHexList.toMutableList()
-                    while (newList.size <= gradIndex) {
-                        newList.add("#FFFFFF")
-                    }
+                    while (newList.size <= gradIndex) { newList.add("#FFFFFF") }
                     newList[gradIndex] = hex
                     val updatedGradStr = newList.joinToString(",")
                     viewModel.updateAiFabColors(bgHex, iconHex, updatedGradStr)
                 } else {
-                    if (target == "bg") {
-                        viewModel.updateAiFabColors(hex, iconHex, gradHex)
-                    } else {
-                        viewModel.updateAiFabColors(bgHex, hex, gradHex)
-                    }
+                    if (target == "bg") viewModel.updateAiFabColors(hex, iconHex, gradHex)
+                    else viewModel.updateAiFabColors(bgHex, hex, gradHex)
                 }
             },
             onDismiss = { showColorWheelFor = null },

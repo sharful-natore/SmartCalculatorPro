@@ -58,7 +58,7 @@ import java.text.DecimalFormat
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun UnitConverterScreen(
+fun SmartConverterScreen(
     viewModel: CalculatorViewModel,
     themeColors: CalculatorThemeColors
 ) {
@@ -79,7 +79,7 @@ fun UnitConverterScreen(
     ) { currentType ->
         if (currentType == null) {
             // Screen 1: Category Cards Grid View
-            ConverterCategoriesView(viewModel, themeColors)
+            SmartConverterCategoriesView(viewModel, themeColors)
         } else {
             // Screen 2: Detailed Converter View
             ConverterDetailView(currentType, viewModel, themeColors)
@@ -88,7 +88,7 @@ fun UnitConverterScreen(
 }
 
 @Composable
-fun ConverterCategoriesView(
+fun SmartConverterCategoriesView(
     viewModel: CalculatorViewModel,
     themeColors: CalculatorThemeColors
 ) {

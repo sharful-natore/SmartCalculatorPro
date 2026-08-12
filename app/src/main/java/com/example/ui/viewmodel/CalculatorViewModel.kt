@@ -1326,6 +1326,25 @@ How can I help you today?"""
             .apply()
     }
 
+    // Center Search FAB customizations
+    var centerSearchFabBgColorHex by mutableStateOf(sharedPrefs.getString("center_search_fab_bg", "") ?: "")
+        private set
+    var centerSearchFabBorderColorHex by mutableStateOf(sharedPrefs.getString("center_search_fab_border", "") ?: "") 
+        private set
+    var centerSearchFabIconColorHex by mutableStateOf(sharedPrefs.getString("center_search_fab_icon", "") ?: "") 
+        private set
+
+    fun updateCenterSearchFabColors(bg: String, border: String, icon: String) {
+        centerSearchFabBgColorHex = bg
+        centerSearchFabBorderColorHex = border
+        centerSearchFabIconColorHex = icon
+        sharedPrefs.edit()
+            .putString("center_search_fab_bg", bg)
+            .putString("center_search_fab_border", border)
+            .putString("center_search_fab_icon", icon)
+            .apply()
+    }
+
     // AI Chat FAB customizations
     var aiFabBgColorHex by mutableStateOf(sharedPrefs.getString("ai_fab_bg", "") ?: "") // empty means dynamic theme color
         private set
@@ -1365,10 +1384,86 @@ How can I help you today?"""
     var weatherLocation by mutableStateOf(sharedPrefs.getString("weather_location", "") ?: "")
         private set
 
-    fun updateWeatherLocation(location: String) {
+    var weatherLocationLat by mutableStateOf(sharedPrefs.getFloat("weather_lat", 23.7104f).toDouble())
+        private set
+    var weatherLocationLng by mutableStateOf(sharedPrefs.getFloat("weather_lng", 90.4074f).toDouble())
+        private set
+    var weatherData by mutableStateOf<com.example.data.network.WeatherResponse?>(null)
+        private set
+    var weatherIsLoading by mutableStateOf(false)
+        private set
+    var weatherFetchError by mutableStateOf<String?>(null)
+        private set
+
+    private var lastWeatherFetchTime = 0L
+
+    var geocodingResults by mutableStateOf<List<com.example.data.network.GeocodingResult>>(emptyList())
+        private set
+    var geocodingIsLoading by mutableStateOf(false)
+        private set
+
+    fun fetchWeather(force: Boolean = false) {
+        val currentTime = System.currentTimeMillis()
+        if (!force && weatherData != null && (currentTime - lastWeatherFetchTime) < 300_000) {
+            // Data is less than 5 minutes old, skip unless forced
+            return
+        }
+
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                weatherIsLoading = true
+                weatherFetchError = null
+                val response = com.example.data.network.WeatherApiClient.weatherApi.getWeather(weatherLocationLat, weatherLocationLng)
+                weatherData = response
+                lastWeatherFetchTime = System.currentTimeMillis()
+            } catch (e: Exception) {
+                e.printStackTrace()
+                withContext(Dispatchers.Main) {
+                    val msg = e.message ?: "Unknown error"
+                    weatherFetchError = if (msg.contains("429")) {
+                        if (selectedLanguage == AppLanguage.BENGALI) "বেশি বার চেষ্টার কারণে আবহাওয়া সার্ভার সাময়িকভাবে বন্ধ আছে।" else "Weather server busy (429). Please try again later."
+                    } else msg
+                    android.util.Log.e("Weather", "Fetch failed: $msg")
+                }
+            } finally {
+                weatherIsLoading = false
+            }
+        }
+    }
+
+    fun searchLocationForWeather(query: String) {
+        if (query.isBlank()) {
+            geocodingResults = emptyList()
+            return
+        }
+        viewModelScope.launch {
+            try {
+                geocodingIsLoading = true
+                val response = com.example.data.network.WeatherApiClient.geocodingApi.searchLocation(query)
+                geocodingResults = response.results ?: emptyList()
+            } catch (e: Exception) {
+                geocodingResults = emptyList()
+            } finally {
+                geocodingIsLoading = false
+            }
+        }
+    }
+
+    fun clearGeocodingResults() {
+        geocodingResults = emptyList()
+    }
+
+    fun updateWeatherLocation(location: String, lat: Double? = null, lng: Double? = null) {
         val trimmed = location.trim()
         weatherLocation = trimmed
-        sharedPrefs.edit().putString("weather_location", trimmed).apply()
+        val editor = sharedPrefs.edit().putString("weather_location", trimmed)
+        if (lat != null && lng != null) {
+            weatherLocationLat = lat
+            weatherLocationLng = lng
+            editor.putFloat("weather_lat", lat.toFloat()).putFloat("weather_lng", lng.toFloat())
+        }
+        editor.apply()
+        fetchWeather()
     }
 
     private fun loadFavorites(key: String): Set<String> {
@@ -1724,7 +1819,6 @@ How can I help you today?"""
         calculateAge()
         calculateDiscount()
         calculatePercentage()
-
         // Offload heavy IO/Network tasks to IO thread for maximum app opening speed
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -1735,6 +1829,8 @@ How can I help you today?"""
                 e.printStackTrace()
                 android.util.Log.e("CalculatorViewModel", "Failed to install security provider: ${e.message}")
             }
+
+            fetchWeather()
 
             try {
                 loadChatHistory()
