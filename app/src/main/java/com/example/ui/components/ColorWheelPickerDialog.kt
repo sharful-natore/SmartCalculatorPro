@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontWeight
@@ -19,7 +20,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.ui.theme.CalculatorThemeColors
-import com.example.util.AppLanguage
 import java.util.Locale
 
 @Composable
@@ -31,35 +31,35 @@ fun ColorWheelPickerDialog(
     themeColors: CalculatorThemeColors,
     isBn: Boolean
 ) {
-    var r by remember { mutableStateOf((initialColor.red * 255f).toInt()) }
-    var g by remember { mutableStateOf((initialColor.green * 255f).toInt()) }
-    var b by remember { mutableStateOf((initialColor.blue * 255f).toInt()) }
-    
-    // Quick presets (color wheel slices)
-    val presets = listOf(
-        Color(0xFFEF4444), // Red
-        Color(0xFFF97316), // Orange
-        Color(0xFFFBBF24), // Yellow
-        Color(0xFF34D399), // Green
-        Color(0xFF10B981), // Emerald
-        Color(0xFF06B6D4), // Cyan
-        Color(0xFF3B82F6), // Blue
-        Color(0xFF6366F1), // Indigo
-        Color(0xFF8B5CF6), // Purple
-        Color(0xFFD946EF), // Fuchsia
-        Color(0xFFEC4899), // Pink
-        Color(0xFFFFFFFF), // White
-        Color(0xFF1E293B), // Dark Blue Gray
-        Color(0xFF000000)  // Black
+    // Convert initial color to HSV
+    val initialHsv = floatArrayOf(0f, 1f, 1f)
+    android.graphics.Color.colorToHSV(initialColor.toArgb(), initialHsv)
+
+    var hue by remember { mutableStateOf(initialHsv[0]) }
+    var saturation by remember { mutableStateOf(initialHsv[1]) }
+    var value by remember { mutableStateOf(initialHsv[2]) }
+
+    val currentColor = remember(hue, saturation, value) {
+        Color(android.graphics.Color.HSVToColor(floatArrayOf(hue, saturation, value)))
+    }
+
+    // Curated professional color palette swatches
+    val presetColors = listOf(
+        Color(0xFFEF4444), Color(0xFFF97316), Color(0xFFFBBF24), Color(0xFF84CC16),
+        Color(0xFF10B981), Color(0xFF06B6D4), Color(0xFF3B82F6), Color(0xFF6366F1),
+        Color(0xFF8B5CF6), Color(0xFFD946EF), Color(0xFFEC4899), Color(0xFFF43F5E),
+        Color(0xFF0F172A), Color(0xFF334155), Color(0xFF64748B), Color(0xFF94A3B8),
+        Color(0xFFCBD5E1), Color(0xFFF1F5F9), Color(0xFFFFFFFF), Color(0xFF000000)
     )
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = themeColors.cardBg)
+                .padding(12.dp),
+            shape = RoundedCornerShape(28.dp),
+            colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
             Column(
                 modifier = Modifier
@@ -67,126 +67,174 @@ fun ColorWheelPickerDialog(
                     .fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // Title
                 Text(
                     text = title,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = themeColors.displayText,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(bottom = 16.dp)
+                    modifier = Modifier.padding(bottom = 12.dp)
                 )
 
-                // Large Dynamic Live Preview Ring
-                val currentColor = Color(r, g, b)
+                // Large Dynamic Live Preview Ring & Hex Code
                 Box(
                     modifier = Modifier
-                        .size(80.dp)
+                        .size(72.dp)
                         .clip(CircleShape)
                         .background(currentColor)
-                        .border(4.dp, themeColors.displayText.copy(alpha = 0.15f), CircleShape),
+                        .border(3.dp, themeColors.displayText.copy(alpha = 0.2f), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
+                    val argb = currentColor.toArgb()
+                    val r = android.graphics.Color.red(argb)
+                    val g = android.graphics.Color.green(argb)
+                    val b = android.graphics.Color.blue(argb)
                     val luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0
                     val textColor = if (luminance > 0.5) Color.Black else Color.White
+                    
                     Text(
                         text = String.format(Locale.US, "#%02X%02X%02X", r, g, b),
-                        fontSize = 12.sp,
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = textColor
                     )
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-                // Color Wheel Presets Grid
+                // Rainbow Hue Slider
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = if (isBn) "রঙের বর্ণালী (Hue Spectrum)" else "Hue Spectrum",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = themeColors.displayText.copy(alpha = 0.8f)
+                        )
+                        Text(
+                            text = "${hue.toInt()}°",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = themeColors.displayText
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    
+                    // Rainbow Track Box with Slider overlay
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(24.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(
+                                brush = Brush.horizontalGradient(
+                                    colors = listOf(
+                                        Color.Red, Color.Yellow, Color.Green,
+                                        Color.Cyan, Color.Blue, Color.Magenta, Color.Red
+                                    )
+                                )
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Slider(
+                            value = hue,
+                            onValueChange = { hue = it },
+                            valueRange = 0f..360f,
+                            colors = SliderDefaults.colors(
+                                thumbColor = Color.White,
+                                activeTrackColor = Color.Transparent,
+                                inactiveTrackColor = Color.Transparent
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Brightness Slider
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = if (isBn) "উজ্জ্বলতা (Brightness)" else "Brightness",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = themeColors.displayText.copy(alpha = 0.8f)
+                        )
+                        Text(
+                            text = "${(value * 100).toInt()}%",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = themeColors.displayText
+                        )
+                    }
+                    Slider(
+                        value = value,
+                        onValueChange = { value = it },
+                        valueRange = 0.1f..1f,
+                        colors = SliderDefaults.colors(
+                            thumbColor = themeColors.buttonEqualBg,
+                            activeTrackColor = themeColors.buttonEqualBg.copy(alpha = 0.7f),
+                            inactiveTrackColor = themeColors.displayText.copy(alpha = 0.15f)
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Presets Palette Grid (5 columns per row)
                 Text(
-                    text = if (isBn) "রঙের চাকা প্যালেট (Wheel Palette)" else "Color Wheel Presets",
+                    text = if (isBn) "প্রিসেট রঙ প্যালেট (Color Swatches)" else "Preset Swatches",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = themeColors.displayText.copy(alpha = 0.7f),
+                    color = themeColors.displayText.copy(alpha = 0.8f),
                     modifier = Modifier.align(Alignment.Start).padding(bottom = 8.dp)
                 )
-                
-                FlowRow(
+
+                val presetRows = presetColors.chunked(5)
+                Column(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    presets.forEach { color ->
-                        Box(
-                            modifier = Modifier
-                                .padding(horizontal = 4.dp)
-                                .size(32.dp)
-                                .clip(CircleShape)
-                                .background(color)
-                                .border(
-                                    width = if (Color(r, g, b) == color) 3.dp else 1.dp,
-                                    color = if (Color(r, g, b) == color) themeColors.buttonEqualBg else Color.Gray.copy(alpha = 0.3f),
-                                    shape = CircleShape
+                    presetRows.forEach { rowColors ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            rowColors.forEach { color ->
+                                val isSelected = currentColor.toArgb() == color.toArgb()
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(CircleShape)
+                                        .background(color)
+                                        .border(
+                                            width = if (isSelected) 3.dp else 1.dp,
+                                            color = if (isSelected) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.2f),
+                                            shape = CircleShape
+                                        )
+                                        .clickable {
+                                            val hsv = floatArrayOf(0f, 1f, 1f)
+                                            android.graphics.Color.colorToHSV(color.toArgb(), hsv)
+                                            hue = hsv[0]
+                                            saturation = hsv[1]
+                                            value = hsv[2]
+                                        }
                                 )
-                                .clickable {
-                                    r = (color.red * 255f).toInt()
-                                    g = (color.green * 255f).toInt()
-                                    b = (color.blue * 255f).toInt()
-                                }
-                        )
+                            }
+                        }
                     }
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))
-
-                // RGB Precision Sliders
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    // Red Slider
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("R", color = Color.Red, fontWeight = FontWeight.Bold, fontSize = 14.sp, modifier = Modifier.width(18.dp))
-                        Slider(
-                            value = r.toFloat(),
-                            onValueChange = { r = it.toInt() },
-                            valueRange = 0f..255f,
-                            colors = SliderDefaults.colors(
-                                thumbColor = Color.Red,
-                                activeTrackColor = Color.Red.copy(alpha = 0.4f)
-                            ),
-                            modifier = Modifier.weight(1f)
-                        )
-                        Text(r.toString(), color = themeColors.displayText, fontSize = 12.sp, modifier = Modifier.width(28.dp), textAlign = TextAlign.End)
-                    }
-
-                    // Green Slider
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("G", color = Color(0xFF10B981), fontWeight = FontWeight.Bold, fontSize = 14.sp, modifier = Modifier.width(18.dp))
-                        Slider(
-                            value = g.toFloat(),
-                            onValueChange = { g = it.toInt() },
-                            valueRange = 0f..255f,
-                            colors = SliderDefaults.colors(
-                                thumbColor = Color(0xFF10B981),
-                                activeTrackColor = Color(0xFF10B981).copy(alpha = 0.4f)
-                            ),
-                            modifier = Modifier.weight(1f)
-                        )
-                        Text(g.toString(), color = themeColors.displayText, fontSize = 12.sp, modifier = Modifier.width(28.dp), textAlign = TextAlign.End)
-                    }
-
-                    // Blue Slider
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("B", color = Color.Blue, fontWeight = FontWeight.Bold, fontSize = 14.sp, modifier = Modifier.width(18.dp))
-                        Slider(
-                            value = b.toFloat(),
-                            onValueChange = { b = it.toInt() },
-                            valueRange = 0f..255f,
-                            colors = SliderDefaults.colors(
-                                thumbColor = Color.Blue,
-                                activeTrackColor = Color.Blue.copy(alpha = 0.4f)
-                            ),
-                            modifier = Modifier.weight(1f)
-                        )
-                        Text(b.toString(), color = themeColors.displayText, fontSize = 12.sp, modifier = Modifier.width(28.dp), textAlign = TextAlign.End)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
 
                 // Actions Row
                 Row(
@@ -194,17 +242,26 @@ fun ColorWheelPickerDialog(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text(if (isBn) "বাতিল" else "Cancel", color = themeColors.displayText.copy(alpha = 0.6f))
+                        Text(
+                            text = if (isBn) "বাতিল" else "Cancel",
+                            color = themeColors.displayText.copy(alpha = 0.7f),
+                            fontWeight = FontWeight.Medium
+                        )
                     }
 
                     Button(
                         onClick = {
-                            onColorSelected(Color(r, g, b))
+                            onColorSelected(currentColor)
                             onDismiss()
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg)
+                        colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
+                        shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text(if (isBn) "ঠিক আছে" else "Apply", color = Color.White)
+                        Text(
+                            text = if (isBn) "প্রয়োগ করুন" else "Apply Color",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
             }
@@ -212,42 +269,3 @@ fun ColorWheelPickerDialog(
     }
 }
 
-@Composable
-private fun FlowRow(
-    modifier: Modifier = Modifier,
-    horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
-    verticalArrangement: Arrangement.Vertical = Arrangement.Top,
-    content: @Composable () -> Unit
-) {
-    androidx.compose.ui.layout.Layout(
-        content = content,
-        modifier = modifier
-    ) { measurables, constraints ->
-        val placeables = measurables.map { it.measure(constraints) }
-        val layoutWidth = constraints.maxWidth
-        
-        var currentX = 0
-        var currentY = 0
-        var rowHeight = 0
-        
-        val placements = mutableListOf<Pair<androidx.compose.ui.layout.Placeable, Pair<Int, Int>>>()
-        
-        placeables.forEach { placeable ->
-            if (currentX + placeable.width > layoutWidth) {
-                currentX = 0
-                currentY += rowHeight + verticalArrangement.spacing.roundToPx()
-                rowHeight = 0
-            }
-            placements.add(placeable to (currentX to currentY))
-            currentX += placeable.width + horizontalArrangement.spacing.roundToPx()
-            rowHeight = maxOf(rowHeight, placeable.height)
-        }
-        
-        val finalHeight = currentY + rowHeight
-        layout(layoutWidth, finalHeight) {
-            placements.forEach { (placeable, pos) ->
-                placeable.place(pos.first, pos.second)
-            }
-        }
-    }
-}

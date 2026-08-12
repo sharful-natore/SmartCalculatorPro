@@ -30,6 +30,8 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.automirrored.filled.Backspace
 import androidx.compose.material.icons.filled.Science
+import androidx.compose.material.icons.filled.Info
+import com.example.util.AppLanguage
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.Science
@@ -226,6 +228,50 @@ fun CalculatorScreen(
                 .heightIn(min = screenHeight)
                 .padding(start = 12.dp, end = 12.dp, top = 12.dp, bottom = 17.dp)
         ) {
+        // Navigation Reason Banner
+        val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
+        val reasonText = if (isBn) viewModel.calculatorNavigationReasonBn else viewModel.calculatorNavigationReasonEn
+        
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = themeColors.buttonEqualBg.copy(alpha = 0.15f)
+            ),
+            border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.3f))
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Info,
+                    contentDescription = "Info",
+                    tint = themeColors.buttonEqualBg,
+                    modifier = Modifier.size(18.dp)
+                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = if (isBn) "🔍 ক্যালকুলেটর স্ক্রিনে আসার কারণ (Navigation Intent):" else "🔍 Calculator Navigation Intent / Reason:",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.buttonEqualBg
+                    )
+                    Text(
+                        text = reasonText,
+                        fontSize = 12.sp,
+                        color = themeColors.displayText,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+        }
+
         // 1. Calculator Display Screen
         Box(
             modifier = Modifier

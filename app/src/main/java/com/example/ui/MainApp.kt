@@ -238,6 +238,7 @@ fun MainContent(
     LaunchedEffect(Unit) {
         // Reset ViewModel's activeTab to 0 on fresh launch
         viewModel.activeTab = 0
+        viewModel.setCalculatorNavigationReason("User tapped Calculator tab", "ইউজার ক্যালকুলেটর ট্যাব ট্যাপ করেছেন")
         
         // Immediately snap to Dashboard, ignoring any restored state
         if (pagerState.currentPage != 0) {
@@ -245,18 +246,24 @@ fun MainContent(
         }
         
         // Wait for page state to stabilize
-        delay(800) 
+        delay(300) 
         isAppInitialized = true
         
         delay(200) // Remaining delay to let UI settle before update check
         performUpdateCheck(false)
     }
 
-    // Sync from pager state to ViewModel
-    LaunchedEffect(pagerState.currentPage, pagerState.isScrollInProgress) {
-        if (isAppInitialized && !pagerState.isScrollInProgress) {
-            if (viewModel.activeTab < 4) {
+    // Sync from pager state to ViewModel only when user is actively swiping/scrolling
+    LaunchedEffect(pagerState.currentPage) {
+        if (isAppInitialized && pagerState.isScrollInProgress) {
+            if (viewModel.activeTab < 4 && pagerState.currentPage != viewModel.activeTab) {
                 viewModel.activeTab = pagerState.currentPage
+                if (pagerState.currentPage == 2) {
+                    viewModel.setCalculatorNavigationReason(
+                        "Swiped to Calculator screen",
+                        "সুইপ করে ক্যালকুলেটর স্ক্রিনে আসা হয়েছে"
+                    )
+                }
             }
         }
     }
@@ -609,7 +616,17 @@ fun MainContent(
                                     .clickable(
                                         interactionSource = tabInteraction,
                                         indication = ripple(bounded = true, color = Color.White),
-                                        onClick = { viewModel.activeTab = index }
+                                        onClick = {
+                                            if (index == 2) {
+                                                viewModel.changeActiveTab(
+                                                    2,
+                                                    "User tapped Calculator tab in Navigation Bar",
+                                                    "ন্যাভবার থেকে ইউজার ক্যালকুলেটর ট্যাব ট্যাপ করেছেন"
+                                                )
+                                            } else {
+                                                viewModel.activeTab = index
+                                            }
+                                        }
                                     ),
                                 contentAlignment = Alignment.Center
                             ) {

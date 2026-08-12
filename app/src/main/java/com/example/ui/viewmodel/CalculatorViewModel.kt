@@ -156,6 +156,23 @@ class CalculatorViewModel(
     var activeTab by mutableStateOf(0)
     var isEvaluated by mutableStateOf(false)
 
+    var calculatorNavigationReasonEn by mutableStateOf("User tapped Calculator tab")
+        private set
+    var calculatorNavigationReasonBn by mutableStateOf("ইউজার ক্যালকুলেটর ট্যাব ট্যাপ করেছেন")
+        private set
+
+    fun setCalculatorNavigationReason(en: String, bn: String) {
+        calculatorNavigationReasonEn = en
+        calculatorNavigationReasonBn = bn
+    }
+
+    fun changeActiveTab(tab: Int, reasonEn: String = "User tapped Calculator tab", reasonBn: String = "ইউজার ক্যালকুলেটর ট্যাব ট্যাপ করেছেন") {
+        activeTab = tab
+        if (tab == 2) {
+            setCalculatorNavigationReason(reasonEn, reasonBn)
+        }
+    }
+
     // History deletion confirmation state
     var showClearHistoryDialog by mutableStateOf(false)
     var showClearChatDialog by mutableStateOf(false)
@@ -1258,7 +1275,11 @@ How can I help you today?"""
                     openTool(tool)
                 }
                 "calculate" -> {
-                    activeTab = 2
+                    changeActiveTab(
+                        2,
+                        "Opened from AI Chat Action command: \"$actionData\"",
+                        "এআই চ্যাট একশন কমান্ড থেকে খোলা হয়েছে: \"$actionData\""
+                    )
                     expressionValue = TextFieldValue(actionData, selection = TextRange(actionData.length))
                     evaluateExpression()
                 }
@@ -2142,7 +2163,11 @@ How can I help you today?"""
         if (entry.type == "Calculator" || entry.type == "Basic" || entry.type.isBlank()) {
             expressionValue = TextFieldValue(entry.expression, selection = TextRange(entry.expression.length))
             result = entry.result
-            activeTab = 2 // Switch to calculator
+            changeActiveTab(
+                2,
+                "Opened from History item: \"${entry.expression} = ${entry.result}\"",
+                "হিস্ট্রি আইটেম থেকে খোলা হয়েছে: \"${entry.expression} = ${entry.result}\""
+            )
         } else if (entry.type == "BMI Calculator") {
             activeTab = 0
             openTool(com.example.data.model.ToolType.BMI)
@@ -2693,7 +2718,11 @@ How can I help you today?"""
         mathExpr = mathExpr.filter { it.isDigit() || it in "+-*/.()" }
 
         if (mathExpr.isNotBlank()) {
-            activeTab = 2
+            changeActiveTab(
+                2,
+                "Opened from Voice / Speech AI Math Parsing: \"$mathExpr\"",
+                "ভয়েস বা স্পিচ এআই ম্যাথ পার্সিং থেকে খোলা হয়েছে: \"$mathExpr\""
+            )
             expressionValue = TextFieldValue(mathExpr, selection = TextRange(mathExpr.length))
             evaluateExpression()
         }

@@ -65,13 +65,20 @@ class MainActivity : ComponentActivity() {
             when (targetTab) {
                 "dashboard" -> viewModel.activeTab = 0
                 "converter" -> viewModel.activeTab = 1
-                "calculator" -> viewModel.activeTab = 2
+                "calculator" -> {
+                    viewModel.changeActiveTab(
+                        2,
+                        "Opened via Launcher Shortcut Intent",
+                        "লঞ্চার শর্টকাট ইন্টেন্ট থেকে ক্যালকুলেটর খোলা হয়েছে"
+                    )
+                }
                 "history" -> viewModel.activeTab = 3
             }
             intent.removeExtra("target_tab")
         } else {
             // ALWAYS default to Dashboard (0) on app launch
             viewModel.activeTab = 0
+            viewModel.setCalculatorNavigationReason("User tapped Calculator tab", "ইউজার ক্যালকুলেটর ট্যাব ট্যাপ করেছেন")
         }
     }
 }
