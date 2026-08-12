@@ -158,7 +158,7 @@ fun MainContent(
         }
     }
     val coroutineScope = rememberCoroutineScope()
-    val pagerState = rememberPagerState(initialPage = viewModel.activeTab.coerceAtMost(3)) { 4 }
+    val pagerState = rememberPagerState(initialPage = 0) { 4 }
 
     var showSettingsDialog by remember { mutableStateOf(false) }
     var showTermsDialog by remember { mutableStateOf(false) }
@@ -228,7 +228,8 @@ fun MainContent(
 
     // Default page setup on app launch
     LaunchedEffect(Unit) {
-        pagerState.scrollToPage(viewModel.activeTab)
+        viewModel.activeTab = 0
+        pagerState.scrollToPage(0)
         delay(1000) // Slight delay to let UI settle before update check
         performUpdateCheck(false)
     }
@@ -775,19 +776,32 @@ fun MainContent(
                         Color(0xFF4285F4)
                     )
 
+                    val animatedGradientBrush = remember(rotationAngle, geminiColors) {
+                        object : androidx.compose.ui.graphics.ShaderBrush() {
+                            override fun createShader(size: androidx.compose.ui.geometry.Size): androidx.compose.ui.graphics.Shader {
+                                val shader = androidx.compose.ui.graphics.SweepGradientShader(
+                                    center = androidx.compose.ui.geometry.Offset(size.width / 2f, size.height / 2f),
+                                    colors = geminiColors
+                                )
+                                val matrix = android.graphics.Matrix()
+                                matrix.postRotate(rotationAngle, size.width / 2f, size.height / 2f)
+                                shader.setLocalMatrix(matrix)
+                                return shader
+                            }
+                        }
+                    }
+
                     Box(
                         modifier = Modifier
                             .shadow(elevation = 6.dp, shape = RoundedCornerShape(22.dp))
                             .clip(RoundedCornerShape(22.dp))
                             .drawWithContent {
                                 drawContent()
-                                rotate(rotationAngle) {
-                                    drawRoundRect(
-                                        brush = Brush.sweepGradient(geminiColors),
-                                        style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.dp.toPx()),
-                                        cornerRadius = androidx.compose.ui.geometry.CornerRadius(22.dp.toPx(), 22.dp.toPx())
-                                    )
-                                }
+                                drawRoundRect(
+                                    brush = animatedGradientBrush,
+                                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = 3.dp.toPx()),
+                                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(22.dp.toPx(), 22.dp.toPx())
+                                )
                             }
                             .background(if (themeColors.isDark) Color(0xFF1E293B) else Color.White)
                             .clickable { viewModel.showAiChat = true }

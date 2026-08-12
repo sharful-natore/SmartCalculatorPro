@@ -78,6 +78,95 @@ object CalendarUtils {
         )
     }
 
+    fun getSpecialEvents(calendar: Calendar, isBn: Boolean): List<String> {
+        val events = mutableListOf<String>()
+
+        val gDay = calendar.get(Calendar.DAY_OF_MONTH)
+        val gMonth = calendar.get(Calendar.MONTH) // 0-indexed
+        val dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK) // 1 = Sun, 6 = Fri, 7 = Sat
+
+        // 1. Weekend Holidays (Friday & Saturday)
+        if (dayOfWeek == Calendar.FRIDAY) {
+            events.add(if (isBn) "🔴 সাপ্তাহিক ছুটি (শুক্রবার)" else "🔴 Weekend Holiday (Friday)")
+        } else if (dayOfWeek == Calendar.SATURDAY) {
+            events.add(if (isBn) "🔴 সাপ্তাহিক ছুটি (শনিবার)" else "🔴 Weekend Holiday (Saturday)")
+        }
+
+        // 2. Fixed Gregorian Special Days / National Holidays
+        when (gMonth) {
+            0 -> { // January
+                if (gDay == 1) events.add(if (isBn) "🌟 ইংরেজি নববর্ষ" else "🌟 New Year's Day")
+            }
+            1 -> { // February
+                if (gDay == 14) events.add(if (isBn) "💖 বিশ্ব ভালোবাসা দিবস" else "💖 Valentine's Day")
+                if (gDay == 21) events.add(if (isBn) "🌺 আন্তর্জাতিক মাতৃভাষা দিবস ও শহীদ দিবস" else "🌺 International Mother Language Day")
+            }
+            2 -> { // March
+                if (gDay == 8) events.add(if (isBn) "👩 আন্তর্জাতিক নারী দিবস" else "👩 International Women's Day")
+                if (gDay == 17) events.add(if (isBn) "👶 জাতির পিতার জন্মবার্ষিকী ও জাতীয় শিশু দিবস" else "👶 Children's Day")
+                if (gDay == 26) events.add(if (isBn) "🇧🇩 মহান স্বাধীনতা ও জাতীয় দিবস" else "🇧🇩 Independence Day")
+            }
+            3 -> { // April
+                if (gDay == 14) events.add(if (isBn) "🌾 পহেলা বৈশাখ (বাংলা নববর্ষ)" else "🌾 Pahela Baishakh (Bengali New Year)")
+            }
+            4 -> { // May
+                if (gDay == 1) events.add(if (isBn) "🛠️ মে দিবস (আন্তর্জাতিক শ্রমিক দিবস)" else "🛠️ May Day (Labor Day)")
+            }
+            7 -> { // August
+                if (gDay == 12) events.add(if (isBn) "🌟 আন্তর্জাতিক যুব দিবস" else "🌟 International Youth Day")
+                if (gDay == 15) events.add(if (isBn) "🖤 জাতীয় শোক দিবস" else "🖤 National Mourning Day")
+            }
+            9 -> { // October
+                if (gDay == 24) events.add(if (isBn) "🌐 জাতিসংঘ দিবস" else "🌐 United Nations Day")
+            }
+            10 -> { // November
+                if (gDay == 21) events.add(if (isBn) "🪖 সশস্ত্র বাহিনী দিবস" else "🪖 Armed Forces Day")
+            }
+            11 -> { // December
+                if (gDay == 16) events.add(if (isBn) "🇧🇩 মহান বিজয় দিবস" else "🇧🇩 Victory Day")
+                if (gDay == 25) events.add(if (isBn) "🎄 শুভ বড়দিন (ক্রিসমাস)" else "🎄 Christmas Day")
+                if (gDay == 31) events.add(if (isBn) "🎆 ৩১st নাইট / বছরের শেষ দিন" else "🎆 New Year's Eve")
+            }
+        }
+
+        // 3. Islamic Special Days (based on Hijri Month 0-11 & Day)
+        val (hDay, hMonthIdx, _) = getHijriDateComponents(calendar)
+        when (hMonthIdx) {
+            0 -> { // Muharram
+                if (hDay == 1) events.add(if (isBn) "🌙 পহেলা মহররম (হিজরী নববর্ষ)" else "🌙 Hijri New Year")
+                if (hDay == 10) events.add(if (isBn) "🕌 পবিত্র আশুরা" else "🕌 Holy Ashura")
+            }
+            2 -> { // Rabiul Awwal
+                if (hDay == 12) events.add(if (isBn) "🕌 পবিত্র ঈদে মিলাদুন্নবী (সা.)" else "🕌 Holy Eid-e-Miladunnabi")
+            }
+            6 -> { // Rajab
+                if (hDay == 27) events.add(if (isBn) "🕌 পবিত্র শবে মেরাজ" else "🕌 Holy Shab-e-Miraj")
+            }
+            7 -> { // Shaban
+                if (hDay == 15) events.add(if (isBn) "🕌 পবিত্র শবে বরাত" else "🕌 Holy Shab-e-Barat")
+            }
+            8 -> { // Ramadan
+                if (hDay == 1) events.add(if (isBn) "🌙 পবিত্র মাহে রমজান শুরু" else "🌙 First Day of Ramadan")
+                if (hDay == 27) events.add(if (isBn) "🕌 পবিত্র শবে কদর" else "🕌 Holy Shab-e-Qadr")
+            }
+            9 -> { // Shawwal
+                if (hDay in 1..3) events.add(if (isBn) "🌙 পবিত্র ঈদুল ফিতর" else "🌙 Holy Eid-ul-Fitr")
+            }
+            11 -> { // Dhu al-Hijjah
+                if (hDay == 9) events.add(if (isBn) "🕋 পবিত্র ইয়াওমে আরাফাহ" else "🕋 Day of Arafah")
+                if (hDay in 10..12) events.add(if (isBn) "🕋 পবিত্র ঈদুল আযহা" else "🕋 Holy Eid-ul-Adha")
+            }
+        }
+
+        // 4. Bengali Calendar Fixed Days
+        val (bDay, bMonthIdx, _) = getBengaliDateComponents(calendar)
+        if (bMonthIdx == 0 && bDay == 1 && !events.any { it.contains("পহেলা বৈশাখ") || it.contains("Baishakh") }) {
+            events.add(if (isBn) "🌾 পহেলা বৈশাখ (বাংলা নববর্ষ)" else "🌾 Bengali New Year")
+        }
+
+        return events
+    }
+
     fun getBengaliDateComponents(calendar: Calendar): Triple<Int, Int, Int> {
         val year = calendar.get(Calendar.YEAR)
         val month = calendar.get(Calendar.MONTH) // 0..11
@@ -119,12 +208,14 @@ object CalendarUtils {
     }
 
     fun getHijriDateComponents(calendar: Calendar): Triple<Int, Int, Int> {
+        val cal = calendar.clone() as Calendar
+        cal.add(Calendar.DAY_OF_MONTH, -1) // Adjust -1 day for Bangladesh moon sighting standard
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             try {
                 val localDate = LocalDate.of(
-                    calendar.get(Calendar.YEAR),
-                    calendar.get(Calendar.MONTH) + 1,
-                    calendar.get(Calendar.DAY_OF_MONTH)
+                    cal.get(Calendar.YEAR),
+                    cal.get(Calendar.MONTH) + 1,
+                    cal.get(Calendar.DAY_OF_MONTH)
                 )
                 val hijrahDate = HijrahDate.from(localDate)
                 val hDay = hijrahDate.get(java.time.temporal.ChronoField.DAY_OF_MONTH)
@@ -138,9 +229,9 @@ object CalendarUtils {
 
         // Fallback Islamic tabular calendar algorithm
         val julianDay = getJulianDay(
-            calendar.get(Calendar.YEAR),
-            calendar.get(Calendar.MONTH) + 1,
-            calendar.get(Calendar.DAY_OF_MONTH)
+            cal.get(Calendar.YEAR),
+            cal.get(Calendar.MONTH) + 1,
+            cal.get(Calendar.DAY_OF_MONTH)
         )
         val l = julianDay - 1948440 + 10632
         val n = ((l - 1) / 10631).toInt()

@@ -43,8 +43,16 @@ fun MultiCalendarCard(
     val currentYear = selectedCalendar.get(Calendar.YEAR)
     val currentMonth = selectedCalendar.get(Calendar.MONTH) // 0-indexed
 
-    val todayDateInfo = remember(selectedCalendar.timeInMillis) {
+    val selectedDateInfo = remember(selectedCalendar.timeInMillis) {
         CalendarUtils.getMultiDateInfo(selectedCalendar, isBn)
+    }
+    val selectedEvents = remember(selectedCalendar.timeInMillis) {
+        CalendarUtils.getSpecialEvents(selectedCalendar, isBn)
+    }
+    val isSelectedToday = remember(selectedCalendar.timeInMillis) {
+        selectedCalendar.get(Calendar.YEAR) == todayCalendar.get(Calendar.YEAR) &&
+                selectedCalendar.get(Calendar.MONTH) == todayCalendar.get(Calendar.MONTH) &&
+                selectedCalendar.get(Calendar.DAY_OF_MONTH) == todayCalendar.get(Calendar.DAY_OF_MONTH)
     }
 
     // Grid days calculation
@@ -139,13 +147,13 @@ fun MultiCalendarCard(
 
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = todayDateInfo.englishMonthYear,
+                        text = selectedDateInfo.englishMonthYear,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = themeColors.displayText
                     )
                     Text(
-                        text = "${todayDateInfo.bengaliMonthYear} • ${todayDateInfo.hijriMonthYear}",
+                        text = "${selectedDateInfo.bengaliMonthYear} • ${selectedDateInfo.hijriMonthYear}",
                         fontSize = 12.sp,
                         color = themeColors.buttonEqualBg,
                         fontWeight = FontWeight.SemiBold
@@ -237,7 +245,7 @@ fun MultiCalendarCard(
                         text = day,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (idx == 5) Color(0xFFD32F2F) else themeColors.displayText.copy(alpha = 0.7f),
+                        color = if (idx == 5 || idx == 6) Color(0xFFE53935) else themeColors.displayText.copy(alpha = 0.7f),
                         modifier = Modifier.weight(1f),
                         textAlign = TextAlign.Center
                     )
@@ -250,11 +258,11 @@ fun MultiCalendarCard(
             val totalGridCells = firstDayOffset + totalDaysInMonth
             val gridRows = (totalGridCells + 6) / 7
 
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 for (row in 0 until gridRows) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceAround
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         for (col in 0..6) {
                             val cellIndex = row * 7 + col
@@ -272,27 +280,29 @@ fun MultiCalendarCard(
                                         cellCal.get(Calendar.MONTH) == selectedCalendar.get(Calendar.MONTH) &&
                                         cellCal.get(Calendar.DAY_OF_MONTH) == selectedCalendar.get(Calendar.DAY_OF_MONTH)
 
+                                val isWeekend = col == 5 || col == 6 // Fri or Sat
+
                                 val (bDay, _, _) = CalendarUtils.getBengaliDateComponents(cellCal)
                                 val (hDay, _, _) = CalendarUtils.getHijriDateComponents(cellCal)
 
                                 Box(
                                     modifier = Modifier
                                         .weight(1f)
-                                        .height(56.dp)
-                                        .clip(RoundedCornerShape(10.dp))
+                                        .height(54.dp)
+                                        .clip(RoundedCornerShape(8.dp))
                                         .background(
                                             if (isToday) themeColors.buttonEqualBg
                                             else if (isSelected) themeColors.buttonEqualBg.copy(alpha = 0.18f)
                                             else themeColors.displayText.copy(alpha = 0.04f)
                                         )
                                         .then(
-                                            if (isSelected && !isToday) Modifier.border(1.5.dp, themeColors.buttonEqualBg, RoundedCornerShape(10.dp))
+                                            if (isSelected && !isToday) Modifier.border(1.5.dp, themeColors.buttonEqualBg, RoundedCornerShape(8.dp))
                                             else Modifier
                                         )
                                         .clickable {
                                             selectedCalendar = cellCal
                                         }
-                                        .padding(horizontal = 2.dp, vertical = 4.dp),
+                                        .padding(vertical = 3.dp),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Column(
@@ -302,22 +312,26 @@ fun MultiCalendarCard(
                                         // English Day (Large & Bold)
                                         Text(
                                             text = dayNumber.toString(),
-                                            fontSize = 15.sp,
+                                            fontSize = 14.sp,
                                             fontWeight = FontWeight.ExtraBold,
-                                            color = if (isToday) Color.White else themeColors.displayText
+                                            color = when {
+                                                isToday -> Color.White
+                                                isWeekend -> Color(0xFFE53935)
+                                                else -> themeColors.displayText
+                                            }
                                         )
 
                                         Spacer(modifier = Modifier.height(2.dp))
 
                                         // Sub-row: Bengali & Hijri Day numbers
                                         Row(
-                                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                            horizontalArrangement = Arrangement.spacedBy(2.dp),
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
                                             // Bengali Day (Green)
                                             Text(
                                                 text = if (isBn) CalendarUtils.toBengaliDigits(bDay) else bDay.toString(),
-                                                fontSize = 10.sp,
+                                                fontSize = 9.5.sp,
                                                 fontWeight = FontWeight.Bold,
                                                 color = if (isToday) Color(0xFFA7F3D0) else Color(0xFF10B981)
                                             )
@@ -325,7 +339,7 @@ fun MultiCalendarCard(
                                             // Hijri / Arabic Day (Amber)
                                             Text(
                                                 text = if (isBn) CalendarUtils.toBengaliDigits(hDay) else hDay.toString(),
-                                                fontSize = 10.sp,
+                                                fontSize = 9.5.sp,
                                                 fontWeight = FontWeight.Bold,
                                                 color = if (isToday) Color(0xFFFDE68A) else Color(0xFFF59E0B)
                                             )
@@ -351,23 +365,50 @@ fun MultiCalendarCard(
                     .border(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
                     .padding(12.dp)
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(
-                        text = "📅 ${todayDateInfo.englishDayName}, ${todayDateInfo.englishDate}",
+                        text = if (isSelectedToday) {
+                            if (isBn) "📅 আজকের তারিখ: ${selectedDateInfo.englishDayName}, ${selectedDateInfo.englishDate}"
+                            else "📅 Today: ${selectedDateInfo.englishDayName}, ${selectedDateInfo.englishDate}"
+                        } else {
+                            if (isBn) "📅 নির্বাচিত তারিখ: ${selectedDateInfo.englishDayName}, ${selectedDateInfo.englishDate}"
+                            else "📅 Selected Date: ${selectedDateInfo.englishDayName}, ${selectedDateInfo.englishDate}"
+                        },
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp,
                         color = themeColors.displayText
                     )
                     Text(
-                        text = "🌾 বাংলা: ${todayDateInfo.bengaliDate}",
+                        text = "🌾 বাংলা: ${selectedDateInfo.bengaliDate}",
                         fontSize = 13.sp,
                         color = themeColors.displayText.copy(alpha = 0.85f)
                     )
                     Text(
-                        text = "🌙 আরবি/হিজরী: ${todayDateInfo.hijriDate}",
+                        text = "🌙 আরবি/হিজরী: ${selectedDateInfo.hijriDate}",
                         fontSize = 13.sp,
                         color = themeColors.displayText.copy(alpha = 0.85f)
                     )
+
+                    if (selectedEvents.isNotEmpty()) {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 4.dp),
+                            color = themeColors.buttonEqualBg.copy(alpha = 0.3f)
+                        )
+                        Text(
+                            text = if (isBn) "🎉 দিবস ও বিশেষ অনুষ্ঠান:" else "🎉 Special Occasion / Event:",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.5.sp,
+                            color = themeColors.buttonEqualBg
+                        )
+                        selectedEvents.forEach { event ->
+                            Text(
+                                text = "• $event",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = if (event.contains("🔴")) Color(0xFFE53935) else themeColors.displayText
+                            )
+                        }
+                    }
                 }
             }
 
