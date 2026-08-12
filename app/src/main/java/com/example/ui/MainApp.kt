@@ -20,7 +20,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.ui.draw.blur
 import com.example.data.model.ToolType
 import com.example.data.model.ConverterType
 import androidx.compose.foundation.Canvas
@@ -658,16 +657,6 @@ fun MainContent(
                     ), label = "rgb_color3"
                 )
 
-                val auraScale by infiniteTransition.animateFloat(
-                    initialValue = 1.0f,
-                    targetValue = 1.35f,
-                    animationSpec = infiniteRepeatable(
-                        animation = tween(2500, easing = FastOutSlowInEasing),
-                        repeatMode = RepeatMode.Reverse
-                    ),
-                    label = "auraScale"
-                )
-
                 val iconScale by infiniteTransition.animateFloat(
                     initialValue = 0.9f,
                     targetValue = 1.12f,
@@ -682,27 +671,9 @@ fun MainContent(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .offset(y = (-20).dp)
-                        .size(72.dp),
+                        .size(64.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    // Soft Blended Aura
-                    Box(
-                        modifier = Modifier
-                            .size(58.dp)
-                            .graphicsLayer {
-                                scaleX = auraScale
-                                scaleY = auraScale
-                                alpha = 0.6f
-                            }
-                            .blur(20.dp, edgeTreatment = androidx.compose.ui.draw.BlurredEdgeTreatment.Unbounded)
-                            .background(
-                                brush = Brush.sweepGradient(
-                                    colors = listOf(color1, color2, color3, color1)
-                                ),
-                                shape = CircleShape
-                            )
-                    )
-
                     // FAB Button with Animated RGB Gradient and White Border
                     Box(
                         modifier = Modifier
