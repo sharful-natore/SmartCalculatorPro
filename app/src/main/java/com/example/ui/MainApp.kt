@@ -253,9 +253,9 @@ fun MainContent(
         performUpdateCheck(false)
     }
 
-    // Sync from pager state to ViewModel only when user is actively swiping/scrolling
+    // Sync from pager state to ViewModel when pager changes page
     LaunchedEffect(pagerState.currentPage) {
-        if (isAppInitialized && pagerState.isScrollInProgress) {
+        if (isAppInitialized) {
             if (viewModel.activeTab < 4 && pagerState.currentPage != viewModel.activeTab) {
                 viewModel.activeTab = pagerState.currentPage
                 if (pagerState.currentPage == 2) {
