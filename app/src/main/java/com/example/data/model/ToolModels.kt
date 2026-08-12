@@ -301,8 +301,8 @@ enum class ToolType(
         ToolCategory.UTILITY, Icons.Default.Casino
     ),
     MULTI_CALENDAR(
-        "Smart Multi-Calendar", "ট্রিপল ক্যালেন্ডার",
-        "ইংরেজি, বাংলা ও আরবি (হিজরী) ফুল ফিচার্ড ক্যালেন্ডার",
+        "Smart Calendar", "স্মার্ট ক্যালেন্ডার",
+        "ইংরেজি, বাংলা ও আরবি (হিজরী) ট্রিপল ক্যালেন্ডার",
         ToolCategory.UTILITY, Icons.Default.CalendarMonth
     );
 

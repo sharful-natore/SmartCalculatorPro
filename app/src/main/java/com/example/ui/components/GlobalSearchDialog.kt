@@ -171,31 +171,6 @@ fun GlobalSearchDialog(
 ) {
     if (!viewModel.showGlobalSearch) return
 
-    val view = androidx.compose.ui.platform.LocalView.current
-    DisposableEffect(view, themeColors.isDark) {
-        var parent = view.parent
-        var dialog: android.app.Dialog? = null
-        while (parent != null) {
-            val context = (parent as? android.view.View)?.context
-            if (context is android.app.Dialog) {
-                dialog = context
-                break
-            }
-            parent = parent.parent
-        }
-        
-        val window = dialog?.window ?: (view.context as? android.app.Activity)?.window
-        if (window != null) {
-            window.statusBarColor = android.graphics.Color.TRANSPARENT
-            window.navigationBarColor = android.graphics.Color.TRANSPARENT
-            WindowCompat.getInsetsController(window, window.decorView).apply {
-                isAppearanceLightStatusBars = !themeColors.isDark
-                isAppearanceLightNavigationBars = !themeColors.isDark
-            }
-        }
-        onDispose {}
-    }
-
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
     val dialogWidth = (screenWidth * 0.92f).coerceAtMost(500.dp)
@@ -204,8 +179,7 @@ fun GlobalSearchDialog(
     Dialog(
         onDismissRequest = { viewModel.showGlobalSearch = false },
         properties = DialogProperties(
-            usePlatformDefaultWidth = false,
-            decorFitsSystemWindows = false
+            usePlatformDefaultWidth = false
         )
     ) {
         androidx.activity.compose.BackHandler {
@@ -278,7 +252,7 @@ fun GlobalSearchDialog(
                             if (type.matchesConverterQuery(query)) {
                                 results.add(SearchResult.Converter(type, language) {
                                     viewModel.selectedConverterType = type
-                                    viewModel.activeTab = 1
+                                    viewModel.activeTab = 2
                                     viewModel.showGlobalSearch = false
                                 })
                             }
@@ -290,7 +264,7 @@ fun GlobalSearchDialog(
                                 results.add(SearchResult.Tool(type, language) {
                                     viewModel.selectedToolCategoryFilter = null
                                     viewModel.selectedToolType = type
-                                    viewModel.activeTab = 2
+                                    viewModel.activeTab = 0
                                     viewModel.showGlobalSearch = false
                                 })
                             }
@@ -308,7 +282,7 @@ fun GlobalSearchDialog(
                             if (nExpr.contains(normalizedQuery, ignoreCase = true) || nRes.contains(normalizedQuery, ignoreCase = true)) {
                                 results.add(SearchResult.History(item.expression, item.result) {
                                     viewModel.selectHistoryItem(item)
-                                    viewModel.activeTab = 0
+                                    viewModel.activeTab = 1
                                     viewModel.showGlobalSearch = false
                                 })
                             }

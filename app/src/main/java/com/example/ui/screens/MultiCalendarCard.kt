@@ -89,7 +89,7 @@ fun MultiCalendarCard(
                     Spacer(modifier = Modifier.width(10.dp))
                     Column {
                         Text(
-                            text = if (isBn) "স্মার্ট ট্রিপল ক্যালেন্ডার" else "Smart Multi-Calendar",
+                            text = if (isBn) "স্মার্ট ক্যালেন্ডার" else "Smart Calendar",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = themeColors.displayText
@@ -167,6 +167,63 @@ fun MultiCalendarCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Color Legend Bar
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 10.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(10.dp)
+                            .clip(CircleShape)
+                            .background(themeColors.displayText)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = if (isBn) "ইংরেজি" else "English",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.displayText.copy(alpha = 0.8f)
+                    )
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(10.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF10B981))
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = if (isBn) "বাংলা (সবুজ)" else "Bengali (Green)",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF10B981)
+                    )
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(10.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFFF59E0B))
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = if (isBn) "হিজরী (হলুদ)" else "Hijri (Amber)",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFF59E0B)
+                    )
+                }
+            }
+
             // Days of Week Header
             val daysHeader = if (isBn) listOf("রবি", "সোম", "মঙ্গল", "বুধ", "বৃহঃ", "শুক্র", "শনি")
             else listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
@@ -211,29 +268,68 @@ fun MultiCalendarCard(
                                         cellCal.get(Calendar.MONTH) == todayCalendar.get(Calendar.MONTH) &&
                                         cellCal.get(Calendar.DAY_OF_MONTH) == todayCalendar.get(Calendar.DAY_OF_MONTH)
 
-                                val cellDateInfo = CalendarUtils.getMultiDateInfo(cellCal, isBn)
+                                val isSelected = cellCal.get(Calendar.YEAR) == selectedCalendar.get(Calendar.YEAR) &&
+                                        cellCal.get(Calendar.MONTH) == selectedCalendar.get(Calendar.MONTH) &&
+                                        cellCal.get(Calendar.DAY_OF_MONTH) == selectedCalendar.get(Calendar.DAY_OF_MONTH)
+
+                                val (bDay, _, _) = CalendarUtils.getBengaliDateComponents(cellCal)
+                                val (hDay, _, _) = CalendarUtils.getHijriDateComponents(cellCal)
 
                                 Box(
                                     modifier = Modifier
                                         .weight(1f)
-                                        .aspectRatio(1f)
-                                        .clip(RoundedCornerShape(8.dp))
+                                        .height(56.dp)
+                                        .clip(RoundedCornerShape(10.dp))
                                         .background(
                                             if (isToday) themeColors.buttonEqualBg
+                                            else if (isSelected) themeColors.buttonEqualBg.copy(alpha = 0.18f)
                                             else themeColors.displayText.copy(alpha = 0.04f)
+                                        )
+                                        .then(
+                                            if (isSelected && !isToday) Modifier.border(1.5.dp, themeColors.buttonEqualBg, RoundedCornerShape(10.dp))
+                                            else Modifier
                                         )
                                         .clickable {
                                             selectedCalendar = cellCal
-                                        },
+                                        }
+                                        .padding(horizontal = 2.dp, vertical = 4.dp),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.Center
+                                    ) {
+                                        // English Day (Large & Bold)
                                         Text(
-                                            text = if (isBn) CalendarUtils.toBengaliDigits(dayNumber) else dayNumber.toString(),
-                                            fontSize = 14.sp,
-                                            fontWeight = if (isToday) FontWeight.ExtraBold else FontWeight.SemiBold,
+                                            text = dayNumber.toString(),
+                                            fontSize = 15.sp,
+                                            fontWeight = FontWeight.ExtraBold,
                                             color = if (isToday) Color.White else themeColors.displayText
                                         )
+
+                                        Spacer(modifier = Modifier.height(2.dp))
+
+                                        // Sub-row: Bengali & Hijri Day numbers
+                                        Row(
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            // Bengali Day (Green)
+                                            Text(
+                                                text = if (isBn) CalendarUtils.toBengaliDigits(bDay) else bDay.toString(),
+                                                fontSize = 10.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = if (isToday) Color(0xFFA7F3D0) else Color(0xFF10B981)
+                                            )
+
+                                            // Hijri / Arabic Day (Amber)
+                                            Text(
+                                                text = if (isBn) CalendarUtils.toBengaliDigits(hDay) else hDay.toString(),
+                                                fontSize = 10.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = if (isToday) Color(0xFFFDE68A) else Color(0xFFF59E0B)
+                                            )
+                                        }
                                     }
                                 }
                             } else {

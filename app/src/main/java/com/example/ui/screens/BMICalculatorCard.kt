@@ -253,101 +253,112 @@ fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
                 bmiValue < 25f -> Color(0xFF34C759)   // Vibrant Green
                 else -> Color(0xFFE65100)              // Deep Orange
             }
-            Box(modifier = Modifier
-                .fillMaxWidth().height(140.dp), contentAlignment = Alignment.BottomCenter) {
-                Canvas(modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 24.dp, vertical = 8.dp)) {
-                    val strokeWidth = 14.dp.toPx()
-                    val radius = size.width / 2 - strokeWidth / 2
-                    val center = Offset(size.width / 2, size.height)
-                    
-                    // Draw Arcs
-                    // Total range: 40 - 15 = 25 units
-                    // Underweight: 15 to 18.5 (3.5 units) -> 14% of 180 deg = 25.2 deg
-                    // Normal: 18.5 to 25 (6.5 units) -> 26% of 180 deg = 46.8 deg
-                    // Overweight/Obese: 25 to 40 (15 units) -> 60% of 180 deg = 108 deg
-                    val angles = listOf(
-                        180f to 205.2f,    // Underweight (Light Blue)
-                        205.2f to 252f,    // Normal (Vibrant Green)
-                        252f to 360f       // Overweight (Deep Orange)
-                    )
-                    val colors = listOf(Color(0xFF29B6F6), Color(0xFF34C759), Color(0xFFE65100))
-                    
-                    for (i in angles.indices) {
-                        drawArc(
-                            color = colors[i],
-                            startAngle = angles[i].first,
-                            sweepAngle = angles[i].second - angles[i].first,
-                            useCenter = false,
-                            topLeft = Offset(center.x - radius, center.y - radius),
-                            size = Size(radius * 2, radius * 2),
-                            style = Stroke(
-                                width = strokeWidth,
-                                cap = StrokeCap.Butt
+
+            // Linear Color-Coded BMI Scale Bar
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Result Display
+                Text(
+                    text = viewModel.bmiCategoryResult,
+                    color = currentBmiColorText,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = viewModel.bmiResultValue,
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = currentBmiColorText
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Indicator Position (Range 15 to 40)
+                val normalizedBmi = ((bmiValue - 15f) / 25f).coerceIn(0.02f, 0.98f)
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp)
+                ) {
+                    Column {
+                        // Pointer Thumb triangle pointing down to bar
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(14.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxHeight()
+                                    .align(Alignment.CenterStart)
+                                    .fillMaxWidth(fraction = normalizedBmi),
+                                contentAlignment = Alignment.CenterEnd
+                            ) {
+                                Canvas(modifier = Modifier.size(12.dp)) {
+                                    val path = androidx.compose.ui.graphics.Path().apply {
+                                        moveTo(size.width / 2, size.height)
+                                        lineTo(0f, 0f)
+                                        lineTo(size.width, 0f)
+                                        close()
+                                    }
+                                    drawPath(path = path, color = currentBmiColorText)
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(2.dp))
+
+                        // Segmented Bar
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(14.dp)
+                                .clip(RoundedCornerShape(7.dp))
+                        ) {
+                            // Underweight (< 18.5) ~ 14% of bar
+                            Box(
+                                modifier = Modifier
+                                    .weight(0.14f)
+                                    .fillMaxHeight()
+                                    .background(Color(0xFF29B6F6))
                             )
-                        )
-                    }
+                            Spacer(modifier = Modifier.width(2.dp))
+                            // Normal (18.5 - 25) ~ 26% of bar
+                            Box(
+                                modifier = Modifier
+                                    .weight(0.26f)
+                                    .fillMaxHeight()
+                                    .background(Color(0xFF34C759))
+                            )
+                            Spacer(modifier = Modifier.width(2.dp))
+                            // Overweight & Obese (25 - 40) ~ 60% of bar
+                            Box(
+                                modifier = Modifier
+                                    .weight(0.60f)
+                                    .fillMaxHeight()
+                                    .background(Color(0xFFE65100))
+                            )
+                        }
 
-                    // Calculate Needle position (Range 15 to 40)
-                    val normalizedBmi = (bmiValue - 15f).coerceIn(0f, 25f) / 25f
-                    val needleAngle = 180f + (180f * normalizedBmi)
-                    val needleAngleRad = Math.toRadians(needleAngle.toDouble())
-                    
-                    val innerRadius = radius - strokeWidth / 2
-                    val needleEnd = Offset(
-                        x = center.x + (innerRadius * cos(needleAngleRad)).toFloat(),
-                        y = center.y + (innerRadius * sin(needleAngleRad)).toFloat()
-                    )
-                    
-                    // Draw Needle Line
-                    drawLine(
-                        color = currentBmiColorText,
-                        start = center,
-                        end = needleEnd,
-                        strokeWidth = 3.dp.toPx(),
-                        cap = StrokeCap.Round
-                    )
+                        Spacer(modifier = Modifier.height(6.dp))
 
-                    // Draw Pivot Circle
-                    drawCircle(
-                        color = currentBmiColorText,
-                        radius = 8.dp.toPx(),
-                        center = center
-                    )
-                    drawCircle(
-                        color = Color.White,
-                        radius = 3.dp.toPx(),
-                        center = center
-                    )
-                    
-                    // Draw Arrow Pointer (Pointing Up)
-                    val arrowSize = 12.dp.toPx()
-                    val arrowPath = androidx.compose.ui.graphics.Path().apply {
-                        moveTo(needleEnd.x, needleEnd.y)
-                        // Calculate two points for the base of the triangle
-                        // The arrow should point along the needleAngle
-                        val angleLeft = needleAngleRad - Math.PI / 6 + Math.PI
-                        val angleRight = needleAngleRad + Math.PI / 6 + Math.PI
-                        lineTo(
-                            (needleEnd.x + arrowSize * cos(angleLeft)).toFloat(),
-                            (needleEnd.y + arrowSize * sin(angleLeft)).toFloat()
-                        )
-                        lineTo(
-                            (needleEnd.x + arrowSize * cos(angleRight)).toFloat(),
-                            (needleEnd.y + arrowSize * sin(angleRight)).toFloat()
-                        )
-                        close()
+                        // Labels below bar
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("15", fontSize = 10.sp, color = themeColors.displayText.copy(alpha = 0.5f))
+                            Text("18.5", fontSize = 10.sp, color = themeColors.displayText.copy(alpha = 0.5f))
+                            Text("25", fontSize = 10.sp, color = themeColors.displayText.copy(alpha = 0.5f))
+                            Text("40", fontSize = 10.sp, color = themeColors.displayText.copy(alpha = 0.5f))
+                        }
                     }
-                    drawPath(path = arrowPath, color = currentBmiColorText)
-                    drawPath(path = arrowPath, color = Color.White, style = Stroke(width = 1.dp.toPx()))
-                }
-                
-                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier
-                    .offset(y = (-4).dp)) {
-                    Text(text = viewModel.bmiCategoryResult, color = currentBmiColorText, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(text = viewModel.bmiResultValue, fontSize = 26.sp, fontWeight = FontWeight.ExtraBold, color = currentBmiColorText)
                 }
             }
 

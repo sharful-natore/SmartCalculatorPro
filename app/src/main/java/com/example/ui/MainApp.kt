@@ -34,6 +34,7 @@ import androidx.compose.ui.draw.scale
 
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.Brush
@@ -225,9 +226,10 @@ fun MainContent(
         }
     }
 
-    // Auto-check for updates on app startup (silent)
+    // Default page setup on app launch
     LaunchedEffect(Unit) {
-        delay(1000) // Slight delay to let UI settle
+        pagerState.scrollToPage(viewModel.activeTab)
+        delay(1000) // Slight delay to let UI settle before update check
         performUpdateCheck(false)
     }
 
@@ -256,18 +258,18 @@ fun MainContent(
                 viewModel.showAiChat = false
             }
             // If inside a specific converter detail screen
-            viewModel.activeTab == 1 && viewModel.selectedConverterType != null -> {
+            viewModel.activeTab == 2 && viewModel.selectedConverterType != null -> {
                 viewModel.closeConverterDetail()
             }
             // If inside a specific tool detail screen
-            viewModel.activeTab == 2 && viewModel.selectedToolType != null -> {
+            viewModel.activeTab == 0 && viewModel.selectedToolType != null -> {
                 viewModel.closeToolDetail()
             }
-            // If on non-home tab (Converter, Tools, History, Themes)
+            // If on non-home tab (Calculator, Converter, History, Themes)
             viewModel.activeTab != 0 -> {
                 viewModel.activeTab = 0
             }
-            // If on home tab (Calculator)
+            // If on home tab (Dashboard)
             else -> {
                 viewModel.showExitDialog = true
             }
@@ -363,12 +365,12 @@ fun MainContent(
                         ) { activeTab ->
                             Text(
                                 text = when (activeTab) {
-                                    0 -> LanguageManager.getString("app_title_calc", viewModel.selectedLanguage)
-                                    1 -> LanguageManager.getString("app_title_conv", viewModel.selectedLanguage)
-                                    2 -> LanguageManager.getString("app_title_tools", viewModel.selectedLanguage)
+                                    0 -> LanguageManager.getString("app_title_tools", viewModel.selectedLanguage)
+                                    1 -> LanguageManager.getString("app_title_calc", viewModel.selectedLanguage)
+                                    2 -> LanguageManager.getString("app_title_conv", viewModel.selectedLanguage)
                                     3 -> LanguageManager.getString("app_title_history", viewModel.selectedLanguage)
                                     4 -> LanguageManager.getString("app_title_themes", viewModel.selectedLanguage)
-                                    else -> LanguageManager.getString("app_title_calc", viewModel.selectedLanguage)
+                                    else -> LanguageManager.getString("app_title_tools", viewModel.selectedLanguage)
                                 },
                                 color = Color.White,
                                 fontSize = 16.sp,
@@ -392,9 +394,8 @@ fun MainContent(
                         }
 
                         // Favorites Button
-                        var showFavoritesDialog by remember { mutableStateOf(false) }
                         IconButton(
-                            onClick = { showFavoritesDialog = true },
+                            onClick = { viewModel.showFavoritesDialog = true },
                             modifier = Modifier.testTag("favorites_button")
                         ) {
                             Icon(
@@ -404,11 +405,11 @@ fun MainContent(
                             )
                         }
 
-                        if (showFavoritesDialog) {
+                        if (viewModel.showFavoritesDialog) {
                             FavoritesDialog(
                                 viewModel = viewModel,
                                 themeColors = themeColors,
-                                onDismiss = { showFavoritesDialog = false }
+                                onDismiss = { viewModel.showFavoritesDialog = false }
                             )
                         }
 
@@ -505,9 +506,9 @@ fun MainContent(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     val tabs = listOf(
-                        Triple(2, Icons.Default.Widgets, LanguageManager.getString("tab_tools", viewModel.selectedLanguage)),
-                        Triple(0, Icons.Default.Calculate, LanguageManager.getString("tab_calc", viewModel.selectedLanguage)),
-                        Triple(1, ImageVector.vectorResource(id = R.drawable.ic_convert_tab), LanguageManager.getString("tab_conv", viewModel.selectedLanguage)),
+                        Triple(0, Icons.Default.Dashboard, LanguageManager.getString("tab_tools", viewModel.selectedLanguage)),
+                        Triple(1, Icons.Default.Calculate, LanguageManager.getString("tab_calc", viewModel.selectedLanguage)),
+                        Triple(2, ImageVector.vectorResource(id = R.drawable.ic_convert_tab), LanguageManager.getString("tab_conv", viewModel.selectedLanguage)),
                         Triple(3, Icons.Default.History, LanguageManager.getString("tab_history", viewModel.selectedLanguage))
                     )
                     
@@ -670,7 +671,7 @@ fun MainContent(
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
-                        .offset(y = (-18).dp)
+                        .offset(y = (-21).dp)
                         .size(60.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -679,6 +680,7 @@ fun MainContent(
                             .size(56.dp)
                             .shadow(elevation = 8.dp, shape = CircleShape)
                             .background(Color.White, shape = CircleShape)
+                            .border(2.dp, themeColors.buttonEqualBg, CircleShape)
                             .clip(CircleShape)
                             .clickable(
                                 interactionSource = fabInteractionSource,
@@ -730,84 +732,83 @@ fun MainContent(
                 ) { page ->
                     Box(modifier = Modifier.fillMaxSize()) {
                         when (page) {
-                            0 -> BasicScientificScreen(viewModel, themeColors)
-                            1 -> UnitConverterScreen(viewModel, themeColors)
-                            2 -> SpecialToolsScreen(viewModel, themeColors)
+                            0 -> SpecialToolsScreen(viewModel, themeColors)
+                            1 -> BasicScientificScreen(viewModel, themeColors)
+                            2 -> UnitConverterScreen(viewModel, themeColors)
                             3 -> HistoryScreen(viewModel, themeColors)
                         }
                     }
                 }
             }
 
-            // Floating Pill AI Button with Animated Rainbow Border on left side (all screens EXCEPT Calculator tab)
-            if (viewModel.activeTab != 0) {
-                val aiInfiniteRotation = rememberInfiniteTransition(label = "gemini_border_rotation")
-                val aiRotationAngle by aiInfiniteRotation.animateFloat(
-                    initialValue = 0f,
-                    targetValue = 360f,
-                    animationSpec = infiniteRepeatable(
-                        animation = tween(3500, easing = LinearEasing),
-                        repeatMode = RepeatMode.Restart
-                    ),
-                    label = "aiRotationAngle"
-                )
+            // Floating Pill AI Button with 2dp Animated Rotating Gemini Border on Right Side (Hides on Calculator tab with smooth enter/exit animation)
+            val isAiFabVisible = !viewModel.showAiChat && viewModel.activeTab != 1
 
-                val geminiColors = listOf(
-                    Color(0xFF4285F4),
-                    Color(0xFF9B51E0),
-                    Color(0xFFEA4335),
-                    Color(0xFFFBBC05),
-                    Color(0xFF34A853),
-                    Color(0xFF4285F4)
-                )
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(end = 16.dp, bottom = 8.dp),
-                    contentAlignment = Alignment.BottomEnd
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(end = 8.dp, bottom = 8.dp),
+                contentAlignment = Alignment.BottomEnd
+            ) {
+                AnimatedVisibility(
+                    visible = isAiFabVisible,
+                    enter = fadeIn(animationSpec = tween(280)) + scaleIn(initialScale = 0.6f, animationSpec = spring(stiffness = Spring.StiffnessMediumLow)),
+                    exit = fadeOut(animationSpec = tween(220)) + scaleOut(targetScale = 0.6f, animationSpec = tween(220))
                 ) {
+                    val infiniteTransition = rememberInfiniteTransition(label = "gemini_border_rotation")
+                    val rotationAngle by infiniteTransition.animateFloat(
+                        initialValue = 0f,
+                        targetValue = 360f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(3500, easing = LinearEasing),
+                            repeatMode = RepeatMode.Restart
+                        ),
+                        label = "aiRotationAngle"
+                    )
+
+                    val geminiColors = listOf(
+                        Color(0xFF4285F4),
+                        Color(0xFF9B51E0),
+                        Color(0xFFEA4335),
+                        Color(0xFFFBBC05),
+                        Color(0xFF34A853),
+                        Color(0xFF4285F4)
+                    )
+
                     Box(
                         modifier = Modifier
-                            .height(40.dp)
-                            .shadow(elevation = 6.dp, shape = RoundedCornerShape(20.dp))
-                            .clip(RoundedCornerShape(20.dp))
-                            .clickable { viewModel.showAiChat = true },
+                            .shadow(elevation = 6.dp, shape = RoundedCornerShape(22.dp))
+                            .clip(RoundedCornerShape(22.dp))
+                            .drawWithContent {
+                                drawContent()
+                                rotate(rotationAngle) {
+                                    drawRoundRect(
+                                        brush = Brush.sweepGradient(geminiColors),
+                                        style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.dp.toPx()),
+                                        cornerRadius = androidx.compose.ui.geometry.CornerRadius(22.dp.toPx(), 22.dp.toPx())
+                                    )
+                                }
+                            }
+                            .background(if (themeColors.isDark) Color(0xFF1E293B) else Color.White)
+                            .clickable { viewModel.showAiChat = true }
+                            .padding(horizontal = 18.dp, vertical = 9.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        // Rotating Sweep Gradient for Border Effect
-                        Box(
-                            modifier = Modifier
-                                .size(width = 110.dp, height = 110.dp)
-                                .graphicsLayer { rotationZ = aiRotationAngle }
-                                .background(
-                                    brush = Brush.sweepGradient(geminiColors),
-                                    shape = CircleShape
-                                )
-                        )
-
-                        // Inner Pill Container [✦ AI]
                         Row(
-                            modifier = Modifier
-                                .padding(2.dp)
-                                .height(36.dp)
-                                .clip(RoundedCornerShape(18.dp))
-                                .background(Color(0xFFE8EAF6)) // Soft lavender/blue tint matching screenshot
-                                .padding(horizontal = 14.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
                                 imageVector = Icons.Default.AutoAwesome,
                                 contentDescription = "AI",
-                                tint = Color(0xFF3F51B5),
-                                modifier = Modifier.size(16.dp)
+                                tint = Color(0xFF4285F4),
+                                modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = "AI",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 14.sp,
-                                color = Color(0xFF3F51B5)
+                                color = if (themeColors.isDark) Color.White else Color(0xFF1E293B)
                             )
                         }
                     }
@@ -2617,31 +2618,111 @@ fun FavoritesDialog(
     themeColors: CalculatorThemeColors,
     onDismiss: () -> Unit
 ) {
+    var itemToDelete by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
+
+    if (itemToDelete != null) {
+        val (name, isConv) = itemToDelete!!
+        AlertDialog(
+            onDismissRequest = { itemToDelete = null },
+            title = {
+                Text(
+                    text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "ফেভারিট মুছে ফেলা" else "Remove Favorite",
+                    fontWeight = FontWeight.Bold,
+                    color = themeColors.displayText
+                )
+            },
+            text = {
+                Text(
+                    text = if (viewModel.selectedLanguage == AppLanguage.BENGALI)
+                        "আপনি কি নিশ্চিত যে এই আইটেমটি ফেভারিট তালিকা থেকে মুছে ফেলতে চান?"
+                    else
+                        "Are you sure you want to remove this item from your favorites?",
+                    color = themeColors.displayText.copy(alpha = 0.85f)
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        if (isConv) {
+                            viewModel.toggleFavoriteConverter(name)
+                        } else {
+                            viewModel.toggleFavoriteTool(name)
+                        }
+                        itemToDelete = null
+                    }
+                ) {
+                    Text(
+                        text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "হ্যাঁ, মুছুন" else "Remove",
+                        color = Color(0xFFEF4444),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { itemToDelete = null }
+                ) {
+                    Text(
+                        text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "বাতিল" else "Cancel",
+                        color = themeColors.displayText
+                    )
+                }
+            },
+            containerColor = themeColors.cardBg,
+            shape = RoundedCornerShape(16.dp)
+        )
+    }
+
     Dialog(onDismissRequest = onDismiss) {
         Surface(
-            shape = RoundedCornerShape(20.dp),
+            shape = RoundedCornerShape(24.dp),
             color = themeColors.background,
-            modifier = Modifier.fillMaxWidth().fillMaxHeight(0.7f).padding(16.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.75f)
+                .padding(8.dp)
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "আপনার ফেভারিটস" else "Your Favorites",
-                    color = themeColors.displayText,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
+            Column(modifier = Modifier.padding(20.dp)) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "আপনার ফেভারিটস" else "Your Favorites",
+                        color = themeColors.displayText,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    IconButton(onClick = onDismiss) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Close",
+                            tint = themeColors.displayText
+                        )
+                    }
+                }
 
                 androidx.compose.foundation.lazy.LazyColumn(
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     if (viewModel.favoriteConverters.isEmpty() && viewModel.favoriteTools.isEmpty()) {
                         item {
-                            Text(
-                                text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "কোনো ফেভারিট পাওয়া যায়নি।" else "No favorites added yet.",
-                                color = themeColors.displayText.copy(alpha = 0.6f),
-                                modifier = Modifier.padding(16.dp)
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(32.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "কোনো ফেভারিট যুক্ত করা হয়নি।" else "No favorites added yet.",
+                                    color = themeColors.displayText.copy(alpha = 0.6f),
+                                    fontSize = 15.sp
+                                )
+                            }
                         }
                     }
 
@@ -2651,37 +2732,67 @@ fun FavoritesDialog(
                                 text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "কনভার্টার" else "Converters",
                                 color = themeColors.buttonEqualBg,
                                 fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(vertical = 8.dp)
+                                fontSize = 14.sp,
+                                modifier = Modifier.padding(top = 4.dp, bottom = 4.dp)
                             )
                         }
                         items(viewModel.favoriteConverters.toList()) { convName ->
                             val converter = try { ConverterType.valueOf(convName) } catch (e: Exception) { null }
                             if (converter != null) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 8.dp)
-                                        .clickable {
-                                            viewModel.activeTab = 1
-                                            viewModel.openConverter(converter)
-                                            onDismiss()
-                                        },
-                                    verticalAlignment = Alignment.CenterVertically
+                                ElevatedCard(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(14.dp),
+                                    colors = CardDefaults.elevatedCardColors(containerColor = themeColors.cardBg),
+                                    elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
                                 ) {
-                                    Icon(
-                                        imageVector = converter.icon,
-                                        contentDescription = null,
-                                        tint = themeColors.displayText,
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(16.dp))
-                                    Text(
-                                        text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) converter.titleBn else converter.titleEn,
-                                        color = themeColors.displayText,
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                    IconButton(onClick = { viewModel.toggleFavoriteConverter(convName) }) {
-                                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red.copy(alpha = 0.8f))
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                viewModel.activeTab = 2
+                                                viewModel.openConverter(converter)
+                                                onDismiss()
+                                            }
+                                            .padding(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(42.dp)
+                                                .clip(RoundedCornerShape(10.dp))
+                                                .background(themeColors.buttonEqualBg.copy(alpha = 0.12f)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = converter.icon,
+                                                contentDescription = null,
+                                                tint = themeColors.buttonEqualBg,
+                                                modifier = Modifier.size(24.dp)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) converter.titleBn else converter.titleEn,
+                                                fontSize = 15.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = themeColors.displayText
+                                            )
+                                            Text(
+                                                text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) converter.category.titleBn else converter.category.titleEn,
+                                                fontSize = 12.sp,
+                                                color = themeColors.displayText.copy(alpha = 0.65f),
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        }
+                                        IconButton(onClick = { itemToDelete = Pair(convName, true) }) {
+                                            Icon(
+                                                imageVector = Icons.Default.Delete,
+                                                contentDescription = "Delete",
+                                                tint = Color(0xFFEF4444)
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -2694,49 +2805,72 @@ fun FavoritesDialog(
                                 text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "টুলস" else "Tools",
                                 color = themeColors.buttonEqualBg,
                                 fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(vertical = 8.dp)
+                                fontSize = 14.sp,
+                                modifier = Modifier.padding(top = 10.dp, bottom = 4.dp)
                             )
                         }
                         items(viewModel.favoriteTools.toList()) { toolName ->
                             val tool = try { ToolType.valueOf(toolName) } catch (e: Exception) { null }
                             if (tool != null) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 8.dp)
-                                        .clickable {
-                                            viewModel.activeTab = 2
-                                            viewModel.openTool(tool)
-                                            onDismiss()
-                                        },
-                                    verticalAlignment = Alignment.CenterVertically
+                                ElevatedCard(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(14.dp),
+                                    colors = CardDefaults.elevatedCardColors(containerColor = themeColors.cardBg),
+                                    elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
                                 ) {
-                                    Icon(
-                                        imageVector = tool.icon,
-                                        contentDescription = null,
-                                        tint = themeColors.displayText,
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(16.dp))
-                                    Text(
-                                        text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) tool.titleBn else tool.titleEn,
-                                        color = themeColors.displayText,
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                    IconButton(onClick = { viewModel.toggleFavoriteTool(toolName) }) {
-                                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red.copy(alpha = 0.8f))
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                viewModel.activeTab = 0
+                                                viewModel.openTool(tool)
+                                                onDismiss()
+                                            }
+                                            .padding(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(42.dp)
+                                                .clip(RoundedCornerShape(10.dp))
+                                                .background(themeColors.buttonEqualBg.copy(alpha = 0.12f)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = tool.icon,
+                                                contentDescription = null,
+                                                tint = themeColors.buttonEqualBg,
+                                                modifier = Modifier.size(24.dp)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) tool.titleBn else tool.titleEn,
+                                                fontSize = 15.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = themeColors.displayText
+                                            )
+                                            Text(
+                                                text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) tool.category.titleBn else tool.category.titleEn,
+                                                fontSize = 12.sp,
+                                                color = themeColors.displayText.copy(alpha = 0.65f),
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        }
+                                        IconButton(onClick = { itemToDelete = Pair(toolName, false) }) {
+                                            Icon(
+                                                imageVector = Icons.Default.Delete,
+                                                contentDescription = "Delete",
+                                                tint = Color(0xFFEF4444)
+                                            )
+                                        }
                                     }
                                 }
                             }
                         }
                     }
-                }
-
-                TextButton(
-                    onClick = onDismiss,
-                    modifier = Modifier.align(Alignment.End).padding(top = 8.dp)
-                ) {
-                    Text(if (viewModel.selectedLanguage == AppLanguage.BENGALI) "বন্ধ করুন" else "Close", color = themeColors.buttonEqualBg)
                 }
             }
         }

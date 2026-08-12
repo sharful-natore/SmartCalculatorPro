@@ -40,14 +40,14 @@ object LanguageManager {
                 AppLanguage.CHINESE -> "单位转换器"
             }
             "app_title_tools" -> when (language) {
-                AppLanguage.ENGLISH -> "Special Tools"
-                AppLanguage.BENGALI -> "বিশেষ টুলস"
-                AppLanguage.HINDI -> "विशेष उपकरण"
-                AppLanguage.ARABIC -> "أدوات خاصة"
-                AppLanguage.FRENCH -> "Outils Spéciaux"
-                AppLanguage.SPANISH -> "Herramientas Especiales"
-                AppLanguage.GERMAN -> "Spezialwerkzeuge"
-                AppLanguage.CHINESE -> "特殊工具"
+                AppLanguage.ENGLISH -> "Dashboard"
+                AppLanguage.BENGALI -> "ড্যাশবোর্ড"
+                AppLanguage.HINDI -> "डैशबोर्ड"
+                AppLanguage.ARABIC -> "لوحة التحكم"
+                AppLanguage.FRENCH -> "Tableau de bord"
+                AppLanguage.SPANISH -> "Panel de control"
+                AppLanguage.GERMAN -> "Dashboard"
+                AppLanguage.CHINESE -> "仪表板"
             }
             "app_title_history" -> when (language) {
                 AppLanguage.ENGLISH -> "Calculation History"
@@ -90,14 +90,14 @@ object LanguageManager {
                 AppLanguage.CHINESE -> "转换"
             }
             "tab_tools" -> when (language) {
-                AppLanguage.ENGLISH -> "Tools"
-                AppLanguage.BENGALI -> "টুলস"
-                AppLanguage.HINDI -> "उपकरण"
-                AppLanguage.ARABIC -> "أدوات"
-                AppLanguage.FRENCH -> "Outils"
-                AppLanguage.SPANISH -> "Herram."
-                AppLanguage.GERMAN -> "Tools"
-                AppLanguage.CHINESE -> "工具"
+                AppLanguage.ENGLISH -> "Dashboard"
+                AppLanguage.BENGALI -> "ড্যাশবোর্ড"
+                AppLanguage.HINDI -> "डैशबोर्ड"
+                AppLanguage.ARABIC -> "لوحة التحكم"
+                AppLanguage.FRENCH -> "Dashboard"
+                AppLanguage.SPANISH -> "Panel"
+                AppLanguage.GERMAN -> "Dashboard"
+                AppLanguage.CHINESE -> "仪表板"
             }
             "tab_history" -> when (language) {
                 AppLanguage.ENGLISH -> "History"

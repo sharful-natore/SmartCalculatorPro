@@ -352,60 +352,7 @@ fun ToolsCategoriesView(
                 .testTag("tool_search_input")
         )
 
-        // AI Assistant Hero Spotlight Banner
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp)
-                .clickable { viewModel.showAiChat = true },
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = themeColors.buttonEqualBg)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(44.dp)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.2f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.AutoAwesome,
-                        contentDescription = "AI",
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
 
-                Spacer(modifier = Modifier.width(12.dp))
-
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "এআই স্মার্ট অ্যাসিস্ট্যান্ট" else "AI Smart Assistant",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                        color = Color.White
-                    )
-                    Text(
-                        text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "যেকোনো হিসাব বা সমাধান এআই-কে জিজ্ঞেস করুন..." else "Solve math, finance, or converter questions step-by-step",
-                        fontSize = 12.sp,
-                        color = Color.White.copy(alpha = 0.85f)
-                    )
-                }
-
-                Icon(
-                    imageVector = Icons.Default.ChevronRight,
-                    contentDescription = "Open AI",
-                    tint = Color.White,
-                    modifier = Modifier.size(22.dp)
-                )
-            }
-        }
 
         // Favorites / Quick Access Rail (If user has favorite tools)
         if (viewModel.favoriteTools.isNotEmpty()) {
@@ -1229,6 +1176,21 @@ private fun getToolInfoItems(toolType: ToolType, isBn: Boolean): List<Pair<Strin
         } else {
             listOf(
                 "1. Semester Tuition Fees Breakdown" to "Total fees include: credit hour tuition charges, semester admission/registration fees, laboratory or activity costs, and library charges."
+            )
+        }
+        ToolType.MULTI_CALENDAR -> if (isBn) {
+            listOf(
+                "১. ট্রিপল স্মার্ট ক্যালেন্ডার" to "এই ক্যালেন্ডারে একই সাথে ইংরেজি (গ্রেগরিয়ান), বাংলা (সৌর) এবং আরবি (হিজরী) বর্ষপঞ্জি সমন্বিতভাবে প্রদর্শিত হয়।",
+                "২. বাংলা বর্ষপঞ্জি নিয়ম (বাংলা একাডেমি)" to "প্রথম ৫ মাস (বৈশাখ-ভাদ্র) ৩১ দিনে এবং পরের ৭ মাস (আশ্বিন-চৈত্র) ৩০ দিনে হিসাব করা হয়। অধিবর্ষে চৈত্র মাস ৩১ দিনে হয়।",
+                "৩. হিজরী/আরবি বর্ষপঞ্জি নিয়ম" to "হিজরী বর্ষপঞ্জি সম্পূর্ণ চাঁদ দেখার ওপর নির্ভর করে (৩৫৪/৩৫৫ দিন)। স্থানভেদে চাঁদ দেখার ভিত্তিতে ১ দিনের তারতম্য হতে পারে।",
+                "৪. কালার ডেকোরেশন লেজেন্ড" to "• প্রধান সংখ্যা: ইংরেজি গ্রেগরিয়ান তারিখ\n• সবুজ সংখ্যা: বাংলা সৌর বর্ষপঞ্জির তারিখ\n• হলুদ/অ্যাম্বার সংখ্যা: আরবি হিজরী বর্ষপঞ্জির তারিখ"
+            )
+        } else {
+            listOf(
+                "1. Smart Triple Calendar Overview" to "Displays Gregorian (English), Solar Bengali, and Lunar Hijri (Islamic) calendar dates simultaneously in a unified layout.",
+                "2. Bengali Calendar Rule" to "According to Bangla Academy revised calendar: The first 5 months (Baishakh-Bhadra) have 31 days, and the last 7 months (Ashwin-Chaitra) have 30 days (Chaitra has 31 days in a leap year).",
+                "3. Hijri Calendar Rule" to "The Islamic calendar is purely lunar (354/355 days per year). Local moon sightings may cause a 1-day variance.",
+                "4. Color Legend" to "• Primary Number: English Gregorian Day\n• Green Accent: Bengali Solar Day\n• Amber/Gold: Hijri Lunar Day"
             )
         }
         else -> emptyList()

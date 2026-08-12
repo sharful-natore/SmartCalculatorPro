@@ -150,9 +150,10 @@ class CalculatorViewModel(
     var isScientificExpanded by mutableStateOf(false)
 
     var showGlobalSearch by mutableStateOf(false)
+    var showFavoritesDialog by mutableStateOf(false)
 
-    // Current Active Tab: 0 = Calculator, 1 = Converter, 2 = Special (Smart Tools Dashboard), 3 = History, 4 = Themes
-    var activeTab by mutableStateOf(2)
+    // Current Active Tab: 0 = Dashboard, 1 = Calculator, 2 = Converter, 3 = History, 4 = Themes
+    var activeTab by mutableStateOf(0)
     var isEvaluated by mutableStateOf(false)
 
     // History deletion confirmation state
@@ -1227,7 +1228,7 @@ How can I help you today?"""
                 "bmi" -> {
                     val parts = actionData.split(",")
                     if (parts.size >= 2) {
-                        activeTab = 2
+                        activeTab = 0
                         openTool(com.example.data.model.ToolType.BMI)
                         bmiWeightUnit = "kg"
                         bmiHeightUnit = "cm"
@@ -1240,7 +1241,7 @@ How can I help you today?"""
                 "discount" -> {
                     val parts = actionData.split(",")
                     if (parts.size >= 2) {
-                        activeTab = 2
+                        activeTab = 0
                         openTool(com.example.data.model.ToolType.DISCOUNT)
                         originalPrice = parts[0]
                         discountPercent = parts[1]
@@ -1249,19 +1250,19 @@ How can I help you today?"""
                     }
                 }
                 "navigate_tool" -> {
-                    activeTab = 2
+                    activeTab = 0
                     val tool = com.example.data.model.ToolType.valueOf(actionData)
                     openTool(tool)
                 }
                 "calculate" -> {
-                    activeTab = 0
+                    activeTab = 1
                     expressionValue = TextFieldValue(actionData, selection = TextRange(actionData.length))
                     evaluateExpression()
                 }
                 "converter" -> {
                     val parts = actionData.split(",")
                     if (parts.size >= 4) {
-                        activeTab = 1
+                        activeTab = 2
                         val catStr = parts[0]
                         val fromU = parts[1]
                         val toU = parts[2]
@@ -1606,6 +1607,7 @@ How can I help you today?"""
 
     fun openTool(type: com.example.data.model.ToolType) {
         selectedToolType = type
+        activeTab = 0
     }
 
     fun closeToolDetail() {
@@ -1981,7 +1983,7 @@ How can I help you today?"""
     fun selectHistoryItem(entry: HistoryEntry) {
         expressionValue = TextFieldValue(entry.expression, selection = TextRange(entry.expression.length))
         result = entry.result
-        activeTab = 0 // Switch to calculator
+        activeTab = 1 // Switch to calculator
     }
 
     fun saveNamedCalculation(name: String) {
@@ -2103,6 +2105,7 @@ How can I help you today?"""
         toUnit = type.units.getOrNull(1) ?: fromUnit
         converterInput = "1"
         calculateConverter()
+        activeTab = 2
     }
 
     fun closeConverterDetail() {
@@ -2413,7 +2416,7 @@ How can I help you today?"""
             textLower.contains("euro") || textLower.contains("ইউরো") || textLower.contains("eur")
         ) {
             val numValue = extractNumberFromString(textLower) ?: 1.0
-            activeTab = 1
+            activeTab = 2
             selectedConverterType = com.example.data.model.ConverterType.CURRENCY
 
             if (textLower.contains("dollar") || textLower.contains("ডলার") || textLower.contains("usd")) {
@@ -2441,7 +2444,7 @@ How can I help you today?"""
             textLower.contains("গ্রাম") || textLower.contains("pound") || textLower.contains("পাউন্ড")
         ) {
             val numValue = extractNumberFromString(textLower) ?: 1.0
-            activeTab = 1
+            activeTab = 2
             selectedConverterType = com.example.data.model.ConverterType.WEIGHT
             fromUnit = "Kilogram (kg)"
             toUnit = "Gram (g)"
@@ -2455,7 +2458,7 @@ How can I help you today?"""
             textLower.contains("bigha") || textLower.contains("বিঘা")
         ) {
             val numValue = extractNumberFromString(textLower) ?: 1.0
-            activeTab = 1
+            activeTab = 2
             selectedConverterType = if (textLower.contains("bigha") || textLower.contains("বিঘা")) {
                 com.example.data.model.ConverterType.AREA
             } else {
@@ -2472,19 +2475,19 @@ How can I help you today?"""
 
         // 4. Check for Special Tools queries (e.g., "bmi", "বিএমআই", "বিদ্যুৎ বিল", "age")
         if (textLower.contains("bmi") || textLower.contains("বিএমআই")) {
-            activeTab = 2
+            activeTab = 0
             openTool(com.example.data.model.ToolType.BMI)
             return
         } else if (textLower.contains("age") || textLower.contains("বয়স")) {
-            activeTab = 2
+            activeTab = 0
             openTool(com.example.data.model.ToolType.AGE)
             return
         } else if (textLower.contains("electricity") || textLower.contains("বিদ্যুৎ")) {
-            activeTab = 2
+            activeTab = 0
             openTool(com.example.data.model.ToolType.ELECTRICITY_BILL)
             return
         } else if (textLower.contains("loan") || textLower.contains("emi") || textLower.contains("ইএমআই")) {
-            activeTab = 2
+            activeTab = 0
             openTool(com.example.data.model.ToolType.EMI_LOAN)
             return
         }
@@ -2501,7 +2504,7 @@ How can I help you today?"""
         mathExpr = mathExpr.filter { it.isDigit() || it in "+-*/.()" }
 
         if (mathExpr.isNotBlank()) {
-            activeTab = 0
+            activeTab = 1
             expressionValue = TextFieldValue(mathExpr, selection = TextRange(mathExpr.length))
             evaluateExpression()
         }
