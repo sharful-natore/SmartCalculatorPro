@@ -1402,7 +1402,15 @@ How can I help you today?"""
     var favoriteConverters by mutableStateOf(loadFavorites("favorite_converters"))
         private set
 
-    var weatherLocation by mutableStateOf(sharedPrefs.getString("weather_location", "") ?: "")
+    var weatherLocation by mutableStateOf(
+        let {
+            val loc = sharedPrefs.getString("weather_location", "") ?: ""
+            if (loc.isBlank()) {
+                sharedPrefs.edit().putString("weather_location", "Dhaka").apply()
+                "Dhaka"
+            } else loc
+        }
+    )
         private set
 
     var weatherLocationLat by mutableStateOf(sharedPrefs.getFloat("weather_lat", 23.7104f).toDouble())

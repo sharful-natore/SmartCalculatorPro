@@ -3,13 +3,11 @@
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <!-- Border Circle (Google AI Purple) -->
+    <!-- Teal Circle Background matching App Theme -->
     <path
-        android:fillColor="#121824"
-        android:strokeColor="#9B51E0"
-        android:strokeWidth="1.5"
+        android:fillColor="#00ACC1"
         android:pathData="M12,1.5 A10.5,10.5 0 1,1 11.9,1.5 Z"/>
-    <!-- Converter Icon centered and scaled -->
+    <!-- Converter Icon in White -->
     <path
         android:fillColor="#FFFFFF"
         android:pathData="M9.0,16.8 L6.0,13.8 L9.0,10.8 L9.84,11.66 L8.3,13.2 L12.6,13.2 L12.6,14.4 L8.3,14.4 L9.84,15.95 L9.0,16.8 Z M15.0,13.2 L14.16,12.35 L15.7,10.8 L11.4,10.8 L11.4,9.6 L15.7,9.6 L14.16,8.06 L15.0,7.2 L18.0,10.2 L15.0,13.2 Z"/>

@@ -237,24 +237,28 @@ fun MainContent(
 
     // Default page setup on app launch - sync pagerState with viewModel.activeTab
     LaunchedEffect(Unit) {
+        // Ensure we start from the expected tab
         if (pagerState.currentPage != viewModel.activeTab) {
             pagerState.scrollToPage(viewModel.activeTab)
         }
         
-        // Wait for page state to stabilize
-        delay(300) 
+        // Use a longer delay to ensure all layout and restoration events are finished
+        delay(600) 
         isAppInitialized = true
         
-        delay(200) // Remaining delay to let UI settle before update check
+        delay(400) // Let UI settle before update check
         performUpdateCheck(false)
     }
 
     // Sync from pager state to ViewModel when pager changes page
-    LaunchedEffect(pagerState.currentPage) {
+    LaunchedEffect(pagerState.currentPage, pagerState.isScrollInProgress) {
         if (isAppInitialized) {
+            // Only update activeTab and reason if the change is from user interaction or a deliberate navigation
             if (viewModel.activeTab < 4 && pagerState.currentPage != viewModel.activeTab) {
                 viewModel.activeTab = pagerState.currentPage
-                if (pagerState.currentPage == 2) {
+                
+                // Only set the "Swiped" reason if the scroll was actually in progress (user swipe)
+                if (pagerState.currentPage == 2 && pagerState.isScrollInProgress) {
                     viewModel.setCalculatorNavigationReason(
                         "Swiped to Calculator screen",
                         "সুইপ করে ক্যালকুলেটর স্ক্রিনে আসা হয়েছে"
