@@ -35,6 +35,7 @@ import androidx.compose.ui.draw.scale
 
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.drawscope.rotate
@@ -166,6 +167,8 @@ fun MainContent(
     var showPrivacyDialog by remember { mutableStateOf(false) }
     var showAboutDialog by remember { mutableStateOf(false) }
     var showFeedbackDialog by remember { mutableStateOf(false) }
+    var showStartButtonCustomizer by remember { mutableStateOf(false) }
+    var showAiFabCustomizer by remember { mutableStateOf(false) }
 
     // --- App Update State ---
     var showUpdateDialog by remember { mutableStateOf(false) }
@@ -230,14 +233,11 @@ fun MainContent(
     // Guard variable to ensure launch initialization forces Dashboard (Tab 0) first
     var isAppInitialized by remember { mutableStateOf(false) }
 
-    // Default page setup on app launch - ALWAYS start on Dashboard (Tab 0)
+    // Default page setup on app launch - ALWAYS start on the correct activeTab (including shortcuts/intents)
     LaunchedEffect(Unit) {
-        viewModel.activeTab = 0
-        pagerState.scrollToPage(0)
-        // Wait until pagerState.currentPage actually settles to 0 before marking initialization complete
-        while (pagerState.currentPage != 0) {
-            delay(16)
-        }
+        delay(150) // Wait for any automatic page state restoration to complete
+        val startPage = viewModel.activeTab.coerceIn(0, 3)
+        pagerState.scrollToPage(startPage)
         isAppInitialized = true
         delay(1000) // Slight delay to let UI settle before update check
         performUpdateCheck(false)
@@ -376,8 +376,8 @@ fun MainContent(
                             Text(
                                 text = when (activeTab) {
                                     0 -> LanguageManager.getString("app_title_tools", viewModel.selectedLanguage)
-                                    1 -> LanguageManager.getString("app_title_calc", viewModel.selectedLanguage)
-                                    2 -> LanguageManager.getString("app_title_conv", viewModel.selectedLanguage)
+                                    1 -> LanguageManager.getString("app_title_conv", viewModel.selectedLanguage)
+                                    2 -> LanguageManager.getString("app_title_calc", viewModel.selectedLanguage)
                                     3 -> LanguageManager.getString("app_title_history", viewModel.selectedLanguage)
                                     4 -> LanguageManager.getString("app_title_themes", viewModel.selectedLanguage)
                                     else -> LanguageManager.getString("app_title_tools", viewModel.selectedLanguage)
@@ -400,18 +400,6 @@ fun MainContent(
                                 contentDescription = "Global Search",
                                 tint = Color.White,
                                 modifier = Modifier.size(24.dp)
-                            )
-                        }
-
-                        // Favorites Button
-                        IconButton(
-                            onClick = { viewModel.showFavoritesDialog = true },
-                            modifier = Modifier.testTag("favorites_button")
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Favorite,
-                                contentDescription = "Favorites",
-                                tint = Color.White
                             )
                         }
 
@@ -526,6 +514,32 @@ fun MainContent(
                     for (i in 0..1) {
                         val (index, icon, label) = tabs[i]
                         val isSelected = viewModel.activeTab == index
+                        val isStartButton = index == 0
+                        
+                        val customBg = if (isStartButton && viewModel.searchFabBgColorHex.isNotEmpty() && viewModel.searchFabBgColorHex != "#FFFFFF") {
+                            try { Color(android.graphics.Color.parseColor(viewModel.searchFabBgColorHex)) } catch (e: Exception) { if (isSelected) Color.White.copy(alpha = 0.25f) else Color.Transparent }
+                        } else {
+                            if (isSelected) Color.White.copy(alpha = 0.25f) else Color.Transparent
+                        }
+                        
+                        val customBorderModifier = if (isStartButton && viewModel.searchFabBorderColorHex.isNotEmpty()) {
+                            try {
+                                Modifier.border(
+                                    width = 1.5.dp,
+                                    color = Color(android.graphics.Color.parseColor(viewModel.searchFabBorderColorHex)),
+                                    shape = RoundedCornerShape(19.dp)
+                                )
+                            } catch (e: Exception) { Modifier }
+                        } else {
+                            Modifier
+                        }
+                        
+                        val customIconColor = if (isStartButton && viewModel.searchFabIconColorHex.isNotEmpty()) {
+                            try { Color(android.graphics.Color.parseColor(viewModel.searchFabIconColorHex)) } catch (e: Exception) { if (isSelected) Color.White else Color.White.copy(alpha = 0.65f) }
+                        } else {
+                            if (isSelected) Color.White else Color.White.copy(alpha = 0.65f)
+                        }
+
                         Box(
                             modifier = Modifier
                                 .weight(1f)
@@ -539,11 +553,17 @@ fun MainContent(
                                     .height(38.dp)
                                     .width(60.dp)
                                     .clip(RoundedCornerShape(19.dp))
-                                    .background(if (isSelected) Color.White.copy(alpha = 0.25f) else Color.Transparent)
-                                    .clickable(
+                                    .then(customBorderModifier)
+                                    .background(customBg)
+                                    .combinedClickable(
                                         interactionSource = tabInteraction,
                                         indication = ripple(bounded = true, color = Color.White),
-                                        onClick = { viewModel.activeTab = index }
+                                        onClick = { viewModel.activeTab = index },
+                                        onLongClick = {
+                                            if (isStartButton) {
+                                                showStartButtonCustomizer = true
+                                            }
+                                        }
                                     ),
                                 contentAlignment = Alignment.Center
                             ) {
@@ -551,7 +571,7 @@ fun MainContent(
                                     imageVector = icon, 
                                     contentDescription = label,
                                     modifier = Modifier.size(24.dp),
-                                    tint = if (isSelected) Color.White else Color.White.copy(alpha = 0.65f)
+                                    tint = customIconColor
                                 ) 
                             }
                         }
@@ -776,14 +796,25 @@ fun MainContent(
                         label = "aiRotationAngle"
                     )
 
-                    val geminiColors = listOf(
-                        Color(0xFF4285F4),
-                        Color(0xFF9B51E0),
-                        Color(0xFFEA4335),
-                        Color(0xFFFBBC05),
-                        Color(0xFF34A853),
-                        Color(0xFF4285F4)
-                    )
+                    val geminiColors = remember(viewModel.aiFabGradientColorsHex) {
+                        val base = if (viewModel.aiFabGradientColorsHex.isNotEmpty()) {
+                            viewModel.aiFabGradientColorsHex.split(",").mapNotNull { hex ->
+                                try { Color(android.graphics.Color.parseColor(hex.trim())) } catch (e: Exception) { null }
+                            }
+                        } else emptyList()
+                        val list = if (base.isNotEmpty()) base else listOf(
+                            Color(0xFF4285F4),
+                            Color(0xFF9B51E0),
+                            Color(0xFFEA4335),
+                            Color(0xFFFBBC05),
+                            Color(0xFF34A853)
+                        )
+                        if (list.firstOrNull() != list.lastOrNull()) {
+                            list + list.first()
+                        } else {
+                            list
+                        }
+                    }
 
                     val animatedGradientBrush = remember(rotationAngle, geminiColors) {
                         object : androidx.compose.ui.graphics.ShaderBrush() {
@@ -800,21 +831,40 @@ fun MainContent(
                         }
                     }
 
+                    val aiBgColor = remember(viewModel.aiFabBgColorHex, themeColors.isDark) {
+                        if (viewModel.aiFabBgColorHex.isNotEmpty()) {
+                            try { Color(android.graphics.Color.parseColor(viewModel.aiFabBgColorHex)) } catch (e: Exception) { if (themeColors.isDark) Color(0xFF1E293B) else Color.White }
+                        } else {
+                            if (themeColors.isDark) Color(0xFF1E293B) else Color.White
+                        }
+                    }
+
+                    val aiIconColor = remember(viewModel.aiFabIconColorHex) {
+                        if (viewModel.aiFabIconColorHex.isNotEmpty()) {
+                            try { Color(android.graphics.Color.parseColor(viewModel.aiFabIconColorHex)) } catch (e: Exception) { Color(0xFF4285F4) }
+                        } else {
+                            Color(0xFF4285F4)
+                        }
+                    }
+
                     Box(
                         modifier = Modifier
-                            .shadow(elevation = 2.dp, shape = RoundedCornerShape(22.dp))
-                            .clip(RoundedCornerShape(22.dp))
+                            .shadow(elevation = 2.dp, shape = RoundedCornerShape(26.dp))
+                            .clip(RoundedCornerShape(26.dp))
                             .drawWithContent {
                                 drawContent()
                                 drawRoundRect(
                                     brush = animatedGradientBrush,
                                     style = androidx.compose.ui.graphics.drawscope.Stroke(width = 3.dp.toPx()),
-                                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(22.dp.toPx(), 22.dp.toPx())
+                                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(26.dp.toPx(), 26.dp.toPx())
                                 )
                             }
-                            .background(if (themeColors.isDark) Color(0xFF1E293B) else Color.White)
-                            .clickable { viewModel.showAiChat = true }
-                            .padding(horizontal = 18.dp, vertical = 9.dp),
+                            .background(aiBgColor)
+                            .combinedClickable(
+                                onClick = { viewModel.showAiChat = true },
+                                onLongClick = { showAiFabCustomizer = true }
+                            )
+                            .padding(horizontal = 22.dp, vertical = 14.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Row(
@@ -823,7 +873,7 @@ fun MainContent(
                             Icon(
                                 imageVector = Icons.Default.AutoAwesome,
                                 contentDescription = "AI",
-                                tint = Color(0xFF4285F4),
+                                tint = aiIconColor,
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
@@ -1220,7 +1270,7 @@ fun MainContent(
                 try {
                     context.getString(com.example.R.string.app_name)
                 } catch (e: Exception) {
-                    "Smart Calculator Pro"
+                    "ToolMate"
                 }
             }
 
@@ -1322,7 +1372,7 @@ fun MainContent(
                                         .fillMaxWidth()
                                         .clip(RoundedCornerShape(8.dp))
                                         .clickable {
-                                            launchEmailSafely(context, "Connect.shariful@gmail.com", "Smart Calculator Pro - Connection")
+                                            launchEmailSafely(context, "Connect.shariful@gmail.com", "ToolMate - Connection")
                                         }
                                         .padding(vertical = 6.dp, horizontal = 4.dp),
                                     verticalAlignment = Alignment.CenterVertically
@@ -1521,7 +1571,7 @@ fun MainContent(
                                 launchEmailSafely(
                                     context = context,
                                     email = "Connect.shariful@gmail.com",
-                                    subject = "Smart Calculator Pro - Report/Feedback",
+                                    subject = "ToolMate - Report/Feedback",
                                     body = msg
                                 )
                                 showFeedbackDialog = false
@@ -1592,6 +1642,22 @@ fun MainContent(
                 },
                 containerColor = themeColors.cardBg,
                 shape = RoundedCornerShape(20.dp)
+            )
+        }
+
+        if (showStartButtonCustomizer) {
+            NavbarStartButtonCustomizerDialog(
+                viewModel = viewModel,
+                themeColors = themeColors,
+                onDismiss = { showStartButtonCustomizer = false }
+            )
+        }
+
+        if (showAiFabCustomizer) {
+            AiFabCustomizerDialog(
+                viewModel = viewModel,
+                themeColors = themeColors,
+                onDismiss = { showAiFabCustomizer = false }
             )
         }
 
@@ -3096,6 +3162,393 @@ fun FabGradientEditorDialog(
                         Text(if (viewModel.selectedLanguage == AppLanguage.BENGALI) "সংরক্ষণ করুন" else "Save", color = themeColors.buttonEqualText)
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun NavbarStartButtonCustomizerDialog(
+    viewModel: CalculatorViewModel,
+    themeColors: CalculatorThemeColors,
+    onDismiss: () -> Unit
+) {
+    val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
+    var showColorWheelFor by remember { mutableStateOf<String?>(null) } // "bg", "border", "icon"
+    
+    val bgHex = viewModel.searchFabBgColorHex
+    val borderHex = viewModel.searchFabBorderColorHex
+    val iconHex = viewModel.searchFabIconColorHex
+    
+    val defaultBg = Color.White.copy(alpha = 0.25f)
+    val defaultBorder = Color.Transparent
+    val defaultIcon = Color.White
+    
+    val currentBgColor = remember(bgHex) {
+        if (bgHex.isNotEmpty()) {
+            try { Color(android.graphics.Color.parseColor(bgHex)) } catch (e: Exception) { defaultBg }
+        } else { defaultBg }
+    }
+    
+    val currentBorderColor = remember(borderHex) {
+        if (borderHex.isNotEmpty()) {
+            try { Color(android.graphics.Color.parseColor(borderHex)) } catch (e: Exception) { defaultBorder }
+        } else { defaultBorder }
+    }
+    
+    val currentIconColor = remember(iconHex) {
+        if (iconHex.isNotEmpty()) {
+            try { Color(android.graphics.Color.parseColor(iconHex)) } catch (e: Exception) { defaultIcon }
+        } else { defaultIcon }
+    }
+    
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = themeColors.background,
+            tonalElevation = 6.dp,
+            modifier = Modifier.fillMaxWidth().padding(16.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = if (isBn) "স্টার্ট বোতাম কাস্টমাইজ" else "Customize Start Button",
+                    color = themeColors.displayText,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                
+                Divider(color = themeColors.displayText.copy(alpha = 0.1f))
+                
+                // Color Selectors
+                // 1. Background
+                ColorRowOption(
+                    label = if (isBn) "ব্যাকগ্রাউন্ড কালার" else "Background Color",
+                    color = currentBgColor,
+                    onClick = { showColorWheelFor = "bg" },
+                    themeColors = themeColors
+                )
+                
+                // 2. Border
+                ColorRowOption(
+                    label = if (isBn) "বর্ডার কালার" else "Border Color",
+                    color = if (borderHex.isNotEmpty()) currentBorderColor else Color.Transparent,
+                    onClick = { showColorWheelFor = "border" },
+                    themeColors = themeColors,
+                    showNone = borderHex.isEmpty()
+                )
+                
+                // 3. Icon
+                ColorRowOption(
+                    label = if (isBn) "আইকন কালার" else "Icon Color",
+                    color = currentIconColor,
+                    onClick = { showColorWheelFor = "icon" },
+                    themeColors = themeColors
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                // Action Buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    TextButton(
+                        onClick = {
+                            viewModel.updateSearchFabColors("", "", "")
+                            onDismiss()
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = if (isBn) "রিসেট করুন" else "Reset",
+                            color = Color(0xFFD32F2F)
+                        )
+                    }
+                    
+                    Button(
+                        onClick = onDismiss,
+                        colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = if (isBn) "সম্পন্ন" else "Done",
+                            color = Color.White
+                        )
+                    }
+                }
+            }
+        }
+    }
+    
+    if (showColorWheelFor != null) {
+        val target = showColorWheelFor!!
+        val title = when (target) {
+            "bg" -> if (isBn) "ব্যাকগ্রাউন্ড কালার নির্বাচন" else "Select Background Color"
+            "border" -> if (isBn) "বর্ডার কালার নির্বাচন" else "Select Border Color"
+            else -> if (isBn) "আইকন কালার নির্বাচন" else "Select Icon Color"
+        }
+        val initial = when (target) {
+            "bg" -> currentBgColor
+            "border" -> if (borderHex.isNotEmpty()) currentBorderColor else Color.White
+            else -> currentIconColor
+        }
+        
+        com.example.ui.components.ColorWheelPickerDialog(
+            title = title,
+            initialColor = initial,
+            onColorSelected = { color ->
+                val hex = String.format("#%06X", 0xFFFFFF and color.toArgb())
+                when (target) {
+                    "bg" -> viewModel.updateSearchFabColors(hex, borderHex, iconHex)
+                    "border" -> viewModel.updateSearchFabColors(bgHex, hex, iconHex)
+                    "icon" -> viewModel.updateSearchFabColors(bgHex, borderHex, hex)
+                }
+            },
+            onDismiss = { showColorWheelFor = null },
+            themeColors = themeColors,
+            isBn = isBn
+        )
+    }
+}
+
+@Composable
+fun AiFabCustomizerDialog(
+    viewModel: CalculatorViewModel,
+    themeColors: CalculatorThemeColors,
+    onDismiss: () -> Unit
+) {
+    val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
+    var showColorWheelFor by remember { mutableStateOf<String?>(null) } // "bg", "icon", "grad_0".."grad_4"
+    
+    val bgHex = viewModel.aiFabBgColorHex
+    val iconHex = viewModel.aiFabIconColorHex
+    val gradHex = viewModel.aiFabGradientColorsHex
+    
+    val defaultBg = if (themeColors.isDark) Color(0xFF1E293B) else Color.White
+    val defaultIcon = Color(0xFF4285F4)
+    
+    val currentBgColor = remember(bgHex) {
+        if (bgHex.isNotEmpty()) {
+            try { Color(android.graphics.Color.parseColor(bgHex)) } catch (e: Exception) { defaultBg }
+        } else { defaultBg }
+    }
+    
+    val currentIconColor = remember(iconHex) {
+        if (iconHex.isNotEmpty()) {
+            try { Color(android.graphics.Color.parseColor(iconHex)) } catch (e: Exception) { defaultIcon }
+        } else { defaultIcon }
+    }
+    
+    val gradientColorsHexList = remember(gradHex) {
+        if (gradHex.isNotEmpty()) gradHex.split(",").map { it.trim() } else listOf("#4285F4", "#9B51E0", "#EA4335", "#FBBC05", "#34A853")
+    }
+    
+    val gradientColors = remember(gradientColorsHexList) {
+        gradientColorsHexList.map { hex ->
+            try { Color(android.graphics.Color.parseColor(hex)) } catch (e: Exception) { Color.Gray }
+        }
+    }
+    
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = themeColors.background,
+            tonalElevation = 6.dp,
+            modifier = Modifier.fillMaxWidth().padding(16.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(24.dp)
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = if (isBn) "এআই চ্যাট বাটন কাস্টমাইজ" else "Customize AI Chat Button",
+                    color = themeColors.displayText,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                
+                Divider(color = themeColors.displayText.copy(alpha = 0.1f))
+                
+                // Color Option 1: Background
+                ColorRowOption(
+                    label = if (isBn) "ব্যাকগ্রাউন্ড কালার" else "Background Color",
+                    color = currentBgColor,
+                    onClick = { showColorWheelFor = "bg" },
+                    themeColors = themeColors
+                )
+                
+                // Color Option 2: Icon Color
+                ColorRowOption(
+                    label = if (isBn) "আইকন কালার" else "Icon Color",
+                    color = currentIconColor,
+                    onClick = { showColorWheelFor = "icon" },
+                    themeColors = themeColors
+                )
+                
+                Divider(color = themeColors.displayText.copy(alpha = 0.1f))
+                
+                Text(
+                    text = if (isBn) "বর্ডার গ্রাডিয়েন্ট কালারসমূহ" else "Border Gradient Colors",
+                    color = themeColors.displayText.copy(alpha = 0.8f),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.align(Alignment.Start)
+                )
+                
+                // Show the 5 gradient color options
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    for (index in 0..4) {
+                        val colorVal = gradientColors.getOrNull(index) ?: Color.Gray
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .aspectRatio(1f)
+                                .clip(CircleShape)
+                                .background(colorVal)
+                                .border(
+                                    width = 2.dp,
+                                    color = themeColors.displayText.copy(alpha = 0.2f),
+                                    shape = CircleShape
+                                )
+                                .clickable {
+                                    showColorWheelFor = "grad_$index"
+                                }
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                // Action Buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    TextButton(
+                        onClick = {
+                            viewModel.updateAiFabColors("", "", "")
+                            onDismiss()
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = if (isBn) "রিসেট করুন" else "Reset",
+                            color = Color(0xFFD32F2F)
+                        )
+                    }
+                    
+                    Button(
+                        onClick = onDismiss,
+                        colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = if (isBn) "সম্পন্ন" else "Done",
+                            color = Color.White
+                        )
+                    }
+                }
+            }
+        }
+    }
+    
+    if (showColorWheelFor != null) {
+        val target = showColorWheelFor!!
+        val isGrad = target.startsWith("grad_")
+        val gradIndex = if (isGrad) target.substring(5).toIntOrNull() ?: 0 else 0
+        
+        val title = if (isGrad) {
+            if (isBn) "গ্রাডিয়েন্ট কালার ${gradIndex + 1} নির্বাচন" else "Select Gradient Color ${gradIndex + 1}"
+        } else if (target == "bg") {
+            if (isBn) "ব্যাকগ্রাউন্ড কালার নির্বাচন" else "Select Background Color"
+        } else {
+            if (isBn) "আইকন কালার নির্বাচন" else "Select Icon Color"
+        }
+        
+        val initial = if (isGrad) {
+            gradientColors.getOrNull(gradIndex) ?: Color.Gray
+        } else if (target == "bg") {
+            currentBgColor
+        } else {
+            currentIconColor
+        }
+        
+        com.example.ui.components.ColorWheelPickerDialog(
+            title = title,
+            initialColor = initial,
+            onColorSelected = { color ->
+                val hex = String.format("#%06X", 0xFFFFFF and color.toArgb())
+                if (isGrad) {
+                    val newList = gradientColorsHexList.toMutableList()
+                    while (newList.size <= gradIndex) {
+                        newList.add("#FFFFFF")
+                    }
+                    newList[gradIndex] = hex
+                    val updatedGradStr = newList.joinToString(",")
+                    viewModel.updateAiFabColors(bgHex, iconHex, updatedGradStr)
+                } else {
+                    if (target == "bg") {
+                        viewModel.updateAiFabColors(hex, iconHex, gradHex)
+                    } else {
+                        viewModel.updateAiFabColors(bgHex, hex, gradHex)
+                    }
+                }
+            },
+            onDismiss = { showColorWheelFor = null },
+            themeColors = themeColors,
+            isBn = isBn
+        )
+    }
+}
+
+@Composable
+fun ColorRowOption(
+    label: String,
+    color: Color,
+    onClick: () -> Unit,
+    themeColors: CalculatorThemeColors,
+    showNone: Boolean = false
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(themeColors.cardBg)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            color = themeColors.displayText,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium
+        )
+        
+        Box(
+            modifier = Modifier
+                .size(28.dp)
+                .clip(CircleShape)
+                .background(if (showNone) Color.Transparent else color)
+                .border(2.dp, themeColors.displayText.copy(alpha = 0.2f), CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            if (showNone) {
+                Divider(
+                    color = Color.Red,
+                    modifier = Modifier.rotate(45f)
+                )
             }
         }
     }

@@ -16,6 +16,9 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.filled.Save
+import com.example.util.AppLanguage
+import android.widget.Toast
 import com.example.ui.theme.CalculatorThemeColors
 import com.example.ui.viewmodel.CalculatorViewModel
 import java.util.*
@@ -132,6 +135,36 @@ fun AgeCalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
             }
 
             Spacer(modifier = Modifier.height(20.dp))
+
+            val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
+            Button(
+                onClick = {
+                    val dob = viewModel.ageDob
+                    val years = viewModel.ageYearsResult
+                    val months = viewModel.ageMonthsResult
+                    val days = viewModel.ageDaysResult
+                    if (years != "0" && years.isNotEmpty() && years != "-") {
+                        val expr = if (isBn) "জন্মতারিখ: $dob" else "DOB: $dob"
+                        val result = if (isBn) "$years বছর $months মাস $days দিন" else "$years Y, $months M, $days D"
+                        viewModel.saveToolResultToHistory("Age Calculator", expr, result)
+                        Toast.makeText(context, if (isBn) "ফলাফল হিস্টোরিতে সেভ করা হয়েছে!" else "Saved to history!", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(context, if (isBn) "অনুগ্রহ করে সঠিক জন্মতারিখ দিন" else "Please enter a valid date of birth", Toast.LENGTH_SHORT).show()
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = themeColors.buttonEqualBg.copy(alpha = 0.15f),
+                    contentColor = themeColors.buttonEqualBg
+                ),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(if (isBn) "ফলাফল হিস্টোরিতে রাখুন" else "Save Result to History", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             Divider(color = themeColors.displayText.copy(alpha = 0.1f))
 

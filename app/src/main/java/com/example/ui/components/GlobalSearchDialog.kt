@@ -252,7 +252,7 @@ fun GlobalSearchDialog(
                             if (type.matchesConverterQuery(query)) {
                                 results.add(SearchResult.Converter(type, language) {
                                     viewModel.selectedConverterType = type
-                                    viewModel.activeTab = 2
+                                    viewModel.activeTab = 1
                                     viewModel.showGlobalSearch = false
                                 })
                             }
@@ -282,7 +282,7 @@ fun GlobalSearchDialog(
                             if (nExpr.contains(normalizedQuery, ignoreCase = true) || nRes.contains(normalizedQuery, ignoreCase = true)) {
                                 results.add(SearchResult.History(item.expression, item.result) {
                                     viewModel.selectHistoryItem(item)
-                                    viewModel.activeTab = 1
+                                    viewModel.activeTab = 2
                                     viewModel.showGlobalSearch = false
                                 })
                             }

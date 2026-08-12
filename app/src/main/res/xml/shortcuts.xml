@@ -49,18 +49,18 @@
     </shortcut>
 
     <shortcut
-        android:shortcutId="shortcut_favorites"
+        android:shortcutId="shortcut_converter"
         android:enabled="true"
-        android:icon="@drawable/ic_shortcut_favorites"
-        android:shortcutShortLabel="@string/shortcut_favorites"
-        android:shortcutLongLabel="@string/shortcut_favorites">
+        android:icon="@drawable/ic_shortcut_converter"
+        android:shortcutShortLabel="@string/shortcut_converter"
+        android:shortcutLongLabel="@string/shortcut_converter">
         <intent
             android:action="android.intent.action.VIEW"
             android:targetPackage="com.vibestudio.smartcalculatorpro"
             android:targetClass="com.example.MainActivity">
             <extra
                 android:name="target_tab"
-                android:value="favorites" />
+                android:value="converter" />
         </intent>
     </shortcut>
 </shortcuts>

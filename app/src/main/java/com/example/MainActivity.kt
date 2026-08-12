@@ -66,10 +66,6 @@ class MainActivity : ComponentActivity() {
             "converter" -> viewModel.activeTab = 1
             "calculator" -> viewModel.activeTab = 2
             "history" -> viewModel.activeTab = 3
-            "favorites" -> {
-                viewModel.activeTab = 0
-                viewModel.showFavoritesDialog = true
-            }
         }
     }
 }

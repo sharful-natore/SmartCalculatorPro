@@ -587,30 +587,33 @@ How can I help you today?"""
                     }
                 } else {
                     if (diff >= 0) {
-                        "🟢 **Profit Calculation:**\n\n" +
+                        "🟢 **Profit Analysis:**\n\n" +
                         "• 🛒 **Cost Price:** $${df.format(cp)}\n" +
                         "• 🏷️ **Selling Price:** $${df.format(sp)}\n" +
-                        "• 💰 **Net Profit:** **$${df.format(diff)}**\n" +
-                        "• 📈 **Profit Margin:** **${df.format(pct)}%**"
+                        "• 💰 **Total Profit:** **$${df.format(diff)}**\n" +
+                        "• 📈 **Profit Percentage:** **${df.format(pct)}%**"
                     } else {
-                        "🔴 **Loss Calculation:**\n\n" +
+                        "🔴 **Loss Analysis:**\n\n" +
                         "• 🛒 **Cost Price:** $${df.format(cp)}\n" +
                         "• 🏷️ **Selling Price:** $${df.format(sp)}\n" +
-                        "• 💸 **Net Loss:** **$${df.format(-diff)}**\n" +
-                        "• 📉 **Loss Margin:** **${df.format(-pct)}%**"
+                        "• 💸 **Total Loss:** **$${df.format(-diff)}**\n" +
+                        "• 📉 **Loss Percentage:** **${df.format(-pct)}%**"
                     }
                 }
+                actType = "calculate"
+                actLabel = if (isBn) "প্রফিট ক্যালকুলেটরে দেখুন" else "View in Profit Calculator"
+                actData = "$cp,$sp"
             }
 
             // Split Bill
-            (normalized.contains("ভাগ") || normalized.contains("বিল") || normalized.contains("প্রত্যেকে") || normalized.contains("split") || normalized.contains("per person")) && numbers.size >= 2 -> {
+            (normalized.contains("split") || normalized.contains("ভাগ") || normalized.contains("জন") || normalized.contains("people")) && numbers.size >= 2 -> {
                 val df = DecimalFormat("#,##0.##")
-                val totalBill = numbers.maxOrNull() ?: 100.0
-                val peopleCount = (numbers.minOrNull() ?: 2.0).coerceAtLeast(1.0)
+                val totalBill = numbers[0]
+                val peopleCount = numbers[1]
                 val perPerson = totalBill / peopleCount
                 
                 replyText = if (isBn) {
-                    "🍕 **বিল ভাগ করে হিসাব (Split Bill):**\n\n" +
+                    "🍕 **বিল ভাগাভাগি (Split Bill):**\n\n" +
                     "• 💵 **মোট বিল:** ৳${df.format(totalBill)}\n" +
                     "• 👥 **মোট জনসংখ্যা:** ${peopleCount.toInt()} জন\n" +
                     "• 👤 **প্রত্যেকে পরিশোধ করবে:** **৳${df.format(perPerson)}**"
@@ -626,9 +629,9 @@ How can I help you today?"""
             normalized.contains("hello") || normalized.contains(" hi ") || normalized.startsWith("hi") || normalized.contains("hey") ||
             normalized.contains("হ্যালো") || normalized.contains("হাই") || normalized.contains("সালাম") || normalized.contains("salam") || normalized.contains("আসসালামু আলাইকুম") -> {
                 replyText = if (isBn) {
-                    "আসসালামু আলাইকুম ও হ্যালো! 👋 আমি আপনার স্মার্ট ক্যালকুলেটর অফলাইন এআই সহকারী। আমি কিভাবে আপনাকে সাহায্য করতে পারি?"
+                    "আসসালামু আলাইকুম ও হ্যালো! 👋 আমি আপনার টুলমেট অফলাইন এআই সহকারী। আমি কিভাবে আপনাকে সাহায্য করতে পারি?"
                 } else {
-                    "Hello there! 👋 I am your Smart Calculator Offline AI Assistant. How can I help you today?"
+                    "Hello there! 👋 I am your ToolMate Offline AI Assistant. How can I help you today?"
                 }
             }
 
@@ -644,9 +647,9 @@ How can I help you today?"""
             // Name
             normalized.contains("your name") || normalized.contains("তোমার নাম কি") || normalized.contains("আপনার নাম কি") || normalized.contains("নাম কি") || normalized.contains("name") -> {
                 replyText = if (isBn) {
-                    "আমার নাম **স্মার্ট এআই সহকারী (Smart AI Assistant)**! 🤖 আমি এই স্মার্ট ক্যালকুলেটর অ্যাপেরই একটি অংশ।"
+                    "আমার নাম **টুলমেট এআই (ToolMate AI)**! 🤖 আমি এই টুলমেট অ্যাপেরই একটি অংশ।"
                 } else {
-                    "My name is **Smart AI Assistant**! 🤖 I am a built-in part of this Smart Calculator app."
+                    "My name is **ToolMate AI**! 🤖 I am a built-in part of this ToolMate app."
                 }
             }
 
@@ -1302,6 +1305,56 @@ How can I help you today?"""
     fun updateFabColors(colors: List<String>) {
         fabGradientHexColors = colors
         sharedPrefs.edit().putString("fab_colors", colors.joinToString(",")).apply()
+    }
+
+    // Search FAB customizations
+    var searchFabBgColorHex by mutableStateOf(sharedPrefs.getString("search_fab_bg", "") ?: "")
+        private set
+    var searchFabBorderColorHex by mutableStateOf(sharedPrefs.getString("search_fab_border", "") ?: "") // empty means dynamic theme color
+        private set
+    var searchFabIconColorHex by mutableStateOf(sharedPrefs.getString("search_fab_icon", "") ?: "") // empty means dynamic theme color
+        private set
+
+    fun updateSearchFabColors(bg: String, border: String, icon: String) {
+        searchFabBgColorHex = bg
+        searchFabBorderColorHex = border
+        searchFabIconColorHex = icon
+        sharedPrefs.edit()
+            .putString("search_fab_bg", bg)
+            .putString("search_fab_border", border)
+            .putString("search_fab_icon", icon)
+            .apply()
+    }
+
+    // AI Chat FAB customizations
+    var aiFabBgColorHex by mutableStateOf(sharedPrefs.getString("ai_fab_bg", "") ?: "") // empty means dynamic theme color
+        private set
+    var aiFabIconColorHex by mutableStateOf(sharedPrefs.getString("ai_fab_icon", "#4285F4") ?: "#4285F4")
+        private set
+    var aiFabGradientColorsHex by mutableStateOf(sharedPrefs.getString("ai_fab_grad", "#4285F4,#9B51E0,#EA4335,#FBBC05,#34A853") ?: "#4285F4,#9B51E0,#EA4335,#FBBC05,#34A853")
+        private set
+
+    fun updateAiFabColors(bg: String, icon: String, gradient: String) {
+        aiFabBgColorHex = bg
+        aiFabIconColorHex = icon
+        aiFabGradientColorsHex = gradient
+        sharedPrefs.edit()
+            .putString("ai_fab_bg", bg)
+            .putString("ai_fab_icon", icon)
+            .putString("ai_fab_grad", gradient)
+            .apply()
+    }
+
+    fun saveToolResultToHistory(toolName: String, expressionStr: String, resultStr: String) {
+        viewModelScope.launch {
+            repository.insertHistory(
+                HistoryEntry(
+                    expression = expressionStr,
+                    result = resultStr,
+                    type = toolName
+                )
+            )
+        }
     }
 
     var favoriteTools by mutableStateOf(loadFavorites("favorite_tools"))
@@ -1990,9 +2043,40 @@ How can I help you today?"""
     }
 
     fun selectHistoryItem(entry: HistoryEntry) {
-        expressionValue = TextFieldValue(entry.expression, selection = TextRange(entry.expression.length))
-        result = entry.result
-        activeTab = 2 // Switch to calculator
+        if (entry.type == "Calculator" || entry.type == "Basic" || entry.type.isBlank()) {
+            expressionValue = TextFieldValue(entry.expression, selection = TextRange(entry.expression.length))
+            result = entry.result
+            activeTab = 2 // Switch to calculator
+        } else if (entry.type == "BMI Calculator") {
+            activeTab = 0
+            openTool(com.example.data.model.ToolType.BMI)
+        } else if (entry.type == "Age Calculator") {
+            activeTab = 0
+            openTool(com.example.data.model.ToolType.AGE)
+        } else if (entry.type == "Discount Calculator") {
+            activeTab = 0
+            openTool(com.example.data.model.ToolType.DISCOUNT)
+        } else {
+            val matchingConverter = com.example.data.model.ConverterType.values().find {
+                it.titleEn == entry.type || it.titleBn == entry.type
+            }
+            if (matchingConverter != null) {
+                activeTab = 1
+                selectedConverterType = matchingConverter
+                val numberPart = entry.expression.split(" ").firstOrNull()
+                if (numberPart != null && numberPart.toDoubleOrNull() != null) {
+                    converterInput = numberPart
+                }
+            } else {
+                val matchingTool = com.example.data.model.ToolType.values().find {
+                    it.titleEn == entry.type || it.titleBn == entry.type
+                }
+                if (matchingTool != null) {
+                    activeTab = 0
+                    openTool(matchingTool)
+                }
+            }
+        }
     }
 
     fun saveNamedCalculation(name: String) {

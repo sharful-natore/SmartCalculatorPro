@@ -493,6 +493,7 @@ fun ConverterDetailView(
     viewModel: CalculatorViewModel,
     themeColors: CalculatorThemeColors
 ) {
+    val context = LocalContext.current
     var isFromDropdownExpanded by remember { mutableStateOf(false) }
     var isToDropdownExpanded by remember { mutableStateOf(false) }
     var showConverterInfo by remember { mutableStateOf(false) }
@@ -967,7 +968,36 @@ fun ConverterDetailView(
             }
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Button(
+            onClick = {
+                val inputVal = viewModel.converterInput
+                val outputVal = viewModel.converterOutput
+                val fromUnitName = converterType.getLocalizedUnitName(viewModel.fromUnit, viewModel.selectedLanguage)
+                val toUnitName = converterType.getLocalizedUnitName(viewModel.toUnit, viewModel.selectedLanguage)
+                if (inputVal.isNotEmpty() && outputVal.isNotEmpty()) {
+                    val expr = "$inputVal $fromUnitName"
+                    val result = "$outputVal $toUnitName"
+                    viewModel.saveToolResultToHistory(converterType.getTitle(viewModel.selectedLanguage), expr, result)
+                    Toast.makeText(context, if (viewModel.selectedLanguage == AppLanguage.BENGALI) "ইতিহাসে সেভ করা হয়েছে!" else "Saved to history!", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(context, if (viewModel.selectedLanguage == AppLanguage.BENGALI) "অনুগ্রহ করে মান প্রদান করুন" else "Please enter a value to convert", Toast.LENGTH_SHORT).show()
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = themeColors.buttonEqualBg.copy(alpha = 0.15f),
+                contentColor = themeColors.buttonEqualBg
+            ),
+            shape = RoundedCornerShape(10.dp)
+        ) {
+            Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(16.dp))
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(if (viewModel.selectedLanguage == AppLanguage.BENGALI) "ফলাফল হিস্টোরিতে রাখুন" else "Save Result to History", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Conversion Quick Matrix Table
         ElevatedCard(

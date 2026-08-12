@@ -13,6 +13,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Save
+import com.example.util.AppLanguage
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
 import com.example.ui.theme.CalculatorThemeColors
 import com.example.ui.viewmodel.CalculatorViewModel
 
@@ -138,6 +143,36 @@ fun DiscountCalculatorCard(viewModel: CalculatorViewModel, themeColors: Calculat
                         modifier = Modifier.testTag("discount_savings_text")
                     )
                 }
+            }
+
+            val context = LocalContext.current
+            val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = {
+                    val price = viewModel.originalPrice
+                    val discount = viewModel.discountPercent
+                    val finalPrice = viewModel.finalPriceResult
+                    val savings = viewModel.discountSavingsResult
+                    if (price.isNotEmpty() && finalPrice.isNotEmpty() && finalPrice != "0" && finalPrice != "0.0") {
+                        val expr = if (isBn) "মূল দাম: $price, ডিসকাউন্ট: $discount%" else "Price: $price, Discount: $discount%"
+                        val resultStr = if (isBn) "ফাইনাল দাম: $finalPrice (সাশ্রয়: $savings)" else "Final Price: $finalPrice (Saved: $savings)"
+                        viewModel.saveToolResultToHistory("Discount Calculator", expr, resultStr)
+                        Toast.makeText(context, if (isBn) "ফলাফল হিস্টোরিতে সেভ করা হয়েছে!" else "Saved to history!", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(context, if (isBn) "অনুগ্রহ করে দাম ও ডিসকাউন্ট দিন" else "Please enter original price and discount", Toast.LENGTH_SHORT).show()
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = themeColors.buttonEqualBg.copy(alpha = 0.15f),
+                    contentColor = themeColors.buttonEqualBg
+                ),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(if (isBn) "ফলাফল হিস্টোরিতে রাখুন" else "Save Result to History", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             }
         }
     }

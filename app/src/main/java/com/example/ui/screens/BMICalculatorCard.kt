@@ -29,6 +29,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.filled.Save
+import com.example.util.AppLanguage
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
 import com.example.ui.theme.CalculatorThemeColors
 import com.example.ui.viewmodel.CalculatorViewModel
 import kotlin.math.cos
@@ -391,6 +395,36 @@ fun BMICalculatorCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
                         )
                     }
                 }
+            }
+
+            val context = LocalContext.current
+            val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
+            Button(
+                onClick = {
+                    val weight = viewModel.bmiWeight
+                    val wUnit = viewModel.bmiWeightUnit
+                    val height = if (viewModel.bmiHeightUnit == "cm") "${viewModel.bmiHeight} cm" else "${viewModel.bmiHeightFt} ft ${viewModel.bmiHeightIn} in"
+                    val bmi = viewModel.bmiResultValue
+                    val category = viewModel.bmiCategoryResult
+                    if (bmi.isNotEmpty() && bmi != "0.0") {
+                        val expr = if (isBn) "ওজন: $weight $wUnit, উচ্চতা: $height" else "Weight: $weight $wUnit, Height: $height"
+                        val resultStr = if (isBn) "বিএমআই: $bmi ($category)" else "BMI: $bmi ($category)"
+                        viewModel.saveToolResultToHistory("BMI Calculator", expr, resultStr)
+                        Toast.makeText(context, if (isBn) "ফলাফল হিস্টোরিতে সেভ করা হয়েছে!" else "Saved to history!", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(context, if (isBn) "অনুগ্রহ করে সঠিক তথ্য দিন" else "Please enter valid info", Toast.LENGTH_SHORT).show()
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = themeColors.buttonEqualBg.copy(alpha = 0.15f),
+                    contentColor = themeColors.buttonEqualBg
+                ),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(if (isBn) "ফলাফল হিস্টোরিতে রাখুন" else "Save Result to History", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             }
 
             Spacer(modifier = Modifier.height(16.dp))

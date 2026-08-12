@@ -22,6 +22,6 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "Smart Calculator Pro"
+rootProject.name = "ToolMate"
 
 include(":app")

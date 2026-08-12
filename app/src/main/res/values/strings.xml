@@ -1,7 +1,7 @@
 <resources>
-    <string name="app_name">Smart Calculator Pro</string>
+    <string name="app_name">ToolMate</string>
     <string name="shortcut_dashboard">Dashboard</string>
     <string name="shortcut_calculator">Calculator</string>
     <string name="shortcut_history">History</string>
-    <string name="shortcut_favorites">Favorites</string>
+    <string name="shortcut_converter">Unit Converter</string>
 </resources>

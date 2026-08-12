@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.IntOffset
 import kotlin.math.roundToInt
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.background
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
@@ -86,6 +87,7 @@ fun HistoryScreen(
     var isSearchActive by remember { mutableStateOf(false) }
     var isAscending by remember { mutableStateOf(false) }
     var showSortMenu by remember { mutableStateOf(false) }
+    var selectedTypeFilter by remember { mutableStateOf("Calculator") }
 
     val context = LocalContext.current
     val historySpeechLauncher = rememberLauncherForActivityResult(
@@ -355,6 +357,57 @@ fun HistoryScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Dynamic Tool Type Filter Chips Row
+        val availableTypes = remember(historyItems) {
+            val types = historyItems.map { if (it.type == "Basic") "Calculator" else it.type }.filter { it.isNotEmpty() }.distinct()
+            val list = mutableListOf<String>()
+            if (types.contains("Calculator") || historyItems.isEmpty()) {
+                list.add("Calculator")
+            }
+            list.addAll(types.filter { it != "Calculator" })
+            if (!types.contains("Calculator") && historyItems.isNotEmpty()) {
+                list.add(0, "Calculator")
+            }
+            list
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+                .padding(vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            availableTypes.forEach { type ->
+                val isSelected = selectedTypeFilter == type
+                val labelText = if (isBn) {
+                    when (type) {
+                        "Calculator" -> "ক্যালকুলেটর"
+                        "BMI Calculator" -> "বিএমআই"
+                        "Age Calculator" -> "বয়স"
+                        "Discount Calculator" -> "ডিসকাউন্ট"
+                        else -> type
+                    }
+                } else {
+                    type
+                }
+                FilterChip(
+                    selected = isSelected,
+                    onClick = { selectedTypeFilter = type },
+                    label = { Text(labelText) },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = themeColors.buttonEqualBg,
+                        selectedLabelColor = Color.White,
+                        containerColor = themeColors.cardBg,
+                        labelColor = themeColors.displayText
+                    ),
+                    modifier = Modifier.testTag("history_chip_$type")
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
         if (historyItems.isEmpty()) {
             Box(
                 modifier = Modifier
@@ -395,6 +448,14 @@ fun HistoryScreen(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 val filteredItems = historyItems.filter { 
+                    // Filter by selected category chip
+                    val matchesType = if (selectedTypeFilter == "Calculator") {
+                        it.type == "Calculator" || it.type == "Basic" || it.type.isBlank()
+                    } else {
+                        it.type == selectedTypeFilter
+                    }
+                    if (!matchesType) return@filter false
+
                     val eng = listOf("0", "1", "2", "3", "4", "5", "6", "7", "8", "9")
                     val ben = listOf("০", "১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯")
                     var nExpr = it.expression

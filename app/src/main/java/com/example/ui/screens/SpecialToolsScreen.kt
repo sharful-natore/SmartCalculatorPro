@@ -24,6 +24,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -44,6 +46,13 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.content.Context
+import android.location.Geocoder
+import android.location.Location
+import android.location.LocationManager
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
+import java.util.Locale
 import com.example.util.AppLanguage
 import com.example.data.model.ToolCategory
 import com.example.data.model.ToolType
@@ -152,6 +161,7 @@ fun ToolsCategoriesView(
     val searchQuery = viewModel.toolSearchQuery.lowercase().trim()
     val selectedFilter = viewModel.selectedToolCategoryFilter
     var showWeatherDialog by remember { mutableStateOf(false) }
+    var unfavoriteConfirmTool by remember { mutableStateOf<ToolType?>(null) }
 
     val context = LocalContext.current
     val speechLauncher = rememberLauncherForActivityResult(
@@ -277,15 +287,20 @@ fun ToolsCategoriesView(
                             imageVector = weatherIcon,
                             contentDescription = "Weather",
                             tint = themeColors.buttonEqualBg,
-                            modifier = Modifier.size(15.dp)
+                            modifier = Modifier.size(16.dp)
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = weatherText,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = themeColors.buttonEqualBg
-                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        BoxWithConstraints(modifier = Modifier.weight(1f, fill = false)) {
+                            val isSmallText = maxWidth < 120.dp
+                            Text(
+                                text = weatherText,
+                                fontSize = if (isSmallText) 9.sp else 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.buttonEqualBg,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
                     }
                 }
 
@@ -301,54 +316,66 @@ fun ToolsCategoriesView(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Sub-row Badges (Bengali Date & Hijri Date side by side)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(themeColors.displayText.copy(alpha = 0.05f))
-                            .padding(horizontal = 10.dp, vertical = 5.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Spa,
-                            contentDescription = "Bengali Date",
-                            tint = Color(0xFF10B981),
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = dateInfo.bengaliDate,
-                            fontSize = 12.sp,
-                            color = themeColors.displayText.copy(alpha = 0.85f),
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
+                // Sub-row Badges (Bengali Date & Hijri Date side by side - single line dynamic sizing)
+                BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                    val isSmall = maxWidth < 360.dp
+                    val badgeFontSize = if (isSmall) 10.sp else 12.sp
+                    val iconSize = if (isSmall) 11.dp else 14.dp
+                    val horizontalPadding = if (isSmall) 6.dp else 10.dp
+                    val verticalPadding = if (isSmall) 4.dp else 5.dp
 
                     Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(themeColors.displayText.copy(alpha = 0.05f))
-                            .padding(horizontal = 10.dp, vertical = 5.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(if (isSmall) 4.dp else 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.NightsStay,
-                            contentDescription = "Hijri Date",
-                            tint = Color(0xFFF59E0B),
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = dateInfo.hijriDate,
-                            fontSize = 12.sp,
-                            color = themeColors.displayText.copy(alpha = 0.85f),
-                            fontWeight = FontWeight.SemiBold
-                        )
+                        Row(
+                            modifier = Modifier
+                                .weight(1f, fill = false)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(themeColors.displayText.copy(alpha = 0.05f))
+                                .padding(horizontal = horizontalPadding, vertical = verticalPadding),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Spa,
+                                contentDescription = "Bengali Date",
+                                tint = Color(0xFF10B981),
+                                modifier = Modifier.size(iconSize)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = dateInfo.bengaliDate,
+                                fontSize = badgeFontSize,
+                                color = themeColors.displayText.copy(alpha = 0.85f),
+                                fontWeight = FontWeight.SemiBold,
+                                maxLines = 1
+                            )
+                        }
+
+                        Row(
+                            modifier = Modifier
+                                .weight(1f, fill = false)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(themeColors.displayText.copy(alpha = 0.05f))
+                                .padding(horizontal = horizontalPadding, vertical = verticalPadding),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.NightsStay,
+                                contentDescription = "Hijri Date",
+                                tint = Color(0xFFF59E0B),
+                                modifier = Modifier.size(iconSize)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = dateInfo.hijriDate,
+                                fontSize = badgeFontSize,
+                                color = themeColors.displayText.copy(alpha = 0.85f),
+                                fontWeight = FontWeight.SemiBold,
+                                maxLines = 1
+                            )
+                        }
                     }
                 }
             }
@@ -357,6 +384,30 @@ fun ToolsCategoriesView(
         // Change Weather Location Dialog
         if (showWeatherDialog) {
             var tempInput by remember { mutableStateOf(viewModel.weatherLocation) }
+            var isFetchingLocation by remember { mutableStateOf(false) }
+            var locationErrorMsg by remember { mutableStateOf<String?>(null) }
+            
+            val locationPermissionLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.RequestMultiplePermissions()
+            ) { permissions ->
+                val granted = permissions[android.Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                        permissions[android.Manifest.permission.ACCESS_COARSE_LOCATION] == true
+                if (granted) {
+                    isFetchingLocation = true
+                    locationErrorMsg = null
+                    getCurrentLocationName(context, isBn) { city ->
+                        isFetchingLocation = false
+                        if (city != null) {
+                            tempInput = city
+                        } else {
+                            locationErrorMsg = if (isBn) "লোকেশন পাওয়া যায়নি!" else "Location not found!"
+                        }
+                    }
+                } else {
+                    locationErrorMsg = if (isBn) "লোকেশন পারমিশন দেওয়া হয়নি!" else "Location permission denied!"
+                }
+            }
+
             AlertDialog(
                 onDismissRequest = { showWeatherDialog = false },
                 title = {
@@ -368,8 +419,89 @@ fun ToolsCategoriesView(
                 },
                 text = {
                     Column {
+                        // Current Location Button
+                        Button(
+                            onClick = {
+                                val hasFine = ContextCompat.checkSelfPermission(
+                                    context,
+                                    android.Manifest.permission.ACCESS_FINE_LOCATION
+                               ) == PackageManager.PERMISSION_GRANTED
+                                val hasCoarse = ContextCompat.checkSelfPermission(
+                                    context,
+                                    android.Manifest.permission.ACCESS_COARSE_LOCATION
+                                ) == PackageManager.PERMISSION_GRANTED
+                                
+                                if (hasFine || hasCoarse) {
+                                    isFetchingLocation = true
+                                    locationErrorMsg = null
+                                    getCurrentLocationName(context, isBn) { city ->
+                                        isFetchingLocation = false
+                                        if (city != null) {
+                                            tempInput = city
+                                        } else {
+                                            locationErrorMsg = if (isBn) "লোকেশন পাওয়া যায়নি!" else "Location not found!"
+                                        }
+                                    }
+                                } else {
+                                    locationPermissionLauncher.launch(
+                                        arrayOf(
+                                            android.Manifest.permission.ACCESS_FINE_LOCATION,
+                                            android.Manifest.permission.ACCESS_COARSE_LOCATION
+                                        )
+                                    )
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = themeColors.buttonEqualBg.copy(alpha = 0.15f),
+                                contentColor = themeColors.buttonEqualBg
+                            ),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            if (isFetchingLocation) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(18.dp),
+                                    color = themeColors.buttonEqualBg,
+                                    strokeWidth = 2.dp
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = if (isBn) "লোকেশন খোঁজা হচ্ছে..." else "Finding Location...",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.LocationOn,
+                                    contentDescription = "My Location",
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = if (isBn) "আমার বর্তমান লোকেশন নিন" else "Use Current Location",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+
+                        if (locationErrorMsg != null) {
+                            Text(
+                                text = locationErrorMsg!!,
+                                color = Color(0xFFEF4444),
+                                fontSize = 12.sp,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+                        }
+
+                        Divider(
+                            color = themeColors.displayText.copy(alpha = 0.1f),
+                            thickness = 1.dp,
+                            modifier = Modifier.padding(bottom = 12.dp)
+                        )
+
                         Text(
-                            text = if (isBn) "আপনার শহরের নাম লিখুন:" else "Enter your city name:",
+                            text = if (isBn) "অথবা টাইপ করে সার্চ করুন:" else "Or search/type name manually:",
                             color = themeColors.displayText.copy(alpha = 0.8f),
                             fontSize = 14.sp,
                             modifier = Modifier.padding(bottom = 8.dp)
@@ -416,7 +548,51 @@ fun ToolsCategoriesView(
             )
         }
 
-        // Search Bar
+        if (unfavoriteConfirmTool != null) {
+            val toolToUnfav = unfavoriteConfirmTool!!
+            AlertDialog(
+                onDismissRequest = { unfavoriteConfirmTool = null },
+                title = {
+                    Text(
+                        text = if (isBn) "নিশ্চিতকরণ" else "Confirmation",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = themeColors.displayText
+                    )
+                },
+                text = {
+                    Text(
+                        text = if (isBn) {
+                            "আপনি কি এই টুলটি (${toolToUnfav.titleBn}) ফেভারিট তালিকা থেকে বাদ দিতে চান?"
+                        } else {
+                            "Are you sure you want to remove ${toolToUnfav.titleEn} from your favorites?"
+                        },
+                        fontSize = 14.sp,
+                        color = themeColors.displayText.copy(alpha = 0.8f)
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            viewModel.toggleFavoriteTool(toolToUnfav.name)
+                            unfavoriteConfirmTool = null
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg)
+                    ) {
+                        Text(text = if (isBn) "হ্যাঁ" else "Yes", color = Color.White)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { unfavoriteConfirmTool = null }) {
+                        Text(text = if (isBn) "না" else "No", color = themeColors.buttonEqualBg)
+                    }
+                },
+                containerColor = themeColors.cardBg,
+                shape = RoundedCornerShape(16.dp)
+            )
+        }
+
+        // Search Bar (Placed at the top of the tools section)
         OutlinedTextField(
             value = viewModel.toolSearchQuery,
             onValueChange = { viewModel.toolSearchQuery = it },
@@ -470,52 +646,123 @@ fun ToolsCategoriesView(
                 .testTag("tool_search_input")
         )
 
-
-
-        // Favorites / Quick Access Rail (If user has favorite tools)
-        if (viewModel.favoriteTools.isNotEmpty()) {
+        // Featured & Favorite Tools Title
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp, bottom = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text(
-                text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "আপনার ফেভারিট টুলস" else "Your Favorite Tools",
-                fontWeight = FontWeight.Bold,
-                fontSize = 14.sp,
-                color = themeColors.displayText,
-                modifier = Modifier.padding(bottom = 8.dp)
+                text = if (isBn) "ফিচার্ড ও ফেভারিট টুলস" else "Featured & Favorite Tools",
+                fontSize = 15.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = themeColors.displayText
             )
-
-            Row(
+            Text(
+                text = "🔥 Custom",
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                color = themeColors.buttonEqualBg,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState())
-                    .padding(bottom = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                viewModel.favoriteTools.forEach { toolName ->
-                    val favTool = try { ToolType.valueOf(toolName) } catch (e: Exception) { null }
-                    if (favTool != null) {
-                        Surface(
-                            onClick = { viewModel.openTool(favTool) },
-                            shape = RoundedCornerShape(12.dp),
-                            color = themeColors.cardBg,
-                            tonalElevation = 2.dp,
-                            modifier = Modifier.width(130.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(themeColors.buttonEqualBg.copy(alpha = 0.1f))
+                    .padding(horizontal = 8.dp, vertical = 3.dp)
+            )
+        }
+
+        // Horizontal Scroll Layout for the Combined Featured & Favorite Tools
+        val combinedList = remember(viewModel.favoriteTools) {
+            val favs = viewModel.favoriteTools.mapNotNull { name ->
+                try { ToolType.valueOf(name) } catch (e: Exception) { null }
+            }
+            val defaultFeatured = listOf(
+                ToolType.AGE,
+                ToolType.BMI,
+                ToolType.DISCOUNT,
+                ToolType.EMI_LOAN,
+                ToolType.WATER_INTAKE
+            )
+            (favs + defaultFeatured).distinct()
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+                .padding(vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            combinedList.forEach { tool ->
+                val isFavorited = viewModel.favoriteTools.contains(tool.name)
+                Box(
+                    modifier = Modifier.width(130.dp)
+                ) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { viewModel.openTool(tool) }
+                            .themeCardShadow(themeColors, elevation = 1.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .padding(12.dp)
+                                .fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Column(
-                                modifier = Modifier.padding(10.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(themeColors.buttonEqualBg.copy(alpha = 0.1f)),
+                                contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    imageVector = favTool.icon,
-                                    contentDescription = null,
+                                    imageVector = tool.icon,
+                                    contentDescription = tool.titleEn,
                                     tint = themeColors.buttonEqualBg,
-                                    modifier = Modifier.size(28.dp)
+                                    modifier = Modifier.size(18.dp)
                                 )
-                                Spacer(modifier = Modifier.height(6.dp))
-                                Text(
-                                    text = favTool.getTitle(viewModel.selectedLanguage),
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = themeColors.displayText,
-                                    maxLines = 1
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = if (isBn) tool.titleBn else tool.titleEn,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.displayText,
+                                textAlign = TextAlign.Center,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = if (isBn) "ট্যাপ করুন" else "Tap to open",
+                                fontSize = 10.sp,
+                                color = themeColors.displayText.copy(alpha = 0.5f),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+
+                    // Favorite Icon in the Top-Right Corner of favorited tools
+                    if (isFavorited) {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(top = 4.dp, end = 4.dp)
+                        ) {
+                            IconButton(
+                                onClick = { unfavoriteConfirmTool = tool },
+                                modifier = Modifier.size(28.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Favorite,
+                                    contentDescription = "Unfavorite",
+                                    tint = Color(0xFFE91E63),
+                                    modifier = Modifier.size(18.dp)
                                 )
                             }
                         }
@@ -523,6 +770,8 @@ fun ToolsCategoriesView(
                 }
             }
         }
+
+        Spacer(modifier = Modifier.height(12.dp))
 
         // Category Filter Chips
         Row(
@@ -1315,3 +1564,98 @@ private fun getToolInfoItems(toolType: ToolType, isBn: Boolean): List<Pair<Strin
         else -> emptyList()
     }
 }
+
+fun getCurrentLocationName(context: Context, isBn: Boolean, onResult: (String?) -> Unit) {
+    try {
+        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager
+        if (locationManager == null) {
+            onResult(null)
+            return
+        }
+        
+        val hasFine = ContextCompat.checkSelfPermission(
+            context,
+            android.Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+        val hasCoarse = ContextCompat.checkSelfPermission(
+            context,
+            android.Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+        
+        if (!hasFine && !hasCoarse) {
+            onResult(null)
+            return
+        }
+        
+        val providers = locationManager.getProviders(true)
+        var bestLocation: Location? = null
+        for (provider in providers) {
+            val loc = locationManager.getLastKnownLocation(provider) ?: continue
+            if (bestLocation == null || loc.accuracy < bestLocation.accuracy) {
+                bestLocation = loc
+            }
+        }
+        
+        val loc = bestLocation
+        if (loc != null) {
+            val geocoder = Geocoder(context, if (isBn) Locale("bn") else Locale.getDefault())
+            if (android.os.Build.VERSION.SDK_INT >= 33) {
+                geocoder.getFromLocation(loc.latitude, loc.longitude, 1, object : Geocoder.GeocodeListener {
+                    override fun onGeocode(addresses: MutableList<android.location.Address>) {
+                        val address = addresses.firstOrNull()
+                        val city = address?.locality ?: address?.subAdminArea ?: address?.adminArea ?: address?.countryName
+                        onResult(city)
+                    }
+                    override fun onError(errorMessage: String?) {
+                        onResult(null)
+                    }
+                })
+            } else {
+                @Suppress("DEPRECATION")
+                val addresses = geocoder.getFromLocation(loc.latitude, loc.longitude, 1)
+                val address = addresses?.firstOrNull()
+                val city = address?.locality ?: address?.subAdminArea ?: address?.adminArea ?: address?.countryName
+                onResult(city)
+            }
+        } else {
+            val provider = if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                LocationManager.GPS_PROVIDER
+            } else if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+                LocationManager.NETWORK_PROVIDER
+            } else {
+                null
+            }
+            
+            if (provider != null) {
+                locationManager.requestSingleUpdate(
+                    provider,
+                    object : android.location.LocationListener {
+                        override fun onLocationChanged(location: Location) {
+                            val geocoder = Geocoder(context, if (isBn) Locale("bn") else Locale.getDefault())
+                            try {
+                                @Suppress("DEPRECATION")
+                                val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
+                                val address = addresses?.firstOrNull()
+                                val city = address?.locality ?: address?.subAdminArea ?: address?.adminArea ?: address?.countryName
+                                onResult(city)
+                            } catch (e: Exception) {
+                                onResult(null)
+                            }
+                        }
+                        @Deprecated("Deprecated in Java")
+                        override fun onStatusChanged(provider: String?, status: Int, extras: android.os.Bundle?) {}
+                        override fun onProviderEnabled(provider: String) {}
+                        override fun onProviderDisabled(provider: String) {}
+                    },
+                    android.os.Looper.getMainLooper()
+                )
+            } else {
+                onResult(null)
+            }
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
+        onResult(null)
+    }
+}
+
