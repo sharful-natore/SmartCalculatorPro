@@ -103,7 +103,9 @@ fun DynamicWeatherScreen(
             val current = weatherData.current
             
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 // Current Weather Card

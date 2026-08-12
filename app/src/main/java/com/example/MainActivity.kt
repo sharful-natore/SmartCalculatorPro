@@ -60,18 +60,19 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleShortcutIntent(intent: Intent?) {
-        if (intent?.action == Intent.ACTION_MAIN) {
+        val targetTab = intent?.getStringExtra("target_tab")
+        if (targetTab != null) {
+            when (targetTab) {
+                "dashboard" -> viewModel.activeTab = 0
+                "converter" -> viewModel.activeTab = 1
+                "calculator" -> viewModel.activeTab = 2
+                "history" -> viewModel.activeTab = 3
+            }
+            intent.removeExtra("target_tab")
+        } else {
+            // ALWAYS default to Dashboard (0) on app launch
             viewModel.activeTab = 0
-            return
         }
-        val targetTab = intent?.getStringExtra("target_tab") ?: return
-        when (targetTab) {
-            "dashboard" -> viewModel.activeTab = 0
-            "converter" -> viewModel.activeTab = 1
-            "calculator" -> viewModel.activeTab = 2
-            "history" -> viewModel.activeTab = 3
-        }
-        intent.removeExtra("target_tab")
     }
 }
 
