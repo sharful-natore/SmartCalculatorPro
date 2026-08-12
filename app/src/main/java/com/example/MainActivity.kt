@@ -60,6 +60,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleShortcutIntent(intent: Intent?) {
+        if (intent?.action == Intent.ACTION_MAIN) return
         val targetTab = intent?.getStringExtra("target_tab") ?: return
         when (targetTab) {
             "dashboard" -> viewModel.activeTab = 0
@@ -67,6 +68,7 @@ class MainActivity : ComponentActivity() {
             "calculator" -> viewModel.activeTab = 2
             "history" -> viewModel.activeTab = 3
         }
+        intent.removeExtra("target_tab")
     }
 }
 

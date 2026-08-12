@@ -235,9 +235,8 @@ fun MainContent(
 
     // Default page setup on app launch - ALWAYS start on the correct activeTab (including shortcuts/intents)
     LaunchedEffect(Unit) {
-        delay(150) // Wait for any automatic page state restoration to complete
-        val startPage = viewModel.activeTab.coerceIn(0, 3)
-        pagerState.scrollToPage(startPage)
+        // Immediately snap to the correct active tab, ignoring any restored saved state
+        pagerState.scrollToPage(viewModel.activeTab.coerceIn(0, 3))
         isAppInitialized = true
         delay(1000) // Slight delay to let UI settle before update check
         performUpdateCheck(false)
@@ -790,7 +789,7 @@ fun MainContent(
                         initialValue = 0f,
                         targetValue = 360f,
                         animationSpec = infiniteRepeatable(
-                            animation = tween(3500, easing = LinearEasing),
+                            animation = tween(800, easing = LinearEasing),
                             repeatMode = RepeatMode.Restart
                         ),
                         label = "aiRotationAngle"
@@ -864,7 +863,7 @@ fun MainContent(
                                 onClick = { viewModel.showAiChat = true },
                                 onLongClick = { showAiFabCustomizer = true }
                             )
-                            .padding(horizontal = 22.dp, vertical = 14.dp),
+                            .padding(horizontal = 20.dp, vertical = 6.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Row(

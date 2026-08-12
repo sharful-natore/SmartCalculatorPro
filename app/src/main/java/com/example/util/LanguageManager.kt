@@ -20,14 +20,14 @@ object LanguageManager {
     fun getString(key: String, language: AppLanguage): String {
         return when (key) {
             "app_title_calc" -> when (language) {
-                AppLanguage.ENGLISH -> "ToolMate"
-                AppLanguage.BENGALI -> "টুলমেট"
-                AppLanguage.HINDI -> "टूलमेट (ToolMate)"
-                AppLanguage.ARABIC -> "تول ميت (ToolMate)"
-                AppLanguage.FRENCH -> "ToolMate"
-                AppLanguage.SPANISH -> "ToolMate"
-                AppLanguage.GERMAN -> "ToolMate"
-                AppLanguage.CHINESE -> "ToolMate"
+                AppLanguage.ENGLISH -> "Smart Calculator"
+                AppLanguage.BENGALI -> "স্মার্ট ক্যালকুলেটর"
+                AppLanguage.HINDI -> "स्मार्ट कैलकुलेटर"
+                AppLanguage.ARABIC -> "الحاسبة الذكية"
+                AppLanguage.FRENCH -> "Calculatrice Intelligente"
+                AppLanguage.SPANISH -> "Calculadora Inteligente"
+                AppLanguage.GERMAN -> "Intelligenter Rechner"
+                AppLanguage.CHINESE -> "智能计算器"
             }
             "app_title_conv" -> when (language) {
                 AppLanguage.ENGLISH -> "Unit Converter"
