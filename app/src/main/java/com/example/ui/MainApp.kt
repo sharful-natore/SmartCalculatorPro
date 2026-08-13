@@ -240,23 +240,30 @@ fun MainContent(
         performUpdateCheck(false)
     }
 
-    // Pager state for smooth horizontal tab swiping (excluding Theme page at index 4)
+    // Pager state for smooth horizontal tab swiping
     val pagerState = rememberPagerState(initialPage = if (viewModel.activeTab in 0..3) viewModel.activeTab else 0) { 4 }
 
-    // Sync pagerState.currentPage -> viewModel.activeTab when user swipes
-    LaunchedEffect(pagerState.currentPage) {
-        if (!pagerState.isScrollInProgress && viewModel.activeTab != pagerState.currentPage && pagerState.currentPage in 0..3) {
-            viewModel.activeTab = pagerState.currentPage
-        }
+    var isProgrammaticScroll by remember { mutableStateOf(false) }
+
+    // Sync pagerState.settledPage -> viewModel.activeTab when user swipes
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.settledPage }
+            .collect { page ->
+                if (!isProgrammaticScroll && viewModel.activeTab != page && page in 0..3) {
+                    viewModel.activeTab = page
+                }
+            }
     }
 
     // Sync viewModel.activeTab -> pagerState when tab is changed via bottom nav or buttons
     LaunchedEffect(viewModel.activeTab) {
         if (viewModel.activeTab in 0..3 && pagerState.currentPage != viewModel.activeTab) {
+            isProgrammaticScroll = true
             pagerState.animateScrollToPage(
                 page = viewModel.activeTab,
                 animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing)
             )
+            isProgrammaticScroll = false
         }
     }
 
