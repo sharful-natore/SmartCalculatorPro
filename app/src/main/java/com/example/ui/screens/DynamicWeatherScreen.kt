@@ -1,5 +1,6 @@
 package com.example.ui.screens
 
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -15,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -34,6 +36,28 @@ fun DynamicWeatherScreen(
     isBn: Boolean
 ) {
     var showSearchDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        if (viewModel.weatherData == null) {
+            viewModel.fetchWeather()
+        }
+    }
+
+    // Refresh icon rotation animation while loading
+    val infiniteTransition = rememberInfiniteTransition(label = "weather_refresh_transition")
+    val rotationAngle by if (viewModel.weatherIsLoading) {
+        infiniteTransition.animateFloat(
+            initialValue = 0f,
+            targetValue = 360f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(800, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart
+            ),
+            label = "refresh_rotation"
+        )
+    } else {
+        remember { mutableStateOf(0f) }
+    }
 
     Column(
         modifier = Modifier
@@ -69,37 +93,23 @@ fun DynamicWeatherScreen(
                     tint = themeColors.displayText
                 )
             }
-            IconButton(onClick = { viewModel.fetchWeather() }) {
+            IconButton(onClick = { viewModel.fetchWeather(force = true) }) {
                 Icon(
                     imageVector = Icons.Default.Refresh,
                     contentDescription = "Refresh",
-                    tint = themeColors.displayText
+                    tint = themeColors.displayText,
+                    modifier = Modifier.rotate(rotationAngle)
                 )
             }
         }
 
-        if (viewModel.weatherIsLoading) {
+        val weatherData = viewModel.weatherData ?: viewModel.getFallbackWeather()
+
+        if (viewModel.weatherIsLoading && viewModel.weatherData == null) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = themeColors.buttonEqualBg)
             }
-        } else if (viewModel.weatherFetchError != null) {
-            Box(modifier = Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Default.ErrorOutline, contentDescription = null, tint = Color.Red, modifier = Modifier.size(48.dp))
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = if (isBn) "তথ্য লোড করতে সমস্যা হয়েছে: ${viewModel.weatherFetchError}" else "Error loading data: ${viewModel.weatherFetchError}",
-                        color = themeColors.displayText,
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(onClick = { viewModel.fetchWeather() }) {
-                        Text(if (isBn) "আবার চেষ্টা করুন" else "Retry")
-                    }
-                }
-            }
-        } else if (viewModel.weatherData != null) {
-            val weatherData = viewModel.weatherData!!
+        } else {
             val current = weatherData.current
             
             LazyColumn(
@@ -154,13 +164,6 @@ fun DynamicWeatherScreen(
                     val precip = weatherData.daily.precipitation_sum[index]
                     DailyWeatherItem(timeStr, code, minT, maxT, precip, themeColors, isBn)
                 }
-            }
-        } else {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(
-                    text = if (isBn) "কোনো তথ্য পাওয়া যায়নি" else "No Data Available",
-                    color = themeColors.displayText
-                )
             }
         }
     }

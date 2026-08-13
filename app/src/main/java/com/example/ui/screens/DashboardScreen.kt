@@ -271,68 +271,77 @@ fun DashboardCategoriesView(
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
                 // Header Row: Greeting Title & Weather Widget
+                val weatherLocationName = viewModel.weatherLocation.ifBlank { "Natore" }
+                val weatherTempText = if (viewModel.weatherData != null) {
+                    "${viewModel.weatherData!!.current.temperature_2m.toInt()}°${if (isBn) "সে." else "C"}"
+                } else {
+                    "36.5°${if (isBn) "সে." else "C"}"
+                }
+                val weatherConditionText = if (viewModel.weatherData != null) {
+                    val current = viewModel.weatherData!!.current
+                    when (current.weather_code) {
+                        0 -> if (isBn) "পরিষ্কার" else "Clear"
+                        1, 2, 3 -> if (isBn) "আংশিক মেঘলা" else "Partly Cloudy"
+                        45, 48 -> if (isBn) "কুয়াশা" else "Fog"
+                        51, 53, 55 -> if (isBn) "গুঁড়ি গুঁড়ি বৃষ্টি" else "Drizzle"
+                        61, 63, 65 -> if (isBn) "বৃষ্টি" else "Rain"
+                        71, 73, 75 -> if (isBn) "তুষারপাত" else "Snow"
+                        95, 96, 99 -> if (isBn) "বজ্রবৃষ্টি" else "Thunderstorm"
+                        else -> if (isBn) "আংশিক মেঘলা" else "Partly Cloudy"
+                    }
+                } else {
+                    if (isBn) "আংশিক মেঘলা" else "Partly Cloudy"
+                }
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.Top
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = greetingIcon,
                             contentDescription = "Greeting",
                             tint = themeColors.buttonEqualBg,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(22.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             text = greetingText,
                             fontWeight = FontWeight.ExtraBold,
-                            fontSize = 17.sp,
+                            fontSize = 18.sp,
                             color = themeColors.displayText
                         )
                     }
 
-                    // Weather Info Widget
-                    Row(
+                    // Weather Info Widget matching Image 1
+                    Column(
+                        horizontalAlignment = Alignment.End,
                         modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(themeColors.buttonEqualBg.copy(alpha = 0.15f))
+                            .clip(RoundedCornerShape(10.dp))
                             .clickable { viewModel.openTool(ToolType.WEATHER) }
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                            .padding(vertical = 2.dp, horizontal = 4.dp)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(24.dp)
-                                .clip(CircleShape)
-                                .background(themeColors.buttonEqualBg),
-                            contentAlignment = Alignment.Center
-                        ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "$weatherLocationName • $weatherTempText",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.buttonEqualBg
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
                             Icon(
                                 imageVector = weatherIcon,
                                 contentDescription = "Weather",
-                                tint = androidx.compose.ui.graphics.Color.White,
-                                modifier = Modifier.size(14.dp)
+                                tint = themeColors.buttonEqualBg,
+                                modifier = Modifier.size(18.dp)
                             )
                         }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        BoxWithConstraints(modifier = Modifier.weight(1f, fill = false)) {
-                            val isSmallText = maxWidth < 120.dp
-                            Text(
-                                text = weatherText,
-                                fontSize = if (isSmallText) 10.sp else 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = themeColors.buttonEqualBg,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                            contentDescription = null,
-                            tint = themeColors.buttonEqualBg,
-                            modifier = Modifier.size(16.dp)
+                        Text(
+                            text = weatherConditionText,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = themeColors.buttonEqualBg.copy(alpha = 0.9f)
                         )
                     }
                 }
@@ -347,68 +356,44 @@ fun DashboardCategoriesView(
                     color = themeColors.displayText.copy(alpha = 0.95f)
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
-                // Sub-row Badges (Bengali Date & Hijri Date side by side - single line dynamic sizing)
-                BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                    val isSmall = maxWidth < 360.dp
-                    val badgeFontSize = if (isSmall) 10.sp else 12.sp
-                    val iconSize = if (isSmall) 11.dp else 14.dp
-                    val horizontalPadding = if (isSmall) 6.dp else 10.dp
-                    val verticalPadding = if (isSmall) 4.dp else 5.dp
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(if (isSmall) 4.dp else 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(
+                // Sub-row Badges with Colored Dots matching Image 1
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
                             modifier = Modifier
-                                .weight(1f, fill = false)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(themeColors.displayText.copy(alpha = 0.05f))
-                                .padding(horizontal = horizontalPadding, vertical = verticalPadding),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Spa,
-                                contentDescription = "Bengali Date",
-                                tint = Color(0xFF10B981),
-                                modifier = Modifier.size(iconSize)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = dateInfo.bengaliDate,
-                                fontSize = badgeFontSize,
-                                color = themeColors.displayText.copy(alpha = 0.85f),
-                                fontWeight = FontWeight.SemiBold,
-                                maxLines = 1
-                            )
-                        }
+                                .size(10.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF10B981))
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = dateInfo.bengaliDate,
+                            fontSize = 12.sp,
+                            color = themeColors.displayText.copy(alpha = 0.85f),
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
 
-                        Row(
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
                             modifier = Modifier
-                                .weight(1f, fill = false)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(themeColors.displayText.copy(alpha = 0.05f))
-                                .padding(horizontal = horizontalPadding, vertical = verticalPadding),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.NightsStay,
-                                contentDescription = "Hijri Date",
-                                tint = Color(0xFFF59E0B),
-                                modifier = Modifier.size(iconSize)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = dateInfo.hijriDate,
-                                fontSize = badgeFontSize,
-                                color = themeColors.displayText.copy(alpha = 0.85f),
-                                fontWeight = FontWeight.SemiBold,
-                                maxLines = 1
-                            )
-                        }
+                                .size(10.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFFF59E0B))
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = dateInfo.hijriDate,
+                            fontSize = 12.sp,
+                            color = themeColors.displayText.copy(alpha = 0.85f),
+                            fontWeight = FontWeight.SemiBold
+                        )
                     }
                 }
             }

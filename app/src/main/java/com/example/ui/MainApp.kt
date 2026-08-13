@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.foundation.pager.PagerState
@@ -161,14 +162,6 @@ fun MainContent(
         }
     }
     val coroutineScope = rememberCoroutineScope()
-    val pagerState = rememberPagerState(initialPage = 0) { 5 }
-    
-    // Minimalistic syncing logic: Only update if necessary to avoid cycles
-    LaunchedEffect(viewModel.activeTab) {
-        if (pagerState.currentPage != viewModel.activeTab) {
-            pagerState.animateScrollToPage(viewModel.activeTab)
-        }
-    }
 
     var showSettingsDialog by remember { mutableStateOf(false) }
     var showTermsDialog by remember { mutableStateOf(false) }
@@ -239,50 +232,29 @@ fun MainContent(
         }
     }
 
-    // Guard variable to ensure launch initialization forces Dashboard (Tab 0) first
-    var isAppInitialized by remember { mutableStateOf(false) }
-
-    // Default page setup on app launch - sync pagerState with viewModel.activeTab
+    // Ensure initial launch strictly defaults to Index 0 (Dashboard)
     LaunchedEffect(Unit) {
-        // Ensure we start from the expected tab
-        if (pagerState.currentPage != viewModel.activeTab) {
-            pagerState.scrollToPage(viewModel.activeTab)
-        }
-        
-        // Use a longer delay to ensure all layout and restoration events are finished
-        delay(600) 
-        isAppInitialized = true
-        
+        viewModel.changeActiveTab(0, "App Startup -> Dashboard", "অ্যাপ স্টার্টআপ -> ড্যাশবোর্ড")
         delay(400) // Let UI settle before update check
         performUpdateCheck(false)
     }
 
-    // Sync from pager state to ViewModel when pager changes page
-    LaunchedEffect(pagerState.currentPage, pagerState.isScrollInProgress) {
-        if (isAppInitialized) {
-            // Only update activeTab and reason if the change is from user interaction or a deliberate navigation
-            if (viewModel.activeTab < 4 && pagerState.currentPage != viewModel.activeTab) {
-                viewModel.activeTab = pagerState.currentPage
-                
-                // Only set the "Swiped" reason if the scroll was actually in progress (user swipe)
-                if (pagerState.currentPage == 2 && pagerState.isScrollInProgress) {
-                    viewModel.setCalculatorNavigationReason(
-                        "Swiped to Calculator screen",
-                        "সুইপ করে ক্যালকুলেটর স্ক্রিনে আসা হয়েছে"
-                    )
-                }
+    // Pager state for smooth horizontal tab swiping
+    val pagerState = rememberPagerState(initialPage = viewModel.activeTab) { 5 }
+
+    // Sync pagerState -> viewModel.activeTab when user swipes
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.settledPage }.collect { page ->
+            if (viewModel.activeTab != page) {
+                viewModel.activeTab = page
             }
         }
     }
 
-    // Sync from ViewModel to pager state
+    // Sync viewModel.activeTab -> pagerState when tab is changed via bottom nav or buttons
     LaunchedEffect(viewModel.activeTab) {
-        if (viewModel.activeTab < 4 && pagerState.currentPage != viewModel.activeTab) {
-            if (!isAppInitialized) {
-                pagerState.scrollToPage(viewModel.activeTab)
-            } else {
-                pagerState.animateScrollToPage(viewModel.activeTab)
-            }
+        if (pagerState.settledPage != viewModel.activeTab && !pagerState.isScrollInProgress) {
+            pagerState.animateScrollToPage(viewModel.activeTab)
         }
     }
 
@@ -585,10 +557,7 @@ fun MainContent(
                                         interactionSource = tabInteraction,
                                         indication = ripple(bounded = true, color = Color.White),
                                         onClick = {
-                                            coroutineScope.launch {
-                                                pagerState.animateScrollToPage(index)
-                                            }
-                                            viewModel.activeTab = index
+                                            viewModel.changeActiveTab(index, "Bottom Nav Tab $index", "বটম নেভিগেশন বার ট্যাব $index")
                                         },
                                         onLongClick = {
                                             if (isStartButton) {
@@ -633,10 +602,7 @@ fun MainContent(
                                         interactionSource = tabInteraction,
                                         indication = ripple(bounded = true, color = Color.White),
                                         onClick = {
-                                            coroutineScope.launch {
-                                                pagerState.animateScrollToPage(index)
-                                            }
-                                            viewModel.activeTab = index
+                                            viewModel.changeActiveTab(index, "Bottom Nav Tab $index", "বটম নেভিগেশন বার ট্যাব $index")
                                         }
                                     ),
                                 contentAlignment = Alignment.Center
@@ -809,8 +775,7 @@ fun MainContent(
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.fillMaxSize(),
-                beyondViewportPageCount = 3,
-                userScrollEnabled = !viewModel.isDisplayInteractionActive
+                userScrollEnabled = true
             ) { page ->
                 Box(modifier = Modifier.fillMaxSize()) {
                     when (page) {
@@ -842,7 +807,7 @@ fun MainContent(
                         initialValue = 0f,
                         targetValue = 360f,
                         animationSpec = infiniteRepeatable(
-                            animation = tween(800, easing = LinearEasing),
+                            animation = tween(1000, easing = LinearEasing),
                             repeatMode = RepeatMode.Restart
                         ),
                         label = "aiRotationAngle"
