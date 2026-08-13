@@ -69,13 +69,13 @@ fun DynamicWeatherScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 16.dp),
+                .padding(bottom = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = viewModel.weatherLocation.ifBlank { "Dhaka" },
+                    text = viewModel.weatherLocation.ifBlank { "Natore" },
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = themeColors.displayText
@@ -100,6 +100,90 @@ fun DynamicWeatherScreen(
                     tint = themeColors.displayText,
                     modifier = Modifier.rotate(rotationAngle)
                 )
+            }
+        }
+
+        // Saved Locations Selector Row
+        LazyRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            items(items = viewModel.availableWeatherCities) { city ->
+                val isSelected = city.name.equals(viewModel.weatherLocation, ignoreCase = true)
+                FilterChip(
+                    selected = isSelected,
+                    onClick = { viewModel.selectWeatherCity(city) },
+                    label = {
+                        Text(
+                            text = city.name,
+                            fontSize = 12.sp,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                        )
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = if (isSelected) Icons.Default.LocationOn else Icons.Default.Place,
+                            contentDescription = null,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = themeColors.buttonEqualBg,
+                        selectedLabelColor = Color.White,
+                        selectedLeadingIconColor = Color.White,
+                        containerColor = themeColors.displayBackground,
+                        labelColor = themeColors.displayText,
+                        iconColor = themeColors.displayText.copy(alpha = 0.7f)
+                    ),
+                    shape = RoundedCornerShape(16.dp)
+                )
+            }
+        }
+
+        // Weather Fetch Error / Status Notice
+        viewModel.weatherFetchError?.let { err ->
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(0xFFFEF3C7)
+                )
+            ) {
+                Row(
+                    modifier = Modifier.padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Warning,
+                        contentDescription = "Weather Status Notice",
+                        tint = Color(0xFFD97706),
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = if (isBn) "আবহাওয়া স্ট্যাটাস / কারণ:" else "Weather Status Cause:",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp,
+                            color = Color(0xFF92400E)
+                        )
+                        Text(
+                            text = err,
+                            fontSize = 12.sp,
+                            color = Color(0xFF78350F)
+                        )
+                        Text(
+                            text = if (isBn) "💡 ক্যানভাসে বর্তমানে অফলাইন/সংরক্ষিত ব্যাকআপ আবহাওয়া দেখাচ্ছে।" else "💡 Currently displaying offline cached weather data.",
+                            fontSize = 11.sp,
+                            color = Color(0xFF92400E).copy(alpha = 0.8f)
+                        )
+                    }
+                }
             }
         }
 

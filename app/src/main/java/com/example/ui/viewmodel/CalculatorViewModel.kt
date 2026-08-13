@@ -2,6 +2,7 @@ package com.example.ui.viewmodel
 
 import android.content.Context
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
@@ -644,9 +645,9 @@ How can I help you today?"""
             normalized.contains("hello") || normalized.contains(" hi ") || normalized.startsWith("hi") || normalized.contains("hey") ||
             normalized.contains("হ্যালো") || normalized.contains("হাই") || normalized.contains("সালাম") || normalized.contains("salam") || normalized.contains("আসসালামু আলাইকুম") -> {
                 replyText = if (isBn) {
-                    "আসসালামু আলাইকুম ও হ্যালো! 👋 আমি আপনার টুলমেট অফলাইন এআই সহকারী। আমি কিভাবে আপনাকে সাহায্য করতে পারি?"
+                    "আসসালামু আলাইকুম ও হ্যালো! 👋 আমি আপনার টুলসমেট অফলাইন এআই সহকারী। আমি কিভাবে আপনাকে সাহায্য করতে পারি?"
                 } else {
-                    "Hello there! 👋 I am your ToolMate Offline AI Assistant. How can I help you today?"
+                    "Hello there! 👋 I am your ToolsMate Offline AI Assistant. How can I help you today?"
                 }
             }
 
@@ -662,9 +663,9 @@ How can I help you today?"""
             // Name
             normalized.contains("your name") || normalized.contains("তোমার নাম কি") || normalized.contains("আপনার নাম কি") || normalized.contains("নাম কি") || normalized.contains("name") -> {
                 replyText = if (isBn) {
-                    "আমার নাম **টুলমেট এআই (ToolMate AI)**! 🤖 আমি এই টুলমেট অ্যাপেরই একটি অংশ।"
+                    "আমার নাম **টুলসমেট এআই (ToolsMate AI)**! 🤖 আমি এই টুলসমেট অ্যাপেরই একটি অংশ।"
                 } else {
-                    "My name is **ToolMate AI**! 🤖 I am a built-in part of this ToolMate app."
+                    "My name is **ToolsMate AI**! 🤖 I am a built-in part of this ToolsMate app."
                 }
             }
 
@@ -1519,6 +1520,22 @@ How can I help you today?"""
         geocodingResults = emptyList()
     }
 
+    data class WeatherCity(val name: String, val lat: Double, val lng: Double)
+
+    val availableWeatherCities = mutableStateListOf(
+        WeatherCity("Natore", 24.4102, 88.9834),
+        WeatherCity("Dhaka", 23.8103, 90.4125),
+        WeatherCity("Chittagong", 22.3569, 91.7832),
+        WeatherCity("Sylhet", 24.8949, 91.8687),
+        WeatherCity("Rajshahi", 24.3745, 88.6042),
+        WeatherCity("Khulna", 22.8456, 89.5403),
+        WeatherCity("Barisal", 22.7010, 90.3535)
+    )
+
+    fun selectWeatherCity(city: WeatherCity) {
+        updateWeatherLocation(city.name, city.lat, city.lng)
+    }
+
     fun updateWeatherLocation(location: String, lat: Double? = null, lng: Double? = null) {
         val trimmed = location.trim()
         weatherLocation = trimmed
@@ -1527,9 +1544,12 @@ How can I help you today?"""
             weatherLocationLat = lat
             weatherLocationLng = lng
             editor.putFloat("weather_lat", lat.toFloat()).putFloat("weather_lng", lng.toFloat())
+            if (availableWeatherCities.none { it.name.equals(trimmed, ignoreCase = true) }) {
+                availableWeatherCities.add(WeatherCity(trimmed, lat, lng))
+            }
         }
         editor.apply()
-        fetchWeather()
+        fetchWeather(force = true)
     }
 
     private fun loadFavorites(key: String): Set<String> {

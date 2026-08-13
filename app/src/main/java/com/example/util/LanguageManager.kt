@@ -20,28 +20,27 @@ object LanguageManager {
     fun getString(key: String, language: AppLanguage): String {
         val isBn = language == AppLanguage.BENGALI
         return when (key) {
-            "title_calculator" -> if (isBn) "ক্যালকুলেটর" else "Calculator"
-            "title_converter" -> if (isBn) "ইউনিট কনভার্টার" else "Unit Converter"
-            "title_history" -> if (isBn) "ইতিহাস" else "History"
+            "title_calculator" -> if (isBn) "ক্ালকুলেটর" else "Calculator"
+            "title_converter" -> if (isBn) "কনভার্টর" else "Converter"
             "app_title_dashboard" -> when (language) {
-                AppLanguage.ENGLISH -> "ToolMate Dashboard"
-                AppLanguage.BENGALI -> "টুলমেট ড্যাশবোর্ড"
+                AppLanguage.ENGLISH -> "ToolsMate Dashboard"
+                AppLanguage.BENGALI -> "টুলসমেট ড্যাশবোর্ড"
                 AppLanguage.HINDI -> "टूलमेट डैशबोर्ड"
-                AppLanguage.ARABIC -> "لوحة تحكم ToolMate"
-                AppLanguage.FRENCH -> "Tableau de bord ToolMate"
-                AppLanguage.SPANISH -> "Panel de ToolMate"
-                AppLanguage.GERMAN -> "ToolMate Dashboard"
-                AppLanguage.CHINESE -> "ToolMate 仪表板"
+                AppLanguage.ARABIC -> "لوحة تحكم ToolsMate"
+                AppLanguage.FRENCH -> "Tableau de bord ToolsMate"
+                AppLanguage.SPANISH -> "Panel de ToolsMate"
+                AppLanguage.GERMAN -> "ToolsMate Dashboard"
+                AppLanguage.CHINESE -> "ToolsMate 仪表板"
             }
             "app_title_main" -> when (language) {
-                AppLanguage.ENGLISH -> "ToolMate"
-                AppLanguage.BENGALI -> "টুলমেট"
+                AppLanguage.ENGLISH -> "ToolsMate"
+                AppLanguage.BENGALI -> "টুলসমেট"
                 AppLanguage.HINDI -> "टूलमेट"
                 AppLanguage.ARABIC -> "تول ميت"
-                AppLanguage.FRENCH -> "ToolMate"
-                AppLanguage.SPANISH -> "ToolMate"
-                AppLanguage.GERMAN -> "ToolMate"
-                AppLanguage.CHINESE -> "ToolMate"
+                AppLanguage.FRENCH -> "ToolsMate"
+                AppLanguage.SPANISH -> "ToolsMate"
+                AppLanguage.GERMAN -> "ToolsMate"
+                AppLanguage.CHINESE -> "ToolsMate"
             }
             "app_title_calc" -> when (language) {
                 AppLanguage.ENGLISH -> "Smart Calculator"

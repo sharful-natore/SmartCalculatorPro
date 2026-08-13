@@ -22,6 +22,6 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "ToolMate"
+rootProject.name = "ToolsMate"
 
 include(":app")

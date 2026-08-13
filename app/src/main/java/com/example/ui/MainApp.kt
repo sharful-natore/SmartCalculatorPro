@@ -239,13 +239,13 @@ fun MainContent(
         performUpdateCheck(false)
     }
 
-    // Pager state for smooth horizontal tab swiping
-    val pagerState = rememberPagerState(initialPage = viewModel.activeTab) { 5 }
+    // Pager state for smooth horizontal tab swiping (excluding Theme page at index 4)
+    val pagerState = rememberPagerState(initialPage = if (viewModel.activeTab in 0..3) viewModel.activeTab else 0) { 4 }
 
     // Sync pagerState -> viewModel.activeTab when user swipes
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.settledPage }.collect { page ->
-            if (viewModel.activeTab != page) {
+            if (viewModel.activeTab != page && viewModel.activeTab in 0..3) {
                 viewModel.activeTab = page
             }
         }
@@ -253,7 +253,7 @@ fun MainContent(
 
     // Sync viewModel.activeTab -> pagerState when tab is changed via bottom nav or buttons
     LaunchedEffect(viewModel.activeTab) {
-        if (pagerState.settledPage != viewModel.activeTab && !pagerState.isScrollInProgress) {
+        if (viewModel.activeTab in 0..3 && pagerState.currentPage != viewModel.activeTab) {
             pagerState.animateScrollToPage(viewModel.activeTab)
         }
     }
@@ -772,18 +772,21 @@ fun MainContent(
                 .padding(innerPadding)
                 .consumeWindowInsets(innerPadding)
         ) {
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.fillMaxSize(),
-                userScrollEnabled = true
-            ) { page ->
-                Box(modifier = Modifier.fillMaxSize()) {
-                    when (page) {
-                        0 -> DashboardScreen(viewModel, themeColors)
-                        1 -> SmartConverterScreen(viewModel, themeColors)
-                        2 -> CalculatorScreen(viewModel, themeColors)
-                        3 -> HistoryLogsScreen(viewModel, themeColors)
-                        4 -> VisualThemesScreen(viewModel, themeColors)
+            if (viewModel.activeTab == 4) {
+                VisualThemesScreen(viewModel, themeColors)
+            } else {
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.fillMaxSize(),
+                    userScrollEnabled = true
+                ) { page ->
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        when (page) {
+                            0 -> DashboardScreen(viewModel, themeColors)
+                            1 -> SmartConverterScreen(viewModel, themeColors)
+                            2 -> CalculatorScreen(viewModel, themeColors)
+                            3 -> HistoryLogsScreen(viewModel, themeColors)
+                        }
                     }
                 }
             }
@@ -1287,7 +1290,7 @@ fun MainContent(
                 try {
                     context.getString(com.example.R.string.app_name)
                 } catch (e: Exception) {
-                    "ToolMate"
+                    "ToolsMate"
                 }
             }
 
@@ -1389,7 +1392,7 @@ fun MainContent(
                                         .fillMaxWidth()
                                         .clip(RoundedCornerShape(8.dp))
                                         .clickable {
-                                            launchEmailSafely(context, "Connect.shariful@gmail.com", "ToolMate - Connection")
+                                            launchEmailSafely(context, "Connect.shariful@gmail.com", "ToolsMate - Connection")
                                         }
                                         .padding(vertical = 6.dp, horizontal = 4.dp),
                                     verticalAlignment = Alignment.CenterVertically
@@ -1588,7 +1591,7 @@ fun MainContent(
                                 launchEmailSafely(
                                     context = context,
                                     email = "Connect.shariful@gmail.com",
-                                    subject = "ToolMate - Report/Feedback",
+                                    subject = "ToolsMate - Report/Feedback",
                                     body = msg
                                 )
                                 showFeedbackDialog = false

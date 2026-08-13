@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">ToolMate</string>
+    <string name="app_name">ToolsMate</string>
     <string name="shortcut_dashboard">Dashboard</string>
     <string name="shortcut_calculator">Calculator</string>
     <string name="shortcut_history">History</string>

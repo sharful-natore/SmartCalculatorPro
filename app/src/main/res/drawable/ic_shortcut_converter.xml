@@ -1,14 +1,9 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
-    android:viewportWidth="24"
-    android:viewportHeight="24">
-    <!-- Teal Circle Background matching App Theme -->
-    <path
-        android:fillColor="#00ACC1"
-        android:pathData="M12,1.5 A10.5,10.5 0 1,1 11.9,1.5 Z"/>
-    <!-- Converter Icon in White -->
+    android:viewportWidth="960"
+    android:viewportHeight="960">
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M9.0,16.8 L6.0,13.8 L9.0,10.8 L9.84,11.66 L8.3,13.2 L12.6,13.2 L12.6,14.4 L8.3,14.4 L9.84,15.95 L9.0,16.8 Z M15.0,13.2 L14.16,12.35 L15.7,10.8 L11.4,10.8 L11.4,9.6 L15.7,9.6 L14.16,8.06 L15.0,7.2 L18.0,10.2 L15.0,13.2 Z"/>
+        android:pathData="M280,800L80,600L280,400L336,457L233,560L520,560L520,640L233,640L336,743L280,800ZM680,560L624,503L727,400L440,400L440,320L727,320L624,217L680,160L880,360L680,560Z"/>
 </vector>
