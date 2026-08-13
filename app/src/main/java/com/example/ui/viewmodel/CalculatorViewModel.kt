@@ -156,9 +156,9 @@ class CalculatorViewModel(
     var activeTab by mutableStateOf(0)
     var isEvaluated by mutableStateOf(false)
 
-    var calculatorNavigationReasonEn by mutableStateOf("User tapped Calculator tab")
+    var calculatorNavigationReasonEn by mutableStateOf("Internal Startup / Default")
         private set
-    var calculatorNavigationReasonBn by mutableStateOf("ইউজার ক্যালকুলেটর ট্যাব ট্যাপ করেছেন")
+    var calculatorNavigationReasonBn by mutableStateOf("ইন্টারনাল স্টার্টআপ / ডিফল্ট")
         private set
 
     fun setCalculatorNavigationReason(en: String, bn: String) {
@@ -166,7 +166,7 @@ class CalculatorViewModel(
         calculatorNavigationReasonBn = bn
     }
 
-    fun changeActiveTab(tab: Int, reasonEn: String = "User tapped Calculator tab", reasonBn: String = "ইউজার ক্যালকুলেটর ট্যাব ট্যাপ করেছেন") {
+    fun changeActiveTab(tab: Int, reasonEn: String = "Internal Startup / Default", reasonBn: String = "ইন্টারনাল স্টার্টআপ / ডিফল্ট") {
         activeTab = tab
         setCalculatorNavigationReason(reasonEn, reasonBn)
     }
