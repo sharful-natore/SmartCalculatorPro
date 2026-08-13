@@ -171,6 +171,7 @@ fun MainContent(
     var showStartButtonCustomizer by remember { mutableStateOf(false) }
     var showAiFabCustomizer by remember { mutableStateOf(false) }
     var showCenterSearchFabCustomizer by remember { mutableStateOf(false) }
+    var showVisualThemesDialog by remember { mutableStateOf(false) }
 
     // --- App Update State ---
     var showUpdateDialog by remember { mutableStateOf(false) }
@@ -242,8 +243,8 @@ fun MainContent(
     // Pager state for smooth horizontal tab swiping (excluding Theme page at index 4)
     val pagerState = rememberPagerState(initialPage = if (viewModel.activeTab in 0..3) viewModel.activeTab else 0) { 4 }
 
-    // Sync pagerState -> viewModel.activeTab when user swipes
-    LaunchedEffect(pagerState.currentPage, pagerState.isScrollInProgress) {
+    // Sync pagerState.currentPage -> viewModel.activeTab when user swipes
+    LaunchedEffect(pagerState.currentPage) {
         if (!pagerState.isScrollInProgress && viewModel.activeTab != pagerState.currentPage && pagerState.currentPage in 0..3) {
             viewModel.activeTab = pagerState.currentPage
         }
@@ -350,16 +351,6 @@ fun MainContent(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (viewModel.activeTab == 4) {
-                            IconButton(onClick = { viewModel.activeTab = 0 }) {
-                                Icon(
-                                    imageVector = Icons.Default.ArrowBack,
-                                    contentDescription = "Back",
-                                    tint = Color.White
-                                )
-                            }
-                        }
-                        
                         AnimatedContent(
                             targetState = Pair(viewModel.activeTab, viewModel.selectedToolType),
                             transitionSpec = {
@@ -410,7 +401,7 @@ fun MainContent(
                             )
                         }
 
-                        IconButton(onClick = { viewModel.activeTab = 4 }) {
+                        IconButton(onClick = { showVisualThemesDialog = true }) {
                             Icon(
                                 imageVector = Icons.Default.Palette,
                                 contentDescription = "Themes",
@@ -773,40 +764,28 @@ fun MainContent(
                 .padding(innerPadding)
                 .consumeWindowInsets(innerPadding)
         ) {
-            AnimatedContent(
-                targetState = viewModel.activeTab == 4,
-                transitionSpec = {
-                    fadeIn(animationSpec = tween(280)) togetherWith fadeOut(animationSpec = tween(220))
-                },
-                label = "ThemeScreenTransition"
-            ) { isThemeTab ->
-                if (isThemeTab) {
-                    VisualThemesScreen(viewModel, themeColors)
-                } else {
-                    HorizontalPager(
-                        state = pagerState,
-                        modifier = Modifier.fillMaxSize(),
-                        userScrollEnabled = true
-                    ) { page ->
-                        val pageOffset = (pagerState.currentPage - page) + pagerState.currentPageOffsetFraction
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .graphicsLayer {
-                                    val alphaFactor = 1f - (kotlin.math.abs(pageOffset) * 0.35f).coerceIn(0f, 0.7f)
-                                    alpha = alphaFactor
-                                    val scaleFactor = 1f - (kotlin.math.abs(pageOffset) * 0.04f).coerceIn(0f, 0.08f)
-                                    scaleX = scaleFactor
-                                    scaleY = scaleFactor
-                                }
-                        ) {
-                            when (page) {
-                                0 -> DashboardScreen(viewModel, themeColors)
-                                1 -> SmartConverterScreen(viewModel, themeColors)
-                                2 -> CalculatorScreen(viewModel, themeColors)
-                                3 -> HistoryLogsScreen(viewModel, themeColors)
-                            }
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize(),
+                userScrollEnabled = true
+            ) { page ->
+                val pageOffset = (pagerState.currentPage - page) + pagerState.currentPageOffsetFraction
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer {
+                            val alphaFactor = 1f - (kotlin.math.abs(pageOffset) * 0.35f).coerceIn(0f, 0.7f)
+                            alpha = alphaFactor
+                            val scaleFactor = 1f - (kotlin.math.abs(pageOffset) * 0.04f).coerceIn(0f, 0.08f)
+                            scaleX = scaleFactor
+                            scaleY = scaleFactor
                         }
+                ) {
+                    when (page) {
+                        0 -> DashboardScreen(viewModel, themeColors)
+                        1 -> SmartConverterScreen(viewModel, themeColors)
+                        2 -> CalculatorScreen(viewModel, themeColors)
+                        3 -> HistoryLogsScreen(viewModel, themeColors)
                     }
                 }
             }
@@ -924,6 +903,42 @@ fun MainContent(
                                 color = if (themeColors.isDark) Color.White else Color(0xFF1E293B)
                             )
                         }
+                    }
+                }
+            }
+        }
+
+        // --- Visual Themes Dialog ---
+        if (showVisualThemesDialog) {
+            Dialog(
+                onDismissRequest = { showVisualThemesDialog = false },
+                properties = DialogProperties(usePlatformDefaultWidth = false)
+            ) {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = themeColors.background
+                ) {
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(themeColors.buttonEqualBg)
+                                .statusBarsPadding()
+                                .padding(horizontal = 12.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            IconButton(onClick = { showVisualThemesDialog = false }) {
+                                Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "ভিজ্যুয়াল থিমস" else "Visual Themes",
+                                color = Color.White,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        VisualThemesScreen(viewModel = viewModel, themeColors = themeColors)
                     }
                 }
             }

@@ -445,16 +445,16 @@ fun ConverterCardItem(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(38.dp)
+                            .size(42.dp)
                             .clip(CircleShape)
-                            .background(themeColors.buttonEqualBg.copy(alpha = 0.12f)),
+                            .background(themeColors.buttonEqualBg),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = converterType.icon,
                             contentDescription = converterType.getTitle(viewModel.selectedLanguage),
-                            tint = themeColors.buttonEqualBg,
-                            modifier = Modifier.size(20.dp)
+                            tint = Color.White,
+                            modifier = Modifier.size(22.dp)
                         )
                     }
                     IconButton(
