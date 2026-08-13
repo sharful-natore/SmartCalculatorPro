@@ -161,7 +161,14 @@ fun MainContent(
         }
     }
     val coroutineScope = rememberCoroutineScope()
-    val pagerState = rememberPagerState(initialPage = viewModel.activeTab) { 4 }
+    val pagerState = rememberPagerState(initialPage = 0) { 5 }
+    
+    // Minimalistic syncing logic: Only update if necessary to avoid cycles
+    LaunchedEffect(viewModel.activeTab) {
+        if (pagerState.currentPage != viewModel.activeTab) {
+            pagerState.animateScrollToPage(viewModel.activeTab)
+        }
+    }
 
     var showSettingsDialog by remember { mutableStateOf(false) }
     var showTermsDialog by remember { mutableStateOf(false) }
@@ -799,24 +806,19 @@ fun MainContent(
                 .padding(innerPadding)
                 .consumeWindowInsets(innerPadding)
         ) {
-            if (viewModel.activeTab == 4) {
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize(),
+                beyondViewportPageCount = 3,
+                userScrollEnabled = !viewModel.isDisplayInteractionActive
+            ) { page ->
                 Box(modifier = Modifier.fillMaxSize()) {
-                    VisualThemesScreen(viewModel, themeColors)
-                }
-            } else {
-                HorizontalPager(
-                    state = pagerState,
-                    modifier = Modifier.fillMaxSize(),
-                    beyondViewportPageCount = 3,
-                    userScrollEnabled = !viewModel.isDisplayInteractionActive
-                ) { page ->
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        when (page) {
-                            0 -> DashboardScreen(viewModel, themeColors)
-                            1 -> SmartConverterScreen(viewModel, themeColors)
-                            2 -> CalculatorScreen(viewModel, themeColors)
-                            3 -> HistoryLogsScreen(viewModel, themeColors)
-                        }
+                    when (page) {
+                        0 -> DashboardScreen(viewModel, themeColors)
+                        1 -> SmartConverterScreen(viewModel, themeColors)
+                        2 -> CalculatorScreen(viewModel, themeColors)
+                        3 -> HistoryLogsScreen(viewModel, themeColors)
+                        4 -> VisualThemesScreen(viewModel, themeColors)
                     }
                 }
             }

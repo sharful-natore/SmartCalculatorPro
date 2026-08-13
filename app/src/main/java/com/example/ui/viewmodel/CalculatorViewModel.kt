@@ -156,9 +156,9 @@ class CalculatorViewModel(
     var activeTab by mutableStateOf(0)
     var isEvaluated by mutableStateOf(false)
 
-    var calculatorNavigationReasonEn by mutableStateOf("Internal Startup / Default")
+    var calculatorNavigationReasonEn by mutableStateOf("User opened Dashboard")
         private set
-    var calculatorNavigationReasonBn by mutableStateOf("ইন্টারনাল স্টার্টআপ / ডিফল্ট")
+    var calculatorNavigationReasonBn by mutableStateOf("ড্যাশবোর্ড খোলা হয়েছে")
         private set
 
     fun setCalculatorNavigationReason(en: String, bn: String) {
@@ -1840,12 +1840,14 @@ How can I help you today?"""
     var percentageResultText by mutableStateOf("")
 
     init {
-        // Fast local calculations
-        calculateConverter()
-        calculateBMI()
-        calculateAge()
-        calculateDiscount()
-        calculatePercentage()
+        // Offload calculations to background to prevent UI hang on startup
+        viewModelScope.launch(Dispatchers.Default) {
+            calculateConverter()
+            calculateBMI()
+            calculateAge()
+            calculateDiscount()
+            calculatePercentage()
+        }
         // Offload heavy IO/Network tasks to IO thread for maximum app opening speed
         viewModelScope.launch(Dispatchers.IO) {
             try {
