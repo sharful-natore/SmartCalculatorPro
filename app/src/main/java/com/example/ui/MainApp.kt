@@ -243,9 +243,9 @@ fun MainContent(
     val pagerState = rememberPagerState(initialPage = if (viewModel.activeTab in 0..3) viewModel.activeTab else 0) { 4 }
 
     // Sync pagerState -> viewModel.activeTab when user swipes
-    LaunchedEffect(pagerState.settledPage) {
-        if (viewModel.activeTab != pagerState.settledPage && pagerState.settledPage in 0..3) {
-            viewModel.activeTab = pagerState.settledPage
+    LaunchedEffect(pagerState.currentPage, pagerState.isScrollInProgress) {
+        if (!pagerState.isScrollInProgress && viewModel.activeTab != pagerState.currentPage && pagerState.currentPage in 0..3) {
+            viewModel.activeTab = pagerState.currentPage
         }
     }
 
