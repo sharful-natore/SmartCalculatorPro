@@ -2724,11 +2724,6 @@ How can I help you today?"""
         mathExpr = mathExpr.filter { it.isDigit() || it in "+-*/.()" }
 
         if (mathExpr.isNotBlank()) {
-            changeActiveTab(
-                1,
-                "Opened from Voice / Speech AI Math Parsing: \"$mathExpr\"",
-                "ভয়েস বা স্পিচ এআই ম্যাথ পার্সিং থেকে খোলা হয়েছে: \"$mathExpr\""
-            )
             expressionValue = TextFieldValue(mathExpr, selection = TextRange(mathExpr.length))
             evaluateExpression()
         }

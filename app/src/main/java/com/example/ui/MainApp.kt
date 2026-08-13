@@ -161,7 +161,14 @@ fun MainContent(
         }
     }
     val coroutineScope = rememberCoroutineScope()
-    val pagerState = rememberPagerState(initialPage = viewModel.activeTab) { 4 }
+    android.util.Log.d("MainApp", "Initial activeTab: ${viewModel.activeTab}")
+    val pagerState = rememberPagerState(initialPage = 0) { 4 }
+
+    LaunchedEffect(viewModel.activeTab) {
+        if (pagerState.currentPage != viewModel.activeTab) {
+            pagerState.scrollToPage(viewModel.activeTab)
+        }
+    }
 
     var showSettingsDialog by remember { mutableStateOf(false) }
     var showTermsDialog by remember { mutableStateOf(false) }

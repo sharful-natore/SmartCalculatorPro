@@ -64,6 +64,7 @@ class MainActivity : ComponentActivity() {
 
     private fun handleShortcutIntent(intent: Intent?) {
         val targetTab = intent?.getStringExtra("target_tab")
+        android.util.Log.d("MainActivity", "targetTab: $targetTab")
         if (targetTab != null) {
             when (targetTab) {
                 "dashboard" -> {
