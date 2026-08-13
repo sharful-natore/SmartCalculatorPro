@@ -57,10 +57,10 @@ android {
     versionName = "1.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    buildConfigField("String", "GEMINI_API_KEY", "\"${findApiKey("GEMINI_API_KEY")}\"")
-    buildConfigField("String", "FIREBASE_API_KEY", "\"${findApiKey("FIREBASE_API_KEY")}\"")
-    buildConfigField("String", "FIREBASE_APP_ID", "\"${findApiKey("FIREBASE_APP_ID")}\"")
-    buildConfigField("String", "FIREBASE_PROJECT_ID", "\"${findApiKey("FIREBASE_PROJECT_ID")}\"")
+    buildConfigField("String", "GEMINI_API_KEY", "\"${findApiKey("GEMINI_API_KEY").replace("\"", "").replace("'", "")}\"")
+    buildConfigField("String", "FIREBASE_API_KEY", "\"${findApiKey("FIREBASE_API_KEY").replace("\"", "").replace("'", "")}\"")
+    buildConfigField("String", "FIREBASE_APP_ID", "\"${findApiKey("FIREBASE_APP_ID").replace("\"", "").replace("'", "")}\"")
+    buildConfigField("String", "FIREBASE_PROJECT_ID", "\"${findApiKey("FIREBASE_PROJECT_ID").replace("\"", "").replace("'", "")}\"")
   }
 
   signingConfigs {
@@ -126,10 +126,10 @@ dependencies {
   implementation(libs.firebase.config)
   implementation(libs.accompanist.permissions)
   implementation(libs.androidx.activity.compose)
-  // implementation(libs.androidx.camera.camera2)
-  // implementation(libs.androidx.camera.core)
-  // implementation(libs.androidx.camera.lifecycle)
-  // implementation(libs.androidx.camera.view)
+  implementation(libs.androidx.camera.camera2)
+  implementation(libs.androidx.camera.core)
+  implementation(libs.androidx.camera.lifecycle)
+  implementation(libs.androidx.camera.view)
   implementation(libs.androidx.compose.material.icons.core)
   implementation(libs.androidx.compose.material.icons.extended)
   implementation(libs.androidx.compose.material3)
