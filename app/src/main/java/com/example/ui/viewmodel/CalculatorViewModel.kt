@@ -168,9 +168,7 @@ class CalculatorViewModel(
 
     fun changeActiveTab(tab: Int, reasonEn: String = "User tapped Calculator tab", reasonBn: String = "ইউজার ক্যালকুলেটর ট্যাব ট্যাপ করেছেন") {
         activeTab = tab
-        if (tab == 2) {
-            setCalculatorNavigationReason(reasonEn, reasonBn)
-        }
+        setCalculatorNavigationReason(reasonEn, reasonBn)
     }
 
     // History deletion confirmation state
@@ -2727,7 +2725,7 @@ How can I help you today?"""
 
         if (mathExpr.isNotBlank()) {
             changeActiveTab(
-                2,
+                1,
                 "Opened from Voice / Speech AI Math Parsing: \"$mathExpr\"",
                 "ভয়েস বা স্পিচ এআই ম্যাথ পার্সিং থেকে খোলা হয়েছে: \"$mathExpr\""
             )

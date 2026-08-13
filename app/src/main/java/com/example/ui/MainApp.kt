@@ -161,7 +161,7 @@ fun MainContent(
         }
     }
     val coroutineScope = rememberCoroutineScope()
-    val pagerState = rememberPagerState(initialPage = 0) { 4 }
+    val pagerState = rememberPagerState(initialPage = viewModel.activeTab) { 4 }
 
     var showSettingsDialog by remember { mutableStateOf(false) }
     var showTermsDialog by remember { mutableStateOf(false) }
@@ -271,7 +271,11 @@ fun MainContent(
     // Sync from ViewModel to pager state
     LaunchedEffect(viewModel.activeTab) {
         if (viewModel.activeTab < 4 && pagerState.currentPage != viewModel.activeTab) {
-            pagerState.animateScrollToPage(viewModel.activeTab)
+            if (!isAppInitialized) {
+                pagerState.scrollToPage(viewModel.activeTab)
+            } else {
+                pagerState.animateScrollToPage(viewModel.activeTab)
+            }
         }
     }
 
@@ -573,7 +577,12 @@ fun MainContent(
                                     .combinedClickable(
                                         interactionSource = tabInteraction,
                                         indication = ripple(bounded = true, color = Color.White),
-                                        onClick = { viewModel.activeTab = index },
+                                        onClick = {
+                                            coroutineScope.launch {
+                                                pagerState.animateScrollToPage(index)
+                                            }
+                                            viewModel.activeTab = index
+                                        },
                                         onLongClick = {
                                             if (isStartButton) {
                                                 showStartButtonCustomizer = true
@@ -617,15 +626,10 @@ fun MainContent(
                                         interactionSource = tabInteraction,
                                         indication = ripple(bounded = true, color = Color.White),
                                         onClick = {
-                                            if (index == 2) {
-                                                viewModel.changeActiveTab(
-                                                    2,
-                                                    "User tapped Calculator tab in Navigation Bar",
-                                                    "ন্যাভবার থেকে ইউজার ক্যালকুলেটর ট্যাব ট্যাপ করেছেন"
-                                                )
-                                            } else {
-                                                viewModel.activeTab = index
+                                            coroutineScope.launch {
+                                                pagerState.animateScrollToPage(index)
                                             }
+                                            viewModel.activeTab = index
                                         }
                                     ),
                                 contentAlignment = Alignment.Center
