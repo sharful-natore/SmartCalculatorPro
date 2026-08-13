@@ -287,152 +287,147 @@ fun DashboardCategoriesView(
             if (isBn) "আংশিক মেঘলা" else "Partly Cloudy"
         }
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            // Left Card: Greeting Title & English Date
-            Card(
-                modifier = Modifier
-                    .weight(1.05f)
-                    .themeCardShadow(themeColors, elevation = 1.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Start
-                    ) {
-                        Icon(
-                            imageVector = greetingIcon,
-                            contentDescription = "Greeting",
-                            tint = themeColors.buttonEqualBg,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = greetingText,
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 15.sp,
-                            color = themeColors.displayText
-                        )
-                    }
-                    Text(
-                        text = "${dateInfo.englishDayName}, ${dateInfo.englishDate}",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = themeColors.displayText.copy(alpha = 0.8f),
-                        lineHeight = 15.sp
-                    )
-                }
-            }
-
-            // Right Card: Weather Info (Clickable)
-            Card(
-                modifier = Modifier
-                    .weight(0.95f)
-                    .themeCardShadow(themeColors, elevation = 1.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { viewModel.openTool(ToolType.WEATHER) }
-                        .padding(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Start
-                    ) {
-                        Text(
-                            text = "$weatherLocationName • $weatherTempText",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = themeColors.buttonEqualBg,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Icon(
-                            imageVector = weatherIcon,
-                            contentDescription = "Weather",
-                            tint = themeColors.buttonEqualBg,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-                    Text(
-                        text = weatherConditionText,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = themeColors.buttonEqualBg.copy(alpha = 0.9f),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-            }
-        }
-
-        // Sub-row Badges with Icons for Bengali (Left) and Hijri Dates (Right)
+        // Unified Greeting, Weather & Calendar Card
         Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 12.dp)
                 .themeCardShadow(themeColors, elevation = 1.dp),
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
-            Row(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 14.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(14.dp)
             ) {
-                // Bengali Date (Left Aligned)
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.WbSunny,
-                        contentDescription = "Bengali Calendar",
-                        tint = Color(0xFF10B981),
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = dateInfo.bengaliDate,
-                        fontSize = 11.sp,
-                        color = themeColors.displayText.copy(alpha = 0.8f),
-                        fontWeight = FontWeight.SemiBold
-                    )
+                // Top section: Greeting & Weather Info
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Left Column: Greeting Title & English Date
+                    Column(
+                        modifier = Modifier.weight(1.05f),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Start
+                        ) {
+                            Icon(
+                                imageVector = greetingIcon,
+                                contentDescription = "Greeting",
+                                tint = themeColors.buttonEqualBg,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = greetingText,
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 15.sp,
+                                color = themeColors.displayText
+                            )
+                        }
+                        Text(
+                            text = "${dateInfo.englishDayName}, ${dateInfo.englishDate}",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = themeColors.displayText.copy(alpha = 0.8f),
+                            lineHeight = 15.sp
+                        )
+                    }
+
+                    // Spacer to keep balance
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    // Right Column: Weather Info (Clickable)
+                    Column(
+                        modifier = Modifier
+                            .weight(0.95f)
+                            .clickable { viewModel.openTool(ToolType.WEATHER) },
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                        horizontalAlignment = Alignment.End
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            Text(
+                                text = "$weatherLocationName • $weatherTempText",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.buttonEqualBg,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Icon(
+                                imageVector = weatherIcon,
+                                contentDescription = "Weather",
+                                tint = themeColors.buttonEqualBg,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                        Text(
+                            text = weatherConditionText,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = themeColors.buttonEqualBg.copy(alpha = 0.9f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
 
-                // Hijri/Arabic Date (Right Aligned)
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Bedtime,
-                        contentDescription = "Hijri Calendar",
-                        tint = Color(0xFFF59E0B),
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = dateInfo.hijriDate,
-                        fontSize = 11.sp,
-                        color = themeColors.displayText.copy(alpha = 0.8f),
-                        fontWeight = FontWeight.SemiBold
-                    )
+                // Divider line
+                Divider(
+                    modifier = Modifier.padding(vertical = 10.dp),
+                    color = themeColors.displayText.copy(alpha = 0.08f),
+                    thickness = 1.dp
+                )
+
+                // Bottom section: Bengali & Hijri Calendars
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Bengali Date (Left Aligned)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.WbSunny,
+                            contentDescription = "Bengali Calendar",
+                            tint = Color(0xFF10B981),
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = dateInfo.bengaliDate,
+                            fontSize = 11.sp,
+                            color = themeColors.displayText.copy(alpha = 0.8f),
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+
+                    // Hijri/Arabic Date (Right Aligned)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Bedtime,
+                            contentDescription = "Hijri Calendar",
+                            tint = Color(0xFFF59E0B),
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = dateInfo.hijriDate,
+                            fontSize = 11.sp,
+                            color = themeColors.displayText.copy(alpha = 0.8f),
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
                 }
             }
         }

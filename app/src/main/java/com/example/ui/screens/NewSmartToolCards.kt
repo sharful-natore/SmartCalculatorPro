@@ -266,7 +266,17 @@ fun StopwatchTimerCard(viewModel: CalculatorViewModel, themeColors: CalculatorTh
                             label = { Text(if (isBn) "মিনিট" else "Min") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             modifier = Modifier.weight(1f),
-                            singleLine = true
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = themeColors.displayText,
+                                unfocusedTextColor = themeColors.displayText,
+                                focusedLabelColor = themeColors.buttonEqualBg,
+                                unfocusedLabelColor = themeColors.displayText.copy(alpha = 0.5f),
+                                focusedBorderColor = themeColors.buttonEqualBg,
+                                unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.15f),
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent
+                            )
                         )
                         OutlinedTextField(
                             value = timerSecondsInput,
@@ -274,7 +284,17 @@ fun StopwatchTimerCard(viewModel: CalculatorViewModel, themeColors: CalculatorTh
                             label = { Text(if (isBn) "সেকেন্ড" else "Sec") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             modifier = Modifier.weight(1f),
-                            singleLine = true
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = themeColors.displayText,
+                                unfocusedTextColor = themeColors.displayText,
+                                focusedLabelColor = themeColors.buttonEqualBg,
+                                unfocusedLabelColor = themeColors.displayText.copy(alpha = 0.5f),
+                                focusedBorderColor = themeColors.buttonEqualBg,
+                                unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.15f),
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent
+                            )
                         )
                     }
                     Spacer(modifier = Modifier.height(16.dp))
@@ -827,8 +847,14 @@ fun NotesChecklistCard(viewModel: CalculatorViewModel, themeColors: CalculatorTh
                         shape = RoundedCornerShape(10.dp),
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = themeColors.displayText,
+                            unfocusedTextColor = themeColors.displayText,
+                            focusedPlaceholderColor = themeColors.displayText.copy(alpha = 0.5f),
+                            unfocusedPlaceholderColor = themeColors.displayText.copy(alpha = 0.5f),
                             focusedBorderColor = themeColors.buttonEqualBg,
-                            unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.15f)
+                            unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.15f),
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent
                         )
                     )
 
@@ -1186,7 +1212,17 @@ fun UnitPriceComparerCard(viewModel: CalculatorViewModel, themeColors: Calculato
                         onValueChange = { priceA = it },
                         label = { Text(if (isBn) "দাম (৳)" else "Price ($)") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = themeColors.displayText,
+                            unfocusedTextColor = themeColors.displayText,
+                            focusedLabelColor = themeColors.buttonEqualBg,
+                            unfocusedLabelColor = themeColors.displayText.copy(alpha = 0.5f),
+                            focusedBorderColor = themeColors.buttonEqualBg,
+                            unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.15f),
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent
+                        )
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     OutlinedTextField(
@@ -1194,7 +1230,17 @@ fun UnitPriceComparerCard(viewModel: CalculatorViewModel, themeColors: Calculato
                         onValueChange = { qtyA = it },
                         label = { Text(if (isBn) "পরিমাণ (গ্রাম/কেজি)" else "Qty") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = themeColors.displayText,
+                            unfocusedTextColor = themeColors.displayText,
+                            focusedLabelColor = themeColors.buttonEqualBg,
+                            unfocusedLabelColor = themeColors.displayText.copy(alpha = 0.5f),
+                            focusedBorderColor = themeColors.buttonEqualBg,
+                            unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.15f),
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent
+                        )
                     )
                     if (unitPriceA > 0) {
                         Spacer(modifier = Modifier.height(6.dp))
@@ -1219,7 +1265,17 @@ fun UnitPriceComparerCard(viewModel: CalculatorViewModel, themeColors: Calculato
                         onValueChange = { priceB = it },
                         label = { Text(if (isBn) "দাম (৳)" else "Price ($)") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = themeColors.displayText,
+                            unfocusedTextColor = themeColors.displayText,
+                            focusedLabelColor = themeColors.buttonEqualBg,
+                            unfocusedLabelColor = themeColors.displayText.copy(alpha = 0.5f),
+                            focusedBorderColor = themeColors.buttonEqualBg,
+                            unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.15f),
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent
+                        )
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     OutlinedTextField(
@@ -1227,7 +1283,17 @@ fun UnitPriceComparerCard(viewModel: CalculatorViewModel, themeColors: Calculato
                         onValueChange = { qtyB = it },
                         label = { Text(if (isBn) "পরিমাণ (গ্রাম/কেজি)" else "Qty") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = themeColors.displayText,
+                            unfocusedTextColor = themeColors.displayText,
+                            focusedLabelColor = themeColors.buttonEqualBg,
+                            unfocusedLabelColor = themeColors.displayText.copy(alpha = 0.5f),
+                            focusedBorderColor = themeColors.buttonEqualBg,
+                            unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.15f),
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent
+                        )
                     )
                     if (unitPriceB > 0) {
                         Spacer(modifier = Modifier.height(6.dp))
@@ -1374,7 +1440,17 @@ fun AspectRatioCard(viewModel: CalculatorViewModel, themeColors: CalculatorTheme
                     label = { Text(if (isBn) "প্রস্থ (Width px)" else "Width (px)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.weight(1f),
-                    singleLine = true
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = themeColors.displayText,
+                        unfocusedTextColor = themeColors.displayText,
+                        focusedLabelColor = themeColors.buttonEqualBg,
+                        unfocusedLabelColor = themeColors.displayText.copy(alpha = 0.5f),
+                        focusedBorderColor = themeColors.buttonEqualBg,
+                        unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.15f),
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent
+                    )
                 )
                 OutlinedTextField(
                     value = heightInput,
@@ -1382,7 +1458,17 @@ fun AspectRatioCard(viewModel: CalculatorViewModel, themeColors: CalculatorTheme
                     label = { Text(if (isBn) "উচ্চতা (Height px)" else "Height (px)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.weight(1f),
-                    singleLine = true
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = themeColors.displayText,
+                        unfocusedTextColor = themeColors.displayText,
+                        focusedLabelColor = themeColors.buttonEqualBg,
+                        unfocusedLabelColor = themeColors.displayText.copy(alpha = 0.5f),
+                        focusedBorderColor = themeColors.buttonEqualBg,
+                        unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.15f),
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent
+                    )
                 )
             }
 
@@ -1449,7 +1535,17 @@ fun RandomPickerCard(viewModel: CalculatorViewModel, themeColors: CalculatorThem
                     label = { Text("Min") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.weight(1f),
-                    singleLine = true
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = themeColors.displayText,
+                        unfocusedTextColor = themeColors.displayText,
+                        focusedLabelColor = themeColors.buttonEqualBg,
+                        unfocusedLabelColor = themeColors.displayText.copy(alpha = 0.5f),
+                        focusedBorderColor = themeColors.buttonEqualBg,
+                        unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.15f),
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent
+                    )
                 )
                 OutlinedTextField(
                     value = maxInput,
@@ -1457,7 +1553,17 @@ fun RandomPickerCard(viewModel: CalculatorViewModel, themeColors: CalculatorThem
                     label = { Text("Max") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.weight(1f),
-                    singleLine = true
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = themeColors.displayText,
+                        unfocusedTextColor = themeColors.displayText,
+                        focusedLabelColor = themeColors.buttonEqualBg,
+                        unfocusedLabelColor = themeColors.displayText.copy(alpha = 0.5f),
+                        focusedBorderColor = themeColors.buttonEqualBg,
+                        unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.15f),
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent
+                    )
                 )
                 Button(
                     onClick = {
@@ -1824,8 +1930,14 @@ fun QrCodeCard(viewModel: CalculatorViewModel, themeColors: CalculatorThemeColor
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = themeColors.displayText,
+                            unfocusedTextColor = themeColors.displayText,
+                            focusedPlaceholderColor = themeColors.displayText.copy(alpha = 0.5f),
+                            unfocusedPlaceholderColor = themeColors.displayText.copy(alpha = 0.5f),
                             focusedBorderColor = themeColors.buttonEqualBg,
-                            unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.15f)
+                            unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.15f),
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent
                         )
                     )
 

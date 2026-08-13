@@ -446,7 +446,7 @@ fun ConverterCardItem(
                     Box(
                         modifier = Modifier
                             .size(38.dp)
-                            .clip(RoundedCornerShape(10.dp))
+                            .clip(CircleShape)
                             .background(themeColors.buttonEqualBg.copy(alpha = 0.12f)),
                         contentAlignment = Alignment.Center
                     ) {
