@@ -70,10 +70,7 @@ fun DynamicWeatherScreen(
     }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(themeColors.background)
-            .padding(16.dp)
+        modifier = Modifier.fillMaxWidth()
     ) {
         // Location Header
         Row(

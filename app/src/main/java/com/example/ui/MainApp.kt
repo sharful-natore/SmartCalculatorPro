@@ -241,30 +241,21 @@ fun MainContent(
 
     // Pager state for smooth horizontal tab swiping (excluding Theme page at index 4)
     val pagerState = rememberPagerState(initialPage = if (viewModel.activeTab in 0..3) viewModel.activeTab else 0) { 4 }
-    var isProgrammaticScroll by remember { mutableStateOf(false) }
 
     // Sync pagerState -> viewModel.activeTab when user swipes
-    LaunchedEffect(pagerState) {
-        snapshotFlow { pagerState.settledPage to pagerState.isScrollInProgress }.collect { (page, isScrolling) ->
-            if (!isProgrammaticScroll && !isScrolling && viewModel.activeTab != page && viewModel.activeTab in 0..3 && page in 0..3) {
-                viewModel.activeTab = page
-            }
+    LaunchedEffect(pagerState.settledPage) {
+        if (viewModel.activeTab != pagerState.settledPage && pagerState.settledPage in 0..3) {
+            viewModel.activeTab = pagerState.settledPage
         }
     }
 
     // Sync viewModel.activeTab -> pagerState when tab is changed via bottom nav or buttons
     LaunchedEffect(viewModel.activeTab) {
         if (viewModel.activeTab in 0..3 && pagerState.currentPage != viewModel.activeTab) {
-            isProgrammaticScroll = true
-            try {
-                pagerState.animateScrollToPage(
-                    page = viewModel.activeTab,
-                    animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing)
-                )
-            } finally {
-                delay(50) // small settle delay to clear pending measurements
-                isProgrammaticScroll = false
-            }
+            pagerState.animateScrollToPage(
+                page = viewModel.activeTab,
+                animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing)
+            )
         }
     }
 
@@ -3363,7 +3354,7 @@ fun CenterSearchFabCustomizerDialog(
             title = title,
             initialColor = initial,
             onColorSelected = { color ->
-                val hex = String.format("#%06X", 0xFFFFFF and color.toArgb())
+                val hex = String.format("#%08X", color.toArgb())
                 when (target) {
                     "bg" -> viewModel.updateCenterSearchFabColors(hex, borderHex, iconHex)
                     "border" -> viewModel.updateCenterSearchFabColors(bgHex, hex, iconHex)
@@ -3506,7 +3497,7 @@ fun NavbarStartButtonCustomizerDialog(
             title = title,
             initialColor = initial,
             onColorSelected = { color ->
-                val hex = String.format("#%06X", 0xFFFFFF and color.toArgb())
+                val hex = String.format("#%08X", color.toArgb())
                 when (target) {
                     "bg" -> viewModel.updateSearchFabColors(hex, borderHex, iconHex)
                     "border" -> viewModel.updateSearchFabColors(bgHex, hex, iconHex)
@@ -3688,7 +3679,7 @@ fun AiFabCustomizerDialog(
             title = title,
             initialColor = initial,
             onColorSelected = { color ->
-                val hex = String.format("#%06X", 0xFFFFFF and color.toArgb())
+                val hex = String.format("#%08X", color.toArgb())
                 if (isGrad) {
                     val newList = gradientColorsHexList.toMutableList()
                     while (newList.size <= gradIndex) { newList.add("#FFFFFF") }
@@ -3748,4 +3739,52 @@ fun ColorRowOption(
             }
         }
     }
+}
+
+@Composable
+fun UnfavoriteConfirmDialog(
+    itemType: String, // "Tool" or "Converter"
+    itemNameBn: String,
+    itemNameEn: String,
+    isBn: Boolean,
+    themeColors: CalculatorThemeColors,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = if (isBn) "প্রিয় তালিকা থেকে সরান" else "Remove from Favorites",
+                fontWeight = FontWeight.Bold,
+                color = themeColors.displayText
+            )
+        },
+        text = {
+            Text(
+                text = if (isBn) "$itemNameBn -কে প্রিয় তালিকা থেকে সরাতে চান?" else "Remove $itemNameEn from favorites?",
+                color = themeColors.displayText.copy(alpha = 0.8f)
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(
+                    text = if (isBn) "সরান" else "Remove",
+                    color = Color.Red,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(
+                    text = if (isBn) "বাতিল" else "Cancel",
+                    color = themeColors.displayText
+                )
+            }
+        },
+        containerColor = themeColors.cardBg,
+        titleContentColor = themeColors.displayText,
+        textContentColor = themeColors.displayText
+    )
 }

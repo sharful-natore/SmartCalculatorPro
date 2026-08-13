@@ -836,20 +836,25 @@ fun DashboardCategoriesView(
 
         // View All / সব দেখুন Dialog
         if (showAllFeaturedDialog) {
-            AlertDialog(
+            androidx.compose.ui.window.Dialog(
                 onDismissRequest = { showAllFeaturedDialog = false },
-                title = {
-                    Text(
-                        text = if (isBn) "ফিচার্ড ও ফেভারিট টুলস" else "Featured & Favorite Tools",
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 18.sp,
-                        color = themeColors.displayText
-                    )
-                },
-                text = {
+                properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
+            ) {
+                androidx.compose.material3.Surface(
+                    modifier = Modifier.fillMaxWidth(0.92f).padding(vertical = 24.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    color = themeColors.cardBg
+                ) {
                     Column(
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.padding(20.dp).fillMaxWidth()
                     ) {
+                        Text(
+                            text = if (isBn) "ফিচার্ড ও ফেভারিট টুলস" else "Featured & Favorite Tools",
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 18.sp,
+                            color = themeColors.displayText,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
                         Text(
                             text = if (isBn) 
                                 "কার্ডে লং প্রেস করে রিমুভ করুন অথবা অর্ডার পরিবর্তন করুন।" 
@@ -864,7 +869,7 @@ fun DashboardCategoriesView(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .heightIn(max = 380.dp)
+                                .weight(1f, fill = false)
                                 .verticalScroll(rememberScrollState())
                         ) {
                             chunked.forEach { rowItems ->
@@ -949,19 +954,20 @@ fun DashboardCategoriesView(
                                 }
                             }
                         }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                            TextButton(onClick = { showAllFeaturedDialog = false }) {
+                                Text(
+                                    text = if (isBn) "বন্ধ করুন" else "Close",
+                                    color = themeColors.buttonEqualBg,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
                     }
-                },
-                confirmButton = {
-                    TextButton(onClick = { showAllFeaturedDialog = false }) {
-                        Text(
-                            text = if (isBn) "বন্ধ করুন" else "Close",
-                            color = themeColors.buttonEqualBg,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                },
-                containerColor = themeColors.background
-            )
+                }
+            }
         }
 
         // Long Press / Reorder Option Dialog

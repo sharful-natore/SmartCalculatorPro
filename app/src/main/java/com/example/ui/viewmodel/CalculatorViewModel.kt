@@ -1588,23 +1588,45 @@ How can I help you today?"""
         return sharedPrefs.getStringSet(key, emptySet()) ?: emptySet()
     }
 
+    var pendingUnfavoriteTool by mutableStateOf<String?>(null)
+    var pendingUnfavoriteConverter by mutableStateOf<String?>(null)
+
     fun toggleFavoriteTool(toolName: String) {
         val currentList = orderedFavoriteTools.toMutableList()
         if (currentList.contains(toolName)) {
-            currentList.remove(toolName)
+            pendingUnfavoriteTool = toolName
         } else {
             currentList.add(toolName)
+            saveOrderedFavorites(currentList)
         }
-        saveOrderedFavorites(currentList)
     }
     
+    fun confirmUnfavoriteTool() {
+        pendingUnfavoriteTool?.let { toolName ->
+            val currentList = orderedFavoriteTools.toMutableList()
+            currentList.remove(toolName)
+            saveOrderedFavorites(currentList)
+        }
+        pendingUnfavoriteTool = null
+    }
+
     fun toggleFavoriteConverter(converterName: String) {
         favoriteConverters = if (favoriteConverters.contains(converterName)) {
-            favoriteConverters - converterName
+            pendingUnfavoriteConverter = converterName
+            favoriteConverters
         } else {
-            favoriteConverters + converterName
+            val updated = favoriteConverters + converterName
+            sharedPrefs.edit().putStringSet("favorite_converters", updated).apply()
+            updated
         }
-        sharedPrefs.edit().putStringSet("favorite_converters", favoriteConverters).apply()
+    }
+    
+    fun confirmUnfavoriteConverter() {
+        pendingUnfavoriteConverter?.let { converterName ->
+            favoriteConverters = favoriteConverters - converterName
+            sharedPrefs.edit().putStringSet("favorite_converters", favoriteConverters).apply()
+        }
+        pendingUnfavoriteConverter = null
     }
 
     private val customThemeListType = com.squareup.moshi.Types.newParameterizedType(List::class.java, com.example.ui.theme.CustomTheme::class.java)

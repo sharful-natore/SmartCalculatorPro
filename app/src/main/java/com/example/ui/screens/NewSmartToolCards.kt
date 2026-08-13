@@ -19,6 +19,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -1344,6 +1347,98 @@ fun UnitPriceComparerCard(viewModel: CalculatorViewModel, themeColors: Calculato
 @Composable
 fun SimpleCompassCard(viewModel: CalculatorViewModel, themeColors: CalculatorThemeColors) {
     val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
+    val context = LocalContext.current
+    val sensorManager = remember { context.getSystemService(android.content.Context.SENSOR_SERVICE) as android.hardware.SensorManager }
+
+    var azimuth by remember { mutableStateOf(0f) }
+    var pitch by remember { mutableStateOf(0f) }
+    var roll by remember { mutableStateOf(0f) }
+    var hasSensors by remember { mutableStateOf(true) }
+
+    DisposableEffect(Unit) {
+        val rotationSensor = sensorManager.getDefaultSensor(android.hardware.Sensor.TYPE_ROTATION_VECTOR)
+        val accelSensor = sensorManager.getDefaultSensor(android.hardware.Sensor.TYPE_ACCELEROMETER)
+        val magneticSensor = sensorManager.getDefaultSensor(android.hardware.Sensor.TYPE_MAGNETIC_FIELD)
+
+        if (rotationSensor == null && (accelSensor == null || magneticSensor == null)) {
+            hasSensors = false
+        }
+
+        val listener = object : android.hardware.SensorEventListener {
+            private val rotationMatrix = FloatArray(9)
+            private val orientationAngles = FloatArray(3)
+            private val lastAccelerometer = FloatArray(3)
+            private val lastMagnetometer = FloatArray(3)
+            private var lastAccelerometerSet = false
+            private var lastMagnetometerSet = false
+
+            override fun onSensorChanged(event: android.hardware.SensorEvent) {
+                if (event.sensor.type == android.hardware.Sensor.TYPE_ROTATION_VECTOR) {
+                    android.hardware.SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
+                    android.hardware.SensorManager.getOrientation(rotationMatrix, orientationAngles)
+                    
+                    val azRad = orientationAngles[0]
+                    val pRad = orientationAngles[1]
+                    val rRad = orientationAngles[2]
+
+                    val targetAz = Math.toDegrees(azRad.toDouble()).toFloat()
+                    azimuth = azimuth + 0.15f * (targetAz - azimuth)
+                    pitch = Math.toDegrees(pRad.toDouble()).toFloat()
+                    roll = Math.toDegrees(rRad.toDouble()).toFloat()
+                } else {
+                    if (event.sensor.type == android.hardware.Sensor.TYPE_ACCELEROMETER) {
+                        System.arraycopy(event.values, 0, lastAccelerometer, 0, event.values.size)
+                        lastAccelerometerSet = true
+                    } else if (event.sensor.type == android.hardware.Sensor.TYPE_MAGNETIC_FIELD) {
+                        System.arraycopy(event.values, 0, lastMagnetometer, 0, event.values.size)
+                        lastMagnetometerSet = true
+                    }
+
+                    if (lastAccelerometerSet && lastMagnetometerSet) {
+                        android.hardware.SensorManager.getRotationMatrix(rotationMatrix, null, lastAccelerometer, lastMagnetometer)
+                        android.hardware.SensorManager.getOrientation(rotationMatrix, orientationAngles)
+                        
+                        val azRad = orientationAngles[0]
+                        val pRad = orientationAngles[1]
+                        val rRad = orientationAngles[2]
+
+                        val targetAz = Math.toDegrees(azRad.toDouble()).toFloat()
+                        azimuth = azimuth + 0.15f * (targetAz - azimuth)
+                        pitch = Math.toDegrees(pRad.toDouble()).toFloat()
+                        roll = Math.toDegrees(rRad.toDouble()).toFloat()
+                    }
+                }
+            }
+
+            override fun onAccuracyChanged(sensor: android.hardware.Sensor, accuracy: Int) {}
+        }
+
+        if (rotationSensor != null) {
+            sensorManager.registerListener(listener, rotationSensor, android.hardware.SensorManager.SENSOR_DELAY_UI)
+        } else {
+            sensorManager.registerListener(listener, accelSensor, android.hardware.SensorManager.SENSOR_DELAY_UI)
+            sensorManager.registerListener(listener, magneticSensor, android.hardware.SensorManager.SENSOR_DELAY_UI)
+        }
+
+        onDispose {
+            sensorManager.unregisterListener(listener)
+        }
+    }
+
+    val degrees = ((azimuth + 360) % 360).toInt()
+
+    fun getDirectionString(deg: Int): String {
+        return when (deg) {
+            in 338..360, in 0..22 -> if (isBn) "উত্তর (N)" else "North (N)"
+            in 23..67 -> if (isBn) "উত্তর-পূর্ব (NE)" else "North-East (NE)"
+            in 68..112 -> if (isBn) "পূর্ব (E)" else "East (E)"
+            in 113..157 -> if (isBn) "দক্ষিণ-পূর্ব (SE)" else "South-East (SE)"
+            in 158..202 -> if (isBn) "দক্ষিণ (S)" else "South (S)"
+            in 203..247 -> if (isBn) "দক্ষিণ-পশ্চিম (SW)" else "South-West (SW)"
+            in 248..292 -> if (isBn) "পশ্চিম (W)" else "West (W)"
+            else -> if (isBn) "উত্তর-পশ্চিম (NW)" else "North-West (NW)"
+        }
+    }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -1355,47 +1450,211 @@ fun SimpleCompassCard(viewModel: CalculatorViewModel, themeColors: CalculatorThe
             modifier = Modifier.padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = if (isBn) "ডিজিটাল কম্পাস (Digital Compass)" else "Digital Compass & Level",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = themeColors.displayText,
-                modifier = Modifier.align(Alignment.Start)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Box(
-                modifier = Modifier
-                    .size(160.dp)
-                    .clip(CircleShape)
-                    .border(4.dp, themeColors.buttonEqualBg, CircleShape)
-                    .background(themeColors.displayText.copy(alpha = 0.05f)),
-                contentAlignment = Alignment.Center
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = if (isBn) "ডিজিটাল কম্পাস ও সারফেস লেভেল" else "Digital Compass & Bubble Level",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = themeColors.displayText
+                )
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(if (hasSensors) Color(0xFF10B981).copy(alpha = 0.15f) else Color.Red.copy(alpha = 0.15f))
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                ) {
                     Text(
-                        text = "N",
-                        color = Color.Red,
+                        text = if (hasSensors) (if (isBn) "সক্রিয়" else "ACTIVE") else (if (isBn) "ত্রুটি" else "NO SENSOR"),
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.ExtraBold,
-                        fontSize = 20.sp
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "0° North",
-                        color = themeColors.displayText,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp
+                        color = if (hasSensors) Color(0xFF10B981) else Color.Red
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(150.dp)
+                        .clip(CircleShape)
+                        .border(3.dp, themeColors.buttonEqualBg, CircleShape)
+                        .background(themeColors.displayText.copy(alpha = 0.03f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Canvas(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .rotate(-degrees.toFloat())
+                    ) {
+                        val center = Offset(size.width / 2, size.height / 2)
+                        val radius = size.minDimension / 2 - 12.dp.toPx()
+
+                        drawContext.canvas.nativeCanvas.apply {
+                            val paint = android.graphics.Paint().apply {
+                                color = themeColors.displayText.toArgb()
+                                textSize = 12.dp.toPx()
+                                isFakeBoldText = true
+                                textAlign = android.graphics.Paint.Align.CENTER
+                            }
+
+                            paint.color = android.graphics.Color.RED
+                            drawText("N", center.x, center.y - radius + 4.dp.toPx(), paint)
+
+                            paint.color = themeColors.displayText.toArgb()
+                            drawText("S", center.x, center.y + radius + 8.dp.toPx(), paint)
+
+                            drawText("E", center.x + radius - 4.dp.toPx(), center.y + 4.dp.toPx(), paint)
+
+                            drawText("W", center.x - radius + 4.dp.toPx(), center.y + 4.dp.toPx(), paint)
+                        }
+
+                        for (i in 0 until 360 step 30) {
+                            if (i % 90 != 0) {
+                                val angleRad = Math.toRadians(i.toDouble())
+                                val startX = center.x + (radius - 4.dp.toPx()) * Math.sin(angleRad).toFloat()
+                                val startY = center.y - (radius - 4.dp.toPx()) * Math.cos(angleRad).toFloat()
+                                val endX = center.x + radius * Math.sin(angleRad).toFloat()
+                                val endY = center.y - radius * Math.cos(angleRad).toFloat()
+
+                                drawLine(
+                                    color = themeColors.displayText.copy(alpha = 0.35f),
+                                    start = Offset(startX, startY),
+                                    end = Offset(endX, endY),
+                                    strokeWidth = 1.5.dp.toPx()
+                                )
+                            }
+                        }
+                    }
+
+                    Canvas(modifier = Modifier.fillMaxSize()) {
+                        val center = Offset(size.width / 2, size.height / 2)
+                        val arrowY = center.y - (size.minDimension / 2) + 2.dp.toPx()
+                        drawLine(
+                            color = Color.Red,
+                            start = center,
+                            end = Offset(center.x, arrowY),
+                            strokeWidth = 2.dp.toPx()
+                        )
+                    }
+
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .background(themeColors.cardBg.copy(alpha = 0.85f), CircleShape)
+                            .padding(8.dp)
+                    ) {
+                        Text(
+                            text = "$degrees°",
+                            color = themeColors.displayText,
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 22.sp
+                        )
+                        Text(
+                            text = when (degrees) {
+                                in 338..360, in 0..22 -> "N"
+                                in 23..67 -> "NE"
+                                in 68..112 -> "E"
+                                in 113..157 -> "SE"
+                                in 158..202 -> "S"
+                                in 203..247 -> "SW"
+                                in 248..292 -> "W"
+                                else -> "NW"
+                            },
+                            color = themeColors.buttonEqualBg,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp
+                        )
+                    }
+                }
+
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = if (isBn) "সারফেস লেভেল" else "Surface Level",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.displayText.copy(alpha = 0.8f)
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Box(
+                        modifier = Modifier
+                            .size(100.dp)
+                            .clip(CircleShape)
+                            .border(2.dp, themeColors.displayText.copy(alpha = 0.15f), CircleShape)
+                            .background(themeColors.displayText.copy(alpha = 0.02f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Canvas(modifier = Modifier.fillMaxSize()) {
+                            drawCircle(
+                                color = themeColors.displayText.copy(alpha = 0.05f),
+                                radius = 20.dp.toPx(),
+                                style = Stroke(1.dp.toPx())
+                            )
+                            drawCircle(
+                                color = themeColors.displayText.copy(alpha = 0.05f),
+                                radius = 40.dp.toPx(),
+                                style = Stroke(1.dp.toPx())
+                            )
+                            drawLine(
+                                color = themeColors.displayText.copy(alpha = 0.08f),
+                                start = Offset(0f, size.height / 2),
+                                end = Offset(size.width, size.height / 2),
+                                strokeWidth = 1f
+                            )
+                            drawLine(
+                                color = themeColors.displayText.copy(alpha = 0.08f),
+                                start = Offset(size.width / 2, 0f),
+                                end = Offset(size.width / 2, size.height),
+                                strokeWidth = 1f
+                            )
+                        }
+
+                        val maxOffsetPx = 40.dp
+                        val computedX = (roll.coerceIn(-45f, 45f) / 45f) * maxOffsetPx.value
+                        val computedY = (pitch.coerceIn(-45f, 45f) / 45f) * maxOffsetPx.value
+
+                        Box(
+                            modifier = Modifier
+                                .offset(x = computedX.dp, y = computedY.dp)
+                                .size(14.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF10B981))
+                                .border(1.dp, Color.White, CircleShape)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Text(
+                        text = "X: ${roll.toInt()}°  Y: ${pitch.toInt()}°",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.displayText.copy(alpha = 0.6f)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
 
             Text(
-                text = if (isBn) "কম্পাস ও লেভেল মোড সক্রিয়" else "Heading: 0° North (Digital Calibration Active)",
-                fontSize = 12.sp,
-                color = themeColors.displayText.copy(alpha = 0.6f)
+                text = getDirectionString(degrees),
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                color = themeColors.buttonEqualBg
             )
         }
     }
@@ -1648,9 +1907,31 @@ fun QrCodeCard(viewModel: CalculatorViewModel, themeColors: CalculatorThemeColor
     var scannedResultText by remember { mutableStateOf<String?>(null) }
     var isSimulatingFileSelect by remember { mutableStateOf(false) }
 
+    // Camera Permission request launcher
+    var hasCameraPermission by remember {
+        mutableStateOf(
+            androidx.core.content.ContextCompat.checkSelfPermission(
+                context,
+                android.Manifest.permission.CAMERA
+            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        )
+    }
+
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        hasCameraPermission = isGranted
+        if (!isGranted) {
+            android.widget.Toast.makeText(context, if (isBn) "ক্যামেরা পারমিশন প্রয়োজন!" else "Camera permission required!", android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
+
     // Scan line animation loop
     LaunchedEffect(isScanningActive) {
         if (isScanningActive) {
+            if (!hasCameraPermission) {
+                cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
+            }
             while (true) {
                 for (i in 0..100) {
                     scanLineOffset = i / 100f
@@ -1682,7 +1963,7 @@ fun QrCodeCard(viewModel: CalculatorViewModel, themeColors: CalculatorThemeColor
     }
 
     // Generator state
-    var generatorInputText by remember { mutableStateOf("https://aistudio.google.com") }
+    var generatorInputText by remember { mutableStateOf("ToolsMate") }
     var qrColorIndex by remember { mutableStateOf(0) }
     val qrColors = listOf(
         Color.Black,
@@ -1768,7 +2049,36 @@ fun QrCodeCard(viewModel: CalculatorViewModel, themeColors: CalculatorThemeColor
                                 .border(2.dp, themeColors.displayText.copy(alpha = 0.2f), RoundedCornerShape(16.dp)),
                             contentAlignment = Alignment.Center
                         ) {
-                            if (isScanningActive) {
+                            if (isScanningActive && hasCameraPermission) {
+                                val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+                                AndroidView(
+                                    factory = { ctx ->
+                                        val previewView = androidx.camera.view.PreviewView(ctx).apply {
+                                            scaleType = androidx.camera.view.PreviewView.ScaleType.FILL_CENTER
+                                        }
+                                        val cameraProviderFuture = androidx.camera.lifecycle.ProcessCameraProvider.getInstance(ctx)
+                                        cameraProviderFuture.addListener({
+                                            val cameraProvider = cameraProviderFuture.get()
+                                            val preview = androidx.camera.core.Preview.Builder().build().also {
+                                                it.surfaceProvider = previewView.surfaceProvider
+                                            }
+                                            val cameraSelector = androidx.camera.core.CameraSelector.DEFAULT_BACK_CAMERA
+                                            try {
+                                                cameraProvider.unbindAll()
+                                                cameraProvider.bindToLifecycle(
+                                                    lifecycleOwner,
+                                                    cameraSelector,
+                                                    preview
+                                                )
+                                            } catch (exc: Exception) {
+                                                // Handle error
+                                            }
+                                        }, androidx.core.content.ContextCompat.getMainExecutor(ctx))
+                                        previewView
+                                    },
+                                    modifier = Modifier.fillMaxSize()
+                                )
+
                                 // Live animated scanning laser line
                                 Canvas(modifier = Modifier.fillMaxSize()) {
                                     val y = size.height * scanLineOffset

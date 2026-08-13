@@ -37,10 +37,10 @@ fun ColorWheelPickerDialog(
 
     var hue by remember { mutableStateOf(initialHsv[0]) }
     var saturation by remember { mutableStateOf(initialHsv[1]) }
-    var value by remember { mutableStateOf(initialHsv[2]) }
+    var alpha by remember { mutableStateOf(initialColor.alpha) }
 
-    val currentColor = remember(hue, saturation, value) {
-        Color(android.graphics.Color.HSVToColor(floatArrayOf(hue, saturation, value)))
+    val currentColor = remember(hue, saturation, alpha) {
+        Color(android.graphics.Color.HSVToColor((alpha * 255).toInt(), floatArrayOf(hue, saturation, 1f)))
     }
 
     // Curated professional color palette swatches
@@ -94,7 +94,7 @@ fun ColorWheelPickerDialog(
                     val textColor = if (luminance > 0.5) Color.Black else Color.White
                     
                     Text(
-                        text = String.format(Locale.US, "#%02X%02X%02X", r, g, b),
+                        text = String.format(Locale.US, "#%02X%02X%02X%02X", android.graphics.Color.alpha(argb), r, g, b),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = textColor
@@ -163,21 +163,21 @@ fun ColorWheelPickerDialog(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = if (isBn) "উজ্জ্বলতা (Brightness)" else "Brightness",
+                            text = if (isBn) "স্বচ্ছতা (Transparency)" else "Transparency",
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = themeColors.displayText.copy(alpha = 0.8f)
                         )
                         Text(
-                            text = "${(value * 100).toInt()}%",
+                            text = "${(alpha * 100).toInt()}%",
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
                             color = themeColors.displayText
                         )
                     }
                     Slider(
-                        value = value,
-                        onValueChange = { value = it },
+                        value = alpha,
+                        onValueChange = { alpha = it },
                         valueRange = 0.1f..1f,
                         colors = SliderDefaults.colors(
                             thumbColor = themeColors.buttonEqualBg,
@@ -226,7 +226,7 @@ fun ColorWheelPickerDialog(
                                             android.graphics.Color.colorToHSV(color.toArgb(), hsv)
                                             hue = hsv[0]
                                             saturation = hsv[1]
-                                            value = hsv[2]
+                                            alpha = 1f
                                         }
                                 )
                             }
