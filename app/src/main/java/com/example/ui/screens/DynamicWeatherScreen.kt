@@ -2,6 +2,8 @@ package com.example.ui.screens
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -12,6 +14,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathOperation
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -187,12 +197,33 @@ fun DynamicWeatherScreen(
             }
         }
 
-        val weatherData = viewModel.weatherData ?: viewModel.getFallbackWeather()
+        val weatherData = viewModel.weatherData
 
-        if (viewModel.weatherIsLoading && viewModel.weatherData == null) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = themeColors.buttonEqualBg)
+        if (viewModel.weatherIsLoading && weatherData == null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    CircularProgressIndicator(color = themeColors.buttonEqualBg)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = if (isBn) "আবহাওয়া উপাত্ত সংগ্রহ করা হচ্ছে..." else "Fetching weather data...",
+                        color = themeColors.displayText.copy(alpha = 0.7f),
+                        fontSize = 14.sp
+                    )
+                }
             }
+        } else if (weatherData == null) {
+            // Empty Graphics State when Weather Data is missing/failed
+            WeatherEmptyGraphicsView(
+                viewModel = viewModel,
+                themeColors = themeColors,
+                isBn = isBn,
+                onSearchClick = { showSearchDialog = true }
+            )
         } else {
             val current = weatherData.current
             
@@ -283,14 +314,6 @@ fun CurrentWeatherCard(
         else -> if (isBn) "অজানা" else "Unknown"
     }
 
-    val icon = when (code) {
-        0 -> if (isDay) Icons.Default.WbSunny else Icons.Default.NightsStay
-        1, 2, 3 -> Icons.Default.Cloud
-        61, 63, 65, 51, 53, 55 -> Icons.Default.WaterDrop
-        95, 96, 99 -> Icons.Default.Thunderstorm
-        else -> Icons.Default.Cloud
-    }
-
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
@@ -300,11 +323,10 @@ fun CurrentWeatherCard(
             modifier = Modifier.padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = condition,
-                tint = themeColors.buttonEqualText,
-                modifier = Modifier.size(64.dp)
+            WeatherConditionGraphic(
+                code = code,
+                isDay = isDay,
+                modifier = Modifier.size(80.dp)
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
@@ -383,12 +405,12 @@ fun HourlyWeatherItem(timeStr: String, temp: Double, code: Int, themeColors: Cal
         "--"
     }
 
-    val icon = when (code) {
-        0 -> Icons.Default.WbSunny
-        1, 2, 3 -> Icons.Default.Cloud
-        61, 63, 65, 51, 53, 55 -> Icons.Default.WaterDrop
-        95, 96, 99 -> Icons.Default.Thunderstorm
-        else -> Icons.Default.Cloud
+    val isItemDay = try {
+        val hourStr = timeStr.substringAfter('T').substringBefore(':')
+        val hour = hourStr.toIntOrNull() ?: 12
+        hour in 6..18
+    } catch (e: Exception) {
+        true
     }
 
     Column(
@@ -403,11 +425,10 @@ fun HourlyWeatherItem(timeStr: String, temp: Double, code: Int, themeColors: Cal
             fontSize = 12.sp
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = themeColors.buttonEqualBg,
-            modifier = Modifier.size(24.dp)
+        WeatherConditionGraphic(
+            code = code,
+            isDay = isItemDay,
+            modifier = Modifier.size(32.dp)
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
@@ -438,14 +459,6 @@ fun DailyWeatherItem(
         "--"
     }
 
-    val icon = when (code) {
-        0 -> Icons.Default.WbSunny
-        1, 2, 3 -> Icons.Default.Cloud
-        61, 63, 65, 51, 53, 55 -> Icons.Default.WaterDrop
-        95, 96, 99 -> Icons.Default.Thunderstorm
-        else -> Icons.Default.Cloud
-    }
-
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -465,11 +478,10 @@ fun DailyWeatherItem(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = themeColors.buttonEqualBg,
-                modifier = Modifier.size(20.dp)
+            WeatherConditionGraphic(
+                code = code,
+                isDay = true,
+                modifier = Modifier.size(24.dp)
             )
             if (precip > 0) {
                 Spacer(modifier = Modifier.width(4.dp))
@@ -604,4 +616,406 @@ fun LocationSearchDialog(
             }
         }
     )
+}
+
+@Composable
+fun WeatherEmptyGraphicsView(
+    viewModel: CalculatorViewModel,
+    themeColors: CalculatorThemeColors,
+    isBn: Boolean,
+    onSearchClick: () -> Unit
+) {
+    val causeText = viewModel.weatherFetchError ?: if (isBn) {
+        "ইন্টারনেট সংযোগ চালু নেই অথবা আবহাওয়া ওয়েব সার্ভিস থেকে সাড়া পাওয়া যায়নি।"
+    } else {
+        "No internet connection or weather service did not respond."
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 24.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = themeColors.displayBackground),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Empty State Illustration Badge
+                Box(
+                    modifier = Modifier
+                        .size(100.dp)
+                        .clip(CircleShape)
+                        .background(themeColors.buttonEqualBg.copy(alpha = 0.12f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(76.dp)
+                            .clip(CircleShape)
+                            .background(themeColors.buttonEqualBg.copy(alpha = 0.25f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CloudOff,
+                            contentDescription = "No Weather Data",
+                            tint = themeColors.buttonEqualBg,
+                            modifier = Modifier.size(44.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                Text(
+                    text = if (isBn) "আবহাওয়ার বিবরণ পাওয়া যায়নি" else "No Weather Data Available",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = themeColors.displayText,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Cause Explanation Box
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFEF3C7))
+                ) {
+                    Row(
+                        modifier = Modifier.padding(14.dp),
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = "Reason",
+                            tint = Color(0xFFD97706),
+                            modifier = Modifier
+                                .size(22.dp)
+                                .padding(top = 2.dp)
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text(
+                                text = if (isBn) "কারণ / পরিস্থিতি:" else "Cause / Reason:",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp,
+                                color = Color(0xFF92400E)
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = causeText,
+                                fontSize = 13.sp,
+                                color = Color(0xFF78350F),
+                                lineHeight = 18.sp
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Action Buttons Row
+                Button(
+                    onClick = { viewModel.fetchWeather(force = true) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = "Retry",
+                        tint = Color.White,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = if (isBn) "পুনরায় রিফ্রেশ করুন" else "Retry Refresh",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onSearchClick,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(44.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, themeColors.buttonEqualBg)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Search City",
+                            tint = themeColors.buttonEqualBg,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = if (isBn) "শহরের নাম খুঁজুন" else "Search City",
+                            color = themeColors.buttonEqualBg,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    OutlinedButton(
+                        onClick = { viewModel.loadDemoWeather() },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(44.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.3f))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Visibility,
+                            contentDescription = "Demo Data",
+                            tint = themeColors.displayText,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = if (isBn) "ডেমো ডেটা দেখুন" else "View Demo Data",
+                            color = themeColors.displayText,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun WeatherConditionGraphic(
+    code: Int,
+    isDay: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Canvas(modifier = modifier) {
+        val width = size.width
+        val height = size.height
+        val center = Offset(width / 2f, height / 2f)
+        val radius = width.coerceAtMost(height) / 2f
+
+        when (code) {
+            0 -> { // Clear (Sunny Day / Clear Night)
+                if (isDay) {
+                    // Golden Sun with a soft glow and rays
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(Color(0xFFFFE082), Color(0x00FFE082)),
+                            center = center,
+                            radius = radius
+                        ),
+                        radius = radius,
+                        center = center
+                    )
+                    drawCircle(
+                        brush = Brush.linearGradient(
+                            colors = listOf(Color(0xFFFBBF24), Color(0xFFF59E0B)),
+                            start = Offset(center.x - radius * 0.5f, center.y - radius * 0.5f),
+                            end = Offset(center.x + radius * 0.5f, center.y + radius * 0.5f)
+                        ),
+                        radius = radius * 0.45f,
+                        center = center
+                    )
+                    val rayCount = 8
+                    val rayLength = radius * 0.15f
+                    val innerRayDist = radius * 0.55f
+                    for (i in 0 until rayCount) {
+                        val angle = (i * (360f / rayCount)) * (Math.PI / 180f)
+                        val startX = center.x + Math.cos(angle).toFloat() * innerRayDist
+                        val startY = center.y + Math.sin(angle).toFloat() * innerRayDist
+                        val endX = center.x + Math.cos(angle).toFloat() * (innerRayDist + rayLength)
+                        val endY = center.y + Math.sin(angle).toFloat() * (innerRayDist + rayLength)
+                        drawLine(
+                            color = Color(0xFFF59E0B),
+                            start = Offset(startX, startY),
+                            end = Offset(endX, endY),
+                            strokeWidth = radius * 0.08f,
+                            cap = StrokeCap.Round
+                        )
+                    }
+                } else {
+                    // Cool crescent moon and stars
+                    drawCircle(Color(0xFFFDE047), radius * 0.04f, Offset(center.x - radius * 0.4f, center.y - radius * 0.4f))
+                    drawCircle(Color(0xFFFDE047), radius * 0.03f, Offset(center.x + radius * 0.5f, center.y - radius * 0.2f))
+                    
+                    val moonPath = Path().apply {
+                        addOval(Rect(center.x - radius * 0.4f, center.y - radius * 0.4f, center.x + radius * 0.4f, center.y + radius * 0.4f))
+                    }
+                    val cutoutPath = Path().apply {
+                        addOval(Rect(center.x - radius * 0.2f, center.y - radius * 0.45f, center.x + radius * 0.6f, center.y + radius * 0.35f))
+                    }
+                    val finalMoon = Path.combine(PathOperation.Difference, moonPath, cutoutPath)
+                    drawPath(
+                        path = finalMoon,
+                        brush = Brush.linearGradient(
+                            colors = listOf(Color(0xFFE2E8F0), Color(0xFF94A3B8)),
+                            start = Offset(center.x - radius * 0.4f, center.y - radius * 0.4f),
+                            end = Offset(center.x + radius * 0.4f, center.y + radius * 0.4f)
+                        )
+                    )
+                }
+            }
+            1, 2, 3 -> { // Cloudy / Partly Cloudy
+                if (code == 1 || code == 2) {
+                    drawCircle(
+                        brush = Brush.linearGradient(
+                            colors = listOf(Color(0xFFFBBF24), Color(0xFFF59E0B))
+                        ),
+                        radius = radius * 0.35f,
+                        center = Offset(center.x - radius * 0.25f, center.y - radius * 0.25f)
+                    )
+                }
+                
+                val cloudBrush = Brush.linearGradient(
+                    colors = if (code == 3) {
+                        listOf(Color(0xFF94A3B8), Color(0xFF475569))
+                    } else {
+                        listOf(Color(0xFFF8FAFC), Color(0xFFCBD5E1))
+                    },
+                    start = Offset(center.x - radius * 0.4f, center.y - radius * 0.2f),
+                    end = Offset(center.x + radius * 0.4f, center.y + radius * 0.4f)
+                )
+
+                drawCircle(cloudBrush, radius * 0.35f, Offset(center.x - radius * 0.25f, center.y + radius * 0.1f))
+                drawCircle(cloudBrush, radius * 0.45f, Offset(center.x + radius * 0.05f, center.y - radius * 0.05f))
+                drawCircle(cloudBrush, radius * 0.3f, Offset(center.x + radius * 0.35f, center.y + radius * 0.15f))
+                drawRoundRect(
+                    brush = cloudBrush,
+                    topLeft = Offset(center.x - radius * 0.4f, center.y + radius * 0.05f),
+                    size = Size(radius * 0.85f, radius * 0.35f),
+                    cornerRadius = CornerRadius(radius * 0.2f)
+                )
+            }
+            45, 48 -> { // Fog
+                val strokeW = radius * 0.1f
+                drawLine(
+                    brush = Brush.linearGradient(colors = listOf(Color(0x3394A3B8), Color(0x9994A3B8), Color(0x3394A3B8))),
+                    start = Offset(center.x - radius * 0.6f, center.y - radius * 0.2f),
+                    end = Offset(center.x + radius * 0.6f, center.y - radius * 0.2f),
+                    strokeWidth = strokeW,
+                    cap = StrokeCap.Round
+                )
+                drawLine(
+                    brush = Brush.linearGradient(colors = listOf(Color(0x33E2E8F0), Color(0xCCE2E8F0), Color(0x33E2E8F0))),
+                    start = Offset(center.x - radius * 0.4f, center.y),
+                    end = Offset(center.x + radius * 0.4f, center.y),
+                    strokeWidth = strokeW,
+                    cap = StrokeCap.Round
+                )
+                drawLine(
+                    brush = Brush.linearGradient(colors = listOf(Color(0x3394A3B8), Color(0x9994A3B8), Color(0x3394A3B8))),
+                    start = Offset(center.x - radius * 0.5f, center.y + radius * 0.2f),
+                    end = Offset(center.x + radius * 0.5f, center.y + radius * 0.2f),
+                    strokeWidth = strokeW,
+                    cap = StrokeCap.Round
+                )
+            }
+            61, 63, 65, 51, 53, 55 -> { // Rain / Drizzle
+                val cloudBrush = Brush.linearGradient(
+                    colors = listOf(Color(0xFF64748B), Color(0xFF334155)),
+                    start = Offset(center.x - radius * 0.4f, center.y - radius * 0.3f),
+                    end = Offset(center.x + radius * 0.4f, center.y + radius * 0.3f)
+                )
+                drawCircle(cloudBrush, radius * 0.3f, Offset(center.x - radius * 0.25f, center.y))
+                drawCircle(cloudBrush, radius * 0.4f, Offset(center.x + radius * 0.05f, center.y - radius * 0.15f))
+                drawCircle(cloudBrush, radius * 0.25f, Offset(center.x + radius * 0.35f, center.y + radius * 0.05f))
+                drawRoundRect(
+                    brush = cloudBrush,
+                    topLeft = Offset(center.x - radius * 0.35f, center.y - radius * 0.05f),
+                    size = Size(radius * 0.75f, radius * 0.3f),
+                    cornerRadius = CornerRadius(radius * 0.15f)
+                )
+                val dropBrush = Brush.linearGradient(colors = listOf(Color(0xFF38BDF8), Color(0x0038BDF8)))
+                val dropW = radius * 0.06f
+                val dropH = radius * 0.25f
+                
+                drawLine(
+                    brush = dropBrush,
+                    start = Offset(center.x - radius * 0.15f, center.y + radius * 0.2f),
+                    end = Offset(center.x - radius * 0.25f, center.y + radius * 0.2f + dropH),
+                    strokeWidth = dropW,
+                    cap = StrokeCap.Round
+                )
+                drawLine(
+                    brush = dropBrush,
+                    start = Offset(center.x + radius * 0.05f, center.y + radius * 0.2f),
+                    end = Offset(center.x - radius * 0.05f, center.y + radius * 0.2f + dropH),
+                    strokeWidth = dropW,
+                    cap = StrokeCap.Round
+                )
+                drawLine(
+                    brush = dropBrush,
+                    start = Offset(center.x + radius * 0.25f, center.y + radius * 0.2f),
+                    end = Offset(center.x + radius * 0.15f, center.y + radius * 0.2f + dropH),
+                    strokeWidth = dropW,
+                    cap = StrokeCap.Round
+                )
+            }
+            95, 96, 99 -> { // Thunderstorm
+                val cloudBrush = Brush.linearGradient(
+                    colors = listOf(Color(0xFF475569), Color(0xFF1E293B))
+                )
+                drawCircle(cloudBrush, radius * 0.3f, Offset(center.x - radius * 0.25f, center.y))
+                drawCircle(cloudBrush, radius * 0.4f, Offset(center.x + radius * 0.05f, center.y - radius * 0.15f))
+                drawCircle(cloudBrush, radius * 0.25f, Offset(center.x + radius * 0.35f, center.y + radius * 0.05f))
+                drawRoundRect(
+                    brush = cloudBrush,
+                    topLeft = Offset(center.x - radius * 0.35f, center.y - radius * 0.05f),
+                    size = Size(radius * 0.75f, radius * 0.3f),
+                    cornerRadius = CornerRadius(radius * 0.15f)
+                )
+                val boltPath = Path().apply {
+                    moveTo(center.x + radius * 0.1f, center.y + radius * 0.1f)
+                    lineTo(center.x - radius * 0.15f, center.y + radius * 0.4f)
+                    lineTo(center.x, center.y + radius * 0.4f)
+                    lineTo(center.x - radius * 0.1f, center.y + radius * 0.7f)
+                    lineTo(center.x + radius * 0.2f, center.y + radius * 0.35f)
+                    lineTo(center.x + radius * 0.05f, center.y + radius * 0.35f)
+                    close()
+                }
+                drawPath(
+                    path = boltPath,
+                    color = Color(0xFFFBBF24)
+                )
+            }
+            else -> { // Default Cloudy
+                val cloudBrush = Brush.linearGradient(
+                    colors = listOf(Color(0xFFE2E8F0), Color(0xFF94A3B8))
+                )
+                drawCircle(cloudBrush, radius * 0.3f, Offset(center.x - radius * 0.25f, center.y))
+                drawCircle(cloudBrush, radius * 0.4f, Offset(center.x + radius * 0.05f, center.y - radius * 0.15f))
+                drawCircle(cloudBrush, radius * 0.25f, Offset(center.x + radius * 0.35f, center.y + radius * 0.05f))
+                drawRoundRect(
+                    brush = cloudBrush,
+                    topLeft = Offset(center.x - radius * 0.35f, center.y - radius * 0.05f),
+                    size = Size(radius * 0.75f, radius * 0.3f),
+                    cornerRadius = CornerRadius(radius * 0.15f)
+                )
+            }
+        }
+    }
 }

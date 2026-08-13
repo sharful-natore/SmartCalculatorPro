@@ -309,6 +309,16 @@ enum class ToolType(
         "Smart Calendar", "স্মার্ট ক্যালেন্ডার",
         "ইংরেজি, বাংলা ও আরবি (হিজরী) ট্রিপল ক্যালেন্ডার",
         ToolCategory.UTILITY, Icons.Default.CalendarMonth
+    ),
+    QR_CODE(
+        "QR Code Scanner & Generator", "কিউআর কোড রিডার ও জেনারেটর",
+        "কিউআর কোড স্ক্যান ও দ্রুত নতুন কিউআর তৈরি করুন",
+        ToolCategory.UTILITY, Icons.Default.QrCode
+    ),
+    PHOTO_LAB(
+        "Smart Photo Lab & BG Remover", "ফটো এডিটর ও বিজি রিমুভার",
+        "ফটো রিসাইজ, ক্রপ, ফরম্যাট কনভার্ট ও ব্যাকগ্রাউন্ড রিমুভ করুন",
+        ToolCategory.UTILITY, Icons.Default.Image
     );
 
     fun getTitle(language: AppLanguage): String {
@@ -363,6 +373,66 @@ enum class ToolType(
                 RANDOM_NUMBER_PICKER -> "Random number generator, dice roller, and coin flipper"
                 MULTI_CALENDAR -> "Gregorian, Bengali, and Hijri multi-calendar"
                 WEATHER -> "Check current weather and 7-day forecast"
+                QR_CODE -> "Scan QR codes with camera or generate custom QR codes instantly"
+                PHOTO_LAB -> "Resize, crop, convert between formats, and remove backgrounds from photos"
+            }
+        }
+    }
+}
+
+data class ChecklistItem(
+    val text: String,
+    val isChecked: Boolean
+) {
+    fun serialize(): String {
+        val safeText = text.replace("::", "_COLON2_").replace("##", "_HASH2_")
+        return "$safeText::$isChecked"
+    }
+    companion object {
+        fun deserialize(str: String): ChecklistItem? {
+            val parts = str.split("::")
+            if (parts.size < 2) return null
+            val restoredText = parts[0].replace("_COLON2_", "::").replace("_HASH2_", "##")
+            return ChecklistItem(restoredText, parts[1].toBoolean())
+        }
+    }
+}
+
+data class ProfessionalNote(
+    val id: String = java.util.UUID.randomUUID().toString(),
+    val title: String = "",
+    val content: String = "",
+    val dateString: String = "",
+    val isChecklist: Boolean = false,
+    val checklistItems: List<ChecklistItem> = emptyList(),
+    val colorIndex: Int = 0,
+    val tag: String = "General"
+) {
+    fun serialize(): String {
+        val safeTitle = title.replace("|||", "_PIPE3_").replace("\n", "_NL_")
+        val safeContent = content.replace("|||", "_PIPE3_").replace("\n", "_NL_")
+        val serializedItems = checklistItems.joinToString("##") { it.serialize() }
+        return "$id|||$safeTitle|||$safeContent|||$dateString|||$isChecklist|||$serializedItems|||$colorIndex|||$tag"
+    }
+
+    companion object {
+        fun deserialize(str: String): ProfessionalNote? {
+            try {
+                val parts = str.split("|||")
+                if (parts.size < 8) return null
+                val id = parts[0]
+                val title = parts[1].replace("_PIPE3_", "|||").replace("_NL_", "\n")
+                val content = parts[2].replace("_PIPE3_", "|||").replace("_NL_", "\n")
+                val dateString = parts[3]
+                val isChecklist = parts[4].toBoolean()
+                val itemsList = if (parts[5].isBlank()) emptyList() else parts[5].split("##").mapNotNull {
+                    ChecklistItem.deserialize(it)
+                }
+                val colorIndex = parts[6].toIntOrNull() ?: 0
+                val tag = parts[7]
+                return ProfessionalNote(id, title, content, dateString, isChecklist, itemsList, colorIndex, tag)
+            } catch (e: Exception) {
+                return null
             }
         }
     }

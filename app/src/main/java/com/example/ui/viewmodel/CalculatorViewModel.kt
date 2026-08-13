@@ -1401,6 +1401,31 @@ How can I help you today?"""
     var favoriteConverters by mutableStateOf(loadFavorites("favorite_converters"))
         private set
 
+    var orderedFavoriteTools by mutableStateOf(loadOrderedFavorites())
+        private set
+
+    fun loadOrderedFavorites(): List<String> {
+        val raw = sharedPrefs.getString("ordered_favorite_tools_list2", "") ?: ""
+        if (raw.isBlank()) {
+            val set = sharedPrefs.getStringSet("favorite_tools", emptySet()) ?: emptySet()
+            if (set.isEmpty()) {
+                return listOf("AGE", "BMI", "DISCOUNT", "WATER_INTAKE")
+            }
+            return set.toList()
+        }
+        return raw.split(",").filter { it.isNotBlank() }
+    }
+
+    fun saveOrderedFavorites(list: List<String>) {
+        orderedFavoriteTools = list
+        val raw = list.joinToString(",")
+        sharedPrefs.edit()
+            .putString("ordered_favorite_tools_list2", raw)
+            .putStringSet("favorite_tools", list.toSet())
+            .apply()
+        favoriteTools = list.toSet()
+    }
+
     var weatherLocation by mutableStateOf(
         let {
             val loc = sharedPrefs.getString("weather_location", "") ?: ""
@@ -1485,12 +1510,14 @@ How can I help you today?"""
                 withContext(Dispatchers.Main) {
                     val msg = e.message ?: "Unknown error"
                     weatherFetchError = if (msg.contains("429")) {
-                        if (selectedLanguage == AppLanguage.BENGALI) "বেশি বার চেষ্টার কারণে আবহাওয়া সার্ভার সাময়িকভাবে বন্ধ আছে।" else "Weather server busy (429). Please try again later."
-                    } else msg
-                    android.util.Log.e("Weather", "Fetch failed: $msg")
-                    if (weatherData == null) {
-                        weatherData = getFallbackWeather()
+                        if (selectedLanguage == AppLanguage.BENGALI) "বেশি বার চেষ্টার কারণে আবহাওয়া সার্ভার সাময়িকভাবে ব্যস্ত রয়েছে (Error 429)।" else "Weather server busy (429). Please try again later."
+                    } else if (msg.contains("Unable to resolve host") || msg.contains("UnknownHostException") || msg.contains("ConnectException")) {
+                        if (selectedLanguage == AppLanguage.BENGALI) "ইন্টারনেট সংযোগ চালু নেই বা নেটওয়ার্ক সংযোগ বিচ্ছিন্ন।" else "No internet connection available."
+                    } else {
+                        if (selectedLanguage == AppLanguage.BENGALI) "আবহাওয়া তথ্য লোড করতে সমস্যা হয়েছে: $msg" else "Failed to fetch weather: $msg"
                     }
+                    android.util.Log.e("Weather", "Fetch failed: $msg")
+                    weatherData = null
                 }
             } finally {
                 weatherIsLoading = false
@@ -1514,6 +1541,11 @@ How can I help you today?"""
                 geocodingIsLoading = false
             }
         }
+    }
+
+    fun loadDemoWeather() {
+        weatherData = getFallbackWeather()
+        weatherFetchError = null
     }
 
     fun clearGeocodingResults() {
@@ -1557,12 +1589,13 @@ How can I help you today?"""
     }
 
     fun toggleFavoriteTool(toolName: String) {
-        favoriteTools = if (favoriteTools.contains(toolName)) {
-            favoriteTools - toolName
+        val currentList = orderedFavoriteTools.toMutableList()
+        if (currentList.contains(toolName)) {
+            currentList.remove(toolName)
         } else {
-            favoriteTools + toolName
+            currentList.add(toolName)
         }
-        sharedPrefs.edit().putStringSet("favorite_tools", favoriteTools).apply()
+        saveOrderedFavorites(currentList)
     }
     
     fun toggleFavoriteConverter(converterName: String) {
@@ -2668,6 +2701,36 @@ How can I help you today?"""
     fun updateApplianceKwhRate(rate: String) {
         applianceKwhRate = rate
         sharedPrefs.edit().putString("custom_appliance_kwh_rate", rate).apply()
+    }
+
+    // --- Professional Quick Notes & Memo State ---
+    var notesListString by mutableStateOf(sharedPrefs.getString("professional_notes_list_v2", "") ?: "")
+
+    fun getSavedNotes(): List<com.example.data.model.ProfessionalNote> {
+        if (notesListString.isBlank()) return emptyList()
+        return notesListString.split("[NOTE_SEPARATOR]").mapNotNull {
+            com.example.data.model.ProfessionalNote.deserialize(it)
+        }
+    }
+
+    fun saveNote(note: com.example.data.model.ProfessionalNote) {
+        val current = getSavedNotes().toMutableList()
+        val index = current.indexOfFirst { it.id == note.id }
+        if (index >= 0) {
+            current[index] = note
+        } else {
+            current.add(0, note)
+        }
+        val serialized = current.joinToString("[NOTE_SEPARATOR]") { it.serialize() }
+        notesListString = serialized
+        sharedPrefs.edit().putString("professional_notes_list_v2", serialized).apply()
+    }
+
+    fun deleteNote(noteId: String) {
+        val current = getSavedNotes().filter { it.id != noteId }
+        val serialized = current.joinToString("[NOTE_SEPARATOR]") { it.serialize() }
+        notesListString = serialized
+        sharedPrefs.edit().putString("professional_notes_list_v2", serialized).apply()
     }
 
     // --- Smart Voice Command Processor ---

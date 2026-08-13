@@ -20,8 +20,46 @@ object LanguageManager {
     fun getString(key: String, language: AppLanguage): String {
         val isBn = language == AppLanguage.BENGALI
         return when (key) {
-            "title_calculator" -> if (isBn) "ক্ালকুলেটর" else "Calculator"
-            "title_converter" -> if (isBn) "কনভার্টর" else "Converter"
+            "title_calculator" -> when (language) {
+                AppLanguage.ENGLISH -> "Calculator"
+                AppLanguage.BENGALI -> "ক্যালকুলেটর"
+                AppLanguage.HINDI -> "कैलकुलेटर"
+                AppLanguage.ARABIC -> "الحاسبة"
+                AppLanguage.FRENCH -> "Calculatrice"
+                AppLanguage.SPANISH -> "Calculadora"
+                AppLanguage.GERMAN -> "Rechner"
+                AppLanguage.CHINESE -> "计算器"
+            }
+            "title_converter" -> when (language) {
+                AppLanguage.ENGLISH -> "Unit Converter"
+                AppLanguage.BENGALI -> "ইউনিট কনভার্টার"
+                AppLanguage.HINDI -> "इकाई कनवर्टर"
+                AppLanguage.ARABIC -> "محول الوحدات"
+                AppLanguage.FRENCH -> "Convertisseur d'unités"
+                AppLanguage.SPANISH -> "Convertidor de unidades"
+                AppLanguage.GERMAN -> "Einheitenumrechner"
+                AppLanguage.CHINESE -> "单位转换器"
+            }
+            "title_history" -> when (language) {
+                AppLanguage.ENGLISH -> "Calculation History"
+                AppLanguage.BENGALI -> "হিসাবের ইতিহাস"
+                AppLanguage.HINDI -> "गणना इतिहास"
+                AppLanguage.ARABIC -> "سجل الحسابات"
+                AppLanguage.FRENCH -> "Historique des calculs"
+                AppLanguage.SPANISH -> "Historial de cálculos"
+                AppLanguage.GERMAN -> "Berechnungsverlauf"
+                AppLanguage.CHINESE -> "计算历史"
+            }
+            "title_dashboard" -> when (language) {
+                AppLanguage.ENGLISH -> "ToolsMate Dashboard"
+                AppLanguage.BENGALI -> "টুলসমেট ড্যাশবোর্ড"
+                AppLanguage.HINDI -> "टूलमेट डैशबोर्ड"
+                AppLanguage.ARABIC -> "لوحة تحكم ToolsMate"
+                AppLanguage.FRENCH -> "Tableau de bord ToolsMate"
+                AppLanguage.SPANISH -> "Panel de ToolsMate"
+                AppLanguage.GERMAN -> "ToolsMate Dashboard"
+                AppLanguage.CHINESE -> "ToolsMate 仪表板"
+            }
             "app_title_dashboard" -> when (language) {
                 AppLanguage.ENGLISH -> "ToolsMate Dashboard"
                 AppLanguage.BENGALI -> "টুলসমেট ড্যাশবোর্ড"

@@ -23,6 +23,8 @@ import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.ExperimentalFoundationApi
 
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -93,6 +95,7 @@ fun DashboardScreen(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DashboardCategoriesView(
     viewModel: CalculatorViewModel,
@@ -167,6 +170,8 @@ fun DashboardCategoriesView(
     val selectedFilter = viewModel.selectedToolCategoryFilter
     var showWeatherDialog by remember { mutableStateOf(false) }
     var unfavoriteConfirmTool by remember { mutableStateOf<ToolType?>(null) }
+    var showAllFeaturedDialog by remember { mutableStateOf(false) }
+    var selectedToolForOptions by remember { mutableStateOf<ToolType?>(null) }
 
     val context = LocalContext.current
     val speechLauncher = rememberLauncherForActivityResult(
@@ -220,7 +225,7 @@ fun DashboardCategoriesView(
                 in 12..15 -> Pair(if (isBn) "শুভ দুপুর" else "Good Afternoon", Icons.Default.WbSunny)
                 in 16..17 -> Pair(if (isBn) "শুভ বিকেল" else "Good Afternoon", Icons.Default.WbTwilight)
                 in 18..20 -> Pair(if (isBn) "শুভ সন্ধ্যা" else "Good Evening", Icons.Default.WbTwilight)
-                else -> Pair(if (isBn) "শুভ রাত্রি" else "Good Night", Icons.Default.NightsStay)
+                else -> Pair(if (isBn) "শুভ রাত্রি" else "Good Night", Icons.Default.Bedtime)
             }
         }
 
@@ -250,7 +255,7 @@ fun DashboardCategoriesView(
             val code = viewModel.weatherData!!.current.weather_code
             val isDay = viewModel.weatherData!!.current.is_day == 1
             when (code) {
-                0 -> if (isDay) Icons.Default.WbSunny else Icons.Default.NightsStay
+                0 -> if (isDay) Icons.Default.WbSunny else Icons.Default.Bedtime
                 1, 2, 3 -> Icons.Default.Cloud
                 61, 63, 65, 51, 53, 55 -> Icons.Default.WaterDrop
                 95, 96, 99 -> Icons.Default.Thunderstorm
@@ -260,141 +265,174 @@ fun DashboardCategoriesView(
             Icons.Default.Cloud
         }
 
-        Card(
+        val weatherLocationName = viewModel.weatherLocation.ifBlank { "Natore" }
+        val weatherTempText = if (viewModel.weatherData != null) {
+            "${viewModel.weatherData!!.current.temperature_2m.toInt()}°${if (isBn) "সে." else "C"}"
+        } else {
+            "30°${if (isBn) "সে." else "C"}"
+        }
+        val weatherConditionText = if (viewModel.weatherData != null) {
+            val current = viewModel.weatherData!!.current
+            when (current.weather_code) {
+                0 -> if (isBn) "পরিষ্কার" else "Clear"
+                1, 2, 3 -> if (isBn) "আংশিক মেঘলা" else "Partly Cloudy"
+                45, 48 -> if (isBn) "কুয়াশা" else "Fog"
+                51, 53, 55 -> if (isBn) "গুঁড়ি গুঁড়ি বৃষ্টি" else "Drizzle"
+                61, 63, 65 -> if (isBn) "বৃষ্টি" else "Rain"
+                71, 73, 75 -> if (isBn) "তুষারপাত" else "Snow"
+                95, 96, 99 -> if (isBn) "বজ্রবৃষ্টি" else "Thunderstorm"
+                else -> if (isBn) "আংশিক মেঘলা" else "Partly Cloudy"
+            }
+        } else {
+            if (isBn) "আংশিক মেঘলা" else "Partly Cloudy"
+        }
+
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 12.dp)
-                .themeCardShadow(themeColors, elevation = 1.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                .padding(bottom = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Column(modifier = Modifier.padding(14.dp)) {
-                // Header Row: Greeting Title & Weather Widget
-                val weatherLocationName = viewModel.weatherLocation.ifBlank { "Natore" }
-                val weatherTempText = if (viewModel.weatherData != null) {
-                    "${viewModel.weatherData!!.current.temperature_2m.toInt()}°${if (isBn) "সে." else "C"}"
-                } else {
-                    "36.5°${if (isBn) "সে." else "C"}"
-                }
-                val weatherConditionText = if (viewModel.weatherData != null) {
-                    val current = viewModel.weatherData!!.current
-                    when (current.weather_code) {
-                        0 -> if (isBn) "পরিষ্কার" else "Clear"
-                        1, 2, 3 -> if (isBn) "আংশিক মেঘলা" else "Partly Cloudy"
-                        45, 48 -> if (isBn) "কুয়াশা" else "Fog"
-                        51, 53, 55 -> if (isBn) "গুঁড়ি গুঁড়ি বৃষ্টি" else "Drizzle"
-                        61, 63, 65 -> if (isBn) "বৃষ্টি" else "Rain"
-                        71, 73, 75 -> if (isBn) "তুষারপাত" else "Snow"
-                        95, 96, 99 -> if (isBn) "বজ্রবৃষ্টি" else "Thunderstorm"
-                        else -> if (isBn) "আংশিক মেঘলা" else "Partly Cloudy"
-                    }
-                } else {
-                    if (isBn) "আংশিক মেঘলা" else "Partly Cloudy"
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Top
+            // Left Card: Greeting Title & English Date
+            Card(
+                modifier = Modifier
+                    .weight(1.05f)
+                    .themeCardShadow(themeColors, elevation = 1.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Start
+                    ) {
                         Icon(
                             imageVector = greetingIcon,
                             contentDescription = "Greeting",
                             tint = themeColors.buttonEqualBg,
-                            modifier = Modifier.size(22.dp)
+                            modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             text = greetingText,
                             fontWeight = FontWeight.ExtraBold,
-                            fontSize = 18.sp,
+                            fontSize = 15.sp,
                             color = themeColors.displayText
                         )
                     }
+                    Text(
+                        text = "${dateInfo.englishDayName}, ${dateInfo.englishDate}",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.displayText.copy(alpha = 0.8f),
+                        lineHeight = 15.sp
+                    )
+                }
+            }
 
-                    // Weather Info Widget matching Image 1
-                    Column(
-                        horizontalAlignment = Alignment.End,
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(10.dp))
-                            .clickable { viewModel.openTool(ToolType.WEATHER) }
-                            .padding(vertical = 2.dp, horizontal = 4.dp)
+            // Right Card: Weather Info (Clickable)
+            Card(
+                modifier = Modifier
+                    .weight(0.95f)
+                    .themeCardShadow(themeColors, elevation = 1.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { viewModel.openTool(ToolType.WEATHER) }
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Start
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = "$weatherLocationName • $weatherTempText",
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = themeColors.buttonEqualBg
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Icon(
-                                imageVector = weatherIcon,
-                                contentDescription = "Weather",
-                                tint = themeColors.buttonEqualBg,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
                         Text(
-                            text = weatherConditionText,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = themeColors.buttonEqualBg.copy(alpha = 0.9f)
+                            text = "$weatherLocationName • $weatherTempText",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = themeColors.buttonEqualBg,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            imageVector = weatherIcon,
+                            contentDescription = "Weather",
+                            tint = themeColors.buttonEqualBg,
+                            modifier = Modifier.size(16.dp)
                         )
                     }
+                    Text(
+                        text = weatherConditionText,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = themeColors.buttonEqualBg.copy(alpha = 0.9f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+        }
+
+        // Sub-row Badges with Icons for Bengali (Left) and Hijri Dates (Right)
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 12.dp)
+                .themeCardShadow(themeColors, elevation = 1.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Bengali Date (Left Aligned)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.WbSunny,
+                        contentDescription = "Bengali Calendar",
+                        tint = Color(0xFF10B981),
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = dateInfo.bengaliDate,
+                        fontSize = 11.sp,
+                        color = themeColors.displayText.copy(alpha = 0.8f),
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Date Display
-                Text(
-                    text = "${dateInfo.englishDayName}, ${dateInfo.englishDate}",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = themeColors.displayText.copy(alpha = 0.95f)
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // Sub-row Badges with Colored Dots matching Image 1
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(10.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFF10B981))
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = dateInfo.bengaliDate,
-                            fontSize = 12.sp,
-                            color = themeColors.displayText.copy(alpha = 0.85f),
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(10.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFFF59E0B))
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = dateInfo.hijriDate,
-                            fontSize = 12.sp,
-                            color = themeColors.displayText.copy(alpha = 0.85f),
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
+                // Hijri/Arabic Date (Right Aligned)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Bedtime,
+                        contentDescription = "Hijri Calendar",
+                        tint = Color(0xFFF59E0B),
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = dateInfo.hijriDate,
+                        fontSize = 11.sp,
+                        color = themeColors.displayText.copy(alpha = 0.8f),
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
             }
         }
@@ -678,31 +716,35 @@ fun DashboardCategoriesView(
                 fontWeight = FontWeight.ExtraBold,
                 color = themeColors.displayText
             )
-            Text(
-                text = "🔥 Custom",
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                color = themeColors.buttonEqualBg,
+            Row(
                 modifier = Modifier
                     .clip(RoundedCornerShape(8.dp))
-                    .background(themeColors.buttonEqualBg.copy(alpha = 0.1f))
-                    .padding(horizontal = 8.dp, vertical = 3.dp)
-            )
+                    .background(themeColors.buttonEqualBg.copy(alpha = 0.12f))
+                    .clickable { showAllFeaturedDialog = true }
+                    .padding(horizontal = 10.dp, vertical = 5.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Visibility,
+                    contentDescription = null,
+                    tint = themeColors.buttonEqualBg,
+                    modifier = Modifier.size(13.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = if (isBn) "সব দেখুন" else "View All",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = themeColors.buttonEqualBg
+                )
+            }
         }
 
         // Horizontal Scroll Layout for the Combined Featured & Favorite Tools
-        val combinedList = remember(viewModel.favoriteTools) {
-            val favs = viewModel.favoriteTools.mapNotNull { name ->
+        val combinedList = remember(viewModel.orderedFavoriteTools) {
+            viewModel.orderedFavoriteTools.mapNotNull { name ->
                 try { ToolType.valueOf(name) } catch (e: Exception) { null }
-            }
-            val defaultFeatured = listOf(
-                ToolType.AGE,
-                ToolType.BMI,
-                ToolType.DISCOUNT,
-                ToolType.EMI_LOAN,
-                ToolType.WATER_INTAKE
-            )
-            (favs + defaultFeatured).distinct()
+            }.distinct()
         }
 
         Row(
@@ -714,14 +756,20 @@ fun DashboardCategoriesView(
         ) {
             combinedList.forEach { tool ->
                 val isFavorited = viewModel.favoriteTools.contains(tool.name)
+                val interactionSource = remember { MutableInteractionSource() }
                 Box(
                     modifier = Modifier.width(130.dp)
                 ) {
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { viewModel.openTool(tool) }
-                            .themeCardShadow(themeColors, elevation = 1.dp),
+                            .themeCardShadow(themeColors, elevation = 1.dp)
+                            .combinedClickable(
+                                interactionSource = interactionSource,
+                                indication = androidx.compose.foundation.LocalIndication.current,
+                                onClick = { viewModel.openTool(tool) },
+                                onLongClick = { selectedToolForOptions = tool }
+                            ),
                         shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
                     ) {
@@ -733,7 +781,7 @@ fun DashboardCategoriesView(
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(44.dp)
+                                    .size(48.dp)
                                     .clip(CircleShape)
                                     .background(themeColors.buttonEqualBg),
                                 contentAlignment = Alignment.Center
@@ -742,7 +790,7 @@ fun DashboardCategoriesView(
                                     imageVector = tool.icon,
                                     contentDescription = tool.titleEn,
                                     tint = androidx.compose.ui.graphics.Color.White,
-                                    modifier = Modifier.size(22.dp)
+                                    modifier = Modifier.size(24.dp)
                                 )
                             }
                             Spacer(modifier = Modifier.height(8.dp))
@@ -773,13 +821,13 @@ fun DashboardCategoriesView(
                                 .padding(top = 4.dp, end = 4.dp)
                         ) {
                             IconButton(
-                                onClick = { unfavoriteConfirmTool = tool },
+                                onClick = { selectedToolForOptions = tool },
                                 modifier = Modifier.size(28.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Favorite,
                                     contentDescription = "Unfavorite",
-                                    tint = Color(0xFFE91E63),
+                                    tint = themeColors.buttonEqualBg,
                                     modifier = Modifier.size(18.dp)
                                 )
                             }
@@ -787,6 +835,248 @@ fun DashboardCategoriesView(
                     }
                 }
             }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // View All / সব দেখুন Dialog
+        if (showAllFeaturedDialog) {
+            AlertDialog(
+                onDismissRequest = { showAllFeaturedDialog = false },
+                title = {
+                    Text(
+                        text = if (isBn) "ফিচার্ড ও ফেভারিট টুলস" else "Featured & Favorite Tools",
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 18.sp,
+                        color = themeColors.displayText
+                    )
+                },
+                text = {
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = if (isBn) 
+                                "কার্ডে লং প্রেস করে রিমুভ করুন অথবা অর্ডার পরিবর্তন করুন।" 
+                            else 
+                                "Long press on any card to remove it or change its order.",
+                            fontSize = 12.sp,
+                            color = themeColors.displayText.copy(alpha = 0.7f),
+                            modifier = Modifier.padding(bottom = 12.dp)
+                        )
+                        
+                        val chunked = combinedList.chunked(2)
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 380.dp)
+                                .verticalScroll(rememberScrollState())
+                        ) {
+                            chunked.forEach { rowItems ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    rowItems.forEach { tool ->
+                                        val isFav = viewModel.favoriteTools.contains(tool.name)
+                                        Card(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .themeCardShadow(themeColors, elevation = 1.dp)
+                                                .combinedClickable(
+                                                    onClick = { 
+                                                        showAllFeaturedDialog = false
+                                                        viewModel.openTool(tool) 
+                                                    },
+                                                    onLongClick = {
+                                                        selectedToolForOptions = tool
+                                                    }
+                                                ),
+                                            shape = RoundedCornerShape(12.dp),
+                                            colors = CardDefaults.cardColors(containerColor = themeColors.cardBg)
+                                        ) {
+                                            Column(
+                                                modifier = Modifier
+                                                    .padding(10.dp)
+                                                    .fillMaxWidth(),
+                                                horizontalAlignment = Alignment.CenterHorizontally
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(40.dp)
+                                                        .clip(CircleShape)
+                                                        .background(themeColors.buttonEqualBg),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Icon(
+                                                        imageVector = tool.icon,
+                                                        contentDescription = null,
+                                                        tint = Color.White,
+                                                        modifier = Modifier.size(20.dp)
+                                                    )
+                                                }
+                                                Spacer(modifier = Modifier.height(6.dp))
+                                                Text(
+                                                    text = if (isBn) tool.titleBn else tool.titleEn,
+                                                    fontSize = 11.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = themeColors.displayText,
+                                                    textAlign = TextAlign.Center,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                                Spacer(modifier = Modifier.height(2.dp))
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.Center
+                                                ) {
+                                                    Icon(
+                                                        imageVector = if (isFav) Icons.Default.Favorite else Icons.Default.Star,
+                                                        contentDescription = null,
+                                                        tint = themeColors.buttonEqualBg,
+                                                        modifier = Modifier.size(12.dp)
+                                                    )
+                                                    Spacer(modifier = Modifier.width(3.dp))
+                                                    Text(
+                                                        text = if (isBn) "অপশন" else "Options",
+                                                        fontSize = 9.sp,
+                                                        color = themeColors.displayText.copy(alpha = 0.5f)
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                    if (rowItems.size < 2) {
+                                        Spacer(modifier = Modifier.weight(1f))
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showAllFeaturedDialog = false }) {
+                        Text(
+                            text = if (isBn) "বন্ধ করুন" else "Close",
+                            color = themeColors.buttonEqualBg,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                },
+                containerColor = themeColors.background
+            )
+        }
+
+        // Long Press / Reorder Option Dialog
+        if (selectedToolForOptions != null) {
+            val tool = selectedToolForOptions!!
+            val index = combinedList.indexOf(tool)
+            AlertDialog(
+                onDismissRequest = { selectedToolForOptions = null },
+                title = {
+                    Text(
+                        text = if (isBn) tool.titleBn else tool.titleEn,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.displayText
+                    )
+                },
+                text = {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = if (isBn) "আপনি কি করতে চান?" else "What would you like to do?",
+                            fontSize = 13.sp,
+                            color = themeColors.displayText.copy(alpha = 0.7f)
+                        )
+                        
+                        // Move Left button (if index > 0)
+                        if (index > 0) {
+                            Button(
+                                onClick = {
+                                    val newList = viewModel.orderedFavoriteTools.toMutableList()
+                                    val item = newList.removeAt(index)
+                                    newList.add(index - 1, item)
+                                    viewModel.saveOrderedFavorites(newList)
+                                    selectedToolForOptions = null
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = themeColors.buttonEqualBg.copy(alpha = 0.15f),
+                                    contentColor = themeColors.buttonEqualBg
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ArrowBack,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(text = if (isBn) "বামে সরান" else "Move Left")
+                            }
+                        }
+
+                        // Move Right button (if index < combinedList.size - 1)
+                        if (index < combinedList.size - 1 && index >= 0) {
+                            Button(
+                                onClick = {
+                                    val newList = viewModel.orderedFavoriteTools.toMutableList()
+                                    val item = newList.removeAt(index)
+                                    newList.add(index + 1, item)
+                                    viewModel.saveOrderedFavorites(newList)
+                                    selectedToolForOptions = null
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = themeColors.buttonEqualBg.copy(alpha = 0.15f),
+                                    contentColor = themeColors.buttonEqualBg
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ArrowForward,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(text = if (isBn) "ডানে সরান" else "Move Right")
+                            }
+                        }
+
+                        // Remove from Favorite/Featured
+                        Button(
+                            onClick = {
+                                viewModel.toggleFavoriteTool(tool.name)
+                                selectedToolForOptions = null
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = themeColors.buttonEqualBg,
+                                contentColor = Color.White
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = if (isBn) "রিমুভ করুন" else "Remove")
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { selectedToolForOptions = null }) {
+                        Text(
+                            text = if (isBn) "বাতিল" else "Cancel",
+                            color = themeColors.buttonEqualBg
+                        )
+                    }
+                },
+                containerColor = themeColors.background
+            )
         }
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -946,6 +1236,7 @@ fun ToolFilterChipItem(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ToolGridCardItem(
     toolType: ToolType,
@@ -955,14 +1246,21 @@ fun ToolGridCardItem(
     onClick: () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
+    val isFavorite = viewModel.favoriteTools.contains(toolType.name)
     ElevatedCard(
-        onClick = onClick,
-        interactionSource = interactionSource,
         modifier = modifier
             .fillMaxWidth()
             .testTag("tool_card_${toolType.name.lowercase()}")
             .scaleOnPress(interactionSource)
-            .themeCardShadow(themeColors, elevation = 1.dp),
+            .themeCardShadow(themeColors, elevation = 1.dp)
+            .combinedClickable(
+                interactionSource = interactionSource,
+                indication = androidx.compose.foundation.LocalIndication.current,
+                onClick = onClick,
+                onLongClick = {
+                    viewModel.toggleFavoriteTool(toolType.name)
+                }
+            ),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.elevatedCardColors(
             containerColor = themeColors.cardBg
@@ -981,19 +1279,18 @@ fun ToolGridCardItem(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(38.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(themeColors.buttonEqualBg.copy(alpha = 0.12f)),
+                            .size(42.dp)
+                            .clip(CircleShape)
+                            .background(themeColors.buttonEqualBg),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = toolType.icon,
                             contentDescription = toolType.getTitle(viewModel.selectedLanguage),
-                            tint = themeColors.buttonEqualBg,
-                            modifier = Modifier.size(20.dp)
+                            tint = Color.White,
+                            modifier = Modifier.size(22.dp)
                         )
                     }
-                    val isFavorite = viewModel.favoriteTools.contains(toolType.name)
                     IconButton(
                         onClick = { viewModel.toggleFavoriteTool(toolType.name) },
                         modifier = Modifier.size(28.dp)
@@ -1001,7 +1298,7 @@ fun ToolGridCardItem(
                         Icon(
                             imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                             contentDescription = "Favorite",
-                            tint = if (isFavorite) Color.Red.copy(alpha = 0.8f) else themeColors.displayText.copy(alpha = 0.3f),
+                            tint = if (isFavorite) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.3f),
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -1098,14 +1395,20 @@ fun ToolDetailView(
         }
     }
 
+    val baseModifier = Modifier
+        .fillMaxSize()
+        .background(themeColors.background)
+        .nestedScroll(nestedScrollConnection)
+        .offset { IntOffset(0, bounceAnimatable.value.roundToInt()) }
+    
+    val finalModifier = if (toolType != com.example.data.model.ToolType.WEATHER) {
+        baseModifier.verticalScroll(scrollState)
+    } else {
+        baseModifier
+    }
+
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(themeColors.background)
-            .nestedScroll(nestedScrollConnection)
-            .offset { IntOffset(0, bounceAnimatable.value.roundToInt()) }
-            .verticalScroll(scrollState, enabled = toolType != com.example.data.model.ToolType.WEATHER)
-            .padding(horizontal = 16.dp, vertical = 12.dp)
+        modifier = finalModifier.padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
         // Back Header
         Row(
@@ -1237,6 +1540,8 @@ fun ToolDetailView(
             ToolType.ASPECT_RATIO -> AspectRatioCard(viewModel, themeColors)
             ToolType.RANDOM_NUMBER_PICKER -> RandomPickerCard(viewModel, themeColors)
             ToolType.MULTI_CALENDAR -> MultiCalendarCard(viewModel, themeColors)
+            ToolType.QR_CODE -> QrCodeCard(viewModel, themeColors)
+            ToolType.PHOTO_LAB -> PhotoLabCard(viewModel, themeColors)
             ToolType.WEATHER -> DynamicWeatherScreen(viewModel, themeColors, isBn = viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI)
         }
     }

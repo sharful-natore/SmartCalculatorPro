@@ -23,6 +23,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -400,6 +402,7 @@ fun FilterChipItem(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ConverterCardItem(
     converterType: ConverterType,
@@ -409,14 +412,21 @@ fun ConverterCardItem(
     onClick: () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
+    val isFavorite = viewModel.favoriteConverters.contains(converterType.name)
     ElevatedCard(
-        onClick = onClick,
-        interactionSource = interactionSource,
         modifier = modifier
             .fillMaxWidth()
             .testTag("card_${converterType.name.lowercase()}")
             .scaleOnPress(interactionSource)
-            .themeCardShadow(themeColors, elevation = 1.dp),
+            .themeCardShadow(themeColors, elevation = 1.dp)
+            .combinedClickable(
+                interactionSource = interactionSource,
+                indication = androidx.compose.foundation.LocalIndication.current,
+                onClick = onClick,
+                onLongClick = {
+                    viewModel.toggleFavoriteConverter(converterType.name)
+                }
+            ),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.elevatedCardColors(
             containerColor = themeColors.cardBg
@@ -447,7 +457,6 @@ fun ConverterCardItem(
                             modifier = Modifier.size(20.dp)
                         )
                     }
-                    val isFavorite = viewModel.favoriteConverters.contains(converterType.name)
                     IconButton(
                         onClick = { viewModel.toggleFavoriteConverter(converterType.name) },
                         modifier = Modifier.size(28.dp)
@@ -455,7 +464,7 @@ fun ConverterCardItem(
                         Icon(
                             imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                             contentDescription = "Favorite",
-                            tint = if (isFavorite) Color.Red.copy(alpha = 0.8f) else themeColors.displayText.copy(alpha = 0.3f),
+                            tint = if (isFavorite) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.3f),
                             modifier = Modifier.size(20.dp)
                         )
                     }

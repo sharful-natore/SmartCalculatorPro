@@ -244,8 +244,8 @@ fun MainContent(
 
     // Sync pagerState -> viewModel.activeTab when user swipes
     LaunchedEffect(pagerState) {
-        snapshotFlow { pagerState.settledPage }.collect { page ->
-            if (viewModel.activeTab != page && viewModel.activeTab in 0..3) {
+        snapshotFlow { pagerState.settledPage to pagerState.isScrollInProgress }.collect { (page, isScrolling) ->
+            if (!isScrolling && viewModel.activeTab != page && viewModel.activeTab in 0..3) {
                 viewModel.activeTab = page
             }
         }
@@ -254,7 +254,10 @@ fun MainContent(
     // Sync viewModel.activeTab -> pagerState when tab is changed via bottom nav or buttons
     LaunchedEffect(viewModel.activeTab) {
         if (viewModel.activeTab in 0..3 && pagerState.currentPage != viewModel.activeTab) {
-            pagerState.animateScrollToPage(viewModel.activeTab)
+            pagerState.animateScrollToPage(
+                page = viewModel.activeTab,
+                animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing)
+            )
         }
     }
 
@@ -772,20 +775,39 @@ fun MainContent(
                 .padding(innerPadding)
                 .consumeWindowInsets(innerPadding)
         ) {
-            if (viewModel.activeTab == 4) {
-                VisualThemesScreen(viewModel, themeColors)
-            } else {
-                HorizontalPager(
-                    state = pagerState,
-                    modifier = Modifier.fillMaxSize(),
-                    userScrollEnabled = true
-                ) { page ->
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        when (page) {
-                            0 -> DashboardScreen(viewModel, themeColors)
-                            1 -> SmartConverterScreen(viewModel, themeColors)
-                            2 -> CalculatorScreen(viewModel, themeColors)
-                            3 -> HistoryLogsScreen(viewModel, themeColors)
+            AnimatedContent(
+                targetState = viewModel.activeTab == 4,
+                transitionSpec = {
+                    fadeIn(animationSpec = tween(280)) togetherWith fadeOut(animationSpec = tween(220))
+                },
+                label = "ThemeScreenTransition"
+            ) { isThemeTab ->
+                if (isThemeTab) {
+                    VisualThemesScreen(viewModel, themeColors)
+                } else {
+                    HorizontalPager(
+                        state = pagerState,
+                        modifier = Modifier.fillMaxSize(),
+                        userScrollEnabled = true
+                    ) { page ->
+                        val pageOffset = (pagerState.currentPage - page) + pagerState.currentPageOffsetFraction
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .graphicsLayer {
+                                    val alphaFactor = 1f - (kotlin.math.abs(pageOffset) * 0.35f).coerceIn(0f, 0.7f)
+                                    alpha = alphaFactor
+                                    val scaleFactor = 1f - (kotlin.math.abs(pageOffset) * 0.04f).coerceIn(0f, 0.08f)
+                                    scaleX = scaleFactor
+                                    scaleY = scaleFactor
+                                }
+                        ) {
+                            when (page) {
+                                0 -> DashboardScreen(viewModel, themeColors)
+                                1 -> SmartConverterScreen(viewModel, themeColors)
+                                2 -> CalculatorScreen(viewModel, themeColors)
+                                3 -> HistoryLogsScreen(viewModel, themeColors)
+                            }
                         }
                     }
                 }
