@@ -1284,46 +1284,38 @@ private fun getConverterInfoItems(converterType: ConverterType, isBn: Boolean): 
         }
         ConverterType.FORCE -> if (isBn) {
             listOf(
-                "১. বল রূপান্তর" to "যা কোনো স্থির বস্তুকে গতিশীল করে বা গতির পরিবর্তন ঘটায় তাকে বল বলে। এসআই একক হলো নিউটন।",
-                "২. দৈনন্দিন ব্যবহার" to "ওজন এক প্রকার বল, যা পৃথিবীর মহাকর্ষের কারণে কাজ করে। ১ কেজি ভর প্রায় ৯.৮ নিউটন বল তৈরি করে।"
+                "১. বল রূপান্তর" to "যা কোনো স্থির বস্তুকে গতিশীল করে বা গতির পরিবর্তন ঘটায় তাকে বল বলে। এসআই একক হলো নিউটন।"
             )
         } else {
             listOf(
-                "1. Force Conversion" to "Force is an influence that changes the motion of an object. Standard SI unit is Newton, alongside Dyne and Pound-force.",
-                "2. Gravity & Weight" to "Weight is a type of force. On Earth, 1 Kilogram of mass exerts approximately 9.8 Newtons of downward force."
+                "1. Force Conversion" to "Force is an influence that changes the motion of an object. Standard SI unit is Newton, alongside Dyne and Pound-force."
             )
         }
         ConverterType.TORQUE -> if (isBn) {
             listOf(
-                "১. টর্ক রূপান্তর" to "কোনো বস্তুকে অক্ষের চারদিকে ঘোরাতে যে বল প্রয়োগ করতে হয় তাকে টর্ক বলে। গাড়ি ও ইঞ্জিনের শক্তিতে এটি গুরুত্বপূর্ণ।",
-                "২. এককসমূহ" to "নিউটিন-মিটার (N.m) এবং পাউন্ড-ফুট (lb.ft) হলো টর্কের প্রধান একক।"
+                "১. টর্ক রূপান্তর" to "কোনো বস্তুকে অক্ষের চারদিকে ঘোরাতে যে বল প্রয়োগ করতে হয় তাকে টর্ক বলে। গাড়ি ও ইঞ্জিনের শক্তিতে এটি গুরুত্বপূর্ণ।"
             )
         } else {
             listOf(
-                "1. Torque Conversion" to "Torque measures the rotational force acting on an object. Common units are Newton-meter and Pound-foot.",
-                "2. Engine Specs" to "Torque defines a vehicle's pulling power. Higher torque helps in quick acceleration and carrying heavy loads."
+                "1. Torque Conversion" to "Torque measures the rotational force acting on an object. Common units are Newton-meter and Pound-foot."
             )
         }
         ConverterType.DENSITY -> if (isBn) {
             listOf(
-                "১. ঘনত্ব রূপান্তর" to "ঘনত্ব হলো কোনো পদার্থের একক আয়তনের ভর। বহুল ব্যবহৃত একক হলো কেজি/ঘনমিটার বা গ্রাম/ঘনসেন্টিমিটার।",
-                "২. পানির ঘনত্ব" to "পানির ঘনত্ব সাধারণত ১০০০ কেজি/মি³ বা ১ গ্রাম/সেমি³।"
+                "১. ঘনত্ব রূপান্তর" to "ঘনত্ব হলো কোনো পদার্থের একক আয়তনের ভর। বহুল ব্যবহৃত একক হলো কেজি/ঘনমিটার বা গ্রাম/ঘনসেন্টিমিটার।"
             )
         } else {
             listOf(
-                "1. Density Conversion" to "Density measures mass per unit volume of a substance. Commonly written in kg/m³ or g/cm³.",
-                "2. Reference Point" to "Pure water has a density of 1000 kg/m³ or 1 g/cm³. Objects denser than water will sink, while less dense objects float."
+                "1. Density Conversion" to "Density measures mass per unit volume of a substance. Commonly written in kg/m³ or g/cm³."
             )
         }
         ConverterType.ANGLE -> if (isBn) {
             listOf(
-                "১. কোণ রূপান্তর" to "কোণ পরিমাপের প্রধান একক দুটি হলো ডিগ্রি ও রেডিয়ান। সম্পূর্ণ বৃত্তের কোণ হলো ৩৬০ ডিগ্রি বা ২π রেডিয়ান।",
-                "২. গ্র্যাডিয়ান" to "এটি আরেকটি একক যেখানে ১ পূর্ণ আবর্তন হলো ৪০০ গ্র্যাডিয়ান।"
+                "১. কোণ রূপান্তর" to "কোণ পরিমাপের প্রধান একক দুটি হলো ডিগ্রি ও রেডিয়ান। সম্পূর্ণ বৃত্তের কোণ হলো ৩৬০ ডিগ্রি বা ২π রেডিয়ান।"
             )
         } else {
             listOf(
-                "1. Angle Conversion" to "Angles are measured in Degrees (360° for a full circle) or Radians (2π for a full circle) used in trigonometry.",
-                "2. Gradians" to "A metric unit of angle measurement where a full turn is divided into 400 grads."
+                "1. Angle Conversion" to "Angles are measured in Degrees (360° for a full circle) or Radians (2π for a full circle) used in trigonometry."
             )
         }
         ConverterType.DIGITAL_STORAGE -> if (isBn) {
@@ -1350,145 +1342,119 @@ private fun getConverterInfoItems(converterType: ConverterType, isBn: Boolean): 
         }
         ConverterType.FREQUENCY -> if (isBn) {
             listOf(
-                "১. ফ্রিকোয়েন্সি রূপান্তর" to "প্রতি সেকেন্ডে কোনো তরঙ্গের পূর্ণ কম্পন সংখ্যাকে ফ্রিকোয়েন্সি বা কম্পাঙ্ক বলে। এর একক হলো হার্টজ (Hz)।",
-                "২. রেডিও তরঙ্গ" to "বেতার বা রেডিও সিগন্যাল কিলোহার্টজ (kHz) বা মেগাহার্টজ (MHz) এককে পরিমাপ করা হয়।"
+                "১. ফ্রিকোয়েন্সি রূপান্তর" to "প্রতি সেকেন্ডে কোনো তরঙ্গের পূর্ণ কম্পন সংখ্যাকে ফ্রিকোয়েন্সি বা কম্পাঙ্ক বলে। এর একক হলো হার্টজ (Hz)।"
             )
         } else {
             listOf(
-                "1. Frequency Basics" to "Frequency is the number of occurrences of a repeating event per unit of time. Measured in Hertz (Hz), kHz, MHz, and GHz.",
-                "2. Signals & Waves" to "Radio stations and CPU speeds are measured in Kilohertz, Megahertz, and Gigahertz respectively."
+                "1. Frequency Basics" to "Frequency is the number of occurrences of a repeating event per unit of time. Measured in Hertz (Hz), kHz, MHz, and GHz."
             )
         }
         ConverterType.NUMBER_SYSTEM -> if (isBn) {
             listOf(
-                "১. সংখ্যা পদ্ধতি" to "ডিজিটাল ডিভাইসে ব্যবহৃত সংখ্যা পদ্ধতির মধ্যে রয়েছে বাইনারি (ভিত্তি ২), দশমিক (ভিত্তি ১০), অক্টাল (ভিত্তি ৮) এবং হেক্সাডেসিমেল (ভিত্তি ১৬)।",
-                "২. হেক্সাডেসিমেল" to "এটি প্রোগ্রামিং ও কালার কোডিংয়ে ব্যবহৃত হয়, যেখানে ০-৯ এর পর A-F পর্যন্ত চিহ্ন ব্যবহার করা হয়।"
+                "১. সংখ্যা পদ্ধতি" to "ডিজিটাল ডিভাইসে ব্যবহৃত সংখ্যা পদ্ধতির মধ্যে রয়েছে বাইনারি (ভিত্তি ২), দশমিক (ভিত্তি ১০), অক্টাল (ভিত্তি ৮) এবং হেক্সাডেসিমেল (ভিত্তি ১৬)।"
             )
         } else {
             listOf(
-                "1. Number Systems" to "Computers use Binary (base-2). Standard systems are Decimal (base-10), Octal (base-8), and Hexadecimal (base-16).",
-                "2. Use of Hexadecimal" to "Widely used in web design (color codes) and low-level programming to represent large binary values efficiently."
+                "1. Number Systems" to "Computers use Binary (base-2). Standard systems are Decimal (base-10), Octal (base-8), and Hexadecimal (base-16)."
             )
         }
         ConverterType.SPEED -> if (isBn) {
             listOf(
-                "১. গতিবেগ রূপান্তর" to "গতিবেগ হলো নির্দিষ্ট সময়ে অতিক্রান্ত দূরত্ব। প্রধান এককগুলো হলো কিমি/ঘণ্টা, মাইল/ঘণ্টা এবং নট (নৌযান ও বিমানের গতি পরিমাপের একক)।",
-                "২. আলোর গতি" to "আলোর গতি প্রতি সেকেন্ডে প্রায় ৩ লক্ষ কিলোমিটার।"
+                "১. গতিবেগ রূপান্তর" to "গতিবেগ হলো নির্দিষ্ট সময়ে অতিক্রান্ত দূরত্ব। প্রধান এককগুলো হলো কিমি/ঘণ্টা, মাইল/ঘণ্টা এবং নট (নৌযান ও বিমানের গতি পরিমাপের একক)।"
             )
         } else {
             listOf(
-                "1. Speed Conversion" to "Speed is distance traveled per unit time. Standard units are Km/h (globally), Mph (US/UK), and Knots (for aviation/marine navigation).",
-                "2. Speed of Light" to "Light travels at approximately 300,000 km per second in a vacuum."
+                "1. Speed Conversion" to "Speed is distance traveled per unit time. Standard units are Km/h (globally), Mph (US/UK), and Knots (for aviation/marine navigation)."
             )
         }
         ConverterType.TIME -> if (isBn) {
             listOf(
-                "১. সময় রূপান্তর" to "সেকেন্ড, মিনিট, ঘণ্টা, দিন, সপ্তাহ, মাস এবং বছরের মধ্যে পারস্পরিক নিখুঁত রূপান্তর করা যায়।",
-                "২. লিপ ইয়ার" to "প্রতি ৪ বছর পর পর ফেব্রুয়ারি মাসে ১ দিন বাড়তি যোগ হয়ে বছরটি ৩৬৬ দিনে হয়।"
+                "১. সময় রূপান্তর" to "সেকেন্ড, মিনিট, ঘণ্টা, দিন, সপ্তাহ, মাস এবং বছরের মধ্যে পারস্পরিক নিখুঁত রূপান্তর করা যায়।"
             )
         } else {
             listOf(
-                "1. Time Conversions" to "Time units are historical and astronomical. 1 Day = 24 Hours, 1 Hour = 60 Minutes, 1 Minute = 60 Seconds.",
-                "2. Leap Year Logic" to "A calendar year typically has 365 days, but leap years have 366 days to keep the calendar synchronized with Earth's orbit."
+                "1. Time Conversions" to "Time units are historical and astronomical. 1 Day = 24 Hours, 1 Hour = 60 Minutes, 1 Minute = 60 Seconds."
             )
         }
         ConverterType.FUEL_CONSUMPTION -> if (isBn) {
             listOf(
-                "১. জ্বালানি খরচ রূপান্তর" to "যানবাহনের জ্বালানি দক্ষতা পরিমাপের একক। যেমন: প্রতি লিটারে কত কিমি যায় (km/L) অথবা প্রতি ১০০ কিমিতে কত লিটার লাগে (L/100km)।",
-                "২. সাশ্রয়ী গাড়ি" to "যৌক্তিক জ্বালানি ব্যবহারের জন্য মাইলেজ হিসাব রাখা জরুরি।"
+                "১. জ্বালানি খরচ রূপান্তর" to "যানবাহনের জ্বালানি দক্ষতা পরিমাপের একক। যেমন: প্রতি লিটারে কত কিমি যায় (km/L) অথবা প্রতি ১০০ কিমিতে কত লিটার লাগে (L/100km)।"
             )
         } else {
             listOf(
-                "1. Fuel Efficiency Metrics" to "Measures how far a car goes per volume of fuel: km/L, MPG (Miles Per Gallon), or L/100km (Liters per 100 Kilometers).",
-                "2. Eco-Friendly Driving" to "Monitoring fuel consumption helps in reducing costs and your environmental carbon footprint."
+                "1. Fuel Efficiency Metrics" to "Measures how far a car goes per volume of fuel: km/L, MPG (Miles Per Gallon), or L/100km (Liters per 100 Kilometers)."
             )
         }
         ConverterType.ACCELERATION -> if (isBn) {
             listOf(
-                "১. ত্বরণ রূপান্তর" to "সময়ের সাথে বেগের পরিবর্তনের হারকে ত্বরণ বলে। এর একক মিটার/সেকেন্ড স্কয়ার (m/s²)।",
-                "২. অভিকর্ষজ ত্বরণ" to "পৃথিবীর অভিকর্ষজ ত্বরণ বা 'g' হলো প্রায় ৯.৮ মি/সে²।"
+                "১. ত্বরণ রূপান্তর" to "সময়ের সাথে বেগের পরিবর্তনের হারকে ত্বরণ বলে। এর একক মিটার/সেকেন্ড স্কয়ার (m/s²)।"
             )
         } else {
             listOf(
-                "1. Acceleration Conversion" to "The rate of change of speed with time. Commonly measured in m/s² or g-force.",
-                "2. Standard Gravity" to "Standard gravity (g) is 9.80665 m/s², which is used to calculate weights and forces."
+                "1. Acceleration Conversion" to "The rate of change of speed with time. Commonly measured in m/s² or g-force."
             )
         }
         ConverterType.ELECTRIC_CURRENT -> if (isBn) {
             listOf(
-                "১. বিদ্যুৎ প্রবাহ রূপান্তর" to "কোনো পরিবাহীর মধ্য দিয়ে বৈদ্যুতিক চার্জ প্রবাহের হারকে কারেন্ট বলে। এর আন্তর্জাতিক একক হলো অ্যাম্পিয়ার (A)।",
-                "২. সরাসরি বনাম পর্যায়বৃত্ত" to "কারেন্ট দুই ধরণের হয়: ডিসি (সরাসরি) ও এসি (পর্যায়বৃত্ত)।"
+                "১. বিদ্যুৎ প্রবাহ রূপান্তর" to "কোনো পরিবাহীর মধ্য দিয়ে বৈদ্যুতিক চার্জ প্রবাহের হারকে কারেন্ট বলে। এর আন্তর্জাতিক একক হলো অ্যাম্পিয়ার (A)।"
             )
         } else {
             listOf(
-                "1. Electric Current Units" to "Current is the rate of flow of electric charge. Standard unit is Ampere (A).",
-                "2. AC vs DC" to "AC (Alternating Current) reverses direction periodically, while DC (Direct Current) flows only in one direction."
+                "1. Electric Current Units" to "Current is the rate of flow of electric charge. Standard unit is Ampere (A)."
             )
         }
         ConverterType.VOLTAGE -> if (isBn) {
             listOf(
-                "১. ভোল্টেজ রূপান্তর" to "বৈদ্যুতিক বিভব পার্থক্য যা পরিবাহীর মধ্য দিয়ে কারেন্টকে চালিত করে। এর একক হলো ভোল্ট (V)।",
-                "২. বাসা-বাড়ির ভোল্টেজ" to "বাংলাদেশে সাধারণত বাসাবাড়িতে ২২০ ভোল্ট (V) বিদ্যুৎ সরবরাহ করা হয়।"
+                "১. ভোল্টেজ রূপান্তর" to "বৈদ্যুতিক বিভব পার্থক্য যা পরিবাহীর মধ্য দিয়ে কারেন্টকে চালিত করে। এর একক হলো ভোল্ট (V)।"
             )
         } else {
             listOf(
-                "1. Voltage Basics" to "Voltage is the electrical potential difference that drives current. Units are Volt, Kilovolt, and Millivolt.",
-                "2. Standard Household Voltage" to "Different regions use different standards; for instance, US uses 120V while most of Europe and Asia use 220-240V."
+                "1. Voltage Basics" to "Voltage is the electrical potential difference that drives current. Units are Volt, Kilovolt, and Millivolt."
             )
         }
         ConverterType.RESISTANCE -> if (isBn) {
             listOf(
-                "১. রোধ রূপান্তর" to "পরিবাহীর যে ধর্মের জন্য এর মধ্য দিয়ে বিদ্যুৎ প্রবাহ বাধাগ্রস্ত হয় তাকে রোধ বা রেজিস্ট্যান্স বলে। এর একক ওহম (Ω)।",
-                "২. ওহমের সূত্র" to "বিভব পার্থক্য (V) = বিদ্যুৎ প্রবাহ (I) x রোধ (R)।"
+                "১. রোধ রূপান্তর" to "পরিবাহীর যে ধর্মের জন্য এর মধ্য দিয়ে বিদ্যুৎ প্রবাহ বাধাগ্রস্ত হয় তাকে রোধ বা রেজিস্ট্যান্স বলে। এর একক ওহম (Ω)।"
             )
         } else {
             listOf(
-                "1. Resistance Basics" to "Electrical resistance opposes current flow. Measured in Ohms (Ω), Kiloohms, and Megaohms.",
-                "2. Ohm's Law" to "States that Voltage (V) = Current (I) x Resistance (R)."
+                "1. Resistance Basics" to "Electrical resistance opposes current flow. Measured in Ohms (Ω), Kiloohms, and Megaohms."
             )
         }
         ConverterType.ELECTRIC_CHARGE -> if (isBn) {
             listOf(
-                "১. বৈদ্যুতিক চার্জ রূপান্তর" to "ব্যাটারির ধারণক্ষমতা বা সঞ্চিত চার্জ মাপা হয় মিলিঅ্যাম্পিয়ার-আওয়ার (mAh) বা অ্যাম্পিয়ার-আওয়ার (Ah) দিয়ে।",
-                "২. স্মার্টফোন ব্যাটারি" to "আধুনিক ফোনে সাধারণত ৫০০০ mAh এর কাছাকাছি ব্যাটারি থাকে।"
+                "১. বৈদ্যুতিক চার্জ রূপান্তর" to "ব্যাটারির ধারণক্ষমতা বা সঞ্চিত চার্জ মাপা হয় মিলিঅ্যাম্পিয়ার-আওয়ার (mAh) বা অ্যাম্পিয়ার-আওয়ার (Ah) দিয়ে।"
             )
         } else {
             listOf(
-                "1. Electric Charge Units" to "Measures total electricity stored or transferred. Units include Coulomb, Ah, and mAh (common for phone batteries).",
-                "2. Battery Capacity" to "The mAh rating tells you how long a battery can deliver a specific amount of current."
+                "1. Electric Charge Units" to "Measures total electricity stored or transferred. Units include Coulomb, Ah, and mAh (common for phone batteries)."
             )
         }
         ConverterType.COOKING -> if (isBn) {
             listOf(
-                "১. রন্ধনশিল্প পরিমাপ" to "রান্না বা বেকিংয়ের রেসিপিতে ব্যবহৃত চা-চামচ (Teaspoon), টেবিল-চামচ (Tablespoon) ও কাপের পরিমাপ নির্ভুল করতে এটি ব্যবহৃত হয়।",
-                "২. তরল বনাম শুকনা" to "রান্নার সময় তরল ও শুকনা উপাদানের ওজনে সামান্য পার্থক্য থাকতে পারে।"
+                "১. রন্ধনশিল্প পরিমাপ" to "রান্না বা বেকিংয়ের রেসিপিতে ব্যবহৃত চা-চামচ (Teaspoon), টেবিল-চামচ (Tablespoon) ও কাপের পরিমাপ নির্ভুল করতে এটি ব্যবহৃত হয়।"
             )
         } else {
             listOf(
-                "1. Kitchen Measurements" to "Converts volume recipes between Teaspoons, Tablespoons, Cups, and Fluid Ounces for precise baking.",
-                "2. Precision in Baking" to "Standardizing your measuring cups ensures consistent results in every recipe."
+                "1. Kitchen Measurements" to "Converts volume recipes between Teaspoons, Tablespoons, Cups, and Fluid Ounces for precise baking."
             )
         }
         ConverterType.TYPOGRAPHY -> if (isBn) {
             listOf(
-                "১. টাইপোগ্রাফি রূপান্তর" to "ওয়েবসাইট ও স্ক্রিন ডিজাইনে পিক্সেল (Pixel), পয়েন্ট (Point) এবং রিলেティブ ইউনিট যেমন EM ও REM এর রূপান্তর।",
-                "২. স্ক্রিন রেজোলিউশন" to "পিক্সেলের ঘনত্ব (PPI) স্ক্রিনের স্বচ্ছতা নির্ধারণ করে।"
+                "১. টাইপোগ্রাফি রূপান্তর" to "ওয়েবসাইট ও স্ক্রিন ডিজাইনে পিক্সেল (Pixel), পয়েন্ট (Point) এবং রিলেティブ ইউনিট যেমন EM ও REM এর রূপান্তর।"
             )
         } else {
             listOf(
-                "1. Web Design Typography" to "Pixels (px) are fixed screen dots. Points (pt) are for print. EM and REM are relative to the font scale of the web page.",
-                "2. Responsive Design" to "Using EM or REM units makes your typography scale beautifully across different screen sizes."
+                "1. Web Design Typography" to "Pixels (px) are fixed screen dots. Points (pt) are for print. EM and REM are relative to the font scale of the web page."
             )
         }
         ConverterType.CURRENCY -> if (isBn) {
             listOf(
-                "১. মুদ্রা রূপান্তর" to "দেশী-বিদেশী বিভিন্ন দেশের টাকার মান (যেমন: ডলার, ইউরো, রুপি, রিয়াল ইত্যাদি) বাংলাদেশী টাকায় বা অন্য যেকোনো মুদ্রায় রূপান্তর করা যায়।",
-                "২. বৈদেশিক বিনিময়" to "আন্তর্জাতিক বাণিজ্য ও ভ্রমণের জন্য মুদ্রার হার জানা আবশ্যক।"
+                "১. মুদ্রা রূপান্তর" to "দেশী-বিদেশী বিভিন্ন দেশের টাকার মান (যেমন: ডলার, ইউরো, রুপি, রিয়াল ইত্যাদি) বাংলাদেশী টাকায় বা অন্য যেকোনো মুদ্রায় রূপান্তর করা যায়।"
             )
         } else {
             listOf(
-                "1. Exchange Rate Conversions" to "Allows converting money between USD, BDT, EUR, GBP, INR, and SAR. Uses live online rates if connected.",
-                "2. Global Travel" to "Essential for planning international trips and understanding your purchasing power in different countries."
+                "1. Exchange Rate Conversions" to "Allows converting money between USD, BDT, EUR, GBP, INR, and SAR. Uses live online rates if connected."
             )
         }
         else -> emptyList()

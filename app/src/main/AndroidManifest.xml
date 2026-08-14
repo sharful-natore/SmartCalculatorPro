@@ -23,20 +23,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MyApplication">
         <activity
-            android:name=".QuickCalculatorActivity"
-            android:theme="@style/Theme.QuickCalculator"
-            android:excludeFromRecents="true"
-            android:taskAffinity=""
-            android:exported="true" />
-
-        <activity
-            android:name=".QuickCalculatorActivity"
-            android:theme="@style/Theme.QuickCalculator"
-            android:excludeFromRecents="true"
-            android:taskAffinity=""
-            android:exported="true" />
-
-        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
@@ -51,6 +37,15 @@
                 android:name="android.app.shortcuts"
                 android:resource="@xml/shortcuts" />
         </activity>
+
+        <activity
+            android:name=".QuickCalculatorActivity"
+            android:exported="true"
+            android:label="@string/shortcut_calculator"
+            android:theme="@style/Theme.TransparentDialog"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:windowSoftInputMode="adjustResize" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

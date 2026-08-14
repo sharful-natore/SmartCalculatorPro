@@ -1403,23 +1403,6 @@ fun ClothMeasurementCard(
             themeColors = themeColors,
             modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).testTag("cloth_meter_input")
         )
-
-        val infoItems = if (isBn) {
-            listOf(
-                "১. দেশীয় গজের পরিমাপ" to "বাঙালি সংস্কৃতিতে কাপড় মাপার ঐতিহ্যবাহী গজ-গিরা ব্যবহৃত হয়।\n• ১ গজ = ৩৬ ইঞ্চি = ৩ ফুট\n• ১ গজ = ২ হাত (১ হাত = ১৮ ইঞ্চি)\n• ১ গজ = ১৬ গিরা",
-                "২. গিরা ও ইঞ্চি সম্পর্ক" to "• ১ গিরা = ২.২৫ ইঞ্চি (২ ১/৪ ইঞ্চি)\n• ২ গিরা = ৪.৫ ইঞ্চি\n• ৪ গিরা = ৯ ইঞ্চি (১/৪ গজ)\n• ৮ গিরা = ১৮ ইঞ্চি (১/২ গজ বা ১ হাত)\n• ১২ গিরা = ২৭ ইঞ্চি (৩/৪ গজ)"
-            )
-        } else {
-            listOf(
-                "1. Bengali Traditional Gaj Units" to "Gaj, Gira, and Haat are traditional South Asian units for measuring textiles.\n• 1 Gaj = 1 Yard = 36 Inches = 3 Feet\n• 1 Gaj = 2 Haat (1 Haat = 18 Inches)\n• 1 Gaj = 16 Gira",
-                "2. Gira to Inches breakdown" to "• 1 Gira = 2.25 Inches\n• 4 Gira = 9 Inches (1/4 Gaj)\n• 8 Gira = 18 Inches (1/2 Gaj or 1 Haat)\n• 12 Gira = 27 Inches (3/4 Gaj)\n• 16 Gira = 36 Inches (1 Gaj)"
-            )
-        }
-        CollapsibleInfoSection(
-            title = if (isBn) "প্রয়োজনীয় তথ্য জানুন" else "Learn Required Information",
-            infoItems = infoItems,
-            themeColors = themeColors
-        )
     }
 }
 
@@ -1637,23 +1620,6 @@ fun GoldCalculatorCard(
                 }
             }
         }
-
-        val infoItems = if (isBn) {
-            listOf(
-                "১. স্বর্ণ পরিমাপের ভরি-আনা-রতি" to "বাংলাদেশে সনাতন পদ্ধতিতে স্বর্ণ ও রৌপ্য পরিমাপ করা হয়:\n• ১ ভরি (Tola) = ১১.৬৬৪ গ্রাম\n• ১ ভরি = ১৬ আনা\n• ১ আনা = ৬ রতি\n• ১ রতি = ১০ পয়েন্ট\n• ১ ভরি = ৯৬ রতি = ৯৬০ পয়েন্ট",
-                "২. স্বর্ণের ক্যারেট (Carat) কি?" to "ক্যারেট স্বর্ণের বিশুদ্ধতা নির্দেশ করে:\n• ২২ ক্যারেট: ৯১.৬% বিশুদ্ধ স্বর্ণ (অলংকার তৈরির জন্য সেরা)\n• ২১ ক্যারেট: ৪৭.৫% বিশুদ্ধ স্বর্ণ\n• ১৮ ক্যারেট: ৭৫% বিশুদ্ধ স্বর্ণ\n• ২৪ ক্যারেট: ৯৯.৯% খাঁটি স্বর্ণ (খুব নরম, অলংকার করা যায় না)"
-            )
-        } else {
-            listOf(
-                "1. Traditional Gold Weights" to "Gold and silver in Bangladesh are measured in Vori, Anna, Ratti, and Point:\n• 1 Vori (Tola) = 11.664 Grams\n• 1 Vori = 16 Anna\n• 1 Anna = 6 Ratti\n• 1 Ratti = 10 Points\n• 1 Vori = 96 Ratti = 960 Points",
-                "2. Carat & Gold Purity" to "Carat measures the purity of gold:\n• 22 Carat: 91.6% pure gold (Ideal for high-end ornaments)\n• 21 Carat: 87.5% pure gold\n• 18 Carat: 75.0% pure gold\n• 24 Carat: 99.9% pure gold (Raw gold bar/coin, too soft for jewelry)"
-            )
-        }
-        CollapsibleInfoSection(
-            title = if (isBn) "প্রয়োজনীয় তথ্য জানুন" else "Learn Required Information",
-            infoItems = infoItems,
-            themeColors = themeColors
-        )
     }
 }
 

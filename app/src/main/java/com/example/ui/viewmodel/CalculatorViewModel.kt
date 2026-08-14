@@ -1410,7 +1410,7 @@ How can I help you today?"""
         if (raw.isBlank()) {
             val set = sharedPrefs.getStringSet("favorite_tools", emptySet()) ?: emptySet()
             if (set.isEmpty()) {
-                return listOf("AGE", "BMI", "DISCOUNT", "WATER_INTAKE")
+                return listOf("AGE", "BMI", "CONV_CURRENCY", "DISCOUNT", "WATER_INTAKE", "CONV_LENGTH")
             }
             return set.toList()
         }
@@ -1612,20 +1612,30 @@ How can I help you today?"""
     }
 
     fun toggleFavoriteConverter(converterName: String) {
-        favoriteConverters = if (favoriteConverters.contains(converterName)) {
+        val convKey = "CONV_$converterName"
+        val currentList = orderedFavoriteTools.toMutableList()
+        if (favoriteConverters.contains(converterName) || currentList.contains(convKey) || currentList.contains(converterName)) {
             pendingUnfavoriteConverter = converterName
-            favoriteConverters
         } else {
             val updated = favoriteConverters + converterName
             sharedPrefs.edit().putStringSet("favorite_converters", updated).apply()
-            updated
+            favoriteConverters = updated
+            if (!currentList.contains(convKey)) {
+                currentList.add(convKey)
+                saveOrderedFavorites(currentList)
+            }
         }
     }
     
     fun confirmUnfavoriteConverter() {
         pendingUnfavoriteConverter?.let { converterName ->
+            val convKey = "CONV_$converterName"
             favoriteConverters = favoriteConverters - converterName
             sharedPrefs.edit().putStringSet("favorite_converters", favoriteConverters).apply()
+            val currentList = orderedFavoriteTools.toMutableList()
+            currentList.remove(convKey)
+            currentList.remove(converterName)
+            saveOrderedFavorites(currentList)
         }
         pendingUnfavoriteConverter = null
     }

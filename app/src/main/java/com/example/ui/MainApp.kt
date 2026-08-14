@@ -264,15 +264,15 @@ fun MainContent(
             }
             // If on home tab (Dashboard)
             else -> {
-                viewModel.isExitDialogShown = true
+                viewModel.showExitDialog = true
             }
         }
     }
 
     // Exit Confirmation Dialog
-    if (viewModel.isExitDialogShown) {
+    if (viewModel.showExitDialog) {
         AlertDialog(
-            onDismissRequest = { viewModel.isExitDialogShown = false },
+            onDismissRequest = { viewModel.showExitDialog = false },
             title = {
                 Text(
                     text = LanguageManager.getString("exit_title", viewModel.selectedLanguage),
@@ -291,7 +291,7 @@ fun MainContent(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        viewModel.isExitDialogShown = false
+                        viewModel.showExitDialog = false
                         activity?.finish()
                     }
                 ) {
@@ -304,7 +304,7 @@ fun MainContent(
             },
             dismissButton = {
                 TextButton(
-                    onClick = { viewModel.isExitDialogShown = false }
+                    onClick = { viewModel.showExitDialog = false }
                 ) {
                     Text(
                         text = LanguageManager.getString("exit_cancel", viewModel.selectedLanguage),
