@@ -79,11 +79,8 @@ class MainActivity : ComponentActivity() {
                     viewModel.activeTab = 1
                 }
                 "calculator" -> {
-                    viewModel.changeActiveTab(
-                        2,
-                        "Opened via Launcher Shortcut Intent",
-                        "লঞ্চার শর্টকাট ইন্টেন্ট থেকে ক্যালকুলেটর খোলা হয়েছে"
-                    )
+                    viewModel.activeTab = 0
+                    viewModel.showCalculatorDialog = true
                 }
                 "history" -> {
                     viewModel.activeTab = 3

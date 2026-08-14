@@ -152,6 +152,7 @@ class CalculatorViewModel(
 
     var showGlobalSearch by mutableStateOf(false)
     var showFavoritesDialog by mutableStateOf(false)
+    var showCalculatorDialog by mutableStateOf(false)
 
     // Current Active Tab: 0 = Dashboard, 1 = Smart Converter, 2 = Calculator, 3 = History, 4 = Visual Themes
     var activeTab by mutableStateOf(0)

@@ -749,12 +749,21 @@ fun MainContent(
             Box(
                 modifier = Modifier.fillMaxSize()
             ) {
-                when (viewModel.activeTab) {
-                    0 -> DashboardScreen(viewModel, themeColors)
-                    1 -> SmartConverterScreen(viewModel, themeColors)
-                    2 -> CalculatorScreen(viewModel, themeColors)
-                    3 -> HistoryLogsScreen(viewModel, themeColors)
-                    else -> DashboardScreen(viewModel, themeColors)
+                AnimatedContent(
+                    targetState = viewModel.activeTab,
+                    transitionSpec = {
+                        fadeIn(animationSpec = tween(220)) + scaleIn(initialScale = 0.98f, animationSpec = tween(220)) togetherWith
+                        fadeOut(animationSpec = tween(220))
+                    },
+                    label = "tabSwitchAnimation"
+                ) { tab ->
+                    when (tab) {
+                        0 -> DashboardScreen(viewModel, themeColors)
+                        1 -> SmartConverterScreen(viewModel, themeColors)
+                        2 -> CalculatorScreen(viewModel, themeColors)
+                        3 -> HistoryLogsScreen(viewModel, themeColors)
+                        else -> DashboardScreen(viewModel, themeColors)
+                    }
                 }
             }
 
@@ -1996,6 +2005,152 @@ fun MainContent(
     }
 
     GlobalSearchDialog(viewModel, themeColors)
+
+    if (viewModel.pendingUnfavoriteTool != null) {
+        val toolName = viewModel.pendingUnfavoriteTool!!
+        val tool = try { com.example.data.model.ToolType.valueOf(toolName) } catch (e: Exception) { null }
+        val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
+        UnfavoriteConfirmDialog(
+            itemType = "Tool",
+            itemNameBn = tool?.titleBn ?: toolName,
+            itemNameEn = tool?.titleEn ?: toolName,
+            isBn = isBn,
+            themeColors = themeColors,
+            onConfirm = { viewModel.confirmUnfavoriteTool() },
+            onDismiss = { viewModel.pendingUnfavoriteTool = null }
+        )
+    }
+
+    if (viewModel.pendingUnfavoriteConverter != null) {
+        val convName = viewModel.pendingUnfavoriteConverter!!
+        val conv = try { com.example.data.model.ConverterType.valueOf(convName) } catch (e: Exception) { null }
+        val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
+        UnfavoriteConfirmDialog(
+            itemType = "Converter",
+            itemNameBn = conv?.getTitle(AppLanguage.BENGALI) ?: convName,
+            itemNameEn = conv?.getTitle(AppLanguage.ENGLISH) ?: convName,
+            isBn = isBn,
+            themeColors = themeColors,
+            onConfirm = { viewModel.confirmUnfavoriteConverter() },
+            onDismiss = { viewModel.pendingUnfavoriteConverter = null }
+        )
+    }
+
+    if (viewModel.showCalculatorDialog) {
+        Dialog(
+            onDismissRequest = { viewModel.showCalculatorDialog = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth(0.96f)
+                    .fillMaxHeight(0.90f),
+                shape = RoundedCornerShape(28.dp),
+                color = themeColors.background,
+                tonalElevation = 6.dp
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(12.dp)
+                ) {
+                    // Header with Title, Maximize, and Close buttons
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Calculate,
+                                contentDescription = null,
+                                tint = themeColors.buttonEqualBg,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Text(
+                                text = "ToolsMate Calculator",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.displayText
+                            )
+                        }
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            // Maximize button (switches to full Calculator tab and dismisses dialog)
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .background(themeColors.displayText.copy(alpha = 0.08f), CircleShape)
+                                    .clip(CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                IconButton(
+                                    onClick = {
+                                        viewModel.showCalculatorDialog = false
+                                        viewModel.changeActiveTab(
+                                            2,
+                                            "Maximized from Calculator Dialog",
+                                            "ক্যালকুলেটর ডায়লগ থেকে ম্যাক্সিমাইজ করা হয়েছে"
+                                        )
+                                    },
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.OpenInFull,
+                                        contentDescription = "Maximize",
+                                        tint = themeColors.displayText,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+
+                            // Close button
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .background(themeColors.displayText.copy(alpha = 0.08f), CircleShape)
+                                    .clip(CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                IconButton(
+                                    onClick = { viewModel.showCalculatorDialog = false },
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Close",
+                                        tint = themeColors.displayText,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.1f))
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Calculator Screen Content inside Dialog
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                    ) {
+                        CalculatorScreen(viewModel = viewModel, themeColors = themeColors)
+                    }
+                }
+            }
+        }
+    }
 }
 }
 }
