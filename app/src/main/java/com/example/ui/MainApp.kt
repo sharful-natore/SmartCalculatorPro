@@ -240,32 +240,7 @@ fun MainContent(
         performUpdateCheck(false)
     }
 
-    // Pager state for smooth horizontal tab swiping
-    val pagerState = rememberPagerState(initialPage = if (viewModel.activeTab in 0..3) viewModel.activeTab else 0) { 4 }
 
-    var isProgrammaticScroll by remember { mutableStateOf(false) }
-
-    // Sync pagerState.settledPage -> viewModel.activeTab when user swipes
-    LaunchedEffect(pagerState) {
-        snapshotFlow { pagerState.settledPage }
-            .collect { page ->
-                if (!isProgrammaticScroll && viewModel.activeTab != page && page in 0..3) {
-                    viewModel.activeTab = page
-                }
-            }
-    }
-
-    // Sync viewModel.activeTab -> pagerState when tab is changed via bottom nav or buttons
-    LaunchedEffect(viewModel.activeTab) {
-        if (viewModel.activeTab in 0..3 && pagerState.currentPage != viewModel.activeTab) {
-            isProgrammaticScroll = true
-            pagerState.animateScrollToPage(
-                page = viewModel.activeTab,
-                animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing)
-            )
-            isProgrammaticScroll = false
-        }
-    }
 
     // Handle Back Press
     val activity = context as? Activity
@@ -771,29 +746,15 @@ fun MainContent(
                 .padding(innerPadding)
                 .consumeWindowInsets(innerPadding)
         ) {
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.fillMaxSize(),
-                userScrollEnabled = true
-            ) { page ->
-                val pageOffset = (pagerState.currentPage - page) + pagerState.currentPageOffsetFraction
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .graphicsLayer {
-                            val alphaFactor = 1f - (kotlin.math.abs(pageOffset) * 0.35f).coerceIn(0f, 0.7f)
-                            alpha = alphaFactor
-                            val scaleFactor = 1f - (kotlin.math.abs(pageOffset) * 0.04f).coerceIn(0f, 0.08f)
-                            scaleX = scaleFactor
-                            scaleY = scaleFactor
-                        }
-                ) {
-                    when (page) {
-                        0 -> DashboardScreen(viewModel, themeColors)
-                        1 -> SmartConverterScreen(viewModel, themeColors)
-                        2 -> CalculatorScreen(viewModel, themeColors)
-                        3 -> HistoryLogsScreen(viewModel, themeColors)
-                    }
+            Box(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                when (viewModel.activeTab) {
+                    0 -> DashboardScreen(viewModel, themeColors)
+                    1 -> SmartConverterScreen(viewModel, themeColors)
+                    2 -> CalculatorScreen(viewModel, themeColors)
+                    3 -> HistoryLogsScreen(viewModel, themeColors)
+                    else -> DashboardScreen(viewModel, themeColors)
                 }
             }
 
