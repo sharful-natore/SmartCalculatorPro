@@ -81,12 +81,30 @@ fun DynamicWeatherScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = viewModel.weatherLocation.ifBlank { "Natore" },
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = themeColors.displayText
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = viewModel.weatherLocation.ifBlank { "Natore" },
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.displayText
+                    )
+                    if (viewModel.isOfflineWeatherData) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(Color(0xFFD97706).copy(alpha = 0.18f))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = if (isBn) "অফলাইন" else "Offline",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFD97706)
+                            )
+                        }
+                    }
+                }
                 Text(
                     text = if (isBn) "বর্তমান আবহাওয়া" else "Current Weather",
                     fontSize = 14.sp,

@@ -1442,14 +1442,60 @@ How can I help you today?"""
         private set
     var weatherLocationLng by mutableStateOf(sharedPrefs.getFloat("weather_lng", 90.4074f).toDouble())
         private set
-    var weatherData by mutableStateOf<com.example.data.network.WeatherResponse?>(null)
+    var weatherData by mutableStateOf<com.example.data.network.WeatherResponse?>(loadInitialCachedWeather())
         private set
     var weatherIsLoading by mutableStateOf(false)
         private set
     var weatherFetchError by mutableStateOf<String?>(null)
         private set
+    var isOfflineWeatherData by mutableStateOf(false)
+        private set
 
-    private var lastWeatherFetchTime = 0L
+    private var lastWeatherFetchTime = sharedPrefs.getLong("cached_weather_time", 0L)
+
+    private val weatherResponseAdapter by lazy {
+        moshi.adapter(com.example.data.network.WeatherResponse::class.java)
+    }
+
+    private fun loadInitialCachedWeather(): com.example.data.network.WeatherResponse? {
+        return try {
+            val json = sharedPrefs.getString("cached_weather_json", null)
+            if (!json.isNullOrBlank()) {
+                val adapter = moshi.adapter(com.example.data.network.WeatherResponse::class.java)
+                adapter.fromJson(json)
+            } else {
+                getFallbackWeather()
+            }
+        } catch (e: Exception) {
+            getFallbackWeather()
+        }
+    }
+
+    fun loadCachedWeather(): Boolean {
+        return try {
+            val json = sharedPrefs.getString("cached_weather_json", null)
+            if (!json.isNullOrBlank()) {
+                val loaded = weatherResponseAdapter.fromJson(json)
+                if (loaded != null) {
+                    weatherData = loaded
+                    isOfflineWeatherData = true
+                    lastWeatherFetchTime = sharedPrefs.getLong("cached_weather_time", 0L)
+                    return true
+                }
+            }
+            if (weatherData == null) {
+                weatherData = getFallbackWeather()
+                isOfflineWeatherData = true
+            }
+            false
+        } catch (e: Exception) {
+            if (weatherData == null) {
+                weatherData = getFallbackWeather()
+                isOfflineWeatherData = true
+            }
+            false
+        }
+    }
 
     var geocodingResults by mutableStateOf<List<com.example.data.network.GeocodingResult>>(emptyList())
         private set
@@ -1494,7 +1540,7 @@ How can I help you today?"""
 
     fun fetchWeather(force: Boolean = false) {
         val currentTime = System.currentTimeMillis()
-        if (!force && weatherData != null && (currentTime - lastWeatherFetchTime) < 300_000) {
+        if (!force && weatherData != null && !isOfflineWeatherData && (currentTime - lastWeatherFetchTime) < 300_000) {
             // Data is less than 5 minutes old, skip unless forced
             return
         }
@@ -1505,20 +1551,36 @@ How can I help you today?"""
                 weatherFetchError = null
                 val response = com.example.data.network.WeatherApiClient.weatherApi.getWeather(weatherLocationLat, weatherLocationLng)
                 weatherData = response
+                isOfflineWeatherData = false
                 lastWeatherFetchTime = System.currentTimeMillis()
+                
+                // Cache to SharedPreferences
+                try {
+                    val json = weatherResponseAdapter.toJson(response)
+                    sharedPrefs.edit()
+                        .putString("cached_weather_json", json)
+                        .putLong("cached_weather_time", lastWeatherFetchTime)
+                        .putString("cached_weather_location", weatherLocation)
+                        .apply()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
                 withContext(Dispatchers.Main) {
                     val msg = e.message ?: "Unknown error"
-                    weatherFetchError = if (msg.contains("429")) {
-                        if (selectedLanguage == AppLanguage.BENGALI) "বেশি বার চেষ্টার কারণে আবহাওয়া সার্ভার সাময়িকভাবে ব্যস্ত রয়েছে (Error 429)।" else "Weather server busy (429). Please try again later."
-                    } else if (msg.contains("Unable to resolve host") || msg.contains("UnknownHostException") || msg.contains("ConnectException")) {
-                        if (selectedLanguage == AppLanguage.BENGALI) "ইন্টারনেট সংযোগ চালু নেই বা নেটওয়ার্ক সংযোগ বিচ্ছিন্ন।" else "No internet connection available."
-                    } else {
-                        if (selectedLanguage == AppLanguage.BENGALI) "আবহাওয়া তথ্য লোড করতে সমস্যা হয়েছে: $msg" else "Failed to fetch weather: $msg"
+                    isOfflineWeatherData = true
+                    if (weatherData == null) {
+                        loadCachedWeather()
                     }
-                    android.util.Log.e("Weather", "Fetch failed: $msg")
-                    weatherData = null
+                    weatherFetchError = if (msg.contains("429")) {
+                        if (selectedLanguage == AppLanguage.BENGALI) "বেশি বার চেষ্টার কারণে আবহাওয়া সার্ভার সাময়িকভাবে ব্যস্ত রয়েছে (Error 429)। অফলাইন সংরক্ষিত উপাত্ত দেখানো হচ্ছে।" else "Weather server busy (429). Showing offline cached data."
+                    } else if (msg.contains("Unable to resolve host") || msg.contains("UnknownHostException") || msg.contains("ConnectException")) {
+                        if (selectedLanguage == AppLanguage.BENGALI) "ইন্টারনেট সংযোগ বিচ্ছিন্ন। অফলাইনে পূর্বে সংরক্ষিত আবহাওয়া দেখানো হচ্ছে।" else "Offline: displaying cached weather data."
+                    } else {
+                        if (selectedLanguage == AppLanguage.BENGALI) "অফলাইন মোড: পূর্বে সংরক্ষিত আবহাওয়া উপাত্ত প্রদর্শিত হচ্ছে।" else "Offline Mode: Showing cached weather data."
+                    }
+                    android.util.Log.e("Weather", "Fetch failed: $msg (Retaining cached data)")
                 }
             } finally {
                 weatherIsLoading = false
@@ -1587,6 +1649,78 @@ How can I help you today?"""
 
     private fun loadFavorites(key: String): Set<String> {
         return sharedPrefs.getStringSet(key, emptySet()) ?: emptySet()
+    }
+
+    data class FavoriteConfirmAction(
+        val isTool: Boolean,
+        val key: String,
+        val titleEn: String,
+        val titleBn: String,
+        val isCurrentlyFavorite: Boolean
+    )
+
+    var pendingFavoriteConfirmAction by mutableStateOf<FavoriteConfirmAction?>(null)
+
+    fun requestToggleFavoriteTool(toolType: com.example.data.model.ToolType) {
+        val isFav = favoriteTools.contains(toolType.name) || orderedFavoriteTools.contains(toolType.name)
+        pendingFavoriteConfirmAction = FavoriteConfirmAction(
+            isTool = true,
+            key = toolType.name,
+            titleEn = toolType.titleEn,
+            titleBn = toolType.titleBn,
+            isCurrentlyFavorite = isFav
+        )
+    }
+
+    fun requestToggleFavoriteConverter(converterType: com.example.data.model.ConverterType) {
+        val convKey = "CONV_${converterType.name}"
+        val isFav = favoriteConverters.contains(converterType.name) || orderedFavoriteTools.contains(convKey) || orderedFavoriteTools.contains(converterType.name)
+        pendingFavoriteConfirmAction = FavoriteConfirmAction(
+            isTool = false,
+            key = converterType.name,
+            titleEn = converterType.titleEn,
+            titleBn = converterType.titleBn,
+            isCurrentlyFavorite = isFav
+        )
+    }
+
+    fun confirmPendingFavoriteAction() {
+        pendingFavoriteConfirmAction?.let { action ->
+            if (action.isTool) {
+                val currentList = orderedFavoriteTools.toMutableList()
+                if (action.isCurrentlyFavorite) {
+                    currentList.remove(action.key)
+                } else {
+                    if (!currentList.contains(action.key)) {
+                        currentList.add(action.key)
+                    }
+                }
+                saveOrderedFavorites(currentList)
+            } else {
+                val convKey = "CONV_${action.key}"
+                val currentList = orderedFavoriteTools.toMutableList()
+                if (action.isCurrentlyFavorite) {
+                    val updated = favoriteConverters - action.key
+                    sharedPrefs.edit().putStringSet("favorite_converters", updated).apply()
+                    favoriteConverters = updated
+                    currentList.remove(convKey)
+                    currentList.remove(action.key)
+                } else {
+                    val updated = favoriteConverters + action.key
+                    sharedPrefs.edit().putStringSet("favorite_converters", updated).apply()
+                    favoriteConverters = updated
+                    if (!currentList.contains(convKey)) {
+                        currentList.add(convKey)
+                    }
+                }
+                saveOrderedFavorites(currentList)
+            }
+        }
+        pendingFavoriteConfirmAction = null
+    }
+
+    fun dismissPendingFavoriteAction() {
+        pendingFavoriteConfirmAction = null
     }
 
     var pendingUnfavoriteTool by mutableStateOf<String?>(null)

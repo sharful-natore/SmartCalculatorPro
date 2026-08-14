@@ -173,6 +173,10 @@ fun MainContent(
     var showCenterSearchFabCustomizer by remember { mutableStateOf(false) }
     var showVisualThemesDialog by remember { mutableStateOf(false) }
 
+    // Quick Calculator Windows Window Controls State
+    var isCalcMinimized by remember { mutableStateOf(false) }
+    var isCalcMaximized by remember { mutableStateOf(false) }
+
     // --- App Update State ---
     var showUpdateDialog by remember { mutableStateOf(false) }
     var updateLatestVersion by remember { mutableStateOf("") }
@@ -739,6 +743,27 @@ fun MainContent(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
+        val pagerState = rememberPagerState(
+            initialPage = viewModel.activeTab,
+            pageCount = { 4 }
+        )
+
+        LaunchedEffect(pagerState.currentPage) {
+            if (viewModel.activeTab != pagerState.currentPage) {
+                viewModel.changeActiveTab(
+                    pagerState.currentPage,
+                    "Swiped to Tab ${pagerState.currentPage}",
+                    "ট্যাব সুইপ করা হয়েছে: ${pagerState.currentPage}"
+                )
+            }
+        }
+
+        LaunchedEffect(viewModel.activeTab) {
+            if (pagerState.currentPage != viewModel.activeTab) {
+                pagerState.animateScrollToPage(viewModel.activeTab)
+            }
+        }
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -749,15 +774,12 @@ fun MainContent(
             Box(
                 modifier = Modifier.fillMaxSize()
             ) {
-                AnimatedContent(
-                    targetState = viewModel.activeTab,
-                    transitionSpec = {
-                        fadeIn(animationSpec = tween(220)) + scaleIn(initialScale = 0.98f, animationSpec = tween(220)) togetherWith
-                        fadeOut(animationSpec = tween(220))
-                    },
-                    label = "tabSwitchAnimation"
-                ) { tab ->
-                    when (tab) {
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.fillMaxSize(),
+                    userScrollEnabled = true
+                ) { page ->
+                    when (page) {
                         0 -> DashboardScreen(viewModel, themeColors)
                         1 -> SmartConverterScreen(viewModel, themeColors)
                         2 -> CalculatorScreen(viewModel, themeColors)
@@ -2036,116 +2058,254 @@ fun MainContent(
         )
     }
 
+    if (viewModel.pendingFavoriteConfirmAction != null) {
+        val action = viewModel.pendingFavoriteConfirmAction!!
+        val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
+        val isAdding = !action.isCurrentlyFavorite
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissPendingFavoriteAction() },
+            title = {
+                Text(
+                    text = if (isBn) {
+                        if (isAdding) "প্রিয় তালিকায় যুক্ত করবেন?" else "প্রিয় তালিকা থেকে সরাবেন?"
+                    } else {
+                        if (isAdding) "Add to Favorites?" else "Remove from Favorites?"
+                    },
+                    fontWeight = FontWeight.Bold,
+                    color = themeColors.displayText
+                )
+            },
+            text = {
+                Text(
+                    text = if (isBn) {
+                        if (isAdding) "\"${action.titleBn}\" কে আপনার প্রিয় তালিকায় যুক্ত করতে চান?"
+                        else "\"${action.titleBn}\" কে প্রিয় তালিকা থেকে সরাতে চান?"
+                    } else {
+                        if (isAdding) "Do you want to add \"${action.titleEn}\" to your favorites?"
+                        else "Do you want to remove \"${action.titleEn}\" from your favorites?"
+                    },
+                    color = themeColors.displayText.copy(alpha = 0.8f)
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { viewModel.confirmPendingFavoriteAction() }) {
+                    Text(
+                        text = if (isBn) {
+                            if (isAdding) "যুক্ত করুন" else "সরান"
+                        } else {
+                            if (isAdding) "Add" else "Remove"
+                        },
+                        color = if (isAdding) themeColors.buttonEqualBg else Color.Red,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.dismissPendingFavoriteAction() }) {
+                    Text(
+                        text = if (isBn) "বাতিল" else "Cancel",
+                        color = themeColors.displayText
+                    )
+                }
+            },
+            containerColor = themeColors.cardBg,
+            titleContentColor = themeColors.displayText,
+            textContentColor = themeColors.displayText,
+            shape = RoundedCornerShape(16.dp)
+        )
+    }
+
     if (viewModel.showCalculatorDialog) {
-        Dialog(
-            onDismissRequest = { viewModel.showCalculatorDialog = false },
-            properties = DialogProperties(usePlatformDefaultWidth = false)
-        ) {
-            Surface(
+        if (isCalcMinimized) {
+            // Minimized Floating Bar (Windows Taskbar style bubble)
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth(0.96f)
-                    .fillMaxHeight(0.90f),
-                shape = RoundedCornerShape(28.dp),
-                color = themeColors.background,
-                tonalElevation = 6.dp
+                    .fillMaxSize()
+                    .padding(bottom = 85.dp, end = 16.dp),
+                contentAlignment = Alignment.BottomEnd
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(12.dp)
+                Surface(
+                    onClick = { isCalcMinimized = false },
+                    shape = RoundedCornerShape(16.dp),
+                    color = themeColors.cardBg,
+                    shadowElevation = 10.dp,
+                    modifier = Modifier.border(1.5.dp, themeColors.buttonEqualBg, RoundedCornerShape(16.dp))
                 ) {
-                    // Header with Title, Maximize, and Close buttons
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        Icon(
+                            imageVector = Icons.Default.Calculate,
+                            contentDescription = "Quick Calculator",
+                            tint = themeColors.buttonEqualBg,
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Text(
+                            text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "ক্যালকুলেটর (মিনিমাইজড)" else "Calculator (Minimized)",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = themeColors.displayText
+                        )
+                        Box(
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(CircleShape)
+                                .background(themeColors.buttonEqualBg.copy(alpha = 0.15f))
+                                .clickable { isCalcMinimized = false },
+                            contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Calculate,
-                                contentDescription = null,
+                                imageVector = Icons.Default.OpenInNew,
+                                contentDescription = "Restore",
                                 tint = themeColors.buttonEqualBg,
-                                modifier = Modifier.size(24.dp)
-                            )
-                            Text(
-                                text = "ToolsMate Calculator",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = themeColors.displayText
+                                modifier = Modifier.size(16.dp)
                             )
                         }
-
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        Box(
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(CircleShape)
+                                .background(Color.Red.copy(alpha = 0.15f))
+                                .clickable {
+                                    viewModel.showCalculatorDialog = false
+                                    isCalcMinimized = false
+                                },
+                            contentAlignment = Alignment.Center
                         ) {
-                            // Maximize button (switches to full Calculator tab and dismisses dialog)
-                            Box(
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .background(themeColors.displayText.copy(alpha = 0.08f), CircleShape)
-                                    .clip(CircleShape),
-                                contentAlignment = Alignment.Center
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Close",
+                                tint = Color.Red,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        } else {
+            Dialog(
+                onDismissRequest = { viewModel.showCalculatorDialog = false },
+                properties = DialogProperties(usePlatformDefaultWidth = false)
+            ) {
+                Surface(
+                    modifier = if (isCalcMaximized) {
+                        Modifier.fillMaxSize()
+                    } else {
+                        Modifier
+                            .fillMaxWidth(0.96f)
+                            .fillMaxHeight(0.90f)
+                    },
+                    shape = if (isCalcMaximized) RoundedCornerShape(0.dp) else RoundedCornerShape(24.dp),
+                    color = themeColors.background,
+                    tonalElevation = 8.dp
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(12.dp)
+                    ) {
+                        // Windows-Style Titlebar Header with Title and Minimize, Maximize, Close controls
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                IconButton(
-                                    onClick = {
-                                        viewModel.showCalculatorDialog = false
-                                        viewModel.changeActiveTab(
-                                            2,
-                                            "Maximized from Calculator Dialog",
-                                            "ক্যালকুলেটর ডায়লগ থেকে ম্যাক্সিমাইজ করা হয়েছে"
-                                        )
-                                    },
-                                    modifier = Modifier.size(36.dp)
+                                Icon(
+                                    imageVector = Icons.Default.Calculate,
+                                    contentDescription = null,
+                                    tint = themeColors.buttonEqualBg,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Text(
+                                    text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "কুইক ক্যালকুলেটর" else "Quick Calculator",
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.displayText
+                                )
+                            }
+
+                            // Windows Controls Group (Minimize, Maximize/Restore, Close)
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                // 1. Windows Minimize Button (-)
+                                Box(
+                                    modifier = Modifier
+                                        .size(34.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(themeColors.displayText.copy(alpha = 0.08f))
+                                        .clickable { isCalcMinimized = true },
+                                    contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Default.OpenInFull,
-                                        contentDescription = "Maximize",
+                                        imageVector = Icons.Default.Remove,
+                                        contentDescription = "Minimize",
                                         tint = themeColors.displayText,
                                         modifier = Modifier.size(18.dp)
                                     )
                                 }
-                            }
 
-                            // Close button
-                            Box(
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .background(themeColors.displayText.copy(alpha = 0.08f), CircleShape)
-                                    .clip(CircleShape),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                IconButton(
-                                    onClick = { viewModel.showCalculatorDialog = false },
-                                    modifier = Modifier.size(36.dp)
+                                // 2. Windows Maximize / Restore Button (▢ / ❐)
+                                Box(
+                                    modifier = Modifier
+                                        .size(34.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(themeColors.displayText.copy(alpha = 0.08f))
+                                        .clickable { isCalcMaximized = !isCalcMaximized },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = if (isCalcMaximized) Icons.Default.FullscreenExit else Icons.Default.CropSquare,
+                                        contentDescription = if (isCalcMaximized) "Restore" else "Maximize",
+                                        tint = themeColors.displayText,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+
+                                // 3. Windows Close Button (✕)
+                                Box(
+                                    modifier = Modifier
+                                        .size(34.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(Color(0xFFE81123))
+                                        .clickable {
+                                            viewModel.showCalculatorDialog = false
+                                            isCalcMinimized = false
+                                            isCalcMaximized = false
+                                        },
+                                    contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Close,
                                         contentDescription = "Close",
-                                        tint = themeColors.displayText,
-                                        modifier = Modifier.size(18.dp)
+                                        tint = Color.White,
+                                        modifier = Modifier.size(16.dp)
                                     )
                                 }
                             }
                         }
-                    }
 
-                    HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.1f))
+                        HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.1f))
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
 
-                    // Calculator Screen Content inside Dialog
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f)
-                    ) {
-                        CalculatorScreen(viewModel = viewModel, themeColors = themeColors)
+                        // Calculator Screen Content inside Dialog
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                        ) {
+                            CalculatorScreen(viewModel = viewModel, themeColors = themeColors)
+                        }
                     }
                 }
             }

@@ -17,6 +17,7 @@ enum class ToolCategory(
     ELECTRICITY("Electricity & Power", "বিদ্যুৎ ও শক্তি", Icons.Default.Bolt),
     VEHICLE("Smart & Vehicle Tools", "স্মার্ট ও যানবাহন", Icons.Default.DirectionsCar),
     EDUCATION("Education & Results", "শিক্ষা ও ফলাফল", Icons.Default.School),
+    ISLAMIC("Islamic Services", "ইসলামিক সার্ভিসেস", Icons.Default.NightsStay),
     DEVELOPER("Developer Tools", "ডেভেলপার টুলস", Icons.Default.Code),
     ENGINEERING("Engineering", "ইঞ্জিনিয়ারিং", Icons.Default.SettingsInputComponent);
 
@@ -31,6 +32,7 @@ enum class ToolCategory(
                 ELECTRICITY -> "बिजली और ऊर्जा"
                 VEHICLE -> "वाहन उपकरण"
                 EDUCATION -> "शिक्षा और परिणाम"
+                ISLAMIC -> "इस्लामिक सेवाएं"
                 DEVELOPER -> "डेवलपर टूल्स"
                 ENGINEERING -> "इंजीनियरिंग"
             }
@@ -41,6 +43,7 @@ enum class ToolCategory(
                 ELECTRICITY -> "الكهرباء والطاقة"
                 VEHICLE -> "أدوات المركبات"
                 EDUCATION -> "التعليم والنتائج"
+                ISLAMIC -> "الخدمات الإسلامية"
                 DEVELOPER -> "أدوات المطور"
                 ENGINEERING -> "الهندسة"
             }
@@ -51,6 +54,7 @@ enum class ToolCategory(
                 ELECTRICITY -> "Électricité et Énergie"
                 VEHICLE -> "Outils Véhicule"
                 EDUCATION -> "Éducation et Résultats"
+                ISLAMIC -> "Services Islamiques"
                 DEVELOPER -> "Outils Développeur"
                 ENGINEERING -> "Ingénierie"
             }
@@ -61,6 +65,7 @@ enum class ToolCategory(
                 ELECTRICITY -> "Electricidad y Energía"
                 VEHICLE -> "Herramientas de Vehículo"
                 EDUCATION -> "Educación y Resultados"
+                ISLAMIC -> "Servicios Islámicos"
                 DEVELOPER -> "Herramientas de Desarrollador"
                 ENGINEERING -> "Ingeniería"
             }
@@ -71,6 +76,7 @@ enum class ToolCategory(
                 ELECTRICITY -> "Elektrizität & Strom"
                 VEHICLE -> "Fahrzeug-Tools"
                 EDUCATION -> "Bildung & Ergebnisse"
+                ISLAMIC -> "Islamische Dienste"
                 DEVELOPER -> "Entwickler-Tools"
                 ENGINEERING -> "Ingenieurwesen"
             }
@@ -81,6 +87,7 @@ enum class ToolCategory(
                 ELECTRICITY -> "电力与能源"
                 VEHICLE -> "车辆与出行"
                 EDUCATION -> "教育与成果"
+                ISLAMIC -> "伊斯兰服务"
                 DEVELOPER -> "开发者工具"
                 ENGINEERING -> "工程"
             }
@@ -319,6 +326,33 @@ enum class ToolType(
         "Smart Photo Lab & BG Remover", "ফটো এডিটর ও বিজি রিমুভার",
         "ফটো রিসাইজ, ক্রপ, ফরম্যাট কনভার্ট ও ব্যাকগ্রাউন্ড রিমুভ করুন",
         ToolCategory.UTILITY, Icons.Default.Image
+    ),
+
+    // 9. Islamic Tools
+    QIBLA_COMPASS(
+        "Qibla Compass", "কিবলা কম্পাস",
+        "মক্কা শরিফের আল-কাবা শরীফের দিকে নির্ভুল কিবলা দিক নির্ণয় করুন",
+        ToolCategory.ISLAMIC, Icons.Default.Explore
+    ),
+    DIGITAL_TASBIH(
+        "Digital Tasbih", "ডিজিটাল তাসবিহ",
+        "ডিজিটাল জিকির ও তাসবিহ গণনার স্মার্ট কাউন্টার",
+        ToolCategory.ISLAMIC, Icons.Default.FormatListNumbered
+    ),
+    PRAYER_TIMES(
+        "Prayer Times Schedule", "নামাজের সময়সূচি",
+        "দৈনিক ৫ ওয়াক্ত সালাতের নির্ভুল সময়সূচি ও কাউন্টডাউন",
+        ToolCategory.ISLAMIC, Icons.Default.Schedule
+    ),
+    SEHRI_IFTAR(
+        "Sehri & Iftar Schedule", "সেহরি ও ইফতারের সময়সূচি",
+        "দৈনিক সেহরি ও ইফতারের সময়সূচি, কাউন্টডাউন ও গুরুত্বপূর্ণ দোয়া",
+        ToolCategory.ISLAMIC, Icons.Default.NightsStay
+    ),
+    ISLAMIC_DUAS(
+        "Daily Duas & Zikir", "দৈনন্দিন দোয়া ও জিকির",
+        "কুরআন ও হাদিসের প্রয়োজনীয় দোয়াসমূহ, বাংলা উচ্চারণ ও অর্থ",
+        ToolCategory.ISLAMIC, Icons.Default.MenuBook
     );
 
     fun getTitle(language: AppLanguage): String {
@@ -375,6 +409,11 @@ enum class ToolType(
                 WEATHER -> "Check current weather and 7-day forecast"
                 QR_CODE -> "Scan QR codes with camera or generate custom QR codes instantly"
                 PHOTO_LAB -> "Resize, crop, convert between formats, and remove backgrounds from photos"
+                QIBLA_COMPASS -> "Accurate Qibla direction finder pointing towards the Holy Kaaba in Makkah"
+                DIGITAL_TASBIH -> "Digital zikir and tasbih tally counter with goal targets and presets"
+                PRAYER_TIMES -> "Daily 5 time Islamic prayer timetable with countdowns and alerts"
+                SEHRI_IFTAR -> "Daily Ramadan Sehri and Iftar timetable, countdowns, and authentic duas"
+                ISLAMIC_DUAS -> "Collection of daily authentic Quranic & Masnoon duas with meanings"
             }
         }
     }

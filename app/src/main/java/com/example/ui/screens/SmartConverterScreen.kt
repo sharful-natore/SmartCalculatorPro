@@ -7,6 +7,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -283,81 +284,110 @@ fun SmartConverterCategoriesView(
             }
         }
 
-        // Converter Cards grouped by category
-        if (filteredConverters.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = LanguageManager.getString("no_results", viewModel.selectedLanguage),
-                    color = themeColors.displayText.copy(alpha = 0.6f),
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium
-                )
+        // Converter Cards grouped by category with Smooth Category Switch Animation
+        AnimatedContent(
+            targetState = selectedFilter,
+            transitionSpec = {
+                (fadeIn(animationSpec = tween(220)) + slideInVertically(animationSpec = tween(220)) { it / 8 }) togetherWith
+                fadeOut(animationSpec = tween(150))
+            },
+            label = "converterCategorySortAnimation"
+        ) { currentFilter ->
+            val currentFilteredConverters = if (currentFilter == null) {
+                allConverters.filter { converter ->
+                    searchQuery.isEmpty() ||
+                    converter.titleEn.lowercase().contains(searchQuery) ||
+                    converter.titleBn.lowercase().contains(searchQuery) ||
+                    converter.units.any { it.lowercase().contains(searchQuery) }
+                }
+            } else {
+                allConverters.filter { converter ->
+                    converter.category == currentFilter && (
+                        searchQuery.isEmpty() ||
+                        converter.titleEn.lowercase().contains(searchQuery) ||
+                        converter.titleBn.lowercase().contains(searchQuery) ||
+                        converter.units.any { it.lowercase().contains(searchQuery) }
+                    )
+                }
             }
-        } else {
-            val categoriesToShow = ConverterCategory.values().filter { cat ->
-                filteredConverters.any { it.category == cat }
-            }
 
-            categoriesToShow.forEach { category ->
-                val categoryConverters = filteredConverters.filter { it.category == category }
+            if (currentFilteredConverters.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = LanguageManager.getString("no_results", viewModel.selectedLanguage),
+                        color = themeColors.displayText.copy(alpha = 0.6f),
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            } else {
+                val categoriesToShow = ConverterCategory.values().filter { cat ->
+                    currentFilteredConverters.any { it.category == cat }
+                }
 
-                if (categoryConverters.isNotEmpty()) {
-                    // Category Header
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(28.dp)
-                                .clip(CircleShape)
-                                .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = category.icon,
-                                contentDescription = category.titleEn,
-                                tint = themeColors.buttonEqualBg,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = category.getTitle(viewModel.selectedLanguage),
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = themeColors.displayText
-                        )
-                    }
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    categoriesToShow.forEach { category ->
+                        val categoryConverters = currentFilteredConverters.filter { it.category == category }
 
-                    // Cards Grid (2 columns)
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    ) {
-                        categoryConverters.chunked(2).forEach { rowItems ->
+                        if (categoryConverters.isNotEmpty()) {
+                            // Category Header
                             Row(
-                                modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(vertical = 8.dp)
                             ) {
-                                rowItems.forEach { type ->
-                                    Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
-                                        ConverterCardItem(
-                                            converterType = type,
-                                            viewModel = viewModel,
-                                            themeColors = themeColors,
-                                            modifier = Modifier.fillMaxHeight(),
-                                            onClick = { viewModel.openConverter(type) }
-                                        )
-                                    }
+                                Box(
+                                    modifier = Modifier
+                                        .size(28.dp)
+                                        .clip(CircleShape)
+                                        .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = category.icon,
+                                        contentDescription = category.titleEn,
+                                        tint = themeColors.buttonEqualBg,
+                                        modifier = Modifier.size(16.dp)
+                                    )
                                 }
-                                if (rowItems.size == 1) {
-                                    Spacer(modifier = Modifier.weight(1f))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = category.getTitle(viewModel.selectedLanguage),
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.displayText
+                                )
+                            }
+
+                            // Cards Grid (2 columns)
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(10.dp),
+                                modifier = Modifier.padding(bottom = 16.dp)
+                            ) {
+                                categoryConverters.chunked(2).forEach { rowItems ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        rowItems.forEach { type ->
+                                            Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                                                ConverterCardItem(
+                                                    converterType = type,
+                                                    viewModel = viewModel,
+                                                    themeColors = themeColors,
+                                                    modifier = Modifier.fillMaxHeight(),
+                                                    onClick = { viewModel.openConverter(type) }
+                                                )
+                                            }
+                                        }
+                                        if (rowItems.size == 1) {
+                                            Spacer(modifier = Modifier.weight(1f))
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -424,7 +454,7 @@ fun ConverterCardItem(
                 indication = androidx.compose.foundation.LocalIndication.current,
                 onClick = onClick,
                 onLongClick = {
-                    viewModel.toggleFavoriteConverter(converterType.name)
+                    viewModel.requestToggleFavoriteConverter(converterType)
                 }
             ),
         shape = RoundedCornerShape(16.dp),
@@ -458,7 +488,7 @@ fun ConverterCardItem(
                         )
                     }
                     IconButton(
-                        onClick = { viewModel.toggleFavoriteConverter(converterType.name) },
+                        onClick = { viewModel.requestToggleFavoriteConverter(converterType) },
                         modifier = Modifier.size(28.dp)
                     ) {
                         Icon(

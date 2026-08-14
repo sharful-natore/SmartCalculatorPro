@@ -9,9 +9,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.animation.*
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.*
 import androidx.compose.ui.unit.IntOffset
 import kotlin.math.roundToInt
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
@@ -22,10 +20,18 @@ import androidx.compose.ui.unit.Velocity
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.ExperimentalFoundationApi
-
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.horizontalScroll
@@ -225,20 +231,22 @@ fun DashboardCategoriesView(
             .verticalScroll(scrollState)
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
-        // Time-based Greeting & Multi-Date Header Banner
         val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
-        val dateInfo = remember { com.example.util.CalendarUtils.getMultiDateInfo(java.util.Calendar.getInstance(), isBn) }
 
-        val currentHour = remember { java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY) }
-        val (greetingText, greetingIcon) = remember(currentHour, isBn) {
-            when (currentHour) {
-                in 5..11 -> Pair(if (isBn) "শুভ সকাল" else "Good Morning", Icons.Default.WbSunny)
-                in 12..15 -> Pair(if (isBn) "শুভ দুপুর" else "Good Afternoon", Icons.Default.WbSunny)
-                in 16..17 -> Pair(if (isBn) "শুভ বিকেল" else "Good Afternoon", Icons.Default.WbTwilight)
-                in 18..20 -> Pair(if (isBn) "শুভ সন্ধ্যা" else "Good Evening", Icons.Default.WbTwilight)
-                else -> Pair(if (isBn) "শুভ রাত্রি" else "Good Night", Icons.Default.Bedtime)
+        // Time-based Greeting & Multi-Date Header Banner (Hidden during search)
+        if (searchQuery.isBlank()) {
+            val dateInfo = remember { com.example.util.CalendarUtils.getMultiDateInfo(java.util.Calendar.getInstance(), isBn) }
+
+            val currentHour = remember { java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY) }
+            val (greetingText, greetingIcon) = remember(currentHour, isBn) {
+                when (currentHour) {
+                    in 5..11 -> Pair(if (isBn) "শুভ সকাল" else "Good Morning", Icons.Default.WbSunny)
+                    in 12..15 -> Pair(if (isBn) "শুভ দুপুর" else "Good Afternoon", Icons.Default.WbSunny)
+                    in 16..17 -> Pair(if (isBn) "শুভ বিকেল" else "Good Afternoon", Icons.Default.WbTwilight)
+                    in 18..20 -> Pair(if (isBn) "শুভ সন্ধ্যা" else "Good Evening", Icons.Default.WbTwilight)
+                    else -> Pair(if (isBn) "শুভ রাত্রি" else "Good Night", Icons.Default.Bedtime)
+                }
             }
-        }
 
         val location = viewModel.weatherLocation.ifBlank { "Dhaka" }
         val weatherText = if (viewModel.weatherIsLoading) {
@@ -319,9 +327,13 @@ fun DashboardCategoriesView(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Left Column: Greeting Title & English Date
+                    // Left Column: Greeting Title & English Date (Clickable to open Calendar)
                     Column(
-                        modifier = Modifier.weight(1.05f),
+                        modifier = Modifier
+                            .weight(1.05f)
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable { viewModel.openTool(ToolType.MULTI_CALENDAR) }
+                            .padding(2.dp),
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Row(
@@ -342,13 +354,22 @@ fun DashboardCategoriesView(
                                 color = themeColors.displayText
                             )
                         }
-                        Text(
-                            text = "${dateInfo.englishDayName}, ${dateInfo.englishDate}",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = themeColors.displayText.copy(alpha = 0.8f),
-                            lineHeight = 15.sp
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "${dateInfo.englishDayName}, ${dateInfo.englishDate}",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.displayText.copy(alpha = 0.8f),
+                                lineHeight = 15.sp
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Icon(
+                                imageVector = Icons.Default.CalendarMonth,
+                                contentDescription = "Calendar",
+                                tint = themeColors.buttonEqualBg,
+                                modifier = Modifier.size(13.dp)
+                            )
+                        }
                     }
 
                     // Spacer to keep balance
@@ -406,8 +427,14 @@ fun DashboardCategoriesView(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Bengali Date (Left Aligned)
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Bengali Date (Left Aligned - Clickable)
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .clickable { viewModel.openTool(ToolType.MULTI_CALENDAR) }
+                            .padding(horizontal = 4.dp, vertical = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Icon(
                             imageVector = Icons.Default.WbSunny,
                             contentDescription = "Bengali Calendar",
@@ -423,8 +450,14 @@ fun DashboardCategoriesView(
                         )
                     }
 
-                    // Hijri/Arabic Date (Right Aligned)
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Hijri/Arabic Date (Right Aligned - Clickable)
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .clickable { viewModel.openTool(ToolType.MULTI_CALENDAR) }
+                            .padding(horizontal = 4.dp, vertical = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Icon(
                             imageVector = Icons.Default.Bedtime,
                             contentDescription = "Hijri Calendar",
@@ -441,6 +474,7 @@ fun DashboardCategoriesView(
                     }
                 }
             }
+        }
         }
 
         // Change Weather Location Dialog
@@ -610,6 +644,59 @@ fun DashboardCategoriesView(
             )
         }
 
+        // Pending Favorite Add/Remove Confirmation Dialog
+        viewModel.pendingFavoriteConfirmAction?.let { action ->
+            AlertDialog(
+                onDismissRequest = { viewModel.dismissPendingFavoriteAction() },
+                title = {
+                    Text(
+                        text = if (isBn) "ফেভারিট নিশ্চিতকরণ" else "Favorite Confirmation",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = themeColors.displayText
+                    )
+                },
+                text = {
+                    val message = if (isBn) {
+                        if (action.isCurrentlyFavorite) {
+                            "আপনি কি \"${action.titleBn}\" ফেভারিট তালিকা থেকে বাদ দিতে চান?"
+                        } else {
+                            "আপনি কি \"${action.titleBn}\" আপনার ফেভারিট তালিকায় যুক্ত করতে চান?"
+                        }
+                    } else {
+                        if (action.isCurrentlyFavorite) {
+                            "Are you sure you want to remove \"${action.titleEn}\" from favorites?"
+                        } else {
+                            "Do you want to add \"${action.titleEn}\" to your favorites?"
+                        }
+                    }
+                    Text(
+                        text = message,
+                        fontSize = 14.sp,
+                        color = themeColors.displayText.copy(alpha = 0.85f),
+                        lineHeight = 20.sp
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            viewModel.confirmPendingFavoriteAction()
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg)
+                    ) {
+                        Text(text = if (isBn) "হ্যাঁ, নিশ্চিত" else "Yes, Confirm", color = Color.White)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { viewModel.dismissPendingFavoriteAction() }) {
+                        Text(text = if (isBn) "বাতিল" else "Cancel", color = themeColors.buttonEqualBg)
+                    }
+                },
+                containerColor = themeColors.cardBg,
+                shape = RoundedCornerShape(16.dp)
+            )
+        }
+
         if (unfavoriteConfirmTool != null) {
             val toolToUnfav = unfavoriteConfirmTool!!
             AlertDialog(
@@ -708,43 +795,52 @@ fun DashboardCategoriesView(
                 .testTag("tool_search_input")
         )
 
-        // Featured & Favorite Tools Title
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp, bottom = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = if (isBn) "ফিচার্ড ও ফেভারিট টুলস" else "Featured & Favorite Tools",
-                fontSize = 15.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = themeColors.displayText
+        if (searchQuery.isNotBlank()) {
+            // Live Search Results View (Featured & Category sections hidden during search)
+            DashboardSearchResultsView(
+                searchQuery = searchQuery,
+                viewModel = viewModel,
+                themeColors = themeColors,
+                isBn = isBn
             )
+        } else {
+            // Featured & Favorite Tools Title
             Row(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(themeColors.buttonEqualBg.copy(alpha = 0.12f))
-                    .clickable { showAllFeaturedDialog = true }
-                    .padding(horizontal = 10.dp, vertical = 5.dp),
+                    .fillMaxWidth()
+                    .padding(top = 8.dp, bottom = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.Default.Visibility,
-                    contentDescription = null,
-                    tint = themeColors.buttonEqualBg,
-                    modifier = Modifier.size(13.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = if (isBn) "সব দেখুন" else "View All",
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = themeColors.buttonEqualBg
+                    text = if (isBn) "ফিচার্ড ও ফেভারিট টুলস" else "Featured & Favorite Tools",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = themeColors.displayText
                 )
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(themeColors.buttonEqualBg.copy(alpha = 0.12f))
+                        .clickable { showAllFeaturedDialog = true }
+                        .padding(horizontal = 10.dp, vertical = 5.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Visibility,
+                        contentDescription = null,
+                        tint = themeColors.buttonEqualBg,
+                        modifier = Modifier.size(13.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = if (isBn) "সব দেখুন" else "View All",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.buttonEqualBg
+                    )
+                }
             }
-        }
 
         // Horizontal Scroll Layout for the Combined Featured & Favorite Tools and Converters
         val combinedList = remember(viewModel.orderedFavoriteTools) {
@@ -1190,81 +1286,100 @@ fun DashboardCategoriesView(
             }
         }
 
-        // Tools List Grouped by Category
-        if (filteredTools.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = LanguageManager.getString("no_results", viewModel.selectedLanguage),
-                    color = themeColors.displayText.copy(alpha = 0.6f),
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-        } else {
-            val categoriesToShow = ToolCategory.values().filter { cat ->
-                filteredTools.any { it.category == cat }
+        val allTools = ToolType.values().toList()
+
+        // Tools List Grouped by Category with Smooth Category Switch Animation
+        AnimatedContent(
+            targetState = selectedFilter,
+            transitionSpec = {
+                (fadeIn(animationSpec = tween(220)) + slideInVertically(animationSpec = tween(220)) { it / 8 }) togetherWith
+                fadeOut(animationSpec = tween(150))
+            },
+            label = "categorySortAnimation"
+        ) { currentFilter ->
+            val currentFilteredTools = if (currentFilter == null) {
+                allTools
+            } else {
+                allTools.filter { it.category == currentFilter }
             }
 
-            categoriesToShow.forEach { category ->
-                val categoryTools = filteredTools.filter { it.category == category }
+            if (currentFilteredTools.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = LanguageManager.getString("no_results", viewModel.selectedLanguage),
+                        color = themeColors.displayText.copy(alpha = 0.6f),
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            } else {
+                val categoriesToShow = ToolCategory.values().filter { cat ->
+                    currentFilteredTools.any { it.category == cat }
+                }
 
-                if (categoryTools.isNotEmpty()) {
-                    // Category Header
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(28.dp)
-                                .clip(CircleShape)
-                                .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = category.icon,
-                                contentDescription = category.titleEn,
-                                tint = themeColors.buttonEqualBg,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = category.getTitle(viewModel.selectedLanguage),
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = themeColors.displayText
-                        )
-                    }
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    categoriesToShow.forEach { category ->
+                        val categoryTools = currentFilteredTools.filter { it.category == category }
 
-                    // 2-column Grid of Cards
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    ) {
-                        categoryTools.chunked(2).forEach { rowItems ->
+                        if (categoryTools.isNotEmpty()) {
+                            // Category Header
                             Row(
-                                modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(vertical = 8.dp)
                             ) {
-                                rowItems.forEach { tool ->
-                                    Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
-                                        ToolGridCardItem(
-                                            toolType = tool,
-                                            viewModel = viewModel,
-                                            themeColors = themeColors,
-                                            modifier = Modifier.fillMaxHeight(),
-                                            onClick = { viewModel.openTool(tool) }
-                                        )
-                                    }
+                                Box(
+                                    modifier = Modifier
+                                        .size(28.dp)
+                                        .clip(CircleShape)
+                                        .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = category.icon,
+                                        contentDescription = category.titleEn,
+                                        tint = themeColors.buttonEqualBg,
+                                        modifier = Modifier.size(16.dp)
+                                    )
                                 }
-                                if (rowItems.size == 1) {
-                                    Spacer(modifier = Modifier.weight(1f))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = category.getTitle(viewModel.selectedLanguage),
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.displayText
+                                )
+                            }
+
+                            // 2-column Grid of Cards
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(10.dp),
+                                modifier = Modifier.padding(bottom = 16.dp)
+                            ) {
+                                categoryTools.chunked(2).forEach { rowItems ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        rowItems.forEach { tool ->
+                                            Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                                                ToolGridCardItem(
+                                                    toolType = tool,
+                                                    viewModel = viewModel,
+                                                    themeColors = themeColors,
+                                                    modifier = Modifier.fillMaxHeight(),
+                                                    onClick = { viewModel.openTool(tool) }
+                                                )
+                                            }
+                                        }
+                                        if (rowItems.size == 1) {
+                                            Spacer(modifier = Modifier.weight(1f))
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -1272,6 +1387,7 @@ fun DashboardCategoriesView(
                 }
             }
         }
+        } // End of else block for searchQuery
     }
 }
 
@@ -1337,7 +1453,7 @@ fun ToolGridCardItem(
                 indication = androidx.compose.foundation.LocalIndication.current,
                 onClick = onClick,
                 onLongClick = {
-                    viewModel.toggleFavoriteTool(toolType.name)
+                    viewModel.requestToggleFavoriteTool(toolType)
                 }
             ),
         shape = RoundedCornerShape(16.dp),
@@ -1371,7 +1487,7 @@ fun ToolGridCardItem(
                         )
                     }
                     IconButton(
-                        onClick = { viewModel.toggleFavoriteTool(toolType.name) },
+                        onClick = { viewModel.requestToggleFavoriteTool(toolType) },
                         modifier = Modifier.size(28.dp)
                     ) {
                         Icon(
@@ -1622,6 +1738,11 @@ fun ToolDetailView(
             ToolType.QR_CODE -> QrCodeCard(viewModel, themeColors)
             ToolType.PHOTO_LAB -> PhotoLabCard(viewModel, themeColors)
             ToolType.WEATHER -> DynamicWeatherScreen(viewModel, themeColors, isBn = viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI)
+            ToolType.QIBLA_COMPASS -> QiblaCompassCard(viewModel, themeColors)
+            ToolType.DIGITAL_TASBIH -> DigitalTasbihCard(viewModel, themeColors)
+            ToolType.PRAYER_TIMES -> PrayerTimesCard(viewModel, themeColors)
+            ToolType.SEHRI_IFTAR -> SehriIftarCard(viewModel, themeColors)
+            ToolType.ISLAMIC_DUAS -> IslamicDuasCard(viewModel, themeColors)
         }
     }
 }
@@ -2074,6 +2195,51 @@ private fun getToolInfoItems(toolType: ToolType, isBn: Boolean): List<Pair<Strin
                 "2. Format Conversion & BG Remover" to "Convert images seamlessly across PNG, JPG, and WEBP formats and isolate subjects with smart background removal."
             )
         }
+        ToolType.QIBLA_COMPASS -> if (isBn) {
+            listOf(
+                "১. সঠিক কিবলা নির্দেশক" to "পবিত্র কাবা শরীফের সঠিক দিক ও অ্যাঙ্গেল (২৩৭.৫° দক্ষিণ-পশ্চিম) নির্ধারণ করতে আপনার ডিভাইসের ডিজিটাল কম্পাস ব্যবহার করা হয়।"
+            )
+        } else {
+            listOf(
+                "1. Accurate Qibla Finder" to "Uses hardware orientation sensors to locate the exact direction and compass bearing of the Holy Kaaba in Makkah (237.5° WSW from Bangladesh)."
+            )
+        }
+        ToolType.DIGITAL_TASBIH -> if (isBn) {
+            listOf(
+                "১. জিকির ও তাসবিহ কাউন্টার" to "৩৩, ১০০ বা ১০০০ টার্গেট সেট করে আলহামদুলিল্লাহ, সুবহানাল্লাহসহ দৈনন্দিন জিকির গণনার আধুনিক ট্যালি কাউন্টার।"
+            )
+        } else {
+            listOf(
+                "1. Smart Digital Tasbih" to "Interactive tally counter for daily dhikr and tasbih with target goals (33, 100, 1000) and milestone completion feedback."
+            )
+        }
+        ToolType.PRAYER_TIMES -> if (isBn) {
+            listOf(
+                "১. দৈনিক ৫ ওয়াক্ত সালাত" to "ফজর, যোহর, আসর, মাগরিব ও এশার সালাতের সময়সূচি এবং পরবর্তী সালাতের অবশিষ্ট কাউন্টডাউন সময়।"
+            )
+        } else {
+            listOf(
+                "1. Daily 5 Prayer Schedule" to "Displays accurate daily timetable for Fajr, Dhuhr, Asr, Maghrib, and Isha prayers along with a countdown to the next prayer."
+            )
+        }
+        ToolType.SEHRI_IFTAR -> if (isBn) {
+            listOf(
+                "১. সেহরি ও ইফতারের সময়সূচি" to "আজকের সেহরির শেষ সময় ও ইফতারের নিখুঁত সময় এবং রোজার নিয়ত ও ইফতারের মাসনুন দোয়া।"
+            )
+        } else {
+            listOf(
+                "1. Sehri & Iftar Timetable" to "Daily Ramadan Sehri ending time, Iftar time, along with authentic Sehri Niyyat and Iftar Duas."
+            )
+        }
+        ToolType.ISLAMIC_DUAS -> if (isBn) {
+            listOf(
+                "১. প্রয়োজনীয় মাসনুন দোয়া" to "ঘুম থেকে ওঠা, খাবার খাওয়া, সফর করা ও সায়্যিদুল এস্তেগফারসহ দৈনন্দিন জীবনের গুরুত্বপূর্ণ দোয়াসমূহ।"
+            )
+        } else {
+            listOf(
+                "1. Daily Authentic Duas" to "A curated collection of essential daily Islamic supplications with Arabic text and meanings."
+            )
+        }
     }
 }
 
@@ -2168,6 +2334,480 @@ fun getCurrentLocationName(context: Context, isBn: Boolean, onResult: (String?) 
     } catch (e: Exception) {
         e.printStackTrace()
         onResult(null)
+    }
+}
+
+@Composable
+fun HighlightedText(
+    text: String,
+    query: String,
+    highlightColor: Color,
+    baseColor: Color,
+    fontSize: androidx.compose.ui.unit.TextUnit,
+    fontWeight: FontWeight = FontWeight.Normal,
+    maxLines: Int = Int.MAX_VALUE,
+    lineHeight: androidx.compose.ui.unit.TextUnit = androidx.compose.ui.unit.TextUnit.Unspecified,
+    modifier: Modifier = Modifier
+) {
+    if (query.isBlank() || !text.contains(query, ignoreCase = true)) {
+        Text(
+            text = text,
+            fontSize = fontSize,
+            fontWeight = fontWeight,
+            color = baseColor,
+            maxLines = maxLines,
+            lineHeight = lineHeight,
+            modifier = modifier,
+            overflow = TextOverflow.Ellipsis
+        )
+        return
+    }
+
+    val annotatedString = remember(text, query, highlightColor, baseColor) {
+        buildAnnotatedString {
+            val lowerText = text.lowercase()
+            val lowerQuery = query.lowercase()
+            var startIndex = 0
+            while (startIndex < text.length) {
+                val index = lowerText.indexOf(lowerQuery, startIndex)
+                if (index == -1) {
+                    append(text.substring(startIndex))
+                    break
+                }
+                if (index > startIndex) {
+                    append(text.substring(startIndex, index))
+                }
+                withStyle(
+                    SpanStyle(
+                        background = highlightColor.copy(alpha = 0.25f),
+                        color = highlightColor,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                ) {
+                    append(text.substring(index, index + lowerQuery.length))
+                }
+                startIndex = index + lowerQuery.length
+            }
+        }
+    }
+
+    Text(
+        text = annotatedString,
+        fontSize = fontSize,
+        fontWeight = fontWeight,
+        color = baseColor,
+        maxLines = maxLines,
+        lineHeight = lineHeight,
+        modifier = modifier,
+        overflow = TextOverflow.Ellipsis
+    )
+}
+
+@Composable
+fun SearchEmptyGraphicsView(
+    searchQuery: String,
+    themeColors: CalculatorThemeColors,
+    isBn: Boolean
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "emptySearchTransition")
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 0.94f,
+        targetValue = 1.06f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1600, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulseScale"
+    )
+    val floatY by infiniteTransition.animateFloat(
+        initialValue = -4f,
+        targetValue = 4f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "floatY"
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 36.dp, horizontal = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .size(150.dp)
+                .graphicsLayer {
+                    translationY = floatY
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            // Background ambient canvas aura
+            Canvas(
+                modifier = Modifier
+                    .size(140.dp)
+                    .graphicsLayer {
+                        scaleX = pulseScale
+                        scaleY = pulseScale
+                    }
+            ) {
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            themeColors.buttonEqualBg.copy(alpha = 0.22f),
+                            themeColors.buttonEqualBg.copy(alpha = 0.05f),
+                            Color.Transparent
+                        )
+                    )
+                )
+            }
+
+            // Outer decorative ring
+            Box(
+                modifier = Modifier
+                    .size(90.dp)
+                    .clip(CircleShape)
+                    .background(themeColors.cardBg)
+                    .border(2.dp, themeColors.buttonEqualBg.copy(alpha = 0.3f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.SearchOff,
+                    contentDescription = null,
+                    tint = themeColors.buttonEqualBg,
+                    modifier = Modifier.size(46.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = if (isBn) "কোনো টুলস বা কনভার্টার পাওয়া যায়নি" else "No Tools or Converters Found",
+            fontSize = 17.sp,
+            fontWeight = FontWeight.Bold,
+            color = themeColors.displayText,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        Text(
+            text = if (isBn)
+                "\"$searchQuery\" এর সাথে কোনো টুল বা কনভার্টার মিলেনি। অন্য শব্দ বা বানান দিয়ে চেষ্টা করুন।"
+            else
+                "No tools match \"$searchQuery\". Try checking the spelling or use a different keyword.",
+            fontSize = 13.sp,
+            color = themeColors.displayText.copy(alpha = 0.65f),
+            textAlign = TextAlign.Center,
+            lineHeight = 18.sp,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun DashboardSearchResultsView(
+    searchQuery: String,
+    viewModel: CalculatorViewModel,
+    themeColors: CalculatorThemeColors,
+    isBn: Boolean
+) {
+    val cleanQuery = searchQuery.trim().lowercase()
+
+    val matchedTools = remember(cleanQuery, isBn) {
+        ToolType.values().filter { tool ->
+            tool.titleEn.lowercase().contains(cleanQuery) ||
+            tool.titleBn.lowercase().contains(cleanQuery) ||
+            tool.descriptionBn.lowercase().contains(cleanQuery) ||
+            tool.category.titleEn.lowercase().contains(cleanQuery) ||
+            tool.category.titleBn.lowercase().contains(cleanQuery)
+        }
+    }
+
+    val matchedConverters = remember(cleanQuery, isBn) {
+        ConverterType.values().filter { conv ->
+            conv.titleEn.lowercase().contains(cleanQuery) ||
+            conv.titleBn.lowercase().contains(cleanQuery) ||
+            conv.category.titleEn.lowercase().contains(cleanQuery) ||
+            conv.category.titleBn.lowercase().contains(cleanQuery) ||
+            conv.units.any { it.lowercase().contains(cleanQuery) }
+        }
+    }
+
+    val totalMatches = matchedTools.size + matchedConverters.size
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp)
+    ) {
+        if (totalMatches == 0) {
+            SearchEmptyGraphicsView(
+                searchQuery = searchQuery,
+                themeColors = themeColors,
+                isBn = isBn
+            )
+        } else {
+            // Result Count Banner
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = if (isBn)
+                        "অনুসন্ধানের ফলাফল ($totalMatches টি পাওয়া গেছে)"
+                    else
+                        "Search Results ($totalMatches found)",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = themeColors.displayText
+                )
+            }
+
+            // Matching Tools Section
+            if (matchedTools.isNotEmpty()) {
+                Text(
+                    text = if (isBn) "টুলস (${matchedTools.size})" else "Tools (${matchedTools.size})",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = themeColors.buttonEqualBg,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier.padding(bottom = 16.dp)
+                ) {
+                    matchedTools.chunked(2).forEach { rowTools ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            rowTools.forEach { tool ->
+                                val isFavorite = viewModel.favoriteTools.contains(tool.name)
+                                val interactionSource = remember { MutableInteractionSource() }
+
+                                ElevatedCard(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxHeight()
+                                        .testTag("search_tool_${tool.name.lowercase()}")
+                                        .scaleOnPress(interactionSource)
+                                        .themeCardShadow(themeColors, elevation = 1.dp)
+                                        .combinedClickable(
+                                            interactionSource = interactionSource,
+                                            indication = androidx.compose.foundation.LocalIndication.current,
+                                            onClick = { viewModel.openTool(tool) },
+                                            onLongClick = {
+                                                viewModel.requestToggleFavoriteTool(tool)
+                                            }
+                                        ),
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = CardDefaults.elevatedCardColors(
+                                        containerColor = themeColors.cardBg
+                                    ),
+                                    elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp)
+                                ) {
+                                    Column(
+                                        modifier = Modifier.fillMaxHeight().padding(12.dp),
+                                        verticalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Column {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                modifier = Modifier.fillMaxWidth()
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(38.dp)
+                                                        .clip(CircleShape)
+                                                        .background(themeColors.buttonEqualBg),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Icon(
+                                                        imageVector = tool.icon,
+                                                        contentDescription = null,
+                                                        tint = Color.White,
+                                                        modifier = Modifier.size(20.dp)
+                                                    )
+                                                }
+                                                IconButton(
+                                                    onClick = { viewModel.requestToggleFavoriteTool(tool) },
+                                                    modifier = Modifier.size(28.dp)
+                                                ) {
+                                                    Icon(
+                                                        imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                                        contentDescription = "Favorite",
+                                                        tint = if (isFavorite) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.3f),
+                                                        modifier = Modifier.size(18.dp)
+                                                    )
+                                                }
+                                            }
+
+                                            Spacer(modifier = Modifier.height(8.dp))
+
+                                            HighlightedText(
+                                                text = tool.getTitle(viewModel.selectedLanguage),
+                                                query = cleanQuery,
+                                                highlightColor = themeColors.buttonEqualBg,
+                                                baseColor = themeColors.displayText,
+                                                fontSize = 13.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                maxLines = 2,
+                                                lineHeight = 16.sp
+                                            )
+                                        }
+
+                                        Spacer(modifier = Modifier.height(4.dp))
+
+                                        HighlightedText(
+                                            text = tool.getDescription(viewModel.selectedLanguage),
+                                            query = cleanQuery,
+                                            highlightColor = themeColors.buttonEqualBg,
+                                            baseColor = themeColors.displayText.copy(alpha = 0.65f),
+                                            fontSize = 11.sp,
+                                            maxLines = 2,
+                                            lineHeight = 14.sp
+                                        )
+                                    }
+                                }
+                            }
+                            if (rowTools.size == 1) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Matching Converters Section
+            if (matchedConverters.isNotEmpty()) {
+                Text(
+                    text = if (isBn) "কনভার্টার (${matchedConverters.size})" else "Converters (${matchedConverters.size})",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = themeColors.buttonEqualBg,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier.padding(bottom = 16.dp)
+                ) {
+                    matchedConverters.chunked(2).forEach { rowConverters ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            rowConverters.forEach { conv ->
+                                val isFavorite = viewModel.favoriteConverters.contains(conv.name)
+                                val interactionSource = remember { MutableInteractionSource() }
+
+                                ElevatedCard(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxHeight()
+                                        .testTag("search_conv_${conv.name.lowercase()}")
+                                        .scaleOnPress(interactionSource)
+                                        .themeCardShadow(themeColors, elevation = 1.dp)
+                                        .combinedClickable(
+                                            interactionSource = interactionSource,
+                                            indication = androidx.compose.foundation.LocalIndication.current,
+                                            onClick = { viewModel.openConverter(conv) },
+                                            onLongClick = {
+                                                viewModel.requestToggleFavoriteConverter(conv)
+                                            }
+                                        ),
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = CardDefaults.elevatedCardColors(
+                                        containerColor = themeColors.cardBg
+                                    ),
+                                    elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp)
+                                ) {
+                                    Column(
+                                        modifier = Modifier.fillMaxHeight().padding(12.dp),
+                                        verticalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Column {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                modifier = Modifier.fillMaxWidth()
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(38.dp)
+                                                        .clip(CircleShape)
+                                                        .background(themeColors.buttonEqualBg),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Icon(
+                                                        imageVector = conv.icon,
+                                                        contentDescription = null,
+                                                        tint = Color.White,
+                                                        modifier = Modifier.size(20.dp)
+                                                    )
+                                                }
+                                                IconButton(
+                                                    onClick = { viewModel.requestToggleFavoriteConverter(conv) },
+                                                    modifier = Modifier.size(28.dp)
+                                                ) {
+                                                    Icon(
+                                                        imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                                        contentDescription = "Favorite",
+                                                        tint = if (isFavorite) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.3f),
+                                                        modifier = Modifier.size(18.dp)
+                                                    )
+                                                }
+                                            }
+
+                                            Spacer(modifier = Modifier.height(8.dp))
+
+                                            HighlightedText(
+                                                text = conv.getTitle(viewModel.selectedLanguage),
+                                                query = cleanQuery,
+                                                highlightColor = themeColors.buttonEqualBg,
+                                                baseColor = themeColors.displayText,
+                                                fontSize = 13.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                maxLines = 2,
+                                                lineHeight = 16.sp
+                                            )
+                                        }
+
+                                        Spacer(modifier = Modifier.height(4.dp))
+
+                                        val unitsSample = remember(conv, isBn) {
+                                            conv.units.take(3).joinToString(", ")
+                                        }
+                                        HighlightedText(
+                                            text = unitsSample,
+                                            query = cleanQuery,
+                                            highlightColor = themeColors.buttonEqualBg,
+                                            baseColor = themeColors.displayText.copy(alpha = 0.65f),
+                                            fontSize = 11.sp,
+                                            maxLines = 1,
+                                            lineHeight = 14.sp
+                                        )
+                                    }
+                                }
+                            }
+                            if (rowConverters.size == 1) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
