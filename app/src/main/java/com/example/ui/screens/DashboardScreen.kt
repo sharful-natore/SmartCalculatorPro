@@ -88,6 +88,12 @@ fun DashboardScreen(
     themeColors: CalculatorThemeColors
 ) {
     val selectedType = viewModel.selectedToolType
+    val dashboardScrollState = androidx.compose.runtime.saveable.rememberSaveable(saver = androidx.compose.foundation.ScrollState.Saver) {
+        androidx.compose.foundation.ScrollState(0)
+    }
+    val dashboardFilterScrollState = androidx.compose.runtime.saveable.rememberSaveable(saver = androidx.compose.foundation.ScrollState.Saver) {
+        androidx.compose.foundation.ScrollState(0)
+    }
 
     AnimatedContent(
         targetState = selectedType,
@@ -104,7 +110,12 @@ fun DashboardScreen(
     ) { currentType ->
         if (currentType == null) {
             // View 1: Categories & Tools Grid View
-            DashboardCategoriesView(viewModel, themeColors)
+            DashboardCategoriesView(
+                viewModel = viewModel,
+                themeColors = themeColors,
+                scrollState = dashboardScrollState,
+                filterScrollState = dashboardFilterScrollState
+            )
         } else {
             // View 2: Detailed Tool View
             ToolDetailView(currentType, viewModel, themeColors)
@@ -116,10 +127,10 @@ fun DashboardScreen(
 @Composable
 fun DashboardCategoriesView(
     viewModel: CalculatorViewModel,
-    themeColors: CalculatorThemeColors
+    themeColors: CalculatorThemeColors,
+    scrollState: androidx.compose.foundation.ScrollState = androidx.compose.runtime.saveable.rememberSaveable(saver = androidx.compose.foundation.ScrollState.Saver) { androidx.compose.foundation.ScrollState(0) },
+    filterScrollState: androidx.compose.foundation.ScrollState = androidx.compose.runtime.saveable.rememberSaveable(saver = androidx.compose.foundation.ScrollState.Saver) { androidx.compose.foundation.ScrollState(0) }
 ) {
-    val scrollState = rememberScrollState()
-    val filterScrollState = rememberScrollState()
     val coroutineScope = rememberCoroutineScope()
     val bounceAnimatable = remember { Animatable(0f) }
 

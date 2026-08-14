@@ -63,6 +63,8 @@ class QuickCalculatorActivity : ComponentActivity() {
             MyApplicationTheme {
                 val themeColors = viewModel.getCurrentThemeColors()
                 val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
+                var isMaximized by remember { mutableStateOf(false) }
+                var showExitConfirmDialog by remember { mutableStateOf(false) }
 
                 // Full screen scrim overlay
                 Box(
@@ -72,21 +74,24 @@ class QuickCalculatorActivity : ComponentActivity() {
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
-                            onClick = { finish() }
+                            onClick = { showExitConfirmDialog = true }
                         ),
                     contentAlignment = Alignment.Center
                 ) {
                     // Floating Calculator Dialog Card
                     Surface(
-                        modifier = Modifier
-                            .fillMaxWidth(0.96f)
-                            .fillMaxHeight(0.90f)
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null,
-                                onClick = { /* prevent dismiss on clicking dialog */ }
-                            ),
-                        shape = RoundedCornerShape(28.dp),
+                        modifier = if (isMaximized) {
+                            Modifier.fillMaxSize()
+                        } else {
+                            Modifier
+                                .fillMaxWidth(0.96f)
+                                .fillMaxHeight(0.90f)
+                        }.clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = { /* prevent dismiss on clicking dialog */ }
+                        ),
+                        shape = if (isMaximized) RoundedCornerShape(0.dp) else RoundedCornerShape(24.dp),
                         color = themeColors.background,
                         tonalElevation = 8.dp,
                         shadowElevation = 16.dp
@@ -96,7 +101,7 @@ class QuickCalculatorActivity : ComponentActivity() {
                                 .fillMaxSize()
                                 .padding(12.dp)
                         ) {
-                            // Header with Title, Maximize, and Close buttons
+                            // Header with Title and Windows 11 style controls
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -130,59 +135,13 @@ class QuickCalculatorActivity : ComponentActivity() {
                                     )
                                 }
 
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    // Maximize button (opens full app in calculator tab)
-                                    Box(
-                                        modifier = Modifier
-                                            .size(36.dp)
-                                            .background(themeColors.displayText.copy(alpha = 0.08f), CircleShape)
-                                            .clip(CircleShape),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        IconButton(
-                                            onClick = {
-                                                val intent = Intent(this@QuickCalculatorActivity, MainActivity::class.java).apply {
-                                                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                                                    putExtra("target_tab", "calculator")
-                                                }
-                                                startActivity(intent)
-                                                finish()
-                                            },
-                                            modifier = Modifier.size(36.dp)
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.OpenInFull,
-                                                contentDescription = "Maximize",
-                                                tint = themeColors.displayText,
-                                                modifier = Modifier.size(18.dp)
-                                            )
-                                        }
-                                    }
-
-                                    // Close button
-                                    Box(
-                                        modifier = Modifier
-                                            .size(36.dp)
-                                            .background(themeColors.displayText.copy(alpha = 0.08f), CircleShape)
-                                            .clip(CircleShape),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        IconButton(
-                                            onClick = { finish() },
-                                            modifier = Modifier.size(36.dp)
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.Close,
-                                                contentDescription = "Close",
-                                                tint = themeColors.displayText,
-                                                modifier = Modifier.size(18.dp)
-                                            )
-                                        }
-                                    }
-                                }
+                                com.example.ui.Windows11TitlebarButtons(
+                                    isMaximized = isMaximized,
+                                    onMinimize = { moveTaskToBack(true) },
+                                    onMaximizeToggle = { isMaximized = !isMaximized },
+                                    onClose = { showExitConfirmDialog = true },
+                                    themeColors = themeColors
+                                )
                             }
 
                             HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.1f))
@@ -199,6 +158,72 @@ class QuickCalculatorActivity : ComponentActivity() {
                             }
                         }
                     }
+                }
+
+                // Close Confirmation Dialog
+                if (showExitConfirmDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showExitConfirmDialog = false },
+                        title = {
+                            Text(
+                                text = if (isBn) "অ্যাপ বন্ধ করার বার্তা" else "Close Application Confirmation",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp,
+                                color = themeColors.displayText
+                            )
+                        },
+                        text = {
+                            Text(
+                                text = if (isBn)
+                                    "আপনি কি নিশ্চিত যে সম্পূর্ণ অ্যাপটি বন্ধ করতে চান?"
+                                else
+                                    "Are you sure you want to close the application?",
+                                fontSize = 14.sp,
+                                color = themeColors.displayText.copy(alpha = 0.85f)
+                            )
+                        },
+                        confirmButton = {
+                            Button(
+                                onClick = {
+                                    showExitConfirmDialog = false
+                                    finishAffinity()
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))
+                            ) {
+                                Text(
+                                    text = if (isBn) "হ্যাঁ, অ্যাপ বন্ধ করুন" else "Yes, Exit App",
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        },
+                        dismissButton = {
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                OutlinedButton(
+                                    onClick = {
+                                        showExitConfirmDialog = false
+                                        finish()
+                                    }
+                                ) {
+                                    Text(
+                                        text = if (isBn) "শুধুমাত্র ক্যালকুলেটর বন্ধ" else "Close Calc Only",
+                                        color = themeColors.displayText,
+                                        fontSize = 12.sp
+                                    )
+                                }
+                                TextButton(
+                                    onClick = { showExitConfirmDialog = false }
+                                ) {
+                                    Text(
+                                        text = if (isBn) "বাতিল" else "Cancel",
+                                        color = themeColors.displayText
+                                    )
+                                }
+                            }
+                        },
+                        containerColor = themeColors.cardBg,
+                        shape = RoundedCornerShape(16.dp)
+                    )
                 }
             }
         }

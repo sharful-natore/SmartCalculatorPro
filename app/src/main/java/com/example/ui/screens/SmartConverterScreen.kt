@@ -66,6 +66,12 @@ fun SmartConverterScreen(
     themeColors: CalculatorThemeColors
 ) {
     val selectedType = viewModel.selectedConverterType
+    val converterScrollState = androidx.compose.runtime.saveable.rememberSaveable(saver = androidx.compose.foundation.ScrollState.Saver) {
+        androidx.compose.foundation.ScrollState(0)
+    }
+    val converterFilterScrollState = androidx.compose.runtime.saveable.rememberSaveable(saver = androidx.compose.foundation.ScrollState.Saver) {
+        androidx.compose.foundation.ScrollState(0)
+    }
 
     AnimatedContent(
         targetState = selectedType,
@@ -82,7 +88,12 @@ fun SmartConverterScreen(
     ) { currentType ->
         if (currentType == null) {
             // Screen 1: Category Cards Grid View
-            SmartConverterCategoriesView(viewModel, themeColors)
+            SmartConverterCategoriesView(
+                viewModel = viewModel,
+                themeColors = themeColors,
+                scrollState = converterScrollState,
+                filterScrollState = converterFilterScrollState
+            )
         } else {
             // Screen 2: Detailed Converter View
             ConverterDetailView(currentType, viewModel, themeColors)
@@ -93,10 +104,10 @@ fun SmartConverterScreen(
 @Composable
 fun SmartConverterCategoriesView(
     viewModel: CalculatorViewModel,
-    themeColors: CalculatorThemeColors
+    themeColors: CalculatorThemeColors,
+    scrollState: androidx.compose.foundation.ScrollState = androidx.compose.runtime.saveable.rememberSaveable(saver = androidx.compose.foundation.ScrollState.Saver) { androidx.compose.foundation.ScrollState(0) },
+    filterScrollState: androidx.compose.foundation.ScrollState = androidx.compose.runtime.saveable.rememberSaveable(saver = androidx.compose.foundation.ScrollState.Saver) { androidx.compose.foundation.ScrollState(0) }
 ) {
-    val scrollState = rememberScrollState()
-    val filterScrollState = rememberScrollState()
     val coroutineScope = rememberCoroutineScope()
     val bounceAnimatable = remember { Animatable(0f) }
 

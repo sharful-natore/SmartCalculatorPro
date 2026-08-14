@@ -25,6 +25,14 @@ import androidx.compose.ui.unit.sp
 import com.example.ui.theme.CalculatorThemeColors
 import com.example.ui.viewmodel.CalculatorViewModel
 import com.example.util.AppLanguage
+import android.content.Context
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
+import androidx.compose.ui.platform.LocalContext
+import java.text.SimpleDateFormat
+import java.util.Locale
 import java.util.Calendar
 
 // --- 1. QIBLA COMPASS CARD ---
@@ -34,10 +42,66 @@ fun QiblaCompassCard(
     themeColors: CalculatorThemeColors
 ) {
     val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
+    val context = LocalContext.current
     var phoneAngle by remember { mutableFloatStateOf(0f) }
-    val qiblaBearing = 237.5f // Qibla angle from Bangladesh/Dhaka
-    val currentCompassHeading = (qiblaBearing - phoneAngle + 360f) % 360f
-    val isAligned = Math.abs((phoneAngle - qiblaBearing + 360f) % 360f) < 6f
+    var isHardwareSensorActive by remember { mutableStateOf(false) }
+    val qiblaBearing = 237.5f // Qibla angle from Bangladesh/Makkah
+
+    DisposableEffect(context) {
+        val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
+        val orientationSensor = sensorManager?.getDefaultSensor(Sensor.TYPE_ORIENTATION)
+        val accelSensor = sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+        val magnetSensor = sensorManager?.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
+
+        val lastAccel = FloatArray(3)
+        val lastMagnet = FloatArray(3)
+        var isAccelSet = false
+        var isMagnetSet = false
+
+        val listener = object : SensorEventListener {
+            override fun onSensorChanged(event: SensorEvent?) {
+                if (event == null) return
+                if (event.sensor.type == Sensor.TYPE_ORIENTATION) {
+                    isHardwareSensorActive = true
+                    phoneAngle = (event.values[0] + 360f) % 360f
+                } else if (event.sensor.type == Sensor.TYPE_ACCELEROMETER) {
+                    System.arraycopy(event.values, 0, lastAccel, 0, event.values.size)
+                    isAccelSet = true
+                } else if (event.sensor.type == Sensor.TYPE_MAGNETIC_FIELD) {
+                    System.arraycopy(event.values, 0, lastMagnet, 0, event.values.size)
+                    isMagnetSet = true
+                }
+
+                if (isAccelSet && isMagnetSet) {
+                    val r = FloatArray(9)
+                    val i = FloatArray(9)
+                    if (SensorManager.getRotationMatrix(r, i, lastAccel, lastMagnet)) {
+                        val orientation = FloatArray(3)
+                        SensorManager.getOrientation(r, orientation)
+                        val azimuthInDegrees = (Math.toDegrees(orientation[0].toDouble()).toFloat() + 360f) % 360f
+                        isHardwareSensorActive = true
+                        phoneAngle = azimuthInDegrees
+                    }
+                }
+            }
+            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+        }
+
+        if (orientationSensor != null) {
+            sensorManager?.registerListener(listener, orientationSensor, SensorManager.SENSOR_DELAY_UI)
+        }
+        if (accelSensor != null && magnetSensor != null) {
+            sensorManager?.registerListener(listener, accelSensor, SensorManager.SENSOR_DELAY_UI)
+            sensorManager?.registerListener(listener, magnetSensor, SensorManager.SENSOR_DELAY_UI)
+        }
+
+        onDispose {
+            sensorManager?.unregisterListener(listener)
+        }
+    }
+
+    val angleDiff = Math.abs((phoneAngle - qiblaBearing + 360f) % 360f)
+    val isAligned = angleDiff < 8f || angleDiff > 352f
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -57,12 +121,29 @@ fun QiblaCompassCard(
                 color = themeColors.displayText
             )
             Text(
-                text = if (isBn) "মক্কা শরিফ (আল-কাবা) দিক: ২৩৭.৫° দক্ষিণ-পশ্চিম" else "Makkah (Al-Kaaba) Bearing: 237.5° WSW",
+                text = if (isBn) "মক্কা শরীফ (আল-কাবা) দিক: ২৩৭.৫° দক্ষিণ-পশ্চিম" else "Makkah (Al-Kaaba) Bearing: 237.5° WSW",
                 fontSize = 12.sp,
                 color = themeColors.displayText.copy(alpha = 0.7f),
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
+                modifier = Modifier.padding(top = 4.dp, bottom = 12.dp)
             )
+
+            if (isHardwareSensorActive) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color(0xFF10B981).copy(alpha = 0.15f))
+                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = if (isBn) "লাইভ কমপাস সেন্সর সক্রিয় 🧭" else "Live Compass Sensor Active 🧭",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF10B981)
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+            }
 
             // Compass Circle Dial
             Box(
@@ -77,24 +158,31 @@ fun QiblaCompassCard(
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                // Dial markings
-                Column(
-                    modifier = Modifier.fillMaxSize().padding(12.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.SpaceBetween
+                // Dial markings (rotates opposite to phone angle)
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .rotate(-phoneAngle),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text("N", fontWeight = FontWeight.Bold, color = Color.Red, fontSize = 14.sp)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                    Column(
+                        modifier = Modifier.fillMaxSize().padding(12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("W", fontWeight = FontWeight.Bold, color = themeColors.displayText, fontSize = 14.sp)
-                        Text("E", fontWeight = FontWeight.Bold, color = themeColors.displayText, fontSize = 14.sp)
+                        Text("N", fontWeight = FontWeight.Bold, color = Color.Red, fontSize = 14.sp)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("W", fontWeight = FontWeight.Bold, color = themeColors.displayText, fontSize = 14.sp)
+                            Text("E", fontWeight = FontWeight.Bold, color = themeColors.displayText, fontSize = 14.sp)
+                        }
+                        Text("S", fontWeight = FontWeight.Bold, color = themeColors.displayText, fontSize = 14.sp)
                     }
-                    Text("S", fontWeight = FontWeight.Bold, color = themeColors.displayText, fontSize = 14.sp)
                 }
 
-                // Needle Pointer
+                // Needle Pointer (Points to Qibla: qiblaBearing - phoneAngle)
                 Box(
                     modifier = Modifier
                         .size(170.dp)
@@ -155,7 +243,7 @@ fun QiblaCompassCard(
             ) {
                 Text(
                     text = if (isAligned) {
-                        if (isBn) "যথাযথ কিবলা অভিমুখে রয়েছেন!" else "Perfectly Aligned with Qibla!"
+                        if (isBn) "যথাযথ কিবলা অভিমুখে রয়েছেন! (কাবা শরীফ)" else "Perfectly Aligned with Qibla!"
                     } else {
                         if (isBn) "কমপাস ঘুরিয়ে কিবলা মিলিয়ে নিন" else "Rotate phone to align with Qibla"
                     },
@@ -165,11 +253,45 @@ fun QiblaCompassCard(
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
-            // Phone Angle Simulation Slider
+            // Quick Auto Align Button + Manual Adjustment
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Button(
+                    onClick = { phoneAngle = qiblaBearing },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg)
+                ) {
+                    Icon(Icons.Default.Explore, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = if (isBn) "অটো কিবলা এলাইন" else "Auto Align",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                OutlinedButton(
+                    onClick = { phoneAngle = (phoneAngle + 45f) % 360f },
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(Icons.Default.RotateRight, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = if (isBn) "ঘুরান (+৪৫°)" else "Rotate (+45°)",
+                        fontSize = 12.sp
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
             Text(
-                text = if (isBn) "কমপাস টেস্ট এঙ্গেল (ফোন রোটেশন): ${phoneAngle.toInt()}°" else "Compass Heading Angle: ${phoneAngle.toInt()}°",
+                text = if (isBn) "কমপাস রোটেশন এঙ্গেল: ${phoneAngle.toInt()}°" else "Compass Rotation Angle: ${phoneAngle.toInt()}°",
                 fontSize = 12.sp,
                 color = themeColors.displayText.copy(alpha = 0.7f)
             )
@@ -185,12 +307,12 @@ fun QiblaCompassCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = if (isBn) "দূরত্ব: ৫,১৪৮ কি.মি. (মক্কা)" else "Distance: 5,148 km (Makkah)",
+                    text = if (isBn) "দূরত্ব: ৫,১৪৮ কি.মি. (মাক্কাহ)" else "Distance: 5,148 km (Makkah)",
                     fontSize = 11.sp,
                     color = themeColors.displayText.copy(alpha = 0.6f)
                 )
                 Text(
-                    text = if (isBn) "ডিগ্রি: ২৩৭.৫° WSW" else "Degrees: 237.5° WSW",
+                    text = if (isBn) "কিবলা কোন: ২৩৭.৫° WSW" else "Qibla Angle: 237.5° WSW",
                     fontSize = 11.sp,
                     color = themeColors.displayText.copy(alpha = 0.6f)
                 )
@@ -411,6 +533,164 @@ fun DigitalTasbihCard(
     }
 }
 
+data class BdDistrict(
+    val nameBn: String,
+    val nameEn: String,
+    val offsetMinutes: Int
+)
+
+val bdDistrictsList = listOf(
+    BdDistrict("ঢাকা (Dhaka)", "Dhaka", 0),
+    BdDistrict("গাজীপুর (Gazipur)", "Gazipur", 0),
+    BdDistrict("নারায়ণগঞ্জ (Narayanganj)", "Narayanganj", 0),
+    BdDistrict("চট্টগ্রাম (Chittagong)", "Chittagong", -5),
+    BdDistrict("কক্সবাজার (Cox's Bazar)", "Cox's Bazar", -7),
+    BdDistrict("কুমিল্লা (Comilla)", "Comilla", -3),
+    BdDistrict("সিলেট (Sylhet)", "Sylhet", -6),
+    BdDistrict("মৌলভীবাজার (Moulvibazar)", "Moulvibazar", -7),
+    BdDistrict("হবিগঞ্জ (Habiganj)", "Habiganj", -5),
+    BdDistrict("সুনামগঞ্জ (Sunamganj)", "Sunamganj", -5),
+    BdDistrict("ব্রাহ্মণবাড়িয়া (Brahmanbaria)", "Brahmanbaria", -3),
+    BdDistrict("নোয়াখালী (Noakhali)", "Noakhali", -3),
+    BdDistrict("ফেনী (Feni)", "Feni", -4),
+    BdDistrict("চাঁদপুর (Chandpur)", "Chandpur", -2),
+    BdDistrict("লক্ষ্মীপুর (Lakshmipur)", "Lakshmipur", -2),
+    BdDistrict("খাগড়াছড়ি (Khagrachhari)", "Khagrachhari", -6),
+    BdDistrict("রাঙ্গামাটি (Rangamati)", "Rangamati", -6),
+    BdDistrict("বান্দরবান (Bandarban)", "Bandarban", -6),
+    BdDistrict("রাজশাহী (Rajshahi)", "Rajshahi", 7),
+    BdDistrict("বগুড়া (Bogra)", "Bogra", 5),
+    BdDistrict("পাবনা (Pabna)", "Pabna", 6),
+    BdDistrict("সিরাজগঞ্জ (Sirajganj)", "Sirajganj", 3),
+    BdDistrict("নওগাঁ (Naogaon)", "Naogaon", 8),
+    BdDistrict("নাটোর (Natore)", "Natore", 7),
+    BdDistrict("চাঁপাইনবাবগঞ্জ (Chapainawabganj)", "Chapainawabganj", 9),
+    BdDistrict("জয়পুরহাট (Joypurhat)", "Joypurhat", 6),
+    BdDistrict("রংপুর (Rangpur)", "Rangpur", 8),
+    BdDistrict("দিনাজপুর (Dinajpur)", "Dinajpur", 10),
+    BdDistrict("গাইবান্ধা (Gaibandha)", "Gaibandha", 6),
+    BdDistrict("কুড়িগ্রাম (Kurigram)", "Kurigram", 7),
+    BdDistrict("লালমনিরহাট (Lalmonirhat)", "Lalmonirhat", 8),
+    BdDistrict("নীলফামারী (Nilphamari)", "Nilphamari", 9),
+    BdDistrict("পঞ্চগড় (Panchagarh)", "Panchagarh", 12),
+    BdDistrict("ঠাকুরগাঁও (Thakurgaon)", "Thakurgaon", 11),
+    BdDistrict("খুলনা (Khulna)", "Khulna", 5),
+    BdDistrict("যশোর (Jessore)", "Jessore", 6),
+    BdDistrict("কুষ্টিয়া (Kushtia)", "Kushtia", 6),
+    BdDistrict("সাতক্ষীরা (Satkhira)", "Satkhira", 7),
+    BdDistrict("বাগেরহাট (Bagerhat)", "Bagerhat", 4),
+    BdDistrict("ঝিনাইদহ (Jhenaidah)", "Jhenaidah", 6),
+    BdDistrict("চুয়াডাঙ্গা (Chuadanga)", "Chuadanga", 7),
+    BdDistrict("মেহেরপুর (Meherpur)", "Meherpur", 7),
+    BdDistrict("মাগুরা (Magura)", "Magura", 5),
+    BdDistrict("নড়াইল (Narail)", "Narail", 5),
+    BdDistrict("বরিশাল (Barisal)", "Barisal", 2),
+    BdDistrict("পটুয়াখালী (Patuakhali)", "Patuakhali", 2),
+    BdDistrict("ভোলা (Bhola)", "Bhola", 0),
+    BdDistrict("পিরোজপুর (Pirojpur)", "Pirojpur", 3),
+    BdDistrict("বরগুনা (Barguna)", "Barguna", 3),
+    BdDistrict("ঝালকাঠি (Jhalokati)", "Jhalokati", 2),
+    BdDistrict("ময়মনসিংহ (Mymensingh)", "Mymensingh", -1),
+    BdDistrict("জামালপুর (Jamalpur)", "Jamalpur", 3),
+    BdDistrict("শেরপুর (Sherpur)", "Sherpur", 2),
+    BdDistrict("নেত্রকোনা (Netrokona)", "Netrokona", -2),
+    BdDistrict("ফরিদপুর (Faridpur)", "Faridpur", 2),
+    BdDistrict("গোপালগঞ্জ (Gopalganj)", "Gopalganj", 3),
+    BdDistrict("মাদারীপুর (Madaripur)", "Madaripur", 2),
+    BdDistrict("শরীয়তপুর (Shariatpur)", "Shariatpur", 1),
+    BdDistrict("রাজবাড়ী (Rajbari)", "Rajbari", 4),
+    BdDistrict("মানিকগঞ্জ (Manikganj)", "Manikganj", 2),
+    BdDistrict("মুন্সীগঞ্জ (Munshiganj)", "Munshiganj", 0),
+    BdDistrict("টাঙ্গাইল (Tangail)", "Tangail", 2),
+    BdDistrict("নরসিংদী (Narsingdi)", "Narsingdi", -1),
+    BdDistrict("কিশোরগঞ্জ (Kishoreganj)", "Kishoreganj", -2)
+)
+
+fun adjustIslamicTime(timeStr: String, offsetMinutes: Int): String {
+    if (offsetMinutes == 0) return timeStr
+    return try {
+        val sdf = SimpleDateFormat("hh:mm a", Locale.ENGLISH)
+        val date = sdf.parse(timeStr) ?: return timeStr
+        val cal = Calendar.getInstance().apply {
+            time = date
+            add(Calendar.MINUTE, offsetMinutes)
+        }
+        sdf.format(cal.time)
+    } catch (e: Exception) {
+        timeStr
+    }
+}
+
+@Composable
+fun DistrictSelectorDropdown(
+    viewModel: CalculatorViewModel,
+    themeColors: CalculatorThemeColors
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
+
+    Box {
+        Card(
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(containerColor = themeColors.buttonEqualBg.copy(alpha = 0.15f)),
+            modifier = Modifier.clickable { expanded = true }
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.LocationOn,
+                    contentDescription = "District",
+                    tint = themeColors.buttonEqualBg,
+                    modifier = Modifier.size(15.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = if (isBn) viewModel.selectedIslamicDistrictBn.split(" ")[0] else viewModel.selectedIslamicDistrictEn,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = themeColors.buttonEqualBg
+                )
+                Spacer(modifier = Modifier.width(2.dp))
+                Icon(
+                    imageVector = Icons.Default.ArrowDropDown,
+                    contentDescription = null,
+                    tint = themeColors.buttonEqualBg,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier
+                .heightIn(max = 280.dp)
+                .background(themeColors.cardBg)
+        ) {
+            bdDistrictsList.forEach { district ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = if (isBn) district.nameBn else district.nameEn,
+                            fontSize = 13.sp,
+                            fontWeight = if (viewModel.selectedIslamicDistrictEn == district.nameEn) FontWeight.Bold else FontWeight.Normal,
+                            color = if (viewModel.selectedIslamicDistrictEn == district.nameEn) themeColors.buttonEqualBg else themeColors.displayText
+                        )
+                    },
+                    onClick = {
+                        viewModel.selectedIslamicDistrictBn = district.nameBn
+                        viewModel.selectedIslamicDistrictEn = district.nameEn
+                        viewModel.selectedIslamicDistrictOffsetMinutes = district.offsetMinutes
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
 // --- 3. PRAYER TIMES CARD ---
 @Composable
 fun PrayerTimesCard(
@@ -418,17 +698,16 @@ fun PrayerTimesCard(
     themeColors: CalculatorThemeColors
 ) {
     val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
+    val offset = viewModel.selectedIslamicDistrictOffsetMinutes
 
-    val prayerList = remember {
-        listOf(
-            Triple(if (isBn) "ফজর (Fajr)" else "Fajr", "04:52 AM", true),
-            Triple(if (isBn) "সূর্যোদয় (Sunrise)" else "Sunrise", "06:08 AM", false),
-            Triple(if (isBn) "যোহর (Dhuhr)" else "Dhuhr", "12:15 PM", false),
-            Triple(if (isBn) "আসর (Asr)" else "Asr", "04:35 PM", false),
-            Triple(if (isBn) "মাগরিব (Maghrib)" else "Maghrib", "06:18 PM", false),
-            Triple(if (isBn) "এশা (Isha)" else "Isha", "07:35 PM", false)
-        )
-    }
+    val rawPrayerList = listOf(
+        Triple(if (isBn) "ফজর (Fajr)" else "Fajr", "04:52 AM", true),
+        Triple(if (isBn) "সূর্যোদয় (Sunrise)" else "Sunrise", "06:08 AM", false),
+        Triple(if (isBn) "যোহর (Dhuhr)" else "Dhuhr", "12:15 PM", false),
+        Triple(if (isBn) "আসর (Asr)" else "Asr", "04:35 PM", false),
+        Triple(if (isBn) "মাগরিব (Maghrib)" else "Maghrib", "06:18 PM", false),
+        Triple(if (isBn) "এশা (Isha)" else "Isha", "07:35 PM", false)
+    )
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -453,24 +732,13 @@ fun PrayerTimesCard(
                         color = themeColors.displayText
                     )
                     Text(
-                        text = if (isBn) "ঢাকা ও পার্শ্ববর্তী এলাকা" else "Dhaka & Surrounding Areas",
+                        text = if (isBn) "${viewModel.selectedIslamicDistrictBn.split(" ")[0]} ও পার্শ্ববর্তী এলাকা" else "${viewModel.selectedIslamicDistrictEn} & Surrounding Areas",
                         fontSize = 12.sp,
                         color = themeColors.displayText.copy(alpha = 0.7f)
                     )
                 }
 
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(themeColors.buttonEqualBg.copy(alpha = 0.15f))
-                        .padding(horizontal = 10.dp, vertical = 6.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.LocationOn, contentDescription = null, tint = themeColors.buttonEqualBg, modifier = Modifier.size(14.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Dhaka", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = themeColors.buttonEqualBg)
-                    }
-                }
+                DistrictSelectorDropdown(viewModel, themeColors)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -496,7 +764,7 @@ fun PrayerTimesCard(
                             color = Color.White
                         )
                         Text(
-                            text = if (isBn) "সময় বাকি: ০১ ঘণ্টা ৪৫ মিনিট" else "Remaining: 1 hr 45 mins",
+                            text = if (isBn) "সময় সমন্বয়: ${if (offset >= 0) "+$offset" else "$offset"} মি." else "District Offset: ${if (offset >= 0) "+$offset" else "$offset"} mins",
                             fontSize = 11.sp,
                             color = Color.White.copy(alpha = 0.85f),
                             modifier = Modifier.padding(top = 2.dp)
@@ -504,7 +772,7 @@ fun PrayerTimesCard(
                     }
 
                     Text(
-                        text = "12:15 PM",
+                        text = adjustIslamicTime("12:15 PM", offset),
                         fontSize = 20.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = Color.White
@@ -516,7 +784,8 @@ fun PrayerTimesCard(
 
             // 5 Waqt Timetable List
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                prayerList.forEach { (name, time, isNext) ->
+                rawPrayerList.forEach { (name, baseTime, isNext) ->
+                    val adjustedTime = adjustIslamicTime(baseTime, offset)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -543,7 +812,7 @@ fun PrayerTimesCard(
                         }
 
                         Text(
-                            text = time,
+                            text = adjustedTime,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             color = if (isNext) themeColors.buttonEqualBg else themeColors.displayText
@@ -562,6 +831,7 @@ fun SehriIftarCard(
     themeColors: CalculatorThemeColors
 ) {
     val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
+    val offset = viewModel.selectedIslamicDistrictOffsetMinutes
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -573,18 +843,30 @@ fun SehriIftarCard(
                 .fillMaxWidth()
                 .padding(20.dp)
         ) {
-            Text(
-                text = if (isBn) "সেহরি ও ইফতারের সময়সূচি" else "Sehri & Iftar Schedule",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = themeColors.displayText
-            )
-            Text(
-                text = if (isBn) "আজকের সেহরি শেষ সময় ও ইফতারের সূচি" else "Today's Sehri End & Iftar Timings",
-                fontSize = 12.sp,
-                color = themeColors.displayText.copy(alpha = 0.7f),
-                modifier = Modifier.padding(top = 2.dp, bottom = 16.dp)
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = if (isBn) "সেহরি ও ইফতারের সময়সূচি" else "Sehri & Iftar Schedule",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.displayText
+                    )
+                    Text(
+                        text = if (isBn) "${viewModel.selectedIslamicDistrictBn.split(" ")[0]} জোন সময়সূচি" else "${viewModel.selectedIslamicDistrictEn} Zone Schedule",
+                        fontSize = 12.sp,
+                        color = themeColors.displayText.copy(alpha = 0.7f),
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
+                }
+
+                DistrictSelectorDropdown(viewModel, themeColors)
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -608,7 +890,7 @@ fun SehriIftarCard(
                             color = Color.White.copy(alpha = 0.8f)
                         )
                         Text(
-                            text = "04:46 AM",
+                            text = adjustIslamicTime("04:46 AM", offset),
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF38BDF8),
@@ -635,7 +917,7 @@ fun SehriIftarCard(
                             color = Color.White.copy(alpha = 0.8f)
                         )
                         Text(
-                            text = "06:18 PM",
+                            text = adjustIslamicTime("06:18 PM", offset),
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFFF59E0B),

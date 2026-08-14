@@ -173,6 +173,15 @@ class CalculatorViewModel(
         setCalculatorNavigationReason(reasonEn, reasonBn)
     }
 
+    fun selectActiveTab(tab: Int) {
+        changeActiveTab(tab, "Tab $tab Activated", "ট্যাব $tab সক্রিয় করা হয়েছে")
+    }
+
+    // Selected Bangladesh District for Islamic Prayer & Sehri/Iftar Times
+    var selectedIslamicDistrictBn by mutableStateOf("ঢাকা")
+    var selectedIslamicDistrictEn by mutableStateOf("Dhaka")
+    var selectedIslamicDistrictOffsetMinutes by mutableStateOf(0)
+
     // History deletion confirmation state
     var showClearHistoryDialog by mutableStateOf(false)
     var showClearChatDialog by mutableStateOf(false)

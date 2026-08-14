@@ -27,6 +27,7 @@ import com.example.data.model.ToolType
 import com.example.data.model.ConverterType
 import androidx.compose.foundation.Canvas
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.ui.graphics.toArgb
@@ -176,6 +177,7 @@ fun MainContent(
     // Quick Calculator Windows Window Controls State
     var isCalcMinimized by remember { mutableStateOf(false) }
     var isCalcMaximized by remember { mutableStateOf(false) }
+    var showQuickCalcCloseConfirm by remember { mutableStateOf(false) }
 
     // --- App Update State ---
     var showUpdateDialog by remember { mutableStateOf(false) }
@@ -743,26 +745,52 @@ fun MainContent(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
-        val pagerState = rememberPagerState(
-            initialPage = viewModel.activeTab,
-            pageCount = { 4 }
-        )
-
-        LaunchedEffect(pagerState.currentPage) {
-            if (viewModel.activeTab != pagerState.currentPage) {
-                viewModel.changeActiveTab(
-                    pagerState.currentPage,
-                    "Swiped to Tab ${pagerState.currentPage}",
-                    "ট্যাব সুইপ করা হয়েছে: ${pagerState.currentPage}"
+        val swipeContainerModifier = Modifier
+            .fillMaxSize()
+            .pointerInput(viewModel.activeTab) {
+                var totalDrag = 0f
+                var isTriggered = false
+                detectHorizontalDragGestures(
+                    onDragStart = {
+                        totalDrag = 0f
+                        isTriggered = false
+                    },
+                    onDragEnd = {
+                        if (!isTriggered) {
+                            if (totalDrag < -100f) { // Swipe Left -> next tab
+                                if (viewModel.activeTab < 3) {
+                                    viewModel.selectActiveTab(viewModel.activeTab + 1)
+                                }
+                            } else if (totalDrag > 100f) { // Swipe Right -> prev tab
+                                if (viewModel.activeTab > 0) {
+                                    viewModel.selectActiveTab(viewModel.activeTab - 1)
+                                }
+                            }
+                        }
+                    },
+                    onDragCancel = {
+                        totalDrag = 0f
+                        isTriggered = false
+                    },
+                    onHorizontalDrag = { change, dragAmount ->
+                        change.consume()
+                        totalDrag += dragAmount
+                        if (!isTriggered) {
+                            if (totalDrag < -160f) {
+                                isTriggered = true
+                                if (viewModel.activeTab < 3) {
+                                    viewModel.selectActiveTab(viewModel.activeTab + 1)
+                                }
+                            } else if (totalDrag > 160f) {
+                                isTriggered = true
+                                if (viewModel.activeTab > 0) {
+                                    viewModel.selectActiveTab(viewModel.activeTab - 1)
+                                }
+                            }
+                        }
+                    }
                 )
             }
-        }
-
-        LaunchedEffect(viewModel.activeTab) {
-            if (pagerState.currentPage != viewModel.activeTab) {
-                pagerState.animateScrollToPage(viewModel.activeTab)
-            }
-        }
 
         Box(
             modifier = Modifier
@@ -772,12 +800,21 @@ fun MainContent(
                 .consumeWindowInsets(innerPadding)
         ) {
             Box(
-                modifier = Modifier.fillMaxSize()
+                modifier = swipeContainerModifier
             ) {
-                HorizontalPager(
-                    state = pagerState,
-                    modifier = Modifier.fillMaxSize(),
-                    userScrollEnabled = true
+                AnimatedContent(
+                    targetState = viewModel.activeTab,
+                    transitionSpec = {
+                        if (targetState > initialState) {
+                            (slideInHorizontally { width -> width } + fadeIn(animationSpec = tween(280))) togetherWith
+                                    (slideOutHorizontally { width -> -width } + fadeOut(animationSpec = tween(280)))
+                        } else {
+                            (slideInHorizontally { width -> -width } + fadeIn(animationSpec = tween(280))) togetherWith
+                                    (slideOutHorizontally { width -> width } + fadeOut(animationSpec = tween(280)))
+                        }
+                    },
+                    label = "MainScreenTabTransition",
+                    modifier = Modifier.fillMaxSize()
                 ) { page ->
                     when (page) {
                         0 -> DashboardScreen(viewModel, themeColors)
@@ -2167,17 +2204,16 @@ fun MainContent(
                             modifier = Modifier
                                 .size(28.dp)
                                 .clip(CircleShape)
-                                .background(Color.Red.copy(alpha = 0.15f))
+                                .background(Color(0xFFE81123))
                                 .clickable {
-                                    viewModel.showCalculatorDialog = false
-                                    isCalcMinimized = false
+                                    showQuickCalcCloseConfirm = true
                                 },
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Close,
                                 contentDescription = "Close",
-                                tint = Color.Red,
+                                tint = Color.White,
                                 modifier = Modifier.size(16.dp)
                             )
                         }
@@ -2206,7 +2242,7 @@ fun MainContent(
                             .fillMaxSize()
                             .padding(12.dp)
                     ) {
-                        // Windows-Style Titlebar Header with Title and Minimize, Maximize, Close controls
+                        // Windows 11-Style Titlebar Header with Title and Minimize, Maximize, Close controls
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -2232,66 +2268,14 @@ fun MainContent(
                                 )
                             }
 
-                            // Windows Controls Group (Minimize, Maximize/Restore, Close)
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                // 1. Windows Minimize Button (-)
-                                Box(
-                                    modifier = Modifier
-                                        .size(34.dp)
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(themeColors.displayText.copy(alpha = 0.08f))
-                                        .clickable { isCalcMinimized = true },
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Remove,
-                                        contentDescription = "Minimize",
-                                        tint = themeColors.displayText,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
-
-                                // 2. Windows Maximize / Restore Button (▢ / ❐)
-                                Box(
-                                    modifier = Modifier
-                                        .size(34.dp)
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(themeColors.displayText.copy(alpha = 0.08f))
-                                        .clickable { isCalcMaximized = !isCalcMaximized },
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = if (isCalcMaximized) Icons.Default.FullscreenExit else Icons.Default.CropSquare,
-                                        contentDescription = if (isCalcMaximized) "Restore" else "Maximize",
-                                        tint = themeColors.displayText,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
-
-                                // 3. Windows Close Button (✕)
-                                Box(
-                                    modifier = Modifier
-                                        .size(34.dp)
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(Color(0xFFE81123))
-                                        .clickable {
-                                            viewModel.showCalculatorDialog = false
-                                            isCalcMinimized = false
-                                            isCalcMaximized = false
-                                        },
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Close,
-                                        contentDescription = "Close",
-                                        tint = Color.White,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
-                            }
+                            // Windows 11 Controls Group (Minimize, Maximize/Restore, Close)
+                            Windows11TitlebarButtons(
+                                isMaximized = isCalcMaximized,
+                                onMinimize = { isCalcMinimized = true },
+                                onMaximizeToggle = { isCalcMaximized = !isCalcMaximized },
+                                onClose = { showQuickCalcCloseConfirm = true },
+                                themeColors = themeColors
+                            )
                         }
 
                         HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.1f))
@@ -2310,6 +2294,77 @@ fun MainContent(
                 }
             }
         }
+    }
+
+    // Quick Calculator Exit Confirmation Dialog
+    if (showQuickCalcCloseConfirm) {
+        AlertDialog(
+            onDismissRequest = { showQuickCalcCloseConfirm = false },
+            title = {
+                Text(
+                    text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "অ্যাপ বন্ধ করার বার্তা" else "Close Application Confirmation",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    color = themeColors.displayText
+                )
+            },
+            text = {
+                Text(
+                    text = if (viewModel.selectedLanguage == AppLanguage.BENGALI)
+                        "আপনি কি নিশ্চিত যে সম্পূর্ণ অ্যাপটি বন্ধ করতে চান?"
+                    else
+                        "Are you sure you want to close the application?",
+                    fontSize = 14.sp,
+                    color = themeColors.displayText.copy(alpha = 0.85f)
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showQuickCalcCloseConfirm = false
+                        viewModel.showCalculatorDialog = false
+                        isCalcMinimized = false
+                        isCalcMaximized = false
+                        (context as? Activity)?.finish()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))
+                ) {
+                    Text(
+                        text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "হ্যাঁ, অ্যাপ বন্ধ করুন" else "Yes, Exit App",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            },
+            dismissButton = {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(
+                        onClick = {
+                            showQuickCalcCloseConfirm = false
+                            viewModel.showCalculatorDialog = false
+                            isCalcMinimized = false
+                            isCalcMaximized = false
+                        }
+                    ) {
+                        Text(
+                            text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "শুধুমাত্র ক্যালকুলেটর বন্ধ" else "Close Calc Only",
+                            color = themeColors.displayText,
+                            fontSize = 12.sp
+                        )
+                    }
+                    TextButton(
+                        onClick = { showQuickCalcCloseConfirm = false }
+                    ) {
+                        Text(
+                            text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "বাতিল" else "Cancel",
+                            color = themeColors.displayText
+                        )
+                    }
+                }
+            },
+            containerColor = themeColors.cardBg,
+            shape = RoundedCornerShape(16.dp)
+        )
     }
 }
 }
@@ -4085,4 +4140,92 @@ fun UnfavoriteConfirmDialog(
         titleContentColor = themeColors.displayText,
         textContentColor = themeColors.displayText
     )
+}
+
+@Composable
+fun Windows11TitlebarButtons(
+    isMaximized: Boolean,
+    onMinimize: () -> Unit,
+    onMaximizeToggle: () -> Unit,
+    onClose: () -> Unit,
+    themeColors: com.example.ui.theme.CalculatorThemeColors
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        // 1. Windows 11 Minimize Button (-)
+        Box(
+            modifier = Modifier
+                .size(width = 38.dp, height = 30.dp)
+                .clip(RoundedCornerShape(6.dp))
+                .background(themeColors.displayText.copy(alpha = 0.08f))
+                .clickable(onClick = onMinimize),
+            contentAlignment = Alignment.Center
+        ) {
+            Canvas(modifier = Modifier.size(10.dp)) {
+                drawLine(
+                    color = themeColors.displayText,
+                    start = Offset(0f, size.height / 2f),
+                    end = Offset(size.width, size.height / 2f),
+                    strokeWidth = 2.dp.toPx()
+                )
+            }
+        }
+
+        // 2. Windows 11 Maximize / Restore Button (▢ / ❐)
+        Box(
+            modifier = Modifier
+                .size(width = 38.dp, height = 30.dp)
+                .clip(RoundedCornerShape(6.dp))
+                .background(themeColors.displayText.copy(alpha = 0.08f))
+                .clickable(onClick = onMaximizeToggle),
+            contentAlignment = Alignment.Center
+        ) {
+            if (!isMaximized) {
+                // Single square for Maximize
+                Canvas(modifier = Modifier.size(10.dp)) {
+                    drawRect(
+                        color = themeColors.displayText,
+                        style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.5.dp.toPx())
+                    )
+                }
+            } else {
+                // Overlapping squares for Restore
+                Canvas(modifier = Modifier.size(11.dp)) {
+                    // Back square
+                    drawRect(
+                        color = themeColors.displayText,
+                        topLeft = Offset(size.width * 0.25f, 0f),
+                        size = androidx.compose.ui.geometry.Size(size.width * 0.75f, size.height * 0.75f),
+                        style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.2.dp.toPx())
+                    )
+                    // Front square
+                    drawRect(
+                        color = themeColors.displayText,
+                        topLeft = Offset(0f, size.height * 0.25f),
+                        size = androidx.compose.ui.geometry.Size(size.width * 0.75f, size.height * 0.75f),
+                        style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.2.dp.toPx())
+                    )
+                }
+            }
+        }
+
+        // 3. Windows 11 Close Button (✕) with Windows Red Accent
+        Box(
+            modifier = Modifier
+                .size(width = 38.dp, height = 30.dp)
+                .clip(RoundedCornerShape(6.dp))
+                .background(Color(0xFFE81123))
+                .clickable(onClick = onClose),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.Close,
+                contentDescription = "Close",
+                tint = Color.White,
+                modifier = Modifier.size(16.dp)
+            )
+        }
+    }
 }
