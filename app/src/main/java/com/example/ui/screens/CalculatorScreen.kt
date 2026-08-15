@@ -26,6 +26,12 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ArrowForward
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.automirrored.filled.Backspace
@@ -147,6 +153,9 @@ fun CalculatorScreen(
             animationSpec = spring(stiffness = Spring.StiffnessLow)
         )
     }
+
+    var showCalculatorHistoryOverlay by remember { mutableStateOf(false) }
+    val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
 
     val expansionFraction = expansionAnimatable.value
 
@@ -334,23 +343,39 @@ fun CalculatorScreen(
                 }
 
                 val canSave = viewModel.expression.isNotBlank() && viewModel.expression != "0"
-                IconButton(
-                    onClick = {
-                        if (canSave) {
-                            viewModel.showSaveDialog = true
-                        }
-                    },
-                    enabled = canSave,
-                    modifier = Modifier
-                        .size(34.dp)
-                        .offset(x = 8.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Save,
-                        contentDescription = "Save Calculation",
-                        tint = if (canSave) themeColors.displayText.copy(alpha = 0.5f) else themeColors.displayText.copy(alpha = 0.2f),
-                        modifier = Modifier.size(17.dp)
-                    )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(
+                        onClick = {
+                            showCalculatorHistoryOverlay = !showCalculatorHistoryOverlay
+                        },
+                        modifier = Modifier.size(34.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.History,
+                            contentDescription = "Calculator History",
+                            tint = if (showCalculatorHistoryOverlay) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.5f),
+                            modifier = Modifier.size(17.dp)
+                        )
+                    }
+
+                    IconButton(
+                        onClick = {
+                            if (canSave) {
+                                viewModel.showSaveDialog = true
+                            }
+                        },
+                        enabled = canSave,
+                        modifier = Modifier
+                            .size(34.dp)
+                            .offset(x = 4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Save,
+                            contentDescription = "Save Calculation",
+                            tint = if (canSave) themeColors.displayText.copy(alpha = 0.5f) else themeColors.displayText.copy(alpha = 0.2f),
+                            modifier = Modifier.size(17.dp)
+                        )
+                    }
                 }
             }
 
@@ -785,6 +810,148 @@ fun CalculatorScreen(
                                 isLeft = false,
                                 fontSize = (resultSize * 0.32f).coerceIn(8f, 10f).sp
                             )
+                        }
+                    }
+                }
+            }
+
+            // Calculator History Overlay dropdown
+            androidx.compose.animation.AnimatedVisibility(
+                visible = showCalculatorHistoryOverlay,
+                enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
+                exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .align(Alignment.TopCenter)
+            ) {
+                val historyEntries by viewModel.historyList.collectAsStateWithLifecycle()
+                val calcHistory = remember(historyEntries) {
+                    historyEntries.filter { 
+                        it.type == "Calculator" || it.type == "Basic" || it.type.isBlank() || it.type == "Scientific"
+                    }
+                }
+
+                Surface(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(28.dp)),
+                    color = themeColors.cardBg,
+                    tonalElevation = 8.dp
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(14.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.History,
+                                    contentDescription = null,
+                                    tint = themeColors.buttonEqualBg,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = if (isBn) "ক্যালকুলেটর হিস্টোরি" else "Calculator History",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 15.sp,
+                                    color = themeColors.displayText
+                                )
+                            }
+                            IconButton(
+                                onClick = { showCalculatorHistoryOverlay = false },
+                                modifier = Modifier.size(28.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Close",
+                                    tint = themeColors.displayText,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                        HorizontalDivider(
+                            color = themeColors.displayText.copy(alpha = 0.1f),
+                            modifier = Modifier.padding(vertical = 6.dp)
+                        )
+
+                        if (calcHistory.isEmpty()) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = if (isBn) "কোন ক্যালকুলেটর ইতিহাস পাওয়া যায়নি" else "No calculator history yet",
+                                    fontSize = 13.sp,
+                                    color = themeColors.displayText.copy(alpha = 0.6f)
+                                )
+                            }
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                items(calcHistory) { entry ->
+                                    Card(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                viewModel.selectHistoryItem(entry)
+                                                showCalculatorHistoryOverlay = false
+                                            },
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = CardDefaults.cardColors(
+                                            containerColor = themeColors.background.copy(alpha = 0.7f)
+                                        )
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    text = entry.expression,
+                                                    fontSize = 14.sp,
+                                                    fontFamily = FontFamily.Monospace,
+                                                    color = themeColors.displayExpressionText
+                                                )
+                                                Text(
+                                                    text = "= ${entry.result}",
+                                                    fontSize = 16.sp,
+                                                    fontFamily = FontFamily.Monospace,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = themeColors.displayText
+                                                )
+                                                if (!entry.customName.isNullOrBlank()) {
+                                                    Text(
+                                                        text = entry.customName,
+                                                        fontSize = 11.sp,
+                                                        color = themeColors.buttonEqualBg
+                                                    )
+                                                }
+                                            }
+                                            Icon(
+                                                imageVector = Icons.Default.ArrowForward,
+                                                contentDescription = "Load",
+                                                tint = themeColors.buttonEqualBg,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }

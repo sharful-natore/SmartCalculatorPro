@@ -1526,7 +1526,8 @@ How can I help you today?"""
         val hourly = com.example.data.network.HourlyWeather(
             time = List(24) { String.format("2026-08-13T%02d:00", it) },
             temperature_2m = List(24) { 28.0 + (it % 8) },
-            weather_code = List(24) { 2 }
+            weather_code = List(24) { 2 },
+            precipitation_probability = List(24) { (it * 3) % 100 }
         )
         val daily = com.example.data.network.DailyWeather(
             time = List(7) { "2026-08-13" },
@@ -1535,7 +1536,8 @@ How can I help you today?"""
             temperature_2m_min = List(7) { 27.0 },
             sunrise = List(7) { "05:30" },
             sunset = List(7) { "18:40" },
-            precipitation_sum = List(7) { 0.0 }
+            precipitation_sum = List(7) { 0.0 },
+            precipitation_probability_max = List(7) { 40 + (it * 5) % 60 }
         )
         return com.example.data.network.WeatherResponse(
             latitude = weatherLocationLat,
@@ -2430,6 +2432,19 @@ How can I help you today?"""
                     expression = expr,
                     result = res,
                     type = "Calculator"
+                )
+            )
+        }
+    }
+
+    fun saveCustomHistory(expression: String, result: String, type: String = "Tool", customName: String? = null) {
+        viewModelScope.launch {
+            repository.insertHistory(
+                HistoryEntry(
+                    expression = expression,
+                    result = result,
+                    type = type,
+                    customName = customName
                 )
             )
         }

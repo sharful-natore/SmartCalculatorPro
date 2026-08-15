@@ -200,18 +200,7 @@ fun QiblaCompassCard(
                             tint = if (isAligned) Color(0xFF10B981) else Color(0xFF059669),
                             modifier = Modifier.size(42.dp)
                         )
-                        Box(
-                            modifier = Modifier
-                                .width(4.dp)
-                                .weight(1f)
-                                .background(if (isAligned) Color(0xFF10B981) else Color(0xFF059669))
-                        )
-                        Box(
-                            modifier = Modifier
-                                .width(4.dp)
-                                .weight(1f)
-                                .background(themeColors.displayText.copy(alpha = 0.2f))
-                        )
+                        Spacer(modifier = Modifier.weight(1f))
                     }
                 }
 
@@ -251,6 +240,47 @@ fun QiblaCompassCard(
                     color = if (isAligned) Color(0xFF10B981) else themeColors.displayText,
                     fontSize = 13.sp
                 )
+            }
+
+            // Dynamic Rotation Guidance indicating how many degrees to rotate in which direction
+            if (!isAligned) {
+                val diff = run {
+                    var d = qiblaBearing - phoneAngle
+                    while (d < -180f) d += 360f
+                    while (d > 180f) d -= 360f
+                    d
+                }
+                val degreesToRotate = Math.abs(diff).toInt()
+                val directionText = if (diff > 0) {
+                    if (isBn) "ডানে (ঘড়ির কাটার দিকে) $degreesToRotate° ঘুরুন" else "Rotate Right (Clockwise) by $degreesToRotate°"
+                } else {
+                    if (isBn) "বামে (ঘড়ির কাটার বিপরীত দিকে) $degreesToRotate° ঘুরুন" else "Rotate Left (Counter-Clockwise) by $degreesToRotate°"
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = themeColors.displayBackground),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = if (diff > 0) Icons.Default.RotateRight else Icons.Default.RotateLeft,
+                            contentDescription = null,
+                            tint = themeColors.buttonEqualBg,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = directionText,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = themeColors.displayText
+                        )
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(14.dp))

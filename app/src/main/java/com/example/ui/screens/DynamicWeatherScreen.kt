@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathOperation
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.CornerRadius
@@ -70,7 +71,7 @@ fun DynamicWeatherScreen(
     }
 
     Column(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxSize()
     ) {
         // Location Header
         Row(
@@ -168,45 +169,42 @@ fun DynamicWeatherScreen(
             }
         }
 
-        // Weather Fetch Error / Status Notice
-        viewModel.weatherFetchError?.let { err ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 12.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFFEF3C7)
-                )
-            ) {
-                Row(
-                    modifier = Modifier.padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Warning,
-                        contentDescription = "Weather Status Notice",
-                        tint = Color(0xFFD97706),
-                        modifier = Modifier.size(20.dp)
+        // Weather Fetch Error / Status Notice (Hide when showing offline data)
+        if (!viewModel.isOfflineWeatherData) {
+            viewModel.weatherFetchError?.let { err ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFFFEF3C7)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = if (isBn) "আবহাওয়া স্ট্যাটাস / কারণ:" else "Weather Status Cause:",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 11.sp,
-                            color = Color(0xFF92400E)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = "Weather Status Notice",
+                            tint = Color(0xFFD97706),
+                            modifier = Modifier.size(20.dp)
                         )
-                        Text(
-                            text = err,
-                            fontSize = 12.sp,
-                            color = Color(0xFF78350F)
-                        )
-                        Text(
-                            text = if (isBn) "💡 ক্যানভাসে বর্তমানে অফলাইন/সংরক্ষিত ব্যাকআপ আবহাওয়া দেখাচ্ছে।" else "💡 Currently displaying offline cached weather data.",
-                            fontSize = 11.sp,
-                            color = Color(0xFF92400E).copy(alpha = 0.8f)
-                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = if (isBn) "আবহাওয়া স্ট্যাটাস / কারণ:" else "Weather Status Cause:",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 11.sp,
+                                color = Color(0xFF92400E)
+                            )
+                            Text(
+                                text = err,
+                                fontSize = 12.sp,
+                                color = Color(0xFF78350F)
+                            )
+                        }
                     }
                 }
             }
@@ -253,6 +251,11 @@ fun DynamicWeatherScreen(
                     CurrentWeatherCard(current, themeColors, isBn)
                 }
 
+                // Sun & Moon Tracker
+                item {
+                    SunMoonTrackerCard(weatherData, themeColors, isBn)
+                }
+
                 // Hourly Forecast
                 item {
                     Text(
@@ -260,7 +263,7 @@ fun DynamicWeatherScreen(
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = themeColors.displayText,
-                        modifier = Modifier.padding(bottom = 8.dp)
+                        modifier = Modifier.padding(bottom = 4.dp)
                     )
                     LazyRow(
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -270,19 +273,20 @@ fun DynamicWeatherScreen(
                             val timeStr = weatherData.hourly.time.getOrNull(index) ?: ""
                             val temp = weatherData.hourly.temperature_2m.getOrNull(index) ?: 0.0
                             val code = weatherData.hourly.weather_code.getOrNull(index) ?: 0
-                            HourlyWeatherItem(timeStr, temp, code, themeColors, isBn)
+                            val rainProb = weatherData.hourly.precipitation_probability.getOrNull(index) ?: 0
+                            HourlyWeatherItem(timeStr, temp, code, rainProb, themeColors, isBn)
                         }
                     }
                 }
 
-                // 7-Day Forecast
+                // 7-Day Forecast (with padding cleaned up)
                 item {
                     Text(
                         text = if (isBn) "৭ দিনের পূর্বাভাস" else "7-Day Forecast",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = themeColors.displayText,
-                        modifier = Modifier.padding(vertical = 8.dp)
+                        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
                     )
                 }
 
@@ -292,7 +296,8 @@ fun DynamicWeatherScreen(
                     val minT = weatherData.daily.temperature_2m_min[index]
                     val maxT = weatherData.daily.temperature_2m_max[index]
                     val precip = weatherData.daily.precipitation_sum[index]
-                    DailyWeatherItem(timeStr, code, minT, maxT, precip, themeColors, isBn)
+                    val rainProbMax = weatherData.daily.precipitation_probability_max.getOrNull(index) ?: 0
+                    DailyWeatherItem(timeStr, code, minT, maxT, precip, rainProbMax, themeColors, isBn)
                 }
             }
         }
@@ -410,7 +415,7 @@ fun WeatherDetailItem(icon: androidx.compose.ui.graphics.vector.ImageVector, val
 }
 
 @Composable
-fun HourlyWeatherItem(timeStr: String, temp: Double, code: Int, themeColors: CalculatorThemeColors, isBn: Boolean) {
+fun HourlyWeatherItem(timeStr: String, temp: Double, code: Int, rainProb: Int, themeColors: CalculatorThemeColors, isBn: Boolean) {
     val time = try {
         val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm", Locale.US)
         val date = parser.parse(timeStr)
@@ -452,6 +457,22 @@ fun HourlyWeatherItem(timeStr: String, temp: Double, code: Int, themeColors: Cal
             fontWeight = FontWeight.Bold,
             fontSize = 16.sp
         )
+        Spacer(modifier = Modifier.height(4.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Default.WaterDrop,
+                contentDescription = null,
+                tint = Color(0xFF38BDF8),
+                modifier = Modifier.size(10.dp)
+            )
+            Spacer(modifier = Modifier.width(2.dp))
+            Text(
+                text = "$rainProb%",
+                color = themeColors.displayText.copy(alpha = 0.8f),
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Medium
+            )
+        }
     }
 }
 
@@ -462,6 +483,7 @@ fun DailyWeatherItem(
     minT: Double,
     maxT: Double,
     precip: Double,
+    rainProbMax: Int,
     themeColors: CalculatorThemeColors,
     isBn: Boolean
 ) {
@@ -489,7 +511,7 @@ fun DailyWeatherItem(
         )
         
         Row(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1.2f),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
@@ -498,13 +520,30 @@ fun DailyWeatherItem(
                 isDay = true,
                 modifier = Modifier.size(24.dp)
             )
-            if (precip > 0) {
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = "${precip.toInt()}mm",
-                    color = themeColors.buttonEqualBg,
-                    fontSize = 12.sp
-                )
+            Spacer(modifier = Modifier.width(6.dp))
+            Column(horizontalAlignment = Alignment.Start) {
+                if (precip > 0) {
+                    Text(
+                        text = "${precip.toInt()}mm",
+                        color = themeColors.buttonEqualBg,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.WaterDrop,
+                        contentDescription = "Rain probability",
+                        tint = Color(0xFF38BDF8),
+                        modifier = Modifier.size(10.dp)
+                    )
+                    Spacer(modifier = Modifier.width(2.dp))
+                    Text(
+                        text = "$rainProbMax%",
+                        color = themeColors.displayText.copy(alpha = 0.7f),
+                        fontSize = 10.sp
+                    )
+                }
             }
         }
         
@@ -1030,6 +1069,320 @@ fun WeatherConditionGraphic(
                     size = Size(radius * 0.75f, radius * 0.3f),
                     cornerRadius = CornerRadius(radius * 0.15f)
                 )
+            }
+        }
+    }
+}
+
+// --- Astronomical Helper Functions ---
+
+fun getSunPosition(
+    currentTime: Long,
+    sunriseStr: String?,
+    sunsetStr: String?,
+    isBn: Boolean
+): Pair<String, Float> {
+    val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm", Locale.US)
+    val sunriseTime = try { sunriseStr?.let { parser.parse(it)?.time } } catch (e: Exception) { null }
+    val sunsetTime = try { sunsetStr?.let { parser.parse(it)?.time } } catch (e: Exception) { null }
+
+    if (sunriseTime == null || sunsetTime == null) {
+        val cal = Calendar.getInstance()
+        val hour = cal.get(Calendar.HOUR_OF_DAY)
+        val minute = cal.get(Calendar.MINUTE)
+        val dayPercent = (hour * 60 + minute) / 1440f
+        return if (hour in 6..18) {
+            val angle = (dayPercent - 0.25f) / 0.5f * 180f
+            val status = if (isBn) "আকাশে (কোণ: ${angle.toInt()}°)" else "In Sky (Angle: ${angle.toInt()}°)"
+            Pair(status, angle)
+        } else {
+            val status = if (isBn) "দিগন্তের নিচে (রাত)" else "Below Horizon (Night)"
+            Pair(status, -1f)
+        }
+    }
+
+    return if (currentTime in sunriseTime..sunsetTime) {
+        val totalDaylight = sunsetTime - sunriseTime
+        val elapsed = currentTime - sunriseTime
+        val fraction = elapsed.toFloat() / totalDaylight
+        val angle = fraction * 180f
+        val status = when {
+            angle < 15f -> if (isBn) "উদীয়মান (পূর্ব দিগন্তে)" else "Rising (East)"
+            angle > 165f -> if (isBn) "অস্তগামী (পশ্চিম দিগন্তে)" else "Setting (West)"
+            angle in 75f..105f -> if (isBn) "মধ্যগগন (মাথার উপর)" else "Zenith (Directly Overhead)"
+            else -> if (isBn) "আকাশে (কোণ: ${angle.toInt()}°)" else "In Sky (Angle: ${angle.toInt()}°)"
+        }
+        Pair(status, angle)
+    } else {
+        val status = if (isBn) "দিগন্তের নিচে (রাত)" else "Below Horizon (Night)"
+        Pair(status, -1f)
+    }
+}
+
+fun getMoonPhase(currentTime: Long): Double {
+    val referenceNewMoon = 1704974220000L
+    val synodicPeriodMs = 29.530588853 * 24 * 60 * 60 * 1000
+    val diff = currentTime - referenceNewMoon
+    var phase = (diff % synodicPeriodMs).toDouble() / synodicPeriodMs
+    if (phase < 0) phase += 1.0
+    return phase
+}
+
+fun getMoonPhaseDetails(phase: Double, isBn: Boolean): Triple<String, String, String> {
+    return when {
+        phase < 0.03 || phase > 0.97 -> Triple(
+            if (isBn) "নতুন চাঁদ (অমাবস্যা)" else "New Moon",
+            if (isBn) "চাঁদ সম্পূর্ণ অদৃশ্য" else "Moon is completely dark",
+            "🌑"
+        )
+        phase >= 0.03 && phase < 0.22 -> Triple(
+            if (isBn) "ক্রমবর্ধমান ক্রিসেন্ট" else "Waxing Crescent",
+            if (isBn) "চাঁদের সরু অংশ দৃশ্যমান" else "A thin sliver is visible",
+            "🌒"
+        )
+        phase >= 0.22 && phase < 0.28 -> Triple(
+            if (isBn) "প্রথম চতুর্থাংশ" else "First Quarter",
+            if (isBn) "চাঁদের ডান অর্ধেক দৃশ্যমান" else "Right half is lit",
+            "🌓"
+        )
+        phase >= 0.28 && phase < 0.47 -> Triple(
+            if (isBn) "ক্রমবর্ধমান গিব্বাস" else "Waxing Gibbous",
+            if (isBn) "চাঁদের বেশিরভাগ অংশ দৃশ্যমান" else "Most of the moon is lit",
+            "🌔"
+        )
+        phase >= 0.47 && phase < 0.53 -> Triple(
+            if (isBn) "পূর্ণিমা (পূর্ণ চাঁদ)" else "Full Moon",
+            if (isBn) "চাঁদ সম্পূর্ণ দৃশ্যমান" else "Moon is fully illuminated",
+            "🌕"
+        )
+        phase >= 0.53 && phase < 0.72 -> Triple(
+            if (isBn) "ক্ষয়িষ্ণু গিব্বাস" else "Waning Gibbous",
+            if (isBn) "চাঁদের অংশ কমতে শুরু করেছে" else "Illumination is decreasing",
+            "🌖"
+        )
+        phase >= 0.72 && phase < 0.78 -> Triple(
+            if (isBn) "শেষ চতুর্থাংশ" else "Third Quarter",
+            if (isBn) "চাঁদের বাম অর্ধেক দৃশ্যমান" else "Left half is lit",
+            "🌗"
+        )
+        else -> Triple(
+            if (isBn) "ক্ষয়িষ্ণু ক্রিসেন্ট" else "Waning Crescent",
+            if (isBn) "চাঁদের শেষ সরু অংশ দৃশ্যমান" else "A final thin sliver remains",
+            "🌘"
+        )
+    }
+}
+
+fun getMoonPosition(
+    currentTime: Long,
+    phase: Double,
+    sunriseStr: String?,
+    sunsetStr: String?,
+    isBn: Boolean
+): Pair<String, Float> {
+    val cal = Calendar.getInstance()
+    val hourOfDay = cal.get(Calendar.HOUR_OF_DAY)
+    val minute = cal.get(Calendar.MINUTE)
+    val currentSunHour = hourOfDay + (minute / 60.0)
+    
+    val moonHourDiff = phase * 24.0
+    val moonTransitHour = (currentSunHour - moonHourDiff + 24.0) % 24.0
+    
+    val isVisible = moonTransitHour in 6.0..18.0
+    return if (isVisible) {
+        val fraction = (moonTransitHour - 6.0) / 12.0
+        val angle = (fraction * 180.0).toFloat()
+        val status = when {
+            angle < 15f -> if (isBn) "উদীয়মান (পূর্ব দিগন্তে)" else "Rising (East)"
+            angle > 165f -> if (isBn) "অস্তগামী (পশ্চিম দিগন্তে)" else "Setting (West)"
+            angle in 75f..105f -> if (isBn) "মধ্যগগন (মাথার উপর)" else "Zenith (Overhead)"
+            else -> if (isBn) "আকাশে (কোণ: ${angle.toInt()}°)" else "In Sky (Angle: ${angle.toInt()}°)"
+        }
+        Pair(status, angle)
+    } else {
+        val status = if (isBn) "দিগন্তের নিচে" else "Below Horizon"
+        Pair(status, -1f)
+    }
+}
+
+@Composable
+fun SunMoonTrackerCard(
+    weatherData: com.example.data.network.WeatherResponse,
+    themeColors: CalculatorThemeColors,
+    isBn: Boolean
+) {
+    val currentTime = remember { System.currentTimeMillis() }
+    val todaySunrise = weatherData.daily.sunrise.getOrNull(0)
+    val todaySunset = weatherData.daily.sunset.getOrNull(0)
+    
+    val sunPos = remember(currentTime, todaySunrise, todaySunset, isBn) {
+        getSunPosition(currentTime, todaySunrise, todaySunset, isBn)
+    }
+    
+    val moonPhaseVal = remember(currentTime) {
+        getMoonPhase(currentTime)
+    }
+    
+    val moonDetails = remember(moonPhaseVal, isBn) {
+        getMoonPhaseDetails(moonPhaseVal, isBn)
+    }
+    
+    val moonPos = remember(currentTime, moonPhaseVal, todaySunrise, todaySunset, isBn) {
+        getMoonPosition(currentTime, moonPhaseVal, todaySunrise, todaySunset, isBn)
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = themeColors.cardBg)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(
+                text = if (isBn) "মহাজাগতিক তথ্য (সূর্য ও চন্দ্র ট্র্যাকার)" else "Astronomical Info (Sun & Moon Tracker)",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = themeColors.displayText,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Sun Tracker Card (Left)
+                Card(
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = themeColors.displayBackground)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = if (isBn) "সূর্যের অবস্থান" else "Sun Position",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = themeColors.displayText.copy(alpha = 0.8f)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        // Beautiful Visual Arc for Sun
+                        Box(
+                            modifier = Modifier
+                                .size(64.dp)
+                                .padding(4.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Canvas(modifier = Modifier.fillMaxSize()) {
+                                // Draw horizon arc
+                                drawArc(
+                                    color = themeColors.displayText.copy(alpha = 0.15f),
+                                    startAngle = 180f,
+                                    sweepAngle = 180f,
+                                    useCenter = false,
+                                    style = Stroke(width = 2.dp.toPx())
+                                )
+                                
+                                // If sun is visible, draw its path position
+                                if (sunPos.second >= 0f) {
+                                    val angleRad = (180f + sunPos.second) * (Math.PI / 180f)
+                                    val r = size.width / 2
+                                    val cx = size.width / 2
+                                    val cy = size.height / 2 + 10f
+                                    
+                                    val x = cx + Math.cos(angleRad).toFloat() * r
+                                    val y = cy + Math.sin(angleRad).toFloat() * r
+                                    
+                                    drawCircle(
+                                        color = Color(0xFFF59E0B),
+                                        radius = 6.dp.toPx(),
+                                        center = Offset(x, y)
+                                    )
+                                }
+                            }
+                            
+                            Icon(
+                                imageVector = if (sunPos.second >= 0f) Icons.Default.WbSunny else Icons.Default.NightsStay,
+                                contentDescription = null,
+                                tint = if (sunPos.second >= 0f) Color(0xFFF59E0B) else themeColors.displayText.copy(alpha = 0.4f),
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = sunPos.first,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = themeColors.displayText,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+                
+                // Moon Tracker Card (Right)
+                Card(
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = themeColors.displayBackground)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = if (isBn) "চন্দ্রের অবস্থান ও দশা" else "Moon Position & Phase",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = themeColors.displayText.copy(alpha = 0.8f)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        // Moon Phase Icon and Angle Visual
+                        Box(
+                            modifier = Modifier
+                                .size(64.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = moonDetails.third,
+                                fontSize = 36.sp
+                            )
+                        }
+                        
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = moonDetails.first,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = themeColors.buttonEqualBg,
+                            textAlign = TextAlign.Center
+                        )
+                        Text(
+                            text = moonDetails.second,
+                            fontSize = 9.sp,
+                            color = themeColors.displayText.copy(alpha = 0.6f),
+                            textAlign = TextAlign.Center,
+                            maxLines = 1,
+                            modifier = Modifier.padding(top = 2.dp)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = if (moonPos.second >= 0f) {
+                                if (isBn) "আকাশে (${moonPos.second.toInt()}°)" else "In Sky (${moonPos.second.toInt()}°)"
+                            } else {
+                                moonPos.first
+                            },
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = themeColors.displayText,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
             }
         }
     }

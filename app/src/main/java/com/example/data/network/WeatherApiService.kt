@@ -50,7 +50,8 @@ data class CurrentWeather(
 data class HourlyWeather(
     val time: List<String> = emptyList(),
     val temperature_2m: List<Double> = emptyList(),
-    val weather_code: List<Int> = emptyList()
+    val weather_code: List<Int> = emptyList(),
+    val precipitation_probability: List<Int> = emptyList()
 )
 
 @JsonClass(generateAdapter = true)
@@ -61,7 +62,8 @@ data class DailyWeather(
     val temperature_2m_min: List<Double> = emptyList(),
     val sunrise: List<String> = emptyList(),
     val sunset: List<String> = emptyList(),
-    val precipitation_sum: List<Double> = emptyList()
+    val precipitation_sum: List<Double> = emptyList(),
+    val precipitation_probability_max: List<Int> = emptyList()
 )
 
 interface WeatherApiService {
@@ -70,8 +72,8 @@ interface WeatherApiService {
         @Query("latitude") latitude: Double,
         @Query("longitude") longitude: Double,
         @Query("current") current: String = "temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m,wind_direction_10m",
-        @Query("hourly") hourly: String = "temperature_2m,weather_code",
-        @Query("daily") daily: String = "weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum",
+        @Query("hourly") hourly: String = "temperature_2m,weather_code,precipitation_probability",
+        @Query("daily") daily: String = "weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,precipitation_probability_max",
         @Query("timezone") timezone: String = "auto"
     ): WeatherResponse
 }
