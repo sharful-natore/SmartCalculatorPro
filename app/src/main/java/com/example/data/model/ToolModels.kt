@@ -207,6 +207,11 @@ enum class ToolType(
         "ভরি, আনা, রতি ও পয়েন্ট অনুযায়ী স্বর্ণের দাম নির্ধারণ",
         ToolCategory.UTILITY, Icons.Default.AttachMoney
     ),
+    MARKET_LIST(
+        "Market Shopping List & PDF", "বাজার ফর্দ ও কেনাকাটা মেমো",
+        "বাজারের ফর্দ তৈরি, মালামাল কেনা, দাম ও পরিমাণের হিসাব, মেমো সেভ ও পিডিএফ এক্সপোর্ট",
+        ToolCategory.UTILITY, Icons.Default.ShoppingCart
+    ),
     PASSWORD_GENERATOR(
         "Password Generator", "পাসওয়ার্ড জেনারেটর",
         "কাস্টমাইজড এবং সুরক্ষিত স্ট্রং পাসওয়ার্ড তৈরি করুন",
@@ -317,11 +322,6 @@ enum class ToolType(
         "ইংরেজি, বাংলা ও আরবি (হিজরী) ট্রিপল ক্যালেন্ডার",
         ToolCategory.UTILITY, Icons.Default.CalendarMonth
     ),
-    QR_CODE(
-        "QR Code Scanner & Generator", "কিউআর কোড রিডার ও জেনারেটর",
-        "কিউআর কোড স্ক্যান ও দ্রুত নতুন কিউআর তৈরি করুন",
-        ToolCategory.UTILITY, Icons.Default.QrCode
-    ),
     PHOTO_LAB(
         "Smart Photo Lab & BG Remover", "ফটো এডিটর ও বিজি রিমুভার",
         "ফটো রিসাইজ, ক্রপ, ফরম্যাট কনভার্ট ও ব্যাকগ্রাউন্ড রিমুভ করুন",
@@ -383,6 +383,7 @@ enum class ToolType(
                 TEXT_COUNTER -> "Count words, characters, and spaces in any text"
                 CLOTH_MEASUREMENT -> "Convert between traditional Bengali cloth units (Gaj, Gira, Haat, etc.) and metric units"
                 GOLD_CALCULATOR -> "Calculate gold and silver weight (Vori, Anna, Ratti, Point) and prices with carat rates"
+                MARKET_LIST -> "Create shopping lists, track quantity and unit prices, calculate totals, save memos, and export PDF receipts"
                 PASSWORD_GENERATOR -> "Generate secure customized passwords"
                 ELECTRICITY_BILL -> "Calculate monthly electricity bill from kWh units and tariff"
                 APPLIANCE_COST -> "Calculate power consumption cost for AC, fan, TV, etc."
@@ -407,7 +408,6 @@ enum class ToolType(
                 RANDOM_NUMBER_PICKER -> "Random number generator, dice roller, and coin flipper"
                 MULTI_CALENDAR -> "Gregorian, Bengali, and Hijri multi-calendar"
                 WEATHER -> "Check current weather and 7-day forecast"
-                QR_CODE -> "Scan QR codes with camera or generate custom QR codes instantly"
                 PHOTO_LAB -> "Resize, crop, convert between formats, and remove backgrounds from photos"
                 QIBLA_COMPASS -> "Accurate Qibla direction finder pointing towards the Holy Kaaba in Makkah"
                 DIGITAL_TASBIH -> "Digital zikir and tasbih tally counter with goal targets and presets"

@@ -79,7 +79,17 @@ data class FeaturedDashboardItem(
     val isTool: Boolean,
     val toolType: ToolType? = null,
     val converterType: ConverterType? = null
-)
+) {
+    fun getSubtitle(language: AppLanguage): String {
+        return if (isTool && toolType != null) {
+            toolType.getDescription(language)
+        } else if (converterType != null) {
+            if (language == AppLanguage.BENGALI) "${converterType.titleBn} ইউনিট রূপান্তর" else "Convert ${converterType.titleEn} units"
+        } else {
+            if (language == AppLanguage.BENGALI) "কুইক সায়েন্টিফিক ক্যালকুলেটর" else "Quick Floating Calculator"
+        }
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -965,10 +975,12 @@ fun DashboardCategoriesView(
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = if (isBn) "ট্যাপ করুন" else "Tap to open",
+                                text = item.getSubtitle(viewModel.selectedLanguage),
                                 fontSize = 10.sp,
                                 color = themeColors.displayText.copy(alpha = 0.5f),
-                                textAlign = TextAlign.Center
+                                textAlign = TextAlign.Center,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }
@@ -1100,6 +1112,16 @@ fun DashboardCategoriesView(
                                                     maxLines = 1,
                                                     overflow = TextOverflow.Ellipsis
                                                 )
+                                                Spacer(modifier = Modifier.height(3.dp))
+                                                Text(
+                                                    text = item.getSubtitle(viewModel.selectedLanguage),
+                                                    fontSize = 9.sp,
+                                                    color = themeColors.displayText.copy(alpha = 0.55f),
+                                                    textAlign = TextAlign.Center,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis,
+                                                    modifier = Modifier.padding(horizontal = 4.dp)
+                                                )
                                                 Spacer(modifier = Modifier.height(2.dp))
                                                 Row(
                                                     verticalAlignment = Alignment.CenterVertically,
@@ -1113,7 +1135,7 @@ fun DashboardCategoriesView(
                                                     )
                                                     Spacer(modifier = Modifier.width(3.dp))
                                                     Text(
-                                                        text = if (isBn) "অপশন" else "Options",
+                                                        text = if (isBn) "লং প্রেস: অপশন" else "Hold for Options",
                                                         fontSize = 9.sp,
                                                         color = themeColors.displayText.copy(alpha = 0.5f)
                                                     )
@@ -1607,7 +1629,10 @@ fun ToolDetailView(
         .nestedScroll(nestedScrollConnection)
         .offset { IntOffset(0, bounceAnimatable.value.roundToInt()) }
     
-    val finalModifier = if (toolType != com.example.data.model.ToolType.WEATHER) {
+    val finalModifier = if (toolType != com.example.data.model.ToolType.WEATHER &&
+                          toolType != com.example.data.model.ToolType.MARKET_LIST &&
+                          toolType != com.example.data.model.ToolType.NOTES_CHECKLIST &&
+                          toolType != com.example.data.model.ToolType.WORLD_CLOCK) {
         baseModifier.verticalScroll(scrollState)
     } else {
         baseModifier
@@ -1738,6 +1763,7 @@ fun ToolDetailView(
             ToolType.COLOR_CONVERTER -> ColorConverterCard(viewModel, themeColors)
             ToolType.CLOTH_MEASUREMENT -> ClothMeasurementCard(viewModel, themeColors)
             ToolType.GOLD_CALCULATOR -> GoldCalculatorCard(viewModel, themeColors)
+            ToolType.MARKET_LIST -> MarketListScreen(viewModel, themeColors)
             ToolType.STOPWATCH_TIMER -> StopwatchTimerCard(viewModel, themeColors)
             ToolType.NOTES_CHECKLIST -> NotesChecklistCard(viewModel, themeColors)
             ToolType.WORLD_CLOCK -> WorldClockCard(viewModel, themeColors)
@@ -1746,7 +1772,6 @@ fun ToolDetailView(
             ToolType.ASPECT_RATIO -> AspectRatioCard(viewModel, themeColors)
             ToolType.RANDOM_NUMBER_PICKER -> RandomPickerCard(viewModel, themeColors)
             ToolType.MULTI_CALENDAR -> MultiCalendarCard(viewModel, themeColors)
-            ToolType.QR_CODE -> QrCodeCard(viewModel, themeColors)
             ToolType.PHOTO_LAB -> PhotoLabCard(viewModel, themeColors)
             ToolType.WEATHER -> DynamicWeatherScreen(viewModel, themeColors, isBn = viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI)
             ToolType.QIBLA_COMPASS -> QiblaCompassCard(viewModel, themeColors)
@@ -2184,17 +2209,6 @@ private fun getToolInfoItems(toolType: ToolType, isBn: Boolean): List<Pair<Strin
                 "2. Virtual Dice & Coin Flipper" to "Roll multi-sided dice for board games or flip a fair digital coin for quick decision-making."
             )
         }
-        ToolType.QR_CODE -> if (isBn) {
-            listOf(
-                "১. কিউআর কোড রিডার ও স্ক্যানার" to "ক্যামেরা দিয়ে বা গ্যালারির ছবি থেকে যেকোনো কিউআর কোড এবং বারকোড তাৎক্ষণিক স্ক্যান করে লিংক বা টেক্সট পড়ুন।",
-                "২. কাস্টম কিউআর জেনারেটর" to "ওয়াইফাই পাসওয়ার্ড, ওয়েবসাইট ইউআরএল, টেক্সট বা ফোন নম্বরের জন্য দৃষ্টিনন্দন কিউআর কোড তৈরি ও শেয়ার করুন।"
-            )
-        } else {
-            listOf(
-                "1. QR & Barcode Scanner" to "Scan physical QR codes and barcodes via real-time camera feed or imported gallery images with one-tap link navigation.",
-                "2. Custom QR Generator" to "Create high-resolution QR codes for Wi-Fi access, URLs, contact vCards, or custom text with direct image sharing."
-            )
-        }
         ToolType.PHOTO_LAB -> if (isBn) {
             listOf(
                 "১. ফটো রিসাইজ ও ক্রপ" to "সোশ্যাল মিডিয়া, পাসপোর্ট সাইজ বা অফিশিয়াল পোর্টালের নির্দিষ্ট কেবি/পিক্সেল সাইজে ছবির আকার পরিবর্তন ও কাটুন।",
@@ -2249,6 +2263,17 @@ private fun getToolInfoItems(toolType: ToolType, isBn: Boolean): List<Pair<Strin
         } else {
             listOf(
                 "1. Daily Authentic Duas" to "A curated collection of essential daily Islamic supplications with Arabic text and meanings."
+            )
+        }
+        ToolType.MARKET_LIST -> if (isBn) {
+            listOf(
+                "১. বাজার ফর্দ ও হিসাব তালিকা" to "দৈনন্দিন ও সাপ্তাহিক বাজারের তালিকা তৈরি করুন, প্রতিটি পণ্যের পরিমাণ ও এককের দাম লিখে মোট হিসাব দেখুন।",
+                "২. মেমো সেভ ও PDF এক্সপোর্ট" to "তৈরিকৃত বাজার ফর্দ অ্যাপ হিস্টোরিতে মেমো আকারে সেভ রাখতে পারবেন অথবা সুন্দর পিডিএফ ডকুমেন্টে এক্সপোর্ট করে শেয়ার করতে পারবেন।"
+            )
+        } else {
+            listOf(
+                "1. Market List & Cost Calculation" to "Create shopping item lists with quantities, unit prices, and grand total cost calculation.",
+                "2. Save Memo & PDF Export" to "Save market shopping lists as memos in history or export clean formatted PDF documents for sharing."
             )
         }
     }
