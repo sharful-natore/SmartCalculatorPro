@@ -252,6 +252,20 @@ fun MainContent(
     val activity = context as? Activity
     BackHandler(enabled = true) {
         when {
+            // If Quick calculator window or sub-dialog is open, close them
+            viewModel.showCalendarDialog -> {
+                viewModel.showCalendarDialog = false
+            }
+            viewModel.showMarketDialog -> {
+                viewModel.showMarketDialog = false
+            }
+            viewModel.showCalculatorDialog -> {
+                viewModel.showCalculatorDialog = false
+            }
+            // If Global Search Dialog is open
+            viewModel.showGlobalSearch -> {
+                viewModel.showGlobalSearch = false
+            }
             // If AI Chat is showing, close it first
             viewModel.showAiChat -> {
                 viewModel.showAiChat = false
@@ -260,15 +274,33 @@ fun MainContent(
             viewModel.activeTab == 1 && viewModel.selectedConverterType != null -> {
                 viewModel.closeConverterDetail()
             }
+            // If on Converter tab and search query is not empty
+            viewModel.activeTab == 1 && viewModel.converterSearchQuery.isNotEmpty() -> {
+                viewModel.converterSearchQuery = ""
+                focusManager.clearFocus()
+            }
+            // If on Converter tab and category filter is selected
+            viewModel.activeTab == 1 && viewModel.selectedCategoryFilter != null -> {
+                viewModel.selectedCategoryFilter = null
+            }
             // If inside a specific tool detail screen
             viewModel.activeTab == 0 && viewModel.selectedToolType != null -> {
                 viewModel.closeToolDetail()
+            }
+            // If on Dashboard tab and tool search query is not empty
+            viewModel.activeTab == 0 && viewModel.toolSearchQuery.isNotEmpty() -> {
+                viewModel.toolSearchQuery = ""
+                focusManager.clearFocus()
+            }
+            // If on Dashboard tab and category filter is selected
+            viewModel.activeTab == 0 && viewModel.selectedToolCategoryFilter != null -> {
+                viewModel.selectedToolCategoryFilter = null
             }
             // If on non-home tab (Calculator, Converter, History, Themes)
             viewModel.activeTab != 0 -> {
                 viewModel.activeTab = 0
             }
-            // If on home tab (Dashboard)
+            // If on home tab (Dashboard) with no active search/filter/detail
             else -> {
                 viewModel.showExitDialog = true
             }

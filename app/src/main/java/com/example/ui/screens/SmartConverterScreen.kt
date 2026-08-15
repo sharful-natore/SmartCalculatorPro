@@ -35,6 +35,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import com.example.util.scaleOnPress
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -211,6 +213,8 @@ fun SmartConverterCategoriesView(
             .verticalScroll(scrollState)
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
+        val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
+
         // Search TextField
         OutlinedTextField(
             value = viewModel.converterSearchQuery,
@@ -337,49 +341,187 @@ fun SmartConverterCategoriesView(
                     )
                 }
             } else {
-                val categoriesToShow = ConverterCategory.values().filter { cat ->
-                    currentFilteredConverters.any { it.category == cat }
-                }
+                val isOverviewMode = currentFilter == null && searchQuery.isEmpty()
 
                 Column(modifier = Modifier.fillMaxWidth()) {
+                    // Category Active Banner when filtered
+                    if (currentFilter != null) {
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 12.dp),
+                            shape = RoundedCornerShape(14.dp),
+                            color = themeColors.cardBg,
+                            border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.25f))
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(32.dp)
+                                            .clip(CircleShape)
+                                            .background(themeColors.buttonEqualBg),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = currentFilter.icon,
+                                            contentDescription = null,
+                                            tint = Color.White,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Column {
+                                        Text(
+                                            text = currentFilter.getTitle(viewModel.selectedLanguage),
+                                            fontSize = 15.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = themeColors.displayText
+                                        )
+                                        Text(
+                                            text = if (isBn) "মোট ${currentFilteredConverters.size}টি কনভার্টার" else "Total ${currentFilteredConverters.size} Converters",
+                                            fontSize = 11.sp,
+                                            color = themeColors.buttonEqualBg,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                    }
+                                }
+
+                                Surface(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .clickable { viewModel.selectedCategoryFilter = null },
+                                    color = themeColors.buttonEqualBg.copy(alpha = 0.12f),
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Apps,
+                                            contentDescription = null,
+                                            tint = themeColors.buttonEqualBg,
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = if (isBn) "সব কনভার্টার" else "All",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = themeColors.buttonEqualBg
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    val categoriesToShow = if (isOverviewMode) {
+                        ConverterCategory.values().filter { cat ->
+                            currentFilteredConverters.any { it.category == cat }
+                        }
+                    } else if (currentFilter != null) {
+                        listOf(currentFilter)
+                    } else {
+                        ConverterCategory.values().filter { cat ->
+                            currentFilteredConverters.any { it.category == cat }
+                        }
+                    }
+
                     categoriesToShow.forEach { category ->
                         val categoryConverters = currentFilteredConverters.filter { it.category == category }
 
                         if (categoryConverters.isNotEmpty()) {
+                            val displayedConverters = if (isOverviewMode) categoryConverters.take(4) else categoryConverters
+                            val hasMore = isOverviewMode && categoryConverters.size > 4
+
                             // Category Header
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(vertical = 8.dp)
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp, bottom = 8.dp)
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(28.dp)
-                                        .clip(CircleShape)
-                                        .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = category.icon,
-                                        contentDescription = category.titleEn,
-                                        tint = themeColors.buttonEqualBg,
-                                        modifier = Modifier.size(16.dp)
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(28.dp)
+                                            .clip(CircleShape)
+                                            .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = category.icon,
+                                            contentDescription = category.titleEn,
+                                            tint = themeColors.buttonEqualBg,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = category.getTitle(viewModel.selectedLanguage),
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = themeColors.displayText
                                     )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Surface(
+                                        shape = RoundedCornerShape(6.dp),
+                                        color = themeColors.displayText.copy(alpha = 0.08f)
+                                    ) {
+                                        Text(
+                                            text = if (isBn) "${categoryConverters.size}টি" else "${categoryConverters.size}",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = themeColors.displayText.copy(alpha = 0.7f),
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                        )
+                                    }
                                 }
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = category.getTitle(viewModel.selectedLanguage),
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = themeColors.displayText
-                                )
+
+                                if (hasMore) {
+                                    Row(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(themeColors.buttonEqualBg.copy(alpha = 0.08f))
+                                            .clickable { viewModel.selectedCategoryFilter = category }
+                                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = if (isBn) "সব দেখুন" else "See all",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = themeColors.buttonEqualBg
+                                        )
+                                        Spacer(modifier = Modifier.width(2.dp))
+                                        Icon(
+                                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                            contentDescription = null,
+                                            tint = themeColors.buttonEqualBg,
+                                            modifier = Modifier.size(12.dp)
+                                        )
+                                    }
+                                }
                             }
 
                             // Cards Grid (2 columns)
                             Column(
                                 verticalArrangement = Arrangement.spacedBy(10.dp),
-                                modifier = Modifier.padding(bottom = 16.dp)
+                                modifier = Modifier.padding(bottom = 6.dp)
                             ) {
-                                categoryConverters.chunked(2).forEach { rowItems ->
+                                displayedConverters.chunked(2).forEach { rowItems ->
                                     Row(
                                         modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
                                         horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -400,6 +542,47 @@ fun SmartConverterCategoriesView(
                                         }
                                     }
                                 }
+                            }
+
+                            // Clean "See All" Button at the bottom of the section in Overview mode
+                            if (hasMore) {
+                                Surface(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 4.dp, bottom = 14.dp)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .clickable { viewModel.selectedCategoryFilter = category },
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = themeColors.cardBg,
+                                    border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.25f))
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 9.dp, horizontal = 12.dp),
+                                        horizontalArrangement = Arrangement.Center,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = if (isBn) 
+                                                "${category.getTitle(viewModel.selectedLanguage)}-এর সব (${categoryConverters.size}টি) কনভার্টার দেখুন" 
+                                            else 
+                                                "See all ${categoryConverters.size} ${category.getTitle(viewModel.selectedLanguage)} Converters",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = themeColors.buttonEqualBg
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Icon(
+                                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                            contentDescription = null,
+                                            tint = themeColors.buttonEqualBg,
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                    }
+                                }
+                            } else {
+                                Spacer(modifier = Modifier.height(10.dp))
                             }
                         }
                     }

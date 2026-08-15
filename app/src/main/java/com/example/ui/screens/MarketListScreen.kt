@@ -8,6 +8,7 @@ import android.graphics.Color as AndroidColor
 import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
 import android.net.Uri
+import android.speech.RecognizerIntent
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -970,6 +971,7 @@ fun CreateOrBazaarModalDialog(
     onSavePlan: (MarketPlanList) -> Unit,
     onCompleteDirectBazaar: (CompletedBazaarMemo) -> Unit
 ) {
+    val context = LocalContext.current
     // 0 -> ফর্দ তৈরি, 1 -> বাজার সম্পন্ন
     var dialogTab by remember { mutableStateOf(initialTab) }
     var listTitle by remember {
@@ -986,6 +988,50 @@ fun CreateOrBazaarModalDialog(
         mutableStateListOf(
             MarketItem(name = "", unitPrice = 0.0, quantity = 1.0, unit = if (isBn) "কেজি" else "kg", isChecked = true)
         )
+    }
+
+    // Voice recognition targeting
+    var voiceTargetItemIndex by remember { mutableStateOf<Int?>(null) }
+    var isVoiceTargetTitle by remember { mutableStateOf(false) }
+
+    val speechLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val matches = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+            val spokenText = matches?.firstOrNull() ?: ""
+            if (spokenText.isNotBlank()) {
+                if (isVoiceTargetTitle) {
+                    listTitle = spokenText.trim()
+                } else {
+                    val idx = voiceTargetItemIndex
+                    if (idx != null && idx in items.indices) {
+                        val current = items[idx]
+                        val updated = parseBazaarVoiceText(spokenText, current, isBn)
+                        items[idx] = updated
+                    }
+                }
+            }
+        }
+    }
+
+    val launchVoiceFor: (Boolean, Int?) -> Unit = { isTitle, idx ->
+        try {
+            isVoiceTargetTitle = isTitle
+            voiceTargetItemIndex = idx
+            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE, if (isBn) "bn-BD" else "en-US")
+                putExtra(
+                    RecognizerIntent.EXTRA_PROMPT,
+                    if (isTitle) (if (isBn) "ফর্দের নাম বলুন..." else "Speak List Name...")
+                    else (if (isBn) "পণ্যের নাম বা বিবরণ বলুন (যেমন: আলু ৫০ টাকা ২ কেজি)..." else "Speak Item Name / Price (e.g. Potato 50 tk 2 kg)...")
+                )
+            }
+            speechLauncher.launch(intent)
+        } catch (e: Exception) {
+            Toast.makeText(context, if (isBn) "ভয়েস ইনপুট সমর্থিত নয়" else "Voice input not supported", Toast.LENGTH_SHORT).show()
+        }
     }
 
     // Item row deletion confirmation
@@ -1122,13 +1168,23 @@ fun CreateOrBazaarModalDialog(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // List / Memo Title Field
+                // List / Memo Title Field with Voice Input Button
                 OutlinedTextField(
                     value = listTitle,
                     onValueChange = { listTitle = it },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    label = { Text(if (isBn) "ফর্দ / মেমো নাম" else "List / Memo Title", fontSize = 12.sp) },
+                    label = { Text(if (isBn) "ফর্দ / মেমো নাম (কাস্টমাইজ করতে লিখুন)" else "List / Memo Title (Custom Name)", fontSize = 12.sp) },
+                    trailingIcon = {
+                        IconButton(onClick = { launchVoiceFor(true, null) }) {
+                            Icon(
+                                imageVector = Icons.Default.Mic,
+                                contentDescription = "Voice Input for Title",
+                                tint = themeColors.buttonEqualBg,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                    },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = themeColors.buttonEqualBg,
                         unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f)
@@ -1169,6 +1225,9 @@ fun CreateOrBazaarModalDialog(
                             },
                             onDeleteClick = {
                                 itemIndexToDelete = index
+                            },
+                            onVoiceClick = {
+                                launchVoiceFor(false, index)
                             }
                         )
                     }
@@ -1350,6 +1409,105 @@ fun CreateOrBazaarModalDialog(
     }
 }
 
+// --- Helper: Smart Voice Parser for Bazaar items ---
+fun parseBazaarVoiceText(spoken: String, currentItem: MarketItem, isBn: Boolean): MarketItem {
+    var raw = spoken.trim()
+    if (raw.isBlank()) return currentItem
+
+    // Normalize Bengali digits
+    val bnDigits = charArrayOf('০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯')
+    var normalized = raw
+    for (i in bnDigits.indices) {
+        normalized = normalized.replace(bnDigits[i], ('0' + i))
+    }
+
+    val unitKeywords = listOf(
+        "কেজি" to "কেজি", "কেজিতে" to "কেজি", "kg" to "kg",
+        "গ্রাম" to "গ্রাম", "gm" to "gm", "gram" to "gm",
+        "লিটার" to "লিটার", "liter" to "liter", "ltr" to "liter",
+        "পিস" to "পিস", "টা" to "পিস", "pcs" to "pcs", "piece" to "pcs",
+        "প্যাকেট" to "প্যাকেট", "pkt" to "pkt", "packet" to "pkt",
+        "বক্স" to "বক্স", "box" to "box",
+        "ডজন" to "ডজন", "doz" to "doz", "dozen" to "doz",
+        "হালি" to "হালি",
+        "বস্তা" to "বস্তা", "bag" to "bag"
+    )
+
+    var detectedUnit = currentItem.unit
+    for ((key, u) in unitKeywords) {
+        if (raw.contains(key, ignoreCase = true)) {
+            detectedUnit = if (isBn) {
+                when (u) {
+                    "kg" -> "কেজি"
+                    "gm" -> "গ্রাম"
+                    "liter" -> "লিটার"
+                    "pcs" -> "পিস"
+                    "pkt" -> "প্যাকেট"
+                    "box" -> "বক্স"
+                    "doz" -> "ডজন"
+                    "bag" -> "বস্তা"
+                    else -> u
+                }
+            } else {
+                when (u) {
+                    "কেজি" -> "kg"
+                    "গ্রাম" -> "gm"
+                    "লিটার" -> "liter"
+                    "পিস" -> "pcs"
+                    "প্যাকেট" -> "pkt"
+                    "বক্স" -> "box"
+                    "ডজন" -> "doz"
+                    "হালি" -> "pcs"
+                    "বস্তা" -> "bag"
+                    else -> u
+                }
+            }
+            break
+        }
+    }
+
+    val numbers = Regex("""\d+(\.\d+)?""").findAll(normalized).mapNotNull { it.value.toDoubleOrNull() }.toList()
+
+    var newPrice = currentItem.unitPrice
+    var newQty = currentItem.quantity
+
+    if (numbers.size >= 2) {
+        newPrice = numbers[0]
+        newQty = numbers[1]
+    } else if (numbers.size == 1) {
+        if (raw.contains("টাকা") || raw.contains("tk") || raw.contains("rate") || raw.contains("দর")) {
+            newPrice = numbers[0]
+        } else if (raw.contains("কেজি") || raw.contains("লিটার") || raw.contains("গ্রাম") || raw.contains("পিস") || raw.contains("ডজন") || raw.contains("kg") || raw.contains("pcs")) {
+            newQty = numbers[0]
+        } else {
+            newPrice = numbers[0]
+        }
+    }
+
+    var cleanedName = raw
+    for ((key, _) in unitKeywords) {
+        cleanedName = cleanedName.replace(key, "", ignoreCase = true)
+    }
+    cleanedName = cleanedName.replace("টাকা", "", ignoreCase = true)
+        .replace("টাকার", "", ignoreCase = true)
+        .replace("tk", "", ignoreCase = true)
+        .replace("taka", "", ignoreCase = true)
+        .replace("দর", "", ignoreCase = true)
+        .replace("রেট", "", ignoreCase = true)
+        .replace("দাম", "", ignoreCase = true)
+        .replace(Regex("""[0-9০-৯\.]+"""), "")
+        .trim()
+
+    val finalName = if (cleanedName.isNotBlank()) cleanedName else raw
+
+    return currentItem.copy(
+        name = finalName,
+        unitPrice = if (newPrice > 0) newPrice else currentItem.unitPrice,
+        quantity = if (newQty > 0) newQty else currentItem.quantity,
+        unit = detectedUnit
+    )
+}
+
 // --- Item Input Row Composable (with Name, Rate, Quantity textboxes & Delete button) ---
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -1361,12 +1519,13 @@ fun ItemInputRow(
     unitsList: List<String>,
     themeColors: CalculatorThemeColors,
     onItemChange: (MarketItem) -> Unit,
-    onDeleteClick: () -> Unit
+    onDeleteClick: () -> Unit,
+    onVoiceClick: (() -> Unit)? = null
 ) {
-    var nameText by remember(item.id) { mutableStateOf(item.name) }
-    var rateText by remember(item.id) { mutableStateOf(if (item.unitPrice > 0) (if (item.unitPrice % 1.0 == 0.0) item.unitPrice.toInt().toString() else item.unitPrice.toString()) else "") }
-    var qtyText by remember(item.id) { mutableStateOf(if (item.quantity % 1.0 == 0.0) item.quantity.toInt().toString() else item.quantity.toString()) }
-    var unitText by remember(item.id) { mutableStateOf(item.unit) }
+    var nameText by remember(item.id, item.name) { mutableStateOf(item.name) }
+    var rateText by remember(item.id, item.unitPrice) { mutableStateOf(if (item.unitPrice > 0) (if (item.unitPrice % 1.0 == 0.0) item.unitPrice.toInt().toString() else item.unitPrice.toString()) else "") }
+    var qtyText by remember(item.id, item.quantity) { mutableStateOf(if (item.quantity % 1.0 == 0.0) item.quantity.toInt().toString() else item.quantity.toString()) }
+    var unitText by remember(item.id, item.unit) { mutableStateOf(item.unit) }
     var unitMenuExpanded by remember { mutableStateOf(false) }
 
     Card(
@@ -1380,7 +1539,7 @@ fun ItemInputRow(
                 .fillMaxWidth()
                 .padding(10.dp)
         ) {
-            // Row 1: Checkbox (if Bazaar Mode) + Name Field + Delete Button
+            // Row 1: Checkbox (if Bazaar Mode) + Name Field + Voice Button + Delete Button
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -1395,7 +1554,7 @@ fun ItemInputRow(
                     )
                 }
 
-                // Name Input
+                // Name Input with integrated Voice Mic Icon
                 OutlinedTextField(
                     value = nameText,
                     onValueChange = {
@@ -1405,6 +1564,19 @@ fun ItemInputRow(
                     modifier = Modifier.weight(1f),
                     singleLine = true,
                     placeholder = { Text(if (isBn) "পণ্যের নাম (যেমন: আলু)" else "Item Name", fontSize = 13.sp) },
+                    trailingIcon = {
+                        IconButton(
+                            onClick = { onVoiceClick?.invoke() },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Mic,
+                                contentDescription = "Voice Input for Item",
+                                tint = themeColors.buttonEqualBg,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = themeColors.buttonEqualBg,
                         unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f)
@@ -1555,6 +1727,7 @@ fun ExecuteBazaarFromPlanDialog(
     onDismiss: () -> Unit,
     onCompleteBazaar: (CompletedBazaarMemo, Boolean) -> Unit
 ) {
+    val context = LocalContext.current
     var memoTitle by remember { mutableStateOf(plan.title) }
     val executionItems = remember {
         mutableStateListOf<MarketItem>().apply {
@@ -1565,6 +1738,50 @@ fun ExecuteBazaarFromPlanDialog(
     var deleteOriginalPlanAfterCompletion by remember { mutableStateOf(true) }
     var itemIndexToDelete by remember { mutableStateOf<Int?>(null) }
     var validationErrorMsg by remember { mutableStateOf<String?>(null) }
+
+    // Voice recognition targeting
+    var voiceTargetItemIndex by remember { mutableStateOf<Int?>(null) }
+    var isVoiceTargetTitle by remember { mutableStateOf(false) }
+
+    val speechLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val matches = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+            val spokenText = matches?.firstOrNull() ?: ""
+            if (spokenText.isNotBlank()) {
+                if (isVoiceTargetTitle) {
+                    memoTitle = spokenText.trim()
+                } else {
+                    val idx = voiceTargetItemIndex
+                    if (idx != null && idx in executionItems.indices) {
+                        val current = executionItems[idx]
+                        val updated = parseBazaarVoiceText(spokenText, current, isBn)
+                        executionItems[idx] = updated
+                    }
+                }
+            }
+        }
+    }
+
+    val launchVoiceFor: (Boolean, Int?) -> Unit = { isTitle, idx ->
+        try {
+            isVoiceTargetTitle = isTitle
+            voiceTargetItemIndex = idx
+            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE, if (isBn) "bn-BD" else "en-US")
+                putExtra(
+                    RecognizerIntent.EXTRA_PROMPT,
+                    if (isTitle) (if (isBn) "মেমোর নাম বলুন..." else "Speak Memo Title...")
+                    else (if (isBn) "পণ্যের নাম বা বিবরণ বলুন (যেমন: আলু ৫০ টাকা ২ কেজি)..." else "Speak Item Details...")
+                )
+            }
+            speechLauncher.launch(intent)
+        } catch (e: Exception) {
+            Toast.makeText(context, if (isBn) "ভয়েস ইনপুট সমর্থিত নয়" else "Voice input not supported", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     val unitsList = if (isBn) {
         listOf("কেজি", "গ্রাম", "লিটার", "পিস", "প্যাকেট", "বক্স", "ডজন", "হালি", "বস্তা")
@@ -1621,13 +1838,23 @@ fun ExecuteBazaarFromPlanDialog(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // Title Input
+                // Title Input with Voice
                 OutlinedTextField(
                     value = memoTitle,
                     onValueChange = { memoTitle = it },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    label = { Text(if (isBn) "মেমোর নাম" else "Memo Title", fontSize = 12.sp) },
+                    label = { Text(if (isBn) "মেমোর নাম (কাস্টমাইজ করতে পারেন)" else "Memo Title (Custom Name)", fontSize = 12.sp) },
+                    trailingIcon = {
+                        IconButton(onClick = { launchVoiceFor(true, null) }) {
+                            Icon(
+                                imageVector = Icons.Default.Mic,
+                                contentDescription = "Voice Input for Memo Title",
+                                tint = themeColors.buttonEqualBg,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                    },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = themeColors.buttonEqualBg,
                         unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f)
@@ -1668,6 +1895,9 @@ fun ExecuteBazaarFromPlanDialog(
                             },
                             onDeleteClick = {
                                 itemIndexToDelete = index
+                            },
+                            onVoiceClick = {
+                                launchVoiceFor(false, index)
                             }
                         )
                     }

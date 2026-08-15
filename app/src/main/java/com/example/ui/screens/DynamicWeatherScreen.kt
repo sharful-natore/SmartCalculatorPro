@@ -875,199 +875,328 @@ fun WeatherConditionGraphic(
         when (code) {
             0 -> { // Clear (Sunny Day / Clear Night)
                 if (isDay) {
-                    // Golden Sun with a soft glow and rays
+                    // Radiant Golden Sun with multi-layer glowing aura
                     drawCircle(
                         brush = Brush.radialGradient(
-                            colors = listOf(Color(0xFFFFE082), Color(0x00FFE082)),
+                            colors = listOf(Color(0x66FDE047), Color(0x22FBBF24), Color(0x00F59E0B)),
                             center = center,
-                            radius = radius
+                            radius = radius * 1.05f
                         ),
-                        radius = radius,
+                        radius = radius * 1.05f,
                         center = center
                     )
+                    // Sun Core Disc with rich gradient
                     drawCircle(
                         brush = Brush.linearGradient(
-                            colors = listOf(Color(0xFFFBBF24), Color(0xFFF59E0B)),
-                            start = Offset(center.x - radius * 0.5f, center.y - radius * 0.5f),
-                            end = Offset(center.x + radius * 0.5f, center.y + radius * 0.5f)
+                            colors = listOf(Color(0xFFFEF08A), Color(0xFFFBBF24), Color(0xFFF59E0B)),
+                            start = Offset(center.x - radius * 0.45f, center.y - radius * 0.45f),
+                            end = Offset(center.x + radius * 0.45f, center.y + radius * 0.45f)
                         ),
-                        radius = radius * 0.45f,
+                        radius = radius * 0.46f,
                         center = center
                     )
+                    // Sun Rays (8 rays with alternating lengths and rounded caps)
                     val rayCount = 8
-                    val rayLength = radius * 0.15f
-                    val innerRayDist = radius * 0.55f
                     for (i in 0 until rayCount) {
                         val angle = (i * (360f / rayCount)) * (Math.PI / 180f)
-                        val startX = center.x + Math.cos(angle).toFloat() * innerRayDist
-                        val startY = center.y + Math.sin(angle).toFloat() * innerRayDist
-                        val endX = center.x + Math.cos(angle).toFloat() * (innerRayDist + rayLength)
-                        val endY = center.y + Math.sin(angle).toFloat() * (innerRayDist + rayLength)
+                        val innerDist = radius * 0.58f
+                        val rayLen = if (i % 2 == 0) radius * 0.26f else radius * 0.18f
+                        val startX = center.x + Math.cos(angle).toFloat() * innerDist
+                        val startY = center.y + Math.sin(angle).toFloat() * innerDist
+                        val endX = center.x + Math.cos(angle).toFloat() * (innerDist + rayLen)
+                        val endY = center.y + Math.sin(angle).toFloat() * (innerDist + rayLen)
+                        
                         drawLine(
-                            color = Color(0xFFF59E0B),
+                            brush = Brush.linearGradient(
+                                colors = listOf(Color(0xFFFBBF24), Color(0xFFF59E0B)),
+                                start = Offset(startX, startY),
+                                end = Offset(endX, endY)
+                            ),
                             start = Offset(startX, startY),
                             end = Offset(endX, endY),
-                            strokeWidth = radius * 0.08f,
+                            strokeWidth = radius * 0.085f,
                             cap = StrokeCap.Round
                         )
                     }
                 } else {
-                    // Cool crescent moon and stars
-                    drawCircle(Color(0xFFFDE047), radius * 0.04f, Offset(center.x - radius * 0.4f, center.y - radius * 0.4f))
-                    drawCircle(Color(0xFFFDE047), radius * 0.03f, Offset(center.x + radius * 0.5f, center.y - radius * 0.2f))
+                    // Luminous Crescent Moon with soft night glow and twinkling stars
+                    // Twinkling stars
+                    val star1 = Offset(center.x - radius * 0.45f, center.y - radius * 0.45f)
+                    val star2 = Offset(center.x + radius * 0.55f, center.y - radius * 0.25f)
+                    val star3 = Offset(center.x - radius * 0.35f, center.y + radius * 0.5f)
                     
+                    drawCircle(Color(0xFFFEF08A), radius * 0.045f, star1)
+                    drawCircle(Color(0xFFFEF08A), radius * 0.035f, star2)
+                    drawCircle(Color(0xCCFEF08A), radius * 0.03f, star3)
+                    
+                    // Star sparkle lines on star1
+                    drawLine(Color(0xAAFEF08A), Offset(star1.x - radius * 0.09f, star1.y), Offset(star1.x + radius * 0.09f, star1.y), strokeWidth = 1.5f, cap = StrokeCap.Round)
+                    drawLine(Color(0xAAFEF08A), Offset(star1.x, star1.y - radius * 0.09f), Offset(star1.x, star1.y + radius * 0.09f), strokeWidth = 1.5f, cap = StrokeCap.Round)
+                    
+                    // Moon Aura
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(Color(0x33FDE047), Color(0x00FDE047)),
+                            center = Offset(center.x + radius * 0.05f, center.y),
+                            radius = radius * 0.75f
+                        ),
+                        radius = radius * 0.75f,
+                        center = Offset(center.x + radius * 0.05f, center.y)
+                    )
+
                     val moonPath = Path().apply {
-                        addOval(Rect(center.x - radius * 0.4f, center.y - radius * 0.4f, center.x + radius * 0.4f, center.y + radius * 0.4f))
+                        addOval(Rect(center.x - radius * 0.42f, center.y - radius * 0.45f, center.x + radius * 0.45f, center.y + radius * 0.45f))
                     }
                     val cutoutPath = Path().apply {
-                        addOval(Rect(center.x - radius * 0.2f, center.y - radius * 0.45f, center.x + radius * 0.6f, center.y + radius * 0.35f))
+                        addOval(Rect(center.x - radius * 0.22f, center.y - radius * 0.5f, center.x + radius * 0.65f, center.y + radius * 0.4f))
                     }
                     val finalMoon = Path.combine(PathOperation.Difference, moonPath, cutoutPath)
                     drawPath(
                         path = finalMoon,
                         brush = Brush.linearGradient(
-                            colors = listOf(Color(0xFFE2E8F0), Color(0xFF94A3B8)),
+                            colors = listOf(Color(0xFFFFFBEB), Color(0xFFFDE047), Color(0xFFF59E0B)),
                             start = Offset(center.x - radius * 0.4f, center.y - radius * 0.4f),
                             end = Offset(center.x + radius * 0.4f, center.y + radius * 0.4f)
                         )
                     )
                 }
             }
-            1, 2, 3 -> { // Cloudy / Partly Cloudy
-                if (code == 1 || code == 2) {
+            1, 2 -> { // Partly Cloudy
+                if (isDay) {
+                    // Sun in background
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(Color(0x55FBBF24), Color(0x00FBBF24)),
+                            center = Offset(center.x - radius * 0.3f, center.y - radius * 0.3f),
+                            radius = radius * 0.6f
+                        ),
+                        radius = radius * 0.6f,
+                        center = Offset(center.x - radius * 0.3f, center.y - radius * 0.3f)
+                    )
                     drawCircle(
                         brush = Brush.linearGradient(
-                            colors = listOf(Color(0xFFFBBF24), Color(0xFFF59E0B))
+                            colors = listOf(Color(0xFFFEF08A), Color(0xFFF59E0B)),
+                            start = Offset(center.x - radius * 0.55f, center.y - radius * 0.55f),
+                            end = Offset(center.x - radius * 0.05f, center.y - radius * 0.05f)
                         ),
-                        radius = radius * 0.35f,
-                        center = Offset(center.x - radius * 0.25f, center.y - radius * 0.25f)
+                        radius = radius * 0.38f,
+                        center = Offset(center.x - radius * 0.3f, center.y - radius * 0.3f)
+                    )
+                } else {
+                    // Crescent Moon in background
+                    val moonPath = Path().apply {
+                        addOval(Rect(center.x - radius * 0.55f, center.y - radius * 0.55f, center.x - radius * 0.05f, center.y - radius * 0.05f))
+                    }
+                    val cutoutPath = Path().apply {
+                        addOval(Rect(center.x - radius * 0.4f, center.y - radius * 0.6f, center.x + radius * 0.1f, center.y))
+                    }
+                    val finalMoon = Path.combine(PathOperation.Difference, moonPath, cutoutPath)
+                    drawPath(
+                        path = finalMoon,
+                        brush = Brush.linearGradient(
+                            colors = listOf(Color(0xFFFEF08A), Color(0xFFF59E0B))
+                        )
                     )
                 }
                 
+                // Front Volumetric Cloud with Highlights
                 val cloudBrush = Brush.linearGradient(
-                    colors = if (code == 3) {
-                        listOf(Color(0xFF94A3B8), Color(0xFF475569))
-                    } else {
-                        listOf(Color(0xFFF8FAFC), Color(0xFFCBD5E1))
-                    },
-                    start = Offset(center.x - radius * 0.4f, center.y - radius * 0.2f),
+                    colors = listOf(Color(0xFFFFFFFF), Color(0xFFE2E8F0), Color(0xFFCBD5E1)),
+                    start = Offset(center.x - radius * 0.3f, center.y - radius * 0.2f),
                     end = Offset(center.x + radius * 0.4f, center.y + radius * 0.4f)
                 )
 
-                drawCircle(cloudBrush, radius * 0.35f, Offset(center.x - radius * 0.25f, center.y + radius * 0.1f))
-                drawCircle(cloudBrush, radius * 0.45f, Offset(center.x + radius * 0.05f, center.y - radius * 0.05f))
-                drawCircle(cloudBrush, radius * 0.3f, Offset(center.x + radius * 0.35f, center.y + radius * 0.15f))
+                drawCircle(cloudBrush, radius * 0.36f, Offset(center.x - radius * 0.22f, center.y + radius * 0.12f))
+                drawCircle(cloudBrush, radius * 0.48f, Offset(center.x + radius * 0.08f, center.y - radius * 0.06f))
+                drawCircle(cloudBrush, radius * 0.32f, Offset(center.x + radius * 0.42f, center.y + radius * 0.15f))
                 drawRoundRect(
                     brush = cloudBrush,
-                    topLeft = Offset(center.x - radius * 0.4f, center.y + radius * 0.05f),
-                    size = Size(radius * 0.85f, radius * 0.35f),
+                    topLeft = Offset(center.x - radius * 0.38f, center.y + radius * 0.08f),
+                    size = Size(radius * 0.95f, radius * 0.38f),
                     cornerRadius = CornerRadius(radius * 0.2f)
                 )
             }
-            45, 48 -> { // Fog
-                val strokeW = radius * 0.1f
+            3 -> { // Overcast / Gloomy Cloud
+                // Darker Back Cloud
+                val backCloudBrush = Brush.linearGradient(
+                    colors = listOf(Color(0xFF64748B), Color(0xFF475569)),
+                    start = Offset(center.x - radius * 0.4f, center.y - radius * 0.3f),
+                    end = Offset(center.x + radius * 0.3f, center.y + radius * 0.3f)
+                )
+                drawCircle(backCloudBrush, radius * 0.38f, Offset(center.x - radius * 0.1f, center.y - radius * 0.2f))
+                drawCircle(backCloudBrush, radius * 0.34f, Offset(center.x + radius * 0.25f, center.y - radius * 0.12f))
+                
+                // Foreground Cloud
+                val cloudBrush = Brush.linearGradient(
+                    colors = listOf(Color(0xFFCBD5E1), Color(0xFF94A3B8), Color(0xFF64748B)),
+                    start = Offset(center.x - radius * 0.4f, center.y - radius * 0.1f),
+                    end = Offset(center.x + radius * 0.4f, center.y + radius * 0.45f)
+                )
+                drawCircle(cloudBrush, radius * 0.36f, Offset(center.x - radius * 0.28f, center.y + radius * 0.1f))
+                drawCircle(cloudBrush, radius * 0.46f, Offset(center.x + radius * 0.02f, center.y - radius * 0.02f))
+                drawCircle(cloudBrush, radius * 0.34f, Offset(center.x + radius * 0.38f, center.y + radius * 0.14f))
+                drawRoundRect(
+                    brush = cloudBrush,
+                    topLeft = Offset(center.x - radius * 0.42f, center.y + radius * 0.06f),
+                    size = Size(radius * 0.96f, radius * 0.38f),
+                    cornerRadius = CornerRadius(radius * 0.2f)
+                )
+            }
+            45, 48 -> { // Fog / Mist
+                val strokeW = radius * 0.11f
+                // Flowing layered mist bars
                 drawLine(
-                    brush = Brush.linearGradient(colors = listOf(Color(0x3394A3B8), Color(0x9994A3B8), Color(0x3394A3B8))),
-                    start = Offset(center.x - radius * 0.6f, center.y - radius * 0.2f),
-                    end = Offset(center.x + radius * 0.6f, center.y - radius * 0.2f),
+                    brush = Brush.linearGradient(colors = listOf(Color(0x0094A3B8), Color(0xCC94A3B8), Color(0x0094A3B8))),
+                    start = Offset(center.x - radius * 0.7f, center.y - radius * 0.3f),
+                    end = Offset(center.x + radius * 0.7f, center.y - radius * 0.3f),
                     strokeWidth = strokeW,
                     cap = StrokeCap.Round
                 )
                 drawLine(
-                    brush = Brush.linearGradient(colors = listOf(Color(0x33E2E8F0), Color(0xCCE2E8F0), Color(0x33E2E8F0))),
-                    start = Offset(center.x - radius * 0.4f, center.y),
-                    end = Offset(center.x + radius * 0.4f, center.y),
+                    brush = Brush.linearGradient(colors = listOf(Color(0x00E2E8F0), Color(0xFFF1F5F9), Color(0x00E2E8F0))),
+                    start = Offset(center.x - radius * 0.5f, center.y - radius * 0.05f),
+                    end = Offset(center.x + radius * 0.5f, center.y - radius * 0.05f),
                     strokeWidth = strokeW,
                     cap = StrokeCap.Round
                 )
                 drawLine(
-                    brush = Brush.linearGradient(colors = listOf(Color(0x3394A3B8), Color(0x9994A3B8), Color(0x3394A3B8))),
-                    start = Offset(center.x - radius * 0.5f, center.y + radius * 0.2f),
-                    end = Offset(center.x + radius * 0.5f, center.y + radius * 0.2f),
+                    brush = Brush.linearGradient(colors = listOf(Color(0x0094A3B8), Color(0xDD94A3B8), Color(0x0094A3B8))),
+                    start = Offset(center.x - radius * 0.65f, center.y + radius * 0.2f),
+                    end = Offset(center.x + radius * 0.65f, center.y + radius * 0.2f),
                     strokeWidth = strokeW,
+                    cap = StrokeCap.Round
+                )
+                drawLine(
+                    brush = Brush.linearGradient(colors = listOf(Color(0x00CBD5E1), Color(0xAA94A3B8), Color(0x00CBD5E1))),
+                    start = Offset(center.x - radius * 0.4f, center.y + radius * 0.42f),
+                    end = Offset(center.x + radius * 0.4f, center.y + radius * 0.42f),
+                    strokeWidth = strokeW * 0.85f,
                     cap = StrokeCap.Round
                 )
             }
-            61, 63, 65, 51, 53, 55 -> { // Rain / Drizzle
+            61, 63, 65, 51, 53, 55, 80, 81, 82 -> { // Rain / Drizzle / Showers
+                // Storm Cloud
                 val cloudBrush = Brush.linearGradient(
-                    colors = listOf(Color(0xFF64748B), Color(0xFF334155)),
-                    start = Offset(center.x - radius * 0.4f, center.y - radius * 0.3f),
-                    end = Offset(center.x + radius * 0.4f, center.y + radius * 0.3f)
+                    colors = listOf(Color(0xFF94A3B8), Color(0xFF475569), Color(0xFF334155)),
+                    start = Offset(center.x - radius * 0.4f, center.y - radius * 0.35f),
+                    end = Offset(center.x + radius * 0.4f, center.y + radius * 0.25f)
                 )
-                drawCircle(cloudBrush, radius * 0.3f, Offset(center.x - radius * 0.25f, center.y))
-                drawCircle(cloudBrush, radius * 0.4f, Offset(center.x + radius * 0.05f, center.y - radius * 0.15f))
-                drawCircle(cloudBrush, radius * 0.25f, Offset(center.x + radius * 0.35f, center.y + radius * 0.05f))
+                drawCircle(cloudBrush, radius * 0.34f, Offset(center.x - radius * 0.25f, center.y - radius * 0.05f))
+                drawCircle(cloudBrush, radius * 0.44f, Offset(center.x + radius * 0.06f, center.y - radius * 0.2f))
+                drawCircle(cloudBrush, radius * 0.28f, Offset(center.x + radius * 0.38f, center.y - radius * 0.02f))
                 drawRoundRect(
                     brush = cloudBrush,
-                    topLeft = Offset(center.x - radius * 0.35f, center.y - radius * 0.05f),
-                    size = Size(radius * 0.75f, radius * 0.3f),
-                    cornerRadius = CornerRadius(radius * 0.15f)
+                    topLeft = Offset(center.x - radius * 0.38f, center.y - radius * 0.08f),
+                    size = Size(radius * 0.88f, radius * 0.34f),
+                    cornerRadius = CornerRadius(radius * 0.18f)
                 )
-                val dropBrush = Brush.linearGradient(colors = listOf(Color(0xFF38BDF8), Color(0x0038BDF8)))
-                val dropW = radius * 0.06f
-                val dropH = radius * 0.25f
+
+                // Raindrops with cyan/blue gradient and soft drop angle
+                val dropBrush = Brush.linearGradient(
+                    colors = listOf(Color(0xFF38BDF8), Color(0xFF0284C7)),
+                    start = Offset(0f, 0f),
+                    end = Offset(0f, radius * 0.3f)
+                )
+                val dropW = radius * 0.07f
+                val dropH = radius * 0.26f
                 
+                // 3 diagonal rain streaks
                 drawLine(
                     brush = dropBrush,
-                    start = Offset(center.x - radius * 0.15f, center.y + radius * 0.2f),
-                    end = Offset(center.x - radius * 0.25f, center.y + radius * 0.2f + dropH),
+                    start = Offset(center.x - radius * 0.22f, center.y + radius * 0.22f),
+                    end = Offset(center.x - radius * 0.32f, center.y + radius * 0.22f + dropH),
                     strokeWidth = dropW,
                     cap = StrokeCap.Round
                 )
                 drawLine(
                     brush = dropBrush,
-                    start = Offset(center.x + radius * 0.05f, center.y + radius * 0.2f),
-                    end = Offset(center.x - radius * 0.05f, center.y + radius * 0.2f + dropH),
+                    start = Offset(center.x + radius * 0.05f, center.y + radius * 0.24f),
+                    end = Offset(center.x - radius * 0.05f, center.y + radius * 0.24f + dropH),
                     strokeWidth = dropW,
                     cap = StrokeCap.Round
                 )
                 drawLine(
                     brush = dropBrush,
-                    start = Offset(center.x + radius * 0.25f, center.y + radius * 0.2f),
-                    end = Offset(center.x + radius * 0.15f, center.y + radius * 0.2f + dropH),
+                    start = Offset(center.x + radius * 0.3f, center.y + radius * 0.22f),
+                    end = Offset(center.x + radius * 0.2f, center.y + radius * 0.22f + dropH),
                     strokeWidth = dropW,
                     cap = StrokeCap.Round
                 )
+            }
+            71, 73, 75, 77, 85, 86 -> { // Snow
+                // Winter Cloud
+                val cloudBrush = Brush.linearGradient(
+                    colors = listOf(Color(0xFFE2E8F0), Color(0xFF94A3B8)),
+                    start = Offset(center.x - radius * 0.4f, center.y - radius * 0.35f),
+                    end = Offset(center.x + radius * 0.4f, center.y + radius * 0.25f)
+                )
+                drawCircle(cloudBrush, radius * 0.34f, Offset(center.x - radius * 0.25f, center.y - radius * 0.05f))
+                drawCircle(cloudBrush, radius * 0.44f, Offset(center.x + radius * 0.06f, center.y - radius * 0.2f))
+                drawCircle(cloudBrush, radius * 0.28f, Offset(center.x + radius * 0.38f, center.y - radius * 0.02f))
+                drawRoundRect(
+                    brush = cloudBrush,
+                    topLeft = Offset(center.x - radius * 0.38f, center.y - radius * 0.08f),
+                    size = Size(radius * 0.88f, radius * 0.34f),
+                    cornerRadius = CornerRadius(radius * 0.18f)
+                )
+
+                // Falling Snowflakes
+                val flakePositions = listOf(
+                    Offset(center.x - radius * 0.25f, center.y + radius * 0.35f),
+                    Offset(center.x + radius * 0.05f, center.y + radius * 0.4f),
+                    Offset(center.x + radius * 0.32f, center.y + radius * 0.35f)
+                )
+                for (pos in flakePositions) {
+                    drawCircle(Color.White, radius * 0.07f, pos)
+                    drawLine(Color(0xFFBAE6FD), Offset(pos.x - radius * 0.1f, pos.y), Offset(pos.x + radius * 0.1f, pos.y), strokeWidth = 2f, cap = StrokeCap.Round)
+                    drawLine(Color(0xFFBAE6FD), Offset(pos.x, pos.y - radius * 0.1f), Offset(pos.x, pos.y + radius * 0.1f), strokeWidth = 2f, cap = StrokeCap.Round)
+                }
             }
             95, 96, 99 -> { // Thunderstorm
+                // Deep Dark Thunder Cloud
                 val cloudBrush = Brush.linearGradient(
-                    colors = listOf(Color(0xFF475569), Color(0xFF1E293B))
+                    colors = listOf(Color(0xFF475569), Color(0xFF1E293B), Color(0xFF0F172A))
                 )
-                drawCircle(cloudBrush, radius * 0.3f, Offset(center.x - radius * 0.25f, center.y))
-                drawCircle(cloudBrush, radius * 0.4f, Offset(center.x + radius * 0.05f, center.y - radius * 0.15f))
-                drawCircle(cloudBrush, radius * 0.25f, Offset(center.x + radius * 0.35f, center.y + radius * 0.05f))
+                drawCircle(cloudBrush, radius * 0.34f, Offset(center.x - radius * 0.25f, center.y - radius * 0.05f))
+                drawCircle(cloudBrush, radius * 0.44f, Offset(center.x + radius * 0.06f, center.y - radius * 0.2f))
+                drawCircle(cloudBrush, radius * 0.28f, Offset(center.x + radius * 0.38f, center.y - radius * 0.02f))
                 drawRoundRect(
                     brush = cloudBrush,
-                    topLeft = Offset(center.x - radius * 0.35f, center.y - radius * 0.05f),
-                    size = Size(radius * 0.75f, radius * 0.3f),
-                    cornerRadius = CornerRadius(radius * 0.15f)
+                    topLeft = Offset(center.x - radius * 0.38f, center.y - radius * 0.08f),
+                    size = Size(radius * 0.88f, radius * 0.34f),
+                    cornerRadius = CornerRadius(radius * 0.18f)
                 )
+
+                // Lightning Glow
                 val boltPath = Path().apply {
-                    moveTo(center.x + radius * 0.1f, center.y + radius * 0.1f)
-                    lineTo(center.x - radius * 0.15f, center.y + radius * 0.4f)
-                    lineTo(center.x, center.y + radius * 0.4f)
-                    lineTo(center.x - radius * 0.1f, center.y + radius * 0.7f)
-                    lineTo(center.x + radius * 0.2f, center.y + radius * 0.35f)
-                    lineTo(center.x + radius * 0.05f, center.y + radius * 0.35f)
+                    moveTo(center.x + radius * 0.12f, center.y + radius * 0.05f)
+                    lineTo(center.x - radius * 0.16f, center.y + radius * 0.38f)
+                    lineTo(center.x + radius * 0.02f, center.y + radius * 0.38f)
+                    lineTo(center.x - radius * 0.12f, center.y + radius * 0.72f)
+                    lineTo(center.x + radius * 0.22f, center.y + radius * 0.32f)
+                    lineTo(center.x + radius * 0.06f, center.y + radius * 0.32f)
                     close()
                 }
+                // Outer Bolt Glow
                 drawPath(
                     path = boltPath,
-                    color = Color(0xFFFBBF24)
+                    brush = Brush.linearGradient(
+                        colors = listOf(Color(0xFFFEF08A), Color(0xFFF59E0B))
+                    )
                 )
             }
             else -> { // Default Cloudy
                 val cloudBrush = Brush.linearGradient(
-                    colors = listOf(Color(0xFFE2E8F0), Color(0xFF94A3B8))
+                    colors = listOf(Color(0xFFF1F5F9), Color(0xFFCBD5E1), Color(0xFF94A3B8))
                 )
-                drawCircle(cloudBrush, radius * 0.3f, Offset(center.x - radius * 0.25f, center.y))
-                drawCircle(cloudBrush, radius * 0.4f, Offset(center.x + radius * 0.05f, center.y - radius * 0.15f))
-                drawCircle(cloudBrush, radius * 0.25f, Offset(center.x + radius * 0.35f, center.y + radius * 0.05f))
+                drawCircle(cloudBrush, radius * 0.34f, Offset(center.x - radius * 0.25f, center.y))
+                drawCircle(cloudBrush, radius * 0.44f, Offset(center.x + radius * 0.05f, center.y - radius * 0.15f))
+                drawCircle(cloudBrush, radius * 0.28f, Offset(center.x + radius * 0.35f, center.y + radius * 0.05f))
                 drawRoundRect(
                     brush = cloudBrush,
-                    topLeft = Offset(center.x - radius * 0.35f, center.y - radius * 0.05f),
-                    size = Size(radius * 0.75f, radius * 0.3f),
-                    cornerRadius = CornerRadius(radius * 0.15f)
+                    topLeft = Offset(center.x - radius * 0.38f, center.y - radius * 0.05f),
+                    size = Size(radius * 0.85f, radius * 0.32f),
+                    cornerRadius = CornerRadius(radius * 0.16f)
                 )
             }
         }
@@ -1093,7 +1222,7 @@ fun getSunPosition(
         val dayPercent = (hour * 60 + minute) / 1440f
         return if (hour in 6..18) {
             val angle = (dayPercent - 0.25f) / 0.5f * 180f
-            val status = if (isBn) "আকাশে (কোণ: ${angle.toInt()}°)" else "In Sky (Angle: ${angle.toInt()}°)"
+            val status = if (isBn) "আকাশে (${angle.toInt()}°)" else "In Sky (${angle.toInt()}°)"
             Pair(status, angle)
         } else {
             val status = if (isBn) "দিগন্তের নিচে (রাত)" else "Below Horizon (Night)"
@@ -1109,8 +1238,8 @@ fun getSunPosition(
         val status = when {
             angle < 15f -> if (isBn) "উদীয়মান (পূর্ব দিগন্তে)" else "Rising (East)"
             angle > 165f -> if (isBn) "অস্তগামী (পশ্চিম দিগন্তে)" else "Setting (West)"
-            angle in 75f..105f -> if (isBn) "মধ্যগগন (মাথার উপর)" else "Zenith (Directly Overhead)"
-            else -> if (isBn) "আকাশে (কোণ: ${angle.toInt()}°)" else "In Sky (Angle: ${angle.toInt()}°)"
+            angle in 75f..105f -> if (isBn) "মধ্যগগন (মাথার উপর)" else "Zenith (Overhead)"
+            else -> if (isBn) "আকাশে (${angle.toInt()}°)" else "In Sky (${angle.toInt()}°)"
         }
         Pair(status, angle)
     } else {
@@ -1132,42 +1261,42 @@ fun getMoonPhaseDetails(phase: Double, isBn: Boolean): Triple<String, String, St
     return when {
         phase < 0.03 || phase > 0.97 -> Triple(
             if (isBn) "নতুন চাঁদ (অমাবস্যা)" else "New Moon",
-            if (isBn) "চাঁদ সম্পূর্ণ অদৃশ্য" else "Moon is completely dark",
+            if (isBn) "চাঁদ সম্পূর্ণ অদৃশ্য (০%)" else "Completely dark (0%)",
             "🌑"
         )
         phase >= 0.03 && phase < 0.22 -> Triple(
-            if (isBn) "ক্রমবর্ধমান ক্রিসেন্ট" else "Waxing Crescent",
-            if (isBn) "চাঁদের সরু অংশ দৃশ্যমান" else "A thin sliver is visible",
+            if (isBn) "শুক্লপক্ষ ক্রিসেন্ট" else "Waxing Crescent",
+            if (isBn) "সরু উজ্জ্বল অংশ (২৫%)" else "Thin sliver (25%)",
             "🌒"
         )
         phase >= 0.22 && phase < 0.28 -> Triple(
             if (isBn) "প্রথম চতুর্থাংশ" else "First Quarter",
-            if (isBn) "চাঁদের ডান অর্ধেক দৃশ্যমান" else "Right half is lit",
+            if (isBn) "অর্ধেক দৃশ্যমান (৫০%)" else "Half visible (50%)",
             "🌓"
         )
         phase >= 0.28 && phase < 0.47 -> Triple(
-            if (isBn) "ক্রমবর্ধমান গিব্বাস" else "Waxing Gibbous",
-            if (isBn) "চাঁদের বেশিরভাগ অংশ দৃশ্যমান" else "Most of the moon is lit",
+            if (isBn) "শুক্লপক্ষ গিব্বাস" else "Waxing Gibbous",
+            if (isBn) "বেশিরভাগ দৃশ্যমান (৭৫%)" else "Mostly lit (75%)",
             "🌔"
         )
         phase >= 0.47 && phase < 0.53 -> Triple(
             if (isBn) "পূর্ণিমা (পূর্ণ চাঁদ)" else "Full Moon",
-            if (isBn) "চাঁদ সম্পূর্ণ দৃশ্যমান" else "Moon is fully illuminated",
+            if (isBn) "সম্পূর্ণ দৃশ্যমান (১০০%)" else "Fully illuminated (100%)",
             "🌕"
         )
         phase >= 0.53 && phase < 0.72 -> Triple(
-            if (isBn) "ক্ষয়িষ্ণু গিব্বাস" else "Waning Gibbous",
-            if (isBn) "চাঁদের অংশ কমতে শুরু করেছে" else "Illumination is decreasing",
+            if (isBn) "কৃষ্ণপক্ষ গিব্বাস" else "Waning Gibbous",
+            if (isBn) "আলো কমছে (৭৫%)" else "Decreasing (75%)",
             "🌖"
         )
         phase >= 0.72 && phase < 0.78 -> Triple(
             if (isBn) "শেষ চতুর্থাংশ" else "Third Quarter",
-            if (isBn) "চাঁদের বাম অর্ধেক দৃশ্যমান" else "Left half is lit",
+            if (isBn) "বাম অর্ধেক দৃশ্যমান (৫০%)" else "Left half lit (50%)",
             "🌗"
         )
         else -> Triple(
-            if (isBn) "ক্ষয়িষ্ণু ক্রিসেন্ট" else "Waning Crescent",
-            if (isBn) "চাঁদের শেষ সরু অংশ দৃশ্যমান" else "A final thin sliver remains",
+            if (isBn) "কৃষ্ণপক্ষ ক্রিসেন্ট" else "Waning Crescent",
+            if (isBn) "শেষ সরু অংশ (২৫%)" else "Final sliver (25%)",
             "🌘"
         )
     }
@@ -1196,7 +1325,7 @@ fun getMoonPosition(
             angle < 15f -> if (isBn) "উদীয়মান (পূর্ব দিগন্তে)" else "Rising (East)"
             angle > 165f -> if (isBn) "অস্তগামী (পশ্চিম দিগন্তে)" else "Setting (West)"
             angle in 75f..105f -> if (isBn) "মধ্যগগন (মাথার উপর)" else "Zenith (Overhead)"
-            else -> if (isBn) "আকাশে (কোণ: ${angle.toInt()}°)" else "In Sky (Angle: ${angle.toInt()}°)"
+            else -> if (isBn) "আকাশে (${angle.toInt()}°)" else "In Sky (${angle.toInt()}°)"
         }
         Pair(status, angle)
     } else {
@@ -1231,155 +1360,373 @@ fun SunMoonTrackerCard(
         getMoonPosition(currentTime, moonPhaseVal, todaySunrise, todaySunset, isBn)
     }
 
+    // Format Sunrise / Sunset strings
+    val sunriseDisplay = remember(todaySunrise) {
+        todaySunrise?.substringAfter("T") ?: "06:00"
+    }
+    val sunsetDisplay = remember(todaySunset) {
+        todaySunset?.substringAfter("T") ?: "18:00"
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(containerColor = themeColors.cardBg)
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
-            Text(
-                text = if (isBn) "মহাজাগতিক তথ্য (সূর্য ও চন্দ্র ট্র্যাকার)" else "Astronomical Info (Sun & Moon Tracker)",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = themeColors.displayText,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-            
             Row(
                 modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = if (isBn) "মহাজাগতিক ট্র্যাকার (সূর্য ও চন্দ্র)" else "Celestial Tracker (Sun & Moon)",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = themeColors.displayText
+                )
+                Text(
+                    text = "☀️ 🌙",
+                    fontSize = 15.sp
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            // Equal sized Side-by-Side Cards
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Min),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Sun Tracker Card (Left)
+                // 1. Sun Tracker Card (Left)
                 Card(
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
+                    shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(containerColor = themeColors.displayBackground)
                 ) {
                     Column(
-                        modifier = Modifier.padding(12.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(
-                            text = if (isBn) "সূর্যের অবস্থান" else "Sun Position",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = themeColors.displayText.copy(alpha = 0.8f)
-                        )
+                        // Title
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.WbSunny,
+                                contentDescription = null,
+                                tint = Color(0xFFF59E0B),
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = if (isBn) "সূর্যের অবস্থান" else "Sun Position",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.displayText
+                            )
+                        }
+
                         Spacer(modifier = Modifier.height(8.dp))
-                        
-                        // Beautiful Visual Arc for Sun
+
+                        // Curved Arc Canvas for Sun
                         Box(
                             modifier = Modifier
-                                .size(64.dp)
-                                .padding(4.dp),
+                                .fillMaxWidth()
+                                .height(76.dp)
+                                .padding(horizontal = 4.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Canvas(modifier = Modifier.fillMaxSize()) {
-                                // Draw horizon arc
+                                val w = size.width
+                                val h = size.height
+                                val baselineY = h * 0.82f
+                                val arcRadius = (w * 0.44f).coerceAtMost(h * 0.72f)
+                                val centerX = w / 2f
+
+                                // Baseline horizon line
+                                drawLine(
+                                    color = Color.Gray.copy(alpha = 0.25f),
+                                    start = Offset(10f, baselineY),
+                                    end = Offset(w - 10f, baselineY),
+                                    strokeWidth = 1.5.dp.toPx(),
+                                    pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(6f, 6f), 0f)
+                                )
+
+                                // Horizon celestial arc (Semi-circle)
+                                val arcRect = Rect(centerX - arcRadius, baselineY - arcRadius, centerX + arcRadius, baselineY + arcRadius)
                                 drawArc(
-                                    color = themeColors.displayText.copy(alpha = 0.15f),
+                                    brush = Brush.linearGradient(
+                                        colors = listOf(Color(0xFFFDE047).copy(alpha = 0.4f), Color(0xFFF59E0B).copy(alpha = 0.6f), Color(0xFFFDE047).copy(alpha = 0.4f))
+                                    ),
                                     startAngle = 180f,
                                     sweepAngle = 180f,
                                     useCenter = false,
-                                    style = Stroke(width = 2.dp.toPx())
+                                    style = Stroke(width = 2.dp.toPx(), pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(8f, 6f), 0f)),
+                                    topLeft = arcRect.topLeft,
+                                    size = arcRect.size
                                 )
-                                
-                                // If sun is visible, draw its path position
+
+                                // If sun is above horizon
                                 if (sunPos.second >= 0f) {
                                     val angleRad = (180f + sunPos.second) * (Math.PI / 180f)
-                                    val r = size.width / 2
-                                    val cx = size.width / 2
-                                    val cy = size.height / 2 + 10f
-                                    
-                                    val x = cx + Math.cos(angleRad).toFloat() * r
-                                    val y = cy + Math.sin(angleRad).toFloat() * r
-                                    
+                                    val sunX = centerX + Math.cos(angleRad).toFloat() * arcRadius
+                                    val sunY = baselineY + Math.sin(angleRad).toFloat() * arcRadius
+
+                                    // Outer Sun Glow
                                     drawCircle(
-                                        color = Color(0xFFF59E0B),
+                                        brush = Brush.radialGradient(
+                                            colors = listOf(Color(0x99FDE047), Color(0x33F59E0B), Color(0x00F59E0B)),
+                                            center = Offset(sunX, sunY),
+                                            radius = 16.dp.toPx()
+                                        ),
+                                        radius = 16.dp.toPx(),
+                                        center = Offset(sunX, sunY)
+                                    )
+
+                                    // Sun Core
+                                    drawCircle(
+                                        brush = Brush.linearGradient(
+                                            colors = listOf(Color(0xFFFFFBEB), Color(0xFFF59E0B))
+                                        ),
+                                        radius = 7.dp.toPx(),
+                                        center = Offset(sunX, sunY)
+                                    )
+                                } else {
+                                    // Sun is below horizon (Night)
+                                    drawCircle(
+                                        color = Color.Gray.copy(alpha = 0.4f),
                                         radius = 6.dp.toPx(),
-                                        center = Offset(x, y)
+                                        center = Offset(centerX, baselineY + 10.dp.toPx())
                                     )
                                 }
                             }
-                            
-                            Icon(
-                                imageVector = if (sunPos.second >= 0f) Icons.Default.WbSunny else Icons.Default.NightsStay,
-                                contentDescription = null,
-                                tint = if (sunPos.second >= 0f) Color(0xFFF59E0B) else themeColors.displayText.copy(alpha = 0.4f),
-                                modifier = Modifier.size(24.dp)
+
+                            // East / West tags
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .align(Alignment.BottomCenter)
+                                    .padding(horizontal = 4.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = if (isBn) "পূর্ব 🌅" else "E 🌅",
+                                    fontSize = 9.sp,
+                                    color = themeColors.displayText.copy(alpha = 0.5f)
+                                )
+                                Text(
+                                    text = if (isBn) "🌇 পশ্চিম" else "🌇 W",
+                                    fontSize = 9.sp,
+                                    color = themeColors.displayText.copy(alpha = 0.5f)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        // Status Badge
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = if (sunPos.second >= 0f) Color(0xFFF59E0B).copy(alpha = 0.15f) else themeColors.displayText.copy(alpha = 0.08f)
+                        ) {
+                            Text(
+                                text = sunPos.first,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (sunPos.second >= 0f) Color(0xFFF59E0B) else themeColors.displayText.copy(alpha = 0.7f),
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                             )
                         }
-                        
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = sunPos.first,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = themeColors.displayText,
-                            textAlign = TextAlign.Center
-                        )
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        // Sunrise & Sunset Times
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "🌅 $sunriseDisplay",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = themeColors.displayText.copy(alpha = 0.75f)
+                            )
+                            Text(
+                                text = "🌇 $sunsetDisplay",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = themeColors.displayText.copy(alpha = 0.75f)
+                            )
+                        }
                     }
                 }
                 
-                // Moon Tracker Card (Right)
+                // 2. Moon Tracker Card (Right) - Exactly matching layout & size!
                 Card(
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
+                    shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(containerColor = themeColors.displayBackground)
                 ) {
                     Column(
-                        modifier = Modifier.padding(12.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(
-                            text = if (isBn) "চন্দ্রের অবস্থান ও দশা" else "Moon Position & Phase",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = themeColors.displayText.copy(alpha = 0.8f)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        
-                        // Moon Phase Icon and Angle Visual
-                        Box(
-                            modifier = Modifier
-                                .size(64.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
+                        // Title
+                        Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
                                 text = moonDetails.third,
-                                fontSize = 36.sp
+                                fontSize = 14.sp
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = if (isBn) "চন্দ্রের অবস্থান" else "Moon Position",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.displayText
                             )
                         }
-                        
-                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Curved Arc Canvas for Moon (Matching the Sun's Arc!)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(76.dp)
+                                .padding(horizontal = 4.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Canvas(modifier = Modifier.fillMaxSize()) {
+                                val w = size.width
+                                val h = size.height
+                                val baselineY = h * 0.82f
+                                val arcRadius = (w * 0.44f).coerceAtMost(h * 0.72f)
+                                val centerX = w / 2f
+
+                                // Baseline horizon line
+                                drawLine(
+                                    color = Color.Gray.copy(alpha = 0.25f),
+                                    start = Offset(10f, baselineY),
+                                    end = Offset(w - 10f, baselineY),
+                                    strokeWidth = 1.5.dp.toPx(),
+                                    pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(6f, 6f), 0f)
+                                )
+
+                                // Moon orbit arc (Semi-circle)
+                                val arcRect = Rect(centerX - arcRadius, baselineY - arcRadius, centerX + arcRadius, baselineY + arcRadius)
+                                drawArc(
+                                    brush = Brush.linearGradient(
+                                        colors = listOf(Color(0xFF93C5FD).copy(alpha = 0.4f), Color(0xFFC084FC).copy(alpha = 0.6f), Color(0xFF93C5FD).copy(alpha = 0.4f))
+                                    ),
+                                    startAngle = 180f,
+                                    sweepAngle = 180f,
+                                    useCenter = false,
+                                    style = Stroke(width = 2.dp.toPx(), pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(8f, 6f), 0f)),
+                                    topLeft = arcRect.topLeft,
+                                    size = arcRect.size
+                                )
+
+                                // If Moon is in sky
+                                if (moonPos.second >= 0f) {
+                                    val angleRad = (180f + moonPos.second) * (Math.PI / 180f)
+                                    val moonX = centerX + Math.cos(angleRad).toFloat() * arcRadius
+                                    val moonY = baselineY + Math.sin(angleRad).toFloat() * arcRadius
+
+                                    // Moon Aura Glow
+                                    drawCircle(
+                                        brush = Brush.radialGradient(
+                                            colors = listOf(Color(0x88BAE6FD), Color(0x33A855F7), Color(0x00A855F7)),
+                                            center = Offset(moonX, moonY),
+                                            radius = 16.dp.toPx()
+                                        ),
+                                        radius = 16.dp.toPx(),
+                                        center = Offset(moonX, moonY)
+                                    )
+
+                                    // Luminous Moon Disc
+                                    drawCircle(
+                                        brush = Brush.linearGradient(
+                                            colors = listOf(Color(0xFFFFFFFF), Color(0xFFE2E8F0), Color(0xFF94A3B8))
+                                        ),
+                                        radius = 7.dp.toPx(),
+                                        center = Offset(moonX, moonY)
+                                    )
+                                } else {
+                                    // Moon below horizon
+                                    drawCircle(
+                                        color = Color.Gray.copy(alpha = 0.35f),
+                                        radius = 6.dp.toPx(),
+                                        center = Offset(centerX, baselineY + 10.dp.toPx())
+                                    )
+                                }
+                            }
+
+                            // East / West tags
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .align(Alignment.BottomCenter)
+                                    .padding(horizontal = 4.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = if (isBn) "পূর্ব 🌙" else "E 🌙",
+                                    fontSize = 9.sp,
+                                    color = themeColors.displayText.copy(alpha = 0.5f)
+                                )
+                                Text(
+                                    text = if (isBn) "পশ্চিম 🌌" else "W 🌌",
+                                    fontSize = 9.sp,
+                                    color = themeColors.displayText.copy(alpha = 0.5f)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        // Status Badge
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = if (moonPos.second >= 0f) themeColors.buttonEqualBg.copy(alpha = 0.15f) else themeColors.displayText.copy(alpha = 0.08f)
+                        ) {
+                            Text(
+                                text = if (moonPos.second >= 0f) {
+                                    if (isBn) "আকাশে (${moonPos.second.toInt()}°)" else "In Sky (${moonPos.second.toInt()}°)"
+                                } else {
+                                    moonPos.first
+                                },
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (moonPos.second >= 0f) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.7f),
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        // Moon Phase & Illumination Subtitle
                         Text(
-                            text = moonDetails.first,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = themeColors.buttonEqualBg,
-                            textAlign = TextAlign.Center
-                        )
-                        Text(
-                            text = moonDetails.second,
-                            fontSize = 9.sp,
-                            color = themeColors.displayText.copy(alpha = 0.6f),
-                            textAlign = TextAlign.Center,
-                            maxLines = 1,
-                            modifier = Modifier.padding(top = 2.dp)
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = if (moonPos.second >= 0f) {
-                                if (isBn) "আকাশে (${moonPos.second.toInt()}°)" else "In Sky (${moonPos.second.toInt()}°)"
-                            } else {
-                                moonPos.first
-                            },
-                            fontSize = 11.sp,
+                            text = "${moonDetails.first} • ${moonDetails.second}",
+                            fontSize = 10.sp,
                             fontWeight = FontWeight.Medium,
-                            color = themeColors.displayText,
-                            textAlign = TextAlign.Center
+                            color = themeColors.displayText.copy(alpha = 0.75f),
+                            textAlign = TextAlign.Center,
+                            maxLines = 1
                         )
                     }
                 }

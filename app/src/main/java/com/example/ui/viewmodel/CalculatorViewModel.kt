@@ -200,6 +200,11 @@ class CalculatorViewModel(
     var backupStatusMessage by mutableStateOf("")
     var showBackupStatusDialog by mutableStateOf(false)
     
+    var pendingGlobalRestoreBackup by mutableStateOf<GlobalAppBackup?>(null)
+    var showGlobalRestoreDialog by mutableStateOf(false)
+    var globalRestoreSummary by mutableStateOf("")
+    var showGlobalBackupDialog by mutableStateOf(false)
+    
     // Chat History selection and deletion state
     var selectedChatSessionIds by mutableStateOf(setOf<String>())
     var isChatSelectionMode by mutableStateOf(false)
@@ -2572,77 +2577,227 @@ How can I help you today?"""
     }
 
     fun backupHistoryToUri(uri: android.net.Uri) {
-        viewModelScope.launch {
+        exportFullBackupToUri(uri)
+    }
+
+    fun restoreHistoryFromUri(uri: android.net.Uri) {
+        loadGlobalBackupForConfirmation(uri)
+    }
+
+    fun exportFullBackupToUri(uri: android.net.Uri) {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
-                val entries = historyList.value
-                val moshiInstance = com.squareup.moshi.Moshi.Builder()
+                val history = historyList.value
+                val marketPrefs = context.getSharedPreferences("market_list_prefs", Context.MODE_PRIVATE)
+                val marketPlans = marketPrefs.getString("saved_plan_lists", null) ?: sharedPrefs.getString("saved_plan_lists", null)
+                val completedMemos = marketPrefs.getString("completed_memos", null) ?: sharedPrefs.getString("completed_memos", null)
+                val chatJson = sharedPrefs.getString("ai_chat_sessions_v1", null)
+                val notes = sharedPrefs.getString("professional_notes_list_v2", null)
+                val barcode = sharedPrefs.getString("barcode_scan_history_list", null)
+                val favTools = orderedFavoriteTools
+                val favConv = favoriteConverters.toList()
+
+                val dateFormat = SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault())
+                val backup = GlobalAppBackup(
+                    version = 2,
+                    appName = "ToolsMate All-in-One",
+                    backupDate = dateFormat.format(Date()),
+                    timestamp = System.currentTimeMillis(),
+                    historyEntries = history,
+                    marketPlansJson = marketPlans,
+                    completedMemosJson = completedMemos,
+                    chatSessionsJson = chatJson,
+                    notesJson = notes,
+                    favoriteTools = favTools,
+                    favoriteConverters = favConv,
+                    barcodeHistory = barcode
+                )
+
+                val moshi = com.squareup.moshi.Moshi.Builder()
                     .add(com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory())
                     .build()
-                val listType = com.squareup.moshi.Types.newParameterizedType(List::class.java, HistoryEntry::class.java)
-                val adapter = moshiInstance.adapter<List<HistoryEntry>>(listType)
-                val jsonString = adapter.toJson(entries)
-                
+                val adapter = moshi.adapter(GlobalAppBackup::class.java)
+                val jsonString = adapter.toJson(backup)
+
                 context.contentResolver.openOutputStream(uri)?.use { outputStream ->
                     outputStream.write(jsonString.toByteArray(Charsets.UTF_8))
                 }
+
                 val isBn = selectedLanguage == AppLanguage.BENGALI
-                backupStatusMessage = if (isBn) {
-                    "সফলভাবে ${entries.size}টি হিস্টোরি ব্যাকআপ করা হয়েছে!"
-                } else {
-                    "Successfully backed up ${entries.size} history items!"
+                withContext(Dispatchers.Main) {
+                    backupStatusMessage = if (isBn) {
+                        "✅ অ্যাপের সমস্ত ডেটা সফলভাবে ব্যাকআপ করা হয়েছে!\n\n• হিস্টোরি: ${history.size}টি\n• বাজার ফর্দ ও মেমো সংরক্ষিত\n• এআই চ্যাট ও নোটস সংরক্ষিত"
+                    } else {
+                        "✅ All app data successfully backed up!\n\n• History: ${history.size} items\n• Shopping lists & memos saved\n• AI Chat & Notes saved"
+                    }
+                    showBackupStatusDialog = true
                 }
-                showBackupStatusDialog = true
             } catch (e: Exception) {
                 e.printStackTrace()
                 val isBn = selectedLanguage == AppLanguage.BENGALI
-                backupStatusMessage = if (isBn) {
-                    "ব্যাকআপ ব্যর্থ হয়েছে: ${e.localizedMessage}"
-                } else {
-                    "Backup failed: ${e.localizedMessage}"
+                withContext(Dispatchers.Main) {
+                    backupStatusMessage = if (isBn) {
+                        "ব্যাকআপ ব্যর্থ হয়েছে: ${e.localizedMessage}"
+                    } else {
+                        "Backup failed: ${e.localizedMessage}"
+                    }
+                    showBackupStatusDialog = true
                 }
-                showBackupStatusDialog = true
             }
         }
     }
 
-    fun restoreHistoryFromUri(uri: android.net.Uri) {
-        viewModelScope.launch {
+    fun loadGlobalBackupForConfirmation(uri: android.net.Uri) {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 val jsonString = context.contentResolver.openInputStream(uri)?.use { inputStream ->
                     inputStream.bufferedReader().use { it.readText() }
                 }
                 if (jsonString.isNullOrBlank()) {
-                    throw Exception("File is empty")
+                    throw Exception("Selected file is empty")
                 }
-                val moshiInstance = com.squareup.moshi.Moshi.Builder()
+
+                val moshi = com.squareup.moshi.Moshi.Builder()
                     .add(com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory())
                     .build()
-                val listType = com.squareup.moshi.Types.newParameterizedType(List::class.java, HistoryEntry::class.java)
-                val adapter = moshiInstance.adapter<List<HistoryEntry>>(listType)
-                val entries = adapter.fromJson(jsonString)
-                if (entries != null) {
-                    entries.forEach { entry ->
-                        repository.insertHistory(entry.copy(id = 0))
+
+                var backupObj: GlobalAppBackup? = null
+                try {
+                    backupObj = moshi.adapter(GlobalAppBackup::class.java).fromJson(jsonString)
+                } catch (e: Exception) {
+                    try {
+                        val listType = com.squareup.moshi.Types.newParameterizedType(List::class.java, HistoryEntry::class.java)
+                        val legacyEntries = moshi.adapter<List<HistoryEntry>>(listType).fromJson(jsonString)
+                        if (legacyEntries != null) {
+                            backupObj = GlobalAppBackup(
+                                historyEntries = legacyEntries,
+                                backupDate = "Legacy Backup"
+                            )
+                        }
+                    } catch (e2: Exception) {
+                        throw Exception("Unrecognized backup format")
                     }
-                    val isBn = selectedLanguage == AppLanguage.BENGALI
-                    backupStatusMessage = if (isBn) {
-                        "সফলভাবে ${entries.size}টি হিস্টোরি রিস্টোর করা হয়েছে!"
-                    } else {
-                        "Successfully restored ${entries.size} history items!"
-                    }
-                } else {
-                    throw Exception("Invalid data format")
                 }
-                showBackupStatusDialog = true
+
+                if (backupObj == null) {
+                    throw Exception("Invalid backup file")
+                }
+
+                val isBn = selectedLanguage == AppLanguage.BENGALI
+                var planCount = 0
+                backupObj.marketPlansJson?.let {
+                    try { planCount = org.json.JSONArray(it).length() } catch (e: Exception) {}
+                }
+                var memoCount = 0
+                backupObj.completedMemosJson?.let {
+                    try { memoCount = org.json.JSONArray(it).length() } catch (e: Exception) {}
+                }
+                var notesCount = 0
+                backupObj.notesJson?.let {
+                    notesCount = it.split("[NOTE_SEPARATOR]").filter { s -> s.isNotBlank() }.size
+                }
+
+                withContext(Dispatchers.Main) {
+                    pendingGlobalRestoreBackup = backupObj
+                    globalRestoreSummary = if (isBn) {
+                        "তারিখ: ${backupObj.backupDate.ifBlank { "N/A" }}\n\n" +
+                        "• ক্যালকুলেটর হিস্টোরি: ${backupObj.historyEntries.size}টি\n" +
+                        "• বাজার ফর্দ (Plans): ${planCount}টি\n" +
+                        "• বাজার মেমো (Memos): ${memoCount}টি\n" +
+                        "• সেভ করা নোটস: ${notesCount}টি\n" +
+                        "• প্রিয় টুলস ও কনভার্টার: ${backupObj.favoriteTools.size + backupObj.favoriteConverters.size}টি"
+                    } else {
+                        "Date: ${backupObj.backupDate.ifBlank { "N/A" }}\n\n" +
+                        "• Calculator History: ${backupObj.historyEntries.size}\n" +
+                        "• Market Plans: $planCount\n" +
+                        "• Bazaar Memos: $memoCount\n" +
+                        "• Saved Notes: $notesCount\n" +
+                        "• Favorite Tools & Conv: ${backupObj.favoriteTools.size + backupObj.favoriteConverters.size}"
+                    }
+                    showGlobalRestoreDialog = true
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
                 val isBn = selectedLanguage == AppLanguage.BENGALI
-                backupStatusMessage = if (isBn) {
-                    "রিস্টোর ব্যর্থ হয়েছে: ${e.localizedMessage}"
-                } else {
-                    "Restore failed: ${e.localizedMessage}"
+                withContext(Dispatchers.Main) {
+                    backupStatusMessage = if (isBn) "ফাইল পড়া যায়নি: ${e.localizedMessage}" else "Failed to read backup: ${e.localizedMessage}"
+                    showBackupStatusDialog = true
                 }
-                showBackupStatusDialog = true
+            }
+        }
+    }
+
+    fun confirmAndExecuteGlobalRestore() {
+        val backup = pendingGlobalRestoreBackup ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                if (backup.historyEntries.isNotEmpty()) {
+                    backup.historyEntries.forEach { entry ->
+                        repository.insertHistory(entry.copy(id = 0))
+                    }
+                }
+
+                val marketPrefs = context.getSharedPreferences("market_list_prefs", Context.MODE_PRIVATE)
+                if (!backup.marketPlansJson.isNullOrBlank()) {
+                    marketPrefs.edit().putString("saved_plan_lists", backup.marketPlansJson).apply()
+                    sharedPrefs.edit().putString("saved_plan_lists", backup.marketPlansJson).apply()
+                }
+                if (!backup.completedMemosJson.isNullOrBlank()) {
+                    marketPrefs.edit().putString("completed_memos", backup.completedMemosJson).apply()
+                    sharedPrefs.edit().putString("completed_memos", backup.completedMemosJson).apply()
+                }
+
+                if (!backup.chatSessionsJson.isNullOrBlank()) {
+                    sharedPrefs.edit().putString("ai_chat_sessions_v1", backup.chatSessionsJson).apply()
+                    try { loadChatHistory() } catch (e: Exception) {}
+                }
+
+                if (!backup.notesJson.isNullOrBlank()) {
+                    sharedPrefs.edit().putString("professional_notes_list_v2", backup.notesJson).apply()
+                    withContext(Dispatchers.Main) {
+                        notesListString = backup.notesJson
+                    }
+                }
+
+                if (backup.favoriteTools.isNotEmpty()) {
+                    withContext(Dispatchers.Main) {
+                        saveOrderedFavorites(backup.favoriteTools)
+                    }
+                }
+                if (backup.favoriteConverters.isNotEmpty()) {
+                    sharedPrefs.edit().putStringSet("favorite_converters", backup.favoriteConverters.toSet()).apply()
+                    withContext(Dispatchers.Main) {
+                        favoriteConverters = backup.favoriteConverters.toSet()
+                    }
+                }
+
+                if (!backup.barcodeHistory.isNullOrBlank()) {
+                    sharedPrefs.edit().putString("barcode_scan_history_list", backup.barcodeHistory).apply()
+                    withContext(Dispatchers.Main) {
+                        loadScanHistory()
+                    }
+                }
+
+                val isBn = selectedLanguage == AppLanguage.BENGALI
+                withContext(Dispatchers.Main) {
+                    showGlobalRestoreDialog = false
+                    pendingGlobalRestoreBackup = null
+                    backupStatusMessage = if (isBn) {
+                        "🎉 সকল ডেটা সফলভাবে রিস্টোর করা হয়েছে!"
+                    } else {
+                        "🎉 All data successfully restored!"
+                    }
+                    showBackupStatusDialog = true
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                val isBn = selectedLanguage == AppLanguage.BENGALI
+                withContext(Dispatchers.Main) {
+                    showGlobalRestoreDialog = false
+                    pendingGlobalRestoreBackup = null
+                    backupStatusMessage = if (isBn) "রিস্টোর ব্যর্থ হয়েছে: ${e.localizedMessage}" else "Restore failed: ${e.localizedMessage}"
+                    showBackupStatusDialog = true
+                }
             }
         }
     }
@@ -3207,4 +3362,20 @@ data class ScanHistoryItem(
     val value: String,
     val format: String,
     val timestamp: Long
+)
+
+@JsonClass(generateAdapter = true)
+data class GlobalAppBackup(
+    val version: Int = 2,
+    val appName: String = "ToolsMate All-in-One",
+    val backupDate: String = "",
+    val timestamp: Long = System.currentTimeMillis(),
+    val historyEntries: List<HistoryEntry> = emptyList(),
+    val marketPlansJson: String? = null,
+    val completedMemosJson: String? = null,
+    val chatSessionsJson: String? = null,
+    val notesJson: String? = null,
+    val favoriteTools: List<String> = emptyList(),
+    val favoriteConverters: List<String> = emptyList(),
+    val barcodeHistory: String? = null
 )

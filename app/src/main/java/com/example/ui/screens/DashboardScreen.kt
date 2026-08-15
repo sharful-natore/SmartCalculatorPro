@@ -1351,49 +1351,184 @@ fun DashboardCategoriesView(
                     )
                 }
             } else {
-                val categoriesToShow = ToolCategory.values().filter { cat ->
-                    currentFilteredTools.any { it.category == cat }
-                }
+                val isOverviewMode = currentFilter == null
 
                 Column(modifier = Modifier.fillMaxWidth()) {
+                    // Category Active Banner when filtered
+                    if (!isOverviewMode && currentFilter != null) {
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 12.dp),
+                            shape = RoundedCornerShape(14.dp),
+                            color = themeColors.cardBg,
+                            border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.25f))
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(32.dp)
+                                            .clip(CircleShape)
+                                            .background(themeColors.buttonEqualBg),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = currentFilter.icon,
+                                            contentDescription = null,
+                                            tint = Color.White,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Column {
+                                        Text(
+                                            text = currentFilter.getTitle(viewModel.selectedLanguage),
+                                            fontSize = 15.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = themeColors.displayText
+                                        )
+                                        Text(
+                                            text = if (isBn) "মোট ${currentFilteredTools.size}টি টুলস" else "Total ${currentFilteredTools.size} Tools",
+                                            fontSize = 11.sp,
+                                            color = themeColors.buttonEqualBg,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                    }
+                                }
+
+                                Surface(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .clickable { viewModel.selectedToolCategoryFilter = null },
+                                    color = themeColors.buttonEqualBg.copy(alpha = 0.12f),
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Apps,
+                                            contentDescription = null,
+                                            tint = themeColors.buttonEqualBg,
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = if (isBn) "সকল টুলস" else "All Tools",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = themeColors.buttonEqualBg
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    val categoriesToShow = if (isOverviewMode) {
+                        ToolCategory.values().filter { cat ->
+                            currentFilteredTools.any { it.category == cat }
+                        }
+                    } else {
+                        listOfNotNull(currentFilter)
+                    }
+
                     categoriesToShow.forEach { category ->
                         val categoryTools = currentFilteredTools.filter { it.category == category }
 
                         if (categoryTools.isNotEmpty()) {
+                            // In Overview mode, display top 4 tools per category
+                            val displayedTools = if (isOverviewMode) categoryTools.take(4) else categoryTools
+                            val hasMore = isOverviewMode && categoryTools.size > 4
+
                             // Category Header
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(vertical = 8.dp)
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp, bottom = 8.dp)
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(28.dp)
-                                        .clip(CircleShape)
-                                        .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = category.icon,
-                                        contentDescription = category.titleEn,
-                                        tint = themeColors.buttonEqualBg,
-                                        modifier = Modifier.size(16.dp)
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(28.dp)
+                                            .clip(CircleShape)
+                                            .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = category.icon,
+                                            contentDescription = category.titleEn,
+                                            tint = themeColors.buttonEqualBg,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = category.getTitle(viewModel.selectedLanguage),
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = themeColors.displayText
                                     )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Surface(
+                                        shape = RoundedCornerShape(6.dp),
+                                        color = themeColors.displayText.copy(alpha = 0.08f)
+                                    ) {
+                                        Text(
+                                            text = if (isBn) "${categoryTools.size}টি" else "${categoryTools.size}",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = themeColors.displayText.copy(alpha = 0.7f),
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                        )
+                                    }
                                 }
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = category.getTitle(viewModel.selectedLanguage),
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = themeColors.displayText
-                                )
+
+                                if (hasMore) {
+                                    Row(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(themeColors.buttonEqualBg.copy(alpha = 0.08f))
+                                            .clickable { viewModel.selectedToolCategoryFilter = category }
+                                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = if (isBn) "সব দেখুন" else "See all",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = themeColors.buttonEqualBg
+                                        )
+                                        Spacer(modifier = Modifier.width(2.dp))
+                                        Icon(
+                                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                            contentDescription = null,
+                                            tint = themeColors.buttonEqualBg,
+                                            modifier = Modifier.size(12.dp)
+                                        )
+                                    }
+                                }
                             }
 
                             // 2-column Grid of Cards
                             Column(
                                 verticalArrangement = Arrangement.spacedBy(10.dp),
-                                modifier = Modifier.padding(bottom = 16.dp)
+                                modifier = Modifier.padding(bottom = 6.dp)
                             ) {
-                                categoryTools.chunked(2).forEach { rowItems ->
+                                displayedTools.chunked(2).forEach { rowItems ->
                                     Row(
                                         modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
                                         horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -1414,6 +1549,47 @@ fun DashboardCategoriesView(
                                         }
                                     }
                                 }
+                            }
+
+                            // Clean "See All" Button at the bottom of the section in Overview mode
+                            if (hasMore) {
+                                Surface(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 4.dp, bottom = 14.dp)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .clickable { viewModel.selectedToolCategoryFilter = category },
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = themeColors.cardBg,
+                                    border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.25f))
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 9.dp, horizontal = 12.dp),
+                                        horizontalArrangement = Arrangement.Center,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = if (isBn) 
+                                                "${category.getTitle(viewModel.selectedLanguage)}-এর সব (${categoryTools.size}টি) টুলস দেখুন" 
+                                            else 
+                                                "See all ${categoryTools.size} ${category.getTitle(viewModel.selectedLanguage)} Tools",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = themeColors.buttonEqualBg
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Icon(
+                                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                            contentDescription = null,
+                                            tint = themeColors.buttonEqualBg,
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                    }
+                                }
+                            } else {
+                                Spacer(modifier = Modifier.height(10.dp))
                             }
                         }
                     }
@@ -2222,11 +2398,11 @@ private fun getToolInfoItems(toolType: ToolType, isBn: Boolean): List<Pair<Strin
         }
         ToolType.QIBLA_COMPASS -> if (isBn) {
             listOf(
-                "১. সঠিক কিবলা নির্দেশক" to "পবিত্র কাবা শরীফের সঠিক দিক ও অ্যাঙ্গেল (২৩৭.৫° দক্ষিণ-পশ্চিম) নির্ধারণ করতে আপনার ডিভাইসের ডিজিটাল কম্পাস ব্যবহার করা হয়।"
+                "১. সঠিক কিবলা নির্দেশক" to "পবিত্র কাবা শরীফের সঠিক দিক ও অ্যাঙ্গেল (২৭৭.৬° পশ্চিম / WNW) নির্ধারণ করতে আপনার ডিভাইসের ডিজিটাল কম্পাস ব্যবহার করা হয়।"
             )
         } else {
             listOf(
-                "1. Accurate Qibla Finder" to "Uses hardware orientation sensors to locate the exact direction and compass bearing of the Holy Kaaba in Makkah (237.5° WSW from Bangladesh)."
+                "1. Accurate Qibla Finder" to "Uses hardware orientation sensors to locate the exact direction and compass bearing of the Holy Kaaba in Makkah (277.6° West / WNW from Bangladesh)."
             )
         }
         ToolType.DIGITAL_TASBIH -> if (isBn) {

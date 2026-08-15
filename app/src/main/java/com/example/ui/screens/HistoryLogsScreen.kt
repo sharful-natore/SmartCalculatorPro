@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material.icons.filled.Download
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.*
@@ -88,6 +89,11 @@ fun HistoryLogsScreen(
     var isAscending by remember { mutableStateOf(false) }
     var showSortMenu by remember { mutableStateOf(false) }
     var selectedTypeFilter by remember { mutableStateOf("Calculator") }
+
+    BackHandler(enabled = searchQuery.isNotEmpty() || isSearchActive) {
+        searchQuery = ""
+        isSearchActive = false
+    }
 
     val context = LocalContext.current
     val historySpeechLauncher = rememberLauncherForActivityResult(
