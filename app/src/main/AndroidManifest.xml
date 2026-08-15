@@ -56,6 +56,15 @@
             android:taskAffinity=""
             android:windowSoftInputMode="adjustResize" />
 
+        <activity
+            android:name=".QuickMarketActivity"
+            android:exported="true"
+            android:label="Quick Market List"
+            android:theme="@style/Theme.TransparentDialog"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:windowSoftInputMode="adjustResize" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

@@ -2,6 +2,7 @@
     <string name="app_name">ToolsMate</string>
     <string name="shortcut_calculator">Quick Calculator</string>
     <string name="shortcut_calendar">Quick Calendar</string>
+    <string name="shortcut_market">Quick Market List</string>
     <string name="shortcut_dashboard">Dashboard</string>
     <string name="shortcut_history">History</string>
     <string name="shortcut_converter">Unit Converter</string>

@@ -166,7 +166,7 @@ class QuickCalculatorActivity : ComponentActivity() {
                         onDismissRequest = { showExitConfirmDialog = false },
                         title = {
                             Text(
-                                text = if (isBn) "অ্যাপ বন্ধ করার বার্তা" else "Close Application Confirmation",
+                                text = if (isBn) "কুইক ক্যালকুলেটর বন্ধ করুন" else "Close Quick Calculator",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 18.sp,
                                 color = themeColors.displayText
@@ -175,9 +175,9 @@ class QuickCalculatorActivity : ComponentActivity() {
                         text = {
                             Text(
                                 text = if (isBn)
-                                    "আপনি কি নিশ্চিত যে সম্পূর্ণ অ্যাপটি বন্ধ করতে চান?"
+                                    "আপনি কি কুইক ক্যালকুলেটর বন্ধ করতে চান?"
                                 else
-                                    "Are you sure you want to close the application?",
+                                    "Do you want to close Quick Calculator?",
                                 fontSize = 14.sp,
                                 color = themeColors.displayText.copy(alpha = 0.85f)
                             )
@@ -186,39 +186,25 @@ class QuickCalculatorActivity : ComponentActivity() {
                             Button(
                                 onClick = {
                                     showExitConfirmDialog = false
-                                    finishAffinity()
+                                    finish()
                                 },
                                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))
                             ) {
                                 Text(
-                                    text = if (isBn) "হ্যাঁ, অ্যাপ বন্ধ করুন" else "Yes, Exit App",
+                                    text = if (isBn) "হ্যাঁ" else "Yes",
                                     color = Color.White,
                                     fontWeight = FontWeight.Bold
                                 )
                             }
                         },
                         dismissButton = {
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                OutlinedButton(
-                                    onClick = {
-                                        showExitConfirmDialog = false
-                                        finish()
-                                    }
-                                ) {
-                                    Text(
-                                        text = if (isBn) "শুধুমাত্র ক্যালকুলেটর বন্ধ" else "Close Calc Only",
-                                        color = themeColors.displayText,
-                                        fontSize = 12.sp
-                                    )
-                                }
-                                TextButton(
-                                    onClick = { showExitConfirmDialog = false }
-                                ) {
-                                    Text(
-                                        text = if (isBn) "বাতিল" else "Cancel",
-                                        color = themeColors.displayText
-                                    )
-                                }
+                            TextButton(
+                                onClick = { showExitConfirmDialog = false }
+                            ) {
+                                Text(
+                                    text = if (isBn) "না" else "No",
+                                    color = themeColors.displayText
+                                )
                             }
                         },
                         containerColor = themeColors.cardBg,

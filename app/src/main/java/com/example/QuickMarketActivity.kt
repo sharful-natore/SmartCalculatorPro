@@ -8,13 +8,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.Today
+import androidx.compose.material.icons.filled.ShoppingBasket
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,16 +25,14 @@ import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModelProvider
 import com.example.data.database.CalculatorDatabase
 import com.example.data.repository.HistoryRepository
-import com.example.ui.screens.MultiCalendarCard
+import com.example.ui.screens.MarketListScreen
 import com.example.ui.theme.MyApplicationTheme
 import com.example.ui.viewmodel.CalculatorViewModel
 import com.example.ui.viewmodel.CalculatorViewModelFactory
 import com.example.util.AppLanguage
-import java.text.SimpleDateFormat
-import java.util.*
 import android.graphics.Color as AndroidColor
 
-class QuickCalendarActivity : ComponentActivity() {
+class QuickMarketActivity : ComponentActivity() {
 
     private lateinit var viewModel: CalculatorViewModel
 
@@ -76,18 +71,18 @@ class QuickCalendarActivity : ComponentActivity() {
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    // Floating Calendar Dialog Card
+                    // Floating Quick Market List Dialog Card
                     Surface(
                         modifier = if (isMaximized) {
                             Modifier.fillMaxSize()
                         } else {
                             Modifier
                                 .fillMaxWidth(0.96f)
-                                .fillMaxHeight(0.92f)
+                                .fillMaxHeight(0.94f)
                         }.clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
-                            onClick = { /* prevent dismiss on clicking dialog */ }
+                            onClick = { /* prevent dismiss on clicking dialog body */ }
                         ),
                         shape = if (isMaximized) RoundedCornerShape(0.dp) else RoundedCornerShape(24.dp),
                         color = themeColors.background,
@@ -119,14 +114,14 @@ class QuickCalendarActivity : ComponentActivity() {
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Icon(
-                                            imageVector = Icons.Default.CalendarMonth,
+                                            imageVector = Icons.Default.ShoppingBasket,
                                             contentDescription = null,
                                             tint = themeColors.buttonEqualBg,
                                             modifier = Modifier.size(22.dp)
                                         )
                                     }
                                     Text(
-                                        text = if (isBn) "কুইক ক্যালেন্ডার" else "Quick Calendar",
+                                        text = if (isBn) "কুইক বাজার ফর্দ" else "Quick Market List",
                                         fontSize = 17.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = themeColors.displayText
@@ -144,18 +139,18 @@ class QuickCalendarActivity : ComponentActivity() {
 
                             HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.1f))
 
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(4.dp))
 
-                            // Calendar Screen Content with Vertical Scroll
+                            // Market List Screen Content
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .weight(1f)
-                                    .verticalScroll(rememberScrollState())
                             ) {
-                                MultiCalendarCard(
+                                MarketListScreen(
                                     viewModel = viewModel,
-                                    themeColors = themeColors
+                                    themeColors = themeColors,
+                                    modifier = Modifier.fillMaxSize()
                                 )
                             }
                         }
@@ -168,7 +163,7 @@ class QuickCalendarActivity : ComponentActivity() {
                         onDismissRequest = { showCloseConfirmDialog = false },
                         title = {
                             Text(
-                                text = if (isBn) "কুইক ক্যালেন্ডার বন্ধ করুন" else "Close Quick Calendar",
+                                text = if (isBn) "কুইক বাজার ফর্দ বন্ধ করুন" else "Close Quick Market List",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 18.sp,
                                 color = themeColors.displayText
@@ -177,9 +172,9 @@ class QuickCalendarActivity : ComponentActivity() {
                         text = {
                             Text(
                                 text = if (isBn)
-                                    "আপনি কি কুইক ক্যালেন্ডার বন্ধ করতে চান?"
+                                    "আপনি কি কুইক বাজার ফর্দ বন্ধ করতে চান?"
                                 else
-                                    "Do you want to close Quick Calendar?",
+                                    "Do you want to close Quick Market List?",
                                 fontSize = 14.sp,
                                 color = themeColors.displayText.copy(alpha = 0.85f)
                             )

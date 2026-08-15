@@ -2302,7 +2302,7 @@ fun MainContent(
             onDismissRequest = { showQuickCalcCloseConfirm = false },
             title = {
                 Text(
-                    text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "অ্যাপ বন্ধ করার বার্তা" else "Close Application Confirmation",
+                    text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "কুইক ক্যালকুলেটর বন্ধ করুন" else "Close Quick Calculator",
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
                     color = themeColors.displayText
@@ -2311,9 +2311,9 @@ fun MainContent(
             text = {
                 Text(
                     text = if (viewModel.selectedLanguage == AppLanguage.BENGALI)
-                        "আপনি কি নিশ্চিত যে সম্পূর্ণ অ্যাপটি বন্ধ করতে চান?"
+                        "আপনি কি কুইক ক্যালকুলেটর বন্ধ করতে চান?"
                     else
-                        "Are you sure you want to close the application?",
+                        "Do you want to close Quick Calculator?",
                     fontSize = 14.sp,
                     color = themeColors.displayText.copy(alpha = 0.85f)
                 )
@@ -2325,41 +2325,24 @@ fun MainContent(
                         viewModel.showCalculatorDialog = false
                         isCalcMinimized = false
                         isCalcMaximized = false
-                        (context as? Activity)?.finish()
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))
                 ) {
                     Text(
-                        text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "হ্যাঁ, অ্যাপ বন্ধ করুন" else "Yes, Exit App",
+                        text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "হ্যাঁ" else "Yes",
                         color = Color.White,
                         fontWeight = FontWeight.Bold
                     )
                 }
             },
             dismissButton = {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(
-                        onClick = {
-                            showQuickCalcCloseConfirm = false
-                            viewModel.showCalculatorDialog = false
-                            isCalcMinimized = false
-                            isCalcMaximized = false
-                        }
-                    ) {
-                        Text(
-                            text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "শুধুমাত্র ক্যালকুলেটর বন্ধ" else "Close Calc Only",
-                            color = themeColors.displayText,
-                            fontSize = 12.sp
-                        )
-                    }
-                    TextButton(
-                        onClick = { showQuickCalcCloseConfirm = false }
-                    ) {
-                        Text(
-                            text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "বাতিল" else "Cancel",
-                            color = themeColors.displayText
-                        )
-                    }
+                TextButton(
+                    onClick = { showQuickCalcCloseConfirm = false }
+                ) {
+                    Text(
+                        text = if (viewModel.selectedLanguage == AppLanguage.BENGALI) "না" else "No",
+                        color = themeColors.displayText
+                    )
                 }
             },
             containerColor = themeColors.cardBg,
@@ -2369,10 +2352,11 @@ fun MainContent(
 
     if (viewModel.showCalendarDialog) {
         var isCalMaximized by remember { mutableStateOf(false) }
+        var showCalCloseConfirm by remember { mutableStateOf(false) }
         val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
 
         Dialog(
-            onDismissRequest = { viewModel.showCalendarDialog = false },
+            onDismissRequest = { showCalCloseConfirm = true },
             properties = DialogProperties(usePlatformDefaultWidth = false)
         ) {
             Surface(
@@ -2381,7 +2365,7 @@ fun MainContent(
                 } else {
                     Modifier
                         .fillMaxWidth(0.96f)
-                        .fillMaxHeight(0.90f)
+                        .fillMaxHeight(0.92f)
                 },
                 shape = if (isCalMaximized) RoundedCornerShape(0.dp) else RoundedCornerShape(24.dp),
                 color = themeColors.background,
@@ -2430,7 +2414,7 @@ fun MainContent(
                             isMaximized = isCalMaximized,
                             onMinimize = { viewModel.showCalendarDialog = false },
                             onMaximizeToggle = { isCalMaximized = !isCalMaximized },
-                            onClose = { viewModel.showCalendarDialog = false },
+                            onClose = { showCalCloseConfirm = true },
                             themeColors = themeColors
                         )
                     }
@@ -2439,11 +2423,12 @@ fun MainContent(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Calendar Content inside Dialog
+                    // Calendar Content inside Dialog with Vertical Scroll
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f)
+                            .verticalScroll(rememberScrollState())
                     ) {
                         com.example.ui.screens.MultiCalendarCard(
                             viewModel = viewModel,
@@ -2451,6 +2436,203 @@ fun MainContent(
                         )
                     }
                 }
+            }
+
+            // Quick Calendar Close Confirmation Dialog
+            if (showCalCloseConfirm) {
+                AlertDialog(
+                    onDismissRequest = { showCalCloseConfirm = false },
+                    title = {
+                        Text(
+                            text = if (isBn) "কুইক ক্যালেন্ডার বন্ধ করুন" else "Close Quick Calendar",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            color = themeColors.displayText
+                        )
+                    },
+                    text = {
+                        Text(
+                            text = if (isBn)
+                                "আপনি কি কুইক ক্যালেন্ডার বন্ধ করতে চান?"
+                            else
+                                "Do you want to close Quick Calendar?",
+                            fontSize = 14.sp,
+                            color = themeColors.displayText.copy(alpha = 0.85f)
+                        )
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                showCalCloseConfirm = false
+                                viewModel.showCalendarDialog = false
+                                isCalMaximized = false
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))
+                        ) {
+                            Text(
+                                text = if (isBn) "হ্যাঁ" else "Yes",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(
+                            onClick = { showCalCloseConfirm = false }
+                        ) {
+                            Text(
+                                text = if (isBn) "না" else "No",
+                                color = themeColors.displayText
+                            )
+                        }
+                    },
+                    containerColor = themeColors.cardBg,
+                    shape = RoundedCornerShape(16.dp)
+                )
+            }
+        }
+    }
+
+    if (viewModel.showMarketDialog) {
+        var isMarketMaximized by remember { mutableStateOf(false) }
+        var showMarketCloseConfirm by remember { mutableStateOf(false) }
+        val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
+
+        Dialog(
+            onDismissRequest = { showMarketCloseConfirm = true },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            Surface(
+                modifier = if (isMarketMaximized) {
+                    Modifier.fillMaxSize()
+                } else {
+                    Modifier
+                        .fillMaxWidth(0.96f)
+                        .fillMaxHeight(0.94f)
+                },
+                shape = if (isMarketMaximized) RoundedCornerShape(0.dp) else RoundedCornerShape(24.dp),
+                color = themeColors.background,
+                tonalElevation = 8.dp,
+                shadowElevation = 16.dp
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(12.dp)
+                ) {
+                    // Header Bar (Windows 11 Style)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ShoppingBasket,
+                                    contentDescription = null,
+                                    tint = themeColors.buttonEqualBg,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                            Text(
+                                text = if (isBn) "কুইক বাজার ফর্দ" else "Quick Market List",
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.displayText
+                            )
+                        }
+
+                        Windows11TitlebarButtons(
+                            isMaximized = isMarketMaximized,
+                            onMinimize = { viewModel.showMarketDialog = false },
+                            onMaximizeToggle = { isMarketMaximized = !isMarketMaximized },
+                            onClose = { showMarketCloseConfirm = true },
+                            themeColors = themeColors
+                        )
+                    }
+
+                    HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.1f))
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    // Market List Content inside Dialog
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                    ) {
+                        com.example.ui.screens.MarketListScreen(
+                            viewModel = viewModel,
+                            themeColors = themeColors,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                }
+            }
+
+            // Quick Market List Close Confirmation Dialog
+            if (showMarketCloseConfirm) {
+                AlertDialog(
+                    onDismissRequest = { showMarketCloseConfirm = false },
+                    title = {
+                        Text(
+                            text = if (isBn) "কুইক বাজার ফর্দ বন্ধ করুন" else "Close Quick Market List",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            color = themeColors.displayText
+                        )
+                    },
+                    text = {
+                        Text(
+                            text = if (isBn)
+                                "আপনি কি কুইক বাজার ফর্দ বন্ধ করতে চান?"
+                            else
+                                "Do you want to close Quick Market List?",
+                            fontSize = 14.sp,
+                            color = themeColors.displayText.copy(alpha = 0.85f)
+                        )
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                showMarketCloseConfirm = false
+                                viewModel.showMarketDialog = false
+                                isMarketMaximized = false
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))
+                        ) {
+                            Text(
+                                text = if (isBn) "হ্যাঁ" else "Yes",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(
+                            onClick = { showMarketCloseConfirm = false }
+                        ) {
+                            Text(
+                                text = if (isBn) "না" else "No",
+                                color = themeColors.displayText
+                            )
+                        }
+                    },
+                    containerColor = themeColors.cardBg,
+                    shape = RoundedCornerShape(16.dp)
+                )
             }
         }
     }
