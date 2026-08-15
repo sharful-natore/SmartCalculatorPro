@@ -1641,6 +1641,7 @@ fun DashboardCategoriesView(
                                                             viewModel = viewModel,
                                                             themeColors = themeColors,
                                                             modifier = Modifier.fillMaxHeight(),
+                                                            showPinIcon = !isOverviewMode,
                                                             onClick = { viewModel.openTool(tool) }
                                                         )
                                                     }
@@ -1772,6 +1773,7 @@ fun ToolGridCardItem(
     viewModel: CalculatorViewModel,
     themeColors: CalculatorThemeColors,
     modifier: Modifier = Modifier,
+    showPinIcon: Boolean = true,
     onClick: () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -1825,16 +1827,18 @@ fun ToolGridCardItem(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
-                        IconButton(
-                            onClick = { viewModel.requestToggleFavoriteTool(toolType) },
-                            modifier = Modifier.size(28.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.PushPin,
-                                contentDescription = "Pin Position",
-                                tint = if (isPinned) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.35f),
-                                modifier = Modifier.size(18.dp)
-                            )
+                        if (showPinIcon) {
+                            IconButton(
+                                onClick = { viewModel.requestToggleFavoriteTool(toolType) },
+                                modifier = Modifier.size(28.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.PushPin,
+                                    contentDescription = "Pin Position",
+                                    tint = if (isPinned) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.35f),
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
                         }
                         IconButton(
                             onClick = { viewModel.toggleFavoriteTool(toolType.name) },
@@ -2097,6 +2101,7 @@ fun ToolDetailView(
             ToolType.PRAYER_TIMES -> PrayerTimesCard(viewModel, themeColors)
             ToolType.SEHRI_IFTAR -> SehriIftarCard(viewModel, themeColors)
             ToolType.ISLAMIC_DUAS -> IslamicDuasCard(viewModel, themeColors)
+            ToolType.HOLY_QURAN -> com.example.ui.quran.HolyQuranModuleScreen(themeColors = themeColors, onBackClick = { viewModel.selectedToolType = null })
         }
     }
 }
@@ -2581,6 +2586,15 @@ private fun getToolInfoItems(toolType: ToolType, isBn: Boolean): List<Pair<Strin
         } else {
             listOf(
                 "1. Daily Authentic Duas" to "A curated collection of essential daily Islamic supplications with Arabic text and meanings."
+            )
+        }
+        ToolType.HOLY_QURAN -> if (isBn) {
+            listOf(
+                "১. পবিত্র আল-কুরআন ডিজিটাল মডিউল" to "১১৪টি সূরা, আরবি হরফ, বাংলা অর্থ ও উচ্চারণ, অডিও তেলাওয়াত, অফলাইন ডাউনলোড ও এআই কুরআন অ্যাসিস্ট্যান্ট।"
+            )
+        } else {
+            listOf(
+                "1. Holy Quran Digital Module" to "Read all 114 Surahs with Arabic script, Bengali translation, stream/download audio recitation, and ask questions to AI Assistant."
             )
         }
         ToolType.MARKET_LIST -> if (isBn) {

@@ -353,6 +353,11 @@ enum class ToolType(
         "Daily Duas & Zikir", "দৈনন্দিন দোয়া ও জিকির",
         "কুরআন ও হাদিসের প্রয়োজনীয় দোয়াসমূহ, বাংলা উচ্চারণ ও অর্থ",
         ToolCategory.ISLAMIC, Icons.Default.MenuBook
+    ),
+    HOLY_QURAN(
+        "Holy Quran", "আল-কোরআন (তেলাওয়াত ও অনুবাদ)",
+        "সূরা ও আয়াত পাঠ, বাংলা অর্থ, অডিও তেলাওয়াত ডাউনলোড এবং এআই ডিজিটাল অ্যাসিস্ট্যান্ট",
+        ToolCategory.ISLAMIC, Icons.Default.AutoStories
     );
 
     fun getTitle(language: AppLanguage): String {
@@ -414,6 +419,7 @@ enum class ToolType(
                 PRAYER_TIMES -> "Daily 5 time Islamic prayer timetable with countdowns and alerts"
                 SEHRI_IFTAR -> "Daily Ramadan Sehri and Iftar timetable, countdowns, and authentic duas"
                 ISLAMIC_DUAS -> "Collection of daily authentic Quranic & Masnoon duas with meanings"
+                HOLY_QURAN -> "Holy Quran text, audio recitation, Bangla translation, and AI assistant"
             }
         }
     }

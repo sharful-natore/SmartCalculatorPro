@@ -1728,6 +1728,50 @@ fun DistrictSelectorDropdown(
     }
 }
 
+// --- Helper Functions for Time Parsing & Live Countdown ---
+
+fun parseIslamicTimeToCalendar(timeStr: String, offsetMinutes: Int, dayOffset: Int = 0): Calendar {
+    val cal = Calendar.getInstance()
+    try {
+        val sdf = SimpleDateFormat("hh:mm a", Locale.ENGLISH)
+        val date = sdf.parse(timeStr)
+        if (date != null) {
+            val timeCal = Calendar.getInstance().apply { time = date }
+            cal.set(Calendar.HOUR_OF_DAY, timeCal.get(Calendar.HOUR_OF_DAY))
+            cal.set(Calendar.MINUTE, timeCal.get(Calendar.MINUTE))
+            cal.set(Calendar.SECOND, 0)
+            cal.set(Calendar.MILLISECOND, 0)
+            cal.add(Calendar.MINUTE, offsetMinutes)
+            cal.add(Calendar.DAY_OF_YEAR, dayOffset)
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+    return cal
+}
+
+fun formatIslamicCountdown(diffMillis: Long, isBn: Boolean): String {
+    if (diffMillis <= 0) return if (isBn) "০০ঘণ্টা ০০মিনিট ০০সেকেন্ড" else "00h 00m 00s"
+    val totalSeconds = diffMillis / 1000
+    val hours = totalSeconds / 3600
+    val minutes = (totalSeconds % 3600) / 60
+    val seconds = totalSeconds % 60
+
+    val hStr = String.format(Locale.ENGLISH, "%02d", hours)
+    val mStr = String.format(Locale.ENGLISH, "%02d", minutes)
+    val sStr = String.format(Locale.ENGLISH, "%02d", seconds)
+
+    return if (isBn) {
+        val bnDigits = mapOf('0' to '০', '1' to '১', '2' to '২', '3' to '৩', '4' to '৪', '5' to '৫', '6' to '৬', '7' to '৭', '8' to '৮', '9' to '৯')
+        val hBn = hStr.map { bnDigits[it] ?: it }.joinToString("")
+        val mBn = mStr.map { bnDigits[it] ?: it }.joinToString("")
+        val sBn = sStr.map { bnDigits[it] ?: it }.joinToString("")
+        "${hBn}ঘণ্টা ${mBn}মিনিট ${sBn}সেকেন্ড"
+    } else {
+        "${hStr}h ${mStr}m ${sStr}s"
+    }
+}
+
 // --- 3. PRAYER TIMES CARD ---
 @Composable
 fun PrayerTimesCard(
@@ -1737,13 +1781,119 @@ fun PrayerTimesCard(
     val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
     val offset = viewModel.selectedIslamicDistrictOffsetMinutes
 
-    val rawPrayerList = listOf(
-        Triple(if (isBn) "ফজর (Fajr)" else "Fajr", "04:52 AM", true),
-        Triple(if (isBn) "সূর্যোদয় (Sunrise)" else "Sunrise", "06:08 AM", false),
-        Triple(if (isBn) "যোহর (Dhuhr)" else "Dhuhr", "12:15 PM", false),
-        Triple(if (isBn) "আসর (Asr)" else "Asr", "04:35 PM", false),
-        Triple(if (isBn) "মাগরিব (Maghrib)" else "Maghrib", "06:18 PM", false),
-        Triple(if (isBn) "এশা (Isha)" else "Isha", "07:35 PM", false)
+    // Live Ticker for 1-second dynamic countdown updates
+    var currentTimeMillis by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            currentTimeMillis = System.currentTimeMillis()
+            kotlinx.coroutines.delay(1000L)
+        }
+    }
+
+    // Calendar Boundaries for Today & Tomorrow
+    val calFajrToday = parseIslamicTimeToCalendar("04:52 AM", offset, 0)
+    val calSunriseToday = parseIslamicTimeToCalendar("06:08 AM", offset, 0)
+    val calIshraqToday = parseIslamicTimeToCalendar("06:23 AM", offset, 0)
+    val calZawaalToday = parseIslamicTimeToCalendar("12:00 PM", offset, 0)
+    val calDhuhrToday = parseIslamicTimeToCalendar("12:15 PM", offset, 0)
+    val calAsrToday = parseIslamicTimeToCalendar("04:35 PM", offset, 0)
+    val calSunsetForbiddenToday = parseIslamicTimeToCalendar("06:03 PM", offset, 0)
+    val calMaghribToday = parseIslamicTimeToCalendar("06:18 PM", offset, 0)
+    val calIshaToday = parseIslamicTimeToCalendar("07:35 PM", offset, 0)
+
+    val calFajrTomorrow = parseIslamicTimeToCalendar("04:52 AM", offset, 1)
+
+    // Current Time in Millis
+    val nowMillis = currentTimeMillis
+
+    // Determine Active Waqt or Forbidden Period
+    val (currentNameBn, currentNameEn, currentEndTimeMillis, nextNameBn, nextNameEn, nextStartTimeMillis, isForbidden, activeIndex) = when {
+        nowMillis < calFajrToday.timeInMillis -> {
+            Octuple(
+                "এশা (Isha)", "Isha", calFajrToday.timeInMillis,
+                "ফজর (Fajr)", "Fajr", calFajrToday.timeInMillis,
+                false, 7
+            )
+        }
+        nowMillis < calSunriseToday.timeInMillis -> {
+            Octuple(
+                "ফজর (Fajr)", "Fajr", calSunriseToday.timeInMillis,
+                "⚠️ সূর্যোদয় (নিষিদ্ধ সময়)", "⚠️ Sunrise (Forbidden Time)", calSunriseToday.timeInMillis,
+                false, 0
+            )
+        }
+        nowMillis < calIshraqToday.timeInMillis -> {
+            Octuple(
+                "⚠️ সূর্যোদয়কাল (নিষিদ্ধ সময়)", "⚠️ Sunrise (Forbidden Time)", calIshraqToday.timeInMillis,
+                "ইশরাক ও যোহর", "Ishraq & Dhuhr", calIshraqToday.timeInMillis,
+                true, 1
+            )
+        }
+        nowMillis < calZawaalToday.timeInMillis -> {
+            Octuple(
+                "ইশরাক / চাশতের সময়", "Ishraq / Duha Time", calZawaalToday.timeInMillis,
+                "⚠️ জাওয়াল (নিষিদ্ধ সময়)", "⚠️ Zawaal (Forbidden Time)", calZawaalToday.timeInMillis,
+                false, 2
+            )
+        }
+        nowMillis < calDhuhrToday.timeInMillis -> {
+            Octuple(
+                "⚠️ ঠিক দুপুর / জাওয়াল (নিষিদ্ধ সময়)", "⚠️ Zawaal (Forbidden Time)", calDhuhrToday.timeInMillis,
+                "যোহর (Dhuhr)", "Dhuhr", calDhuhrToday.timeInMillis,
+                true, 3
+            )
+        }
+        nowMillis < calAsrToday.timeInMillis -> {
+            Octuple(
+                "যোহর (Dhuhr)", "Dhuhr", calAsrToday.timeInMillis,
+                "আসর (Asr)", "Asr", calAsrToday.timeInMillis,
+                false, 4
+            )
+        }
+        nowMillis < calSunsetForbiddenToday.timeInMillis -> {
+            Octuple(
+                "আসর (Asr)", "Asr", calSunsetForbiddenToday.timeInMillis,
+                "⚠️ সূর্যাস্তকাল (নিষিদ্ধ সময়)", "⚠️ Sunset (Forbidden Time)", calSunsetForbiddenToday.timeInMillis,
+                false, 5
+            )
+        }
+        nowMillis < calMaghribToday.timeInMillis -> {
+            Octuple(
+                "⚠️ সূর্যাস্তকাল (নিষিদ্ধ সময়)", "⚠️ Sunset (Forbidden Time)", calMaghribToday.timeInMillis,
+                "মাগরিব (Maghrib)", "Maghrib", calMaghribToday.timeInMillis,
+                true, 6
+            )
+        }
+        nowMillis < calIshaToday.timeInMillis -> {
+            Octuple(
+                "মাগরিব (Maghrib)", "Maghrib", calIshaToday.timeInMillis,
+                "এশা (Isha)", "Isha", calIshaToday.timeInMillis,
+                false, 7
+            )
+        }
+        else -> {
+            Octuple(
+                "এশা (Isha)", "Isha", calFajrTomorrow.timeInMillis,
+                "ফজর (Fajr)", "Fajr", calFajrTomorrow.timeInMillis,
+                false, 7
+            )
+        }
+    }
+
+    val currentRemainingMillis = maxOf(0L, currentEndTimeMillis - nowMillis)
+    val nextCountdownMillis = maxOf(0L, nextStartTimeMillis - nowMillis)
+
+    // Schedule items list (Includes 5 Waqts + 3 Forbidden Times)
+    val scheduleItems = listOf(
+        ScheduleItem("ফজর (Fajr)", "Fajr", "04:52 AM", false, null),
+        ScheduleItem("⚠️ সূর্যোদয় (নিষিদ্ধ সময়)", "⚠️ Sunrise (Forbidden)", "06:08 AM - 06:23 AM", true, "সূর্য ওঠার পর ১৫ মিনিট নামাজ পড়া নিষেধ"),
+        ScheduleItem("ইশরাক / চাশতের সময়", "Ishraq / Duha", "06:23 AM", false, "নফল ইবাদতের সময়"),
+        ScheduleItem("⚠️ ঠিক দুপুর / জাওয়াল (নিষিদ্ধ সময়)", "⚠️ Midday / Zawaal (Forbidden)", "12:00 PM - 12:15 PM", true, "সূর্য ঠিক মাথার উপরে থাকলে নামাজ নিষেধ"),
+        ScheduleItem("যোহর (Dhuhr)", "Dhuhr", "12:15 PM", false, null),
+        ScheduleItem("আসর (Asr)", "Asr", "04:35 PM", false, null),
+        ScheduleItem("⚠️ সূর্যাস্তকাল (নিষিদ্ধ সময়)", "⚠️ Sunset (Forbidden)", "06:03 PM - 06:18 PM", true, "সূর্যাস্তের সময় নামাজ নিষেধ (ঐ দিনের আসর ছাড়া)"),
+        ScheduleItem("মাগরিব (Maghrib)", "Maghrib", "06:18 PM", false, null),
+        ScheduleItem("এশা (Isha)", "Isha", "07:35 PM", false, null)
     )
 
     Card(
@@ -1756,6 +1906,7 @@ fun PrayerTimesCard(
                 .fillMaxWidth()
                 .padding(20.dp)
         ) {
+            // Header
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -1763,7 +1914,7 @@ fun PrayerTimesCard(
             ) {
                 Column {
                     Text(
-                        text = if (isBn) "নামাজের সময়সূচি" else "Daily Prayer Times",
+                        text = if (isBn) "নামাজের সময়সূচি ও কাউন্টডাউন" else "Prayer Times & Live Countdown",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = themeColors.displayText
@@ -1780,86 +1931,233 @@ fun PrayerTimesCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Current Prayer Highlight Box
+            // Dynamic Active Status & Countdown Highlight Box
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(14.dp),
-                colors = CardDefaults.cardColors(containerColor = themeColors.buttonEqualBg)
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (isForbidden) Color(0xFFEF4444) else themeColors.buttonEqualBg
+                )
             ) {
-                Row(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(14.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(16.dp)
                 ) {
-                    Column {
-                        Text(
-                            text = if (isBn) "পরবর্তী সালাত: যোহর (Dhuhr)" else "Next Prayer: Dhuhr",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                        Text(
-                            text = if (isBn) "সময় সমন্বয়: ${if (offset >= 0) "+$offset" else "$offset"} মি." else "District Offset: ${if (offset >= 0) "+$offset" else "$offset"} mins",
-                            fontSize = 11.sp,
-                            color = Color.White.copy(alpha = 0.85f),
-                            modifier = Modifier.padding(top = 2.dp)
-                        )
-                    }
-
-                    Text(
-                        text = adjustIslamicTime("12:15 PM", offset),
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = Color.White
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // 5 Waqt Timetable List
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                rawPrayerList.forEach { (name, baseTime, isNext) ->
-                    val adjustedTime = adjustIslamicTime(baseTime, offset)
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(if (isNext) themeColors.buttonEqualBg.copy(alpha = 0.12f) else themeColors.background)
-                            .padding(horizontal = 14.dp, vertical = 10.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
-                                imageVector = if (name.contains("সূর্যোদয়") || name.contains("Sunrise")) Icons.Default.WbSunny else Icons.Default.Schedule,
+                                imageVector = if (isForbidden) Icons.Default.Warning else Icons.Default.Timer,
                                 contentDescription = null,
-                                tint = if (isNext) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.6f),
-                                modifier = Modifier.size(18.dp)
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
                             )
-                            Spacer(modifier = Modifier.width(10.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = name,
+                                text = if (isBn) "বর্তমান: ${if (isForbidden) currentNameBn else currentNameBn}" else "Current: ${if (isForbidden) currentNameEn else currentNameEn}",
                                 fontSize = 14.sp,
-                                fontWeight = if (isNext) FontWeight.Bold else FontWeight.Medium,
-                                color = if (isNext) themeColors.buttonEqualBg else themeColors.displayText
+                                fontWeight = FontWeight.ExtraBold,
+                                color = Color.White
                             )
                         }
 
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = Color.White.copy(alpha = 0.25f)
+                        ) {
+                            Text(
+                                text = if (isForbidden) (if (isBn) "⚠️ নিষিদ্ধ সময়" else "Forbidden") else (if (isBn) "সক্রিয় ওয়াক্ত" else "Active"),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Remaining time for current state
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(
-                            text = adjustedTime,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (isNext) themeColors.buttonEqualBg else themeColors.displayText
+                            text = if (isBn)
+                                "${if (isForbidden) "নিষিদ্ধ সময় শেষ হতে বাকি:" else "চলতি ওয়াক্তের বাকি সময়:"}"
+                            else
+                                "${if (isForbidden) "Forbidden Time Ends In:" else "Current Waqt Ends In:"}",
+                            fontSize = 12.sp,
+                            color = Color.White.copy(alpha = 0.9f)
                         )
+                        Text(
+                            text = formatIslamicCountdown(currentRemainingMillis, isBn),
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Color.White
+                        )
+                    }
+
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        color = Color.White.copy(alpha = 0.25f)
+                    )
+
+                    // Countdown to next waqt/event
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (isBn) "পরবর্তী: ${if (isBn) nextNameBn else nextNameEn}" else "Next: ${if (isBn) nextNameBn else nextNameEn}",
+                            fontSize = 12.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White.copy(alpha = 0.95f)
+                        )
+                        Text(
+                            text = formatIslamicCountdown(nextCountdownMillis, isBn),
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Color.White
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Timetable Header Label
+            Text(
+                text = if (isBn) "৫ ওয়াক্ত নামাজ ও নিষিদ্ধ সময়সূচি" else "5 Waqt Prayer & Forbidden Times",
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+                color = themeColors.displayText,
+                modifier = Modifier.padding(bottom = 10.dp)
+            )
+
+            // Timetable List
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                scheduleItems.forEachIndexed { idx, item ->
+                    val isActive = (idx == activeIndex)
+                    val adjustedTimeStr = if (item.timeStr.contains("-")) {
+                        val parts = item.timeStr.split("-").map { it.trim() }
+                        "${adjustIslamicTime(parts[0], offset)} - ${adjustIslamicTime(parts[1], offset)}"
+                    } else {
+                        adjustIslamicTime(item.timeStr, offset)
+                    }
+
+                    Card(
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = when {
+                                isActive && item.isForbidden -> Color(0xFFEF4444).copy(alpha = 0.18f)
+                                isActive -> themeColors.buttonEqualBg.copy(alpha = 0.15f)
+                                item.isForbidden -> Color(0xFFF59E0B).copy(alpha = 0.08f)
+                                else -> themeColors.background
+                            }
+                        ),
+                        border = if (isActive) BorderStroke(1.5.dp, if (item.isForbidden) Color(0xFFEF4444) else themeColors.buttonEqualBg) else null,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 14.dp, vertical = 11.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = when {
+                                            item.isForbidden -> Icons.Default.Block
+                                            item.nameBn.contains("সূর্যোদয়") || item.nameEn.contains("Sunrise") -> Icons.Default.WbSunny
+                                            else -> Icons.Default.Schedule
+                                        },
+                                        contentDescription = null,
+                                        tint = when {
+                                            item.isForbidden -> Color(0xFFEF4444)
+                                            isActive -> themeColors.buttonEqualBg
+                                            else -> themeColors.displayText.copy(alpha = 0.6f)
+                                        },
+                                        modifier = Modifier.size(17.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = if (isBn) item.nameBn else item.nameEn,
+                                        fontSize = 13.5.sp,
+                                        fontWeight = if (isActive || item.isForbidden) FontWeight.Bold else FontWeight.Medium,
+                                        color = when {
+                                            item.isForbidden -> Color(0xFFDC2626)
+                                            isActive -> themeColors.buttonEqualBg
+                                            else -> themeColors.displayText
+                                        }
+                                    )
+                                    if (isActive) {
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Surface(
+                                            shape = RoundedCornerShape(8.dp),
+                                            color = if (item.isForbidden) Color(0xFFEF4444) else themeColors.buttonEqualBg
+                                        ) {
+                                            Text(
+                                                text = if (isBn) "সক্রিয়" else "Active",
+                                                fontSize = 9.5.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = Color.White,
+                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                            )
+                                        }
+                                    }
+                                }
+
+                                if (item.noteBn != null) {
+                                    Text(
+                                        text = if (isBn) item.noteBn else (item.noteEn ?: ""),
+                                        fontSize = 10.5.sp,
+                                        color = if (item.isForbidden) Color(0xFFDC2626).copy(alpha = 0.85f) else themeColors.displayText.copy(alpha = 0.55f),
+                                        modifier = Modifier.padding(start = 25.dp, top = 2.dp)
+                                    )
+                                }
+                            }
+
+                            Text(
+                                text = adjustedTimeStr,
+                                fontSize = 13.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = when {
+                                    item.isForbidden -> Color(0xFFDC2626)
+                                    isActive -> themeColors.buttonEqualBg
+                                    else -> themeColors.displayText
+                                }
+                            )
+                        }
                     }
                 }
             }
         }
     }
 }
+
+private data class ScheduleItem(
+    val nameBn: String,
+    val nameEn: String,
+    val timeStr: String,
+    val isForbidden: Boolean,
+    val noteBn: String?,
+    val noteEn: String? = null
+)
+
+private data class Octuple<A, B, C, D, E, F, G, H>(
+    val first: A, val second: B, val third: C,
+    val fourth: D, val fifth: E, val sixth: F,
+    val seventh: G, val eighth: H
+)
 
 // --- 4. SEHRI & IFTAR CARD ---
 @Composable
@@ -1869,6 +2167,59 @@ fun SehriIftarCard(
 ) {
     val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
     val offset = viewModel.selectedIslamicDistrictOffsetMinutes
+
+    // Live Ticker for 1-second dynamic countdown updates
+    var currentTimeMillis by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            currentTimeMillis = System.currentTimeMillis()
+            kotlinx.coroutines.delay(1000L)
+        }
+    }
+
+    // Calendar Boundaries
+    val calSehriToday = parseIslamicTimeToCalendar("04:46 AM", offset, 0)
+    val calIftarToday = parseIslamicTimeToCalendar("06:18 PM", offset, 0)
+    val calSehriTomorrow = parseIslamicTimeToCalendar("04:46 AM", offset, 1)
+
+    val nowMillis = currentTimeMillis
+
+    // Active Phase Calculation
+    val (statusTitleBn, statusTitleEn, targetLabelBn, targetLabelEn, targetMillis, isFastingHours) = when {
+        nowMillis < calSehriToday.timeInMillis -> {
+            Hexuple(
+                "এখন সেহরির সময়", "Sehri Time Active",
+                "সেহরির শেষ সময় বাকি:", "Sehri Ends In:",
+                calSehriToday.timeInMillis, false
+            )
+        }
+        nowMillis < calIftarToday.timeInMillis -> {
+            Hexuple(
+                "এখন রোজা পালনের সময়", "Fasting Hours Active",
+                "ইফতারের বাকি সময়:", "Iftar Time In:",
+                calIftarToday.timeInMillis, true
+            )
+        }
+        else -> {
+            Hexuple(
+                "আজকের ইফতার সম্পন্ন", "Today's Iftar Completed",
+                "আগামীকালের সেহরি শেষ হতে বাকি:", "Tomorrow's Sehri Ends In:",
+                calSehriTomorrow.timeInMillis, false
+            )
+        }
+    }
+
+    val countdownMillis = maxOf(0L, targetMillis - nowMillis)
+
+    // Fasting Progress during daytime
+    val fastingProgress = if (isFastingHours) {
+        val totalFastingMillis = (calIftarToday.timeInMillis - calSehriToday.timeInMillis).toFloat()
+        val elapsedMillis = (nowMillis - calSehriToday.timeInMillis).toFloat()
+        (elapsedMillis / totalFastingMillis).coerceIn(0f, 1f)
+    } else 0f
+
+    val sehriRemainingMillis = maxOf(0L, calSehriToday.timeInMillis - nowMillis)
+    val iftarRemainingMillis = maxOf(0L, calIftarToday.timeInMillis - nowMillis)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -1905,6 +2256,104 @@ fun SehriIftarCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Dynamic Live Countdown Banner
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A))
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = if (isFastingHours) Icons.Default.WbSunny else Icons.Default.NightsStay,
+                                contentDescription = null,
+                                tint = if (isFastingHours) Color(0xFFF59E0B) else Color(0xFF38BDF8),
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = if (isBn) statusTitleBn else statusTitleEn,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = (if (isFastingHours) Color(0xFFF59E0B) else Color(0xFF38BDF8)).copy(alpha = 0.25f)
+                        ) {
+                            Text(
+                                text = if (isBn) "লাইভ সময়" else "Live",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isFastingHours) Color(0xFFF59E0B) else Color(0xFF38BDF8),
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Text(
+                        text = if (isBn) targetLabelBn else targetLabelEn,
+                        fontSize = 12.sp,
+                        color = Color.White.copy(alpha = 0.8f)
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = formatIslamicCountdown(countdownMillis, isBn),
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = if (isFastingHours) Color(0xFFF59E0B) else Color(0xFF38BDF8)
+                    )
+
+                    if (isFastingHours) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = if (isBn) "রোজার পার্সেন্টেজ" else "Fasting Completed",
+                                fontSize = 11.sp,
+                                color = Color.White.copy(alpha = 0.7f)
+                            )
+                            Text(
+                                text = "${(fastingProgress * 100).toInt()}%",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFF59E0B)
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        LinearProgressIndicator(
+                            progress = { fastingProgress },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(8.dp)
+                                .clip(CircleShape),
+                            color = Color(0xFFF59E0B),
+                            trackColor = Color.White.copy(alpha = 0.15f)
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Side-by-Side Timing Cards
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -1928,11 +2377,26 @@ fun SehriIftarCard(
                         )
                         Text(
                             text = adjustIslamicTime("04:46 AM", offset),
-                            fontSize = 20.sp,
+                            fontSize = 19.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF38BDF8),
                             modifier = Modifier.padding(top = 4.dp)
                         )
+                        if (nowMillis < calSehriToday.timeInMillis) {
+                            Surface(
+                                shape = RoundedCornerShape(10.dp),
+                                color = Color(0xFF38BDF8).copy(alpha = 0.2f),
+                                modifier = Modifier.padding(top = 6.dp)
+                            ) {
+                                Text(
+                                    text = formatIslamicCountdown(sehriRemainingMillis, isBn),
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF38BDF8),
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
                     }
                 }
 
@@ -1955,11 +2419,26 @@ fun SehriIftarCard(
                         )
                         Text(
                             text = adjustIslamicTime("06:18 PM", offset),
-                            fontSize = 20.sp,
+                            fontSize = 19.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFFF59E0B),
                             modifier = Modifier.padding(top = 4.dp)
                         )
+                        if (nowMillis in calSehriToday.timeInMillis until calIftarToday.timeInMillis) {
+                            Surface(
+                                shape = RoundedCornerShape(10.dp),
+                                color = Color(0xFFF59E0B).copy(alpha = 0.2f),
+                                modifier = Modifier.padding(top = 6.dp)
+                            ) {
+                                Text(
+                                    text = formatIslamicCountdown(iftarRemainingMillis, isBn),
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFFF59E0B),
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -2027,6 +2506,11 @@ fun SehriIftarCard(
         }
     }
 }
+
+private data class Hexuple<A, B, C, D, E, F>(
+    val first: A, val second: B, val third: C,
+    val fourth: D, val fifth: E, val sixth: F
+)
 
 // --- 5. ISLAMIC DUAS & VIRTUOUS AMAL (সমৃদ্ধ দোয়া ও আমল) ---
 
