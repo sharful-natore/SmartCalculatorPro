@@ -1954,7 +1954,9 @@ fun ToolDetailView(
     val finalModifier = if (toolType != com.example.data.model.ToolType.WEATHER &&
                           toolType != com.example.data.model.ToolType.MARKET_LIST &&
                           toolType != com.example.data.model.ToolType.NOTES_CHECKLIST &&
-                          toolType != com.example.data.model.ToolType.WORLD_CLOCK) {
+                          toolType != com.example.data.model.ToolType.WORLD_CLOCK &&
+                          toolType != com.example.data.model.ToolType.HOLY_QURAN &&
+                          toolType != com.example.data.model.ToolType.NAMAZ_EDUCATION) {
         baseModifier.verticalScroll(scrollState)
     } else {
         baseModifier

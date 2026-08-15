@@ -54,11 +54,11 @@ fun QuranScreen(
     val aiDialogVisible by viewModel.aiDialogVisible.collectAsStateWithLifecycle()
     val storageDialogVisible by viewModel.storageDialogVisible.collectAsStateWithLifecycle()
 
-    // Cyan/Teal Palette for Quran Module
-    val cyanPrimary = Color(0xFF00838F)
-    val cyanLight = Color(0xFFE0F7FA)
-    val cyanDark = Color(0xFF004D40)
-    val cyanAccent = Color(0xFF00ACC1)
+    // Dynamic theme-derived palette matching main app theme
+    val cyanPrimary = themeColors.buttonEqualBg
+    val cyanLight = if (themeColors.isDark) themeColors.buttonNormalBg else themeColors.buttonEqualBg.copy(alpha = 0.12f)
+    val cyanDark = if (themeColors.isDark) themeColors.background else themeColors.buttonEqualBg.copy(alpha = 0.85f)
+    val cyanAccent = themeColors.buttonEqualBg
 
     Scaffold(
         topBar = {

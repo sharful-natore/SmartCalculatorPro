@@ -57,9 +57,10 @@ fun SurahDetailScreen(
 
     val listState = rememberLazyListState()
 
-    val cyanPrimary = Color(0xFF00838F)
-    val cyanLight = Color(0xFFE0F7FA)
-    val cyanDark = Color(0xFF004D40)
+    // Dynamic theme-derived palette matching main app theme
+    val cyanPrimary = themeColors.buttonEqualBg
+    val cyanLight = if (themeColors.isDark) themeColors.buttonNormalBg else themeColors.buttonEqualBg.copy(alpha = 0.12f)
+    val cyanDark = if (themeColors.isDark) themeColors.background else themeColors.buttonEqualBg.copy(alpha = 0.85f)
 
     // Load ayahs when screen opens
     LaunchedEffect(surah.number) {
