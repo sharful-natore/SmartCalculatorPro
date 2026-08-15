@@ -13,6 +13,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -876,64 +877,70 @@ fun CalculatorScreen(
                                 )
                             }
                         } else {
-                            LazyColumn(
+                            Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .heightIn(min = 250.dp, max = 480.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp),
-                                contentPadding = PaddingValues(vertical = 4.dp)
+                                    .heightIn(min = 200.dp, max = 450.dp)
+                                    .verticalScroll(rememberScrollState())
                             ) {
-                                items(calcHistory) { entry ->
-                                    Card(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clickable {
-                                                viewModel.selectHistoryItem(entry)
-                                                showCalculatorHistoryOverlay = false
-                                            },
-                                        shape = RoundedCornerShape(12.dp),
-                                        colors = CardDefaults.cardColors(
-                                            containerColor = themeColors.background.copy(alpha = 0.8f)
-                                        )
-                                    ) {
-                                        Row(
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    calcHistory.forEach { entry ->
+                                        Card(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .padding(horizontal = 14.dp, vertical = 12.dp),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
+                                                .clickable {
+                                                    viewModel.selectHistoryItem(entry)
+                                                    showCalculatorHistoryOverlay = false
+                                                },
+                                            shape = RoundedCornerShape(12.dp),
+                                            colors = CardDefaults.cardColors(
+                                                containerColor = themeColors.background.copy(alpha = 0.8f)
+                                            )
                                         ) {
-                                            Column(modifier = Modifier.weight(1f)) {
-                                                Text(
-                                                    text = entry.expression,
-                                                    fontSize = 15.sp,
-                                                    fontFamily = FontFamily.Monospace,
-                                                    color = themeColors.displayExpressionText
-                                                )
-                                                Spacer(modifier = Modifier.height(2.dp))
-                                                Text(
-                                                    text = "= ${entry.result}",
-                                                    fontSize = 17.sp,
-                                                    fontFamily = FontFamily.Monospace,
-                                                    fontWeight = FontWeight.Bold,
-                                                    color = themeColors.displayText
-                                                )
-                                                if (!entry.customName.isNullOrBlank()) {
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Column(modifier = Modifier.weight(1f)) {
+                                                    Text(
+                                                        text = entry.expression,
+                                                        fontSize = 15.sp,
+                                                        fontFamily = FontFamily.Monospace,
+                                                        color = themeColors.displayExpressionText
+                                                    )
                                                     Spacer(modifier = Modifier.height(2.dp))
                                                     Text(
-                                                        text = entry.customName,
-                                                        fontSize = 12.sp,
-                                                        color = themeColors.buttonEqualBg,
-                                                        fontWeight = FontWeight.Medium
+                                                        text = "= ${entry.result}",
+                                                        fontSize = 17.sp,
+                                                        fontFamily = FontFamily.Monospace,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = themeColors.displayText
                                                     )
+                                                    if (!entry.customName.isNullOrBlank()) {
+                                                        Spacer(modifier = Modifier.height(2.dp))
+                                                        Text(
+                                                            text = entry.customName,
+                                                            fontSize = 12.sp,
+                                                            color = themeColors.buttonEqualBg,
+                                                            fontWeight = FontWeight.Medium
+                                                        )
+                                                    }
                                                 }
+                                                Icon(
+                                                    imageVector = Icons.Default.ArrowForward,
+                                                    contentDescription = "Load",
+                                                    tint = themeColors.buttonEqualBg,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
                                             }
-                                            Icon(
-                                                imageVector = Icons.Default.ArrowForward,
-                                                contentDescription = "Load",
-                                                tint = themeColors.buttonEqualBg,
-                                                modifier = Modifier.size(20.dp)
-                                            )
                                         }
                                     }
                                 }

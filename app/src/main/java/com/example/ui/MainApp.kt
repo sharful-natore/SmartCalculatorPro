@@ -2369,18 +2369,7 @@ fun MainContent(
 
     if (viewModel.showCalendarDialog) {
         var isCalMaximized by remember { mutableStateOf(false) }
-        var resetToTodayTrigger by remember { mutableStateOf(0) }
         val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
-
-        val todayDateString = remember {
-            val sdf = java.text.SimpleDateFormat("dd MMMM, yyyy", if (isBn) java.util.Locale("bn", "BD") else java.util.Locale.US)
-            sdf.format(java.util.Date())
-        }
-
-        val todayButtonLabel = remember {
-            val sdf = java.text.SimpleDateFormat("d MMM", if (isBn) java.util.Locale("bn", "BD") else java.util.Locale.US)
-            sdf.format(java.util.Date())
-        }
 
         Dialog(
             onDismissRequest = { viewModel.showCalendarDialog = false },
@@ -2403,7 +2392,7 @@ fun MainContent(
                         .fillMaxSize()
                         .padding(12.dp)
                 ) {
-                    // Titlebar with Today Date Button and Window Controls
+                    // Titlebar with Window Controls
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -2429,45 +2418,12 @@ fun MainContent(
                                     modifier = Modifier.size(22.dp)
                                 )
                             }
-                            Column {
-                                Text(
-                                    text = if (isBn) "কুইক ক্যালেন্ডার" else "Quick Calendar",
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = themeColors.displayText
-                                )
-                                Text(
-                                    text = todayDateString,
-                                    fontSize = 11.sp,
-                                    color = themeColors.buttonEqualBg,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.width(4.dp))
-
-                            // Today Button styled as date button
-                            Button(
-                                onClick = { resetToTodayTrigger++ },
-                                colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
-                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                                shape = RoundedCornerShape(12.dp),
-                                modifier = Modifier.height(32.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Today,
-                                    contentDescription = "Today",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(14.dp)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = todayButtonLabel,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White
-                                )
-                            }
+                            Text(
+                                text = if (isBn) "কুইক ক্যালেন্ডার" else "Quick Calendar",
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.displayText
+                            )
                         }
 
                         Windows11TitlebarButtons(
@@ -2491,8 +2447,7 @@ fun MainContent(
                     ) {
                         com.example.ui.screens.MultiCalendarCard(
                             viewModel = viewModel,
-                            themeColors = themeColors,
-                            resetToTodayTrigger = resetToTodayTrigger
+                            themeColors = themeColors
                         )
                     }
                 }
@@ -4285,13 +4240,13 @@ fun Windows11TitlebarButtons(
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        // 1. Windows 11 Minimize Button (-)
+        // 1. Minimize Button (-)
         Box(
             modifier = Modifier
-                .size(width = 38.dp, height = 30.dp)
-                .clip(RoundedCornerShape(6.dp))
+                .size(32.dp)
+                .clip(CircleShape)
                 .background(themeColors.displayText.copy(alpha = 0.08f))
                 .clickable(onClick = onMinimize),
             contentAlignment = Alignment.Center
@@ -4306,11 +4261,11 @@ fun Windows11TitlebarButtons(
             }
         }
 
-        // 2. Windows 11 Maximize / Restore Button (▢ / ❐)
+        // 2. Maximize / Restore Button (▢ / ❐)
         Box(
             modifier = Modifier
-                .size(width = 38.dp, height = 30.dp)
-                .clip(RoundedCornerShape(6.dp))
+                .size(32.dp)
+                .clip(CircleShape)
                 .background(themeColors.displayText.copy(alpha = 0.08f))
                 .clickable(onClick = onMaximizeToggle),
             contentAlignment = Alignment.Center
@@ -4344,11 +4299,11 @@ fun Windows11TitlebarButtons(
             }
         }
 
-        // 3. Windows 11 Close Button (✕) with Windows Red Accent
+        // 3. Close Button (✕) with Windows Red Accent
         Box(
             modifier = Modifier
-                .size(width = 38.dp, height = 30.dp)
-                .clip(RoundedCornerShape(6.dp))
+                .size(32.dp)
+                .clip(CircleShape)
                 .background(Color(0xFFE81123))
                 .clickable(onClick = onClose),
             contentAlignment = Alignment.Center
