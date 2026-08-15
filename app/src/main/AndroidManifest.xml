@@ -41,7 +41,7 @@
         <activity
             android:name=".QuickCalculatorActivity"
             android:exported="true"
-            android:label="@string/shortcut_calculator"
+            android:label="Quick Calculator"
             android:theme="@style/Theme.TransparentDialog"
             android:excludeFromRecents="true"
             android:taskAffinity=""
@@ -50,7 +50,7 @@
         <activity
             android:name=".QuickCalendarActivity"
             android:exported="true"
-            android:label="@string/shortcut_calendar"
+            android:label="Quick Calendar"
             android:theme="@style/Theme.TransparentDialog"
             android:excludeFromRecents="true"
             android:taskAffinity=""
