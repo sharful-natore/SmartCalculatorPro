@@ -815,15 +815,8 @@ fun CalculatorScreen(
                 }
             }
 
-            // Calculator History Overlay dropdown
-            androidx.compose.animation.AnimatedVisibility(
-                visible = showCalculatorHistoryOverlay,
-                enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
-                exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut(),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .align(Alignment.TopCenter)
-            ) {
+            // Calculator History Dialog popup
+            if (showCalculatorHistoryOverlay) {
                 val historyEntries by viewModel.historyList.collectAsStateWithLifecycle()
                 val calcHistory = remember(historyEntries) {
                     historyEntries.filter { 
@@ -831,18 +824,10 @@ fun CalculatorScreen(
                     }
                 }
 
-                Surface(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clip(RoundedCornerShape(28.dp)),
-                    color = themeColors.cardBg,
-                    tonalElevation = 8.dp
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(14.dp)
-                    ) {
+                AlertDialog(
+                    onDismissRequest = { showCalculatorHistoryOverlay = false },
+                    containerColor = themeColors.cardBg,
+                    title = {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -853,43 +838,40 @@ fun CalculatorScreen(
                                     imageVector = Icons.Default.History,
                                     contentDescription = null,
                                     tint = themeColors.buttonEqualBg,
-                                    modifier = Modifier.size(20.dp)
+                                    modifier = Modifier.size(24.dp)
                                 )
-                                Spacer(modifier = Modifier.width(8.dp))
+                                Spacer(modifier = Modifier.width(10.dp))
                                 Text(
                                     text = if (isBn) "ক্যালকুলেটর হিস্টোরি" else "Calculator History",
                                     fontWeight = FontWeight.Bold,
-                                    fontSize = 15.sp,
+                                    fontSize = 18.sp,
                                     color = themeColors.displayText
                                 )
                             }
                             IconButton(
                                 onClick = { showCalculatorHistoryOverlay = false },
-                                modifier = Modifier.size(28.dp)
+                                modifier = Modifier.size(32.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Close,
                                     contentDescription = "Close",
                                     tint = themeColors.displayText,
-                                    modifier = Modifier.size(18.dp)
+                                    modifier = Modifier.size(20.dp)
                                 )
                             }
                         }
-                        HorizontalDivider(
-                            color = themeColors.displayText.copy(alpha = 0.1f),
-                            modifier = Modifier.padding(vertical = 6.dp)
-                        )
-
+                    },
+                    text = {
                         if (calcHistory.isEmpty()) {
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .weight(1f),
+                                    .height(200.dp),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
                                     text = if (isBn) "কোন ক্যালকুলেটর ইতিহাস পাওয়া যায়নি" else "No calculator history yet",
-                                    fontSize = 13.sp,
+                                    fontSize = 14.sp,
                                     color = themeColors.displayText.copy(alpha = 0.6f)
                                 )
                             }
@@ -897,8 +879,9 @@ fun CalculatorScreen(
                             LazyColumn(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .weight(1f),
-                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                                    .heightIn(min = 250.dp, max = 480.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                contentPadding = PaddingValues(vertical = 4.dp)
                             ) {
                                 items(calcHistory) { entry ->
                                     Card(
@@ -910,35 +893,38 @@ fun CalculatorScreen(
                                             },
                                         shape = RoundedCornerShape(12.dp),
                                         colors = CardDefaults.cardColors(
-                                            containerColor = themeColors.background.copy(alpha = 0.7f)
+                                            containerColor = themeColors.background.copy(alpha = 0.8f)
                                         )
                                     ) {
                                         Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                                                .padding(horizontal = 14.dp, vertical = 12.dp),
                                             horizontalArrangement = Arrangement.SpaceBetween,
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
                                             Column(modifier = Modifier.weight(1f)) {
                                                 Text(
                                                     text = entry.expression,
-                                                    fontSize = 14.sp,
+                                                    fontSize = 15.sp,
                                                     fontFamily = FontFamily.Monospace,
                                                     color = themeColors.displayExpressionText
                                                 )
+                                                Spacer(modifier = Modifier.height(2.dp))
                                                 Text(
                                                     text = "= ${entry.result}",
-                                                    fontSize = 16.sp,
+                                                    fontSize = 17.sp,
                                                     fontFamily = FontFamily.Monospace,
                                                     fontWeight = FontWeight.Bold,
                                                     color = themeColors.displayText
                                                 )
                                                 if (!entry.customName.isNullOrBlank()) {
+                                                    Spacer(modifier = Modifier.height(2.dp))
                                                     Text(
                                                         text = entry.customName,
-                                                        fontSize = 11.sp,
-                                                        color = themeColors.buttonEqualBg
+                                                        fontSize = 12.sp,
+                                                        color = themeColors.buttonEqualBg,
+                                                        fontWeight = FontWeight.Medium
                                                     )
                                                 }
                                             }
@@ -946,15 +932,17 @@ fun CalculatorScreen(
                                                 imageVector = Icons.Default.ArrowForward,
                                                 contentDescription = "Load",
                                                 tint = themeColors.buttonEqualBg,
-                                                modifier = Modifier.size(18.dp)
+                                                modifier = Modifier.size(20.dp)
                                             )
                                         }
                                     }
                                 }
                             }
                         }
-                    }
-                }
+                    },
+                    confirmButton = {},
+                    shape = RoundedCornerShape(24.dp)
+                )
             }
         }
 
