@@ -15,7 +15,7 @@
     <shortcut
         android:shortcutId="shortcut_calendar"
         android:enabled="true"
-        android:icon="@drawable/ic_shortcut_dashboard"
+        android:icon="@drawable/ic_shortcut_calendar"
         android:shortcutShortLabel="@string/shortcut_calendar"
         android:shortcutLongLabel="@string/shortcut_calendar">
         <intent

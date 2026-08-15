@@ -47,6 +47,15 @@
             android:taskAffinity=""
             android:windowSoftInputMode="adjustResize" />
 
+        <activity
+            android:name=".QuickCalendarActivity"
+            android:exported="true"
+            android:label="@string/shortcut_calendar"
+            android:theme="@style/Theme.TransparentDialog"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:windowSoftInputMode="adjustResize" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
