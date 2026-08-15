@@ -869,6 +869,30 @@ fun DigitalTasbihCard(
     var showCustomTargetDialog by remember { mutableStateOf(false) }
     var customTargetInput by remember { mutableStateOf("100") }
 
+    val zikirShortNames = remember(isBn) {
+        if (isBn) listOf(
+            "সুবহানাল্লাহ",
+            "আলহামদুলিল্লাহ",
+            "আল্লাহু আকবার",
+            "আস্তাগফিরুল্লাহ",
+            "লা ইলাহা ইল্লাল্লাহ",
+            "সুবহানাল্লাহি...",
+            "লা হাওলা...",
+            "হাসবুনাল্লাহু...",
+            "দরুদ শরীফ"
+        ) else listOf(
+            "SubhanAllah",
+            "Alhamdulillah",
+            "Allahu Akbar",
+            "Astagfirullah",
+            "La ilaha...",
+            "Subhanallahi...",
+            "La hawla...",
+            "Hasbunallahu...",
+            "Darood"
+        )
+    }
+
     val zikirs = remember(isBn) {
         listOf(
             Pair("سُبْحَانَ اللَّهِ", if (isBn) "সুবহানাল্লাহ (আল্লাহ পবিত্র)" else "SubhanAllah (Glory be to Allah)"),
@@ -1104,10 +1128,12 @@ fun DigitalTasbihCard(
                         }
                     ) {
                         Text(
-                            text = item.second.split(" ")[0].replace("(", ""),
+                            text = zikirShortNames.getOrElse(idx) { item.second.split(" ")[0].replace("(", "") },
                             fontSize = 11.5.sp,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                             color = if (isSelected) Color.White else themeColors.displayText,
+                            maxLines = 1,
+                            softWrap = false,
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                         )
                     }
@@ -1118,51 +1144,57 @@ fun DigitalTasbihCard(
 
             // Target Selector (33, 99, 100, 1000, Custom)
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
                     text = if (isBn) "লক্ষ্য (টার্গেট):" else "Target:",
                     fontSize = 12.5.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = themeColors.displayText.copy(alpha = 0.8f)
+                    color = themeColors.displayText.copy(alpha = 0.8f),
+                    maxLines = 1,
+                    softWrap = false
                 )
 
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    listOf(33, 99, 100, 1000).forEach { limit ->
-                        val isSelected = targetCount == limit
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(if (isSelected) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.07f))
-                                .clickable { targetCount = limit }
-                                .padding(horizontal = 10.dp, vertical = 5.dp)
-                        ) {
-                            Text(
-                                text = "$limit",
-                                fontSize = 11.5.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (isSelected) Color.White else themeColors.displayText
-                            )
-                        }
-                    }
-
-                    // Custom Target Button
+                listOf(33, 99, 100, 1000).forEach { limit ->
+                    val isSelected = targetCount == limit
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(10.dp))
-                            .background(if (targetCount !in listOf(33, 99, 100, 1000)) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.07f))
-                            .clickable { showCustomTargetDialog = true }
-                            .padding(horizontal = 8.dp, vertical = 5.dp)
+                            .background(if (isSelected) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.07f))
+                            .clickable { targetCount = limit }
+                            .padding(horizontal = 10.dp, vertical = 6.dp)
                     ) {
                         Text(
-                            text = if (targetCount !in listOf(33, 99, 100, 1000)) "$targetCount" else (if (isBn) "কাস্টম" else "Custom"),
+                            text = "$limit",
                             fontSize = 11.5.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (targetCount !in listOf(33, 99, 100, 1000)) Color.White else themeColors.displayText
+                            color = if (isSelected) Color.White else themeColors.displayText,
+                            maxLines = 1,
+                            softWrap = false
                         )
                     }
+                }
+
+                // Custom Target Button
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(if (targetCount !in listOf(33, 99, 100, 1000)) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.07f))
+                        .clickable { showCustomTargetDialog = true }
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Text(
+                        text = if (targetCount !in listOf(33, 99, 100, 1000)) "$targetCount" else (if (isBn) "কাস্টম" else "Custom"),
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (targetCount !in listOf(33, 99, 100, 1000)) Color.White else themeColors.displayText,
+                        maxLines = 1,
+                        softWrap = false
+                    )
                 }
             }
 

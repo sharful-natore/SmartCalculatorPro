@@ -1741,6 +1741,21 @@ How can I help you today?"""
         pendingFavoriteConfirmAction = null
     }
 
+    fun pinToTop4(key: String, positionIndex: Int = 0) {
+        val currentList = orderedFavoriteTools.toMutableList()
+        val formattedKey = if (key.startsWith("CONV_") || com.example.data.model.ToolType.values().any { it.name == key }) key else "CONV_$key"
+        
+        currentList.remove(formattedKey)
+        currentList.remove(key)
+        if (key.startsWith("CONV_")) {
+            currentList.remove(key.removePrefix("CONV_"))
+        }
+
+        val targetIdx = positionIndex.coerceIn(0, 3.coerceAtMost(currentList.size))
+        currentList.add(targetIdx, formattedKey)
+        saveOrderedFavorites(currentList)
+    }
+
     var pendingUnfavoriteTool by mutableStateOf<String?>(null)
     var pendingUnfavoriteConverter by mutableStateOf<String?>(null)
 

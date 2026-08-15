@@ -100,6 +100,8 @@ import com.example.util.AppLanguage
 import com.example.util.LanguageManager
 import com.example.util.UpdateManager
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import java.io.File
 
 @Composable
@@ -165,6 +167,7 @@ fun MainContent(
     val coroutineScope = rememberCoroutineScope()
 
     var showSettingsDialog by remember { mutableStateOf(false) }
+    var showGlobalBackupDialog by remember { mutableStateOf(false) }
     var showTermsDialog by remember { mutableStateOf(false) }
     var showPrivacyDialog by remember { mutableStateOf(false) }
     var showAboutDialog by remember { mutableStateOf(false) }
@@ -173,6 +176,18 @@ fun MainContent(
     var showAiFabCustomizer by remember { mutableStateOf(false) }
     var showCenterSearchFabCustomizer by remember { mutableStateOf(false) }
     var showVisualThemesDialog by remember { mutableStateOf(false) }
+
+    val globalBackupLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        uri?.let { viewModel.backupHistoryToUri(it) }
+    }
+
+    val globalRestoreLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        uri?.let { viewModel.restoreHistoryFromUri(it) }
+    }
 
     // Quick Calculator Windows Window Controls State
     var isCalcMinimized by remember { mutableStateOf(false) }
@@ -450,6 +465,14 @@ fun MainContent(
                                     onClick = {
                                         isMoreMenuExpanded = false
                                         showSettingsDialog = true
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text(if (viewModel.selectedLanguage == AppLanguage.BENGALI) "অল-ইন-ওয়ান ব্যাকআপ ও রিস্টোর" else "All-in-One Backup & Restore", color = themeColors.displayText) },
+                                    leadingIcon = { Icon(Icons.Default.CloudSync, contentDescription = null, tint = themeColors.buttonEqualBg) },
+                                    onClick = {
+                                        isMoreMenuExpanded = false
+                                        showGlobalBackupDialog = true
                                     }
                                 )
                                 DropdownMenuItem(
@@ -1223,6 +1246,149 @@ fun MainContent(
                 },
                 containerColor = themeColors.cardBg,
                 shape = RoundedCornerShape(16.dp)
+            )
+        }
+
+        // --- Global Backup & Restore Dialog ---
+        if (showGlobalBackupDialog) {
+            val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
+            AlertDialog(
+                onDismissRequest = { showGlobalBackupDialog = false },
+                icon = {
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CloudSync,
+                            contentDescription = null,
+                            tint = themeColors.buttonEqualBg,
+                            modifier = Modifier.size(26.dp)
+                        )
+                    }
+                },
+                title = {
+                    Text(
+                        text = if (isBn) "অল-ইন-ওয়ান ব্যাকআপ ও রিস্টোর" else "All-in-One Global Backup & Restore",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = themeColors.displayText,
+                        textAlign = TextAlign.Center
+                    )
+                },
+                text = {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = if (isBn)
+                                "আপনার অ্যাপের সমস্ত ডেটা (ক্যালকুলেটর হিস্টোরি, বাজার ফর্দ, নোটস, জিকির গণনাকারি, এআই চ্যাট ও পছন্দসমূহ) একটি নিরাপদ ফাইল হিসেবে ব্যাকআপ রাখুন অথবা পূর্বের ব্যাকআপ থেকে রিস্টোর করুন।"
+                            else
+                                "Safely back up or restore all your app data including Calculator history, Market plans, Notes, AI Chats, and Favorites.",
+                            fontSize = 13.sp,
+                            color = themeColors.displayText.copy(alpha = 0.85f),
+                            lineHeight = 19.sp
+                        )
+
+                        Card(
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(containerColor = themeColors.displayBackground)
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text(
+                                    text = if (isBn) "📁 অন্তর্ভুক্ত সমস্ত ডেটা:" else "📁 Included Data Scope:",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.buttonEqualBg
+                                )
+                                val items = if (isBn) listOf(
+                                    "• 🧮 ক্যালকুলেটর হিস্টোরি",
+                                    "• 🛒 বাজারের ফর্দ ও কেনাকাটা",
+                                    "• 📝 সেভ করা নোটস ও খসড়া",
+                                    "• 🤖 এআই চ্যাট হিস্টোরি",
+                                    "• ⭐ পছন্দের টুলস ও কনভার্টার",
+                                    "• 📷 বারকোড স্ক্যান রেকর্ডস"
+                                ) else listOf(
+                                    "• 🧮 Calculator History Log",
+                                    "• 🛒 Market & Grocery Memos",
+                                    "• 📝 Saved Personal Notes",
+                                    "• 🤖 AI Assistant Chat Logs",
+                                    "• ⭐ Favorite Tools & Converters",
+                                    "• 📷 Barcode Scanner Logs"
+                                )
+                                items.forEach { item ->
+                                    Text(
+                                        text = item,
+                                        fontSize = 11.5.sp,
+                                        color = themeColors.displayText.copy(alpha = 0.8f)
+                                    )
+                                }
+                            }
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Button(
+                                onClick = {
+                                    val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+                                    globalBackupLauncher.launch("toolsmate_full_backup_$timestamp.json")
+                                },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Icon(Icons.Default.FileUpload, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Text(
+                                        text = if (isBn) "ব্যাকআপ নিন" else "Export",
+                                        fontSize = 12.5.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+
+                            OutlinedButton(
+                                onClick = {
+                                    globalRestoreLauncher.launch(arrayOf("application/json", "*/*"))
+                                },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Icon(Icons.Default.FileDownload, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Text(
+                                        text = if (isBn) "রিস্টোর করুন" else "Restore",
+                                        fontSize = 12.5.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showGlobalBackupDialog = false }) {
+                        Text(
+                            text = if (isBn) "বন্ধ করুন" else "Close",
+                            color = themeColors.displayText,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                },
+                containerColor = themeColors.cardBg,
+                shape = RoundedCornerShape(18.dp)
             )
         }
 
@@ -2131,38 +2297,113 @@ fun MainContent(
         val action = viewModel.pendingFavoriteConfirmAction!!
         val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
         val isAdding = !action.isCurrentlyFavorite
+        val itemKey = if (action.isTool) action.key else "CONV_${action.key}"
+
         AlertDialog(
             onDismissRequest = { viewModel.dismissPendingFavoriteAction() },
             title = {
                 Text(
-                    text = if (isBn) {
-                        if (isAdding) "প্রিয় তালিকায় যুক্ত করবেন?" else "প্রিয় তালিকা থেকে সরাবেন?"
-                    } else {
-                        if (isAdding) "Add to Favorites?" else "Remove from Favorites?"
-                    },
+                    text = if (isBn) "\"${action.titleBn}\" অপশন" else "\"${action.titleEn}\" Options",
                     fontWeight = FontWeight.Bold,
                     color = themeColors.displayText
                 )
             },
             text = {
-                Text(
-                    text = if (isBn) {
-                        if (isAdding) "\"${action.titleBn}\" কে আপনার প্রিয় তালিকায় যুক্ত করতে চান?"
-                        else "\"${action.titleBn}\" কে প্রিয় তালিকা থেকে সরাতে চান?"
-                    } else {
-                        if (isAdding) "Do you want to add \"${action.titleEn}\" to your favorites?"
-                        else "Do you want to remove \"${action.titleEn}\" from your favorites?"
-                    },
-                    color = themeColors.displayText.copy(alpha = 0.8f)
-                )
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Text(
+                        text = if (isBn) {
+                            if (isAdding) "\"${action.titleBn}\" কে প্রিয় তালিকায় যুক্ত বা ওপরের সেরা ৪টিতে পিন করতে পারেন।"
+                            else "\"${action.titleBn}\" কে প্রিয় তালিকা থেকে সরাতে পারেন।"
+                        } else {
+                            if (isAdding) "Add \"${action.titleEn}\" to favorites or pin to Top 4 on main screen."
+                            else "Remove \"${action.titleEn}\" from your favorites list."
+                        },
+                        fontSize = 13.5.sp,
+                        color = themeColors.displayText.copy(alpha = 0.85f),
+                        lineHeight = 18.sp
+                    )
+
+                    // Pin to Top 4 Section
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = themeColors.displayBackground,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.PushPin,
+                                    contentDescription = null,
+                                    tint = themeColors.buttonEqualBg,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = if (isBn) "📌 সেরা ৪টি প্রাইমারি কার্ডে পিন করুন:" else "📌 Pin to Top 4 Featured Cards:",
+                                    fontSize = 12.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.buttonEqualBg
+                                )
+                            }
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                listOf(
+                                    0 to if (isBn) "১ম স্থানে" else "Pos 1",
+                                    1 to if (isBn) "২য় স্থানে" else "Pos 2",
+                                    2 to if (isBn) "৩য় স্থানে" else "Pos 3",
+                                    3 to if (isBn) "৪র্থ স্থানে" else "Pos 4"
+                                ).forEach { (pos, label) ->
+                                    Button(
+                                        onClick = {
+                                            viewModel.pinToTop4(itemKey, pos)
+                                            viewModel.dismissPendingFavoriteAction()
+                                            val posText = if (isBn) "${pos + 1} নম্বর" else "Pos ${pos + 1}"
+                                            Toast.makeText(
+                                                context,
+                                                if (isBn) "\"${action.titleBn}\" সেরা ৪টির $posText স্থানে পিন হয়েছে!" else "\"${action.titleEn}\" pinned to Top 4 ($posText)!",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        },
+                                        modifier = Modifier.weight(1f),
+                                        shape = RoundedCornerShape(8.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = themeColors.buttonEqualBg.copy(alpha = 0.15f),
+                                            contentColor = themeColors.buttonEqualBg
+                                        ),
+                                        contentPadding = PaddingValues(vertical = 6.dp, horizontal = 2.dp)
+                                    ) {
+                                        Text(
+                                            text = label,
+                                            fontSize = 10.5.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            maxLines = 1,
+                                            softWrap = false
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             },
             confirmButton = {
                 TextButton(onClick = { viewModel.confirmPendingFavoriteAction() }) {
                     Text(
                         text = if (isBn) {
-                            if (isAdding) "যুক্ত করুন" else "সরান"
+                            if (isAdding) "⭐ প্রিয় তালিকায় যোগ" else "🗑️ প্রিয় তালিকা থেকে সরান"
                         } else {
-                            if (isAdding) "Add" else "Remove"
+                            if (isAdding) "⭐ Add to Favorites" else "🗑️ Remove Favorite"
                         },
                         color = if (isAdding) themeColors.buttonEqualBg else Color.Red,
                         fontWeight = FontWeight.Bold
@@ -2180,7 +2421,7 @@ fun MainContent(
             containerColor = themeColors.cardBg,
             titleContentColor = themeColors.displayText,
             textContentColor = themeColors.displayText,
-            shape = RoundedCornerShape(16.dp)
+            shape = RoundedCornerShape(18.dp)
         )
     }
 

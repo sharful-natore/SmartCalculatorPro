@@ -667,36 +667,108 @@ fun DashboardCategoriesView(
 
         // Pending Favorite Add/Remove Confirmation Dialog
         viewModel.pendingFavoriteConfirmAction?.let { action ->
+            val isAdding = !action.isCurrentlyFavorite
+            val itemKey = if (action.isTool) action.key else "CONV_${action.key}"
+            val context = LocalContext.current
+
             AlertDialog(
                 onDismissRequest = { viewModel.dismissPendingFavoriteAction() },
                 title = {
                     Text(
-                        text = if (isBn) "ফেভারিট নিশ্চিতকরণ" else "Favorite Confirmation",
+                        text = if (isBn) "\"${action.titleBn}\" অপশন" else "\"${action.titleEn}\" Options",
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp,
                         color = themeColors.displayText
                     )
                 },
                 text = {
-                    val message = if (isBn) {
-                        if (action.isCurrentlyFavorite) {
-                            "আপনি কি \"${action.titleBn}\" ফেভারিট তালিকা থেকে বাদ দিতে চান?"
-                        } else {
-                            "আপনি কি \"${action.titleBn}\" আপনার ফেভারিট তালিকায় যুক্ত করতে চান?"
-                        }
-                    } else {
-                        if (action.isCurrentlyFavorite) {
-                            "Are you sure you want to remove \"${action.titleEn}\" from favorites?"
-                        } else {
-                            "Do you want to add \"${action.titleEn}\" to your favorites?"
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        Text(
+                            text = if (isBn) {
+                                if (isAdding) "\"${action.titleBn}\" কে প্রিয় তালিকায় যুক্ত বা ওপরের সেরা ৪টিতে পিন করতে পারেন।"
+                                else "\"${action.titleBn}\" কে প্রিয় তালিকা থেকে সরাতে পারেন।"
+                            } else {
+                                if (isAdding) "Add \"${action.titleEn}\" to favorites or pin to Top 4 on main screen."
+                                else "Remove \"${action.titleEn}\" from your favorites list."
+                            },
+                            fontSize = 13.5.sp,
+                            color = themeColors.displayText.copy(alpha = 0.85f),
+                            lineHeight = 18.sp
+                        )
+
+                        // Pin to Top 4 Section
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = themeColors.displayBackground,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.PushPin,
+                                        contentDescription = null,
+                                        tint = themeColors.buttonEqualBg,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Text(
+                                        text = if (isBn) "📌 সেরা ৪টি প্রাইমারি কার্ডে পিন করুন:" else "📌 Pin to Top 4 Featured Cards:",
+                                        fontSize = 12.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = themeColors.buttonEqualBg
+                                    )
+                                }
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    listOf(
+                                        0 to if (isBn) "১ম স্থানে" else "Pos 1",
+                                        1 to if (isBn) "২য় স্থানে" else "Pos 2",
+                                        2 to if (isBn) "৩য় স্থানে" else "Pos 3",
+                                        3 to if (isBn) "৪র্থ স্থানে" else "Pos 4"
+                                    ).forEach { (pos, label) ->
+                                        Button(
+                                            onClick = {
+                                                viewModel.pinToTop4(itemKey, pos)
+                                                viewModel.dismissPendingFavoriteAction()
+                                                val posText = if (isBn) "${pos + 1} নম্বর" else "Pos ${pos + 1}"
+                                                Toast.makeText(
+                                                    context,
+                                                    if (isBn) "\"${action.titleBn}\" সেরা ৪টির $posText স্থানে পিন হয়েছে!" else "\"${action.titleEn}\" pinned to Top 4 ($posText)!",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            },
+                                            modifier = Modifier.weight(1f),
+                                            shape = RoundedCornerShape(8.dp),
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = themeColors.buttonEqualBg.copy(alpha = 0.15f),
+                                                contentColor = themeColors.buttonEqualBg
+                                            ),
+                                            contentPadding = PaddingValues(vertical = 6.dp, horizontal = 2.dp)
+                                        ) {
+                                            Text(
+                                                text = label,
+                                                fontSize = 10.5.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                maxLines = 1,
+                                                softWrap = false
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
-                    Text(
-                        text = message,
-                        fontSize = 14.sp,
-                        color = themeColors.displayText.copy(alpha = 0.85f),
-                        lineHeight = 20.sp
-                    )
                 },
                 confirmButton = {
                     Button(
@@ -705,7 +777,14 @@ fun DashboardCategoriesView(
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg)
                     ) {
-                        Text(text = if (isBn) "হ্যাঁ, নিশ্চিত" else "Yes, Confirm", color = Color.White)
+                        Text(
+                            text = if (isBn) {
+                                if (isAdding) "⭐ প্রিয় তালিকায় যোগ" else "🗑️ প্রিয় তালিকা থেকে সরান"
+                            } else {
+                                if (isAdding) "⭐ Add Favorite" else "🗑️ Remove Favorite"
+                            },
+                            color = Color.White
+                        )
                     }
                 },
                 dismissButton = {
@@ -714,7 +793,7 @@ fun DashboardCategoriesView(
                     }
                 },
                 containerColor = themeColors.cardBg,
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(18.dp)
             )
         }
 
