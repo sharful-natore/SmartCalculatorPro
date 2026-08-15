@@ -1369,6 +1369,7 @@ fun DashboardCategoriesView(
         Spacer(modifier = Modifier.height(12.dp))
 
         // Category Filter Chips
+        val allTools = ToolType.values().toList()
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -1382,23 +1383,24 @@ fun DashboardCategoriesView(
                 isSelected = selectedFilter == null,
                 icon = Icons.Default.Apps,
                 themeColors = themeColors,
+                count = allTools.size,
                 onClick = { viewModel.selectedToolCategoryFilter = null }
             )
 
             ToolCategory.values().forEach { cat ->
+                val catCount = allTools.count { it.category == cat }
                 ToolFilterChipItem(
                     label = cat.getTitle(viewModel.selectedLanguage),
                     isSelected = selectedFilter == cat,
                     icon = cat.icon,
                     themeColors = themeColors,
+                    count = catCount,
                     onClick = {
                         viewModel.selectedToolCategoryFilter = if (selectedFilter == cat) null else cat
                     }
                 )
             }
         }
-
-        val allTools = ToolType.values().toList()
 
         // Tools List Grouped by Category with Smooth Category Switch Animation
         AnimatedContent(
@@ -1527,8 +1529,16 @@ fun DashboardCategoriesView(
                         val categoryTools = currentFilteredTools.filter { it.category == category }
 
                         if (categoryTools.isNotEmpty()) {
-                            // In Overview mode, display top 4 tools per category
-                            val displayedTools = if (isOverviewMode) categoryTools.take(4) else categoryTools
+                            // In Overview mode, display customized top 4 tools per category
+                            val displayedTools = if (isOverviewMode) {
+                                if (categoryTools.size <= 4) categoryTools
+                                else {
+                                    val top4 = viewModel.getCategoryTopTools(category)
+                                    val filteredTop4 = top4.filter { t -> categoryTools.contains(t) }
+                                    val remaining = categoryTools.filter { !filteredTop4.contains(it) }
+                                    (filteredTop4 + remaining).take(4)
+                                }
+                            } else categoryTools
                             val hasMore = isOverviewMode && categoryTools.size > 4
 
                             // Category Header
@@ -1562,16 +1572,19 @@ fun DashboardCategoriesView(
                                         color = themeColors.displayText
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
-                                    Surface(
-                                        shape = RoundedCornerShape(6.dp),
-                                        color = themeColors.displayText.copy(alpha = 0.08f)
+                                    Box(
+                                        modifier = Modifier
+                                            .defaultMinSize(minWidth = 22.dp, minHeight = 22.dp)
+                                            .clip(CircleShape)
+                                            .background(themeColors.buttonEqualBg)
+                                            .padding(horizontal = 6.dp, vertical = 2.dp),
+                                        contentAlignment = Alignment.Center
                                     ) {
                                         Text(
                                             text = if (isBn) "${categoryTools.size}টি" else "${categoryTools.size}",
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = themeColors.displayText.copy(alpha = 0.7f),
-                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                            fontSize = 10.5.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White
                                         )
                                     }
                                 }
@@ -1685,6 +1698,7 @@ fun ToolFilterChipItem(
     isSelected: Boolean,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     themeColors: CalculatorThemeColors,
+    count: Int = 0,
     onClick: () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -1715,6 +1729,27 @@ fun ToolFilterChipItem(
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                 color = if (isSelected) Color.White else themeColors.displayText
             )
+            if (count > 0) {
+                Spacer(modifier = Modifier.width(6.dp))
+                Box(
+                    modifier = Modifier
+                        .defaultMinSize(minWidth = 18.dp, minHeight = 18.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (isSelected) Color.White.copy(alpha = 0.28f)
+                            else themeColors.buttonEqualBg
+                        )
+                        .padding(horizontal = 5.dp, vertical = 1.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "$count",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = Color.White
+                    )
+                }
+            }
         }
     }
 }

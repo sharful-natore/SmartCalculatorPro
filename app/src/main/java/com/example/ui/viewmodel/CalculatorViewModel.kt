@@ -1741,6 +1741,116 @@ How can I help you today?"""
         pendingFavoriteConfirmAction = null
     }
 
+    var categoryTopToolsMap by mutableStateOf<Map<String, List<String>>>(loadCategoryTopToolsMap())
+        private set
+
+    private fun loadCategoryTopToolsMap(): Map<String, List<String>> {
+        val json = sharedPrefs.getString("category_top_tools_map", null)
+        if (json != null) {
+            try {
+                val type = com.squareup.moshi.Types.newParameterizedType(Map::class.java, String::class.java, List::class.java)
+                val adapter = moshi.adapter<Map<String, List<String>>>(type)
+                val res = adapter.fromJson(json)
+                if (res != null) return res
+            } catch (e: Exception) { e.printStackTrace() }
+        }
+        return emptyMap()
+    }
+
+    fun getCategoryTopTools(category: com.example.data.model.ToolCategory): List<com.example.data.model.ToolType> {
+        val allInCat = com.example.data.model.ToolType.values().filter { it.category == category }
+        if (allInCat.size <= 4) return allInCat
+        val savedOrder = categoryTopToolsMap[category.name]
+        if (savedOrder.isNullOrEmpty()) return allInCat.take(4)
+
+        val ordered = mutableListOf<com.example.data.model.ToolType>()
+        savedOrder.forEach { name ->
+            allInCat.find { it.name == name }?.let { ordered.add(it) }
+        }
+        allInCat.forEach { tool ->
+            if (!ordered.contains(tool)) ordered.add(tool)
+        }
+        return ordered.take(4)
+    }
+
+    fun pinToolToCategoryTop4(toolType: com.example.data.model.ToolType, positionIndex: Int) {
+        val cat = toolType.category
+        val allInCat = com.example.data.model.ToolType.values().filter { it.category == cat }
+        if (allInCat.size <= 4) return
+
+        val currentTop4 = getCategoryTopTools(cat).map { it.name }.toMutableList()
+        currentTop4.remove(toolType.name)
+        val idx = positionIndex.coerceIn(0, 3.coerceAtMost(currentTop4.size))
+        currentTop4.add(idx, toolType.name)
+        val top4Limited = currentTop4.take(4)
+
+        val newMap = categoryTopToolsMap.toMutableMap()
+        newMap[cat.name] = top4Limited
+        categoryTopToolsMap = newMap
+
+        try {
+            val type = com.squareup.moshi.Types.newParameterizedType(Map::class.java, String::class.java, List::class.java)
+            val adapter = moshi.adapter<Map<String, List<String>>>(type)
+            val json = adapter.toJson(newMap)
+            sharedPrefs.edit().putString("category_top_tools_map", json).apply()
+        } catch (e: Exception) { e.printStackTrace() }
+    }
+
+    var categoryTopConvertersMap by mutableStateOf<Map<String, List<String>>>(loadCategoryTopConvertersMap())
+        private set
+
+    private fun loadCategoryTopConvertersMap(): Map<String, List<String>> {
+        val json = sharedPrefs.getString("category_top_converters_map", null)
+        if (json != null) {
+            try {
+                val type = com.squareup.moshi.Types.newParameterizedType(Map::class.java, String::class.java, List::class.java)
+                val adapter = moshi.adapter<Map<String, List<String>>>(type)
+                val res = adapter.fromJson(json)
+                if (res != null) return res
+            } catch (e: Exception) { e.printStackTrace() }
+        }
+        return emptyMap()
+    }
+
+    fun getCategoryTopConverters(category: com.example.data.model.ConverterCategory): List<com.example.data.model.ConverterType> {
+        val allInCat = com.example.data.model.ConverterType.values().filter { it.category == category }
+        if (allInCat.size <= 4) return allInCat
+        val savedOrder = categoryTopConvertersMap[category.name]
+        if (savedOrder.isNullOrEmpty()) return allInCat.take(4)
+
+        val ordered = mutableListOf<com.example.data.model.ConverterType>()
+        savedOrder.forEach { name ->
+            allInCat.find { it.name == name }?.let { ordered.add(it) }
+        }
+        allInCat.forEach { conv ->
+            if (!ordered.contains(conv)) ordered.add(conv)
+        }
+        return ordered.take(4)
+    }
+
+    fun pinConverterToCategoryTop4(converterType: com.example.data.model.ConverterType, positionIndex: Int) {
+        val cat = converterType.category
+        val allInCat = com.example.data.model.ConverterType.values().filter { it.category == cat }
+        if (allInCat.size <= 4) return
+
+        val currentTop4 = getCategoryTopConverters(cat).map { it.name }.toMutableList()
+        currentTop4.remove(converterType.name)
+        val idx = positionIndex.coerceIn(0, 3.coerceAtMost(currentTop4.size))
+        currentTop4.add(idx, converterType.name)
+        val top4Limited = currentTop4.take(4)
+
+        val newMap = categoryTopConvertersMap.toMutableMap()
+        newMap[cat.name] = top4Limited
+        categoryTopConvertersMap = newMap
+
+        try {
+            val type = com.squareup.moshi.Types.newParameterizedType(Map::class.java, String::class.java, List::class.java)
+            val adapter = moshi.adapter<Map<String, List<String>>>(type)
+            val json = adapter.toJson(newMap)
+            sharedPrefs.edit().putString("category_top_converters_map", json).apply()
+        } catch (e: Exception) { e.printStackTrace() }
+    }
+
     fun pinToTop4(key: String, positionIndex: Int = 0) {
         val currentList = orderedFavoriteTools.toMutableList()
         val formattedKey = if (key.startsWith("CONV_") || com.example.data.model.ToolType.values().any { it.name == key }) key else "CONV_$key"
