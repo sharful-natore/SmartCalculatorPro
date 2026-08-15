@@ -358,6 +358,11 @@ enum class ToolType(
         "Holy Quran", "আল-কোরআন (তেলাওয়াত ও অনুবাদ)",
         "সূরা ও আয়াত পাঠ, বাংলা অর্থ, অডিও তেলাওয়াত ডাউনলোড এবং এআই ডিজিটাল অ্যাসিস্ট্যান্ট",
         ToolCategory.ISLAMIC, Icons.Default.AutoStories
+    ),
+    NAMAZ_EDUCATION(
+        "Namaz & Wudu Guide", "পূর্ণাঙ্গ নামাজ ও অজু শিক্ষা",
+        "অজু, তাহারাত, ৫ ওয়াক্ত নামাজ, ওয়াক্তভিত্তিক রাকাতের নিয়ম, জানাজা, ঈদ ও নফল নামাজের চিত্রসহ পূর্ণাঙ্গ শিক্ষা",
+        ToolCategory.ISLAMIC, Icons.Default.MenuBook
     );
 
     fun getTitle(language: AppLanguage): String {
@@ -420,6 +425,7 @@ enum class ToolType(
                 SEHRI_IFTAR -> "Daily Ramadan Sehri and Iftar timetable, countdowns, and authentic duas"
                 ISLAMIC_DUAS -> "Collection of daily authentic Quranic & Masnoon duas with meanings"
                 HOLY_QURAN -> "Holy Quran text, audio recitation, Bangla translation, and AI assistant"
+                NAMAZ_EDUCATION -> "Complete Namaz and Wudu learning guide with Rakat table, step-by-step visual postures, and duas"
             }
         }
     }

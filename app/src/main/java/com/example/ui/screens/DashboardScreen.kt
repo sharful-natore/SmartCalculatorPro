@@ -2102,6 +2102,7 @@ fun ToolDetailView(
             ToolType.SEHRI_IFTAR -> SehriIftarCard(viewModel, themeColors)
             ToolType.ISLAMIC_DUAS -> IslamicDuasCard(viewModel, themeColors)
             ToolType.HOLY_QURAN -> com.example.ui.quran.HolyQuranModuleScreen(themeColors = themeColors, onBackClick = { viewModel.selectedToolType = null })
+            ToolType.NAMAZ_EDUCATION -> com.example.ui.namaz.NamazEducationScreen(themeColors = themeColors, onBackClick = { viewModel.selectedToolType = null })
         }
     }
 }
@@ -2595,6 +2596,15 @@ private fun getToolInfoItems(toolType: ToolType, isBn: Boolean): List<Pair<Strin
         } else {
             listOf(
                 "1. Holy Quran Digital Module" to "Read all 114 Surahs with Arabic script, Bengali translation, stream/download audio recitation, and ask questions to AI Assistant."
+            )
+        }
+        ToolType.NAMAZ_EDUCATION -> if (isBn) {
+            listOf(
+                "১. পূর্ণাঙ্গ নামাজ ও অজু শিক্ষা" to "অজু, তাহারাত, ৫ ওয়াক্ত নামাজ, ওয়াক্তভিত্তিক রাকাতের বিন্যাস, জানাজা, ঈদ ও নফল নামাজের চিত্রসহ বিস্তারিত গাইড।"
+            )
+        } else {
+            listOf(
+                "1. Complete Namaz & Wudu Guide" to "Step-by-step visual guide for Wudu, 5 daily prayers, Rakat breakdown, Janazah, Eid, and optional prayers with Arabic audio recitations."
             )
         }
         ToolType.MARKET_LIST -> if (isBn) {

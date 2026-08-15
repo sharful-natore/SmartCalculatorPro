@@ -7,6 +7,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -511,12 +513,13 @@ fun StorageManagerDialog(
                     )
                     Spacer(modifier = Modifier.height(6.dp))
 
-                    LazyColumn(
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .heightIn(max = 240.dp)
+                            .verticalScroll(rememberScrollState())
                     ) {
-                        items(downloadedSurahs) { surah ->
+                        downloadedSurahs.forEach { surah ->
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -646,7 +649,7 @@ fun AiQuranAssistantDialog(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f)
+                        .height(200.dp)
                         .clip(RoundedCornerShape(10.dp))
                         .background(cyanPrimary.copy(alpha = 0.06f))
                         .padding(12.dp)
@@ -666,15 +669,17 @@ fun AiQuranAssistantDialog(
                             )
                         }
                     } else if (!aiResponse.isNullOrBlank()) {
-                        LazyColumn(modifier = Modifier.fillMaxSize()) {
-                            item {
-                                Text(
-                                    text = aiResponse ?: "",
-                                    fontSize = 13.sp,
-                                    color = themeColors.displayText,
-                                    lineHeight = 18.sp
-                                )
-                            }
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                        ) {
+                            Text(
+                                text = aiResponse ?: "",
+                                fontSize = 13.sp,
+                                color = themeColors.displayText,
+                                lineHeight = 18.sp
+                            )
                         }
                     } else {
                         Text(
