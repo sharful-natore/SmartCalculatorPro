@@ -82,6 +82,10 @@ class MainActivity : ComponentActivity() {
                     viewModel.activeTab = 0
                     viewModel.showCalculatorDialog = true
                 }
+                "calendar" -> {
+                    viewModel.activeTab = 0
+                    viewModel.showCalendarDialog = true
+                }
                 "history" -> {
                     viewModel.activeTab = 3
                 }

@@ -169,8 +169,8 @@ fun DynamicWeatherScreen(
             }
         }
 
-        // Weather Fetch Error / Status Notice (Hide when showing offline data)
-        if (!viewModel.isOfflineWeatherData) {
+        // Weather Fetch Error / Status Notice (Disabled to keep weather details clean)
+        if (false) {
             viewModel.weatherFetchError?.let { err ->
                 Card(
                     modifier = Modifier

@@ -153,6 +153,7 @@ class CalculatorViewModel(
     var showGlobalSearch by mutableStateOf(false)
     var showFavoritesDialog by mutableStateOf(false)
     var showCalculatorDialog by mutableStateOf(false)
+    var showCalendarDialog by mutableStateOf(false)
 
     // Current Active Tab: 0 = Dashboard, 1 = Smart Converter, 2 = Calculator, 3 = History, 4 = Visual Themes
     var activeTab by mutableStateOf(0)
@@ -2109,7 +2110,72 @@ How can I help you today?"""
     var percentValueB by mutableStateOf("200")
     var percentageResultText by mutableStateOf("")
 
+    var scanHistoryList by mutableStateOf<List<com.example.ui.viewmodel.ScanHistoryItem>>(emptyList())
+
+    fun loadScanHistory() {
+        val savedString = sharedPrefs.getString("barcode_scan_history_list", null) ?: ""
+        if (savedString.isBlank()) {
+            scanHistoryList = emptyList()
+            return
+        }
+        val items = mutableListOf<com.example.ui.viewmodel.ScanHistoryItem>()
+        val parts = savedString.split("##RECORD_SPLIT##")
+        for (part in parts) {
+            val fields = part.split("##FIELD_SPLIT##")
+            if (fields.size >= 4) {
+                items.add(
+                    com.example.ui.viewmodel.ScanHistoryItem(
+                        id = fields[0],
+                        value = fields[1],
+                        format = fields[2],
+                        timestamp = fields[3].toLongOrNull() ?: System.currentTimeMillis()
+                    )
+                )
+            }
+        }
+        scanHistoryList = items.sortedByDescending { it.timestamp }
+    }
+
+    fun addScanHistory(value: String, format: String) {
+        if (value.isBlank()) return
+        val filtered = scanHistoryList.filterNot { it.value == value }.toMutableList()
+        filtered.add(
+            0,
+            com.example.ui.viewmodel.ScanHistoryItem(
+                id = java.util.UUID.randomUUID().toString(),
+                value = value,
+                format = format,
+                timestamp = System.currentTimeMillis()
+            )
+        )
+        scanHistoryList = filtered
+        saveScanHistory()
+    }
+
+    fun deleteScanHistory(id: String) {
+        scanHistoryList = scanHistoryList.filterNot { it.id == id }
+        saveScanHistory()
+    }
+
+    fun clearScanHistory() {
+        scanHistoryList = emptyList()
+        saveScanHistory()
+    }
+
+    private fun saveScanHistory() {
+        val sb = StringBuilder()
+        for ((idx, item) in scanHistoryList.withIndex()) {
+            if (idx > 0) sb.append("##RECORD_SPLIT##")
+            sb.append(item.id).append("##FIELD_SPLIT##")
+                .append(item.value).append("##FIELD_SPLIT##")
+                .append(item.format).append("##FIELD_SPLIT##")
+                .append(item.timestamp)
+        }
+        sharedPrefs.edit().putString("barcode_scan_history_list", sb.toString()).apply()
+    }
+
     init {
+        loadScanHistory()
         // Offload calculations to background to prevent UI hang on startup
         viewModelScope.launch(Dispatchers.Default) {
             calculateConverter()
@@ -3134,3 +3200,10 @@ interface GeminiApiService {
         @Body request: GeminiRequest
     ): GeminiResponse
 }
+
+data class ScanHistoryItem(
+    val id: String,
+    val value: String,
+    val format: String,
+    val timestamp: Long
+)

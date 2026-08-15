@@ -2366,6 +2366,139 @@ fun MainContent(
             shape = RoundedCornerShape(16.dp)
         )
     }
+
+    if (viewModel.showCalendarDialog) {
+        var isCalMaximized by remember { mutableStateOf(false) }
+        var resetToTodayTrigger by remember { mutableStateOf(0) }
+        val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
+
+        val todayDateString = remember {
+            val sdf = java.text.SimpleDateFormat("dd MMMM, yyyy", if (isBn) java.util.Locale("bn", "BD") else java.util.Locale.US)
+            sdf.format(java.util.Date())
+        }
+
+        val todayButtonLabel = remember {
+            val sdf = java.text.SimpleDateFormat("d MMM", if (isBn) java.util.Locale("bn", "BD") else java.util.Locale.US)
+            sdf.format(java.util.Date())
+        }
+
+        Dialog(
+            onDismissRequest = { viewModel.showCalendarDialog = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            Surface(
+                modifier = if (isCalMaximized) {
+                    Modifier.fillMaxSize()
+                } else {
+                    Modifier
+                        .fillMaxWidth(0.96f)
+                        .fillMaxHeight(0.90f)
+                },
+                shape = if (isCalMaximized) RoundedCornerShape(0.dp) else RoundedCornerShape(24.dp),
+                color = themeColors.background,
+                tonalElevation = 8.dp
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(12.dp)
+                ) {
+                    // Titlebar with Today Date Button and Window Controls
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.CalendarMonth,
+                                    contentDescription = null,
+                                    tint = themeColors.buttonEqualBg,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                            Column {
+                                Text(
+                                    text = if (isBn) "কুইক ক্যালেন্ডার" else "Quick Calendar",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.displayText
+                                )
+                                Text(
+                                    text = todayDateString,
+                                    fontSize = 11.sp,
+                                    color = themeColors.buttonEqualBg,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(4.dp))
+
+                            // Today Button styled as date button
+                            Button(
+                                onClick = { resetToTodayTrigger++ },
+                                colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.height(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Today,
+                                    contentDescription = "Today",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = todayButtonLabel,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                            }
+                        }
+
+                        Windows11TitlebarButtons(
+                            isMaximized = isCalMaximized,
+                            onMinimize = { viewModel.showCalendarDialog = false },
+                            onMaximizeToggle = { isCalMaximized = !isCalMaximized },
+                            onClose = { viewModel.showCalendarDialog = false },
+                            themeColors = themeColors
+                        )
+                    }
+
+                    HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.1f))
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Calendar Content inside Dialog
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                    ) {
+                        com.example.ui.screens.MultiCalendarCard(
+                            viewModel = viewModel,
+                            themeColors = themeColors,
+                            resetToTodayTrigger = resetToTodayTrigger
+                        )
+                    }
+                }
+            }
+        }
+    }
 }
 }
 }

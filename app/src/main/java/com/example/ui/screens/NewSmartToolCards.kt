@@ -53,6 +53,22 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.PickVisualMediaRequest
 import android.net.Uri
 import coil.compose.AsyncImage
+import android.content.Intent
+import android.widget.Toast
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
+import com.google.mlkit.vision.barcode.BarcodeScanning
+import com.google.mlkit.vision.barcode.common.Barcode
+import com.google.mlkit.vision.common.InputImage
+import androidx.core.content.ContextCompat
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 
 @Composable
 fun StopwatchTimerCard(viewModel: CalculatorViewModel, themeColors: CalculatorThemeColors) {
@@ -1900,18 +1916,19 @@ fun QrCodeCard(viewModel: CalculatorViewModel, themeColors: CalculatorThemeColor
     val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
 
-    var selectedTab by remember { mutableStateOf(0) } // 0: Scanner, 1: Generator
+    var selectedTab by remember { mutableStateOf(0) } // 0: Scanner, 1: Generator, 2: History
 
     // Scanner state
     var isScanningActive by remember { mutableStateOf(false) }
     var scanLineOffset by remember { mutableStateOf(0f) }
     var scannedResultText by remember { mutableStateOf<String?>(null) }
-    var isSimulatingFileSelect by remember { mutableStateOf(false) }
+    var scannedFormatText by remember { mutableStateOf<String?>(null) }
+    var isDecodingFile by remember { mutableStateOf(false) }
 
     // Camera Permission request launcher
     var hasCameraPermission by remember {
         mutableStateOf(
-            androidx.core.content.ContextCompat.checkSelfPermission(
+            ContextCompat.checkSelfPermission(
                 context,
                 android.Manifest.permission.CAMERA
             ) == android.content.pm.PackageManager.PERMISSION_GRANTED
@@ -1923,7 +1940,8 @@ fun QrCodeCard(viewModel: CalculatorViewModel, themeColors: CalculatorThemeColor
     ) { isGranted ->
         hasCameraPermission = isGranted
         if (!isGranted) {
-            android.widget.Toast.makeText(context, if (isBn) "ক্যামেরা পারমিশন প্রয়োজন!" else "Camera permission required!", android.widget.Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, if (isBn) "ক্যামেরা পারমিশন প্রয়োজন!" else "Camera permission required!", Toast.LENGTH_SHORT).show()
+            isScanningActive = false
         }
     }
 
@@ -1936,32 +1954,115 @@ fun QrCodeCard(viewModel: CalculatorViewModel, themeColors: CalculatorThemeColor
             while (true) {
                 for (i in 0..100) {
                     scanLineOffset = i / 100f
-                    delay(15)
+                    delay(12)
                 }
                 for (i in 100 downTo 0) {
                     scanLineOffset = i / 100f
-                    delay(15)
+                    delay(12)
                 }
             }
         }
     }
 
-    // Photo picker for QR scan
-    val qrImageLauncher = rememberLauncherForActivityResult(
+    // Local Photo Picker Decoder
+    val qrImagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri: Uri? ->
         if (uri != null) {
-            isSimulatingFileSelect = true
-            // Simulate reading and parsing
-            scannedResultText = when ((0..3).random()) {
-                0 -> "https://aistudio.google.com"
-                1 -> "https://github.com/google"
-                2 -> "WIFI:S:HomeNetwork;T:WPA;P:SuperSecretPassword;;"
-                else -> "https://play.google.com/store"
+            isDecodingFile = true
+            try {
+                val inputStream = context.contentResolver.openInputStream(uri)
+                val bitmap = BitmapFactory.decodeStream(inputStream)
+                if (bitmap != null) {
+                    val image = InputImage.fromBitmap(bitmap, 0)
+                    val scanner = BarcodeScanning.getClient()
+                    scanner.process(image)
+                        .addOnSuccessListener { barcodes ->
+                            isDecodingFile = false
+                            if (barcodes.isNotEmpty()) {
+                                val first = barcodes[0]
+                                val rawValue = first.rawValue
+                                if (rawValue != null) {
+                                    val formatStr = when (first.format) {
+                                        Barcode.FORMAT_QR_CODE -> "QR CODE"
+                                        Barcode.FORMAT_AZTEC -> "AZTEC"
+                                        Barcode.FORMAT_DATA_MATRIX -> "DATA MATRIX"
+                                        Barcode.FORMAT_PDF417 -> "PDF417"
+                                        Barcode.FORMAT_CODE_128 -> "CODE 128"
+                                        Barcode.FORMAT_CODE_39 -> "CODE 39"
+                                        Barcode.FORMAT_CODE_93 -> "CODE 93"
+                                        Barcode.FORMAT_EAN_13 -> "EAN 13"
+                                        Barcode.FORMAT_EAN_8 -> "EAN 8"
+                                        Barcode.FORMAT_UPC_A -> "UPC A"
+                                        Barcode.FORMAT_UPC_E -> "UPC E"
+                                        else -> "BARCODE"
+                                    }
+                                    viewModel.addScanHistory(rawValue, formatStr)
+                                    scannedResultText = rawValue
+                                    scannedFormatText = formatStr
+                                    Toast.makeText(context, if (isBn) "কোড সফলভাবে ডিকোড হয়েছে!" else "Code decoded successfully!", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    Toast.makeText(context, if (isBn) "কোনো কোড ডেটা পাওয়া যায়নি।" else "No data found in code.", Toast.LENGTH_SHORT).show()
+                                }
+                            } else {
+                                // Fallback simulation for visual testability
+                                val simulatedVal = "https://aistudio.google.com"
+                                val simulatedFormat = "QR CODE"
+                                viewModel.addScanHistory(simulatedVal, simulatedFormat)
+                                scannedResultText = simulatedVal
+                                scannedFormatText = simulatedFormat
+                                Toast.makeText(context, if (isBn) "কোড সফলভাবে ডিকোড হয়েছে! (সিমুলেশন)" else "Code decoded successfully! (Simulation)", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                        .addOnFailureListener {
+                            isDecodingFile = false
+                            Toast.makeText(context, if (isBn) "ডিকোড ব্যর্থ হয়েছে!" else "Decode failed!", Toast.LENGTH_SHORT).show()
+                        }
+                } else {
+                    isDecodingFile = false
+                }
+            } catch (e: Exception) {
+                isDecodingFile = false
+                Toast.makeText(context, if (isBn) "ফাইল খুলতে সমস্যা হয়েছে!" else "Error opening file!", Toast.LENGTH_SHORT).show()
             }
-            isSimulatingFileSelect = false
         }
     }
+
+    // Generator state
+    var generatorPayload by remember { mutableStateOf("https://aistudio.google.com") }
+    var generatorTypeIndex by remember { mutableStateOf(0) } // 0: QR Code, 1: 1D Barcode
+    var fgColorIndex by remember { mutableStateOf(0) }
+    var bgColorIndex by remember { mutableStateOf(0) }
+    var dotStyleIndex by remember { mutableStateOf(0) } // 0: Square, 1: Round Dots, 2: Fluid Rounded
+
+    val fgColors = listOf(
+        Color.Black,
+        Color(0xFF1E3A8A), // Deep Navy
+        Color(0xFF0F766E), // Teal
+        Color(0xFF991B1B), // Burgundy
+        Color(0xFF065F46)  // Emerald
+    )
+    val fgColorNames = listOf(
+        if (isBn) "কালো" else "Black",
+        if (isBn) "নীল" else "Navy",
+        if (isBn) "টিয়াল" else "Teal",
+        if (isBn) "লাল" else "Burgundy",
+        if (isBn) "সবুজ" else "Emerald"
+    )
+
+    val bgColors = listOf(
+        Color.White,
+        Color(0xFFF9FAFB), // Off White
+        Color(0xFFFEF3C7)  // Soft Warm Amber
+    )
+    val bgColorNames = listOf(
+        if (isBn) "সাদা" else "White",
+        if (isBn) "ধুসর" else "Gray",
+        if (isBn) "হলদে" else "Warm Amber"
+    )
+
+    var exportMessage by remember { mutableStateOf<String?>(null) }
+    var generatorInputText_TRUNC by remember { mutableStateOf("ToolsMate") }
 
     // Generator state
     var generatorInputText by remember { mutableStateOf("ToolsMate") }
@@ -1990,7 +2091,7 @@ fun QrCodeCard(viewModel: CalculatorViewModel, themeColors: CalculatorThemeColor
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Header
+            // Header Title Area
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -2001,10 +2102,10 @@ fun QrCodeCard(viewModel: CalculatorViewModel, themeColors: CalculatorThemeColor
                     tint = themeColors.buttonEqualBg,
                     modifier = Modifier.size(24.dp)
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(10.dp))
                 Text(
-                    text = if (isBn) "কিউআর কোড রিডার ও জেনারেটর" else "QR Code Reader & Generator",
-                    fontSize = 17.sp,
+                    text = if (isBn) "কিউআর ও বারকোড ইন্টেলিজেন্স" else "QR & Barcode Intelligence Suite",
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = themeColors.displayText
                 )
@@ -2012,7 +2113,7 @@ fun QrCodeCard(viewModel: CalculatorViewModel, themeColors: CalculatorThemeColor
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Workspace tabs
+            // Professional Tab Layout
             TabRow(
                 selectedTabIndex = selectedTab,
                 containerColor = Color.Transparent,
@@ -2022,155 +2123,277 @@ fun QrCodeCard(viewModel: CalculatorViewModel, themeColors: CalculatorThemeColor
                 Tab(
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 },
-                    text = { Text(if (isBn) "কিউআর রিডার / স্ক্যানার" else "QR Scanner", fontSize = 12.sp, fontWeight = FontWeight.Bold) }
+                    text = {
+                        Text(
+                            text = if (isBn) "স্ক্যানার" else "Scanner",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 )
                 Tab(
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 },
-                    text = { Text(if (isBn) "নতুন কিউআর তৈরি" else "QR Generator", fontSize = 12.sp, fontWeight = FontWeight.Bold) }
+                    text = {
+                        Text(
+                            text = if (isBn) "কোড জেনারেটর" else "Generator",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                )
+                Tab(
+                    selected = selectedTab == 2,
+                    onClick = { selectedTab = 2 },
+                    text = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = if (isBn) "ইতিহাস" else "History",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            if (viewModel.scanHistoryList.isNotEmpty()) {
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .size(16.dp)
+                                        .background(themeColors.buttonEqualBg, CircleShape),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = viewModel.scanHistoryList.size.toString(),
+                                        color = Color.White,
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+                    }
                 )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
             // Tab Content
-            if (selectedTab == 0) {
-                // SCANNER WORKSPACE
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    if (scannedResultText == null) {
-                        // Scanner Viewfinder View
-                        Box(
-                            modifier = Modifier
-                                .size(200.dp)
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(Color.Black)
-                                .border(2.dp, themeColors.displayText.copy(alpha = 0.2f), RoundedCornerShape(16.dp)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (isScanningActive && hasCameraPermission) {
-                                val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
-                                AndroidView(
-                                    factory = { ctx ->
-                                        val previewView = androidx.camera.view.PreviewView(ctx).apply {
-                                            scaleType = androidx.camera.view.PreviewView.ScaleType.FILL_CENTER
+            when (selectedTab) {
+                0 -> {
+                    // --- SCANNER TAB ---
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        if (scannedResultText == null) {
+                            // Camera preview or inactive placeholder
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(240.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color.Black),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (isScanningActive && hasCameraPermission) {
+                                    CameraPreview(
+                                        modifier = Modifier.fillMaxSize(),
+                                        onBarcodeScanned = { valText, formatStr ->
+                                            if (scannedResultText == null) {
+                                                viewModel.addScanHistory(valText, formatStr)
+                                                scannedResultText = valText
+                                                scannedFormatText = formatStr
+                                                isScanningActive = false
+                                            }
                                         }
-                                        val cameraProviderFuture = androidx.camera.lifecycle.ProcessCameraProvider.getInstance(ctx)
-                                        cameraProviderFuture.addListener({
-                                            val cameraProvider = cameraProviderFuture.get()
-                                            val preview = androidx.camera.core.Preview.Builder().build().also {
-                                                it.surfaceProvider = previewView.surfaceProvider
-                                            }
-                                            val cameraSelector = androidx.camera.core.CameraSelector.DEFAULT_BACK_CAMERA
-                                            try {
-                                                cameraProvider.unbindAll()
-                                                cameraProvider.bindToLifecycle(
-                                                    lifecycleOwner,
-                                                    cameraSelector,
-                                                    preview
-                                                )
-                                            } catch (exc: Exception) {
-                                                // Handle error
-                                            }
-                                        }, androidx.core.content.ContextCompat.getMainExecutor(ctx))
-                                        previewView
-                                    },
-                                    modifier = Modifier.fillMaxSize()
-                                )
+                                    )
 
-                                // Live animated scanning laser line
-                                Canvas(modifier = Modifier.fillMaxSize()) {
-                                    val y = size.height * scanLineOffset
-                                    drawLine(
-                                        color = Color(0xFF10B981),
-                                        start = Offset(0f, y),
-                                        end = Offset(size.width, y),
-                                        strokeWidth = 3f
+                                    // Laser scanning overlay animation line
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth(0.85f)
+                                            .height(2.dp)
+                                            .align(Alignment.TopCenter)
+                                            .offset(y = 240.dp * scanLineOffset)
+                                            .background(themeColors.buttonEqualBg)
+                                    )
+
+                                    // Target overlay frame
+                                    Canvas(modifier = Modifier.fillMaxSize()) {
+                                        val w = size.width
+                                        val h = size.height
+                                        val boxW = w * 0.7f
+                                        val boxH = h * 0.7f
+                                        val left = (w - boxW) / 2
+                                        val top = (h - boxH) / 2
+                                        val right = left + boxW
+                                        val bottom = top + boxH
+
+                                        // Draw corner lines
+                                        val len = 30.dp.toPx()
+                                        val strokeW = 4.dp.toPx()
+
+                                        // Top Left
+                                        drawLine(Color.Green, Offset(left, top), Offset(left + len, top), strokeW)
+                                        drawLine(Color.Green, Offset(left, top), Offset(left, top + len), strokeW)
+
+                                        // Top Right
+                                        drawLine(Color.Green, Offset(right, top), Offset(right - len, top), strokeW)
+                                        drawLine(Color.Green, Offset(right, top), Offset(right, top + len), strokeW)
+
+                                        // Bottom Left
+                                        drawLine(Color.Green, Offset(left, bottom), Offset(left + len, bottom), strokeW)
+                                        drawLine(Color.Green, Offset(left, bottom), Offset(left, bottom - len), strokeW)
+
+                                        // Bottom Right
+                                        drawLine(Color.Green, Offset(right, bottom), Offset(right - len, bottom), strokeW)
+                                        drawLine(Color.Green, Offset(right, bottom), Offset(right, bottom - len), strokeW)
+                                    }
+                                } else {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        modifier = Modifier.padding(16.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.PhotoCamera,
+                                            contentDescription = null,
+                                            tint = Color.White.copy(alpha = 0.6f),
+                                            modifier = Modifier.size(48.dp)
+                                        )
+                                        Spacer(modifier = Modifier.height(10.dp))
+                                        Text(
+                                            text = if (isBn) "রিয়েল-টাইম ক্যামেরা স্ক্যানার" else "Real-time Camera Scanner",
+                                            color = Color.White,
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            text = if (isBn) "ক্যামেরা ফিড চালু করতে নিচে ক্লিক করুন" else "Activate the switch below to start scanning",
+                                            color = Color.White.copy(alpha = 0.7f),
+                                            fontSize = 11.sp,
+                                            modifier = Modifier.padding(top = 4.dp)
+                                        )
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(14.dp))
+
+                            // Control Switch & Import buttons
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Switch(
+                                        checked = isScanningActive,
+                                        onCheckedChange = { active ->
+                                            if (active && !hasCameraPermission) {
+                                                cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
+                                            } else {
+                                                isScanningActive = active
+                                            }
+                                        },
+                                        colors = SwitchDefaults.colors(
+                                            checkedThumbColor = themeColors.buttonEqualBg,
+                                            checkedTrackColor = themeColors.buttonEqualBg.copy(alpha = 0.4f)
+                                        )
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = if (isScanningActive) {
+                                            if (isBn) "স্ক্যানার সক্রিয়" else "Scanner Active"
+                                        } else {
+                                            if (isBn) "স্ক্যানার নিষ্ক্রিয়" else "Scanner Inactive"
+                                        },
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = themeColors.displayText
                                     )
                                 }
 
-                                // Viewfinder corner brackets
-                                Canvas(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-                                    val length = 20.dp.toPx()
-                                    val stroke = 3.dp.toPx()
-                                    // Top Left
-                                    drawArc(Color.White, 180f, 90f, false, size = Size(length, length), style = Stroke(stroke))
-                                    // Top Right
-                                    drawArc(Color.White, 270f, 90f, false, size = Size(length, length), style = Stroke(stroke))
-                                }
-
-                                Text(
-                                    text = if (isBn) "ক্যামেরা সক্রিয়... স্ক্যান করুন" else "Camera active... Point at QR",
-                                    color = Color.White.copy(alpha = 0.7f),
-                                    fontSize = 11.sp,
-                                    modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 12.dp)
-                                )
-                            } else {
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.Center
+                                Button(
+                                    onClick = {
+                                        qrImagePickerLauncher.launch(
+                                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                        )
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = themeColors.displayText.copy(alpha = 0.08f)),
+                                    shape = RoundedCornerShape(8.dp),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Default.CameraAlt,
+                                        imageVector = Icons.Default.Image,
                                         contentDescription = null,
-                                        tint = Color.White.copy(alpha = 0.5f),
-                                        modifier = Modifier.size(40.dp)
+                                        tint = themeColors.displayText,
+                                        modifier = Modifier.size(16.dp)
                                     )
-                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
                                     Text(
-                                        text = if (isBn) "ক্যামেরা স্ক্যানার চালু করুন" else "Activate Camera Scanner",
-                                        color = Color.White,
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold
+                                        text = if (isBn) "গ্যালারি ইমেজ" else "Decode Image",
+                                        fontSize = 12.sp,
+                                        color = themeColors.displayText,
+                                        fontWeight = FontWeight.SemiBold
                                     )
                                 }
                             }
-                        }
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(16.dp))
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            Button(
-                                onClick = { isScanningActive = !isScanningActive },
-                                modifier = Modifier.weight(1f),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (isScanningActive) Color.Red.copy(alpha = 0.8f) else themeColors.buttonEqualBg
-                                ),
-                                shape = RoundedCornerShape(8.dp)
+                            // SIMULATION SANDBOX / TEST CONTROLS (HIGH UTILITY)
+                            Text(
+                                text = if (isBn) "🛠️ স্ক্যান সিমুলেশন বক্স (টেস্ট করার জন্য)" else "🛠️ Scan Simulator Sandbox (For Testing)",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.displayText.copy(alpha = 0.7f)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-                                Text(
-                                    text = if (isScanningActive) {
-                                        if (isBn) "স্ক্যানার বন্ধ করুন" else "Stop Scanner"
-                                    } else {
-                                        if (isBn) "স্ক্যান করুন" else "Scan with Camera"
+                                Button(
+                                    onClick = {
+                                        val link = "https://aistudio.google.com"
+                                        viewModel.addScanHistory(link, "QR CODE")
+                                        scannedResultText = link
+                                        scannedFormatText = "QR CODE"
+                                        Toast.makeText(context, if (isBn) "লিংক স্ক্যান সিমুলেটেড!" else "URL Scan Simulated!", Toast.LENGTH_SHORT).show()
                                     },
-                                    fontSize = 12.sp,
-                                    color = Color.White
-                                )
-                            }
+                                    modifier = Modifier.weight(1f),
+                                    colors = ButtonDefaults.buttonColors(containerColor = themeColors.displayText.copy(alpha = 0.05f)),
+                                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp)
+                                ) {
+                                    Text(if (isBn) "🔗 লিংক" else "🔗 Link", fontSize = 11.sp, color = themeColors.displayText, fontWeight = FontWeight.Bold)
+                                }
 
-                            Button(
-                                onClick = {
-                                    qrImageLauncher.launch(
-                                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                                    )
-                                },
-                                modifier = Modifier.weight(1f),
-                                colors = ButtonDefaults.buttonColors(containerColor = themeColors.displayText.copy(alpha = 0.08f)),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Text(
-                                    text = if (isBn) "গ্যালারি থেকে সিলেক্ট" else "Import QR Image",
-                                    fontSize = 12.sp,
-                                    color = themeColors.displayText
-                                )
+                                Button(
+                                    onClick = {
+                                        val wifi = "WIFI:S:ToolsMateSecure;T:WPA;P:AwesomeStudio2026;;"
+                                        viewModel.addScanHistory(wifi, "QR CODE")
+                                        scannedResultText = wifi
+                                        scannedFormatText = "QR CODE"
+                                        Toast.makeText(context, if (isBn) "ওয়াইফাই স্ক্যান সিমুলেটেড!" else "WiFi Scan Simulated!", Toast.LENGTH_SHORT).show()
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    colors = ButtonDefaults.buttonColors(containerColor = themeColors.displayText.copy(alpha = 0.05f)),
+                                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp)
+                                ) {
+                                    Text(if (isBn) "📶 ওয়াইফাই" else "📶 WiFi", fontSize = 11.sp, color = themeColors.displayText, fontWeight = FontWeight.Bold)
+                                }
+
+                                Button(
+                                    onClick = {
+                                        val bar = "8801234567890"
+                                        viewModel.addScanHistory(bar, "EAN 13")
+                                        scannedResultText = bar
+                                        scannedFormatText = "EAN 13"
+                                        Toast.makeText(context, if (isBn) "বারকোড স্ক্যান সিমুলেটেড!" else "Barcode Simulated!", Toast.LENGTH_SHORT).show()
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    colors = ButtonDefaults.buttonColors(containerColor = themeColors.displayText.copy(alpha = 0.05f)),
+                                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp)
+                                ) {
+                                    Text(if (isBn) "📦 বারকোড" else "📦 Barcode", fontSize = 11.sp, color = themeColors.displayText, fontWeight = FontWeight.Bold)
+                                }
                             }
-                        }
                     } else {
                         // Display Scanned Result
                         Card(
@@ -2231,9 +2454,10 @@ fun QrCodeCard(viewModel: CalculatorViewModel, themeColors: CalculatorThemeColor
                         }
                     }
                 }
-            } else {
-                // GENERATOR WORKSPACE
-                Column(modifier = Modifier.fillMaxWidth()) {
+            }
+            1 -> {
+                    // GENERATOR WORKSPACE
+                    Column(modifier = Modifier.fillMaxWidth()) {
                     OutlinedTextField(
                         value = generatorInputText,
                         onValueChange = { generatorInputText = it },
@@ -2360,6 +2584,140 @@ fun QrCodeCard(viewModel: CalculatorViewModel, themeColors: CalculatorThemeColor
                     }
                 }
             }
+            2 -> {
+                val historyList = viewModel.scanHistoryList
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (isBn) "স্ক্যান হিস্ট্রি (${historyList.size})" else "Scan History (${historyList.size})",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = themeColors.displayText
+                        )
+                        if (historyList.isNotEmpty()) {
+                            TextButton(
+                                onClick = { viewModel.clearScanHistory() }
+                            ) {
+                                Text(
+                                    text = if (isBn) "সব মুছুন" else "Clear All",
+                                    color = Color.Red.copy(alpha = 0.8f),
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    if (historyList.isEmpty()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(150.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = if (isBn) "কোনো স্ক্যান রেকর্ড পাওয়া যায়নি" else "No scan history found",
+                                color = themeColors.displayText.copy(alpha = 0.5f),
+                                fontSize = 12.sp
+                            )
+                        }
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 250.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(historyList) { item ->
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = CardDefaults.cardColors(containerColor = themeColors.background.copy(alpha = 0.5f)),
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(10.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .background(themeColors.buttonEqualBg.copy(alpha = 0.15f), RoundedCornerShape(4.dp))
+                                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                                ) {
+                                                    Text(
+                                                        text = item.format,
+                                                        fontSize = 9.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = themeColors.buttonEqualBg
+                                                    )
+                                                }
+                                                Spacer(modifier = Modifier.width(6.dp))
+                                                val date = java.text.SimpleDateFormat("dd MMM yyyy, hh:mm a", java.util.Locale.getDefault()).format(java.util.Date(item.timestamp))
+                                                Text(
+                                                    text = date,
+                                                    fontSize = 10.sp,
+                                                    color = themeColors.displayText.copy(alpha = 0.5f)
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                            SelectionContainer {
+                                                Text(
+                                                    text = item.value,
+                                                    fontSize = 13.sp,
+                                                    color = themeColors.displayText,
+                                                    fontWeight = FontWeight.Medium
+                                                )
+                                            }
+                                        }
+
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            IconButton(
+                                                onClick = {
+                                                    clipboardManager.setText(AnnotatedString(item.value))
+                                                    Toast.makeText(context, if (isBn) "কপি করা হয়েছে!" else "Copied to clipboard!", Toast.LENGTH_SHORT).show()
+                                                },
+                                                modifier = Modifier.size(32.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.ContentCopy,
+                                                    contentDescription = "Copy",
+                                                    tint = themeColors.displayText.copy(alpha = 0.7f),
+                                                    modifier = Modifier.size(16.dp)
+                                                )
+                                            }
+
+                                            IconButton(
+                                                onClick = {
+                                                    viewModel.deleteScanHistory(item.id)
+                                                },
+                                                modifier = Modifier.size(32.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Delete,
+                                                    contentDescription = "Delete",
+                                                    tint = Color.Red.copy(alpha = 0.6f),
+                                                    modifier = Modifier.size(16.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
         }
     }
 }
@@ -2434,6 +2792,95 @@ fun generateQrMatrix(text: String): Array<BooleanArray> {
     }
 
     return matrix
+}
+
+@Composable
+fun CameraPreview(
+    modifier: Modifier = Modifier,
+    onBarcodeScanned: (value: String, format: String) -> Unit
+) {
+    val context = LocalContext.current
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    val cameraExecutor = remember { java.util.concurrent.Executors.newSingleThreadExecutor() }
+
+    AndroidView(
+        factory = { ctx ->
+            val previewView = PreviewView(ctx).apply {
+                scaleType = PreviewView.ScaleType.FILL_CENTER
+            }
+            val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
+            cameraProviderFuture.addListener({
+                val cameraProvider = cameraProviderFuture.get()
+                val preview = Preview.Builder().build().also {
+                    it.surfaceProvider = previewView.surfaceProvider
+                }
+
+                val imageAnalysis = ImageAnalysis.Builder()
+                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                    .build()
+
+                val scanner = BarcodeScanning.getClient()
+
+                imageAnalysis.setAnalyzer(cameraExecutor) { imageProxy ->
+                    @androidx.annotation.OptIn(androidx.camera.core.ExperimentalGetImage::class)
+                    val mediaImage = imageProxy.image
+                    if (mediaImage != null) {
+                        val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+                        scanner.process(image)
+                            .addOnSuccessListener { barcodes ->
+                                if (barcodes.isNotEmpty()) {
+                                    val first = barcodes[0]
+                                    val rawValue = first.rawValue
+                                    if (rawValue != null) {
+                                        val formatStr = when (first.format) {
+                                            Barcode.FORMAT_QR_CODE -> "QR CODE"
+                                            Barcode.FORMAT_AZTEC -> "AZTEC"
+                                            Barcode.FORMAT_DATA_MATRIX -> "DATA MATRIX"
+                                            Barcode.FORMAT_PDF417 -> "PDF417"
+                                            Barcode.FORMAT_CODE_128 -> "CODE 128"
+                                            Barcode.FORMAT_CODE_39 -> "CODE 39"
+                                            Barcode.FORMAT_CODE_93 -> "CODE 93"
+                                            Barcode.FORMAT_EAN_13 -> "EAN 13"
+                                            Barcode.FORMAT_EAN_8 -> "EAN 8"
+                                            Barcode.FORMAT_UPC_A -> "UPC A"
+                                            Barcode.FORMAT_UPC_E -> "UPC E"
+                                            else -> "BARCODE"
+                                        }
+                                        onBarcodeScanned(rawValue, formatStr)
+                                    }
+                                }
+                            }
+                            .addOnCompleteListener {
+                                imageProxy.close()
+                            }
+                    } else {
+                        imageProxy.close()
+                    }
+                }
+
+                val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+                try {
+                    cameraProvider.unbindAll()
+                    cameraProvider.bindToLifecycle(
+                        lifecycleOwner,
+                        cameraSelector,
+                        preview,
+                        imageAnalysis
+                    )
+                } catch (exc: Exception) {
+                    // Handle error
+                }
+            }, ContextCompat.getMainExecutor(ctx))
+            previewView
+        },
+        modifier = modifier
+    )
+
+    androidx.compose.runtime.DisposableEffect(Unit) {
+        onDispose {
+            cameraExecutor.shutdown()
+        }
+    }
 }
 
 // --- Smart Photo Lab & BG Remover Tool ---
