@@ -739,12 +739,18 @@ fun DashboardCategoriesView(
                                     ).forEach { (pos, label) ->
                                         Button(
                                             onClick = {
-                                                viewModel.pinToTop4(itemKey, pos)
+                                                if (action.isTool) {
+                                                    val tool = com.example.data.model.ToolType.values().find { it.name == action.key }
+                                                    if (tool != null) viewModel.pinToolToCategoryTop4(tool, pos)
+                                                } else {
+                                                    val conv = com.example.data.model.ConverterType.values().find { it.name == action.key }
+                                                    if (conv != null) viewModel.pinConverterToCategoryTop4(conv, pos)
+                                                }
                                                 viewModel.dismissPendingFavoriteAction()
                                                 val posText = if (isBn) "${pos + 1} নম্বর" else "Pos ${pos + 1}"
                                                 Toast.makeText(
                                                     context,
-                                                    if (isBn) "\"${action.titleBn}\" সেরা ৪টির $posText স্থানে পিন হয়েছে!" else "\"${action.titleEn}\" pinned to Top 4 ($posText)!",
+                                                    if (isBn) "\"${action.titleBn}\" $posText স্থানে পিন করা হয়েছে!" else "\"${action.titleEn}\" pinned to position $posText!",
                                                     Toast.LENGTH_SHORT
                                                 ).show()
                                             },
@@ -1525,20 +1531,14 @@ fun DashboardCategoriesView(
                         listOfNotNull(currentFilter)
                     }
 
+                    val topToolsMap = viewModel.categoryTopToolsMap
                     categoriesToShow.forEach { category ->
-                        val categoryTools = currentFilteredTools.filter { it.category == category }
+                        val orderedCatTools = viewModel.getAllOrderedToolsForCategory(category)
+                        val categoryTools = orderedCatTools.filter { currentFilteredTools.contains(it) }
 
                         if (categoryTools.isNotEmpty()) {
-                            // In Overview mode, display customized top 4 tools per category
-                            val displayedTools = if (isOverviewMode) {
-                                if (categoryTools.size <= 4) categoryTools
-                                else {
-                                    val top4 = viewModel.getCategoryTopTools(category)
-                                    val filteredTop4 = top4.filter { t -> categoryTools.contains(t) }
-                                    val remaining = categoryTools.filter { !filteredTop4.contains(it) }
-                                    (filteredTop4 + remaining).take(4)
-                                }
-                            } else categoryTools
+                            // In Overview mode, display top 4 tools per category
+                            val displayedTools = if (isOverviewMode) categoryTools.take(4) else categoryTools
                             val hasMore = isOverviewMode && categoryTools.size > 4
 
                             // Category Header
@@ -1615,29 +1615,40 @@ fun DashboardCategoriesView(
                                 }
                             }
 
-                            // 2-column Grid of Cards
-                            Column(
-                                verticalArrangement = Arrangement.spacedBy(10.dp),
-                                modifier = Modifier.padding(bottom = 6.dp)
-                            ) {
-                                displayedTools.chunked(2).forEach { rowItems ->
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
-                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                                    ) {
-                                        rowItems.forEach { tool ->
-                                            Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
-                                                ToolGridCardItem(
-                                                    toolType = tool,
-                                                    viewModel = viewModel,
-                                                    themeColors = themeColors,
-                                                    modifier = Modifier.fillMaxHeight(),
-                                                    onClick = { viewModel.openTool(tool) }
-                                                )
+                            // 2-column Grid of Cards with Smooth Animated Position Reordering
+                            AnimatedContent(
+                                targetState = displayedTools,
+                                transitionSpec = {
+                                    fadeIn(animationSpec = tween(250)) + scaleIn(initialScale = 0.96f, animationSpec = tween(250)) togetherWith
+                                            fadeOut(animationSpec = tween(180))
+                                },
+                                label = "ToolsGridReorder_${category.name}"
+                            ) { currentDisplayedTools ->
+                                Column(
+                                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                                    modifier = Modifier.padding(bottom = 6.dp)
+                                ) {
+                                    currentDisplayedTools.chunked(2).forEach { rowItems ->
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
+                                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                        ) {
+                                            rowItems.forEach { tool ->
+                                                key(tool.name) {
+                                                    Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                                                        ToolGridCardItem(
+                                                            toolType = tool,
+                                                            viewModel = viewModel,
+                                                            themeColors = themeColors,
+                                                            modifier = Modifier.fillMaxHeight(),
+                                                            onClick = { viewModel.openTool(tool) }
+                                                        )
+                                                    }
+                                                }
                                             }
-                                        }
-                                        if (rowItems.size == 1) {
-                                            Spacer(modifier = Modifier.weight(1f))
+                                            if (rowItems.size == 1) {
+                                                Spacer(modifier = Modifier.weight(1f))
+                                            }
                                         }
                                     }
                                 }
@@ -1765,6 +1776,7 @@ fun ToolGridCardItem(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isFavorite = viewModel.favoriteTools.contains(toolType.name)
+    val isPinned = viewModel.isToolPinnedInTop4(toolType)
     ElevatedCard(
         modifier = modifier
             .fillMaxWidth()
@@ -1809,16 +1821,32 @@ fun ToolGridCardItem(
                             modifier = Modifier.size(22.dp)
                         )
                     }
-                    IconButton(
-                        onClick = { viewModel.requestToggleFavoriteTool(toolType) },
-                        modifier = Modifier.size(28.dp)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
-                        Icon(
-                            imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            contentDescription = "Favorite",
-                            tint = if (isFavorite) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.3f),
-                            modifier = Modifier.size(20.dp)
-                        )
+                        IconButton(
+                            onClick = { viewModel.requestToggleFavoriteTool(toolType) },
+                            modifier = Modifier.size(28.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.PushPin,
+                                contentDescription = "Pin Position",
+                                tint = if (isPinned) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.35f),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                        IconButton(
+                            onClick = { viewModel.toggleFavoriteTool(toolType.name) },
+                            modifier = Modifier.size(28.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                contentDescription = "Favorite",
+                                tint = if (isFavorite) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.3f),
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                     }
                 }
 

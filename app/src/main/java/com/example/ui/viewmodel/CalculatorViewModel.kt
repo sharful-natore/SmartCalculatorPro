@@ -1758,34 +1758,38 @@ How can I help you today?"""
     }
 
     fun getCategoryTopTools(category: com.example.data.model.ToolCategory): List<com.example.data.model.ToolType> {
-        val allInCat = com.example.data.model.ToolType.values().filter { it.category == category }
-        if (allInCat.size <= 4) return allInCat
-        val savedOrder = categoryTopToolsMap[category.name]
-        if (savedOrder.isNullOrEmpty()) return allInCat.take(4)
+        return getAllOrderedToolsForCategory(category).take(4)
+    }
 
-        val ordered = mutableListOf<com.example.data.model.ToolType>()
+    fun getAllOrderedToolsForCategory(category: com.example.data.model.ToolCategory): List<com.example.data.model.ToolType> {
+        val allInCat = com.example.data.model.ToolType.values().filter { it.category == category }
+        val savedOrder = categoryTopToolsMap[category.name]
+        if (savedOrder.isNullOrEmpty()) return allInCat
+
+        val result = mutableListOf<com.example.data.model.ToolType>()
         savedOrder.forEach { name ->
-            allInCat.find { it.name == name }?.let { ordered.add(it) }
+            allInCat.find { it.name == name }?.let { tool ->
+                if (!result.contains(tool)) result.add(tool)
+            }
         }
         allInCat.forEach { tool ->
-            if (!ordered.contains(tool)) ordered.add(tool)
+            if (!result.contains(tool)) result.add(tool)
         }
-        return ordered.take(4)
+        return result
     }
 
     fun pinToolToCategoryTop4(toolType: com.example.data.model.ToolType, positionIndex: Int) {
         val cat = toolType.category
         val allInCat = com.example.data.model.ToolType.values().filter { it.category == cat }
-        if (allInCat.size <= 4) return
+        if (allInCat.isEmpty()) return
 
-        val currentTop4 = getCategoryTopTools(cat).map { it.name }.toMutableList()
-        currentTop4.remove(toolType.name)
-        val idx = positionIndex.coerceIn(0, 3.coerceAtMost(currentTop4.size))
-        currentTop4.add(idx, toolType.name)
-        val top4Limited = currentTop4.take(4)
+        val currentOrdered = getAllOrderedToolsForCategory(cat).map { it.name }.toMutableList()
+        currentOrdered.remove(toolType.name)
+        val idx = positionIndex.coerceIn(0, currentOrdered.size)
+        currentOrdered.add(idx, toolType.name)
 
         val newMap = categoryTopToolsMap.toMutableMap()
-        newMap[cat.name] = top4Limited
+        newMap[cat.name] = currentOrdered
         categoryTopToolsMap = newMap
 
         try {
@@ -1794,6 +1798,11 @@ How can I help you today?"""
             val json = adapter.toJson(newMap)
             sharedPrefs.edit().putString("category_top_tools_map", json).apply()
         } catch (e: Exception) { e.printStackTrace() }
+    }
+
+    fun isToolPinnedInTop4(toolType: com.example.data.model.ToolType): Boolean {
+        val top4 = getCategoryTopTools(toolType.category)
+        return top4.contains(toolType)
     }
 
     var categoryTopConvertersMap by mutableStateOf<Map<String, List<String>>>(loadCategoryTopConvertersMap())
@@ -1813,34 +1822,38 @@ How can I help you today?"""
     }
 
     fun getCategoryTopConverters(category: com.example.data.model.ConverterCategory): List<com.example.data.model.ConverterType> {
-        val allInCat = com.example.data.model.ConverterType.values().filter { it.category == category }
-        if (allInCat.size <= 4) return allInCat
-        val savedOrder = categoryTopConvertersMap[category.name]
-        if (savedOrder.isNullOrEmpty()) return allInCat.take(4)
+        return getAllOrderedConvertersForCategory(category).take(4)
+    }
 
-        val ordered = mutableListOf<com.example.data.model.ConverterType>()
+    fun getAllOrderedConvertersForCategory(category: com.example.data.model.ConverterCategory): List<com.example.data.model.ConverterType> {
+        val allInCat = com.example.data.model.ConverterType.values().filter { it.category == category }
+        val savedOrder = categoryTopConvertersMap[category.name]
+        if (savedOrder.isNullOrEmpty()) return allInCat
+
+        val result = mutableListOf<com.example.data.model.ConverterType>()
         savedOrder.forEach { name ->
-            allInCat.find { it.name == name }?.let { ordered.add(it) }
+            allInCat.find { it.name == name }?.let { conv ->
+                if (!result.contains(conv)) result.add(conv)
+            }
         }
         allInCat.forEach { conv ->
-            if (!ordered.contains(conv)) ordered.add(conv)
+            if (!result.contains(conv)) result.add(conv)
         }
-        return ordered.take(4)
+        return result
     }
 
     fun pinConverterToCategoryTop4(converterType: com.example.data.model.ConverterType, positionIndex: Int) {
         val cat = converterType.category
         val allInCat = com.example.data.model.ConverterType.values().filter { it.category == cat }
-        if (allInCat.size <= 4) return
+        if (allInCat.isEmpty()) return
 
-        val currentTop4 = getCategoryTopConverters(cat).map { it.name }.toMutableList()
-        currentTop4.remove(converterType.name)
-        val idx = positionIndex.coerceIn(0, 3.coerceAtMost(currentTop4.size))
-        currentTop4.add(idx, converterType.name)
-        val top4Limited = currentTop4.take(4)
+        val currentOrdered = getAllOrderedConvertersForCategory(cat).map { it.name }.toMutableList()
+        currentOrdered.remove(converterType.name)
+        val idx = positionIndex.coerceIn(0, currentOrdered.size)
+        currentOrdered.add(idx, converterType.name)
 
         val newMap = categoryTopConvertersMap.toMutableMap()
-        newMap[cat.name] = top4Limited
+        newMap[cat.name] = currentOrdered
         categoryTopConvertersMap = newMap
 
         try {
@@ -1849,6 +1862,11 @@ How can I help you today?"""
             val json = adapter.toJson(newMap)
             sharedPrefs.edit().putString("category_top_converters_map", json).apply()
         } catch (e: Exception) { e.printStackTrace() }
+    }
+
+    fun isConverterPinnedInTop4(converterType: com.example.data.model.ConverterType): Boolean {
+        val top4 = getCategoryTopConverters(converterType.category)
+        return top4.contains(converterType)
     }
 
     fun pinToTop4(key: String, positionIndex: Int = 0) {

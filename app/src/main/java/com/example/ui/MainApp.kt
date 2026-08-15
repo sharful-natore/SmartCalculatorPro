@@ -15,12 +15,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.snapshotFlow
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.foundation.pager.PagerState
+import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import com.example.data.model.ToolType
@@ -468,7 +464,7 @@ fun MainContent(
                                     }
                                 )
                                 DropdownMenuItem(
-                                    text = { Text(if (viewModel.selectedLanguage == AppLanguage.BENGALI) "অল-ইন-ওয়ান ব্যাকআপ ও রিস্টোর" else "All-in-One Backup & Restore", color = themeColors.displayText) },
+                                    text = { Text(if (viewModel.selectedLanguage == AppLanguage.BENGALI) "সম্পূর্ণ ডেটা ব্যাকআপ ও রিস্টোর" else "Complete Data Backup & Restore", color = themeColors.displayText) },
                                     leadingIcon = { Icon(Icons.Default.CloudSync, contentDescription = null, tint = themeColors.buttonEqualBg) },
                                     onClick = {
                                         isMoreMenuExpanded = false
@@ -800,94 +796,152 @@ fun MainContent(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
-        val swipeAnimatable = remember { androidx.compose.animation.core.Animatable(0f) }
+        val dragAnimatable = remember { androidx.compose.animation.core.Animatable(0f) }
+        var isDragging by remember { mutableStateOf(false) }
 
-        LaunchedEffect(viewModel.activeTab) {
-            swipeAnimatable.snapTo(0f)
-        }
-
-        val swipeContainerModifier = Modifier
-            .fillMaxSize()
-            .pointerInput(viewModel.activeTab) {
-                var dragAmountSum = 0f
-                detectHorizontalDragGestures(
-                    onDragStart = {
-                        dragAmountSum = 0f
-                        coroutineScope.launch {
-                            swipeAnimatable.snapTo(0f)
-                        }
-                    },
-                    onDragEnd = {
-                        val threshold = size.width * 0.18f
-                        val currentTab = viewModel.activeTab
-                        if (dragAmountSum < -threshold && currentTab < 3) {
-                            viewModel.selectActiveTab(currentTab + 1)
-                        } else if (dragAmountSum > threshold && currentTab > 0) {
-                            viewModel.selectActiveTab(currentTab - 1)
-                        }
-                        coroutineScope.launch {
-                            swipeAnimatable.animateTo(0f, animationSpec = tween(220, easing = FastOutSlowInEasing))
-                        }
-                    },
-                    onDragCancel = {
-                        coroutineScope.launch {
-                            swipeAnimatable.animateTo(0f, animationSpec = tween(220, easing = FastOutSlowInEasing))
-                        }
-                    },
-                    onHorizontalDrag = { change, dragAmount ->
-                        val currentTab = viewModel.activeTab
-                        val canDragLeft = currentTab < 3
-                        val canDragRight = currentTab > 0
-                        
-                        val effectiveDrag = if ((dragAmount > 0 && !canDragRight && dragAmountSum >= 0) ||
-                                                (dragAmount < 0 && !canDragLeft && dragAmountSum <= 0)) {
-                            dragAmount * 0.25f
-                        } else {
-                            dragAmount
-                        }
-                        
-                        change.consume()
-                        dragAmountSum += effectiveDrag
-                        coroutineScope.launch {
-                            swipeAnimatable.snapTo(dragAmountSum)
-                        }
-                    }
-                )
-            }
-
-        Box(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .background(themeColors.background)
                 .padding(innerPadding)
                 .consumeWindowInsets(innerPadding)
         ) {
-            Box(
-                modifier = swipeContainerModifier
-                    .graphicsLayer {
-                        translationX = swipeAnimatable.value
-                    }
-            ) {
-                AnimatedContent(
-                    targetState = viewModel.activeTab,
-                    transitionSpec = {
-                        if (targetState > initialState) {
-                            (slideInHorizontally(animationSpec = tween(280, easing = FastOutSlowInEasing)) { width -> width } + fadeIn(animationSpec = tween(280))) togetherWith
-                                    (slideOutHorizontally(animationSpec = tween(280, easing = FastOutSlowInEasing)) { width -> -width } + fadeOut(animationSpec = tween(280)))
-                        } else {
-                            (slideInHorizontally(animationSpec = tween(280, easing = FastOutSlowInEasing)) { width -> -width } + fadeIn(animationSpec = tween(280))) togetherWith
-                                    (slideOutHorizontally(animationSpec = tween(280, easing = FastOutSlowInEasing)) { width -> width } + fadeOut(animationSpec = tween(280)))
+            val widthPx = with(LocalDensity.current) { constraints.maxWidth.toFloat() }
+            val currentTab = viewModel.activeTab
+
+            val targetTab = when {
+                dragAnimatable.value < 0 && currentTab < 3 -> currentTab + 1
+                dragAnimatable.value > 0 && currentTab > 0 -> currentTab - 1
+                else -> null
+            }
+
+            val swipeContainerModifier = Modifier
+                .fillMaxSize()
+                .pointerInput(currentTab) {
+                    var dragAmountSum = 0f
+                    detectHorizontalDragGestures(
+                        onDragStart = {
+                            isDragging = true
+                            dragAmountSum = 0f
+                            coroutineScope.launch {
+                                dragAnimatable.snapTo(0f)
+                            }
+                        },
+                        onDragEnd = {
+                            val threshold = widthPx * 0.18f
+                            if (dragAmountSum < -threshold && currentTab < 3) {
+                                coroutineScope.launch {
+                                    dragAnimatable.animateTo(-widthPx, animationSpec = tween(220, easing = FastOutSlowInEasing))
+                                    viewModel.selectActiveTab(currentTab + 1)
+                                    dragAnimatable.snapTo(0f)
+                                    isDragging = false
+                                }
+                            } else if (dragAmountSum > threshold && currentTab > 0) {
+                                coroutineScope.launch {
+                                    dragAnimatable.animateTo(widthPx, animationSpec = tween(220, easing = FastOutSlowInEasing))
+                                    viewModel.selectActiveTab(currentTab - 1)
+                                    dragAnimatable.snapTo(0f)
+                                    isDragging = false
+                                }
+                            } else {
+                                coroutineScope.launch {
+                                    dragAnimatable.animateTo(0f, animationSpec = tween(220, easing = FastOutSlowInEasing))
+                                    isDragging = false
+                                }
+                            }
+                        },
+                        onDragCancel = {
+                            coroutineScope.launch {
+                                dragAnimatable.animateTo(0f, animationSpec = tween(220, easing = FastOutSlowInEasing))
+                                isDragging = false
+                            }
+                        },
+                        onHorizontalDrag = { change, dragAmount ->
+                            val canDragLeft = currentTab < 3
+                            val canDragRight = currentTab > 0
+
+                            val effectiveDrag = if ((dragAmount > 0 && !canDragRight && dragAmountSum >= 0) ||
+                                                    (dragAmount < 0 && !canDragLeft && dragAmountSum <= 0)) {
+                                dragAmount * 0.25f
+                            } else {
+                                dragAmount
+                            }
+
+                            change.consume()
+                            dragAmountSum += effectiveDrag
+                            coroutineScope.launch {
+                                dragAnimatable.snapTo(dragAmountSum)
+                            }
                         }
-                    },
-                    label = "MainScreenTabTransition",
-                    modifier = Modifier.fillMaxSize()
-                ) { page ->
-                    when (page) {
-                        0 -> DashboardScreen(viewModel, themeColors)
-                        1 -> SmartConverterScreen(viewModel, themeColors)
-                        2 -> CalculatorScreen(viewModel, themeColors)
-                        3 -> HistoryLogsScreen(viewModel, themeColors)
-                        else -> DashboardScreen(viewModel, themeColors)
+                    )
+                }
+
+            Box(modifier = swipeContainerModifier) {
+                if (isDragging || dragAnimatable.value != 0f) {
+                    // Render current screen sliding
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .graphicsLayer {
+                                translationX = dragAnimatable.value
+                            }
+                    ) {
+                        when (currentTab) {
+                            0 -> DashboardScreen(viewModel, themeColors)
+                            1 -> SmartConverterScreen(viewModel, themeColors)
+                            2 -> CalculatorScreen(viewModel, themeColors)
+                            3 -> HistoryLogsScreen(viewModel, themeColors)
+                            else -> DashboardScreen(viewModel, themeColors)
+                        }
+                    }
+
+                    // Render adjacent target screen sliding side-by-side
+                    if (targetTab != null) {
+                        val adjacentOffset = if (targetTab > currentTab) {
+                            widthPx + dragAnimatable.value
+                        } else {
+                            -widthPx + dragAnimatable.value
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .graphicsLayer {
+                                    translationX = adjacentOffset
+                                }
+                        ) {
+                            when (targetTab) {
+                                0 -> DashboardScreen(viewModel, themeColors)
+                                1 -> SmartConverterScreen(viewModel, themeColors)
+                                2 -> CalculatorScreen(viewModel, themeColors)
+                                3 -> HistoryLogsScreen(viewModel, themeColors)
+                                else -> DashboardScreen(viewModel, themeColors)
+                            }
+                        }
+                    }
+                } else {
+                    // Resting state: render active tab with animated transition for tab clicks
+                    AnimatedContent(
+                        targetState = currentTab,
+                        transitionSpec = {
+                            if (targetState > initialState) {
+                                (slideInHorizontally(animationSpec = tween(280, easing = FastOutSlowInEasing)) { width -> width } + fadeIn(animationSpec = tween(280))) togetherWith
+                                        (slideOutHorizontally(animationSpec = tween(280, easing = FastOutSlowInEasing)) { width -> -width } + fadeOut(animationSpec = tween(280)))
+                            } else {
+                                (slideInHorizontally(animationSpec = tween(280, easing = FastOutSlowInEasing)) { width -> -width } + fadeIn(animationSpec = tween(280))) togetherWith
+                                        (slideOutHorizontally(animationSpec = tween(280, easing = FastOutSlowInEasing)) { width -> width } + fadeOut(animationSpec = tween(280)))
+                            }
+                        },
+                        label = "MainScreenTabTransition",
+                        modifier = Modifier.fillMaxSize()
+                    ) { page ->
+                        when (page) {
+                            0 -> DashboardScreen(viewModel, themeColors)
+                            1 -> SmartConverterScreen(viewModel, themeColors)
+                            2 -> CalculatorScreen(viewModel, themeColors)
+                            3 -> HistoryLogsScreen(viewModel, themeColors)
+                            else -> DashboardScreen(viewModel, themeColors)
+                        }
                     }
                 }
             }
@@ -1283,7 +1337,7 @@ fun MainContent(
                 },
                 title = {
                     Text(
-                        text = if (isBn) "অল-ইন-ওয়ান ব্যাকআপ ও রিস্টোর" else "All-in-One Global Backup & Restore",
+                        text = if (isBn) "সম্পূর্ণ ডেটা ব্যাকআপ ও রিস্টোর" else "Complete Data Backup & Restore",
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp,
                         color = themeColors.displayText,
@@ -2354,106 +2408,76 @@ fun MainContent(
                         lineHeight = 18.sp
                     )
 
-                    if (totalCatItems <= 4) {
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = themeColors.displayBackground,
-                            modifier = Modifier.fillMaxWidth()
+                    val maxPos = totalCatItems.coerceAtMost(4)
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = themeColors.displayBackground,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Row(
-                                modifier = Modifier.padding(12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.Info,
+                                    imageVector = Icons.Default.PushPin,
                                     contentDescription = null,
                                     tint = themeColors.buttonEqualBg,
-                                    modifier = Modifier.size(18.dp)
+                                    modifier = Modifier.size(16.dp)
                                 )
                                 Text(
-                                    text = if (isBn)
-                                        "$catTitle ক্যাটাগরিতে মোট $totalCatItems টি আইটেম রয়েছে, যা ইতিমধ্যেই সামনের প্রিভিউতে দৃশ্যমান।"
-                                    else
-                                        "$catTitle category has $totalCatItems items in total, which are already displayed in the front preview.",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = themeColors.displayText.copy(alpha = 0.85f),
-                                    lineHeight = 16.sp
+                                    text = if (isBn) "📌 $catTitle ক্যাটাগরিতে পজিশন পিন করুন:" else "📌 Pin position in $catTitle:",
+                                    fontSize = 12.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.buttonEqualBg
                                 )
                             }
-                        }
-                    } else {
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = themeColors.displayBackground,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(12.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.PushPin,
-                                        contentDescription = null,
-                                        tint = themeColors.buttonEqualBg,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                    Text(
-                                        text = if (isBn) "📌 $catTitle এর সেরা ৪টি প্রিভিউতে পিন করুন:" else "📌 Pin to $catTitle Top 4 Preview:",
-                                        fontSize = 12.5.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = themeColors.buttonEqualBg
-                                    )
-                                }
 
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    listOf(
-                                        0 to if (isBn) "১ম স্থানে" else "Pos 1",
-                                        1 to if (isBn) "২য় স্থানে" else "Pos 2",
-                                        2 to if (isBn) "৩য় স্থানে" else "Pos 3",
-                                        3 to if (isBn) "৪র্থ স্থানে" else "Pos 4"
-                                    ).forEach { (pos, label) ->
-                                        Button(
-                                            onClick = {
-                                                if (action.isTool) {
-                                                    val tool = com.example.data.model.ToolType.values().find { it.name == action.key }
-                                                    if (tool != null) viewModel.pinToolToCategoryTop4(tool, pos)
-                                                } else {
-                                                    val conv = com.example.data.model.ConverterType.values().find { it.name == action.key }
-                                                    if (conv != null) viewModel.pinConverterToCategoryTop4(conv, pos)
-                                                }
-                                                viewModel.dismissPendingFavoriteAction()
-                                                val posText = if (isBn) "${pos + 1} নম্বর" else "Pos ${pos + 1}"
-                                                Toast.makeText(
-                                                    context,
-                                                    if (isBn) "\"${action.titleBn}\" $catTitle এর সেরা ৪টির $posText স্থানে পিন হয়েছে!" else "\"${action.titleEn}\" pinned to $catTitle Top 4 ($posText)!",
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                            },
-                                            modifier = Modifier.weight(1f),
-                                            shape = RoundedCornerShape(8.dp),
-                                            colors = ButtonDefaults.buttonColors(
-                                                containerColor = themeColors.buttonEqualBg.copy(alpha = 0.15f),
-                                                contentColor = themeColors.buttonEqualBg
-                                            ),
-                                            contentPadding = PaddingValues(vertical = 6.dp, horizontal = 2.dp)
-                                        ) {
-                                            Text(
-                                                text = label,
-                                                fontSize = 10.5.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                maxLines = 1,
-                                                softWrap = false
-                                            )
-                                        }
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                listOf(
+                                    0 to if (isBn) "১ম স্থানে" else "Pos 1",
+                                    1 to if (isBn) "২য় স্থানে" else "Pos 2",
+                                    2 to if (isBn) "৩য় স্থানে" else "Pos 3",
+                                    3 to if (isBn) "৪র্থ স্থানে" else "Pos 4"
+                                ).take(maxPos.coerceAtLeast(1)).forEach { (pos, label) ->
+                                    Button(
+                                        onClick = {
+                                            if (action.isTool) {
+                                                val tool = com.example.data.model.ToolType.values().find { it.name == action.key }
+                                                if (tool != null) viewModel.pinToolToCategoryTop4(tool, pos)
+                                            } else {
+                                                val conv = com.example.data.model.ConverterType.values().find { it.name == action.key }
+                                                if (conv != null) viewModel.pinConverterToCategoryTop4(conv, pos)
+                                            }
+                                            viewModel.dismissPendingFavoriteAction()
+                                            val posText = if (isBn) "${pos + 1} নম্বর" else "Pos ${pos + 1}"
+                                            Toast.makeText(
+                                                context,
+                                                if (isBn) "\"${action.titleBn}\" $catTitle এর $posText পজিশনে পিন করা হয়েছে!" else "\"${action.titleEn}\" pinned to $catTitle $posText position!",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        },
+                                        modifier = Modifier.weight(1f),
+                                        shape = RoundedCornerShape(8.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = themeColors.buttonEqualBg.copy(alpha = 0.15f),
+                                            contentColor = themeColors.buttonEqualBg
+                                        ),
+                                        contentPadding = PaddingValues(vertical = 6.dp, horizontal = 2.dp)
+                                    ) {
+                                        Text(
+                                            text = label,
+                                            fontSize = 10.5.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            maxLines = 1,
+                                            softWrap = false
+                                        )
                                     }
                                 }
                             }

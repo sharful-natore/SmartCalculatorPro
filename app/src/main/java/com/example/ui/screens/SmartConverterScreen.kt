@@ -442,19 +442,13 @@ fun SmartConverterCategoriesView(
                         }
                     }
 
+                    val topConvertersMap = viewModel.categoryTopConvertersMap
                     categoriesToShow.forEach { category ->
-                        val categoryConverters = currentFilteredConverters.filter { it.category == category }
+                        val orderedCatConverters = viewModel.getAllOrderedConvertersForCategory(category)
+                        val categoryConverters = orderedCatConverters.filter { currentFilteredConverters.contains(it) }
 
                         if (categoryConverters.isNotEmpty()) {
-                            val displayedConverters = if (isOverviewMode) {
-                                if (categoryConverters.size <= 4) categoryConverters
-                                else {
-                                    val top4 = viewModel.getCategoryTopConverters(category)
-                                    val filteredTop4 = top4.filter { c -> categoryConverters.contains(c) }
-                                    val remaining = categoryConverters.filter { !filteredTop4.contains(it) }
-                                    (filteredTop4 + remaining).take(4)
-                                }
-                            } else categoryConverters
+                            val displayedConverters = if (isOverviewMode) categoryConverters.take(4) else categoryConverters
                             val hasMore = isOverviewMode && categoryConverters.size > 4
 
                             // Category Header
@@ -531,29 +525,40 @@ fun SmartConverterCategoriesView(
                                 }
                             }
 
-                            // Cards Grid (2 columns)
-                            Column(
-                                verticalArrangement = Arrangement.spacedBy(10.dp),
-                                modifier = Modifier.padding(bottom = 6.dp)
-                            ) {
-                                displayedConverters.chunked(2).forEach { rowItems ->
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
-                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                                    ) {
-                                        rowItems.forEach { type ->
-                                            Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
-                                                ConverterCardItem(
-                                                    converterType = type,
-                                                    viewModel = viewModel,
-                                                    themeColors = themeColors,
-                                                    modifier = Modifier.fillMaxHeight(),
-                                                    onClick = { viewModel.openConverter(type) }
-                                                )
+                            // Cards Grid (2 columns) with Smooth Animated Position Reordering
+                            AnimatedContent(
+                                targetState = displayedConverters,
+                                transitionSpec = {
+                                    fadeIn(animationSpec = tween(250)) + scaleIn(initialScale = 0.96f, animationSpec = tween(250)) togetherWith
+                                            fadeOut(animationSpec = tween(180))
+                                },
+                                label = "ConvertersGridReorder_${category.name}"
+                            ) { currentDisplayedConverters ->
+                                Column(
+                                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                                    modifier = Modifier.padding(bottom = 6.dp)
+                                ) {
+                                    currentDisplayedConverters.chunked(2).forEach { rowItems ->
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
+                                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                        ) {
+                                            rowItems.forEach { type ->
+                                                key(type.name) {
+                                                    Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                                                        ConverterCardItem(
+                                                            converterType = type,
+                                                            viewModel = viewModel,
+                                                            themeColors = themeColors,
+                                                            modifier = Modifier.fillMaxHeight(),
+                                                            onClick = { viewModel.openConverter(type) }
+                                                        )
+                                                    }
+                                                }
                                             }
-                                        }
-                                        if (rowItems.size == 1) {
-                                            Spacer(modifier = Modifier.weight(1f))
+                                            if (rowItems.size == 1) {
+                                                Spacer(modifier = Modifier.weight(1f))
+                                            }
                                         }
                                     }
                                 }
@@ -680,6 +685,7 @@ fun ConverterCardItem(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isFavorite = viewModel.favoriteConverters.contains(converterType.name)
+    val isPinned = viewModel.isConverterPinnedInTop4(converterType)
     ElevatedCard(
         modifier = modifier
             .fillMaxWidth()
@@ -724,16 +730,32 @@ fun ConverterCardItem(
                             modifier = Modifier.size(22.dp)
                         )
                     }
-                    IconButton(
-                        onClick = { viewModel.requestToggleFavoriteConverter(converterType) },
-                        modifier = Modifier.size(28.dp)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
-                        Icon(
-                            imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            contentDescription = "Favorite",
-                            tint = if (isFavorite) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.3f),
-                            modifier = Modifier.size(20.dp)
-                        )
+                        IconButton(
+                            onClick = { viewModel.requestToggleFavoriteConverter(converterType) },
+                            modifier = Modifier.size(28.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.PushPin,
+                                contentDescription = "Pin Position",
+                                tint = if (isPinned) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.35f),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                        IconButton(
+                            onClick = { viewModel.toggleFavoriteConverter(converterType.name) },
+                            modifier = Modifier.size(28.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                contentDescription = "Favorite",
+                                tint = if (isFavorite) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.3f),
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                     }
                 }
 

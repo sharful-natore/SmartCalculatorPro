@@ -1417,25 +1417,34 @@ fun GoldCalculatorCard(
     val df = remember { DecimalFormat("#.##") }
     val dfFour = remember { DecimalFormat("#.####") }
 
+    var selectedMetalTab by remember { mutableStateOf("gold") } // "gold" or "silver"
+
     var voriStr by remember { mutableStateOf("1") }
     var annaStr by remember { mutableStateOf("0") }
     var rattiStr by remember { mutableStateOf("0") }
     var pointStr by remember { mutableStateOf("0") }
 
     var selectedCarat by remember { mutableStateOf("22K") }
-    var goldPricePerVori by remember { mutableStateOf("125000") } // Default Price per Vori BDT
-    var makingChargeStr by remember { mutableStateOf("5000") } // Flat making charge in BDT
+    var goldPricePerVori by remember { mutableStateOf("125000") } // Default Gold Price per Vori BDT
+    var silverPricePerVori by remember { mutableStateOf("2100") } // Default Silver Price per Vori BDT
+
+    var goldMakingChargeStr by remember { mutableStateOf("5000") } // Flat making charge in BDT for Gold
+    var silverMakingChargeStr by remember { mutableStateOf("300") } // Flat making charge in BDT for Silver
     var vatPercentStr by remember { mutableStateOf("5") } // 5% standard VAT
 
     val carats = listOf("22K", "21K", "18K", "Sanatan")
 
+    val isGold = selectedMetalTab == "gold"
+    val currentPricePerVoriStr = if (isGold) goldPricePerVori else silverPricePerVori
+    val currentMakingChargeStr = if (isGold) goldMakingChargeStr else silverMakingChargeStr
+
     // Automatic rate suggest based on Carat relative to 22K rate
-    val rawBaseRate = goldPricePerVori.toDoubleOrNull() ?: 0.0
+    val rawBaseRate = currentPricePerVoriStr.toDoubleOrNull() ?: 0.0
     val derivedRate = when (selectedCarat) {
         "22K" -> rawBaseRate
         "21K" -> rawBaseRate * (21.0 / 22.0)
         "18K" -> rawBaseRate * (18.0 / 22.0)
-        else -> rawBaseRate * 0.65 // Sanatan has ~65% pure gold rate
+        else -> rawBaseRate * 0.65 // Sanatan has ~65% pure metal rate
     }
 
     // Weight Calculation
@@ -1449,11 +1458,11 @@ fun GoldCalculatorCard(
     val totalGrams = totalVori * 11.664
 
     // Price Calculations
-    val goldOnlyPrice = totalVori * derivedRate
-    val makingCharge = makingChargeStr.toDoubleOrNull() ?: 0.0
+    val metalOnlyPrice = totalVori * derivedRate
+    val makingCharge = currentMakingChargeStr.toDoubleOrNull() ?: 0.0
     val vatPercent = vatPercentStr.toDoubleOrNull() ?: 0.0
 
-    val baseWithMaking = goldOnlyPrice + makingCharge
+    val baseWithMaking = metalOnlyPrice + makingCharge
     val vatAmount = baseWithMaking * (vatPercent / 100.0)
     val totalPrice = baseWithMaking + vatAmount
 
@@ -1470,9 +1479,53 @@ fun GoldCalculatorCard(
         )
         Spacer(modifier = Modifier.height(12.dp))
 
+        // Metal Selector Tabs
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Button(
+                onClick = { selectedMetalTab = "gold" },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isGold) themeColors.buttonEqualBg else themeColors.buttonNormalBg,
+                    contentColor = if (isGold) themeColors.buttonEqualText else themeColors.buttonNormalText
+                ),
+                modifier = Modifier.weight(1f).height(40.dp),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Text(
+                    text = if (isBn) "🏆 স্বর্ণ (Gold)" else "🏆 Gold",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Button(
+                onClick = { selectedMetalTab = "silver" },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (!isGold) themeColors.buttonEqualBg else themeColors.buttonNormalBg,
+                    contentColor = if (!isGold) themeColors.buttonEqualText else themeColors.buttonNormalText
+                ),
+                modifier = Modifier.weight(1f).height(40.dp),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Text(
+                    text = if (isBn) "🥈 রৌপ্য (Silver)" else "🥈 Silver",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(14.dp))
+
         // Weight Inputs (Vori, Anna, Ratti, Point)
         Text(
-            text = if (isBn) "স্বর্ণের ওজন:" else "Gold Weight:",
+            text = if (isGold) {
+                if (isBn) "স্বর্ণের ওজন:" else "Gold Weight:"
+            } else {
+                if (isBn) "রৌপ্যের ওজন:" else "Silver Weight:"
+            },
             fontSize = 12.sp,
             fontWeight = FontWeight.Medium,
             color = themeColors.displayText.copy(alpha = 0.8f)
@@ -1513,7 +1566,11 @@ fun GoldCalculatorCard(
 
         // Carat selection Row
         Text(
-            text = if (isBn) "স্বর্ণের মান (ক্যারেট):" else "Gold Quality (Carat):",
+            text = if (isGold) {
+                if (isBn) "স্বর্ণের মান (ক্যারেট):" else "Gold Quality (Carat):"
+            } else {
+                if (isBn) "রৌপ্যের মান (ক্যারেট/হলমার্ক):" else "Silver Quality (Carat):"
+            },
             fontSize = 12.sp,
             fontWeight = FontWeight.Medium,
             color = themeColors.displayText.copy(alpha = 0.8f)
@@ -1525,6 +1582,7 @@ fun GoldCalculatorCard(
         ) {
             carats.forEach { carat ->
                 val isSelected = selectedCarat == carat
+                val caratLabel = if (!isGold && carat == "Sanatan") (if (isBn) "সনাতন" else "Sanatan") else carat
                 Button(
                     onClick = { selectedCarat = carat },
                     colors = ButtonDefaults.buttonColors(
@@ -1535,7 +1593,7 @@ fun GoldCalculatorCard(
                     contentPadding = PaddingValues(0.dp),
                     shape = RoundedCornerShape(8.dp)
                 ) {
-                    Text(text = carat, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Text(text = caratLabel, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -1544,9 +1602,15 @@ fun GoldCalculatorCard(
 
         // Price Input
         CustomOutlinedTextField(
-            value = goldPricePerVori,
-            onValueChange = { goldPricePerVori = it },
-            label = if (isBn) "২২ ক্যারেট প্রতি ভরি মূল্য (৳)" else "22K Price Per Vori (৳)",
+            value = if (isGold) goldPricePerVori else silverPricePerVori,
+            onValueChange = {
+                if (isGold) goldPricePerVori = it else silverPricePerVori = it
+            },
+            label = if (isGold) {
+                if (isBn) "২২ ক্যারেট স্বর্ণের প্রতি ভরি মূল্য (৳)" else "22K Gold Price Per Vori (৳)"
+            } else {
+                if (isBn) "২২ ক্যারেট রৌপ্যের প্রতি ভরি মূল্য (৳)" else "22K Silver Price Per Vori (৳)"
+            },
             themeColors = themeColors,
             modifier = Modifier.fillMaxWidth().testTag("gold_price_per_vori_input")
         )
@@ -1555,8 +1619,10 @@ fun GoldCalculatorCard(
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
             CustomOutlinedTextField(
-                value = makingChargeStr,
-                onValueChange = { makingChargeStr = it },
+                value = if (isGold) goldMakingChargeStr else silverMakingChargeStr,
+                onValueChange = {
+                    if (isGold) goldMakingChargeStr = it else silverMakingChargeStr = it
+                },
                 label = if (isBn) "মজুরি (৳)" else "Making Charge (৳)",
                 themeColors = themeColors,
                 modifier = Modifier.weight(1f).testTag("gold_making_charge_input")
@@ -1580,7 +1646,11 @@ fun GoldCalculatorCard(
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
                 Text(
-                    text = if (isBn) "হিসাব বিবরণী" else "Calculated Details",
+                    text = if (isBn) {
+                        if (isGold) "স্বর্ণের হিসাব বিবরণী" else "রৌপ্যের হিসাব বিবরণী"
+                    } else {
+                        if (isGold) "Gold Calculated Details" else "Silver Calculated Details"
+                    },
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                     color = themeColors.displayText
@@ -1600,8 +1670,16 @@ fun GoldCalculatorCard(
                     Text("৳ ${df.format(derivedRate)} ($selectedCarat)", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
                 }
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(if (isBn) "স্বর্ণের প্রকৃত মূল্য:" else "Gold Value Only:", fontSize = 12.sp, color = themeColors.displayText.copy(alpha = 0.7f))
-                    Text("৳ ${df.format(goldOnlyPrice)}", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                    Text(
+                        if (isBn) {
+                            if (isGold) "স্বর্ণের প্রকৃত মূল্য:" else "রৌপ্যের প্রকৃত মূল্য:"
+                        } else {
+                            if (isGold) "Gold Value Only:" else "Silver Value Only:"
+                        },
+                        fontSize = 12.sp,
+                        color = themeColors.displayText.copy(alpha = 0.7f)
+                    )
+                    Text("৳ ${df.format(metalOnlyPrice)}", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
                 }
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text(if (isBn) "ভ্যাট পরিমাণ:" else "VAT Amount:", fontSize = 12.sp, color = themeColors.displayText.copy(alpha = 0.7f))
