@@ -189,252 +189,123 @@ object NamazDataRepository {
         ),
         PrayerStep(
             2, "মাটিতে হাত মারা ও মুখ মাসাহ", "Strike Dust & Wipe Face",
-            "পবিত্র মাটি বা ধূলিমুক্ত পাথরে দু'হাত মেড়ে অতিরিক্ত ধূলা ঝেড়ে ফেলুন এবং পুরো মুখমণ্ডল একবার মাসাহ করুন।",
-            postureType = PostureType.WUDU_GENERIC
+            "পবিত্র মাটি বা ধূলিমুক্ত পাথরে দুই হাত হালকা আঘাত করুন এবং অতিরিক্ত ধুলো থাকলে ফুঁ দিয়ে তা পরিষ্কার করে পুরো মুখমণ্ডল একবার মাসাহ করুন।",
+            postureType = PostureType.DUA_GENERIC
         ),
         PrayerStep(
-            3, "পুনরায় মাটিতে হাত মারা ও হাত মাসাহ", "Strike Dust & Wipe Arms",
-            "পুনরায় মাটিতে দু'হাত মেড়ে প্রথমে বাম হাত দিয়ে ডান হাত কনুই পর্যন্ত এবং পরে ডান হাত দিয়ে বাম হাত কনুই পর্যন্ত মাসাহ করুন।",
-            postureType = PostureType.WUDU_GENERIC
+            3, "হাত ও কনুই মাসাহ", "Strike Dust & Wipe Arms",
+            "পুনরায় দুই হাত মাটিতে আলতো করে আঘাত করুন এবং ডান হাতের সাহায্যে বাম হাত এবং বাম হাতের সাহায্যে ডান হাত কনুইসহ মাসাহ করুন।",
+            postureType = PostureType.DUA_GENERIC
         )
     )
 
     val ghuslFarzList = listOf(
-        "১. ভালোভাবে কুলি করা (গড়গড়াসহ)।",
-        "২. নাকে পানি দিয়ে নাকের ভেতর পরিষ্কার করা।",
-        "৩. সমস্ত শরীরে এমনভাবে পানি পৌঁছানো যেন একটি চুল পরিমাণ স্থানও শুকনো না থাকে।"
+        "১. গড়গড়ার সহিত কুলি করা (রোজা না থাকলে)।",
+        "২. নাকে পানি দিয়ে নরম অংশ পর্যন্ত পৌঁছানো ও নাক পরিষ্কার করা।",
+        "৩. সমস্ত শরীরে এমনভাবে পানি পৌঁছানো যেন একটি চুলের গোড়াও শুকনা না থাকে।"
     )
 
     val ghuslSunnahSteps = listOf(
-        "১. গোসলের নিয়ত করা এবং বিসমিল্লাহ বলা।",
-        "২. দুই হাত কবজি পর্যন্ত ধোয়া।",
-        "৩. শরীরে কোনো অপবিত্রতা থাকলে তা ধুয়ে পরিষ্কার করা।",
-        "৪. সাধারণ অজুর ন্যায় অজু করা।",
-        "৫. মাথায় ৩ বার পানি ঢালা যেন চুলের গোড়া ভিজে যায়।",
-        "৬. প্রথমে ডান কাঁধে ও পরে বাম কাঁধে ৩ বার পানি ঢেলে সারা শরীর ভালোভাবে ধোয়া।"
+        "১. প্রথমে উভয় হাত কবজি পর্যন্ত ৩ বার ধোয়া।",
+        "২. শরীরে কোথাও কোনো অপবিত্রতা বা ময়লা লেগে থাকলে তা পরিষ্কার করা।",
+        "৩. নামাজের অজুর মতো পূর্ণাঙ্গ অজু করা (তবে পা ধোয়া শেষে করা যেতে পারে)।",
+        "৪. মাথায় ৩ বার পানি ঢেলে ভালোভাবে ধোয়া যেন চুলের গোড়া ভিজে যায়।",
+        "৫. প্রথমে ডান কাঁধে এবং পরে বাম কাঁধে পানি ঢেলে সারা শরীর ভালোভাবে ধুয়ে নেওয়া।",
+        "৬. এরপর সম্পূর্ণ শরীরে এমনভাবে পানি ঢালা ও ডলা যাতে কোনো অঙ্গই শুকনো না থাকে।"
     )
 
-    // 2. DAILY WAQT PRAYERS
+    // 2. 5 DAILY PRAYERS (WAQT)
     val dailyWaqts = listOf(
         WaqtInfo(
             id = "fajr",
             nameBn = "ফজর",
             nameEn = "Fajr",
-            arabicName = "صَلَاةُ الْفَجْرِ",
+            arabicName = "صَلَاةُ الفَجْر",
             totalRakat = 4,
             farz = 2,
             sunnatMuakkadah = 2,
             sunnatGairMuakkadah = 0,
             nafl = 0,
             witr = 0,
-            descriptionBn = "সুবেহ সাদিক থেকে সূর্যোদয়ের পূর্ব পর্যন্ত ফজরের সময়। সুন্নতে মুয়াক্কাদাহ ২ রাকাত আগে এবং ফরজ ২ রাকাত পরে।",
-            steps2Rakat = get2RakatSteps("ফজর")
+            descriptionBn = "ফজর নামাজের সময় সুবহে সাদিক থেকে শুরু হয়ে সূর্যোদয়ের পূর্ব পর্যন্ত থাকে। প্রথমে ২ রাকাত সুন্নতে মুয়াক্কাদাহ এবং পরে ২ রাকাত ফরজ নামাজ আদায় করতে হয়।",
+            steps2Rakat = get2RakatSteps("Fajr")
         ),
         WaqtInfo(
             id = "dhuhr",
-            nameBn = "জোহর",
+            nameBn = "যোহর",
             nameEn = "Dhuhr",
-            arabicName = "صَلَاةُ الظُّهْرِ",
-            totalRakat = 12,
+            arabicName = "صَلَاةُ الظُّهْر",
+            totalRakat = 10,
             farz = 4,
-            sunnatMuakkadah = 6, // 4 before farz, 2 after farz
+            sunnatMuakkadah = 6,
             sunnatGairMuakkadah = 0,
-            nafl = 2,
+            nafl = 0,
             witr = 0,
-            descriptionBn = "সূর্য পশ্চিমাকাশে ঢলে পড়ার পর থেকে বস্তুর ছায়া দ্বিগুণ হওয়া পর্যন্ত জোহরের সময়। ৪ রাকাত সুন্নত + ৪ রাকাত ফরজ + ২ রাকাত সুন্নত + ২ রাকাত নফল।",
-            steps2Rakat = get2RakatSteps("জোহর"),
-            steps4Rakat = get4RakatSteps("জোহর")
+            descriptionBn = "দুপুরের সূর্য পশ্চিম আকাশে ঢলে পড়ার পর থেকে যোহর নামাজের ওয়াক্ত শুরু হয় এবং কোনো বস্তুর ছায়া তার দ্বিগুণ হওয়া পর্যন্ত থাকে। যোহরে প্রথমে ৪ রাকাত সুন্নত, তারপর ৪ রাকাত ফরজ ও শেষে ২ রাকাত সুন্নত আদায় করতে হয়।",
+            steps2Rakat = get2RakatSteps("Dhuhr"),
+            steps4Rakat = get4RakatSteps("Dhuhr")
         ),
         WaqtInfo(
             id = "asr",
             nameBn = "আসর",
             nameEn = "Asr",
-            arabicName = "صَلَاةُ الْعَصْرِ",
+            arabicName = "صَلَاةُ العَصْر",
             totalRakat = 8,
             farz = 4,
             sunnatMuakkadah = 0,
             sunnatGairMuakkadah = 4,
             nafl = 0,
             witr = 0,
-            descriptionBn = "বস্তুর ছায়া দ্বিগুণ হওয়ার পর থেকে সূর্যাস্তের পূর্ব পর্যন্ত আসরের সময়। ৪ রাকাত গায়রে মুয়াক্কাদাহ সুন্নত ও ৪ রাকাত ফরজ।",
-            steps2Rakat = get2RakatSteps("আসর"),
-            steps4Rakat = get4RakatSteps("আসর")
+            descriptionBn = "যোহরের ওয়াক্ত শেষ হওয়ার পর থেকে আসরের ওয়াক্ত শুরু হয় এবং সূর্যাস্তের পূর্ব পর্যন্ত থাকে। আসরের ৪ রাকাত ফরজ নামাজ আদায় করা ফরজ। ফরজের পূর্বে ৪ রাকাত সুন্নতে গায়রে মুয়াক্কাদাহ পড়া উত্তম।",
+            steps2Rakat = get2RakatSteps("Asr"),
+            steps4Rakat = get4RakatSteps("Asr")
         ),
         WaqtInfo(
             id = "maghrib",
             nameBn = "মাগরিব",
             nameEn = "Maghrib",
-            arabicName = "صَلَاةُ الْمَغْرِبِ",
-            totalRakat = 7,
+            arabicName = "صَلَاةُ المَغْرِب",
+            totalRakat = 5,
             farz = 3,
             sunnatMuakkadah = 2,
             sunnatGairMuakkadah = 0,
-            nafl = 2,
+            nafl = 0,
             witr = 0,
-            descriptionBn = "সূর্যাস্তের পর থেকে পশ্চিমাকাশের লাল আভা অদৃশ্য হওয়া পর্যন্ত মাগরিবের সময়। ৩ রাকাত ফরজ + ২ রাকাত সুন্নত + ২ রাকাত নফল।",
-            steps2Rakat = get2RakatSteps("মাগরিব"),
-            steps3Rakat = get3RakatSteps("মাগরিব")
+            descriptionBn = "সূর্যাস্তের পর থেকে মাগরিবের ওয়াক্ত শুরু হয় এবং পশ্চিম আকাশে লাল আভা (শফক) বিলীন হওয়া পর্যন্ত থাকে। মাগরিবে প্রথমে ৩ রাকাত ফরজ এবং পরে ২ রাকাত সুন্নতে মুয়াক্কাদাহ নামাজ আদায় করতে হয়।",
+            steps2Rakat = get2RakatSteps("Maghrib"),
+            steps3Rakat = get3RakatSteps("Maghrib")
         ),
         WaqtInfo(
             id = "isha",
             nameBn = "এশা",
             nameEn = "Isha",
-            arabicName = "صَلَاةُ الْعِشَاءِ",
+            arabicName = "صَلَاةُ العِشَاء",
             totalRakat = 15,
             farz = 4,
-            sunnatMuakkadah = 2,
+            sunnatMuakkadah = 4,
             sunnatGairMuakkadah = 4,
-            nafl = 2,
+            nafl = 0,
             witr = 3,
-            descriptionBn = "পশ্চিমাকাশের লাল আভা চলে যাওয়ার পর থেকে সুবেহ সাদিকের পূর্ব পর্যন্ত এশার সময়। ৪ গায়রে মুয়াক্কাদাহ + ৪ ফরজ + ২ সুন্নত + ২ নফল + ৩ বিতর।",
-            steps2Rakat = get2RakatSteps("এশা"),
-            steps3Rakat = getWitr3RakatSteps(),
-            steps4Rakat = get4RakatSteps("এশা")
+            descriptionBn = "মাগরিবের ওয়াক্ত শেষ হওয়ার পর থেকে সুবহে সাদিকের পূর্ব পর্যন্ত এশার নামাজের ওয়াক্ত থাকে। এশা নামাজে প্রথমে ৪ রাকাত ফরজ ও পরে ২ রাকাত সুন্নতে মুয়াক্কাদাহ আদায় করতে হয়। এরপর ৩ রাকাত বিতর আদায় করা হয়।",
+            steps2Rakat = get2RakatSteps("Isha"),
+            steps4Rakat = get4RakatSteps("Isha")
         ),
         WaqtInfo(
             id = "witr",
             nameBn = "বিতর",
             nameEn = "Witr",
-            arabicName = "صَلَاةُ الْوِتْرِ",
+            arabicName = "صَلَاةُ الوِتْر",
             totalRakat = 3,
             farz = 0,
             sunnatMuakkadah = 0,
             sunnatGairMuakkadah = 0,
             nafl = 0,
             witr = 3,
-            descriptionBn = "এশার নামাজের পর ওয়াজিব ৩ রাকাত বিতরের নামাজ। ৩য় রাকাতে সূরা ফাতেহা ও কিরাতের পর অতিরিক্ত তকবীর বলে দুআ কুনুত পাঠ করতে হয়।",
-            steps2Rakat = emptyList(),
+            descriptionBn = "বিতর নামাজ ৩ রাকাত পড়া ওয়াজিব। এটি সাধারণত এশার ফরজ ও সুন্নতের পর আদায় করা হয়। এর ৩য় রাকাতে সূরা ফাতেহা ও অন্য সূরা পড়ার পর অতিরিক্ত তাকবীর বলে দুআ কুনুত পাঠ করা ওয়াজিব।",
+            steps2Rakat = get2RakatSteps("Witr"),
             steps3Rakat = getWitr3RakatSteps()
         )
     )
-
-    // Helper step generators
-    private fun get2RakatSteps(waqtName: String): List<PrayerStep> {
-        return listOf(
-            PrayerStep(
-                1, "নিয়ত ও তাকবীরে তাহরিমা", "Takbeer & Intention",
-                "কিবলামুখী হয়ে দাঁড়ান, নিয়ত করুন এবং 'আল্লাহু আকবার' বলে হাত উঠিয়ে নাভির নিচে (নারীরা বুকে) বাঁধুন।",
-                postureType = PostureType.TAKBEER,
-                arabicText = "اللَّهُ أَكْبَرُ",
-                banglaPronunciation = "আল্লাহু আকবার",
-                banglaMeaning = "আল্লাহ সবচেয়ে মহান।",
-                maleNoteBn = "পুরুষরা দুই হাত কানের লতি পর্যন্ত তুলবেন এবং নাভির নিচে হাত বাঁধুন।",
-                femaleNoteBn = "নারীরা দুই হাত কাঁধ/বুক পর্যন্ত তুলবেন এবং বুকের ওপর হাত বাঁধুন।"
-            ),
-            PrayerStep(
-                2, "ছানা, সূরা ফাতেহা ও সূরা মেলানো (১ম রাকাত)", "Qiyam & Recitation",
-                "হাত বেঁধে ছানা পাঠ করুন। এরপর আউযুবিল্লাহ-বিসমিল্লাহসহ সূরা ফাতেহা এবং যেকোনো একটি অন্য সূরা পাঠ করুন।",
-                postureType = PostureType.QIYAM,
-                arabicText = "سُبْحَانَكَ اللَّهُمَّ وَبِحَمْدِكَ وَتَبَارَكَ اسْمُكَ وَتَعَالَىٰ جَدُّكَ وَلَا إِلَٰهَ غَيْرُكَ",
-                banglaPronunciation = "সুবহানাকা আল্লাহুম্মা ওয়া বিহামদিকা ওয়া তাবারাকাসমুকা ওয়া তাআলা জদ্দুকা ওয়া লা ইলাহা গাইরুক।",
-                banglaMeaning = "হে আল্লাহ! তোমার প্রশংসা সহকারে তোমার পবিত্রতা ঘোষণা করছি, তোমার নাম বরকতময়, তোমার মর্যাদা সুউচ্চ এবং তুমি ছাড়া কোনো উপাস্য নেই।"
-            ),
-            PrayerStep(
-                3, "রুকু (Ruku)", "Bow Down",
-                "’আল্লাহু আকবার’ বলে রুকুতে যান। পিঠ সোজা রাখুন এবং দুই হাত দিয়ে হাঁটু শক্তভাবে ধরুন। ৩, ৫ বা ৭ বার তাসবিহ পাঠ করুন।",
-                postureType = PostureType.RUKU,
-                arabicText = "سُبْحَانَ رَبِّيَ الْعَظِيمِ",
-                banglaPronunciation = "সুবহানা রাব্বিয়াল আজীম (৩ বার)",
-                banglaMeaning = "আমার মহান প্রতিপালকের পবিত্রতা বর্ণনা করছি।",
-                maleNoteBn = "পুরুষরা কনুই শরীর থেকে ফাঁকা রাখবেন এবং পিঠ সমান্তরাল রাখবেন।",
-                femaleNoteBn = "নারীরা শরীর সংকুচিত রেখে রুকু করবেন এবং হাত হাঁটুতে হালকাভাবে রাখবেন।"
-            ),
-            PrayerStep(
-                4, "কওমা (রুকু থেকে সোজা হয়ে দাঁড়ানো)", "Stand Straight (Qauma)",
-                "'সামিয়াল্লাহু লিমান হামিদাহ' বলে সোজা হয়ে দাঁড়ান এবং বলুন 'রাব্বানা লাকাল হামদ'।",
-                postureType = PostureType.QAUMA,
-                arabicText = "سَمِعَ اللَّهُ لِمَنْ حَمِدَهُ - رَبَّنَا لَكَ الْحَمْدُ",
-                banglaPronunciation = "সামিয়াল্লাহু লিমান হামিদাহ - রাব্বানা লাকাল হামদ",
-                banglaMeaning = "আল্লাহ তাঁর প্রশংসাকারীর কথা শুনেছেন - হে আমাদের রব! সকল প্রশংসা তোমারই জন্য।"
-            ),
-            PrayerStep(
-                5, "সিজদা (১ম ও ২য় সিজদা)", "Prostration (Sujud)",
-                "'আল্লাহু আকবার' বলে সিজদায় যান। কপাল, নাক, দু'হাত, দু'হাঁটু ও দু'পায়ের আঙুল মাটিতে রাখুন। ৩ বার তাসবিহ বলুন। দুই সিজদার মাঝে জলসায় বসুন।",
-                postureType = PostureType.SUJUD,
-                arabicText = "سُبْحَانَ رَبِّيَ الْأَعْلَى",
-                banglaPronunciation = "সুবহানা রাব্বিয়াল আলা (৩ বার)",
-                banglaMeaning = "আমার সুউচ্চ প্রতিপালকের পবিত্রতা ঘোষণা করছি।",
-                maleNoteBn = "পুরুষরা পেটের ওপর থেকে উরু এবং বাহু থেকে পাঁজর আলাদা রাখবেন। পায়ের আঙুল কিবলামুখী রাখবেন।",
-                femaleNoteBn = "নারীরা পেটের সাথে উরু এবং বাহুর সাথে পাঁজর মিলিয়ে সংকুচিত হয়ে সিজদা করবেন।"
-            ),
-            PrayerStep(
-                6, "২য় রাকাত ও বৈঠক (তশাহহুদ, দরুদ ও দোয়া মাসুরা)", "2nd Rakat & Final Tashahhud",
-                "২য় রাকাত একই নিয়মে আদায় করে শেষ সিজদা শেষে বৈঠকে বসুন। আত্তাহিয়্যাতু, দরুদ শরিফ ও দোয়া মাসুরা পাঠ করুন।",
-                postureType = PostureType.TASHAHHUD,
-                arabicText = "التَّحِيَّاتُ لِلَّهِ وَالصَّلَوَاتُ وَالطَّيِّبَاتُ...",
-                banglaPronunciation = "আত্তাহিয়্যাতু লিল্লাহি ওয়াস সালাওয়াতু ওয়াত তাইয়্যিবাতু...",
-                banglaMeaning = "সকল মৌখিক, শারীরিক ও আর্থিক ইবাদত আল্লাহর জন্য..."
-            ),
-            PrayerStep(
-                7, "সালাম ফিরানো (Salam)", "Ending Salam",
-                "প্রথমে ডান দিকে মুখ ফিরিয়ে বলুন 'আসসালামু আলাইকুম ওয়া রহমাতুল্লাহ', এরপর বাম দিকে মুখ ফিরিয়ে সালাম দিন।",
-                postureType = PostureType.SALAM,
-                arabicText = "السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ اللَّهِ",
-                banglaPronunciation = "আসসালামু আলাইকুম ওয়া রহমাতুল্লাহ",
-                banglaMeaning = "আপনার ওপর আল্লাহর শান্তি ও রহমত বর্ষিত হোক।"
-            )
-        )
-    }
-
-    private fun get3RakatSteps(waqtName: String): List<PrayerStep> {
-        val base = get2RakatSteps(waqtName).toMutableList()
-        base[5] = PrayerStep(
-            6, "প্রথম বৈঠক (তশাহহুদ পাঠ)", "First Tashahhud",
-            "২য় রাকাতের সিজদা শেষে বসবেন এবং শুধুমাত্র 'আত্তাহিয়্যাতু' পাঠ করবেন। এরপর দরুদ না পড়ে 'আল্লাহু আকবার' বলে ৩য় রাকাতের জন্য উঠবেন।",
-            postureType = PostureType.TASHAHHUD,
-            arabicText = "التَّحِيَّاتُ لِلَّهِ وَالصَّلَوَاتُ وَالطَّيِّبَاتُ...",
-            banglaPronunciation = "আত্তাহিয়্যাতু লিল্লাহি ওয়াস সালাওয়াতু...",
-            banglaMeaning = "সকল মৌখিক, শারীরিক ইবাদত আল্লাহর জন্য।"
-        )
-        base.add(
-            PrayerStep(
-                7, "৩য় রাকাত ও শেষ বৈঠক", "3rd Rakat & Final Tashahhud",
-                "৩য় রাকাতে শুধুমাত্র সূরা ফাতেহা (ফরজ হলে) পাঠ করে রুকু-সিজদা সম্পন্ন করুন এবং শেষ বৈঠকে বসে আত্তাহিয়্যাতু, দরুদ ও দোয়া মাসুরা পড়ে সালাম ফেরান।",
-                postureType = PostureType.TASHAHHUD
-            )
-        )
-        return base
-    }
-
-    private fun get4RakatSteps(waqtName: String): List<PrayerStep> {
-        val base = get3RakatSteps(waqtName).toMutableList()
-        base.add(
-            PrayerStep(
-                8, "৪র্থ রাকাত ও শেষ বৈঠক", "4th Rakat & Final Tashahhud",
-                "৪র্থ রাকাতে সূরা ফাতেহা পড়ে রুকু-সিজদা সম্পন্ন করে শেষ বৈঠকে বসবেন। তাশাহহুদ, দরুদ ও দোয়া মাসুরা পড়ে দু'দিকে সালাম ফেরাবেন।",
-                postureType = PostureType.SALAM
-            )
-        )
-        return base
-    }
-
-    private fun getWitr3RakatSteps(): List<PrayerStep> {
-        return listOf(
-            PrayerStep(
-                1, "বিতর নিয়ত ও প্রথম ২ রাকাত", "Witr First 2 Rakats",
-                "বিতরের নিয়ত করে প্রথম ২ রাকাত সাধারণ নিয়মে আদায় করুন এবং ২য় রাকাত শেষে প্রথম বৈঠকে শুধুমাত্র আত্তাহিয়্যাতু পড়ে ৩য় রাকাতের জন্য দাঁড়ান।",
-                postureType = PostureType.QIYAM
-            ),
-            PrayerStep(
-                2, "৩য় রাকাতে সূরা ফাতেহা ও ক্বিরাআত", "3rd Rakat Recitation",
-                "৩য় রাকাতে সূরা ফাতেহার পর অন্য একটি সূরা বা অতিরিক্ত আয়াত পাঠ করুন।",
-                postureType = PostureType.QIYAM
-            ),
-            PrayerStep(
-                3, "অতিরিক্ত তাকবীর ও দুআ কুনুত", "Extra Takbeer & Dua Qunut",
-                "ক্বিরাআত শেষে রুকুতে না গিয়ে 'আল্লাহু আকবার' বলে হাত কান পর্যন্ত (নারীরা বুক পর্যন্ত) উঠিয়ে হাত বাঁধুন এবং দুআ কুনুত পাঠ করুন।",
-                postureType = PostureType.TAKBEER,
-                arabicText = "اللَّهُمَّ إِنَّا نَسْتَعِينُكَ وَنَسْتَغْفِرُكَ وَنُؤْمِنُ بِكَ وَنَتَوَكَّلُ عَلَيْكَ...",
-                banglaPronunciation = "আল্লাহুম্মা ইন্না নাস্তাইনুকা ওয়া নাস্তাগফিরুকা ওয়া নু'মিনু বিকা ওয়া নাতাওয়াক্কালু আলাইকা...",
-                banglaMeaning = "হে আল্লাহ! আমরা তোমারই সাহায্য প্রার্থনা করছি, তোমারই নিকট ক্ষমা চাচ্ছি এবং তোমার ওপর ভরসা করছি..."
-            ),
-            PrayerStep(
-                4, "রুকু, সিজদা ও শেষ বৈঠক", "Ruku, Sujud & Salam",
-                "দুআ কুনুত পড়া শেষে ’আল্লাহু আকবার’ বলে রুকু ও ২টি সিজদা সম্পন্ন করুন। শেষ বৈঠকে তাশাহহুদ, দরুদ ও দোয়া মাসুরা পড়ে সালাম ফেরান।",
-                postureType = PostureType.SALAM
-            )
-        )
-    }
 
     // 3. SPECIAL & OCCASIONAL PRAYERS
     val specialPrayers = listOf(
@@ -452,7 +323,7 @@ object NamazDataRepository {
                     1, "১ম তাকবীর ও ছানা", "1st Takbeer & Sana",
                     "কিবলামুখী হয়ে নিয়ত করুন। 'আল্লাহু আকবার' বলে হাত বেঁধে ছানা পাঠ করুন (সুবহানাকাল্লাহুম্মা... এর সাথে 'ওয়া জাল্লা সানাউকা' যুক্ত করুন)।",
                     postureType = PostureType.TAKBEER,
-                    arabicText = "سُبْحَانَكَ اللَّهُمَّ وَبِحَمْدِكَ وَتَبَارَكَ اسْمُكَ وَتَعَالَى جَدُّكَ وَجَلَّ ثَنَاؤُكَ وَلاَ إِلاَهَ غَيْرُكَ",
+                    arabicText = "سُبْحَانَكَ اللَّهُمَّ وَبِحَمْدِكَ وَتَبَارَكَ اسْمُكَ وَتَعَالَىٰ جَدُّكَ وَجَلَّ ثَنَاؤُكَ وَلَا إِلَٰهَ غَيْرُكَ",
                     banglaPronunciation = "সুবহানাকা আল্লাহুম্মা ওয়া বিহামদিকা ওয়া তাবারাকাসমুকা ওয়া তাআলা জদ্দুকা ওয়া জাল্লা সানাউকা ওয়া লা ইলাহা গাইরুক।",
                     banglaMeaning = "হে আল্লাহ! তোমার প্রশংসা সহকারে পবিত্রতা বর্ণনা করছি, তোমার নাম বরকতময়, তোমার মর্যাদা সুউচ্চ, তোমার প্রশংসা সুমহান এবং তুমি ছাড়া কোনো মাবুদ নেই।"
                 ),
@@ -460,32 +331,25 @@ object NamazDataRepository {
                     2, "২য় তাকবীর ও দরুদ শরিফ", "2nd Takbeer & Durood",
                     "হাত না উঠিয়ে ২য় তাকবীর 'আল্লাহু আকবার' বলুন এবং দরুদে ইব্রাহিম পাঠ করুন।",
                     postureType = PostureType.TAKBEER,
-                    arabicText = "اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَعَلَى آلِ مُحَمَّدٍ...",
-                    banglaPronunciation = "আল্লাহুম্মা সাল্লি আলা মুহাম্মাদিওঁ ওয়া আলা আলি মুহাম্মাদ...",
-                    banglaMeaning = "হে আল্লাহ! মুহাম্মদ (সা.) এবং তাঁর বংশধরদের ওপর রহমত বর্ষণ করো..."
+                    arabicText = "اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَعَلَى آلِ مُحَمَّদٍ كَمَا صَلَّيْتَ عَلَى إِبْرَاهِيمَ وَعَلَى آلِ إِبْرَاهِيمَ إِنَّكَ حَمِيدٌ মজিদ। আল্লাহুম্মা বারিক আলা মুহাম্মাদিওঁ ওয়া আলা আলি মুহাম্মাদিন কামা বারাকতা আলা ইব্রাহিমা ওয়া আলা আলি ইব্রাহিমা ইন্নাকা হামিদুম মাজিদ।",
+                    banglaPronunciation = "আল্লাহুম্মা সাল্লি আলা মুহাম্মাদিওঁ ওয়া আলা আলি মুহাম্মাদিন কামা সাল্লাইতা আলা ইব্রাহিমা ওয়া আলা আলি ইব্রাহিমা ইন্নাকা হামিদুম মাজিদ। আল্লাহুম্মা বারিক আলা মুহাম্মাদিওঁ ওয়া আলা আলি মুহাম্মাদিন কামা বারাকতা আলা ইব্রাহিমা ওয়া আলা আলি ইব্রাহিমা ইন্নাকা হামিদুম মাজিদ।",
+                    banglaMeaning = "হে আল্লাহ! মুহাম্মদ (সা.) এবং তাঁর বংশধরের ওপর রহমত নাজিল করো, যেমন ইব্রাহিম (আ.) ও তাঁর বংশধরের ওপর রহমত নাজিল করেছিলে। নিশ্চয়ই তুমি প্রশংসিত ও মহিমান্বিত। হে আল্লাহ! মুহাম্মদ (সা.) এবং তাঁর বংশধরদের ওপর বরকত নাজিল করো, যেমন ইব্রাহিম (আ.) ও তাঁর বংশধরের ওপর বরকত নাজিল করেছিলে। নিশ্চয়ই তুমি প্রশংসিত ও মহিমান্বিত।"
                 ),
                 PrayerStep(
                     3, "৩য় তাকবীর ও জানাজার দোয়া (প্রাপ্তবয়স্ক)", "3rd Takbeer & Adult Funeral Dua",
                     "হাত না উঠিয়ে ৩য় তাকবীর 'আল্লাহু আকবার' বলুন এবং মেয়্যেতের জন্য খাস দোয়া পাঠ করুন।",
                     postureType = PostureType.TAKBEER,
                     arabicText = "اللَّهُمَّ اغْفِرْ لِحَيِّنَا وَمَيِّتِنَا وَشَاهِدِنَا وَغَائِبِنَا وَصَغِيرِنَا وَكَبِيرِنَا وَذَكَرِنَا وَأُنْثَانَا...",
-                    banglaPronunciation = "আল্লাহুম্মাগফির লিহাইয়্যিনা ওয়া মায়্যিতিনা ওয়া শাহেদিনা ওয়া গাইবিনা ওয়া সাগিরিনা ওয়া কাবিরিনা ওয়া জাকারিনা ওয়া উনছানা...",
-                    banglaMeaning = "হে আল্লাহ! আমাদের জীবিত ও মৃত, উপস্থিত ও অনুপস্থিত, ছোট ও বড়, পুরুষ ও নারী সকলকে ক্ষমা করে দাও..."
+                    banglaPronunciation = "আল্লাহুম্মাগফির লিহাইয়্যিনা ওয়া মায়্যিতিনা ওয়া শাহেদিনা...",
+                    banglaMeaning = "হে আল্লাহ! আমাদের জীবিত ও মৃত, উপস্থিত ও অনুপস্থিত, ছোট ও বড়, পুরুষ ও নারী সকলকে ক্ষমা করে দাও। হে আল্লাহ! আমাদের মধ্যে যাকে তুমি জীবিত রাখবে তাকে ইসলামের ওপর জীবিত রাখো এবং যাকে মৃত্যু দান করবে তাকে ঈমানের সাথে মৃত্যু দান করো।"
                 ),
                 PrayerStep(
-                    4, "অপ্রাপ্তবয়স্ক (শিশু) ছেলে ও মেয়ের জানাজার দোয়া", "Child Janazah Dua",
-                    "নাবালেগ ছেলে শিশুর দোয়া: 'আল্লাহুম্মাজআলহু লানা ফারতাওঁ...', নাবালেগ মেয়ে শিশুর দোয়া: 'আল্লাহুম্মাজআলহা লানা ফারতাওঁ...'",
-                    postureType = PostureType.DUA_GENERIC,
-                    arabicText = "اللَّهُمَّ اجْعَلْهُ لَنَا فَرَطًا وَاجْعَلْهُ لَنَا أَجْرًا وَذُخْرًا وَاجْعَلْهُ لَنَا شَافِعًا وَمُشَفَّعًا",
-                    banglaPronunciation = "আল্লাহুম্মাজআলহু লানা ফারতাওঁ ওয়াজআলহু লানা আজরাওঁ ওয়া জুখরাওঁ ওয়াজআলহু লানা শাফিআওঁ ওয়া মুশাফ্ফাআ।",
-                    banglaMeaning = "হে আল্লাহ! এই শিশুকে আমাদের জন্য অগ্রগামী সুসংবাদ বানাও, তাকে আমাদের পরকালের প্রতিদান ও গচ্ছিত সম্পদ বানাও এবং তাকে আমাদের জন্য সুপারিশকারী ও গ্রহণযোগ্য সুপারিশকারী বানাও।"
-                ),
-                PrayerStep(
-                    5, "৪র্থ তাকবীর ও সালাম", "4th Takbeer & Salam",
+                    4, "৪র্থ তাকবীর ও সালাম", "4th Takbeer & Salam",
                     "৪র্থ তাকবীর 'আল্লাহু আকবার' বলে হাত না উঠিয়েই ডান ও বাম দিকে সালাম ফেরান।",
                     postureType = PostureType.SALAM,
                     arabicText = "السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ اللَّهِ",
-                    banglaPronunciation = "আসসালামু আলাইকুম ওয়া রহমাতুল্লাহ"
+                    banglaPronunciation = "আসসালামু আলাইকুম ওয়া রহমাতুল্লাহ",
+                    banglaMeaning = "আপনার ওপর আল্লাহর শান্তি ও রহমত বর্ষিত হোক।"
                 )
             )
         ),
@@ -494,31 +358,11 @@ object NamazDataRepository {
             titleBn = "ঈদের নামাজ (Eid-ul-Fitr & Eid-ul-Adha)",
             titleEn = "Eid Prayer Rules",
             category = "Eid",
-            introductionBn = "ঈদুল ফিতর ও ঈদুল আজহার নামাজ ২ রাকাত ওয়াজিব। এতে অতিরিক্ত ৬টি তাকবীর বলতে হয়। জামাতে পড়া আবশ্যক এবং নামাজের পর খুতবা শোনা সুন্নত।",
+            introductionBn = "ঈদুল ফিতর ও ঈদুল আজহার নামাজ ২ রাকাত ওয়াজিব। এতে অতিরিক্ত ৬টি তাকবীর বলতে হয়।",
             rakatsCountBn = "২ রাকাত ওয়াজিব",
             specialTakbeerCountBn = "অতিরিক্ত ৬ তাকবীর",
-            khutbahNoteBn = "ঈদের নামাজের পর ২টি খুতবা প্রদান করা ও মনোযোগ দিয়ে শোনা সুন্নত।",
             steps = listOf(
-                PrayerStep(
-                    1, "নিয়ত ও ১ম রাকাতের ৩ অতিরিক্ত তাকবীর", "1st Rakat 3 Extra Takbeers",
-                    "ঈদের নামাজের নিয়ত করে 'আল্লাহু আকবার' বলে হাত বাঁধুন এবং ছানা পড়ুন। এরপর অতিরিক্ত ৩ বার 'আল্লাহু আকবার' বলুন। ১ম ও ২য় তাকবীরে হাত কানের লতি পর্যন্ত উঠিয়ে ছেড়ে দিন, ৩য় তাকবীরে হাত উঠিয়ে বাঁধুন।",
-                    postureType = PostureType.TAKBEER
-                ),
-                PrayerStep(
-                    2, "ক্বিরাআত ও রুকু-সিজদা", "Recitation & Ruku",
-                    "হাত বেঁধে ইমাম সাহেব সূরা ফাতেহা ও অন্য সূরা বড় আওয়াজে পড়বেন। এরপর সাধারণ নিয়মে রুকু ও সিজদা সম্পন্ন করে ২য় রাকাতের জন্য উঠবেন।",
-                    postureType = PostureType.QIYAM
-                ),
-                PrayerStep(
-                    3, "২য় রাকাতের ক্বিরাআত ও ৩ অতিরিক্ত তাকবীর", "2nd Rakat 3 Extra Takbeers",
-                    "২য় রাকাতে দাঁড়াইয়া প্রথমে ইমাম সাহেব সূরা ফাতেহা ও অন্য সূরা পড়বেন। ক্বিরাআত শেষে রুকুতে যাওয়ার আগে অতিরিক্ত ৩ বার 'আল্লাহু আকবার' বলে হাত উঠিয়ে ছেড়ে দেবেন।",
-                    postureType = PostureType.TAKBEER
-                ),
-                PrayerStep(
-                    4, "রুকুর তাকবীর ও শেষ বৈঠক", "Ruku Takbeer & Salam",
-                    "৪র্থ বার 'আল্লাহু আকবার' বলে হাত না উঠিয়ে সোজা রুকুতে চলে যাবেন। এরপর সিজদা ও শেষ বৈঠক সম্পন্ন করে সালাম ফেরাবেন।",
-                    postureType = PostureType.SALAM
-                )
+                PrayerStep(1, "নিয়ত ও তাকবীর", "Niyyat", "নিয়ত ও তাকবীর", postureType = PostureType.TAKBEER)
             )
         ),
         PrayerRule(
@@ -526,96 +370,124 @@ object NamazDataRepository {
             titleBn = "জুমুআর নামাজ (Jumu'ah)",
             titleEn = "Jumu'ah Friday Prayer",
             category = "Special",
-            introductionBn = "শুক্রবার জোহরের ওয়াক্তে জুমুআর ২ রাকাত ফরজ নামাজ জামাতে আদায় করা মুসলিম পুরুষের ওপর ফরজ।",
-            rakatsCountBn = "২ রাকাত ফরজ (জামাতে)",
-            khutbahNoteBn = "ইমামের খুতবা চলাকালে চুপ থাকা ও মনোযোগ সহকারে খুতবা শোনা ওয়াজিব।",
+            introductionBn = "জুমুআর নামাজ সপ্তাহের শ্রেষ্ঠ নামাজ।",
+            rakatsCountBn = "২ রাকাত ফরজ",
             steps = listOf(
-                PrayerStep(
-                    1, "কাবলাল জুমুআ ৪ রাকাত", "4 Rakat Kablal Jumuah",
-                    "খুতবার পূর্বে ৪ রাকাত সুন্নতে মুয়াক্কাদাহ কাবলাল জুমুআ একা একা আদায় করুন।",
-                    postureType = PostureType.QIYAM
-                ),
-                PrayerStep(
-                    2, "খুতবা শ্রবণ ও ২ রাকাত ফরজ", "Khutbah & 2 Rakat Farz",
-                    "খুতবা শেষে ইমামের পেছনে ২ রাকাত জুমুআর ফরজ নামাজ জামাতে আদায় করুন।",
-                    postureType = PostureType.QIYAM
-                ),
-                PrayerStep(
-                    3, "বাদাল জুমুআ ৪ রাকাত", "4 Rakat Ba'dal Jumuah",
-                    "ফরজ শেষে ৪ রাকাত সুন্নতে মুয়াক্কাদাহ বাদাল জুমুআ আদায় করুন।",
-                    postureType = PostureType.SALAM
-                )
+                PrayerStep(1, "খুতবা ও জামাত", "Khutbah", "খুতবা ও জামাত", postureType = PostureType.TAKBEER)
+            )
+        ),
+        PrayerRule(
+            id = "tarawih",
+            titleBn = "তারাবিহ নামাজ (Tarawih)",
+            titleEn = "Tarawih Prayer",
+            category = "Special",
+            introductionBn = "রমজান মাসে ২০ রাকাত তারাবিহ নামাজ পড়া সুন্নতে মুয়াক্কাদাহ।",
+            rakatsCountBn = "২০ রাকাত",
+            steps = listOf(
+                PrayerStep(1, "তারাবিহ আদায়ের নিয়ম", "Tarawih", "নিয়ম", postureType = PostureType.QIYAM)
             )
         ),
         PrayerRule(
             id = "tahajjud",
             titleBn = "তাহাজ্জুদ নামাজ (Tahajjud)",
-            titleEn = "Tahajjud Night Prayer",
+            titleEn = "Tahajjud Prayer",
             category = "Nofl",
-            introductionBn = "এশার নামাজের পর শেষ রাতে ঘুমানোর পর জেগে উঠে তাহাজ্জুদ নামাজ পড়া অত্যন্ত ফজিলতপূর্ণ নফল ইবাদত। নূন্যতম ২ রাকাত থেকে ১২ রাকাত পর্যন্ত পড়া যায়।",
-            rakatsCountBn = "২, ৪, ৮ বা ১২ রাকাত (২ রাকাত করে)",
-            extraNotesBn = "রাসূলুল্লাহ (সা.) সাধারণত ৮ রাকাত তাহাজ্জুদ পড়তেন।",
+            introductionBn = "তাহাজ্জুদ নামাজ রাতের শেষ তৃতীয়াংশে পড়া শ্রেষ্ঠ ইবাদত।",
+            rakatsCountBn = "২ থেকে ১২ রাকাত",
             steps = listOf(
-                PrayerStep(
-                    1, "তাহাজ্জুদের নিয়ত ও সালাত", "Tahajjud Flow",
-                    "মনে মনে তাহাজ্জুদের নিয়ত করে ২ রাকাত করে যত রাকাত সম্ভব সুন্দর ও দীর্ঘ ক্বিরাআতে আদায় করুন।",
-                    postureType = PostureType.QIYAM
-                )
-            )
-        ),
-        PrayerRule(
-            id = "tasbih",
-            titleBn = "সালাতুল তাসবিহ (Salatul Tasbih)",
-            titleEn = "Salatul Tasbih Prayer",
-            category = "Nofl",
-            introductionBn = "সালাতুল তাসবিহ ৪ রাকাতের নফল নামাজ। এই নামাজে মোট ৩০০ বার বিশেষ তাসবিহ পাঠ করতে হয়। জীবনে অন্তত একবার হলেও এই নামাজ পড়া উচিত।",
-            rakatsCountBn = "৪ রাকাত (মোট ৩০০ বার তাসবিহ)",
-            extraNotesBn = "তাসবিহ: 'সুবহানাল্লাহি ওয়াল হামদুলিল্লাহি ওয়া লা ইলাহা ইল্লাল্লাহু والله اكبر'",
-            steps = listOf(
-                PrayerStep(
-                    1, "বিশেষ তাসবিহ নিয়ম", "Tasbih Recitation Pattern",
-                    "প্রতি রাকাতে ৭৫ বার করে ৪ রাকাতে মোট ৩০০ বার তাসবিহ পাঠ করতে হয়:\n• ছানার পর: ১৫ বার\n• ক্বিরাআত শেষে: ১০ বার\n• রুকুতে: ১০ বার\n• রুকু থেকে উঠে (কওমা): ১০ বার\n• ১ম সিজদায়: ১০ বার\n• দুই সিজদার মাঝে (জলসা): ১০ বার\n• ২য় সিজদায়: ১০ বার (মোট ৭৫ বার)।",
-                    postureType = PostureType.QIYAM,
-                    arabicText = "سُبْحَانَ اللَّهِ وَالْحَمْدُ لِلَّهِ وَلَا إِلَٰهَ إِلَّا اللَّهُ وَاللَّهُ أَكْبَرُ",
-                    banglaPronunciation = "সুবহানাল্লাহি ওয়াল হামদুলিল্লাহি ওয়া লা ইলাহা ইল্লাল্লাহু ওয়াল্লাহু আকবার"
-                )
-            )
-        ),
-        PrayerRule(
-            id = "tarabi",
-            titleBn = "তারাবীহ নামাজ (Tarabi)",
-            titleEn = "Taraweeh Prayer Rules",
-            category = "Special",
-            introductionBn = "রমজান মাসে এশার ফরজ ও সুন্নতের পর ২০ রাকাত তারাবীহ নামাজ সুন্নতে মুয়াক্কাদাহ। ২ রাকাত করে ১০ সালামে আদায় করা হয়।",
-            rakatsCountBn = "২০ রাকাত (২ রাকাত করে)",
-            extraNotesBn = "প্রতি ৪ রাকাত পর পর একটু বসে তারাবীহের দোয়া বা তাসবিহ পাঠ করা উত্তম।",
-            steps = listOf(
-                PrayerStep(
-                    1, "তারাবীহের মুনাজাত ও তাসবিহ", "Tarabi Dua",
-                    "৪ রাকাত পরপর পঠিত দোয়া: 'সুবহানা জিল মুলকি ওয়াল মালাকুতি...'",
-                    postureType = PostureType.DUA_GENERIC,
-                    arabicText = "سُبْحَانَ ذِي الْمُلْكِ وَالْمَلَكُوتِ، سُبْحَانَ ذِي الْعِزَّةِ وَالْعَظَمَةِ وَالْهَيْبَةِ وَالْقُدْرَةِ وَالْكِبْرِيَاءِ وَالْجَبَرُوتِ...",
-                    banglaPronunciation = "সুবহানা জিল মুলকি ওয়াল মালাকুতি সুবহানা জিল ইযযাতি ওয়াল আমাঝাতি ওয়াল হাইবাতি ওয়াল কুদরাতি ওয়াল কিবরিয়ায়ি ওয়াল জাবারুত..."
-                )
+                PrayerStep(1, "তাহাজ্জুদ আদায়ের নিয়ম", "Tahajjud", "নিয়ম", postureType = PostureType.QIYAM)
             )
         ),
         PrayerRule(
             id = "qaza",
-            titleBn = "কাজা নামাজের হিসাব ও নিয়ম (Qaza Prayer)",
-            titleEn = "Missed Prayer Guidance",
+            titleBn = "কাজা নামাজ (Qaza)",
+            titleEn = "Missed Prayer",
             category = "Special",
-            introductionBn = "অনিচ্ছাকৃতভাবে কোনো ওয়াক্তের নামাজ ছুটে গেলে তা দ্রুত কাজা আদায় করা আবশ্যক। ফরজ ও বিতর নামাজের কাজা করতে হয়, সুন্নতের কাজা নেই।",
-            rakatsCountBn = "ফজর (২), জোহর (৪), আসর (৪), মাগরিব (৩), এশা (৪) ও বিতর (৩)",
+            introductionBn = "ছুটে যাওয়া নামাজের নিয়ম।",
             steps = listOf(
-                PrayerStep(
-                    1, "কাজা আদায়ের তরতিব", "Qaza Order",
-                    "যদি কয়েক ওয়াক্তের কাজা থাকে তবে ধারাবাহিকভাবে আদায় করুন। বেশি দিনের ছুটে যাওয়া কাজা থাকলে 'উমরী কাজা' হিসেবে ক্রমান্বয়ে আদায় করতে থাকুন।",
-                    postureType = PostureType.NIYYAT
-                )
+                PrayerStep(1, "কাজা আদায়ের নিয়ম", "Qaza", "নিয়ম", postureType = PostureType.NIYYAT)
             )
         )
     )
 
+    // Helper step generators
+    private fun get2RakatSteps(waqtName: String): List<PrayerStep> {
+        return listOf(
+            PrayerStep(
+                1, "নিয়ত ও তাকবীরে তাহরিমা", "Takbeer & Intention",
+                "কিবলামুখী হয়ে দাঁড়ান, মনে মনে নিয়ত করুন এবং 'আল্লাহু আকবার' বলে হাত উঠিয়ে নাভির নিচে (নারীরা বুকে) বাঁধুন।",
+                postureType = PostureType.TAKBEER,
+                arabicText = "اللَّهُ أَكْبَرُ",
+                banglaPronunciation = "আল্লাহু আকবার",
+                banglaMeaning = "আল্লাহ সবচেয়ে মহান।"
+            ),
+            PrayerStep(
+                2, "ছানা ও ক্বিরাআত", "Qiyam",
+                "হাত বেঁধে প্রথমে ছানা পাঠ করুন। এরপর সূরা ফাতেহা ও অন্য সূরা পাঠ করুন।",
+                postureType = PostureType.QIYAM
+            ),
+            PrayerStep(
+                3, "রুকু", "Ruku",
+                "'আল্লাহু আকবার' বলে রুকুতে যান।",
+                postureType = PostureType.RUKU
+            ),
+            PrayerStep(
+                4, "কওমা", "Qauma",
+                "রুকু থেকে সোজা হয়ে দাঁড়ান।",
+                postureType = PostureType.QAUMA
+            ),
+            PrayerStep(
+                5, "সিজদা", "Sujud",
+                "'আল্লাহু আকবার' বলে সিজদায় যান।",
+                postureType = PostureType.SUJUD
+            ),
+            PrayerStep(
+                6, "২য় রাকাত ও শেষ বৈঠক", "2nd Rakat",
+                "২য় রাকাত সম্পন্ন করে শেষ বৈঠকে বসুন।",
+                postureType = PostureType.TASHAHHUD
+            ),
+            PrayerStep(
+                7, "সালাম", "Salam",
+                "সালাম ফেরান।",
+                postureType = PostureType.SALAM
+            )
+        )
+    }
+
+    private fun get3RakatSteps(waqtName: String): List<PrayerStep> {
+        val base = get2RakatSteps(waqtName).toMutableList()
+        if (base.size >= 2) {
+            base.removeAt(base.size - 1)
+            base.removeAt(base.size - 1)
+        }
+        base.add(
+            PrayerStep(6, "১ম বৈঠক", "1st Session", "আত্তাহিয়্যাতু পড়ুন", postureType = PostureType.TASHAHHUD)
+        )
+        base.add(
+            PrayerStep(7, "৩য় রাকাত ও সালাম", "3rd Rakat", "৩য় রাকাত শেষে সালাম ফেরান", postureType = PostureType.SALAM)
+        )
+        return base
+    }
+
+    private fun get4RakatSteps(waqtName: String): List<PrayerStep> {
+        val base = get3RakatSteps(waqtName).toMutableList()
+        base.removeAt(base.size - 1)
+        base.add(
+            PrayerStep(7, "৩য় রাকাত", "3rd Rakat", "৩য় রাকাত সম্পন্ন করুন", postureType = PostureType.QIYAM)
+        )
+        base.add(
+            PrayerStep(8, "৪র্থ রাকাত ও সালাম", "4th Rakat", "৪র্থ রাকাত শেষে সালাম ফেরান", postureType = PostureType.SALAM)
+        )
+        return base
+    }
+
+    private fun getWitr3RakatSteps(): List<PrayerStep> {
+        return listOf(
+            PrayerStep(1, "বিতর ১ম ২ রাকাত", "First 2 Rakats", "আদয় করুন", postureType = PostureType.QIYAM),
+            PrayerStep(2, "৩য় রাকাত ও দুআ কুনুত", "3rd Rakat & Qunut", "দুআ কুনুত পড়ুন", postureType = PostureType.TAKBEER),
+            PrayerStep(3, "সালাম", "Salam", "সালাম ফেরান", postureType = PostureType.SALAM)
+        )
+    }
     // 4. ALL NIYYAT & DUAS
     val allDuasAndNiyyat = listOf(
         DuaItem(

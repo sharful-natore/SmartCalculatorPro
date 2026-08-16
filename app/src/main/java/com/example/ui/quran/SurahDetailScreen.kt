@@ -47,6 +47,7 @@ fun SurahDetailScreen(
     val ayahs by viewModel.currentAyahs.collectAsStateWithLifecycle()
     val isAyahsLoading by viewModel.isAyahsLoading.collectAsStateWithLifecycle()
     val isWordByWord by viewModel.isWordByWord.collectAsStateWithLifecycle()
+    val isPlayerVisible by viewModel.isPlayerVisible.collectAsStateWithLifecycle()
 
     val currentSurahNum by viewModel.audioPlayer.currentSurahNumber.collectAsStateWithLifecycle()
     val currentAyahIndex by viewModel.audioPlayer.currentAyahIndex.collectAsStateWithLifecycle()
@@ -126,30 +127,33 @@ fun SurahDetailScreen(
             }
         },
         bottomBar = {
-            // Bottom Floating Audio Control Bar
-            SurahAudioControlBar(
-                surah = surah,
-                currentAyahIndex = currentAyahIndex,
-                totalAyahs = ayahs.size,
-                isPlaying = isPlaying && currentSurahNum == surah.number,
-                currentPositionMs = currentPositionMs,
-                durationMs = durationMs,
-                playbackSpeed = playbackSpeed,
-                cyanPrimary = cyanPrimary,
-                cyanDark = cyanDark,
-                themeColors = themeColors,
-                onPlayPauseToggle = {
-                    if (currentSurahNum == surah.number) {
-                        viewModel.audioPlayer.togglePlayPause()
-                    } else {
-                        viewModel.playSurah(surah, 0)
-                    }
-                },
-                onPrevious = { viewModel.audioPlayer.playPrevious() },
-                onNext = { viewModel.audioPlayer.playNext() },
-                onSeek = { viewModel.audioPlayer.seekTo(it) },
-                onSpeedChange = { viewModel.audioPlayer.setPlaybackSpeed(it) }
-            )
+            if (isPlayerVisible) {
+                // Bottom Floating Audio Control Bar
+                SurahAudioControlBar(
+                    surah = surah,
+                    currentAyahIndex = currentAyahIndex,
+                    totalAyahs = ayahs.size,
+                    isPlaying = isPlaying && currentSurahNum == surah.number,
+                    currentPositionMs = currentPositionMs,
+                    durationMs = durationMs,
+                    playbackSpeed = playbackSpeed,
+                    cyanPrimary = cyanPrimary,
+                    cyanDark = cyanDark,
+                    themeColors = themeColors,
+                    onPlayPauseToggle = {
+                        if (currentSurahNum == surah.number) {
+                            viewModel.audioPlayer.togglePlayPause()
+                        } else {
+                            viewModel.playSurah(surah, 0)
+                        }
+                    },
+                    onPrevious = { viewModel.audioPlayer.playPrevious() },
+                    onNext = { viewModel.audioPlayer.playNext() },
+                    onSeek = { viewModel.audioPlayer.seekTo(it) },
+                    onSpeedChange = { viewModel.audioPlayer.setPlaybackSpeed(it) },
+                    onClose = { viewModel.setPlayerVisible(false) }
+                )
+            }
         }
     ) { paddingValues ->
         Box(
@@ -337,7 +341,18 @@ fun AyahCard(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            if (ayah.textEnglish.isNotBlank()) {
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = "উচ্চারণ: ${ayah.textEnglish}",
+                    fontSize = 13.5.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = cyanPrimary,
+                    lineHeight = 19.sp
+                )
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Bangla Translation
             Text(
@@ -367,7 +382,8 @@ fun SurahAudioControlBar(
     onPrevious: () -> Unit,
     onNext: () -> Unit,
     onSeek: (Long) -> Unit,
-    onSpeedChange: (Float) -> Unit
+    onSpeedChange: (Float) -> Unit,
+    onClose: () -> Unit
 ) {
     var showSpeedMenu by remember { mutableStateOf(false) }
 
@@ -406,6 +422,18 @@ fun SurahAudioControlBar(
                     fontWeight = FontWeight.Medium,
                     color = cyanPrimary
                 )
+                Spacer(modifier = Modifier.width(8.dp))
+                IconButton(
+                    onClick = onClose,
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Close Player",
+                        tint = themeColors.displayText.copy(alpha = 0.5f),
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
             }
 
             // Progress Seekbar

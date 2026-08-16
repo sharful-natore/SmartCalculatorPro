@@ -519,12 +519,12 @@ fun MainContent(
         },
         bottomBar = {
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(themeColors.navBarBg)
-                    .navigationBarsPadding(),
-                contentAlignment = Alignment.BottomCenter
-            ) {
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(themeColors.navBarBg)
+                        .navigationBarsPadding(),
+                    contentAlignment = Alignment.BottomCenter
+                ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()

@@ -52,8 +52,8 @@ class QuranApiService {
     }
 
     suspend fun fetchSurahAyahs(surahNumber: Int): List<AyahEntity> = withContext(Dispatchers.IO) {
-        // Editions: quran-uthmani (Arabic), bn.bengali (Bangla Translation), ar.alafasy (Audio Recitation)
-        val url = "https://api.alquran.cloud/v1/surah/$surahNumber/editions/quran-uthmani,bn.bengali,ar.alafasy"
+        // Editions: quran-uthmani (Arabic), bn.bengali (Bangla Translation), en.transliteration (English Transliteration), ar.alafasy (Audio Recitation)
+        val url = "https://api.alquran.cloud/v1/surah/$surahNumber/editions/quran-uthmani,bn.bengali,en.transliteration,ar.alafasy"
         val request = Request.Builder().url(url).build()
 
         try {
@@ -62,7 +62,46 @@ class QuranApiService {
             val json = JSONObject(body)
             if (json.optInt("code") == 200) {
                 val dataArray = json.getJSONArray("data")
-                if (dataArray.length() >= 3) {
+                if (dataArray.length() >= 4) {
+                    val uthmaniObj = dataArray.getJSONObject(0)
+                    val banglaObj = dataArray.getJSONObject(1)
+                    val transObj = dataArray.getJSONObject(2)
+                    val audioObj = dataArray.getJSONObject(3)
+
+                    val uthmaniAyahs = uthmaniObj.getJSONArray("ayahs")
+                    val banglaAyahs = banglaObj.getJSONArray("ayahs")
+                    val transAyahs = transObj.getJSONArray("ayahs")
+                    val audioAyahs = audioObj.getJSONArray("ayahs")
+
+                    val ayahsList = mutableListOf<AyahEntity>()
+                    for (i in 0 until uthmaniAyahs.length()) {
+                        val arAyah = uthmaniAyahs.getJSONObject(i)
+                        val bnAyah = banglaAyahs.getJSONObject(i)
+                        val transAyah = transAyahs.getJSONObject(i)
+                        val audioAyah = audioAyahs.getJSONObject(i)
+
+                        val numInSurah = arAyah.getInt("numberInSurah")
+                        val numInQuran = arAyah.getInt("number")
+                        val textArabic = arAyah.getString("text")
+                        val textBangla = bnAyah.getString("text")
+                        val textEnglish = transAyah.getString("text") // Storing transliteration here
+                        val audioUrl = audioAyah.optString("audio", "https://cdn.islamic.network/quran/audio/128/ar.alafasy/$numInQuran.mp3")
+
+                        ayahsList.add(
+                            AyahEntity(
+                                id = "${surahNumber}_$numInSurah",
+                                surahNumber = surahNumber,
+                                numberInSurah = numInSurah,
+                                numberInQuran = numInQuran,
+                                textArabic = textArabic,
+                                textBangla = textBangla,
+                                textEnglish = textEnglish,
+                                audioUrl = audioUrl
+                            )
+                        )
+                    }
+                    return@withContext ayahsList
+                } else if (dataArray.length() >= 3) {
                     val uthmaniObj = dataArray.getJSONObject(0)
                     val banglaObj = dataArray.getJSONObject(1)
                     val audioObj = dataArray.getJSONObject(2)
@@ -91,6 +130,7 @@ class QuranApiService {
                                 numberInQuran = numInQuran,
                                 textArabic = textArabic,
                                 textBangla = textBangla,
+                                textEnglish = "",
                                 audioUrl = audioUrl
                             )
                         )

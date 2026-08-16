@@ -118,6 +118,10 @@ class QuranAudioPlayer(private val context: Context) {
         }
     }
 
+    fun pause() {
+        player.pause()
+    }
+
     fun playNext() {
         if (player.hasNextMediaItem()) {
             player.seekToNextMediaItem()

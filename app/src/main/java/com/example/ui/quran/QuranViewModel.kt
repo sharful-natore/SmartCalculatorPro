@@ -81,6 +81,17 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
     private val _isWordByWord = MutableStateFlow(false)
     val isWordByWord: StateFlow<Boolean> = _isWordByWord.asStateFlow()
 
+    // Audio Player Visibility State
+    private val _isPlayerVisible = MutableStateFlow(false)
+    val isPlayerVisible: StateFlow<Boolean> = _isPlayerVisible.asStateFlow()
+
+    fun setPlayerVisible(visible: Boolean) {
+        _isPlayerVisible.value = visible
+        if (!visible) {
+            audioPlayer.pause()
+        }
+    }
+
     // Storage Management
     private val _storageDialogVisible = MutableStateFlow(false)
     val storageDialogVisible: StateFlow<Boolean> = _storageDialogVisible.asStateFlow()
@@ -135,6 +146,7 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
             val ayahs = repository.ensureAyahsLoaded(surah.number)
             if (ayahs.isNotEmpty()) {
                 audioPlayer.playSurah(surah.number, startAyahIndex, ayahs)
+                _isPlayerVisible.value = true
             }
         }
     }

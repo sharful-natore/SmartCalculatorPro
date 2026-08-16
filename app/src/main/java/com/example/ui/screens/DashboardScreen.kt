@@ -1951,106 +1951,116 @@ fun ToolDetailView(
         .nestedScroll(nestedScrollConnection)
         .offset { IntOffset(0, bounceAnimatable.value.roundToInt()) }
     
+    val isQuranOrNamaz = toolType == com.example.data.model.ToolType.HOLY_QURAN ||
+                         toolType == com.example.data.model.ToolType.NAMAZ_EDUCATION
+
     val finalModifier = if (toolType != com.example.data.model.ToolType.WEATHER &&
                           toolType != com.example.data.model.ToolType.MARKET_LIST &&
                           toolType != com.example.data.model.ToolType.NOTES_CHECKLIST &&
                           toolType != com.example.data.model.ToolType.WORLD_CLOCK &&
-                          toolType != com.example.data.model.ToolType.HOLY_QURAN &&
-                          toolType != com.example.data.model.ToolType.NAMAZ_EDUCATION) {
+                          !isQuranOrNamaz) {
         baseModifier.verticalScroll(scrollState)
     } else {
         baseModifier
     }
 
+    val contentPaddingModifier = if (isQuranOrNamaz) {
+        Modifier.padding(0.dp)
+    } else {
+        Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+    }
+
     Column(
-        modifier = finalModifier.padding(horizontal = 16.dp, vertical = 12.dp)
+        modifier = finalModifier.then(contentPaddingModifier)
     ) {
-        // Back Header
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp)
-        ) {
-            val backInteractionSource = remember { MutableInteractionSource() }
-            FilledIconButton(
-                onClick = { viewModel.closeToolDetail() },
-                interactionSource = backInteractionSource,
-                colors = IconButtonDefaults.filledIconButtonColors(
-                    containerColor = themeColors.cardBg,
-                    contentColor = themeColors.displayText
-                ),
-                modifier = Modifier
-                    .size(40.dp)
-                    .scaleOnPress(backInteractionSource)
-                    .testTag("back_to_tools_list")
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "Back",
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.width(12.dp))
-
+        if (!isQuranOrNamaz) {
+            // Back Header
             Row(
-                modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
             ) {
-                Column {
-                    Text(
-                        text = toolType.getTitle(viewModel.selectedLanguage),
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = themeColors.displayText
-                    )
-                    Text(
-                        text = toolType.category.getTitle(viewModel.selectedLanguage),
-                        fontSize = 12.sp,
-                        color = themeColors.buttonEqualBg,
-                        fontWeight = FontWeight.Medium
+                val backInteractionSource = remember { MutableInteractionSource() }
+                FilledIconButton(
+                    onClick = { viewModel.closeToolDetail() },
+                    interactionSource = backInteractionSource,
+                    colors = IconButtonDefaults.filledIconButtonColors(
+                        containerColor = themeColors.cardBg,
+                        contentColor = themeColors.displayText
+                    ),
+                    modifier = Modifier
+                        .size(40.dp)
+                        .scaleOnPress(backInteractionSource)
+                        .testTag("back_to_tools_list")
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Back",
+                        modifier = Modifier.size(20.dp)
                     )
                 }
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    val isFavorite = viewModel.favoriteTools.contains(toolType.name)
-                    IconButton(
-                        onClick = { viewModel.toggleFavoriteTool(toolType.name) },
-                        modifier = Modifier.size(36.dp)
-                    ) {
-                        Icon(
-                            imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            contentDescription = "Favorite",
-                            tint = if (isFavorite) Color.Red.copy(alpha = 0.8f) else themeColors.displayText.copy(alpha = 0.3f),
-                            modifier = Modifier.size(20.dp)
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Row(
+                    modifier = Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = toolType.getTitle(viewModel.selectedLanguage),
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = themeColors.displayText
+                        )
+                        Text(
+                            text = toolType.category.getTitle(viewModel.selectedLanguage),
+                            fontSize = 12.sp,
+                            color = themeColors.buttonEqualBg,
+                            fontWeight = FontWeight.Medium
                         )
                     }
-                    InfoToggleButton(
-                        isExpanded = showToolInfo,
-                        onToggle = { showToolInfo = !showToolInfo },
-                        themeColors = themeColors
-                    )
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        val isFavorite = viewModel.favoriteTools.contains(toolType.name)
+                        IconButton(
+                            onClick = { viewModel.toggleFavoriteTool(toolType.name) },
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                contentDescription = "Favorite",
+                                tint = if (isFavorite) Color.Red.copy(alpha = 0.8f) else themeColors.displayText.copy(alpha = 0.3f),
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        InfoToggleButton(
+                            isExpanded = showToolInfo,
+                            onToggle = { showToolInfo = !showToolInfo },
+                            themeColors = themeColors
+                        )
+                    }
                 }
             }
-        }
 
-        AnimatedVisibility(
-            visible = showToolInfo,
-            enter = fadeIn() + expandVertically(),
-            exit = fadeOut() + shrinkVertically()
-        ) {
-            val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
-            val infoTitle = if (isBn) "প্রয়োজনীয় তথ্য ও গাইডলাইন" else "Helpful Information & Guidelines"
-            val infoItems = getToolInfoItems(toolType, isBn)
-            if (infoItems.isNotEmpty()) {
-                ToolInfoSection(
-                    title = infoTitle,
-                    infoItems = infoItems,
-                    themeColors = themeColors,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
+            AnimatedVisibility(
+                visible = showToolInfo,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
+                val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
+                val infoTitle = if (isBn) "প্রয়োজনীয় তথ্য ও গাইডলাইন" else "Helpful Information & Guidelines"
+                val infoItems = getToolInfoItems(toolType, isBn)
+                if (infoItems.isNotEmpty()) {
+                    ToolInfoSection(
+                        title = infoTitle,
+                        infoItems = infoItems,
+                        themeColors = themeColors,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                }
             }
         }
 

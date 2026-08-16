@@ -4,6 +4,7 @@ import android.text.format.Formatter
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -161,6 +162,8 @@ fun QuranScreen(
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = themeColors.displayText,
+                            unfocusedTextColor = themeColors.displayText,
                             focusedBorderColor = cyanPrimary,
                             unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f),
                             focusedContainerColor = themeColors.cardBg,
@@ -168,44 +171,74 @@ fun QuranScreen(
                         )
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
-                    // Action Chips (AI Assistant & Storage Manager)
+                    // Minimal & Beautiful Action Buttons (AI Assistant & Storage Manager)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        FilterChip(
-                            selected = false,
+                        Surface(
                             onClick = { viewModel.openAiAssistant() },
-                            label = {
-                                Text("✨ এআই কুরআন অ্যাসিস্ট্যান্ট", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                            },
-                            leadingIcon = {
-                                Icon(Icons.Default.Psychology, contentDescription = null, modifier = Modifier.size(16.dp), tint = cyanPrimary)
-                            },
-                            colors = FilterChipDefaults.filterChipColors(
-                                containerColor = cyanLight,
-                                labelColor = cyanDark
-                            )
-                        )
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp),
+                            color = cyanPrimary.copy(alpha = 0.1f),
+                            border = BorderStroke(1.dp, cyanPrimary.copy(alpha = 0.25f))
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 10.dp, horizontal = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.AutoAwesome,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                    tint = cyanPrimary
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "এআই অ্যাসিস্ট্যান্ট",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = cyanPrimary
+                                )
+                            }
+                        }
 
-                        FilterChip(
-                            selected = false,
+                        Surface(
                             onClick = { viewModel.openStorageManager(context) },
-                            label = {
-                                Text("💾 অফলাইন স্টোরেজ", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                            },
-                            leadingIcon = {
-                                Icon(Icons.Default.SdCard, contentDescription = null, modifier = Modifier.size(16.dp), tint = cyanPrimary)
-                            },
-                            colors = FilterChipDefaults.filterChipColors(
-                                containerColor = cyanLight,
-                                labelColor = cyanDark
-                            )
-                        )
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp),
+                            color = cyanPrimary.copy(alpha = 0.1f),
+                            border = BorderStroke(1.dp, cyanPrimary.copy(alpha = 0.25f))
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 10.dp, horizontal = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.SdCard,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                    tint = cyanPrimary
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "অফলাইন স্টোরেজ",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = cyanPrimary
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -458,11 +491,14 @@ fun StorageManagerDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = themeColors.cardBg,
+        titleContentColor = themeColors.displayText,
+        textContentColor = themeColors.displayText,
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.SdCard, contentDescription = null, tint = cyanPrimary)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("অফলাইন স্টোরেজ ম্যানেজার", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text("অফলাইন স্টোরেজ ম্যানেজার", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
             }
         },
         text = {
@@ -578,11 +614,14 @@ fun AiQuranAssistantDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = themeColors.cardBg,
+        titleContentColor = themeColors.displayText,
+        textContentColor = themeColors.displayText,
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = cyanPrimary)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("এআই কুরআন অ্যাসিস্ট্যান্ট", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text("এআই কুরআন অ্যাসিস্ট্যান্ট", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
             }
         },
         text = {
@@ -611,7 +650,11 @@ fun AiQuranAssistantDialog(
                                 viewModel.setAiQuestion(chipText)
                                 viewModel.askQuranAi(chipText)
                             },
-                            label = { Text(chipText, fontSize = 10.5.sp) }
+                            label = { Text(chipText, fontSize = 10.5.sp, color = themeColors.displayText) },
+                            colors = SuggestionChipDefaults.suggestionChipColors(
+                                containerColor = themeColors.displayBackground,
+                                labelColor = themeColors.displayText
+                            )
                         )
                     }
                 }
@@ -623,7 +666,7 @@ fun AiQuranAssistantDialog(
                     value = aiQuestion,
                     onValueChange = { viewModel.setAiQuestion(it) },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("যেমন: কুরআনে ধৈর্য নিয়ে কি বলা হয়েছে?", fontSize = 12.sp) },
+                    placeholder = { Text("যেমন: কুরআনে ধৈর্য নিয়ে কি বলা হয়েছে?", fontSize = 12.sp, color = themeColors.displayText.copy(alpha = 0.5f)) },
                     trailingIcon = {
                         IconButton(
                             onClick = {
@@ -640,7 +683,15 @@ fun AiQuranAssistantDialog(
                         viewModel.askQuranAi(aiQuestion)
                     }),
                     singleLine = true,
-                    shape = RoundedCornerShape(10.dp)
+                    shape = RoundedCornerShape(10.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = themeColors.displayText,
+                        unfocusedTextColor = themeColors.displayText,
+                        focusedBorderColor = cyanPrimary,
+                        unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f),
+                        focusedContainerColor = themeColors.displayBackground,
+                        unfocusedContainerColor = themeColors.displayBackground
+                    )
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
