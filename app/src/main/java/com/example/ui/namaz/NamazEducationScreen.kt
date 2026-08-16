@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -41,10 +40,10 @@ import androidx.compose.material.icons.filled.Male
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Mosque
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -66,11 +65,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -87,19 +84,22 @@ fun NamazEducationScreen(
     val isFemaleMode by viewModel.isFemaleMode.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedWaqtId by viewModel.selectedWaqtId.collectAsState()
+    val selectedRakatType by viewModel.selectedRakatType.collectAsState()
     val expandedRuleIds by viewModel.expandedRuleIds.collectAsState()
     val playingDuaId by viewModel.playingDuaId.collectAsState()
     val isPlaying by viewModel.isPlaying.collectAsState()
 
     val primaryCyan = themeColors.buttonEqualBg
     val femaleAccentColor = Color(0xFFEC4899)
+    val activeAccent = if (isFemaleMode) femaleAccentColor else primaryCyan
 
     val tabs = listOf(
         Triple(0, "অজু ও তাহারাত", Icons.Default.WaterDrop),
         Triple(1, "৫ ওয়াক্ত নামাজ", Icons.Default.Mosque),
         Triple(2, "বিশেষ নামাজ", Icons.Default.AutoAwesome),
-        Triple(3, "নিয়ত ও দোয়া", Icons.Default.MenuBook),
-        Triple(4, "চিত্রসহ শিক্ষা", Icons.Default.FormatListNumbered)
+        Triple(3, "সূরা ও দোয়া", Icons.Default.MenuBook),
+        Triple(4, "আহকাম ও সাহু", Icons.Default.Warning),
+        Triple(5, "চিত্রসহ গাইড", Icons.Default.FormatListNumbered)
     )
 
     Scaffold(
@@ -114,9 +114,9 @@ fun NamazEducationScreen(
                             color = themeColors.displayText
                         )
                         Text(
-                            text = if (isFemaleMode) "নারী ভার্সন (নিয়ম ও দুআ)" else "পুরুষ ভার্সন (নিয়ম ও দুআ)",
+                            text = if (isFemaleMode) "নারী ভার্সন (পর্দা ও শরীয়তের বিশেষ নিয়ম)" else "পুরুষ ভার্সন (সহিহ পদ্ধতি ও মাসনূন দুআ)",
                             fontSize = 11.sp,
-                            color = if (isFemaleMode) femaleAccentColor else primaryCyan
+                            color = activeAccent
                         )
                     }
                 },
@@ -130,22 +130,22 @@ fun NamazEducationScreen(
                     }
                 },
                 actions = {
-                    // Male / Female Gender Toggle Pill Switch
+                    // Male / Female Toggle Button Pill
                     Surface(
                         onClick = { viewModel.toggleGenderMode() },
                         shape = RoundedCornerShape(20.dp),
-                        color = if (isFemaleMode) femaleAccentColor.copy(alpha = 0.18f) else primaryCyan.copy(alpha = 0.18f),
-                        border = BorderStroke(1.dp, if (isFemaleMode) femaleAccentColor else primaryCyan),
+                        color = activeAccent.copy(alpha = 0.18f),
+                        border = BorderStroke(1.2.dp, activeAccent),
                         modifier = Modifier.padding(end = 12.dp)
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                            modifier = Modifier.padding(horizontal = 11.dp, vertical = 6.dp)
                         ) {
                             Icon(
                                 imageVector = if (isFemaleMode) Icons.Default.Female else Icons.Default.Male,
                                 contentDescription = "Gender Mode",
-                                tint = if (isFemaleMode) femaleAccentColor else primaryCyan,
+                                tint = activeAccent,
                                 modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
@@ -153,7 +153,7 @@ fun NamazEducationScreen(
                                 text = if (isFemaleMode) "নারী ♀" else "পুরুষ ♂",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (isFemaleMode) femaleAccentColor else primaryCyan
+                                color = activeAccent
                             )
                         }
                     }
@@ -168,17 +168,18 @@ fun NamazEducationScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // Category ScrollableTabRow
+            // Scrollable Tab Row
             ScrollableTabRow(
                 selectedTabIndex = selectedTab,
                 containerColor = themeColors.cardBg,
-                contentColor = primaryCyan,
+                contentColor = activeAccent,
                 edgePadding = 12.dp,
                 divider = { HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.1f)) }
             ) {
                 tabs.forEach { (index, title, icon) ->
+                    val isSelected = selectedTab == index
                     Tab(
-                        selected = selectedTab == index,
+                        selected = isSelected,
                         onClick = { viewModel.setSelectedTab(index) },
                         text = {
                             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -186,14 +187,14 @@ fun NamazEducationScreen(
                                     imageVector = icon,
                                     contentDescription = null,
                                     modifier = Modifier.size(16.dp),
-                                    tint = if (selectedTab == index) (if (isFemaleMode) femaleAccentColor else primaryCyan) else themeColors.displayText.copy(alpha = 0.6f)
+                                    tint = if (isSelected) activeAccent else themeColors.displayText.copy(alpha = 0.6f)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
                                     text = title,
                                     fontSize = 13.5.sp,
-                                    fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Medium,
-                                    color = if (selectedTab == index) (if (isFemaleMode) femaleAccentColor else primaryCyan) else themeColors.displayText.copy(alpha = 0.7f)
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (isSelected) activeAccent else themeColors.displayText.copy(alpha = 0.75f)
                                 )
                             }
                         }
@@ -201,23 +202,24 @@ fun NamazEducationScreen(
                 }
             }
 
-            // Tab Content with Animated Content Transition
+            // Animated Tab Body
             AnimatedContent(
                 targetState = selectedTab,
                 transitionSpec = {
                     fadeIn(animationSpec = tween(220)) togetherWith fadeOut(animationSpec = tween(150))
                 },
-                label = "NamazTabAnimation",
+                label = "NamazTabContentTransition",
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
             ) { tabIndex ->
                 when (tabIndex) {
-                    0 -> WuduAndTaharatSection(themeColors, isFemaleMode, viewModel)
-                    1 -> DailyPrayersSection(themeColors, isFemaleMode, selectedWaqtId, viewModel)
-                    2 -> SpecialPrayersSection(themeColors, isFemaleMode, expandedRuleIds, viewModel)
-                    3 -> AllDuasAndNiyyatSection(themeColors, isFemaleMode, searchQuery, playingDuaId, isPlaying, viewModel)
-                    4 -> VisualIllustratorSection(themeColors, isFemaleMode, viewModel)
+                    0 -> WuduAndTaharatSection(themeColors, isFemaleMode, activeAccent, viewModel)
+                    1 -> DailyPrayersSection(themeColors, isFemaleMode, activeAccent, selectedWaqtId, selectedRakatType, viewModel)
+                    2 -> SpecialPrayersSection(themeColors, isFemaleMode, activeAccent, expandedRuleIds, viewModel)
+                    3 -> AllDuasAndSurahsSection(themeColors, isFemaleMode, activeAccent, searchQuery, playingDuaId, isPlaying, viewModel)
+                    4 -> FiqhAndSahwSection(themeColors, isFemaleMode, activeAccent, expandedRuleIds, viewModel)
+                    5 -> VisualIllustratorSection(themeColors, isFemaleMode, activeAccent, viewModel)
                 }
             }
         }
@@ -231,10 +233,10 @@ fun NamazEducationScreen(
 fun WuduAndTaharatSection(
     themeColors: CalculatorThemeColors,
     isFemaleMode: Boolean,
+    accentColor: Color,
     viewModel: NamazViewModel
 ) {
-        var activeSubCategory by remember { mutableStateOf("wudu_steps") }
-    val primaryCyan = themeColors.buttonEqualBg
+    var activeSubCategory by remember { mutableStateOf("wudu_steps") }
     val playingDuaId by viewModel.playingDuaId.collectAsState()
     val isPlaying by viewModel.isPlaying.collectAsState()
 
@@ -244,7 +246,7 @@ fun WuduAndTaharatSection(
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         item {
-            // Subcategory Chip Selector
+            // Subcategory Filter Chips
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -252,17 +254,17 @@ fun WuduAndTaharatSection(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 listOf(
-                    "wudu_steps" to "অজুর পদক্ষেপ",
-                    "wudu_farz_sunnah" to "ফরজ ও সুন্নত",
-                    "tayammum" to "তায়াম্মুম",
-                    "ghusl" to "গোসলের নিয়ম",
-                    "breakers" to "অজু ভঙ্গের কারণ"
+                    "wudu_steps" to "অজুর দোয়া ও চিত্র",
+                    "wudu_farz_sunnah" to "ফরজ, সুন্নত ও মুস্তাহাব",
+                    "breakers" to "অজু ভঙ্গের কারণ",
+                    "ghusl" to "গোসলের ফরজ ও নিয়ম",
+                    "tayammum" to "তায়াম্মুমের পদ্ধতি"
                 ).forEach { (key, label) ->
                     val isSelected = activeSubCategory == key
                     Surface(
                         onClick = { activeSubCategory = key },
                         shape = RoundedCornerShape(14.dp),
-                        color = if (isSelected) primaryCyan else themeColors.cardBg,
+                        color = if (isSelected) accentColor else themeColors.cardBg,
                         border = if (!isSelected) BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.15f)) else null
                     ) {
                         Text(
@@ -281,31 +283,26 @@ fun WuduAndTaharatSection(
             "wudu_steps" -> {
                 item {
                     Text(
-                        text = "অজুর ধারাবাহিক সঠিক চিত্র ও নিয়মাবলি:",
-                        fontSize = 15.sp,
+                        text = "অজুর শুরুতে ও শেষে পড়ার মাসনূন দোয়া:",
+                        fontSize = 15.5.sp,
                         fontWeight = FontWeight.Bold,
                         color = themeColors.displayText
                     )
                 }
                 items(NamazDataRepository.wuduDuas) { wuduItem ->
-                    val prayerStep = PrayerStep(
-                        stepNumber = wuduItem.stepNumber,
-                        titleBn = wuduItem.titleBn,
-                        titleEn = wuduItem.titleEn,
-                        descriptionBn = wuduItem.descriptionBn,
-                        postureType = PostureType.WUDU_GENERIC,
-                        arabicText = wuduItem.arabicText,
-                        banglaPronunciation = wuduItem.banglaPronunciation,
-                        banglaMeaning = wuduItem.banglaMeaning
-                    )
-PrayerStepCard(
-                        step = prayerStep,
+                    PrayerStepCard(
+                        step = wuduItem,
                         isFemaleMode = isFemaleMode,
                         themeColors = themeColors,
-                        isPlaying = playingDuaId == "wudu_dua_${prayerStep.stepNumber}" && isPlaying,
+                        isPlaying = playingDuaId == "wudu_dua_${wuduItem.stepNumber}" && isPlaying,
                         onAudioClick = {
-                            if (!prayerStep.arabicText.isNullOrEmpty()) {
-                                viewModel.playOrPauseDuaAudio("wudu_dua_${prayerStep.stepNumber}", prayerStep.audioUrl, prayerStep.arabicText!!, prayerStep.banglaPronunciation ?: "")
+                            if (!wuduItem.arabicText.isNullOrEmpty()) {
+                                viewModel.playOrPauseDuaAudio(
+                                    "wudu_dua_${wuduItem.stepNumber}",
+                                    wuduItem.audioUrl,
+                                    wuduItem.arabicText,
+                                    wuduItem.banglaPronunciation ?: ""
+                                )
                             }
                         }
                     )
@@ -316,17 +313,18 @@ PrayerStepCard(
                     Card(
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
+                        border = BorderStroke(1.dp, accentColor.copy(alpha = 0.3f)),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.CheckCircle, contentDescription = null, tint = primaryCyan)
+                                Icon(Icons.Default.CheckCircle, contentDescription = null, tint = accentColor)
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("অজুর ৪টি ফরজ (আবশ্যকীয়)", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                                Text("অজুর ৪টি ফরজ (আবশ্যকীয় অঙ্গ ধৌত)", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = accentColor)
                             }
                             Spacer(modifier = Modifier.height(10.dp))
                             NamazDataRepository.wuduFarzList.forEach { itemText ->
-                                Text(itemText, fontSize = 13.5.sp, color = themeColors.displayText, modifier = Modifier.padding(vertical = 4.dp), lineHeight = 19.sp)
+                                Text(itemText, fontSize = 13.5.sp, color = themeColors.displayText, modifier = Modifier.padding(vertical = 3.dp), lineHeight = 19.sp)
                             }
                         }
                     }
@@ -339,9 +337,9 @@ PrayerStepCard(
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = primaryCyan)
+                                Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = accentColor)
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("অজুর ১৩টি সুন্নত", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                                Text("অজুর ১০টি গুরুত্বপূর্ণ সুন্নাত", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
                             }
                             Spacer(modifier = Modifier.height(10.dp))
                             NamazDataRepository.wuduSunnahSteps.forEach { itemText ->
@@ -350,26 +348,6 @@ PrayerStepCard(
                         }
                     }
                 }
-            }
-            "tayammum" -> {
-                item {
-                    Text("তায়াম্মুমের পদ্ধতি (পবিত্র মাটি দিয়ে অজুর বিকল্প):", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
-                }
-                items(NamazDataRepository.tayammumSteps) { step ->
-PrayerStepCard(
-                        step = step,
-                        isFemaleMode = isFemaleMode,
-                        themeColors = themeColors,
-                        isPlaying = playingDuaId == "tayammum_step_${step.stepNumber}" && isPlaying,
-                        onAudioClick = {
-                            if (!step.arabicText.isNullOrEmpty()) {
-                                viewModel.playOrPauseDuaAudio("tayammum_step_${step.stepNumber}", step.audioUrl, step.arabicText!!, step.banglaPronunciation ?: "")
-                            }
-                        }
-                    )
-                }
-            }
-            "ghusl" -> {
                 item {
                     Card(
                         shape = RoundedCornerShape(16.dp),
@@ -377,16 +355,10 @@ PrayerStepCard(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            Text("গোসলের ৩টি ফরজ:", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = primaryCyan)
+                            Text("অজুর মুস্তাহাব ও আদবসমূহ:", fontSize = 15.5.sp, fontWeight = FontWeight.Bold, color = accentColor)
                             Spacer(modifier = Modifier.height(8.dp))
-                            NamazDataRepository.ghuslFarzList.forEach { itemText ->
-                                Text(itemText, fontSize = 13.5.sp, color = themeColors.displayText, modifier = Modifier.padding(vertical = 3.dp))
-                            }
-                            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = themeColors.displayText.copy(alpha = 0.1f))
-                            Text("সুন্নতে মুয়াক্কাদাহ গোসলের নিয়ম:", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
-                            Spacer(modifier = Modifier.height(8.dp))
-                            NamazDataRepository.ghuslSunnahSteps.forEach { itemText ->
-                                Text(itemText, fontSize = 13.5.sp, color = themeColors.displayText, modifier = Modifier.padding(vertical = 3.dp))
+                            NamazDataRepository.wuduMustahabList.forEach { itemText ->
+                                Text(itemText, fontSize = 13.sp, color = themeColors.displayText.copy(alpha = 0.9f), modifier = Modifier.padding(vertical = 2.5.dp))
                             }
                         }
                     }
@@ -397,16 +369,82 @@ PrayerStepCard(
                     Card(
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
+                        border = BorderStroke(1.dp, Color(0xFFEF4444).copy(alpha = 0.4f)),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            Text("অজু ভঙ্গের ৭টি প্রধান কারণ:", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFFEF4444))
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.Warning, contentDescription = null, tint = Color(0xFFEF4444))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("অজু ভঙ্গের ৭টি কারণ:", fontSize = 16.5.sp, fontWeight = FontWeight.Bold, color = Color(0xFFEF4444))
+                            }
                             Spacer(modifier = Modifier.height(10.dp))
                             NamazDataRepository.wuduBreakersList.forEach { itemText ->
                                 Text(itemText, fontSize = 13.5.sp, color = themeColors.displayText, modifier = Modifier.padding(vertical = 4.dp), lineHeight = 19.sp)
                             }
                         }
                     }
+                }
+            }
+            "ghusl" -> {
+                item {
+                    Card(
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text("গোসলের ৩টি ফরজ (বাধ্যতামূলক):", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = accentColor)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            NamazDataRepository.ghuslFarzList.forEach { itemText ->
+                                Text(itemText, fontSize = 13.5.sp, color = themeColors.displayText, modifier = Modifier.padding(vertical = 3.dp), lineHeight = 19.sp)
+                            }
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = themeColors.displayText.copy(alpha = 0.1f))
+                            Text("সুন্নাত পদ্ধতিতে গোসলের ধারাবাহিক নিয়ম:", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            NamazDataRepository.ghuslSunnahSteps.forEach { itemText ->
+                                Text(itemText, fontSize = 13.5.sp, color = themeColors.displayText, modifier = Modifier.padding(vertical = 3.dp), lineHeight = 19.sp)
+                            }
+                        }
+                    }
+                }
+            }
+            "tayammum" -> {
+                item {
+                    Card(
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text("তায়াম্মুমের ৩টি ফরজ:", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = accentColor)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            NamazDataRepository.tayammumFarzList.forEach { itemText ->
+                                Text(itemText, fontSize = 13.5.sp, color = themeColors.displayText, modifier = Modifier.padding(vertical = 3.dp))
+                            }
+                        }
+                    }
+                }
+                item {
+                    Text("তায়াম্মুম আদায়ের ধারাবাহিক পদ্ধতি:", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                }
+                items(NamazDataRepository.tayammumSteps) { step ->
+                    PrayerStepCard(
+                        step = step,
+                        isFemaleMode = isFemaleMode,
+                        themeColors = themeColors,
+                        isPlaying = playingDuaId == "tayammum_${step.stepNumber}" && isPlaying,
+                        onAudioClick = {
+                            if (!step.arabicText.isNullOrEmpty()) {
+                                viewModel.playOrPauseDuaAudio(
+                                    "tayammum_${step.stepNumber}",
+                                    step.audioUrl,
+                                    step.arabicText,
+                                    step.banglaPronunciation ?: ""
+                                )
+                            }
+                        }
+                    )
                 }
             }
         }
@@ -420,11 +458,12 @@ PrayerStepCard(
 fun DailyPrayersSection(
     themeColors: CalculatorThemeColors,
     isFemaleMode: Boolean,
+    accentColor: Color,
     selectedWaqtId: String,
+    selectedRakatType: String,
     viewModel: NamazViewModel
 ) {
-    val primaryCyan = themeColors.buttonEqualBg
-        val selectedWaqt = NamazDataRepository.dailyWaqts.find { it.id == selectedWaqtId } ?: NamazDataRepository.dailyWaqts.first()
+    val selectedWaqt = NamazDataRepository.dailyWaqts.find { it.id == selectedWaqtId } ?: NamazDataRepository.dailyWaqts.first()
     val playingDuaId by viewModel.playingDuaId.collectAsState()
     val isPlaying by viewModel.isPlaying.collectAsState()
 
@@ -433,8 +472,8 @@ fun DailyPrayersSection(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
+        // Waqt Selection Tabs
         item {
-            // Waqt Selector Tabs (Fajr, Dhuhr, Asr, Maghrib, Isha, Witr)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -446,7 +485,7 @@ fun DailyPrayersSection(
                     Surface(
                         onClick = { viewModel.setSelectedWaqtId(waqt.id) },
                         shape = RoundedCornerShape(14.dp),
-                        color = if (isSelected) primaryCyan else themeColors.cardBg,
+                        color = if (isSelected) accentColor else themeColors.cardBg,
                         border = if (!isSelected) BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.15f)) else null
                     ) {
                         Row(
@@ -462,13 +501,13 @@ fun DailyPrayersSection(
                             Spacer(modifier = Modifier.width(6.dp))
                             Surface(
                                 shape = CircleShape,
-                                color = if (isSelected) Color.White.copy(alpha = 0.25f) else primaryCyan.copy(alpha = 0.15f)
+                                color = if (isSelected) Color.White.copy(alpha = 0.25f) else accentColor.copy(alpha = 0.15f)
                             ) {
                                 Text(
                                     text = "${waqt.totalRakat}র",
-                                    fontSize = 10.5.sp,
+                                    fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (isSelected) Color.White else primaryCyan,
+                                    color = if (isSelected) Color.White else accentColor,
                                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                 )
                             }
@@ -478,12 +517,13 @@ fun DailyPrayersSection(
             }
         }
 
-        // Rakat Breakdown Table Card
+        // Waqt Overview & Rakat Breakdown Card
         item {
             Card(
                 shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                border = BorderStroke(1.dp, accentColor.copy(alpha = 0.25f))
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(
@@ -494,34 +534,41 @@ fun DailyPrayersSection(
                         Column {
                             Text(
                                 text = "${selectedWaqt.nameBn} নামাজের রাকাত বিন্যাস",
-                                fontSize = 17.sp,
+                                fontSize = 17.5.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = themeColors.displayText
                             )
                             Text(
                                 text = selectedWaqt.arabicName,
                                 fontSize = 14.sp,
-                                color = primaryCyan,
+                                color = accentColor,
                                 fontWeight = FontWeight.Bold
                             )
                         }
 
                         Surface(
                             shape = RoundedCornerShape(12.dp),
-                            color = primaryCyan.copy(alpha = 0.15f)
+                            color = accentColor.copy(alpha = 0.15f)
                         ) {
                             Text(
                                 text = "মোট ${selectedWaqt.totalRakat} রাকাত",
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = primaryCyan,
+                                color = accentColor,
                                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "⏰ সময়সীমা: ${selectedWaqt.timeDescriptionBn}",
+                        fontSize = 12.5.sp,
+                        color = themeColors.displayText.copy(alpha = 0.85f),
+                        lineHeight = 18.sp
+                    )
 
+                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = selectedWaqt.descriptionBn,
                         fontSize = 12.5.sp,
@@ -537,7 +584,7 @@ fun DailyPrayersSection(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         RakatPill("ফরজ", "${selectedWaqt.farz} রাকাত", Color(0xFF10B981), Modifier.weight(1f))
-                        RakatPill("সুন্নত", "${selectedWaqt.sunnatMuakkadah + selectedWaqt.sunnatGairMuakkadah} রাকাত", primaryCyan, Modifier.weight(1f))
+                        RakatPill("সুন্নত", "${selectedWaqt.sunnatMuakkadah + selectedWaqt.sunnatGairMuakkadah} রাকাত", accentColor, Modifier.weight(1f))
                         if (selectedWaqt.witr > 0) {
                             RakatPill("বিতর", "${selectedWaqt.witr} রাকাত", Color(0xFFF59E0B), Modifier.weight(1f))
                         }
@@ -549,25 +596,99 @@ fun DailyPrayersSection(
             }
         }
 
-        // Step-by-Step Prayer Flow Cards
+        // Sub-Rakat Filter Selector (Farz vs Sunnah vs Witr)
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Surface(
+                    onClick = { viewModel.setSelectedRakatType("farz") },
+                    shape = RoundedCornerShape(12.dp),
+                    color = if (selectedRakatType == "farz") Color(0xFF10B981) else themeColors.cardBg,
+                    border = BorderStroke(1.dp, if (selectedRakatType == "farz") Color(0xFF10B981) else themeColors.displayText.copy(alpha = 0.15f)),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = "ফরজ নামাজ (${selectedWaqt.farz}র)",
+                        fontSize = 12.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (selectedRakatType == "farz") Color.White else themeColors.displayText,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
+
+                if (selectedWaqt.steps2Rakat != null && (selectedWaqt.sunnatMuakkadah > 0 || selectedWaqt.sunnatGairMuakkadah > 0)) {
+                    Surface(
+                        onClick = { viewModel.setSelectedRakatType("sunnat") },
+                        shape = RoundedCornerShape(12.dp),
+                        color = if (selectedRakatType == "sunnat") accentColor else themeColors.cardBg,
+                        border = BorderStroke(1.dp, if (selectedRakatType == "sunnat") accentColor else themeColors.displayText.copy(alpha = 0.15f)),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = "সুন্নত নামাজ (২র)",
+                            fontSize = 12.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (selectedRakatType == "sunnat") Color.White else themeColors.displayText,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+                    }
+                }
+
+                if (selectedWaqt.stepsWitr != null) {
+                    Surface(
+                        onClick = { viewModel.setSelectedRakatType("witr") },
+                        shape = RoundedCornerShape(12.dp),
+                        color = if (selectedRakatType == "witr") Color(0xFFF59E0B) else themeColors.cardBg,
+                        border = BorderStroke(1.dp, if (selectedRakatType == "witr") Color(0xFFF59E0B) else themeColors.displayText.copy(alpha = 0.15f)),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = "বিতর ওয়াজিব (৩র)",
+                            fontSize = 12.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (selectedRakatType == "witr") Color.White else themeColors.displayText,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+                    }
+                }
+            }
+        }
+
+        // Display Corresponding Steps
+        val activeSteps = when (selectedRakatType) {
+            "sunnat" -> selectedWaqt.steps2Rakat ?: emptyList()
+            "witr" -> selectedWaqt.stepsWitr ?: emptyList()
+            else -> selectedWaqt.steps4Rakat ?: selectedWaqt.steps3Rakat ?: selectedWaqt.steps2Rakat ?: emptyList()
+        }
+
         item {
             Text(
-                text = "${selectedWaqt.nameBn} নামাজের ধাপভিত্তিক নিয়ম:",
+                text = "${selectedWaqt.nameBn} নামাজের ধাপভিত্তিক সহিহ আমল:",
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
                 color = themeColors.displayText
             )
         }
 
-        items(selectedWaqt.steps4Rakat ?: selectedWaqt.steps3Rakat ?: selectedWaqt.steps2Rakat ?: emptyList()) { step ->
+        items(activeSteps) { step ->
             PrayerStepCard(
                 step = step,
                 isFemaleMode = isFemaleMode,
                 themeColors = themeColors,
-                isPlaying = playingDuaId == "waqt_${selectedWaqt.id}_step_${step.stepNumber}" && isPlaying,
+                isPlaying = playingDuaId == "waqt_${selectedWaqt.id}_${selectedRakatType}_${step.stepNumber}" && isPlaying,
                 onAudioClick = {
                     if (!step.arabicText.isNullOrEmpty()) {
-                        viewModel.playOrPauseDuaAudio("waqt_${selectedWaqt.id}_step_${step.stepNumber}", step.audioUrl, step.arabicText!!, step.banglaPronunciation ?: "")
+                        viewModel.playOrPauseDuaAudio(
+                            "waqt_${selectedWaqt.id}_${selectedRakatType}_${step.stepNumber}",
+                            step.audioUrl,
+                            step.arabicText,
+                            step.banglaPronunciation ?: ""
+                        )
                     }
                 }
             )
@@ -600,10 +721,10 @@ fun RakatPill(label: String, count: String, color: Color, modifier: Modifier = M
 fun SpecialPrayersSection(
     themeColors: CalculatorThemeColors,
     isFemaleMode: Boolean,
+    accentColor: Color,
     expandedRuleIds: Set<String>,
     viewModel: NamazViewModel
 ) {
-        val primaryCyan = themeColors.buttonEqualBg
     val playingDuaId by viewModel.playingDuaId.collectAsState()
     val isPlaying by viewModel.isPlaying.collectAsState()
 
@@ -614,7 +735,7 @@ fun SpecialPrayersSection(
     ) {
         item {
             Text(
-                text = "বিশেষ, ওয়াজিব ও নফল নামাজের পূর্ণাঙ্গ নিয়ম:",
+                text = "বিশেষ, ওয়াজিব ও গুরুত্বপূর্ণ নফল নামাজের পূর্ণাঙ্গ নিয়ম:",
                 fontSize = 15.5.sp,
                 fontWeight = FontWeight.Bold,
                 color = themeColors.displayText
@@ -626,7 +747,8 @@ fun SpecialPrayersSection(
             Card(
                 shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                border = BorderStroke(1.dp, if (isExpanded) accentColor.copy(alpha = 0.4f) else themeColors.displayText.copy(alpha = 0.1f))
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(
@@ -645,9 +767,9 @@ fun SpecialPrayersSection(
                             )
                             if (rule.rakatsCountBn.isNotEmpty()) {
                                 Text(
-                                    text = "নিয়ম: ${rule.rakatsCountBn}",
+                                    text = "রাকাত ও নিয়ম: ${rule.rakatsCountBn}",
                                     fontSize = 12.sp,
-                                    color = primaryCyan,
+                                    color = accentColor,
                                     fontWeight = FontWeight.Bold,
                                     modifier = Modifier.padding(top = 2.dp)
                                 )
@@ -658,13 +780,12 @@ fun SpecialPrayersSection(
                             Icon(
                                 imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                                 contentDescription = "Expand",
-                                tint = primaryCyan
+                                tint = accentColor
                             )
                         }
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
-
                     Text(
                         text = rule.introductionBn,
                         fontSize = 13.sp,
@@ -684,17 +805,25 @@ fun SpecialPrayersSection(
                             if (rule.khutbahNoteBn != null) {
                                 Surface(
                                     shape = RoundedCornerShape(10.dp),
-                                    color = primaryCyan.copy(alpha = 0.1f),
+                                    color = accentColor.copy(alpha = 0.1f),
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Text(
                                         text = "📌 খুতবার নির্দেশিকা: ${rule.khutbahNoteBn}",
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Medium,
-                                        color = primaryCyan,
+                                        color = accentColor,
                                         modifier = Modifier.padding(10.dp)
                                     )
                                 }
+                            }
+
+                            if (rule.extraNotesBn != null) {
+                                Text(
+                                    text = "💡 গুরুত্বপূর্ণ নোট: ${rule.extraNotesBn}",
+                                    fontSize = 12.sp,
+                                    color = themeColors.displayText.copy(alpha = 0.75f)
+                                )
                             }
 
                             rule.steps.forEach { step ->
@@ -702,10 +831,15 @@ fun SpecialPrayersSection(
                                     step = step,
                                     isFemaleMode = isFemaleMode,
                                     themeColors = themeColors,
-                                    isPlaying = playingDuaId == "special_${rule.id}_step_${step.stepNumber}" && isPlaying,
+                                    isPlaying = playingDuaId == "special_${rule.id}_${step.stepNumber}" && isPlaying,
                                     onAudioClick = {
                                         if (!step.arabicText.isNullOrEmpty()) {
-                                            viewModel.playOrPauseDuaAudio("special_${rule.id}_step_${step.stepNumber}", step.audioUrl, step.arabicText!!, step.banglaPronunciation ?: "")
+                                            viewModel.playOrPauseDuaAudio(
+                                                "special_${rule.id}_${step.stepNumber}",
+                                                step.audioUrl,
+                                                step.arabicText,
+                                                step.banglaPronunciation ?: ""
+                                            )
                                         }
                                     }
                                 )
@@ -719,26 +853,27 @@ fun SpecialPrayersSection(
 }
 
 // ==========================================
-// 4. TAB 3: ALL NIYYAT & DUAS (সকল নিয়ত ও দোয়া)
+// 4. TAB 3: ESSENTIAL SURAHS & DUAS (সূরা ও দোয়া)
 // ==========================================
 @Composable
-fun AllDuasAndNiyyatSection(
+fun AllDuasAndSurahsSection(
     themeColors: CalculatorThemeColors,
     isFemaleMode: Boolean,
+    accentColor: Color,
     searchQuery: String,
     playingDuaId: String?,
     isPlaying: Boolean,
     viewModel: NamazViewModel
 ) {
-    val primaryCyan = themeColors.buttonEqualBg
     var selectedCategoryFilter by remember { mutableStateOf("All") }
 
-    val filteredList = NamazDataRepository.allDuasAndNiyyat.filter { dua ->
-        val matchesCategory = (selectedCategoryFilter == "All" || dua.category == selectedCategoryFilter)
+    val filteredList = NamazDataRepository.allDuasAndNiyyat.filter { item ->
+        val matchesCategory = (selectedCategoryFilter == "All" || item.category == selectedCategoryFilter)
         val matchesQuery = searchQuery.isEmpty() ||
-                dua.titleBn.contains(searchQuery, ignoreCase = true) ||
-                dua.banglaPronunciation.contains(searchQuery, ignoreCase = true) ||
-                dua.arabicText.contains(searchQuery)
+                item.titleBn.contains(searchQuery, ignoreCase = true) ||
+                item.banglaPronunciation.contains(searchQuery, ignoreCase = true) ||
+                item.arabicText.contains(searchQuery) ||
+                item.banglaMeaning.contains(searchQuery, ignoreCase = true)
         matchesCategory && matchesQuery
     }
 
@@ -747,18 +882,18 @@ fun AllDuasAndNiyyatSection(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        // Search Bar
         item {
-            // Search Bar
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { viewModel.setSearchQuery(it) },
-                placeholder = { Text("দোয়া বা নিয়ত সার্চ করুন...", fontSize = 13.5.sp) },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = primaryCyan) },
+                placeholder = { Text("দোয়া, সূরা বা উচ্চারণ দিয়ে খুঁজুন...", fontSize = 13.5.sp) },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = accentColor) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = primaryCyan,
+                    focusedBorderColor = accentColor,
                     unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f),
                     focusedContainerColor = themeColors.cardBg,
                     unfocusedContainerColor = themeColors.cardBg
@@ -766,8 +901,8 @@ fun AllDuasAndNiyyatSection(
             )
         }
 
+        // Filter Categories
         item {
-            // Category Filter Chips
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -775,16 +910,16 @@ fun AllDuasAndNiyyatSection(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 listOf(
-                    "All" to "সব দোয়া ও নিয়ত",
-                    "Niyyat" to "নামাজের নিয়ত",
-                    "Prayer Dua" to "নামাজের দোয়া",
-                    "Wudu Dua" to "অজুর দোয়া"
+                    "All" to "সকল সূরা ও দোয়া",
+                    "Surah" to "প্রয়োজনীয় ছোট সূরা",
+                    "Prayer Dua" to "নামাজের মূল দোয়া",
+                    "Post Prayer" to "নামাজ পরবর্তী তাসবীহাত"
                 ).forEach { (catKey, label) ->
                     val isSelected = selectedCategoryFilter == catKey
                     Surface(
                         onClick = { selectedCategoryFilter = catKey },
                         shape = RoundedCornerShape(14.dp),
-                        color = if (isSelected) primaryCyan else themeColors.cardBg,
+                        color = if (isSelected) accentColor else themeColors.cardBg,
                         border = if (!isSelected) BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.15f)) else null
                     ) {
                         Text(
@@ -826,18 +961,16 @@ fun AllDuasAndNiyyatSection(
 }
 
 // ==========================================
-// 5. TAB 4: VISUAL ILLUSTRATOR (চিত্রসহ শিক্ষা)
+// 5. TAB 4: FIQH, AHKAM, ARKAN & SAHW (আহকাম ও সাহু)
 // ==========================================
 @Composable
-fun VisualIllustratorSection(
+fun FiqhAndSahwSection(
     themeColors: CalculatorThemeColors,
     isFemaleMode: Boolean,
+    accentColor: Color,
+    expandedRuleIds: Set<String>,
     viewModel: NamazViewModel
 ) {
-        val primaryCyan = themeColors.buttonEqualBg
-    val playingDuaId by viewModel.playingDuaId.collectAsState()
-    val isPlaying by viewModel.isPlaying.collectAsState()
-
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
@@ -847,25 +980,155 @@ fun VisualIllustratorSection(
             Card(
                 shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = primaryCyan.copy(alpha = 0.12f)
+                    containerColor = accentColor.copy(alpha = 0.12f)
                 ),
-                border = BorderStroke(1.dp, primaryCyan.copy(alpha = 0.3f)),
+                border = BorderStroke(1.dp, accentColor.copy(alpha = 0.3f)),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Info, contentDescription = null, tint = primaryCyan)
+                        Icon(Icons.Default.Warning, contentDescription = null, tint = accentColor)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "চিত্রসহ নামাজ আদায়ের অবস্থানসমূহ (Postures)",
+                            text = "নামাজের বিশুদ্ধতার জন্য জরুরি মাসআলা-মাসায়েল",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
-                            color = primaryCyan
+                            color = accentColor
                         )
                     }
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "নিচে কিয়াম, রুকু, কওমা, সিজদা ও সালামের সঠিক শারীরিক অবস্থান চিত্রিত করা হলো। উপরে ডানপাশের সুইচ দিয়ে পুরুষ ও নারীদের অবস্থানের পার্থক্য দেখতে পারেন।",
+                        text = "নামাজ শুদ্ধ হওয়ার জন্য ১৪টি ফরজ, ১৪টি ওয়াজিব, সাহু সিজদার বিধান এবং নামাজ ভঙ্গের কারণগুলো সঠিকভাবে জানা প্রত্যেক মুসলিমের ওপর আবশ্যক।",
+                        fontSize = 12.5.sp,
+                        color = themeColors.displayText.copy(alpha = 0.85f),
+                        lineHeight = 18.sp
+                    )
+                }
+            }
+        }
+
+        items(NamazDataRepository.fiqhRulesList) { fiqhItem ->
+            val isExpanded = expandedRuleIds.contains(fiqhItem.id)
+            Card(
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
+                modifier = Modifier.fillMaxWidth(),
+                border = BorderStroke(1.dp, if (isExpanded) accentColor.copy(alpha = 0.4f) else themeColors.displayText.copy(alpha = 0.1f))
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { viewModel.toggleRuleExpanded(fiqhItem.id) },
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = fiqhItem.titleBn,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.displayText
+                            )
+                            Text(
+                                text = fiqhItem.subtitleBn,
+                                fontSize = 12.sp,
+                                color = accentColor,
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier.padding(top = 2.dp)
+                            )
+                        }
+
+                        IconButton(onClick = { viewModel.toggleRuleExpanded(fiqhItem.id) }) {
+                            Icon(
+                                imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                contentDescription = "Expand",
+                                tint = accentColor
+                            )
+                        }
+                    }
+
+                    AnimatedVisibility(visible = isExpanded) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 12.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.1f), modifier = Modifier.padding(bottom = 6.dp))
+
+                            fiqhItem.items.forEach { point ->
+                                Text(
+                                    text = point,
+                                    fontSize = 13.sp,
+                                    color = themeColors.displayText.copy(alpha = 0.9f),
+                                    lineHeight = 19.sp,
+                                    modifier = Modifier.padding(vertical = 2.dp)
+                                )
+                            }
+
+                            if (fiqhItem.explanationBn != null) {
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Surface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = accentColor.copy(alpha = 0.1f),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        text = "📌 বিশেষ নির্দেশ: ${fiqhItem.explanationBn}",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = accentColor,
+                                        modifier = Modifier.padding(10.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ==========================================
+// 6. TAB 5: VISUAL ILLUSTRATOR (চিত্রসহ গাইড)
+// ==========================================
+@Composable
+fun VisualIllustratorSection(
+    themeColors: CalculatorThemeColors,
+    isFemaleMode: Boolean,
+    accentColor: Color,
+    viewModel: NamazViewModel
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        item {
+            Card(
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = accentColor.copy(alpha = 0.12f)
+                ),
+                border = BorderStroke(1.dp, accentColor.copy(alpha = 0.3f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Info, contentDescription = null, tint = accentColor)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "সচিত্র নামাজ আদায় ও শারীরিক অবস্থানসমূহ",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = accentColor
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "নিচে কিয়াম, তাকবীর, রুকু, কওমা, সিজদা, বৈঠক ও সালামের সঠিক শারীরিক রূপ চিত্রায়িত করা হলো। উপরে ডানপাশের সুইচ দিয়ে পুরুষ ও নারীদের অবস্থানের পার্থক্য দেখতে পারেন।",
                         fontSize = 12.5.sp,
                         color = themeColors.displayText.copy(alpha = 0.85f),
                         lineHeight = 18.sp

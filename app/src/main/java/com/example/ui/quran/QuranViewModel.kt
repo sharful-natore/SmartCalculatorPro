@@ -2,6 +2,7 @@ package com.example.ui.quran
 
 import android.app.Application
 import android.content.Context
+import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.Data
@@ -12,17 +13,21 @@ import com.example.data.quran.AyahEntity
 import com.example.data.quran.QuranAudioPlayer
 import com.example.data.quran.QuranDatabase
 import com.example.data.quran.QuranDownloadWorker
+import com.example.data.quran.QuranMetadata
 import com.example.data.quran.QuranRepository
 import com.example.data.quran.SurahEntity
+import com.example.util.NetworkUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -38,7 +43,7 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
     init {
         val dao = QuranDatabase.getDatabase(application).quranDao()
         repository = QuranRepository(dao)
-        audioPlayer = QuranAudioPlayer(application)
+        audioPlayer = QuranAudioPlayer.getInstance(application)
 
         viewModelScope.launch {
             repository.refreshSurahs()
@@ -144,9 +149,47 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
     fun playSurah(surah: SurahEntity, startAyahIndex: Int = 0) {
         viewModelScope.launch {
             val ayahs = repository.ensureAyahsLoaded(surah.number)
-            if (ayahs.isNotEmpty()) {
-                audioPlayer.playSurah(surah.number, startAyahIndex, ayahs)
-                _isPlayerVisible.value = true
+            if (ayahs.isEmpty()) return@launch
+
+            val isDownloaded = surah.isAudioDownloaded || isSurahAudioLocallyAvailable(surah.number)
+            val isOnline = NetworkUtil.isOnline(getApplication())
+
+            if (!isDownloaded && !isOnline) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(
+                        getApplication(),
+                        "ইন্টারনেট সংযোগ নেই! অডিও শুনতে ইন্টারনেট চালু করুন অথবা আগে সূরাটি ডাউনলোড করুন।",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+                return@launch
+            }
+
+            audioPlayer.playSurah(
+                surahNumber = surah.number,
+                surahNameBangla = surah.nameBangla,
+                surahNameArabic = surah.nameArabic,
+                startAyahIndex = startAyahIndex,
+                ayahs = ayahs
+            )
+            _isPlayerVisible.value = true
+        }
+    }
+
+    private fun isSurahAudioLocallyAvailable(surahNumber: Int): Boolean {
+        val dir = repository.getAudioDirectory(getApplication(), surahNumber)
+        if (!dir.exists()) return false
+        val firstAyahFile = File(dir, "ayah_1.mp3")
+        return firstAyahFile.exists() && firstAyahFile.length() > 0
+    }
+
+    fun selectSurahByNumber(surahNumber: Int) {
+        viewModelScope.launch {
+            val list = repository.allSurahs.first()
+            val found = list.find { it.number == surahNumber }
+                ?: QuranMetadata.defaultSurahList.find { it.number == surahNumber }
+            if (found != null) {
+                selectSurah(found)
             }
         }
     }

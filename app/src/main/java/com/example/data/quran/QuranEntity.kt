@@ -27,4 +27,8 @@ data class AyahEntity(
     val textEnglish: String = "",
     val audioUrl: String,
     val wordsJson: String = "" // Optional word-by-word data as JSON string
-)
+) {
+    fun getBanglaPronunciation(): String {
+        return QuranBanglaPronunciation.getPronunciation(surahNumber, numberInSurah, textEnglish)
+    }
+}

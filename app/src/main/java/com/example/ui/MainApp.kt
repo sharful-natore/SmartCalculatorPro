@@ -21,6 +21,8 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import com.example.data.model.ToolType
 import com.example.data.model.ConverterType
+import com.example.ui.quran.QuranMiniPlayerBanner
+import com.example.data.quran.QuranAudioPlayer
 import androidx.compose.foundation.Canvas
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -518,7 +520,21 @@ fun MainContent(
             }
         },
         bottomBar = {
-            Box(
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.Transparent)
+            ) {
+                val bannerContext = LocalContext.current
+                QuranMiniPlayerBanner(
+                    audioPlayer = QuranAudioPlayer.getInstance(bannerContext),
+                    themeColors = themeColors,
+                    onOpenSurah = { surahNumber ->
+                        viewModel.selectedToolType = ToolType.HOLY_QURAN
+                        viewModel.activeTab = 0
+                    }
+                )
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(themeColors.navBarBg)
@@ -792,6 +808,7 @@ fun MainContent(
                     )
                 }
             }
+        }
         },
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         modifier = Modifier.fillMaxSize()
@@ -946,8 +963,8 @@ fun MainContent(
                 }
             }
 
-            // Floating Pill AI Button with 2dp Animated Rotating Gemini Border on Right Side (Hides on Calculator tab with smooth enter/exit animation)
-            val isAiFabVisible = !viewModel.showAiChat && viewModel.activeTab != 2
+            // Floating Pill AI Button with 2dp Animated Rotating Gemini Border on Right Side (Hides on Calculator tab or when inside Holy Quran tool with smooth enter/exit animation)
+            val isAiFabVisible = !viewModel.showAiChat && viewModel.activeTab != 2 && viewModel.selectedToolType != ToolType.HOLY_QURAN
 
             Box(
                 modifier = Modifier

@@ -240,7 +240,7 @@ fun SurahDetailScreen(
                                 val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                                 val clip = ClipData.newPlainText(
                                     "Ayah",
-                                    "${ayah.textArabic}\n\n${ayah.textBangla}\n(সূরা ${surah.nameBangla}, আয়াত ${ayah.numberInSurah})"
+                                    "${ayah.textArabic}\n\nউচ্চারণ: ${ayah.getBanglaPronunciation()}\n\nঅনুবাদ: ${ayah.textBangla}\n(সূরা ${surah.nameBangla}, আয়াত ${ayah.numberInSurah})"
                                 )
                                 clipboard.setPrimaryClip(clip)
                                 Toast.makeText(context, "আয়াত কপি করা হয়েছে!", Toast.LENGTH_SHORT).show()
@@ -266,13 +266,20 @@ fun AyahCard(
     onPlayAyah: () -> Unit,
     onCopyAyah: () -> Unit
 ) {
+    // 3 Distinct high-contrast elegant color palettes
+    val arabicColor = if (themeColors.isDark) Color(0xFF34D399) else Color(0xFF047857) // Rich Quran Emerald
+    val pronunciationColor = if (themeColors.isDark) Color(0xFFFBBF24) else Color(0xFFB45309) // Warm Golden Amber
+    val translationColor = if (themeColors.isDark) Color(0xFFE2E8F0) else Color(0xFF1E293B) // Clean Slate
+
+    val banglaPronunciation = remember(ayah) { ayah.getBanglaPronunciation() }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isCurrentPlaying) cyanPrimary.copy(alpha = 0.08f) else themeColors.cardBg
         ),
-        border = if (isCurrentPlaying) BorderStroke(2.dp, cyanPrimary) else null,
+        border = if (isCurrentPlaying) BorderStroke(2.dp, cyanPrimary) else BorderStroke(0.8.dp, if (themeColors.isDark) Color.White.copy(alpha = 0.06f) else Color.Black.copy(alpha = 0.06f)),
         elevation = CardDefaults.cardElevation(defaultElevation = if (isCurrentPlaying) 4.dp else 1.5.dp)
     ) {
         Column(
@@ -290,14 +297,30 @@ fun AyahCard(
                     modifier = Modifier
                         .size(32.dp)
                         .clip(CircleShape)
-                        .background(cyanPrimary.copy(alpha = 0.15f)),
+                        .background(arabicColor.copy(alpha = 0.15f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = "${ayah.numberInSurah}",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
-                        color = cyanPrimary
+                        color = arabicColor
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                // Tag for Arabic
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = arabicColor.copy(alpha = 0.12f)
+                ) {
+                    Text(
+                        text = "আরবি",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = arabicColor,
+                        modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp)
                     )
                 }
 
@@ -311,7 +334,7 @@ fun AyahCard(
                     Icon(
                         imageVector = if (isCurrentPlaying) Icons.Default.VolumeUp else Icons.Default.PlayArrow,
                         contentDescription = "Play Verse",
-                        tint = cyanPrimary
+                        tint = arabicColor
                     )
                 }
 
@@ -330,38 +353,88 @@ fun AyahCard(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Arabic Text
+            // 1. Arabic Text (Distinct Emerald Color)
             Text(
                 text = ayah.textArabic,
-                fontSize = 22.sp,
+                fontSize = 23.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = cyanDark,
+                color = arabicColor,
                 textAlign = TextAlign.End,
-                lineHeight = 40.sp,
+                lineHeight = 42.sp,
                 modifier = Modifier.fillMaxWidth()
             )
 
-            if (ayah.textEnglish.isNotBlank()) {
-                Spacer(modifier = Modifier.height(10.dp))
-                Text(
-                    text = "উচ্চারণ: ${ayah.textEnglish}",
-                    fontSize = 13.5.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = cyanPrimary,
-                    lineHeight = 19.sp
-                )
+            // 2. Bangla Pronunciation (Distinct Warm Amber/Gold Color)
+            if (banglaPronunciation.isNotBlank()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = pronunciationColor.copy(alpha = 0.08f),
+                    border = BorderStroke(0.8.dp, pronunciationColor.copy(alpha = 0.25f)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Surface(
+                                shape = RoundedCornerShape(4.dp),
+                                color = pronunciationColor.copy(alpha = 0.18f)
+                            ) {
+                                Text(
+                                    text = "বাংলা উচ্চারণ",
+                                    fontSize = 10.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = pronunciationColor,
+                                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = banglaPronunciation,
+                            fontSize = 14.5.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = pronunciationColor,
+                            lineHeight = 21.sp
+                        )
+                    }
+                }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // Bangla Translation
-            Text(
-                text = ayah.textBangla,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Normal,
-                color = themeColors.displayText,
-                lineHeight = 22.sp
-            )
+            // 3. Bangla Translation (Distinct Slate Color)
+            if (ayah.textBangla.isNotBlank()) {
+                Spacer(modifier = Modifier.height(10.dp))
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = translationColor.copy(alpha = 0.04f),
+                    border = BorderStroke(0.8.dp, translationColor.copy(alpha = 0.15f)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Surface(
+                                shape = RoundedCornerShape(4.dp),
+                                color = translationColor.copy(alpha = 0.12f)
+                            ) {
+                                Text(
+                                    text = "অনুবাদ ও অর্থ",
+                                    fontSize = 10.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = translationColor,
+                                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = ayah.textBangla,
+                            fontSize = 14.5.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = translationColor,
+                            lineHeight = 22.sp
+                        )
+                    }
+                }
+            }
         }
     }
 }

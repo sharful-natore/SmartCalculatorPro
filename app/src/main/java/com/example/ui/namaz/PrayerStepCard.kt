@@ -4,14 +4,8 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.widget.Toast
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -41,10 +35,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -68,6 +62,7 @@ fun PrayerStepCard(
     val context = LocalContext.current
     val primaryCyan = themeColors.buttonEqualBg
     val femaleAccentColor = Color(0xFFEC4899)
+    val activeAccent = if (isFemaleMode) femaleAccentColor else primaryCyan
 
     Card(
         modifier = modifier
@@ -76,14 +71,14 @@ fun PrayerStepCard(
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.1f))
+        border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.1f))
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            // Step Number, Title & Posture Graphic Header
+            // Header Row: Step Number, Title, Posture Graphic
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -93,23 +88,24 @@ fun PrayerStepCard(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.weight(1f)
                 ) {
-                    // Step Number Badge
-                    Surface(
-                        shape = CircleShape,
-                        color = if (isFemaleMode && step.femaleNoteBn != null) femaleAccentColor else primaryCyan,
-                        modifier = Modifier.size(34.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Text(
-                                text = "${step.stepNumber}",
-                                color = Color.White,
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.ExtraBold
-                            )
+                    // Step Number Badge (if > 0)
+                    if (step.stepNumber > 0) {
+                        Surface(
+                            shape = CircleShape,
+                            color = activeAccent,
+                            modifier = Modifier.size(34.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(
+                                    text = "${step.stepNumber}",
+                                    color = Color.White,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.ExtraBold
+                                )
+                            }
                         }
+                        Spacer(modifier = Modifier.width(12.dp))
                     }
-
-                    Spacer(modifier = Modifier.width(12.dp))
 
                     Column {
                         Text(
@@ -128,34 +124,31 @@ fun PrayerStepCard(
                     }
                 }
 
-                // Posture Icon Illustrator Canvas
+                // Posture Icon Graphic Canvas
                 PostureIllustrationGraphic(
                     postureType = step.postureType,
                     isFemaleMode = isFemaleMode,
-                    color = if (isFemaleMode) femaleAccentColor else primaryCyan
+                    color = activeAccent
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            if (step.descriptionBn.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = step.descriptionBn,
+                    fontSize = 13.5.sp,
+                    color = themeColors.displayText.copy(alpha = 0.9f),
+                    lineHeight = 20.sp
+                )
+            }
 
-            // Step Description
-            Text(
-                text = step.descriptionBn,
-                fontSize = 13.5.sp,
-                color = themeColors.displayText.copy(alpha = 0.9f),
-                lineHeight = 20.sp
-            )
-
-            // Gender Difference Badge & Instruction Note
+            // Gender Specific Guidance Box
             if (step.maleNoteBn != null || step.femaleNoteBn != null) {
                 Spacer(modifier = Modifier.height(10.dp))
                 Surface(
                     shape = RoundedCornerShape(12.dp),
-                    color = if (isFemaleMode) femaleAccentColor.copy(alpha = 0.12f) else primaryCyan.copy(alpha = 0.12f),
-                    border = androidx.compose.foundation.BorderStroke(
-                        1.dp,
-                        if (isFemaleMode) femaleAccentColor.copy(alpha = 0.4f) else primaryCyan.copy(alpha = 0.4f)
-                    ),
+                    color = activeAccent.copy(alpha = 0.1f),
+                    border = BorderStroke(1.dp, activeAccent.copy(alpha = 0.35f)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
@@ -163,48 +156,45 @@ fun PrayerStepCard(
                             Icon(
                                 imageVector = if (isFemaleMode) Icons.Default.Female else Icons.Default.Male,
                                 contentDescription = null,
-                                tint = if (isFemaleMode) femaleAccentColor else primaryCyan,
+                                tint = activeAccent,
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = if (isFemaleMode) "নারী ও পুরুষের নিয়মগত পার্থক্য (নারী ভার্সন):" else "নারী ও পুরুষের নিয়মগত পার্থক্য (পুরুষ ভার্সন):",
-                                fontSize = 12.sp,
+                                text = if (isFemaleMode) "নারীদের আদায়ের বিশেষ পদ্ধতি:" else "পুরুষদের আদায়ের বিশেষ পদ্ধতি:",
+                                fontSize = 12.5.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (isFemaleMode) femaleAccentColor else primaryCyan
+                                color = activeAccent
                             )
                         }
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = if (isFemaleMode) (step.femaleNoteBn ?: step.maleNoteBn ?: "") else (step.maleNoteBn ?: step.femaleNoteBn ?: ""),
                             fontSize = 12.5.sp,
-                            color = themeColors.displayText.copy(alpha = 0.9f),
-                            lineHeight = 18.sp
+                            color = themeColors.displayText.copy(alpha = 0.95f),
+                            lineHeight = 18.5.sp
                         )
                     }
                 }
             }
 
-            // Arabic Text Container with Tashkeel Styling & Audio Action
-            if (!step.arabicText.isNull_or_empty()) {
-                Spacer(modifier = Modifier.height(14.dp))
+            // Arabic Text & Pronunciation / Meaning Container
+            if (!step.arabicText.isNullOrEmpty()) {
+                Spacer(modifier = Modifier.height(12.dp))
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(14.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = if (themeColors.isDark) Color(0xFF0F172A) else Color(0xFFECFDF5)
+                        containerColor = if (themeColors.isDark) Color(0xFF0F172A) else Color(0xFFF0FDF4)
                     ),
-                    border = androidx.compose.foundation.BorderStroke(
-                        1.dp,
-                        primaryCyan.copy(alpha = 0.3f)
-                    )
+                    border = BorderStroke(1.dp, activeAccent.copy(alpha = 0.25f))
                 ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(14.dp)
                     ) {
-                        // Top Action Row (Audio & Copy)
+                        // Header Bar with Audio & Copy Buttons
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -212,14 +202,14 @@ fun PrayerStepCard(
                         ) {
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
-                                color = primaryCyan.copy(alpha = 0.15f)
+                                color = activeAccent.copy(alpha = 0.15f)
                             ) {
                                 Text(
-                                    text = "القرآن / الأذكار",
+                                    text = "القرآن والأذكار (আরবি)",
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = primaryCyan,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                                    color = activeAccent,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                                 )
                             }
 
@@ -227,21 +217,30 @@ fun PrayerStepCard(
                                 if (onAudioClick != null) {
                                     IconButton(
                                         onClick = onAudioClick,
-                                        modifier = Modifier.size(32.dp)
+                                        modifier = Modifier.size(34.dp)
                                     ) {
                                         Icon(
-                                            imageVector = if (isPlaying) Icons.Default.PauseCircle else Icons.Default.PlayCircle,
+                                            imageVector = if (isPlaying) Icons.Default.PauseCircle else Icons.Default.VolumeUp,
                                             contentDescription = "Play Audio",
-                                            tint = primaryCyan,
+                                            tint = activeAccent,
                                             modifier = Modifier.size(24.dp)
                                         )
                                     }
                                 }
                                 IconButton(
                                     onClick = {
-                                        copyToClipboard(context, step.arabicText ?: "")
+                                        val combined = buildString {
+                                            append(step.arabicText ?: "")
+                                            if (!step.banglaPronunciation.isNullOrEmpty()) {
+                                                append("\n\nউচ্চারণ: ${step.banglaPronunciation}")
+                                            }
+                                            if (!step.banglaMeaning.isNullOrEmpty()) {
+                                                append("\n\nঅর্থ: ${step.banglaMeaning}")
+                                            }
+                                        }
+                                        copyToClipboard(context, combined)
                                     },
-                                    modifier = Modifier.size(32.dp)
+                                    modifier = Modifier.size(34.dp)
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.ContentCopy,
@@ -253,14 +252,14 @@ fun PrayerStepCard(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(10.dp))
 
-                        // Arabic Text
+                        // Beautiful Arabic Tashkeel Text
                         Text(
                             text = step.arabicText ?: "",
-                            fontSize = 22.sp,
+                            fontSize = 21.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (themeColors.isDark) Color(0xFF34D399) else Color(0xFF059669),
+                            color = if (themeColors.isDark) Color(0xFF34D399) else Color(0xFF047857),
                             textAlign = TextAlign.Center,
                             fontFamily = FontFamily.Serif,
                             lineHeight = 36.sp,
@@ -268,24 +267,24 @@ fun PrayerStepCard(
                         )
 
                         // Bangla Pronunciation
-                        if (!step.banglaPronunciation.isNull_or_empty()) {
+                        if (!step.banglaPronunciation.isNullOrEmpty()) {
                             Spacer(modifier = Modifier.height(10.dp))
                             Text(
                                 text = "উচ্চারণ: ${step.banglaPronunciation}",
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Medium,
-                                color = if (themeColors.isDark) Color(0xFF60A5FA) else Color(0xFF2563EB),
+                                color = if (themeColors.isDark) Color(0xFF60A5FA) else Color(0xFF1D4ED8),
                                 lineHeight = 19.sp
                             )
                         }
 
                         // Bangla Meaning
-                        if (!step.banglaMeaning.isNull_or_empty()) {
-                            Spacer(modifier = Modifier.height(4.dp))
+                        if (!step.banglaMeaning.isNullOrEmpty()) {
+                            Spacer(modifier = Modifier.height(6.dp))
                             Text(
                                 text = "অর্থ: ${step.banglaMeaning}",
                                 fontSize = 12.5.sp,
-                                color = if (themeColors.isDark) Color(0xFFFBBF24) else Color(0xFFD97706),
+                                color = if (themeColors.isDark) Color(0xFFFBBF24) else Color(0xFFB45309),
                                 lineHeight = 18.sp
                             )
                         }
@@ -304,75 +303,123 @@ fun PostureIllustrationGraphic(
 ) {
     Box(
         modifier = Modifier
-            .size(44.dp)
+            .size(46.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(color.copy(alpha = 0.12f))
             .border(1.dp, color.copy(alpha = 0.3f), RoundedCornerShape(12.dp)),
         contentAlignment = Alignment.Center
     ) {
-        Canvas(modifier = Modifier.size(28.dp)) {
+        Canvas(modifier = Modifier.size(30.dp)) {
             val w = size.width
             val h = size.height
-            val strokeWidth = 2.5f
+            val strokeWidth = 2.6f
 
             when (postureType) {
                 PostureType.QIYAM, PostureType.NIYYAT -> {
-                    // Standing Person Vector
-                    drawCircle(color, radius = w * 0.15f, center = androidx.compose.ui.geometry.Offset(w * 0.5f, h * 0.2f))
-                    drawLine(color, start = androidx.compose.ui.geometry.Offset(w * 0.5f, h * 0.35f), end = androidx.compose.ui.geometry.Offset(w * 0.5f, h * 0.7f), strokeWidth = strokeWidth)
-                    drawLine(color, start = androidx.compose.ui.geometry.Offset(w * 0.5f, h * 0.7f), end = androidx.compose.ui.geometry.Offset(w * 0.35f, h * 0.95f), strokeWidth = strokeWidth)
-                    drawLine(color, start = androidx.compose.ui.geometry.Offset(w * 0.5f, h * 0.7f), end = androidx.compose.ui.geometry.Offset(w * 0.65f, h * 0.95f), strokeWidth = strokeWidth)
+                    // Head
+                    drawCircle(color, radius = w * 0.14f, center = Offset(w * 0.5f, h * 0.18f))
+                    // Body
+                    drawLine(color, start = Offset(w * 0.5f, h * 0.32f), end = Offset(w * 0.5f, h * 0.68f), strokeWidth = strokeWidth)
+                    // Legs
+                    if (isFemaleMode) {
+                        // Female: feet together
+                        drawLine(color, start = Offset(w * 0.5f, h * 0.68f), end = Offset(w * 0.5f, h * 0.95f), strokeWidth = strokeWidth * 1.5f)
+                    } else {
+                        // Male: feet slightly apart
+                        drawLine(color, start = Offset(w * 0.5f, h * 0.68f), end = Offset(w * 0.38f, h * 0.95f), strokeWidth = strokeWidth)
+                        drawLine(color, start = Offset(w * 0.5f, h * 0.68f), end = Offset(w * 0.62f, h * 0.95f), strokeWidth = strokeWidth)
+                    }
+                    // Arms folded (Chest for female, Navel for male)
+                    val foldY = if (isFemaleMode) h * 0.42f else h * 0.54f
+                    drawLine(color, start = Offset(w * 0.35f, foldY), end = Offset(w * 0.65f, foldY), strokeWidth = strokeWidth)
                 }
                 PostureType.TAKBEER -> {
-                    // Raised Hands Person
-                    drawCircle(color, radius = w * 0.15f, center = androidx.compose.ui.geometry.Offset(w * 0.5f, h * 0.2f))
-                    drawLine(color, start = androidx.compose.ui.geometry.Offset(w * 0.5f, h * 0.35f), end = androidx.compose.ui.geometry.Offset(w * 0.5f, h * 0.7f), strokeWidth = strokeWidth)
+                    // Head
+                    drawCircle(color, radius = w * 0.14f, center = Offset(w * 0.5f, h * 0.2f))
+                    // Body
+                    drawLine(color, start = Offset(w * 0.5f, h * 0.34f), end = Offset(w * 0.5f, h * 0.7f), strokeWidth = strokeWidth)
+                    // Legs
+                    drawLine(color, start = Offset(w * 0.5f, h * 0.7f), end = Offset(w * 0.4f, h * 0.95f), strokeWidth = strokeWidth)
+                    drawLine(color, start = Offset(w * 0.5f, h * 0.7f), end = Offset(w * 0.6f, h * 0.95f), strokeWidth = strokeWidth)
                     // Raised Arms
                     val armPath = Path().apply {
-                        moveTo(w * 0.2f, h * 0.25f)
-                        lineTo(w * 0.35f, h * 0.4f)
-                        lineTo(w * 0.5f, h * 0.4f)
-                        lineTo(w * 0.65f, h * 0.4f)
-                        lineTo(w * 0.8f, h * 0.25f)
+                        val armTop = if (isFemaleMode) h * 0.3f else h * 0.18f
+                        moveTo(w * 0.22f, armTop)
+                        lineTo(w * 0.35f, h * 0.42f)
+                        lineTo(w * 0.5f, h * 0.42f)
+                        lineTo(w * 0.65f, h * 0.42f)
+                        lineTo(w * 0.78f, armTop)
                     }
                     drawPath(armPath, color, style = Stroke(width = strokeWidth))
                 }
                 PostureType.RUKU -> {
-                    // Bowed Ruku Vector
-                    drawCircle(color, radius = w * 0.14f, center = androidx.compose.ui.geometry.Offset(w * 0.3f, h * 0.35f))
-                    // Back
-                    drawLine(color, start = androidx.compose.ui.geometry.Offset(w * 0.3f, h * 0.45f), end = androidx.compose.ui.geometry.Offset(w * 0.7f, h * 0.45f), strokeWidth = strokeWidth)
+                    // Head
+                    drawCircle(color, radius = w * 0.13f, center = Offset(w * 0.25f, if (isFemaleMode) h * 0.38f else h * 0.45f))
+                    // Torso
+                    val backEnd = Offset(w * 0.68f, h * 0.48f)
+                    val backStart = Offset(w * 0.25f, if (isFemaleMode) h * 0.38f else h * 0.48f)
+                    drawLine(color, start = backStart, end = backEnd, strokeWidth = strokeWidth)
                     // Legs
-                    drawLine(color, start = androidx.compose.ui.geometry.Offset(w * 0.7f, h * 0.45f), end = androidx.compose.ui.geometry.Offset(w * 0.7f, h * 0.9f), strokeWidth = strokeWidth)
+                    drawLine(color, start = backEnd, end = Offset(w * 0.68f, h * 0.92f), strokeWidth = strokeWidth)
+                    // Arms holding knees
+                    drawLine(color, start = Offset(w * 0.38f, if (isFemaleMode) h * 0.42f else h * 0.48f), end = Offset(w * 0.65f, h * 0.68f), strokeWidth = strokeWidth)
+                }
+                PostureType.QAUMA -> {
+                    // Head
+                    drawCircle(color, radius = w * 0.14f, center = Offset(w * 0.5f, h * 0.18f))
+                    // Body
+                    drawLine(color, start = Offset(w * 0.5f, h * 0.32f), end = Offset(w * 0.5f, h * 0.68f), strokeWidth = strokeWidth)
+                    // Legs
+                    drawLine(color, start = Offset(w * 0.5f, h * 0.68f), end = Offset(w * 0.42f, h * 0.95f), strokeWidth = strokeWidth)
+                    drawLine(color, start = Offset(w * 0.5f, h * 0.68f), end = Offset(w * 0.58f, h * 0.95f), strokeWidth = strokeWidth)
+                    // Hands hanging freely
+                    drawLine(color, start = Offset(w * 0.36f, h * 0.36f), end = Offset(w * 0.36f, h * 0.6f), strokeWidth = strokeWidth)
+                    drawLine(color, start = Offset(w * 0.64f, h * 0.36f), end = Offset(w * 0.64f, h * 0.6f), strokeWidth = strokeWidth)
                 }
                 PostureType.SUJUD -> {
-                    // Prostrating Sujud Vector
-                    drawCircle(color, radius = w * 0.12f, center = androidx.compose.ui.geometry.Offset(w * 0.2f, h * 0.75f))
+                    // Head touching ground
+                    drawCircle(color, radius = w * 0.12f, center = Offset(w * 0.2f, h * 0.78f))
                     val bodyPath = Path().apply {
-                        moveTo(w * 0.2f, h * 0.75f)
-                        lineTo(w * 0.5f, h * 0.55f)
-                        lineTo(w * 0.8f, h * 0.85f)
+                        if (isFemaleMode) {
+                            // Compact body close to ground
+                            moveTo(w * 0.2f, h * 0.78f)
+                            lineTo(w * 0.45f, h * 0.62f)
+                            lineTo(w * 0.75f, h * 0.78f)
+                        } else {
+                            // High arched back, arms apart
+                            moveTo(w * 0.2f, h * 0.78f)
+                            lineTo(w * 0.45f, h * 0.48f)
+                            lineTo(w * 0.75f, h * 0.78f)
+                        }
                     }
                     drawPath(bodyPath, color, style = Stroke(width = strokeWidth))
                 }
-                PostureType.QAUMA, PostureType.JALSA, PostureType.TASHAHHUD -> {
-                    // Sitting Person
-                    drawCircle(color, radius = w * 0.14f, center = androidx.compose.ui.geometry.Offset(w * 0.5f, h * 0.3f))
+                PostureType.JALSA, PostureType.TASHAHHUD -> {
+                    // Head
+                    drawCircle(color, radius = w * 0.13f, center = Offset(w * 0.48f, h * 0.3f))
                     val sitPath = Path().apply {
-                        moveTo(w * 0.5f, h * 0.45f)
-                        lineTo(w * 0.5f, h * 0.75f)
-                        lineTo(w * 0.8f, h * 0.75f)
+                        moveTo(w * 0.48f, h * 0.43f)
+                        lineTo(w * 0.48f, h * 0.72f)
+                        lineTo(w * 0.78f, h * 0.72f)
                     }
                     drawPath(sitPath, color, style = Stroke(width = strokeWidth))
+                    // Hand on thigh
+                    drawLine(color, start = Offset(w * 0.48f, h * 0.52f), end = Offset(w * 0.68f, h * 0.62f), strokeWidth = strokeWidth)
                 }
                 PostureType.SALAM -> {
-                    // Turn Head Person
-                    drawCircle(color, radius = w * 0.15f, center = androidx.compose.ui.geometry.Offset(w * 0.6f, h * 0.2f))
-                    drawLine(color, start = androidx.compose.ui.geometry.Offset(w * 0.5f, h * 0.35f), end = androidx.compose.ui.geometry.Offset(w * 0.5f, h * 0.85f), strokeWidth = strokeWidth)
+                    // Head turned
+                    drawCircle(color, radius = w * 0.14f, center = Offset(w * 0.62f, h * 0.22f))
+                    drawLine(color, start = Offset(w * 0.5f, h * 0.36f), end = Offset(w * 0.5f, h * 0.75f), strokeWidth = strokeWidth)
+                    drawLine(color, start = Offset(w * 0.5f, h * 0.75f), end = Offset(w * 0.75f, h * 0.75f), strokeWidth = strokeWidth)
                 }
                 PostureType.WUDU_GENERIC, PostureType.DUA_GENERIC -> {
-                    // Water Drop / Hands Dua Vector
-                    drawCircle(color, radius = w * 0.2f, center = androidx.compose.ui.geometry.Offset(w * 0.5f, h * 0.5f), style = Stroke(width = strokeWidth))
+                    // Dua Hands / Water Drop Vector
+                    val dropPath = Path().apply {
+                        moveTo(w * 0.5f, h * 0.2f)
+                        cubicTo(w * 0.75f, h * 0.45f, w * 0.8f, h * 0.7f, w * 0.5f, h * 0.85f)
+                        cubicTo(w * 0.2f, h * 0.7f, w * 0.25f, h * 0.45f, w * 0.5f, h * 0.2f)
+                    }
+                    drawPath(dropPath, color, style = Stroke(width = strokeWidth))
                 }
             }
         }
@@ -389,5 +436,3 @@ private fun copyToClipboard(context: Context, text: String) {
         e.printStackTrace()
     }
 }
-
-private fun String?.isNull_or_empty(): Boolean = this == null || this.isEmpty()
