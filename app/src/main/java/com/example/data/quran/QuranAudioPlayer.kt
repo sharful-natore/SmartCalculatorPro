@@ -78,6 +78,13 @@ class QuranAudioPlayer private constructor(private val context: Context) {
     private val _playbackSpeed = MutableStateFlow(1.0f)
     val playbackSpeed: StateFlow<Float> = _playbackSpeed.asStateFlow()
 
+    private val _isDetailScreenOpen = MutableStateFlow(false)
+    val isDetailScreenOpen: StateFlow<Boolean> = _isDetailScreenOpen.asStateFlow()
+
+    fun setIsDetailScreenOpen(isOpen: Boolean) {
+        _isDetailScreenOpen.value = isOpen
+    }
+
     private var activeAyahs: List<AyahEntity> = emptyList()
 
     init {

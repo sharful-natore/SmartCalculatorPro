@@ -46,8 +46,9 @@ fun QuranMiniPlayerBanner(
     val totalAyahs by audioPlayer.totalAyahs.collectAsStateWithLifecycle()
     val currentPos by audioPlayer.currentPositionMs.collectAsStateWithLifecycle()
     val duration by audioPlayer.durationMs.collectAsStateWithLifecycle()
+    val isDetailScreenOpen by audioPlayer.isDetailScreenOpen.collectAsStateWithLifecycle()
 
-    val visible = isPlayerActive && currentSurahNum != null
+    val visible = isPlayerActive && currentSurahNum != null && !isDetailScreenOpen
 
     AnimatedVisibility(
         visible = visible,

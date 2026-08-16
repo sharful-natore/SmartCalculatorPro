@@ -200,9 +200,7 @@ fun ModernPrayerTimesCard(
     )
 
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState()),
+        modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Top Bar: Title & District Selector Pill

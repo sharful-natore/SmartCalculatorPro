@@ -104,22 +104,9 @@ fun QuranScreen(
                                     color = Color.White
                                 )
                                 Text(
-                                    text = "Holy Quran (Audio, Translation & AI)",
+                                    text = "Holy Quran (Audio & Translation)",
                                     fontSize = 12.sp,
                                     color = Color.White.copy(alpha = 0.85f)
-                                )
-                            }
-                            // Quick Floating AI Button in Top Bar
-                            IconButton(
-                                onClick = { viewModel.openAiAssistant() },
-                                modifier = Modifier
-                                    .clip(CircleShape)
-                                    .background(Color.White.copy(alpha = 0.2f))
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.AutoAwesome,
-                                    contentDescription = "AI Assistant",
-                                    tint = Color.White
                                 )
                             }
                         }
@@ -136,8 +123,10 @@ fun QuranScreen(
                             .padding(horizontal = 16.dp),
                         placeholder = {
                             Text(
-                                text = "সূরা খুঁজুন (নাম বা নম্বর, যেমন: ১ বা ফাতিহা)...",
+                                text = "সূরা খুঁজুন (নাম বা নম্বর)...",
                                 fontSize = 13.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
                                 color = themeColors.displayText.copy(alpha = 0.5f)
                             )
                         },

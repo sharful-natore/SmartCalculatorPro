@@ -68,6 +68,14 @@ fun SurahDetailScreen(
         viewModel.selectSurah(surah)
     }
 
+    // Inform audio player that we are on Surah Detail page (so bottom miniplayer is hidden in favor of detail bar)
+    DisposableEffect(Unit) {
+        viewModel.audioPlayer.setIsDetailScreenOpen(true)
+        onDispose {
+            viewModel.audioPlayer.setIsDetailScreenOpen(false)
+        }
+    }
+
     // Auto-Scroll to currently playing Ayah
     LaunchedEffect(currentSurahNum, currentAyahIndex) {
         if (currentSurahNum == surah.number && currentAyahIndex in ayahs.indices) {
