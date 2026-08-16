@@ -75,7 +75,8 @@ fun PrayerStepCard(
             .animateContentSize(),
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.1f))
     ) {
         Column(
             modifier = Modifier
@@ -259,7 +260,7 @@ fun PrayerStepCard(
                             text = step.arabicText ?: "",
                             fontSize = 22.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (themeColors.isDark) Color(0xFF6EE7B7) else Color(0xFF047857),
+                            color = if (themeColors.isDark) Color(0xFF34D399) else Color(0xFF059669),
                             textAlign = TextAlign.Center,
                             fontFamily = FontFamily.Serif,
                             lineHeight = 36.sp,
@@ -273,7 +274,7 @@ fun PrayerStepCard(
                                 text = "উচ্চারণ: ${step.banglaPronunciation}",
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Medium,
-                                color = themeColors.displayText.copy(alpha = 0.85f),
+                                color = if (themeColors.isDark) Color(0xFF60A5FA) else Color(0xFF2563EB),
                                 lineHeight = 19.sp
                             )
                         }
@@ -284,7 +285,7 @@ fun PrayerStepCard(
                             Text(
                                 text = "অর্থ: ${step.banglaMeaning}",
                                 fontSize = 12.5.sp,
-                                color = themeColors.displayText.copy(alpha = 0.75f),
+                                color = if (themeColors.isDark) Color(0xFFFBBF24) else Color(0xFFD97706),
                                 lineHeight = 18.sp
                             )
                         }

@@ -1936,7 +1936,7 @@ fun PrayerTimesCard(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = if (isForbidden) Color(0xFFEF4444) else themeColors.buttonEqualBg
+                    containerColor = Color(0xFF0F172A)
                 )
             ) {
                 Column(
@@ -1953,7 +1953,7 @@ fun PrayerTimesCard(
                             Icon(
                                 imageVector = if (isForbidden) Icons.Default.Warning else Icons.Default.Timer,
                                 contentDescription = null,
-                                tint = Color.White,
+                                tint = if (isForbidden) Color(0xFFEF4444) else Color(0xFF38BDF8),
                                 modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
@@ -1967,13 +1967,13 @@ fun PrayerTimesCard(
 
                         Surface(
                             shape = RoundedCornerShape(12.dp),
-                            color = Color.White.copy(alpha = 0.25f)
+                            color = (if (isForbidden) Color(0xFFEF4444) else Color(0xFF38BDF8)).copy(alpha = 0.25f)
                         ) {
                             Text(
                                 text = if (isForbidden) (if (isBn) "⚠️ নিষিদ্ধ সময়" else "Forbidden") else (if (isBn) "সক্রিয় ওয়াক্ত" else "Active"),
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White,
+                                color = if (isForbidden) Color(0xFFEF4444) else Color(0xFF38BDF8),
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                             )
                         }
@@ -2005,7 +2005,7 @@ fun PrayerTimesCard(
 
                     HorizontalDivider(
                         modifier = Modifier.padding(vertical = 8.dp),
-                        color = Color.White.copy(alpha = 0.25f)
+                        color = (if (isForbidden) Color(0xFFEF4444) else Color(0xFF38BDF8)).copy(alpha = 0.25f)
                     )
 
                     // Countdown to next waqt/event
@@ -2307,7 +2307,7 @@ fun SehriIftarCard(
                     Text(
                         text = if (isBn) targetLabelBn else targetLabelEn,
                         fontSize = 12.sp,
-                        color = Color.White.copy(alpha = 0.8f)
+                        color = themeColors.displayText.copy(alpha = 0.8f)
                     )
 
                     Spacer(modifier = Modifier.height(4.dp))
@@ -2362,7 +2362,8 @@ fun SehriIftarCard(
                 Card(
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B))
+                    colors = CardDefaults.cardColors(containerColor = themeColors.background),
+                    border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.08f))
                 ) {
                     Column(
                         modifier = Modifier.padding(14.dp),
@@ -2373,7 +2374,7 @@ fun SehriIftarCard(
                         Text(
                             text = if (isBn) "সেহরির শেষ সময়" else "Sehri Ends",
                             fontSize = 12.sp,
-                            color = Color.White.copy(alpha = 0.8f)
+                            color = themeColors.displayText.copy(alpha = 0.8f)
                         )
                         Text(
                             text = adjustIslamicTime("04:46 AM", offset),
@@ -2404,7 +2405,8 @@ fun SehriIftarCard(
                 Card(
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B))
+                    colors = CardDefaults.cardColors(containerColor = themeColors.background),
+                    border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.08f))
                 ) {
                     Column(
                         modifier = Modifier.padding(14.dp),
@@ -2415,7 +2417,7 @@ fun SehriIftarCard(
                         Text(
                             text = if (isBn) "ইফতারের সময়" else "Iftar Time",
                             fontSize = 12.sp,
-                            color = Color.White.copy(alpha = 0.8f)
+                            color = themeColors.displayText.copy(alpha = 0.8f)
                         )
                         Text(
                             text = adjustIslamicTime("06:18 PM", offset),

@@ -213,11 +213,11 @@ fun NamazEducationScreen(
                     .weight(1f)
             ) { tabIndex ->
                 when (tabIndex) {
-                    0 -> WuduAndTaharatSection(themeColors, isFemaleMode)
+                    0 -> WuduAndTaharatSection(themeColors, isFemaleMode, viewModel)
                     1 -> DailyPrayersSection(themeColors, isFemaleMode, selectedWaqtId, viewModel)
                     2 -> SpecialPrayersSection(themeColors, isFemaleMode, expandedRuleIds, viewModel)
                     3 -> AllDuasAndNiyyatSection(themeColors, isFemaleMode, searchQuery, playingDuaId, isPlaying, viewModel)
-                    4 -> VisualIllustratorSection(themeColors, isFemaleMode)
+                    4 -> VisualIllustratorSection(themeColors, isFemaleMode, viewModel)
                 }
             }
         }
@@ -230,10 +230,13 @@ fun NamazEducationScreen(
 @Composable
 fun WuduAndTaharatSection(
     themeColors: CalculatorThemeColors,
-    isFemaleMode: Boolean
+    isFemaleMode: Boolean,
+    viewModel: NamazViewModel
 ) {
-    var activeSubCategory by remember { mutableStateOf("wudu_steps") }
+        var activeSubCategory by remember { mutableStateOf("wudu_steps") }
     val primaryCyan = themeColors.buttonEqualBg
+    val playingDuaId by viewModel.playingDuaId.collectAsState()
+    val isPlaying by viewModel.isPlaying.collectAsState()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -284,21 +287,27 @@ fun WuduAndTaharatSection(
                         color = themeColors.displayText
                     )
                 }
-                items(NamazDataRepository.wuduSteps) { wuduItem ->
+                items(NamazDataRepository.wuduDuas) { wuduItem ->
                     val prayerStep = PrayerStep(
                         stepNumber = wuduItem.stepNumber,
                         titleBn = wuduItem.titleBn,
                         titleEn = wuduItem.titleEn,
                         descriptionBn = wuduItem.descriptionBn,
                         postureType = PostureType.WUDU_GENERIC,
-                        arabicText = wuduItem.arabicDua,
-                        banglaPronunciation = wuduItem.banglaDuaPronunciation,
-                        banglaMeaning = wuduItem.banglaDuaMeaning
+                        arabicText = wuduItem.arabicText,
+                        banglaPronunciation = wuduItem.banglaPronunciation,
+                        banglaMeaning = wuduItem.banglaMeaning
                     )
-                    PrayerStepCard(
+PrayerStepCard(
                         step = prayerStep,
                         isFemaleMode = isFemaleMode,
-                        themeColors = themeColors
+                        themeColors = themeColors,
+                        isPlaying = playingDuaId == "wudu_dua_${prayerStep.stepNumber}" && isPlaying,
+                        onAudioClick = {
+                            if (!prayerStep.arabicText.isNullOrEmpty()) {
+                                viewModel.playOrPauseDuaAudio("wudu_dua_${prayerStep.stepNumber}", prayerStep.audioUrl, prayerStep.arabicText!!, prayerStep.banglaPronunciation ?: "")
+                            }
+                        }
                     )
                 }
             }
@@ -335,7 +344,7 @@ fun WuduAndTaharatSection(
                                 Text("অজুর ১৩টি সুন্নত", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
                             }
                             Spacer(modifier = Modifier.height(10.dp))
-                            NamazDataRepository.wuduSunnahList.forEach { itemText ->
+                            NamazDataRepository.wuduSunnahSteps.forEach { itemText ->
                                 Text(itemText, fontSize = 13.5.sp, color = themeColors.displayText, modifier = Modifier.padding(vertical = 3.dp), lineHeight = 19.sp)
                             }
                         }
@@ -347,7 +356,17 @@ fun WuduAndTaharatSection(
                     Text("তায়াম্মুমের পদ্ধতি (পবিত্র মাটি দিয়ে অজুর বিকল্প):", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
                 }
                 items(NamazDataRepository.tayammumSteps) { step ->
-                    PrayerStepCard(step = step, isFemaleMode = isFemaleMode, themeColors = themeColors)
+PrayerStepCard(
+                        step = step,
+                        isFemaleMode = isFemaleMode,
+                        themeColors = themeColors,
+                        isPlaying = playingDuaId == "tayammum_step_${step.stepNumber}" && isPlaying,
+                        onAudioClick = {
+                            if (!step.arabicText.isNullOrEmpty()) {
+                                viewModel.playOrPauseDuaAudio("tayammum_step_${step.stepNumber}", step.audioUrl, step.arabicText!!, step.banglaPronunciation ?: "")
+                            }
+                        }
+                    )
                 }
             }
             "ghusl" -> {
@@ -405,7 +424,9 @@ fun DailyPrayersSection(
     viewModel: NamazViewModel
 ) {
     val primaryCyan = themeColors.buttonEqualBg
-    val selectedWaqt = NamazDataRepository.dailyWaqts.find { it.id == selectedWaqtId } ?: NamazDataRepository.dailyWaqts.first()
+        val selectedWaqt = NamazDataRepository.dailyWaqts.find { it.id == selectedWaqtId } ?: NamazDataRepository.dailyWaqts.first()
+    val playingDuaId by viewModel.playingDuaId.collectAsState()
+    val isPlaying by viewModel.isPlaying.collectAsState()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -538,11 +559,17 @@ fun DailyPrayersSection(
             )
         }
 
-        items(selectedWaqt.steps3Rakat ?: selectedWaqt.steps4Rakat ?: selectedWaqt.steps2Rakat) { step ->
+        items(selectedWaqt.steps4Rakat ?: selectedWaqt.steps3Rakat ?: selectedWaqt.steps2Rakat ?: emptyList()) { step ->
             PrayerStepCard(
                 step = step,
                 isFemaleMode = isFemaleMode,
-                themeColors = themeColors
+                themeColors = themeColors,
+                isPlaying = playingDuaId == "waqt_${selectedWaqt.id}_step_${step.stepNumber}" && isPlaying,
+                onAudioClick = {
+                    if (!step.arabicText.isNullOrEmpty()) {
+                        viewModel.playOrPauseDuaAudio("waqt_${selectedWaqt.id}_step_${step.stepNumber}", step.audioUrl, step.arabicText!!, step.banglaPronunciation ?: "")
+                    }
+                }
             )
         }
     }
@@ -576,7 +603,9 @@ fun SpecialPrayersSection(
     expandedRuleIds: Set<String>,
     viewModel: NamazViewModel
 ) {
-    val primaryCyan = themeColors.buttonEqualBg
+        val primaryCyan = themeColors.buttonEqualBg
+    val playingDuaId by viewModel.playingDuaId.collectAsState()
+    val isPlaying by viewModel.isPlaying.collectAsState()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -672,7 +701,13 @@ fun SpecialPrayersSection(
                                 PrayerStepCard(
                                     step = step,
                                     isFemaleMode = isFemaleMode,
-                                    themeColors = themeColors
+                                    themeColors = themeColors,
+                                    isPlaying = playingDuaId == "special_${rule.id}_step_${step.stepNumber}" && isPlaying,
+                                    onAudioClick = {
+                                        if (!step.arabicText.isNullOrEmpty()) {
+                                            viewModel.playOrPauseDuaAudio("special_${rule.id}_step_${step.stepNumber}", step.audioUrl, step.arabicText!!, step.banglaPronunciation ?: "")
+                                        }
+                                    }
                                 )
                             }
                         }
@@ -796,9 +831,12 @@ fun AllDuasAndNiyyatSection(
 @Composable
 fun VisualIllustratorSection(
     themeColors: CalculatorThemeColors,
-    isFemaleMode: Boolean
+    isFemaleMode: Boolean,
+    viewModel: NamazViewModel
 ) {
-    val primaryCyan = themeColors.buttonEqualBg
+        val primaryCyan = themeColors.buttonEqualBg
+    val playingDuaId by viewModel.playingDuaId.collectAsState()
+    val isPlaying by viewModel.isPlaying.collectAsState()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
