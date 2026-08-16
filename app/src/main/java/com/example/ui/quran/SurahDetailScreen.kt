@@ -1,5 +1,6 @@
 package com.example.ui.quran
 
+import androidx.activity.compose.BackHandler
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -62,6 +63,11 @@ fun SurahDetailScreen(
     val cyanPrimary = themeColors.buttonEqualBg
     val cyanLight = if (themeColors.isDark) themeColors.buttonNormalBg else themeColors.buttonEqualBg.copy(alpha = 0.12f)
     val cyanDark = if (themeColors.isDark) themeColors.background else themeColors.buttonEqualBg.copy(alpha = 0.85f)
+
+    // Intercept system back press to return to Surah List
+    BackHandler {
+        onBackClick()
+    }
 
     // Load ayahs when screen opens
     LaunchedEffect(surah.number) {
@@ -159,7 +165,7 @@ fun SurahDetailScreen(
                     onNext = { viewModel.audioPlayer.playNext() },
                     onSeek = { viewModel.audioPlayer.seekTo(it) },
                     onSpeedChange = { viewModel.audioPlayer.setPlaybackSpeed(it) },
-                    onClose = { viewModel.setPlayerVisible(false) }
+                    onClose = { viewModel.stopAndClosePlayer() }
                 )
             }
         }
@@ -191,6 +197,14 @@ fun SurahDetailScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp)
                 ) {
+                    // Tajweed Guide Legend Bar
+                    item {
+                        TajweedLegendBar(
+                            themeColors = themeColors,
+                            modifier = Modifier.padding(bottom = 12.dp)
+                        )
+                    }
+
                     // Header Item: Bismillah
                     item {
                         if (surah.number != 9) { // Bismillah is not present in Surah At-Tawbah
@@ -210,10 +224,9 @@ fun SurahDetailScreen(
                                     horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
                                     Text(
-                                        text = "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ",
-                                        fontSize = 24.sp,
+                                        text = buildTajweedAnnotatedString("بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ", cyanDark),
+                                        fontSize = 25.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = cyanDark,
                                         textAlign = TextAlign.Center
                                     )
                                     Spacer(modifier = Modifier.height(4.dp))
@@ -361,14 +374,13 @@ fun AyahCard(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // 1. Arabic Text (Distinct Emerald Color)
+            // 1. Arabic Text (Distinct Emerald Color with Tajweed Rule Annotation)
             Text(
-                text = ayah.textArabic,
-                fontSize = 23.sp,
+                text = buildTajweedAnnotatedString(ayah.textArabic, arabicColor),
+                fontSize = 24.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = arabicColor,
                 textAlign = TextAlign.End,
-                lineHeight = 42.sp,
+                lineHeight = 44.sp,
                 modifier = Modifier.fillMaxWidth()
             )
 

@@ -54,7 +54,7 @@ fun QuranMiniPlayerBanner(
         visible = visible,
         enter = slideInVertically(initialOffsetY = { it }) + fadeIn(animationSpec = tween(250)),
         exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(animationSpec = tween(200)),
-        modifier = modifier
+        modifier = modifier.background(Color.Transparent)
     ) {
         val primaryColor = themeColors.buttonEqualBg
         val progress = if (duration > 0) (currentPos.toFloat() / duration.toFloat()).coerceIn(0f, 1f) else 0f

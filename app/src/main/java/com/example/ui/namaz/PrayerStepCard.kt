@@ -303,123 +303,405 @@ fun PostureIllustrationGraphic(
 ) {
     Box(
         modifier = Modifier
-            .size(46.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(color.copy(alpha = 0.12f))
-            .border(1.dp, color.copy(alpha = 0.3f), RoundedCornerShape(12.dp)),
+            .size(68.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(color.copy(alpha = 0.08f))
+            .border(1.dp, color.copy(alpha = 0.25f), RoundedCornerShape(16.dp)),
         contentAlignment = Alignment.Center
     ) {
-        Canvas(modifier = Modifier.size(30.dp)) {
+        Canvas(modifier = Modifier.size(54.dp)) {
             val w = size.width
             val h = size.height
-            val strokeWidth = 2.6f
 
-            when (postureType) {
-                PostureType.QIYAM, PostureType.NIYYAT -> {
-                    // Head
-                    drawCircle(color, radius = w * 0.14f, center = Offset(w * 0.5f, h * 0.18f))
-                    // Body
-                    drawLine(color, start = Offset(w * 0.5f, h * 0.32f), end = Offset(w * 0.5f, h * 0.68f), strokeWidth = strokeWidth)
-                    // Legs
-                    if (isFemaleMode) {
-                        // Female: feet together
-                        drawLine(color, start = Offset(w * 0.5f, h * 0.68f), end = Offset(w * 0.5f, h * 0.95f), strokeWidth = strokeWidth * 1.5f)
-                    } else {
-                        // Male: feet slightly apart
-                        drawLine(color, start = Offset(w * 0.5f, h * 0.68f), end = Offset(w * 0.38f, h * 0.95f), strokeWidth = strokeWidth)
-                        drawLine(color, start = Offset(w * 0.5f, h * 0.68f), end = Offset(w * 0.62f, h * 0.95f), strokeWidth = strokeWidth)
-                    }
-                    // Arms folded (Chest for female, Navel for male)
-                    val foldY = if (isFemaleMode) h * 0.42f else h * 0.54f
-                    drawLine(color, start = Offset(w * 0.35f, foldY), end = Offset(w * 0.65f, foldY), strokeWidth = strokeWidth)
-                }
-                PostureType.TAKBEER -> {
-                    // Head
-                    drawCircle(color, radius = w * 0.14f, center = Offset(w * 0.5f, h * 0.2f))
-                    // Body
-                    drawLine(color, start = Offset(w * 0.5f, h * 0.34f), end = Offset(w * 0.5f, h * 0.7f), strokeWidth = strokeWidth)
-                    // Legs
-                    drawLine(color, start = Offset(w * 0.5f, h * 0.7f), end = Offset(w * 0.4f, h * 0.95f), strokeWidth = strokeWidth)
-                    drawLine(color, start = Offset(w * 0.5f, h * 0.7f), end = Offset(w * 0.6f, h * 0.95f), strokeWidth = strokeWidth)
-                    // Raised Arms
-                    val armPath = Path().apply {
-                        val armTop = if (isFemaleMode) h * 0.3f else h * 0.18f
-                        moveTo(w * 0.22f, armTop)
-                        lineTo(w * 0.35f, h * 0.42f)
-                        lineTo(w * 0.5f, h * 0.42f)
-                        lineTo(w * 0.65f, h * 0.42f)
-                        lineTo(w * 0.78f, armTop)
-                    }
-                    drawPath(armPath, color, style = Stroke(width = strokeWidth))
-                }
-                PostureType.RUKU -> {
-                    // Head
-                    drawCircle(color, radius = w * 0.13f, center = Offset(w * 0.25f, if (isFemaleMode) h * 0.38f else h * 0.45f))
-                    // Torso
-                    val backEnd = Offset(w * 0.68f, h * 0.48f)
-                    val backStart = Offset(w * 0.25f, if (isFemaleMode) h * 0.38f else h * 0.48f)
-                    drawLine(color, start = backStart, end = backEnd, strokeWidth = strokeWidth)
-                    // Legs
-                    drawLine(color, start = backEnd, end = Offset(w * 0.68f, h * 0.92f), strokeWidth = strokeWidth)
-                    // Arms holding knees
-                    drawLine(color, start = Offset(w * 0.38f, if (isFemaleMode) h * 0.42f else h * 0.48f), end = Offset(w * 0.65f, h * 0.68f), strokeWidth = strokeWidth)
-                }
-                PostureType.QAUMA -> {
-                    // Head
-                    drawCircle(color, radius = w * 0.14f, center = Offset(w * 0.5f, h * 0.18f))
-                    // Body
-                    drawLine(color, start = Offset(w * 0.5f, h * 0.32f), end = Offset(w * 0.5f, h * 0.68f), strokeWidth = strokeWidth)
-                    // Legs
-                    drawLine(color, start = Offset(w * 0.5f, h * 0.68f), end = Offset(w * 0.42f, h * 0.95f), strokeWidth = strokeWidth)
-                    drawLine(color, start = Offset(w * 0.5f, h * 0.68f), end = Offset(w * 0.58f, h * 0.95f), strokeWidth = strokeWidth)
-                    // Hands hanging freely
-                    drawLine(color, start = Offset(w * 0.36f, h * 0.36f), end = Offset(w * 0.36f, h * 0.6f), strokeWidth = strokeWidth)
-                    drawLine(color, start = Offset(w * 0.64f, h * 0.36f), end = Offset(w * 0.64f, h * 0.6f), strokeWidth = strokeWidth)
-                }
-                PostureType.SUJUD -> {
-                    // Head touching ground
-                    drawCircle(color, radius = w * 0.12f, center = Offset(w * 0.2f, h * 0.78f))
-                    val bodyPath = Path().apply {
-                        if (isFemaleMode) {
-                            // Compact body close to ground
-                            moveTo(w * 0.2f, h * 0.78f)
-                            lineTo(w * 0.45f, h * 0.62f)
-                            lineTo(w * 0.75f, h * 0.78f)
-                        } else {
-                            // High arched back, arms apart
-                            moveTo(w * 0.2f, h * 0.78f)
-                            lineTo(w * 0.45f, h * 0.48f)
-                            lineTo(w * 0.75f, h * 0.78f)
+            // Realistic Color Palette
+            val matColor = Color(0xFF0F766E)
+            val skinTone = Color(0xFFE5C09A)
+            val maleRobeColor = Color(0xFFF8FAFC)
+            val maleRobeShadow = Color(0xFFE2E8F0)
+            val femaleRobeColor = if (color == Color(0xFFEC4899)) Color(0xFFFCE7F3) else Color(0xFFF1F5F9)
+            val femaleHijabColor = Color(0xFFBE185D)
+            val capColor = Color(0xFF0284C7)
+            val hairColor = Color(0xFF334155)
+
+            val garmentColor = if (isFemaleMode) femaleRobeColor else maleRobeColor
+            val garmentShadow = if (isFemaleMode) Color(0xFFFBCFE8) else maleRobeShadow
+
+            // 1. Draw Prayer Mat Base Line at Bottom
+            drawLine(
+                color = matColor,
+                start = Offset(w * 0.05f, h * 0.94f),
+                end = Offset(w * 0.95f, h * 0.94f),
+                strokeWidth = 3.5f
+            )
+
+            if (isFemaleMode) {
+                // FEMALE ILLUSTRATIONS - FLAT FACE SILHOUETTE (NO VISIBLE FACIAL FEATURES)
+                when (postureType) {
+                    PostureType.QIYAM, PostureType.NIYYAT -> {
+                        // Standing in full modest abaya, hands folded over chest
+                        val abayaPath = Path().apply {
+                            moveTo(w * 0.35f, h * 0.34f)
+                            lineTo(w * 0.65f, h * 0.34f)
+                            lineTo(w * 0.78f, h * 0.92f)
+                            lineTo(w * 0.22f, h * 0.92f)
+                            close()
                         }
+                        drawPath(abayaPath, garmentColor)
+                        drawPath(abayaPath, garmentShadow, style = Stroke(width = 2f))
+
+                        // Hands folded at chest
+                        drawCircle(skinTone, radius = w * 0.065f, center = Offset(w * 0.5f, h * 0.46f))
+
+                        // Full Hijab/Khimar
+                        drawCircle(femaleHijabColor, radius = w * 0.16f, center = Offset(w * 0.5f, h * 0.22f))
+                        // Flat face oval (smooth skin tone, no facial features)
+                        drawCircle(skinTone, radius = w * 0.09f, center = Offset(w * 0.5f, h * 0.23f))
                     }
-                    drawPath(bodyPath, color, style = Stroke(width = strokeWidth))
-                }
-                PostureType.JALSA, PostureType.TASHAHHUD -> {
-                    // Head
-                    drawCircle(color, radius = w * 0.13f, center = Offset(w * 0.48f, h * 0.3f))
-                    val sitPath = Path().apply {
-                        moveTo(w * 0.48f, h * 0.43f)
-                        lineTo(w * 0.48f, h * 0.72f)
-                        lineTo(w * 0.78f, h * 0.72f)
+
+                    PostureType.TAKBEER -> {
+                        // Takbeer: Hands raised up to chest/shoulder level inside shawl/abaya
+                        val abayaPath = Path().apply {
+                            moveTo(w * 0.32f, h * 0.36f)
+                            lineTo(w * 0.68f, h * 0.36f)
+                            lineTo(w * 0.78f, h * 0.92f)
+                            lineTo(w * 0.22f, h * 0.92f)
+                            close()
+                        }
+                        drawPath(abayaPath, garmentColor)
+                        drawPath(abayaPath, garmentShadow, style = Stroke(width = 2f))
+
+                        // Hands raised to chest/shoulder level
+                        drawCircle(skinTone, radius = w * 0.05f, center = Offset(w * 0.35f, h * 0.36f))
+                        drawCircle(skinTone, radius = w * 0.05f, center = Offset(w * 0.65f, h * 0.36f))
+
+                        // Hijab & Flat face
+                        drawCircle(femaleHijabColor, radius = w * 0.16f, center = Offset(w * 0.5f, h * 0.22f))
+                        drawCircle(skinTone, radius = w * 0.09f, center = Offset(w * 0.5f, h * 0.23f))
                     }
-                    drawPath(sitPath, color, style = Stroke(width = strokeWidth))
-                    // Hand on thigh
-                    drawLine(color, start = Offset(w * 0.48f, h * 0.52f), end = Offset(w * 0.68f, h * 0.62f), strokeWidth = strokeWidth)
-                }
-                PostureType.SALAM -> {
-                    // Head turned
-                    drawCircle(color, radius = w * 0.14f, center = Offset(w * 0.62f, h * 0.22f))
-                    drawLine(color, start = Offset(w * 0.5f, h * 0.36f), end = Offset(w * 0.5f, h * 0.75f), strokeWidth = strokeWidth)
-                    drawLine(color, start = Offset(w * 0.5f, h * 0.75f), end = Offset(w * 0.75f, h * 0.75f), strokeWidth = strokeWidth)
-                }
-                PostureType.WUDU_GENERIC, PostureType.DUA_GENERIC -> {
-                    // Dua Hands / Water Drop Vector
-                    val dropPath = Path().apply {
-                        moveTo(w * 0.5f, h * 0.2f)
-                        cubicTo(w * 0.75f, h * 0.45f, w * 0.8f, h * 0.7f, w * 0.5f, h * 0.85f)
-                        cubicTo(w * 0.2f, h * 0.7f, w * 0.25f, h * 0.45f, w * 0.5f, h * 0.2f)
+
+                    PostureType.RUKU -> {
+                        // Compact Ruku (slightly bowed, arms kept close)
+                        val torsoPath = Path().apply {
+                            moveTo(w * 0.3f, h * 0.45f)
+                            lineTo(w * 0.68f, h * 0.52f)
+                            lineTo(w * 0.68f, h * 0.92f)
+                            lineTo(w * 0.48f, h * 0.92f)
+                            lineTo(w * 0.48f, h * 0.68f)
+                            lineTo(w * 0.3f, h * 0.62f)
+                            close()
+                        }
+                        drawPath(torsoPath, garmentColor)
+                        drawPath(torsoPath, garmentShadow, style = Stroke(width = 2f))
+
+                        // Arms resting gently on knees
+                        drawLine(skinTone, start = Offset(w * 0.42f, h * 0.52f), end = Offset(w * 0.58f, h * 0.68f), strokeWidth = 4.5f)
+                        drawCircle(skinTone, radius = w * 0.045f, center = Offset(w * 0.58f, h * 0.68f))
+
+                        // Hijab & Flat Face
+                        drawCircle(femaleHijabColor, radius = w * 0.13f, center = Offset(w * 0.25f, h * 0.44f))
+                        drawCircle(skinTone, radius = w * 0.08f, center = Offset(w * 0.25f, h * 0.45f))
                     }
-                    drawPath(dropPath, color, style = Stroke(width = strokeWidth))
+
+                    PostureType.QAUMA -> {
+                        // Standing straight in full abaya
+                        val abayaPath = Path().apply {
+                            moveTo(w * 0.35f, h * 0.34f)
+                            lineTo(w * 0.65f, h * 0.34f)
+                            lineTo(w * 0.76f, h * 0.92f)
+                            lineTo(w * 0.24f, h * 0.92f)
+                            close()
+                        }
+                        drawPath(abayaPath, garmentColor)
+                        drawPath(abayaPath, garmentShadow, style = Stroke(width = 2f))
+
+                        // Arms hanging naturally at sides
+                        drawLine(skinTone, start = Offset(w * 0.32f, h * 0.4f), end = Offset(w * 0.32f, h * 0.62f), strokeWidth = 3.5f)
+                        drawLine(skinTone, start = Offset(w * 0.68f, h * 0.4f), end = Offset(w * 0.68f, h * 0.62f), strokeWidth = 3.5f)
+
+                        // Hijab & Flat Face
+                        drawCircle(femaleHijabColor, radius = w * 0.16f, center = Offset(w * 0.5f, h * 0.22f))
+                        drawCircle(skinTone, radius = w * 0.09f, center = Offset(w * 0.5f, h * 0.23f))
+                    }
+
+                    PostureType.SUJUD -> {
+                        // Female Sujud: Compact, forearms/elbows flat on mat, body enclosed
+                        val sujudPath = Path().apply {
+                            moveTo(w * 0.16f, h * 0.88f)
+                            lineTo(w * 0.38f, h * 0.60f)
+                            lineTo(w * 0.78f, h * 0.72f)
+                            lineTo(w * 0.88f, h * 0.88f)
+                            lineTo(w * 0.38f, h * 0.88f)
+                            close()
+                        }
+                        drawPath(sujudPath, garmentColor)
+                        drawPath(sujudPath, garmentShadow, style = Stroke(width = 2f))
+
+                        // Forearms flat on ground
+                        drawLine(skinTone, start = Offset(w * 0.2f, h * 0.86f), end = Offset(w * 0.38f, h * 0.86f), strokeWidth = 3.5f)
+
+                        // Hijab & Flat Face touching mat
+                        drawCircle(femaleHijabColor, radius = w * 0.12f, center = Offset(w * 0.18f, h * 0.8f))
+                        drawCircle(skinTone, radius = w * 0.07f, center = Offset(w * 0.16f, h * 0.83f))
+                    }
+
+                    PostureType.JALSA, PostureType.TASHAHHUD -> {
+                        // Female Sitting (Taworruk): दोनों পা ডান দিকে
+                        val sitPath = Path().apply {
+                            moveTo(w * 0.42f, h * 0.38f)
+                            lineTo(w * 0.62f, h * 0.38f)
+                            lineTo(w * 0.84f, h * 0.88f)
+                            lineTo(w * 0.28f, h * 0.88f)
+                            close()
+                        }
+                        drawPath(sitPath, garmentColor)
+                        drawPath(sitPath, garmentShadow, style = Stroke(width = 2f))
+
+                        // Hands flat on knees
+                        drawLine(skinTone, start = Offset(w * 0.45f, h * 0.52f), end = Offset(w * 0.65f, h * 0.68f), strokeWidth = 3.5f)
+                        if (postureType == PostureType.TASHAHHUD) {
+                            drawLine(femaleHijabColor, start = Offset(w * 0.65f, h * 0.68f), end = Offset(w * 0.72f, h * 0.62f), strokeWidth = 2.5f)
+                        }
+
+                        // Hijab & Flat Face
+                        drawCircle(femaleHijabColor, radius = w * 0.15f, center = Offset(w * 0.52f, h * 0.22f))
+                        drawCircle(skinTone, radius = w * 0.09f, center = Offset(w * 0.52f, h * 0.23f))
+                    }
+
+                    PostureType.SALAM -> {
+                        val sitPath = Path().apply {
+                            moveTo(w * 0.42f, h * 0.38f)
+                            lineTo(w * 0.62f, h * 0.38f)
+                            lineTo(w * 0.84f, h * 0.88f)
+                            lineTo(w * 0.28f, h * 0.88f)
+                            close()
+                        }
+                        drawPath(sitPath, garmentColor)
+                        drawPath(sitPath, garmentShadow, style = Stroke(width = 2f))
+
+                        // Head turned right, flat face
+                        drawCircle(femaleHijabColor, radius = w * 0.15f, center = Offset(w * 0.66f, h * 0.22f))
+                        drawCircle(skinTone, radius = w * 0.09f, center = Offset(w * 0.68f, h * 0.23f))
+                    }
+
+                    PostureType.WUDU_GENERIC, PostureType.DUA_GENERIC -> {
+                        val abayaPath = Path().apply {
+                            moveTo(w * 0.35f, h * 0.45f)
+                            lineTo(w * 0.65f, h * 0.45f)
+                            lineTo(w * 0.76f, h * 0.92f)
+                            lineTo(w * 0.24f, h * 0.92f)
+                            close()
+                        }
+                        drawPath(abayaPath, garmentColor)
+
+                        // Open Palms
+                        drawCircle(skinTone, radius = w * 0.065f, center = Offset(w * 0.38f, h * 0.46f))
+                        drawCircle(skinTone, radius = w * 0.065f, center = Offset(w * 0.62f, h * 0.46f))
+
+                        // Hijab & Flat Face
+                        drawCircle(femaleHijabColor, radius = w * 0.15f, center = Offset(w * 0.5f, h * 0.24f))
+                        drawCircle(skinTone, radius = w * 0.09f, center = Offset(w * 0.5f, h * 0.25f))
+                    }
+                }
+            } else {
+                // MALE ILLUSTRATIONS
+                when (postureType) {
+                    PostureType.QIYAM, PostureType.NIYYAT -> {
+                        // Male Thobe & Cap
+                        val thobePath = Path().apply {
+                            moveTo(w * 0.38f, h * 0.35f)
+                            lineTo(w * 0.62f, h * 0.35f)
+                            lineTo(w * 0.7f, h * 0.92f)
+                            lineTo(w * 0.3f, h * 0.92f)
+                            close()
+                        }
+                        drawPath(thobePath, garmentColor)
+                        drawPath(thobePath, garmentShadow, style = Stroke(width = 2f))
+
+                        // Feet
+                        drawCircle(skinTone, radius = w * 0.04f, center = Offset(w * 0.42f, h * 0.92f))
+                        drawCircle(skinTone, radius = w * 0.04f, center = Offset(w * 0.58f, h * 0.92f))
+
+                        // Folded Hands on Navel
+                        drawCircle(skinTone, radius = w * 0.06f, center = Offset(w * 0.5f, h * 0.52f))
+
+                        // Head, Beard & Cap
+                        drawCircle(hairColor, radius = w * 0.14f, center = Offset(w * 0.5f, h * 0.21f))
+                        drawCircle(skinTone, radius = w * 0.11f, center = Offset(w * 0.5f, h * 0.2f))
+                        val capPath = Path().apply {
+                            moveTo(w * 0.36f, h * 0.18f)
+                            quadraticTo(w * 0.5f, h * 0.06f, w * 0.64f, h * 0.18f)
+                            close()
+                        }
+                        drawPath(capPath, capColor)
+                    }
+
+                    PostureType.TAKBEER -> {
+                        val thobePath = Path().apply {
+                            moveTo(w * 0.38f, h * 0.38f)
+                            lineTo(w * 0.62f, h * 0.38f)
+                            lineTo(w * 0.7f, h * 0.92f)
+                            lineTo(w * 0.3f, h * 0.92f)
+                            close()
+                        }
+                        drawPath(thobePath, garmentColor)
+                        drawPath(thobePath, garmentShadow, style = Stroke(width = 2f))
+
+                        val leftArm = Path().apply {
+                            moveTo(w * 0.38f, h * 0.42f)
+                            lineTo(w * 0.22f, h * 0.25f)
+                        }
+                        val rightArm = Path().apply {
+                            moveTo(w * 0.62f, h * 0.42f)
+                            lineTo(w * 0.78f, h * 0.25f)
+                        }
+                        drawPath(leftArm, skinTone, style = Stroke(width = 4.5f))
+                        drawPath(rightArm, skinTone, style = Stroke(width = 4.5f))
+
+                        drawCircle(skinTone, radius = w * 0.05f, center = Offset(w * 0.2f, h * 0.22f))
+                        drawCircle(skinTone, radius = w * 0.05f, center = Offset(w * 0.8f, h * 0.22f))
+
+                        drawCircle(skinTone, radius = w * 0.11f, center = Offset(w * 0.5f, h * 0.22f))
+                        val capPath = Path().apply {
+                            moveTo(w * 0.36f, h * 0.2f)
+                            quadraticTo(w * 0.5f, h * 0.08f, w * 0.64f, h * 0.2f)
+                            close()
+                        }
+                        drawPath(capPath, capColor)
+                    }
+
+                    PostureType.RUKU -> {
+                        val torsoPath = Path().apply {
+                            moveTo(w * 0.25f, h * 0.45f)
+                            lineTo(w * 0.7f, h * 0.45f)
+                            lineTo(w * 0.7f, h * 0.92f)
+                            lineTo(w * 0.55f, h * 0.92f)
+                            lineTo(w * 0.55f, h * 0.62f)
+                            lineTo(w * 0.25f, h * 0.6f)
+                            close()
+                        }
+                        drawPath(torsoPath, garmentColor)
+                        drawPath(torsoPath, garmentShadow, style = Stroke(width = 2f))
+
+                        drawLine(skinTone, start = Offset(w * 0.4f, h * 0.52f), end = Offset(w * 0.62f, h * 0.72f), strokeWidth = 5f)
+                        drawCircle(skinTone, radius = w * 0.045f, center = Offset(w * 0.62f, h * 0.72f))
+
+                        drawCircle(skinTone, radius = w * 0.1f, center = Offset(w * 0.2f, h * 0.5f))
+                        val capPath = Path().apply {
+                            moveTo(w * 0.12f, h * 0.46f)
+                            quadraticTo(w * 0.2f, h * 0.36f, w * 0.28f, h * 0.46f)
+                            close()
+                        }
+                        drawPath(capPath, capColor)
+                    }
+
+                    PostureType.QAUMA -> {
+                        val thobePath = Path().apply {
+                            moveTo(w * 0.38f, h * 0.35f)
+                            lineTo(w * 0.62f, h * 0.35f)
+                            lineTo(w * 0.7f, h * 0.92f)
+                            lineTo(w * 0.3f, h * 0.92f)
+                            close()
+                        }
+                        drawPath(thobePath, garmentColor)
+                        drawPath(thobePath, garmentShadow, style = Stroke(width = 2f))
+
+                        drawLine(skinTone, start = Offset(w * 0.32f, h * 0.4f), end = Offset(w * 0.32f, h * 0.68f), strokeWidth = 4f)
+                        drawLine(skinTone, start = Offset(w * 0.68f, h * 0.4f), end = Offset(w * 0.68f, h * 0.68f), strokeWidth = 4f)
+
+                        drawCircle(skinTone, radius = w * 0.11f, center = Offset(w * 0.5f, h * 0.21f))
+                        val capPath = Path().apply {
+                            moveTo(w * 0.36f, h * 0.19f)
+                            quadraticTo(w * 0.5f, h * 0.07f, w * 0.64f, h * 0.19f)
+                            close()
+                        }
+                        drawPath(capPath, capColor)
+                    }
+
+                    PostureType.SUJUD -> {
+                        val bodyPath = Path().apply {
+                            moveTo(w * 0.18f, h * 0.88f)
+                            lineTo(w * 0.42f, h * 0.52f)
+                            lineTo(w * 0.78f, h * 0.68f)
+                            lineTo(w * 0.88f, h * 0.88f)
+                            lineTo(w * 0.42f, h * 0.88f)
+                            close()
+                        }
+                        drawPath(bodyPath, garmentColor)
+                        drawPath(bodyPath, garmentShadow, style = Stroke(width = 2f))
+
+                        drawCircle(skinTone, radius = w * 0.09f, center = Offset(w * 0.16f, h * 0.82f))
+                        val capPath = Path().apply {
+                            moveTo(w * 0.1f, h * 0.78f)
+                            quadraticTo(w * 0.18f, h * 0.68f, w * 0.26f, h * 0.78f)
+                            close()
+                        }
+                        drawPath(capPath, capColor)
+
+                        drawCircle(skinTone, radius = w * 0.04f, center = Offset(w * 0.28f, h * 0.88f))
+                    }
+
+                    PostureType.JALSA, PostureType.TASHAHHUD -> {
+                        val sitPath = Path().apply {
+                            moveTo(w * 0.45f, h * 0.38f)
+                            lineTo(w * 0.62f, h * 0.38f)
+                            lineTo(w * 0.82f, h * 0.88f)
+                            lineTo(w * 0.32f, h * 0.88f)
+                            close()
+                        }
+                        drawPath(sitPath, garmentColor)
+                        drawPath(sitPath, garmentShadow, style = Stroke(width = 2f))
+
+                        drawLine(skinTone, start = Offset(w * 0.48f, h * 0.5f), end = Offset(w * 0.65f, h * 0.68f), strokeWidth = 4f)
+                        if (postureType == PostureType.TASHAHHUD) {
+                            drawLine(capColor, start = Offset(w * 0.65f, h * 0.68f), end = Offset(w * 0.72f, h * 0.62f), strokeWidth = 3f)
+                        }
+
+                        drawCircle(skinTone, radius = w * 0.11f, center = Offset(w * 0.52f, h * 0.22f))
+                        val capPath = Path().apply {
+                            moveTo(w * 0.38f, h * 0.2f)
+                            quadraticTo(w * 0.52f, h * 0.08f, w * 0.66f, h * 0.2f)
+                            close()
+                        }
+                        drawPath(capPath, capColor)
+                    }
+
+                    PostureType.SALAM -> {
+                        val sitPath = Path().apply {
+                            moveTo(w * 0.45f, h * 0.38f)
+                            lineTo(w * 0.62f, h * 0.38f)
+                            lineTo(w * 0.82f, h * 0.88f)
+                            lineTo(w * 0.32f, h * 0.88f)
+                            close()
+                        }
+                        drawPath(sitPath, garmentColor)
+                        drawPath(sitPath, garmentShadow, style = Stroke(width = 2f))
+
+                        drawCircle(skinTone, radius = w * 0.11f, center = Offset(w * 0.68f, h * 0.22f))
+                        val capPath = Path().apply {
+                            moveTo(w * 0.55f, h * 0.2f)
+                            quadraticTo(w * 0.68f, h * 0.08f, w * 0.8f, h * 0.2f)
+                            close()
+                        }
+                        drawPath(capPath, capColor)
+                    }
+
+                    PostureType.WUDU_GENERIC, PostureType.DUA_GENERIC -> {
+                        drawCircle(skinTone, radius = w * 0.07f, center = Offset(w * 0.38f, h * 0.42f))
+                        drawCircle(skinTone, radius = w * 0.07f, center = Offset(w * 0.62f, h * 0.42f))
+
+                        val leftArm = Path().apply {
+                            moveTo(w * 0.32f, h * 0.68f)
+                            lineTo(w * 0.38f, h * 0.42f)
+                        }
+                        val rightArm = Path().apply {
+                            moveTo(w * 0.68f, h * 0.68f)
+                            lineTo(w * 0.62f, h * 0.42f)
+                        }
+                        drawPath(leftArm, skinTone, style = Stroke(width = 5f))
+                        drawPath(rightArm, skinTone, style = Stroke(width = 5f))
+
+                        drawCircle(capColor.copy(alpha = 0.2f), radius = w * 0.25f, center = Offset(w * 0.5f, h * 0.38f))
+                    }
                 }
             }
         }

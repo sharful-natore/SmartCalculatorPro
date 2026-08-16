@@ -2667,14 +2667,15 @@ fun IslamicDuasCard(
                                 // Arabic Typography with Tashkeel
                                 Surface(
                                     shape = RoundedCornerShape(12.dp),
-                                    color = themeColors.cardBg,
+                                    color = if (themeColors.isDark) Color(0xFF0F172A) else Color(0xFFECFDF5),
+                                    border = BorderStroke(1.dp, if (themeColors.isDark) Color(0xFF059669).copy(alpha = 0.4f) else Color(0xFF10B981).copy(alpha = 0.25f)),
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Text(
                                         text = dua.arabic,
                                         fontSize = 19.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = themeColors.displayText,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (themeColors.isDark) Color(0xFF34D399) else Color(0xFF047857),
                                         textAlign = TextAlign.Center,
                                         lineHeight = 32.sp,
                                         modifier = Modifier
@@ -2685,23 +2686,24 @@ fun IslamicDuasCard(
 
                                 Spacer(modifier = Modifier.height(10.dp))
 
-                                // Pronunciation
+                                // Pronunciation (Distinct Royal Blue Color)
                                 Text(
                                     text = if (isBn) "উচ্চারণ: ${dua.pronunciationBn}" else "Pronunciation: ${dua.pronunciationEn}",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = themeColors.displayText.copy(alpha = 0.9f),
-                                    lineHeight = 17.sp
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (themeColors.isDark) Color(0xFF60A5FA) else Color(0xFF1D4ED8),
+                                    lineHeight = 18.sp
                                 )
 
                                 Spacer(modifier = Modifier.height(6.dp))
 
-                                // Meaning
+                                // Meaning (Distinct Warm Amber Gold Color)
                                 Text(
                                     text = if (isBn) "অর্থ: ${dua.meaningBn}" else "Meaning: ${dua.meaningEn}",
-                                    fontSize = 12.sp,
-                                    color = themeColors.displayText.copy(alpha = 0.75f),
-                                    lineHeight = 16.sp
+                                    fontSize = 12.5.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = if (themeColors.isDark) Color(0xFFFBBF24) else Color(0xFFB45309),
+                                    lineHeight = 17.5.sp
                                 )
 
                                 // Expanded Virtues, Reference & Counter

@@ -526,14 +526,29 @@ fun MainContent(
                     .background(Color.Transparent)
             ) {
                 val bannerContext = LocalContext.current
-                QuranMiniPlayerBanner(
-                    audioPlayer = QuranAudioPlayer.getInstance(bannerContext),
-                    themeColors = themeColors,
-                    onOpenSurah = { surahNumber ->
-                        viewModel.selectedToolType = ToolType.HOLY_QURAN
-                        viewModel.activeTab = 0
-                    }
+                val activeTool = viewModel.selectedToolType
+                val isIslamicTool = activeTool in listOf(
+                    ToolType.HOLY_QURAN,
+                    ToolType.NAMAZ_EDUCATION,
+                    ToolType.ISLAMIC_DUAS,
+                    ToolType.PRAYER_TIMES,
+                    ToolType.SEHRI_IFTAR,
+                    ToolType.QIBLA_COMPASS,
+                    ToolType.DIGITAL_TASBIH
                 )
+                val isCalculatorActive = viewModel.activeTab == 2 ||
+                        viewModel.showCalculatorDialog ||
+                        (viewModel.activeTab == 0 && activeTool != null && !isIslamicTool)
+                if (!isCalculatorActive) {
+                    QuranMiniPlayerBanner(
+                        audioPlayer = QuranAudioPlayer.getInstance(bannerContext),
+                        themeColors = themeColors,
+                        onOpenSurah = { surahNumber ->
+                            viewModel.selectedToolType = ToolType.HOLY_QURAN
+                            viewModel.activeTab = 0
+                        }
+                    )
+                }
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()

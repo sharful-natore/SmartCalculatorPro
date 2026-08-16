@@ -93,8 +93,13 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
     fun setPlayerVisible(visible: Boolean) {
         _isPlayerVisible.value = visible
         if (!visible) {
-            audioPlayer.pause()
+            audioPlayer.stopAndClose()
         }
+    }
+
+    fun stopAndClosePlayer() {
+        _isPlayerVisible.value = false
+        audioPlayer.stopAndClose()
     }
 
     // Storage Management

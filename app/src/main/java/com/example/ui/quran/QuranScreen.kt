@@ -114,6 +114,14 @@ fun QuranScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
+                    // Tajweed Legend Bar
+                    TajweedLegendBar(
+                        themeColors = themeColors,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
                     // Search Bar
                     OutlinedTextField(
                         value = searchQuery,
@@ -271,7 +279,8 @@ fun QuranScreen(
                             themeColors = themeColors,
                             onCardClick = { onSurahClick(surah) },
                             onPlayClick = { viewModel.playSurah(surah) },
-                            onDownloadClick = { viewModel.downloadSurahAudio(context, surah.number) }
+                            onDownloadClick = { viewModel.downloadSurahAudio(context, surah.number) },
+                            onDownloadCompleteClick = { viewModel.openStorageManager(context) }
                         )
                     }
                 }
@@ -310,7 +319,8 @@ fun SurahListItemCard(
     themeColors: CalculatorThemeColors,
     onCardClick: () -> Unit,
     onPlayClick: () -> Unit,
-    onDownloadClick: () -> Unit
+    onDownloadClick: () -> Unit,
+    onDownloadCompleteClick: () -> Unit
 ) {
     ElevatedCard(
         modifier = Modifier
@@ -375,26 +385,8 @@ fun SurahListItemCard(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(4.dp))
-
-                // Download Status Badge
-                if (surah.isAudioDownloaded) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.CheckCircle,
-                            contentDescription = "Downloaded",
-                            tint = Color(0xFF2E7D32),
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "অডিও সংগৃহীত (অফলাইন)",
-                            fontSize = 10.5.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFF2E7D32)
-                        )
-                    }
-                } else if (surah.downloadProgress in 1..99) {
+                if (surah.downloadProgress in 1..99) {
+                    Spacer(modifier = Modifier.height(4.dp))
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -423,10 +415,9 @@ fun SurahListItemCard(
             // Arabic Calligraphy Name & Action Buttons
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    text = surah.nameArabic,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = cyanDark
+                    text = buildTajweedAnnotatedString(surah.nameArabic, cyanDark),
+                    fontSize = 19.sp,
+                    fontWeight = FontWeight.Bold
                 )
 
                 Spacer(modifier = Modifier.height(6.dp))
@@ -445,8 +436,21 @@ fun SurahListItemCard(
                         )
                     }
 
-                    // Download Button
-                    if (!surah.isAudioDownloaded && surah.downloadProgress == 0) {
+                    // Download or Download Complete Button
+                    if (surah.isAudioDownloaded) {
+                        // Downloaded Complete Icon Button -> Click opens downloaded list dialog
+                        IconButton(
+                            onClick = onDownloadCompleteClick,
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.DownloadDone,
+                                contentDescription = "Downloaded List",
+                                tint = Color(0xFF10B981),
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                    } else if (surah.downloadProgress == 0) {
                         IconButton(
                             onClick = onDownloadClick,
                             modifier = Modifier.size(32.dp)
@@ -541,7 +545,7 @@ fun StorageManagerDialog(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(max = 240.dp)
+                            .heightIn(max = 260.dp)
                             .verticalScroll(rememberScrollState())
                     ) {
                         downloadedSurahs.forEach { surah ->
@@ -559,9 +563,21 @@ fun StorageManagerDialog(
                                         color = themeColors.displayText
                                     )
                                     Text(
-                                        text = "${surah.numberOfAyahs} টি আয়াত",
+                                        text = "${surah.numberOfAyahs} টি আয়াত • অফলাইন প্রস্তুত",
                                         fontSize = 11.sp,
-                                        color = themeColors.displayText.copy(alpha = 0.6f)
+                                        color = Color(0xFF10B981)
+                                    )
+                                }
+                                IconButton(
+                                    onClick = {
+                                        viewModel.playSurah(surah)
+                                        onDismiss()
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.PlayCircle,
+                                        contentDescription = "Play",
+                                        tint = cyanPrimary
                                     )
                                 }
                                 IconButton(

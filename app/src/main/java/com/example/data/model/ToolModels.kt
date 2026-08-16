@@ -13,11 +13,11 @@ enum class ToolCategory(
 ) {
     HEALTH("Health & Fitness", "স্বাস্থ্য ও ফিটনেস", Icons.Default.Favorite),
     FINANCE("Finance & Business", "অর্থ ও ব্যবসা", Icons.Default.AccountBalance),
+    ISLAMIC("Islamic Services", "ইসলামিক সার্ভিসেস", Icons.Default.NightsStay),
     UTILITY("Everyday Utility", "দৈনন্দিন ইউটিলিটি", Icons.Default.Widgets),
     ELECTRICITY("Electricity & Power", "বিদ্যুৎ ও শক্তি", Icons.Default.Bolt),
     VEHICLE("Smart & Vehicle Tools", "স্মার্ট ও যানবাহন", Icons.Default.DirectionsCar),
     EDUCATION("Education & Results", "শিক্ষা ও ফলাফল", Icons.Default.School),
-    ISLAMIC("Islamic Services", "ইসলামিক সার্ভিসেস", Icons.Default.NightsStay),
     DEVELOPER("Developer Tools", "ডেভেলপার টুলস", Icons.Default.Code),
     ENGINEERING("Engineering", "ইঞ্জিনিয়ারিং", Icons.Default.SettingsInputComponent);
 
