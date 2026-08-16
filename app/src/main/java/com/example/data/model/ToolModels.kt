@@ -334,6 +334,11 @@ enum class ToolType(
         "মক্কা শরিফের আল-কাবা শরীফের দিকে নির্ভুল কিবলা দিক নির্ণয় করুন",
         ToolCategory.ISLAMIC, Icons.Default.Explore
     ),
+    HOLY_QURAN(
+        "Holy Quran", "আল-কোরআন (তেলাওয়াত ও অনুবাদ)",
+        "সূরা ও আয়াত পাঠ, বাংলা অর্থ, অডিও তেলাওয়াত ডাউনলোড এবং এআই ডিজিটাল অ্যাসিস্ট্যান্ট",
+        ToolCategory.ISLAMIC, Icons.Default.AutoStories
+    ),
     DIGITAL_TASBIH(
         "Digital Tasbih", "ডিজিটাল তাসবিহ",
         "ডিজিটাল জিকির ও তাসবিহ গণনার স্মার্ট কাউন্টার",
@@ -354,15 +359,10 @@ enum class ToolType(
         "কুরআন ও হাদিসের প্রয়োজনীয় দোয়াসমূহ, বাংলা উচ্চারণ ও অর্থ",
         ToolCategory.ISLAMIC, Icons.Default.MenuBook
     ),
-    HOLY_QURAN(
-        "Holy Quran", "আল-কোরআন (তেলাওয়াত ও অনুবাদ)",
-        "সূরা ও আয়াত পাঠ, বাংলা অর্থ, অডিও তেলাওয়াত ডাউনলোড এবং এআই ডিজিটাল অ্যাসিস্ট্যান্ট",
-        ToolCategory.ISLAMIC, Icons.Default.AutoStories
-    ),
     NAMAZ_EDUCATION(
         "Namaz & Wudu Guide", "পূর্ণাঙ্গ নামাজ ও অজু শিক্ষা",
-        "অজু, তাহারাত, ৫ ওয়াক্ত নামাজ, ওয়াক্তভিত্তিক রাকাতের নিয়ম, জানাজা, ঈদ ও নফল নামাজের চিত্রসহ পূর্ণাঙ্গ শিক্ষা",
-        ToolCategory.ISLAMIC, Icons.Default.MenuBook
+        "অজু, তাহারাত, ৫ ওয়াক্ত নামাজ, ওয়াক্তভিত্তিক রাকাতের নিয়ম, জানাজা, ঈদ ও নফল নামাজের পূর্ণাঙ্গ শিক্ষা",
+        ToolCategory.ISLAMIC, Icons.Default.Mosque
     );
 
     fun getTitle(language: AppLanguage): String {

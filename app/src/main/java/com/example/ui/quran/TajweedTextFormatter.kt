@@ -24,6 +24,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -38,6 +39,90 @@ object TajweedColors {
     val Madd = Color(0xFFF59E0B)     // Gold / Amber (মাদ্দ / দীর্ঘ টান)
     val Iqlab = Color(0xFF06B6D4)    // Cyan / Teal (ইকলাব)
 }
+
+data class TajweedDetailRule(
+    val titleBn: String,
+    val titleAr: String,
+    val color: Color,
+    val ruleDescriptionBn: String,
+    val lettersBn: String,
+    val exampleAr: String,
+    val exampleBn: String,
+    val durationBn: String
+)
+
+val allTajweedDetailRules = listOf(
+    TajweedDetailRule(
+        titleBn = "গুণ্নাহ (Ghunnah)",
+        titleAr = "غُنَّة",
+        color = TajweedColors.Ghunnah,
+        ruleDescriptionBn = "নূন (ن) বা মীম (م) হরফের ওপর তাশদীদ ( ّ ) থাকলে নাকের বাঁশিতে গুঞ্জন তৈরি করে ১ আলিফ (২ হরকত) সময় ধরে পড়া বাধ্যতামূলক।",
+        lettersBn = "তাশদীদযুক্ত নূন (نّ) ও মীম (مّ)",
+        exampleAr = "إِنَّ • ثُمَّ • أُمَّتُكُمْ",
+        exampleBn = "ইন্না • ছুম্মা • উম্মাতুকুম",
+        durationBn = "১ আলিফ (২ হরকত)"
+    ),
+    TajweedDetailRule(
+        titleBn = "ইখফা (Ikhfa - গোপন করে পড়া)",
+        titleAr = "إِخْفَاء",
+        color = TajweedColors.Ikhfa,
+        ruleDescriptionBn = "নূন সাকিন (نْ) বা তানবীন ( ً ٍ ٌ ) এর পর ইখফার ১৫টি অক্ষরের যেকোনো একটি আসলে নূনের আওয়াজকে নাকের বাঁশিতে লুকাইয়া অস্পষ্টভাবে পড়তে হয়।",
+        lettersBn = "১৫টি হরফ: ত (ت), ছ (ث), জিম (ج), দাল (د), যাল (ذ), যা (ز), সীন (س), শীন (ش), সোয়াদ (ص), দোয়াদ (ض), তোয়া (ط), জোয়া (ظ), ফা (ف), ক্বাফ (ق), কাফ (ك)",
+        exampleAr = "مَنْ كَانَ • مِنْ قَبْلِ • كِتَابٌ كَرِيمٌ",
+        exampleBn = "মাঙ্ ক্যানা • মিঙ্ ক্বাবলি • কিতাবুঙ্ কারীম",
+        durationBn = "১ আলিফ গুণ্নাহসহ"
+    ),
+    TajweedDetailRule(
+        titleBn = "ঈদগাম (Idgham - মিলিয়ে পড়া)",
+        titleAr = "إِدْغَام",
+        color = TajweedColors.Idgham,
+        ruleDescriptionBn = "নূন সাকিন বা তানবীনের পর ঈদগামের ৬টি অক্ষরের যেকোনো একটি আসলে প্রথম বর্ণকে দ্বিতীয় বর্ণের সাথে যুক্ত করে পড়া।",
+        lettersBn = "৬টি হরফ (যালমুন - يرملون): য়া (ي), রা (ر), মীম (م), লাম (ل), ওয়াও (و), নূন (ن)\n• বা-গুণ্নাহ (গুণ্নাহসহ ৪টি): ي, ن, م, و\n• বেলা-গুণ্নাহ (গুণ্নাহ ছাড়া ২টি): ل, ر",
+        exampleAr = "مَنْ يَقُولُ (বা-গুণ্নাহ) • مِنْ رَبِّهِمْ (বেলা-গুণ্নাহ)",
+        exampleBn = "মাইঁ ইয়াকূলু • মির্ রাব্বিহিম",
+        durationBn = "বা-গুণ্নাহ ১ আলিফ / বেলা-গুণ্নাহ স্বাভাবিক"
+    ),
+    TajweedDetailRule(
+        titleBn = "কলকলাহ (Qalqalah - প্রতিধ্বনি বা ধাক্কা)",
+        titleAr = "قَلْقَلَة",
+        color = TajweedColors.Qalqalah,
+        ruleDescriptionBn = "কলকলাহর ৫টি অক্ষরের ওপর জযম ( ْ ) থাকলে বা থামলে (ওয়াকফ) উচ্চারণের সময় কণ্ঠে ধাক্কা বা প্রতিধ্বনি সৃষ্টি করে পড়তে হয়।",
+        lettersBn = "৫টি হরফ (কুতবু জাদ - قُطْبُ جَدٍّ): ক্বাফ (ق), তোয়া (ط), বা (ب), জিম (ج), দাল (د)",
+        exampleAr = "قُلْ هُوَ اللَّهُ أَحَدٌ • الْفَلَقِ • وَتَبَّ",
+        exampleBn = "আহাদ (ধাক্কা) • আল-ফালাক্ব • ওয়া ত্যাব্ব",
+        durationBn = "প্রতিধ্বনি সৃষ্টি"
+    ),
+    TajweedDetailRule(
+        titleBn = "মাদ্দ (Madd - দীর্ঘ টানা)",
+        titleAr = "مَدّ",
+        color = TajweedColors.Madd,
+        ruleDescriptionBn = "মাদ্দের ৩টি মূল হরফ (আলিফ, ওয়াও, ইয়া) এর আগে যথাক্রমে জবর, পেশ, যের অথবা খাড়া জবর ( ٰ ), খাড়া যের ( ٖ ), উল্টা পেশ ( ٗ ), মাদ্দ চিহ্ন ( ۤ ) থাকলে স্বরধ্বনি টেনে পড়তে হয়।",
+        lettersBn = "আলিফ (ا), ওয়াও (و), ইয়া (ي), খাড়া জবর/যের, মাদ্দ চিহ্ন ( ۤ )",
+        exampleAr = "جَاءَ (৪ আলিফ) • الرَّحْمٰنِ (১ আলিফ) • السَّمَاءِ (৪ আলিফ)",
+        exampleBn = "জাাাা-আ • আর-রাহমা-ন • আস-সামাাা-ই",
+        durationBn = "১, ৩ বা ৪ আলিফ টান"
+    ),
+    TajweedDetailRule(
+        titleBn = "ইকলাব (Iqlab - মীম দিয়ে পরিবর্তন)",
+        titleAr = "إِقْلَاب",
+        color = TajweedColors.Iqlab,
+        ruleDescriptionBn = "নূন সাকিন বা তানবীনের পর 'বা' (ب) অক্ষর আসলে নূনকে মীম (م) দ্বারা পরিবর্তন করে গুণ্নাহর সাথে পড়তে হয়। ছোট মীম ( ۢ ) দিয়ে নির্দেশিত থাকে।",
+        lettersBn = "১টি হরফ: বা (ب)",
+        exampleAr = "مِنْ بَعْدِ • أَنْبِئْهُمْ",
+        exampleBn = "মিম্ বা'দি • আম্বি-হুম",
+        durationBn = "১ আলিফ গুণ্নাহ"
+    ),
+    TajweedDetailRule(
+        titleBn = "ইযহার (Izhar - স্পষ্ট পড়া)",
+        titleAr = "إِظْهَار",
+        color = Color(0xFF6B7280),
+        ruleDescriptionBn = "নূন সাকিন বা তানবীনের পর হলকী (কণ্ঠনালীর) ৬টি অক্ষরের যেকোনো একটি আসলে কোনো গুণ্নাহ না করে স্পষ্ট ও স্বাভাবিকভাবে পড়া।",
+        lettersBn = "৬টি কণ্ঠনালীর হরফ: হামযাহ (ء), হা (هـ), 'আইন (ع), হা (ح), গাইন (غ), খা (خ)",
+        exampleAr = "مَنْ آمَنَ • مِنْ حَكِيمٍ",
+        exampleBn = "মান আমানা • মিন হাকীম",
+        durationBn = "স্পষ্ট (গুণ্নাহ ছাড়া)"
+    )
+)
 
 /**
  * Dynamically parses Arabic text with diacritics and builds an AnnotatedString
@@ -134,17 +219,20 @@ fun buildTajweedAnnotatedString(
 @Composable
 fun TajweedLegendBar(
     themeColors: CalculatorThemeColors,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    initialExpanded: Boolean = false
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(initialExpanded) }
+    var showDetailDialog by remember { mutableStateOf(false) }
+    var selectedRuleForDialog by remember { mutableStateOf<TajweedDetailRule?>(null) }
 
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(14.dp),
         color = if (themeColors.isDark) Color(0xFF0F172A) else Color(0xFFF8FAFC),
         border = BorderStroke(1.dp, if (themeColors.isDark) Color(0xFF334155) else Color(0xFFE2E8F0))
     ) {
-        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp)) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -155,16 +243,22 @@ fun TajweedLegendBar(
                     imageVector = Icons.Default.MenuBook,
                     contentDescription = null,
                     tint = Color(0xFF10B981),
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(19.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "তাজবীদ পড়ার কালার গাইড (Tajweed Rules)",
-                    fontSize = 12.5.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = themeColors.displayText,
-                    modifier = Modifier.weight(1f)
-                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "তাজবীদ পড়ার কালার গাইড ও বিস্তারিত নিয়ম",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.displayText
+                    )
+                    Text(
+                        text = "ট্যাপ করে রং ও হরফের নিয়ম সংক্ষেপ / বিস্তারিত দেখুন",
+                        fontSize = 10.5.sp,
+                        color = Color(0xFF10B981)
+                    )
+                }
                 Icon(
                     imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                     contentDescription = null,
@@ -180,9 +274,9 @@ fun TajweedLegendBar(
             ) {
                 Column(modifier = Modifier.padding(top = 10.dp)) {
                     Text(
-                        text = "কুরআন শরীফ সঠিক উচ্চারণে পড়ার জন্য পড়ার নিয়ম অনুযায়ী রঙিন হরফ নির্দেশিকা:",
+                        text = "কুরআন শরীফ সঠিক উচ্চারণে পড়ার জন্য রঙিন হরফের সহজ সংকেত (ট্যাপ করে বিস্তারিত পড়ুন):",
                         fontSize = 11.5.sp,
-                        color = themeColors.displayText.copy(alpha = 0.75f),
+                        color = themeColors.displayText.copy(alpha = 0.8f),
                         lineHeight = 16.sp
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -191,9 +285,18 @@ fun TajweedLegendBar(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        TajweedRulePill(name = "গুণ্নাহ (Ghunnah)", color = TajweedColors.Ghunnah)
-                        TajweedRulePill(name = "ইখফা (Ikhfa)", color = TajweedColors.Ikhfa)
-                        TajweedRulePill(name = "ঈদগাম (Idgham)", color = TajweedColors.Idgham)
+                        TajweedRulePill(name = "গুণ্নাহ (Ghunnah)", color = TajweedColors.Ghunnah) {
+                            selectedRuleForDialog = allTajweedDetailRules[0]
+                            showDetailDialog = true
+                        }
+                        TajweedRulePill(name = "ইখফা (Ikhfa)", color = TajweedColors.Ikhfa) {
+                            selectedRuleForDialog = allTajweedDetailRules[1]
+                            showDetailDialog = true
+                        }
+                        TajweedRulePill(name = "ঈদগাম (Idgham)", color = TajweedColors.Idgham) {
+                            selectedRuleForDialog = allTajweedDetailRules[2]
+                            showDetailDialog = true
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(6.dp))
@@ -202,24 +305,79 @@ fun TajweedLegendBar(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        TajweedRulePill(name = "কলকলাহ (Qalqalah)", color = TajweedColors.Qalqalah)
-                        TajweedRulePill(name = "মাদ্দ / টানা (Madd)", color = TajweedColors.Madd)
-                        TajweedRulePill(name = "ইকলাব (Iqlab)", color = TajweedColors.Iqlab)
+                        TajweedRulePill(name = "কলকলাহ (Qalqalah)", color = TajweedColors.Qalqalah) {
+                            selectedRuleForDialog = allTajweedDetailRules[3]
+                            showDetailDialog = true
+                        }
+                        TajweedRulePill(name = "মাদ্দ / টানা (Madd)", color = TajweedColors.Madd) {
+                            selectedRuleForDialog = allTajweedDetailRules[4]
+                            showDetailDialog = true
+                        }
+                        TajweedRulePill(name = "ইকলাব (Iqlab)", color = TajweedColors.Iqlab) {
+                            selectedRuleForDialog = allTajweedDetailRules[5]
+                            showDetailDialog = true
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Button to open full detailed guide
+                    Surface(
+                        onClick = {
+                            selectedRuleForDialog = null
+                            showDetailDialog = true
+                        },
+                        shape = RoundedCornerShape(10.dp),
+                        color = Color(0xFF10B981).copy(alpha = 0.12f),
+                        border = BorderStroke(1.dp, Color(0xFF10B981).copy(alpha = 0.35f)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(vertical = 7.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AutoFixHigh,
+                                contentDescription = null,
+                                tint = Color(0xFF10B981),
+                                modifier = Modifier.size(15.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "📖 সকল তাজবীদ নিয়ম ও মাসআলা বিস্তারিত দেখুন",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF10B981)
+                            )
+                        }
                     }
                 }
             }
         }
+    }
+
+    if (showDetailDialog) {
+        TajweedRulesDetailDialog(
+            themeColors = themeColors,
+            initialSelectedRule = selectedRuleForDialog,
+            onDismiss = { showDetailDialog = false }
+        )
     }
 }
 
 @Composable
 private fun TajweedRulePill(
     name: String,
-    color: Color
+    color: Color,
+    onClick: () -> Unit = {}
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(vertical = 2.dp)
+        modifier = Modifier
+            .clip(RoundedCornerShape(6.dp))
+            .clickable(onClick = onClick)
+            .padding(vertical = 3.dp, horizontal = 4.dp)
     ) {
         Box(
             modifier = Modifier
@@ -235,4 +393,160 @@ private fun TajweedRulePill(
             color = color
         )
     }
+}
+
+@Composable
+fun TajweedRulesDetailDialog(
+    themeColors: CalculatorThemeColors,
+    initialSelectedRule: TajweedDetailRule? = null,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("বন্ধ করুন", fontWeight = FontWeight.Bold, color = themeColors.buttonEqualBg)
+            }
+        },
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.MenuBook,
+                    contentDescription = null,
+                    tint = Color(0xFF10B981),
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Column {
+                    Text(
+                        text = "তাজবীদ পড়ার পূর্ণাঙ্গ নিয়ম ও মাসআলা",
+                        fontSize = 16.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.displayText
+                    )
+                    Text(
+                        text = "কুরআন মজিদ সহিহ-শুদ্ধ উচ্চারণে পড়ার গাইডলাইন",
+                        fontSize = 11.sp,
+                        color = themeColors.displayText.copy(alpha = 0.7f)
+                    )
+                }
+            }
+        },
+        text = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 480.dp)
+            ) {
+                androidx.compose.foundation.lazy.LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(vertical = 4.dp)
+                ) {
+                    items(allTajweedDetailRules.size) { index ->
+                        val rule = allTajweedDetailRules[index]
+                        Card(
+                            shape = RoundedCornerShape(14.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (themeColors.isDark) Color(0xFF1E293B) else Color(0xFFF1F5F9)
+                            ),
+                            border = BorderStroke(
+                                width = if (initialSelectedRule?.titleBn == rule.titleBn) 2.dp else 1.dp,
+                                color = rule.color.copy(alpha = 0.6f)
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(12.dp)
+                                                .clip(CircleShape)
+                                                .background(rule.color)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = rule.titleBn,
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = rule.color
+                                        )
+                                    }
+
+                                    Surface(
+                                        shape = RoundedCornerShape(8.dp),
+                                        color = rule.color.copy(alpha = 0.15f)
+                                    ) {
+                                        Text(
+                                            text = rule.titleAr,
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = rule.color,
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(6.dp))
+
+                                Text(
+                                    text = "📌 নিয়ম: ${rule.ruleDescriptionBn}",
+                                    fontSize = 12.5.sp,
+                                    color = themeColors.displayText,
+                                    lineHeight = 18.sp
+                                )
+
+                                Spacer(modifier = Modifier.height(4.dp))
+
+                                Text(
+                                    text = "🔤 সংশ্লিষ্ট হরফ/চিহ্ন: ${rule.lettersBn}",
+                                    fontSize = 11.5.sp,
+                                    color = themeColors.displayText.copy(alpha = 0.85f),
+                                    lineHeight = 17.sp
+                                )
+
+                                Spacer(modifier = Modifier.height(6.dp))
+
+                                Surface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = rule.color.copy(alpha = 0.1f),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Column(modifier = Modifier.padding(8.dp)) {
+                                        Text(
+                                            text = "কুরআনের উদাহরণ (আরবি):",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = rule.color
+                                        )
+                                        Text(
+                                            text = rule.exampleAr,
+                                            fontSize = 17.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = rule.color,
+                                            textAlign = TextAlign.Center,
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 2.dp)
+                                        )
+                                        Text(
+                                            text = "বাংলা উচ্চারণ: ${rule.exampleBn} (${rule.durationBn})",
+                                            fontSize = 11.5.sp,
+                                            color = themeColors.displayText.copy(alpha = 0.9f)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        containerColor = themeColors.cardBg,
+        shape = RoundedCornerShape(20.dp)
+    )
 }

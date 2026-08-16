@@ -63,6 +63,7 @@ fun SurahDetailScreen(
     val cyanPrimary = themeColors.buttonEqualBg
     val cyanLight = if (themeColors.isDark) themeColors.buttonNormalBg else themeColors.buttonEqualBg.copy(alpha = 0.12f)
     val cyanDark = if (themeColors.isDark) themeColors.background else themeColors.buttonEqualBg.copy(alpha = 0.85f)
+    val cyanAccent = themeColors.buttonEqualBg
 
     // Intercept system back press to return to Surah List
     BackHandler {
@@ -201,7 +202,8 @@ fun SurahDetailScreen(
                     item {
                         TajweedLegendBar(
                             themeColors = themeColors,
-                            modifier = Modifier.padding(bottom = 12.dp)
+                            modifier = Modifier.padding(bottom = 12.dp),
+                            initialExpanded = true
                         )
                     }
 

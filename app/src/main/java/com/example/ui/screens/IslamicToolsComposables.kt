@@ -35,6 +35,8 @@ import com.example.ui.theme.CalculatorThemeColors
 import com.example.ui.viewmodel.CalculatorViewModel
 import com.example.util.AppLanguage
 import com.example.ui.islamic.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.ui.namaz.NamazViewModel
 import android.content.Context
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -1848,10 +1850,16 @@ data class IslamicDuaItem(
 @Composable
 fun IslamicDuasCard(
     viewModel: CalculatorViewModel,
-    themeColors: CalculatorThemeColors
+    themeColors: CalculatorThemeColors,
+    namazViewModel: NamazViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
+
+    val playingDuaId by namazViewModel.playingDuaId.collectAsStateWithLifecycle()
+    val isPlaying by namazViewModel.isPlaying.collectAsStateWithLifecycle()
+    val downloadedDuaIds by namazViewModel.downloadedDuaIds.collectAsStateWithLifecycle()
+    val downloadProgress by namazViewModel.downloadProgress.collectAsStateWithLifecycle()
 
     var selectedCategory by remember { mutableStateOf(DuaCategory.ALL) }
     var searchQuery by remember { mutableStateOf("") }
@@ -2593,6 +2601,7 @@ fun IslamicDuasCard(
                     filteredDuas.forEach { dua ->
                         val isExpanded = expandedDuaId == dua.id || searchQuery.isNotEmpty()
                         val count = counters[dua.id] ?: 0
+                        val isCurrentPlaying = playingDuaId == dua.id && isPlaying
 
                         Card(
                             modifier = Modifier.fillMaxWidth(),
@@ -2834,91 +2843,154 @@ fun IslamicDuasCard(
 
                                 Spacer(modifier = Modifier.height(10.dp))
 
-                                // Action Buttons (Copy & Share)
+                                // Action Buttons (Play Audio, Copy & Share)
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.End,
+                                    horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    // Copy Button
-                                    TextButton(
-                                        onClick = {
-                                            val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-                                            val fullText = """
-${if (isBn) dua.titleBn else dua.titleEn}
-${dua.arabic}
-
-${if (isBn) "উচ্চারণ" else "Pronunciation"}: ${if (isBn) dua.pronunciationBn else dua.pronunciationEn}
-${if (isBn) "অর্থ" else "Meaning"}: ${if (isBn) dua.meaningBn else dua.meaningEn}
-
-${if (isBn) "ফজিলত" else "Virtue"}: ${if (isBn) dua.virtuesBn else dua.virtuesEn}
-${if (isBn) "রেফারেন্স" else "Reference"}: ${dua.reference}
-                                            """.trimIndent()
-                                            val clip = android.content.ClipData.newPlainText("Islamic Dua", fullText)
-                                            clipboard.setPrimaryClip(clip)
-                                            android.widget.Toast.makeText(
-                                                context,
-                                                if (isBn) "দোয়াটি কপি করা হয়েছে" else "Dua copied to clipboard",
-                                                android.widget.Toast.LENGTH_SHORT
-                                            ).show()
-                                        },
-                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
-                                        modifier = Modifier.height(32.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.ContentCopy,
-                                            contentDescription = "Copy",
-                                            tint = themeColors.buttonEqualBg,
-                                            modifier = Modifier.size(14.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text(
-                                            text = if (isBn) "কপি" else "Copy",
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = themeColors.buttonEqualBg
-                                        )
+                                    // Left side: Offline download status / progress
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        val progress = downloadProgress[dua.id]
+                                        val isDownloaded = downloadedDuaIds.contains(dua.id)
+                                        
+                                        if (progress != null && progress in 1..99) {
+                                            CircularProgressIndicator(
+                                                progress = { progress / 100f },
+                                                modifier = Modifier.size(14.dp),
+                                                strokeWidth = 2.dp,
+                                                color = themeColors.buttonEqualBg
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(
+                                                text = if (isBn) "ডাউনলোড হচ্ছে ($progress%)" else "Downloading ($progress%)",
+                                                fontSize = 10.5.sp,
+                                                color = themeColors.buttonEqualBg
+                                            )
+                                        } else if (isDownloaded || progress == 100) {
+                                            Icon(
+                                                imageVector = Icons.Default.CheckCircle,
+                                                contentDescription = "Offline Available",
+                                                tint = Color(0xFF10B981),
+                                                modifier = Modifier.size(14.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(
+                                                text = if (isBn) "ডাউনলোডেড" else "Downloaded",
+                                                fontSize = 10.5.sp,
+                                                color = Color(0xFF10B981),
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                        }
                                     }
 
-                                    Spacer(modifier = Modifier.width(6.dp))
+                                    // Right side: Play, Copy, Share buttons
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        // Play/Pause Button
+                                        TextButton(
+                                            onClick = {
+                                                namazViewModel.playOrPauseDuaAudio(dua.id, null, dua.arabic, dua.pronunciationBn)
+                                            },
+                                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                                            modifier = Modifier.height(32.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = if (isCurrentPlaying) Icons.Default.PauseCircle else Icons.Default.VolumeUp,
+                                                contentDescription = "Play",
+                                                tint = if (isCurrentPlaying) Color(0xFF10B981) else themeColors.buttonEqualBg,
+                                                modifier = Modifier.size(14.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(
+                                                text = if (isCurrentPlaying) (if (isBn) "থামুন" else "Pause") else (if (isBn) "শুনুন" else "Listen"),
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = if (isCurrentPlaying) Color(0xFF10B981) else themeColors.buttonEqualBg
+                                            )
+                                        }
 
-                                    // Share Button
-                                    TextButton(
-                                        onClick = {
-                                            val shareText = """
-${if (isBn) dua.titleBn else dua.titleEn}
-${dua.arabic}
-
-${if (isBn) "উচ্চারণ" else "Pronunciation"}: ${if (isBn) dua.pronunciationBn else dua.pronunciationEn}
-${if (isBn) "অর্থ" else "Meaning"}: ${if (isBn) dua.meaningBn else dua.meaningEn}
-
-${if (isBn) "ফজিলত" else "Virtue"}: ${if (isBn) dua.virtuesBn else dua.virtuesEn}
-${if (isBn) "রেফারেন্স" else "Reference"}: ${dua.reference}
-                                            """.trimIndent()
-                                            val sendIntent = android.content.Intent().apply {
-                                                action = android.content.Intent.ACTION_SEND
-                                                putExtra(android.content.Intent.EXTRA_TEXT, shareText)
-                                                type = "text/plain"
-                                            }
-                                            val shareIntent = android.content.Intent.createChooser(sendIntent, if (isBn) "দোয়া শেয়ার করুন" else "Share Dua")
-                                            context.startActivity(shareIntent)
-                                        },
-                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
-                                        modifier = Modifier.height(32.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Share,
-                                            contentDescription = "Share",
-                                            tint = themeColors.buttonEqualBg,
-                                            modifier = Modifier.size(14.dp)
-                                        )
                                         Spacer(modifier = Modifier.width(4.dp))
-                                        Text(
-                                            text = if (isBn) "শেয়ার" else "Share",
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = themeColors.buttonEqualBg
-                                        )
+
+                                        // Copy Button
+                                        TextButton(
+                                            onClick = {
+                                                val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                                                val fullText = """
+                                                    ${if (isBn) dua.titleBn else dua.titleEn}
+                                                    ${dua.arabic}
+                                                    
+                                                    ${if (isBn) "উচ্চারণ" else "Pronunciation"}: ${if (isBn) dua.pronunciationBn else dua.pronunciationEn}
+                                                    ${if (isBn) "অর্থ" else "Meaning"}: ${if (isBn) dua.meaningBn else dua.meaningEn}
+                                                    
+                                                    ${if (isBn) "ফজিলত" else "Virtue"}: ${if (isBn) dua.virtuesBn else dua.virtuesEn}
+                                                    ${if (isBn) "রেফারেন্স" else "Reference"}: ${dua.reference}
+                                                """.trimIndent()
+                                                val clip = android.content.ClipData.newPlainText("Islamic Dua", fullText)
+                                                clipboard.setPrimaryClip(clip)
+                                                android.widget.Toast.makeText(
+                                                    context,
+                                                    if (isBn) "দোয়াটি কপি করা হয়েছে" else "Dua copied to clipboard",
+                                                    android.widget.Toast.LENGTH_SHORT
+                                                ).show()
+                                            },
+                                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                                            modifier = Modifier.height(32.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.ContentCopy,
+                                                contentDescription = "Copy",
+                                                tint = themeColors.buttonEqualBg,
+                                                modifier = Modifier.size(14.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(
+                                                text = if (isBn) "কপি" else "Copy",
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = themeColors.buttonEqualBg
+                                            )
+                                        }
+
+                                        Spacer(modifier = Modifier.width(4.dp))
+
+                                        // Share Button
+                                        TextButton(
+                                            onClick = {
+                                                val shareText = """
+                                                    ${if (isBn) dua.titleBn else dua.titleEn}
+                                                    ${dua.arabic}
+                                                    
+                                                    ${if (isBn) "উচ্চারণ" else "Pronunciation"}: ${if (isBn) dua.pronunciationBn else dua.pronunciationEn}
+                                                    ${if (isBn) "অর্থ" else "Meaning"}: ${if (isBn) dua.meaningBn else dua.meaningEn}
+                                                    
+                                                    ${if (isBn) "ফজিলত" else "Virtue"}: ${if (isBn) dua.virtuesBn else dua.virtuesEn}
+                                                    ${if (isBn) "রেফারেন্স" else "Reference"}: ${dua.reference}
+                                                """.trimIndent()
+                                                val sendIntent = android.content.Intent().apply {
+                                                    action = android.content.Intent.ACTION_SEND
+                                                    putExtra(android.content.Intent.EXTRA_TEXT, shareText)
+                                                    type = "text/plain"
+                                                }
+                                                val shareIntent = android.content.Intent.createChooser(sendIntent, if (isBn) "দোয়া শেয়ার করুন" else "Share Dua")
+                                                context.startActivity(shareIntent)
+                                            },
+                                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                                            modifier = Modifier.height(32.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Share,
+                                                contentDescription = "Share",
+                                                tint = themeColors.buttonEqualBg,
+                                                modifier = Modifier.size(14.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(
+                                                text = if (isBn) "শেয়ার" else "Share",
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = themeColors.buttonEqualBg
+                                            )
+                                        }
                                     }
                                 }
                             }

@@ -1,5 +1,8 @@
 package com.example.ui.islamic
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.ui.namaz.NamazViewModel
+import kotlin.math.absoluteValue
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -902,6 +905,17 @@ private fun DuaActionCard(
     tts: TextToSpeech?,
     isBn: Boolean
 ) {
+    val namazViewModel: NamazViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    val playingDuaId by namazViewModel.playingDuaId.collectAsStateWithLifecycle()
+    val isPlaying by namazViewModel.isPlaying.collectAsStateWithLifecycle()
+    val downloadProgress by namazViewModel.downloadProgress.collectAsStateWithLifecycle()
+    val downloadedDuaIds by namazViewModel.downloadedDuaIds.collectAsStateWithLifecycle()
+
+    val duaId = "ramadan_dua_" + title.hashCode().absoluteValue.toString()
+    val isCurrentPlaying = playingDuaId == duaId && isPlaying
+    val progress = downloadProgress[duaId]
+    val isDownloaded = downloadedDuaIds.contains(duaId)
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
@@ -918,23 +932,43 @@ private fun DuaActionCard(
                     text = title,
                     fontSize = 14.5.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFFD97706)
+                    color = Color(0xFFD97706),
+                    modifier = Modifier.weight(1f)
                 )
 
-                Row {
-                    // TTS Audio Playback
-                    IconButton(
-                        onClick = {
-                            tts?.speak(arabic, TextToSpeech.QUEUE_FLUSH, null, "DUA_PLAY")
-                            Toast.makeText(context, if (isBn) "অডিও পাঠ হচ্ছে..." else "Playing audio...", Toast.LENGTH_SHORT).show()
-                        },
-                        modifier = Modifier.size(32.dp)
-                    ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Audio Playback via Free CDN / NamazViewModel
+                    if (progress != null && progress in 1..99) {
+                        CircularProgressIndicator(
+                            progress = { progress / 100f },
+                            modifier = Modifier
+                                .padding(horizontal = 6.dp)
+                                .size(18.dp),
+                            strokeWidth = 2.dp,
+                            color = Color(0xFFD97706)
+                        )
+                    } else {
+                        IconButton(
+                            onClick = {
+                                namazViewModel.playOrPauseDuaAudio(duaId, null, arabic, transliteration)
+                            },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (isCurrentPlaying) Icons.Default.PauseCircle else Icons.Default.VolumeUp,
+                                contentDescription = "Play Dua",
+                                tint = if (isCurrentPlaying) Color(0xFF10B981) else Color(0xFFD97706),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+
+                    if (isDownloaded || progress == 100) {
                         Icon(
-                            imageVector = Icons.Default.VolumeUp,
-                            contentDescription = "Play Dua",
-                            tint = Color(0xFFD97706),
-                            modifier = Modifier.size(18.dp)
+                            imageVector = Icons.Default.Check,
+                            contentDescription = "Downloaded Offline",
+                            tint = Color(0xFF10B981),
+                            modifier = Modifier.size(14.dp).padding(horizontal = 2.dp)
                         )
                     }
 

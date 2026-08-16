@@ -147,6 +147,7 @@ dependencies {
   implementation(libs.androidx.room.runtime)
   implementation(libs.androidx.media3.exoplayer)
   implementation(libs.androidx.media3.ui)
+  implementation("androidx.media:media:1.7.0")
   implementation(libs.androidx.work.runtime.ktx)
   implementation(libs.coil.compose)
   implementation(libs.converter.moshi)

@@ -68,9 +68,50 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleShortcutIntent(intent: Intent?) {
+        val navigateTo = intent?.getStringExtra("NAVIGATE_TO")
+        val notificationSurahNumber = intent?.getIntExtra("SURAH_NUMBER", -1) ?: -1
+        if (navigateTo == "HOLY_QURAN") {
+            viewModel.activeTab = 0
+            viewModel.openTool(com.example.data.model.ToolType.HOLY_QURAN)
+            if (notificationSurahNumber > 0) {
+                try {
+                    val quranViewModel = ViewModelProvider(this)[com.example.ui.quran.QuranViewModel::class.java]
+                    quranViewModel.selectSurahByNumber(notificationSurahNumber)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+            intent.removeExtra("NAVIGATE_TO")
+            intent.removeExtra("SURAH_NUMBER")
+            setIntent(Intent())
+            return
+        }
+
+        val targetTool = intent?.getStringExtra("target_tool")
+        val targetConverter = intent?.getStringExtra("target_converter")
         val targetTab = intent?.getStringExtra("target_tab")
-        android.util.Log.d("MainActivity", "targetTab: $targetTab")
-        if (targetTab != null) {
+
+        if (targetTool != null) {
+            try {
+                val toolType = com.example.data.model.ToolType.valueOf(targetTool)
+                viewModel.activeTab = 0
+                viewModel.openTool(toolType)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            intent.removeExtra("target_tool")
+            setIntent(Intent())
+        } else if (targetConverter != null) {
+            try {
+                val converterType = com.example.data.model.ConverterType.valueOf(targetConverter)
+                viewModel.activeTab = 1
+                viewModel.openConverter(converterType)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            intent.removeExtra("target_converter")
+            setIntent(Intent())
+        } else if (targetTab != null) {
             when (targetTab) {
                 "dashboard" -> {
                     viewModel.activeTab = 0

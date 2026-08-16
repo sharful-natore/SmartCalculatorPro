@@ -774,6 +774,37 @@ fun DashboardCategoriesView(
                                 }
                             }
                         }
+                        // Add to Home Screen Button
+                        Button(
+                            onClick = {
+                                if (action.isTool) {
+                                    val tool = com.example.data.model.ToolType.values().find { it.name == action.key }
+                                    if (tool != null) com.example.util.ShortcutUtils.pinToolShortcut(context, tool, isBn)
+                                } else {
+                                    val conv = com.example.data.model.ConverterType.values().find { it.name == action.key }
+                                    if (conv != null) com.example.util.ShortcutUtils.pinConverterShortcut(context, conv, isBn)
+                                }
+                                viewModel.dismissPendingFavoriteAction()
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = themeColors.buttonEqualBg,
+                                contentColor = Color.White
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Home,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = if (isBn) "📱 হোমস্ক্রিনে শর্টকাট যোগ করুন" else "📱 Add to Home Screen",
+                                fontSize = 13.5.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 },
                 confirmButton = {
@@ -781,7 +812,10 @@ fun DashboardCategoriesView(
                         onClick = {
                             viewModel.confirmPendingFavoriteAction()
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg)
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isAdding) themeColors.buttonEqualBg.copy(alpha = 0.15f) else Color.Red.copy(alpha = 0.15f),
+                            contentColor = if (isAdding) themeColors.buttonEqualBg else Color.Red
+                        )
                     ) {
                         Text(
                             text = if (isBn) {
@@ -789,7 +823,7 @@ fun DashboardCategoriesView(
                             } else {
                                 if (isAdding) "⭐ Add Favorite" else "🗑️ Remove Favorite"
                             },
-                            color = Color.White
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 },
@@ -1777,6 +1811,8 @@ fun ToolGridCardItem(
     onClick: () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
+    val cardContext = LocalContext.current
+    val isBn = viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI
     val isFavorite = viewModel.favoriteTools.contains(toolType.name)
     val isPinned = viewModel.isToolPinnedInTop4(toolType)
     ElevatedCard(
@@ -2612,11 +2648,11 @@ private fun getToolInfoItems(toolType: ToolType, isBn: Boolean): List<Pair<Strin
         }
         ToolType.NAMAZ_EDUCATION -> if (isBn) {
             listOf(
-                "১. পূর্ণাঙ্গ নামাজ ও অজু শিক্ষা" to "অজু, তাহারাত, ৫ ওয়াক্ত নামাজ, ওয়াক্তভিত্তিক রাকাতের বিন্যাস, জানাজা, ঈদ ও নফল নামাজের চিত্রসহ বিস্তারিত গাইড।"
+                "১. পূর্ণাঙ্গ নামাজ ও অজু শিক্ষা" to "অজু, তাহারাত, ৫ ওয়াক্ত নামাজ, ওয়াক্তভিত্তিক রাকাতের বিন্যাস, জানাজা, ঈদ ও নফল নামাজের বিস্তারিত সহিহ গাইড।"
             )
         } else {
             listOf(
-                "1. Complete Namaz & Wudu Guide" to "Step-by-step visual guide for Wudu, 5 daily prayers, Rakat breakdown, Janazah, Eid, and optional prayers with Arabic audio recitations."
+                "1. Complete Namaz & Wudu Guide" to "Step-by-step guide for Wudu, 5 daily prayers, Rakat breakdown, Janazah, Eid, and optional prayers with Arabic audio recitations."
             )
         }
         ToolType.MARKET_LIST -> if (isBn) {
@@ -2981,6 +3017,7 @@ fun DashboardSearchResultsView(
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             rowTools.forEach { tool ->
+                                val toolCtx = LocalContext.current
                                 val isFavorite = viewModel.favoriteTools.contains(tool.name)
                                 val interactionSource = remember { MutableInteractionSource() }
 
@@ -2996,7 +3033,7 @@ fun DashboardSearchResultsView(
                                             indication = androidx.compose.foundation.LocalIndication.current,
                                             onClick = { viewModel.openTool(tool) },
                                             onLongClick = {
-                                                viewModel.requestToggleFavoriteTool(tool)
+                                                com.example.util.ShortcutUtils.pinToolShortcut(toolCtx, tool, isBn)
                                             }
                                         ),
                                     shape = RoundedCornerShape(16.dp),
@@ -3098,6 +3135,7 @@ fun DashboardSearchResultsView(
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             rowConverters.forEach { conv ->
+                                val convCtx = LocalContext.current
                                 val isFavorite = viewModel.favoriteConverters.contains(conv.name)
                                 val interactionSource = remember { MutableInteractionSource() }
 
@@ -3113,7 +3151,7 @@ fun DashboardSearchResultsView(
                                             indication = androidx.compose.foundation.LocalIndication.current,
                                             onClick = { viewModel.openConverter(conv) },
                                             onLongClick = {
-                                                viewModel.requestToggleFavoriteConverter(conv)
+                                                com.example.util.ShortcutUtils.pinConverterShortcut(convCtx, conv, isBn)
                                             }
                                         ),
                                     shape = RoundedCornerShape(16.dp),

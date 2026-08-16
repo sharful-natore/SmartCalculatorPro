@@ -19,9 +19,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -31,6 +33,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Female
@@ -42,6 +45,7 @@ import androidx.compose.material.icons.filled.Mosque
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.WaterDrop
+import androidx.compose.material.icons.filled.ZoomIn
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -99,7 +103,7 @@ fun NamazEducationScreen(
         Triple(2, "বিশেষ নামাজ", Icons.Default.AutoAwesome),
         Triple(3, "সূরা ও দোয়া", Icons.Default.MenuBook),
         Triple(4, "আহকাম ও সাহু", Icons.Default.Warning),
-        Triple(5, "চিত্রসহ গাইড", Icons.Default.FormatListNumbered)
+        Triple(5, "অঙ্গভঙ্গি ও নিয়ম", Icons.Default.FormatListNumbered)
     )
 
     Scaffold(
@@ -239,6 +243,8 @@ fun WuduAndTaharatSection(
     var activeSubCategory by remember { mutableStateOf("wudu_steps") }
     val playingDuaId by viewModel.playingDuaId.collectAsState()
     val isPlaying by viewModel.isPlaying.collectAsState()
+    val downloadProgress by viewModel.downloadProgress.collectAsState()
+    val downloadedDuaIds by viewModel.downloadedDuaIds.collectAsState()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -254,7 +260,7 @@ fun WuduAndTaharatSection(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 listOf(
-                    "wudu_steps" to "অজুর দোয়া ও চিত্র",
+                    "wudu_steps" to "অজুর দোয়া ও ধাপসমূহ",
                     "wudu_farz_sunnah" to "ফরজ, সুন্নত ও মুস্তাহাব",
                     "breakers" to "অজু ভঙ্গের কারণ",
                     "ghusl" to "গোসলের ফরজ ও নিয়ম",
@@ -282,6 +288,41 @@ fun WuduAndTaharatSection(
         when (activeSubCategory) {
             "wudu_steps" -> {
                 item {
+                    // Wudu Guide Header Text Card
+                    Card(
+                        shape = RoundedCornerShape(18.dp),
+                        colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
+                        border = BorderStroke(1.dp, accentColor.copy(alpha = 0.35f)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.WaterDrop,
+                                    contentDescription = null,
+                                    tint = accentColor,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "সহিহ সুন্নাত অনুযায়ী অজুর নিয়ম ও পদ্ধতি",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.displayText
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "পবিত্রতা অর্জনের জন্য অজুর ৪টি ফরজ ও ১৩টি সুন্নাত অনুযায়ী প্রতিটি অঙ্গ ধারাবাহিকভাবে ধৌত করা আবশ্যক। নিচে অজুর মাসনূন দোয়া ও স্পষ্ট ধাপসমূহ বিস্তৃত বর্ণনা ও অডিওসহ দেওয়া হলো:",
+                                fontSize = 12.5.sp,
+                                color = themeColors.displayText.copy(alpha = 0.85f),
+                                lineHeight = 18.5.sp
+                            )
+                        }
+                    }
+                }
+
+                item {
                     Text(
                         text = "অজুর শুরুতে ও শেষে পড়ার মাসনূন দোয়া:",
                         fontSize = 15.5.sp,
@@ -290,19 +331,27 @@ fun WuduAndTaharatSection(
                     )
                 }
                 items(NamazDataRepository.wuduDuas) { wuduItem ->
+                    val duaId = "wudu_dua_${wuduItem.stepNumber}"
+                    val progress = downloadProgress[duaId] ?: if (downloadedDuaIds.contains(duaId)) 100 else null
                     PrayerStepCard(
                         step = wuduItem,
                         isFemaleMode = isFemaleMode,
                         themeColors = themeColors,
-                        isPlaying = playingDuaId == "wudu_dua_${wuduItem.stepNumber}" && isPlaying,
+                        isPlaying = playingDuaId == duaId && isPlaying,
                         onAudioClick = {
                             if (!wuduItem.arabicText.isNullOrEmpty()) {
                                 viewModel.playOrPauseDuaAudio(
-                                    "wudu_dua_${wuduItem.stepNumber}",
+                                    duaId,
                                     wuduItem.audioUrl,
                                     wuduItem.arabicText,
                                     wuduItem.banglaPronunciation ?: ""
                                 )
+                            }
+                        },
+                        downloadProgress = progress,
+                        onDownloadClick = {
+                            if (!wuduItem.arabicText.isNullOrEmpty()) {
+                                viewModel.downloadDuaAudio(duaId, wuduItem.arabicText)
                             }
                         }
                     )
@@ -429,19 +478,27 @@ fun WuduAndTaharatSection(
                     Text("তায়াম্মুম আদায়ের ধারাবাহিক পদ্ধতি:", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
                 }
                 items(NamazDataRepository.tayammumSteps) { step ->
+                    val duaId = "tayammum_${step.stepNumber}"
+                    val progress = downloadProgress[duaId] ?: if (downloadedDuaIds.contains(duaId)) 100 else null
                     PrayerStepCard(
                         step = step,
                         isFemaleMode = isFemaleMode,
                         themeColors = themeColors,
-                        isPlaying = playingDuaId == "tayammum_${step.stepNumber}" && isPlaying,
+                        isPlaying = playingDuaId == duaId && isPlaying,
                         onAudioClick = {
                             if (!step.arabicText.isNullOrEmpty()) {
                                 viewModel.playOrPauseDuaAudio(
-                                    "tayammum_${step.stepNumber}",
+                                    duaId,
                                     step.audioUrl,
                                     step.arabicText,
                                     step.banglaPronunciation ?: ""
                                 )
+                            }
+                        },
+                        downloadProgress = progress,
+                        onDownloadClick = {
+                            if (!step.arabicText.isNullOrEmpty()) {
+                                viewModel.downloadDuaAudio(duaId, step.arabicText)
                             }
                         }
                     )
@@ -466,6 +523,8 @@ fun DailyPrayersSection(
     val selectedWaqt = NamazDataRepository.dailyWaqts.find { it.id == selectedWaqtId } ?: NamazDataRepository.dailyWaqts.first()
     val playingDuaId by viewModel.playingDuaId.collectAsState()
     val isPlaying by viewModel.isPlaying.collectAsState()
+    val downloadProgress by viewModel.downloadProgress.collectAsState()
+    val downloadedDuaIds by viewModel.downloadedDuaIds.collectAsState()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -676,19 +735,27 @@ fun DailyPrayersSection(
         }
 
         items(activeSteps) { step ->
+            val duaId = "waqt_${selectedWaqt.id}_${selectedRakatType}_${step.stepNumber}"
+            val progress = downloadProgress[duaId] ?: if (downloadedDuaIds.contains(duaId)) 100 else null
             PrayerStepCard(
                 step = step,
                 isFemaleMode = isFemaleMode,
                 themeColors = themeColors,
-                isPlaying = playingDuaId == "waqt_${selectedWaqt.id}_${selectedRakatType}_${step.stepNumber}" && isPlaying,
+                isPlaying = playingDuaId == duaId && isPlaying,
                 onAudioClick = {
                     if (!step.arabicText.isNullOrEmpty()) {
                         viewModel.playOrPauseDuaAudio(
-                            "waqt_${selectedWaqt.id}_${selectedRakatType}_${step.stepNumber}",
+                            duaId,
                             step.audioUrl,
                             step.arabicText,
                             step.banglaPronunciation ?: ""
                         )
+                    }
+                },
+                downloadProgress = progress,
+                onDownloadClick = {
+                    if (!step.arabicText.isNullOrEmpty()) {
+                        viewModel.downloadDuaAudio(duaId, step.arabicText)
                     }
                 }
             )
@@ -727,6 +794,8 @@ fun SpecialPrayersSection(
 ) {
     val playingDuaId by viewModel.playingDuaId.collectAsState()
     val isPlaying by viewModel.isPlaying.collectAsState()
+    val downloadProgress by viewModel.downloadProgress.collectAsState()
+    val downloadedDuaIds by viewModel.downloadedDuaIds.collectAsState()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -827,19 +896,27 @@ fun SpecialPrayersSection(
                             }
 
                             rule.steps.forEach { step ->
+                                val duaId = "special_${rule.id}_${step.stepNumber}"
+                                val progress = downloadProgress[duaId] ?: if (downloadedDuaIds.contains(duaId)) 100 else null
                                 PrayerStepCard(
                                     step = step,
                                     isFemaleMode = isFemaleMode,
                                     themeColors = themeColors,
-                                    isPlaying = playingDuaId == "special_${rule.id}_${step.stepNumber}" && isPlaying,
+                                    isPlaying = playingDuaId == duaId && isPlaying,
                                     onAudioClick = {
                                         if (!step.arabicText.isNullOrEmpty()) {
                                             viewModel.playOrPauseDuaAudio(
-                                                "special_${rule.id}_${step.stepNumber}",
+                                                duaId,
                                                 step.audioUrl,
                                                 step.arabicText,
                                                 step.banglaPronunciation ?: ""
                                             )
+                                        }
+                                    },
+                                    downloadProgress = progress,
+                                    onDownloadClick = {
+                                        if (!step.arabicText.isNullOrEmpty()) {
+                                            viewModel.downloadDuaAudio(duaId, step.arabicText)
                                         }
                                     }
                                 )
@@ -866,6 +943,8 @@ fun AllDuasAndSurahsSection(
     viewModel: NamazViewModel
 ) {
     var selectedCategoryFilter by remember { mutableStateOf("All") }
+    val downloadProgress by viewModel.downloadProgress.collectAsState()
+    val downloadedDuaIds by viewModel.downloadedDuaIds.collectAsState()
 
     val filteredList = NamazDataRepository.allDuasAndNiyyat.filter { item ->
         val matchesCategory = (selectedCategoryFilter == "All" || item.category == selectedCategoryFilter)
@@ -936,6 +1015,7 @@ fun AllDuasAndSurahsSection(
 
         items(filteredList) { dua ->
             val isCurrentPlaying = (playingDuaId == dua.id && isPlaying)
+            val progress = downloadProgress[dua.id] ?: if (downloadedDuaIds.contains(dua.id)) 100 else null
             val prayerStep = PrayerStep(
                 stepNumber = 0,
                 titleBn = dua.titleBn,
@@ -954,6 +1034,10 @@ fun AllDuasAndSurahsSection(
                 isPlaying = isCurrentPlaying,
                 onAudioClick = {
                     viewModel.playOrPauseDuaAudio(dua.id, dua.audioUrl, dua.arabicText, dua.banglaPronunciation)
+                },
+                downloadProgress = progress,
+                onDownloadClick = {
+                    viewModel.downloadDuaAudio(dua.id, dua.arabicText)
                 }
             )
         }
@@ -1092,7 +1176,7 @@ fun FiqhAndSahwSection(
 }
 
 // ==========================================
-// 6. TAB 5: VISUAL ILLUSTRATOR (চিত্রসহ গাইড)
+// 6. TAB 5: PHYSICAL POSITIONS & RULES (অঙ্গভঙ্গি ও নিয়ম)
 // ==========================================
 @Composable
 fun VisualIllustratorSection(
@@ -1101,6 +1185,8 @@ fun VisualIllustratorSection(
     accentColor: Color,
     viewModel: NamazViewModel
 ) {
+    val currentGenderLabel = if (isFemaleMode) "নারীদের নামাজ আদায়ের শরীয়াহ সম্মত বিশুদ্ধ গাইড" else "পুরুষদের সুন্নাত তরীকায় নামাজ আদায়ের বিশুদ্ধ গাইড"
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
@@ -1109,29 +1195,65 @@ fun VisualIllustratorSection(
         item {
             Card(
                 shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
+                border = BorderStroke(1.dp, accentColor.copy(alpha = 0.35f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = if (isFemaleMode) Icons.Default.Female else Icons.Default.Male,
+                            contentDescription = null,
+                            tint = accentColor,
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = currentGenderLabel,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = themeColors.displayText
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = if (isFemaleMode)
+                            "নারীদের নামাজের ক্ষেত্রে সতোর পূর্ণ আবৃত রাখা, তাকবীরে তাহরীমায় কাঁধ পর্যন্ত হাত তোলা, কিয়ামে বুকে হাত বাঁধা, রুকুতে স্বল্প অবনত হওয়া এবং সিজদায় উরু পেটের সাথে মিলিয়ে মাটিতে সংকুচিত হয়ে বসার মাসআলাসমূহ অত্যন্ত নিখুঁত ও সহজভাবে নিচে বর্ণনা করা হয়েছে।"
+                        else
+                            "পুরুষদের জন্য সুন্নাত নিয়মে তাকবীরে তাহরীমায় কানের লতি পর্যন্ত হাত উঠানো, নাভির নিচে হাত বাঁধা, রুকুতে পিঠ সোজা রাখা এবং সিজদায় বাহু ফাঁক রেখে ক্বিয়াম থেকে সালাম পর্যন্ত প্রতিটির নিখুঁত বিবরণ নিচে বিস্তারিত দেওয়া হলো।",
+                        fontSize = 12.5.sp,
+                        color = themeColors.displayText.copy(alpha = 0.85f),
+                        lineHeight = 18.5.sp
+                    )
+                }
+            }
+        }
+
+        item {
+            Card(
+                shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = accentColor.copy(alpha = 0.12f)
                 ),
                 border = BorderStroke(1.dp, accentColor.copy(alpha = 0.3f)),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(modifier = Modifier.padding(14.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Info, contentDescription = null, tint = accentColor)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "সচিত্র নামাজ আদায় ও শারীরিক অবস্থানসমূহ",
-                            fontSize = 16.sp,
+                            text = "ধাপভিত্তিক সঠিক অঙ্গভঙ্গি ও মাসআলা",
+                            fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             color = accentColor
                         )
                     }
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "নিচে কিয়াম, তাকবীর, রুকু, কওমা, সিজদা, বৈঠক ও সালামের সঠিক শারীরিক রূপ চিত্রায়িত করা হলো। উপরে ডানপাশের সুইচ দিয়ে পুরুষ ও নারীদের অবস্থানের পার্থক্য দেখতে পারেন।",
-                        fontSize = 12.5.sp,
-                        color = themeColors.displayText.copy(alpha = 0.85f),
-                        lineHeight = 18.sp
+                        text = "নিচে নামাজের প্রতিটি ধাপের সঠিক অঙ্গভঙ্গি, শারীরিক অবস্থান, তাসবীহ ও দোয়া বিস্তৃতভাবে দেওয়া হলো:",
+                        fontSize = 12.sp,
+                        color = themeColors.displayText.copy(alpha = 0.85f)
                     )
                 }
             }

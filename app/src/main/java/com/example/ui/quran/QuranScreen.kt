@@ -73,52 +73,35 @@ fun QuranScreen(
                         .fillMaxWidth()
                         .padding(bottom = 8.dp)
                 ) {
-                    // Header Banner with Gradient
-                    Box(
+                    // Minimal & Theme-Matching Header
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(
-                                Brush.horizontalGradient(
-                                    colors = listOf(cyanDark, cyanPrimary)
-                                )
-                            )
-                            .padding(horizontal = 12.dp, vertical = 14.dp)
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            IconButton(onClick = onBackClick) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                    contentDescription = "Back",
-                                    tint = Color.White
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "পবিত্র আল-কুরআন",
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White
-                                )
-                                Text(
-                                    text = "Holy Quran (Audio & Translation)",
-                                    fontSize = 12.sp,
-                                    color = Color.White.copy(alpha = 0.85f)
-                                )
-                            }
+                        IconButton(onClick = onBackClick) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = themeColors.displayText
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "পবিত্র আল-কুরআন",
+                                fontSize = 18.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.displayText
+                            )
+                            Text(
+                                text = "Holy Quran (Audio & Translation)",
+                                fontSize = 11.5.sp,
+                                color = cyanAccent
+                            )
                         }
                     }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Tajweed Legend Bar
-                    TajweedLegendBar(
-                        themeColors = themeColors,
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    )
 
                     Spacer(modifier = Modifier.height(8.dp))
 

@@ -551,6 +551,7 @@ fun SmartConverterCategoriesView(
                                                             viewModel = viewModel,
                                                             themeColors = themeColors,
                                                             modifier = Modifier.fillMaxHeight(),
+                                                            showPinIcon = !isOverviewMode,
                                                             onClick = { viewModel.openConverter(type) }
                                                         )
                                                     }
@@ -681,9 +682,12 @@ fun ConverterCardItem(
     viewModel: CalculatorViewModel,
     themeColors: CalculatorThemeColors,
     modifier: Modifier = Modifier,
+    showPinIcon: Boolean = true,
     onClick: () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
+    val cardContext = androidx.compose.ui.platform.LocalContext.current
+    val isBn = viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI
     val isFavorite = viewModel.favoriteConverters.contains(converterType.name)
     val isPinned = viewModel.isConverterPinnedInTop4(converterType)
     ElevatedCard(
@@ -697,7 +701,7 @@ fun ConverterCardItem(
                 indication = androidx.compose.foundation.LocalIndication.current,
                 onClick = onClick,
                 onLongClick = {
-                    viewModel.requestToggleFavoriteConverter(converterType)
+                    com.example.util.ShortcutUtils.pinConverterShortcut(cardContext, converterType, isBn)
                 }
             ),
         shape = RoundedCornerShape(16.dp),
@@ -734,16 +738,18 @@ fun ConverterCardItem(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
-                        IconButton(
-                            onClick = { viewModel.requestToggleFavoriteConverter(converterType) },
-                            modifier = Modifier.size(28.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.PushPin,
-                                contentDescription = "Pin Position",
-                                tint = if (isPinned) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.35f),
-                                modifier = Modifier.size(18.dp)
-                            )
+                        if (showPinIcon) {
+                            IconButton(
+                                onClick = { viewModel.requestToggleFavoriteConverter(converterType) },
+                                modifier = Modifier.size(28.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.PushPin,
+                                    contentDescription = "Pin Position",
+                                    tint = if (isPinned) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.35f),
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
                         }
                         IconButton(
                             onClick = { viewModel.toggleFavoriteConverter(converterType.name) },

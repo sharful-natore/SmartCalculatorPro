@@ -308,13 +308,22 @@ class QuranAudioPlayer private constructor(private val context: Context) {
                 context, 4, stopIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
 
+            val mediaStyle = androidx.media.app.NotificationCompat.MediaStyle()
+                .setShowActionsInCompactView(0, 1, 2)
+                .setShowCancelButton(true)
+                .setCancelButtonIntent(stopPending)
+
             val notification = NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.mipmap.ic_launcher)
-                .setContentTitle("$surahName • আয়াত $currentAyah/$total")
-                .setContentText("ক্বারী: মিশারী রশিদ আলাফাসী (Mishary Alafasy)")
+                .setContentTitle(surahName)
+                .setContentText("আয়াত $currentAyah/$total • ক্বারী: মিশারী রশিদ আলাফাসী")
+                .setSubText("সূরা $surahNum")
                 .setContentIntent(contentPendingIntent)
                 .setOngoing(isPlay)
                 .setOnlyAlertOnce(true)
+                .setShowWhen(false)
+                .setCategory(NotificationCompat.CATEGORY_TRANSPORT)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .addAction(android.R.drawable.ic_media_previous, "Previous", prevPending)
                 .addAction(
                     if (isPlay) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play,
@@ -323,10 +332,7 @@ class QuranAudioPlayer private constructor(private val context: Context) {
                 )
                 .addAction(android.R.drawable.ic_media_next, "Next", nextPending)
                 .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Close", stopPending)
-                .setStyle(
-                    NotificationCompat.BigTextStyle()
-                        .bigText("ক্বারী: মিশারী রশিদ আলাফাসী\nসূরা $surahName • আয়াত $currentAyah/$total")
-                )
+                .setStyle(mediaStyle)
                 .build()
 
             notificationManager.notify(NOTIFICATION_ID, notification)

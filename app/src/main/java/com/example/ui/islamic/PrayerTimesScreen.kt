@@ -588,14 +588,15 @@ fun ModernPrayerTimesCard(
                         }
                     )
                 ) {
-                    Row(
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 13.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                            .padding(horizontal = 14.dp, vertical = 10.dp)
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Box(
                                 modifier = Modifier
                                     .size(38.dp)
@@ -625,59 +626,62 @@ fun ModernPrayerTimesCard(
 
                             Spacer(modifier = Modifier.width(12.dp))
 
-                            Column {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
+                            Column(
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Text(
+                                            text = if (isBn) item.nameBn else item.nameEn,
+                                            fontSize = 14.5.sp,
+                                            fontWeight = if (isItemActive || item.isForbidden) FontWeight.Bold else FontWeight.SemiBold,
+                                            color = when {
+                                                item.isForbidden -> Color(0xFFDC2626)
+                                                isItemActive -> Color(0xFF0284C7)
+                                                else -> themeColors.displayText
+                                            }
+                                        )
+                                        if (isItemActive) {
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Surface(
+                                                shape = RoundedCornerShape(8.dp),
+                                                color = if (item.isForbidden) Color(0xFFEF4444) else Color(0xFF0284C7)
+                                            ) {
+                                                Text(
+                                                    text = if (isBn) "সক্রিয়" else "Active",
+                                                    fontSize = 9.5.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Color.White,
+                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.width(4.dp))
+
                                     Text(
-                                        text = if (isBn) item.nameBn else item.nameEn,
-                                        fontSize = 14.5.sp,
-                                        fontWeight = if (isItemActive || item.isForbidden) FontWeight.Bold else FontWeight.SemiBold,
+                                        text = item.timeRangeStr,
+                                        fontSize = 13.5.sp,
+                                        fontWeight = FontWeight.Bold,
                                         color = when {
                                             item.isForbidden -> Color(0xFFDC2626)
                                             isItemActive -> Color(0xFF0284C7)
                                             else -> themeColors.displayText
                                         }
                                     )
-                                    if (isItemActive) {
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Surface(
-                                            shape = RoundedCornerShape(8.dp),
-                                            color = if (item.isForbidden) Color(0xFFEF4444) else Color(0xFF0284C7)
-                                        ) {
-                                            Text(
-                                                text = if (isBn) "সক্রিয়" else "Active",
-                                                fontSize = 10.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = Color.White,
-                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                            )
-                                        }
-                                    }
-                                }
-
-                                if (item.noteBn != null) {
-                                    Text(
-                                        text = if (isBn) item.noteBn else (item.noteEn ?: ""),
-                                        fontSize = 11.sp,
-                                        color = if (item.isForbidden) Color(0xFFDC2626).copy(alpha = 0.8f) else themeColors.displayText.copy(alpha = 0.5f),
-                                        modifier = Modifier.padding(top = 2.dp)
-                                    )
                                 }
                             }
-                        }
-
-                        Column(horizontalAlignment = Alignment.End) {
-                            Text(
-                                text = item.timeRangeStr,
-                                fontSize = 13.5.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = when {
-                                    item.isForbidden -> Color(0xFFDC2626)
-                                    isItemActive -> Color(0xFF0284C7)
-                                    else -> themeColors.displayText
-                                }
-                            )
 
                             if (!item.isForbidden && !item.isNafl) {
+                                Spacer(modifier = Modifier.width(6.dp))
                                 IconButton(
                                     onClick = {
                                         val newAlerts = alertsMap.toMutableMap()
@@ -690,7 +694,7 @@ fun ModernPrayerTimesCard(
                                             Toast.LENGTH_SHORT
                                         ).show()
                                     },
-                                    modifier = Modifier.size(24.dp).padding(top = 2.dp)
+                                    modifier = Modifier.size(24.dp)
                                 ) {
                                     Icon(
                                         imageVector = if (hasAlert) Icons.Default.NotificationsActive else Icons.Default.NotificationsNone,
@@ -700,6 +704,18 @@ fun ModernPrayerTimesCard(
                                     )
                                 }
                             }
+                        }
+
+                        if (item.noteBn != null) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = if (isBn) item.noteBn else (item.noteEn ?: ""),
+                                fontSize = 11.sp,
+                                color = if (item.isForbidden) Color(0xFFDC2626).copy(alpha = 0.8f) else themeColors.displayText.copy(alpha = 0.5f),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = 4.dp)
+                            )
                         }
                     }
                 }

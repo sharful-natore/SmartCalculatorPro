@@ -3,13 +3,21 @@ package com.example.ui.namaz
 import android.app.Application
 import android.speech.tts.TextToSpeech
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import java.io.File
+import java.io.FileOutputStream
+import java.net.URLEncoder
 import java.util.Locale
 
 class NamazViewModel(application: Application) : AndroidViewModel(application) {
@@ -45,6 +53,15 @@ class NamazViewModel(application: Application) : AndroidViewModel(application) {
     private val _isPlaying = MutableStateFlow(false)
     val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
 
+    // Downloaded Duas Tracking
+    private val _downloadedDuaIds = MutableStateFlow<Set<String>>(emptySet())
+    val downloadedDuaIds: StateFlow<Set<String>> = _downloadedDuaIds.asStateFlow()
+
+    // Download Progress Tracking: Maps duaId -> progress percentage (1..100)
+    private val _downloadProgress = MutableStateFlow<Map<String, Int>>(emptyMap())
+    val downloadProgress: StateFlow<Map<String, Int>> = _downloadProgress.asStateFlow()
+
+    private val httpClient = OkHttpClient.Builder().build()
     private var exoPlayer: ExoPlayer? = null
     private var textToSpeech: TextToSpeech? = null
     private var isTtsInitialized = false
@@ -52,6 +69,7 @@ class NamazViewModel(application: Application) : AndroidViewModel(application) {
     init {
         initExoPlayer()
         initTts()
+        refreshDownloadedDuas()
     }
 
     private fun initExoPlayer() {
@@ -115,6 +133,114 @@ class NamazViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun getLocalAudioFile(duaId: String): File {
+        val dir = getApplication<Application>().getExternalFilesDir("namaz_audio") ?: getApplication<Application>().filesDir
+        if (!dir.exists()) {
+            dir.mkdirs()
+        }
+        return File(dir, "${duaId}.mp3")
+    }
+
+    fun refreshDownloadedDuas() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val dir = getApplication<Application>().getExternalFilesDir("namaz_audio") ?: getApplication<Application>().filesDir
+                val files = dir.listFiles()
+                val downloadedSet = files?.filter { it.isFile && it.length() > 0 }
+                    ?.map { it.name.substringBeforeLast(".") }
+                    ?.toSet() ?: emptySet()
+                _downloadedDuaIds.value = downloadedSet
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun getAudioUrlForDua(id: String, arabicText: String): String {
+        val cleanId = id.trim().lowercase()
+        val cleanText = arabicText.replace("\n", " ").replace("۝", " ").trim()
+        
+        return when {
+            cleanId.contains("fatiha") || cleanText.contains("الحمد لله رب العالمين") -> {
+                "https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/1.mp3"
+            }
+            cleanId.contains("ikhlas") || cleanText.contains("قل هو الله أحد") -> {
+                "https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/112.mp3"
+            }
+            cleanId.contains("falaq") || cleanText.contains("قل أعوذ برب الفلق") -> {
+                "https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/113.mp3"
+            }
+            cleanId.contains("nas") || cleanText.contains("قل أعوذ برب الناس") -> {
+                "https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/114.mp3"
+            }
+            cleanId.contains("kafirun") || cleanText.contains("قل يا أيها الكافرون") -> {
+                "https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/109.mp3"
+            }
+            cleanId.contains("kawthar") || cleanText.contains("إنا أعطيناك الكوثر") -> {
+                "https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/108.mp3"
+            }
+            cleanId.contains("kursi") || cleanText.contains("الله لا إله إلا هو الحي القيوم") -> {
+                "https://cdn.islamic.network/quran/audio/128/ar.alafasy/262.mp3"
+            }
+            cleanText.contains("سبحان ربي العظيم") -> {
+                "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ar&q=" + URLEncoder.encode("سُبْحَانَ رَبِّيَ الْعَظِيمِ", "UTF-8")
+            }
+            cleanText.contains("سبحان ربي الأعلى") -> {
+                "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ar&q=" + URLEncoder.encode("سُبْحَانَ رَبِّيَ الْأَعْلَىٰ", "UTF-8")
+            }
+            cleanText.contains("سمع الله لمن حمده") -> {
+                "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ar&q=" + URLEncoder.encode("سَمِعَ اللَّهُ لِمَنْ حَمِدَهُ رَبَّنَا لَكَ الْحَمْدُ", "UTF-8")
+            }
+            cleanText.contains("السلام عليكم ورحمة الله") -> {
+                "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ar&q=" + URLEncoder.encode("السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ اللَّهِ", "UTF-8")
+            }
+            else -> {
+                val encoded = URLEncoder.encode(cleanText, "UTF-8")
+                "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ar&q=$encoded"
+            }
+        }
+    }
+
+    fun downloadDuaAudio(duaId: String, arabicText: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            _downloadProgress.update { it + (duaId to 1) }
+            try {
+                val url = getAudioUrlForDua(duaId, arabicText)
+                val targetFile = getLocalAudioFile(duaId)
+                val request = Request.Builder().url(url).build()
+                val response = httpClient.newCall(request).execute()
+                val body = response.body
+                if (response.isSuccessful && body != null) {
+                    val totalBytes = body.contentLength()
+                    val inputStream = body.byteStream()
+                    val outputStream = FileOutputStream(targetFile)
+                    val buffer = ByteArray(8192)
+                    var bytesRead: Int
+                    var downloadedBytes = 0L
+                    while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                        outputStream.write(buffer, 0, bytesRead)
+                        downloadedBytes += bytesRead
+                        if (totalBytes > 0) {
+                            val progress = ((downloadedBytes.toFloat() / totalBytes) * 100).toInt()
+                            _downloadProgress.update { it + (duaId to progress.coerceIn(1, 99)) }
+                        }
+                    }
+                    outputStream.flush()
+                    outputStream.close()
+                    inputStream.close()
+                    
+                    _downloadProgress.update { it + (duaId to 100) }
+                    _downloadedDuaIds.update { it + duaId }
+                } else {
+                    _downloadProgress.update { it + (duaId to -1) }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _downloadProgress.update { it + (duaId to -1) }
+            }
+        }
+    }
+
     fun playOrPauseDuaAudio(duaId: String, audioUrl: String?, arabicText: String, banglaPronunciation: String) {
         if (_playingDuaId.value == duaId && _isPlaying.value) {
             pauseAudio()
@@ -124,28 +250,42 @@ class NamazViewModel(application: Application) : AndroidViewModel(application) {
         stopAudio()
         _playingDuaId.value = duaId
 
-        if (!audioUrl.isNullOrEmpty()) {
+        val localFile = getLocalAudioFile(duaId)
+        if (localFile.exists() && localFile.length() > 0) {
             try {
                 exoPlayer?.let { player ->
-                    player.setMediaItem(MediaItem.fromUri(audioUrl))
+                    player.setMediaItem(MediaItem.fromUri(android.net.Uri.fromFile(localFile)))
                     player.prepare()
                     player.play()
                     _isPlaying.value = true
-                    return
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-        }
-
-        // Fallback to TTS recitation if URL is empty or fails
-        if (isTtsInitialized && textToSpeech != null) {
+        } else {
+            val remoteUrl = getAudioUrlForDua(duaId, arabicText)
             try {
-                textToSpeech?.setLanguage(Locale("ar"))
-                textToSpeech?.speak(arabicText, TextToSpeech.QUEUE_FLUSH, null, duaId)
-                _isPlaying.value = true
+                exoPlayer?.let { player ->
+                    player.setMediaItem(MediaItem.fromUri(android.net.Uri.parse(remoteUrl)))
+                    player.prepare()
+                    player.play()
+                    _isPlaying.value = true
+                }
+                // Auto-download for offline access next time!
+                downloadDuaAudio(duaId, arabicText)
             } catch (e: Exception) {
                 e.printStackTrace()
+                
+                // Fallback to TTS recitation if ExoPlayer stream fails
+                if (isTtsInitialized && textToSpeech != null) {
+                    try {
+                        textToSpeech?.setLanguage(Locale("ar"))
+                        textToSpeech?.speak(arabicText, TextToSpeech.QUEUE_FLUSH, null, duaId)
+                        _isPlaying.value = true
+                    } catch (ex: Exception) {
+                        ex.printStackTrace()
+                    }
+                }
             }
         }
     }

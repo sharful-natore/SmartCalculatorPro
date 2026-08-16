@@ -540,12 +540,14 @@ fun MainContent(
                         viewModel.showCalculatorDialog ||
                         (viewModel.activeTab == 0 && activeTool != null && !isIslamicTool)
                 if (!isCalculatorActive) {
+                    val quranViewModel: com.example.ui.quran.QuranViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
                     QuranMiniPlayerBanner(
                         audioPlayer = QuranAudioPlayer.getInstance(bannerContext),
                         themeColors = themeColors,
                         onOpenSurah = { surahNumber ->
                             viewModel.selectedToolType = ToolType.HOLY_QURAN
                             viewModel.activeTab = 0
+                            quranViewModel.selectSurahByNumber(surahNumber)
                         }
                     )
                 }
