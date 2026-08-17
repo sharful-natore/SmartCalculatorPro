@@ -121,7 +121,7 @@ class QuickPrayerActivity : ComponentActivity() {
                                         )
                                     }
                                     Text(
-                                        text = if (isBn) "নামাজের সময়সূচি ও সেহরি-ইফতার" else "Prayer Times & Sehri-Iftar",
+                                        text = if (isBn) "ইসলামিক টুলস" else "Islamic Tools",
                                         fontSize = 16.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = themeColors.displayText
@@ -157,7 +157,7 @@ class QuickPrayerActivity : ComponentActivity() {
                                     shape = RoundedCornerShape(12.dp)
                                 ) {
                                     Text(
-                                        text = if (isBn) "নামাজের সময়সূচি" else "Prayer Times",
+                                        text = if (isBn) "নামাজ" else "Prayer",
                                         color = if (selectedTab == 0) Color.White else themeColors.displayText,
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 13.sp
@@ -172,8 +172,23 @@ class QuickPrayerActivity : ComponentActivity() {
                                     shape = RoundedCornerShape(12.dp)
                                 ) {
                                     Text(
-                                        text = if (isBn) "সেহরি ও ইফতার" else "Sehri & Iftar",
+                                        text = if (isBn) "রোজা" else "Fasting",
                                         color = if (selectedTab == 1) Color.White else themeColors.displayText,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 13.sp
+                                    )
+                                }
+                                Button(
+                                    onClick = { selectedTab = 2 },
+                                    modifier = Modifier.weight(1f),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (selectedTab == 2) themeColors.buttonEqualBg else themeColors.cardBg
+                                    ),
+                                    shape = RoundedCornerShape(12.dp)
+                                ) {
+                                    Text(
+                                        text = if (isBn) "কুরআন" else "Quran",
+                                        color = if (selectedTab == 2) Color.White else themeColors.displayText,
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 13.sp
                                     )
@@ -188,15 +203,19 @@ class QuickPrayerActivity : ComponentActivity() {
                                     .weight(1f)
                                     .verticalScroll(rememberScrollState())
                             ) {
-                                if (selectedTab == 0) {
-                                    PrayerTimesCard(
+                                when (selectedTab) {
+                                    0 -> PrayerTimesCard(
                                         viewModel = viewModel,
                                         themeColors = themeColors
                                     )
-                                } else {
-                                    ModernSehriIftarCard(
+                                    1 -> ModernSehriIftarCard(
                                         viewModel = viewModel,
                                         themeColors = themeColors
+                                    )
+                                    else -> com.example.ui.quran.HolyQuranModuleScreen(
+                                        themeColors = themeColors,
+                                        onBackClick = {},
+                                        quranViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
                                     )
                                 }
                             }

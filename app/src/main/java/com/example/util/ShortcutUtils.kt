@@ -145,16 +145,10 @@ object ShortcutUtils {
                     .setIntent(Intent(context, QuickMarketActivity::class.java).apply { action = Intent.ACTION_VIEW })
                     .build(),
                 ShortcutInfo.Builder(context, "shortcut_prayer")
-                    .setShortLabel(if (isBn) "নামাজের সময়" else "Prayer Times")
-                    .setLongLabel(if (isBn) "নামাজের সময়সূচি ও সেহরি-ইফতার" else "Prayer Times & Sehri-Iftar")
-                    .setIcon(getBitmapIcon(context, R.drawable.ic_shortcut_calendar))
+                    .setShortLabel(if (isBn) "ইসলামিক টুলস" else "Islamic Tools")
+                    .setLongLabel(if (isBn) "ইসলামিক টুলস (নামাজ, রোজা, কুরআন)" else "Islamic Tools (Prayer, Fasting, Quran)")
+                    .setIcon(getBitmapIcon(context, R.drawable.ic_shortcut_prayer))
                     .setIntent(Intent(context, QuickPrayerActivity::class.java).apply { action = Intent.ACTION_VIEW })
-                    .build(),
-                ShortcutInfo.Builder(context, "shortcut_quran")
-                    .setShortLabel(if (isBn) "আল কুরআন" else "Al-Quran")
-                    .setLongLabel(if (isBn) "আল কুরআনুল কারীম" else "Al-Quran Kareem")
-                    .setIcon(getBitmapIcon(context, R.drawable.ic_shortcut_converter))
-                    .setIntent(Intent(context, QuickQuranActivity::class.java).apply { action = Intent.ACTION_VIEW })
                     .build()
             )
 

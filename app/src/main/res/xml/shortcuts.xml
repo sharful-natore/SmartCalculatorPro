@@ -39,7 +39,7 @@
     <shortcut
         android:shortcutId="shortcut_prayer"
         android:enabled="true"
-        android:icon="@drawable/ic_shortcut_calendar"
+        android:icon="@drawable/ic_shortcut_prayer"
         android:shortcutShortLabel="@string/shortcut_prayer"
         android:shortcutLongLabel="@string/shortcut_prayer">
         <intent

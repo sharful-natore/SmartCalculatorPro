@@ -280,6 +280,16 @@ fun ModernPrayerTimesCard(
         NamazTimeService.getPrayerTimesForCoordinates(viewModel.selectedIslamicDistrictLat, viewModel.selectedIslamicDistrictLon, todayCal)
     }
 
+    // Trigger prayer notification checks
+    LaunchedEffect(currentTimeMillis) {
+        com.example.util.PrayerNotificationHelper.checkAndTriggerNotifications(
+            context = context,
+            timings = liveTodayTimings,
+            alertsMap = alertsMap,
+            isBn = isBn
+        )
+    }
+
     val liveIshraqStr = remember(liveTodayTimings) {
         NamazTimeService.minutesToTimeStr(NamazTimeService.timeStrToMinutes(liveTodayTimings.sunrise) + 15)
     }
@@ -820,32 +830,53 @@ fun ModernPrayerTimesCard(
                                 color = if (currentWaqtData.isForbidden) Color(0xFFFEE2E2) else themeColors.titleBarBg.copy(alpha = 0.12f),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
+                                val timeFormatted = formatTimerClock(currentRemainingMillis)
+                                val finalDisplayTime = if (isBn) convertDigitsToBn(timeFormatted) else timeFormatted
+                                val finalLabel = if (isBn) "শেষ হতে বাকি $finalDisplayTime" else "Ends in $finalDisplayTime"
                                 Text(
-                                    text = "-${formatTimerClock(currentRemainingMillis)}",
-                                    fontSize = 12.5.sp,
+                                    text = finalLabel,
+                                    fontSize = 11.sp,
                                     fontWeight = FontWeight.ExtraBold,
-                                    fontFamily = FontFamily.Monospace,
                                     color = if (currentWaqtData.isForbidden) Color(0xFFB91C1C) else themeColors.titleBarBg,
                                     textAlign = TextAlign.Center,
-                                    modifier = Modifier.padding(vertical = 4.dp, horizontal = 4.dp)
+                                    modifier = Modifier.padding(vertical = 5.dp, horizontal = 4.dp)
                                 )
                             }
 
-                            // Elapsed progress bar
+                            // Elapsed progress bar with remaining percentage
                             val currentProgress = remember(currentWaqtData, currentTimeMillis) {
                                 val total = (currentWaqtData.currentEndMillis - currentWaqtData.currentStartMillis).coerceAtLeast(1L)
                                 val elapsed = (currentTimeMillis - currentWaqtData.currentStartMillis).coerceAtLeast(0L)
                                 (elapsed.toFloat() / total.toFloat()).coerceIn(0f, 1f)
                             }
-                            LinearProgressIndicator(
-                                progress = { currentProgress },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(5.dp)
-                                    .clip(RoundedCornerShape(3.dp)),
-                                color = if (currentWaqtData.isForbidden) Color(0xFFDC2626) else themeColors.titleBarBg,
-                                trackColor = if (currentWaqtData.isForbidden) Color(0xFFFCA5A5).copy(alpha = 0.4f) else themeColors.titleBarBg.copy(alpha = 0.2f)
-                            )
+                            val currentRemainingPercent = remember(currentWaqtData, currentTimeMillis) {
+                                val total = (currentWaqtData.currentEndMillis - currentWaqtData.currentStartMillis).coerceAtLeast(1L)
+                                val remaining = (currentWaqtData.currentEndMillis - currentTimeMillis).coerceAtLeast(0L)
+                                ((remaining.toFloat() / total.toFloat()) * 100).toInt().coerceIn(0, 100)
+                            }
+                            val remainingPercentStr = if (isBn) convertDigitsToBn(currentRemainingPercent.toString()) + "%" else "$currentRemainingPercent%"
+
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = remainingPercentStr,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (currentWaqtData.isForbidden) Color(0xFFB91C1C) else themeColors.titleBarBg
+                                )
+                                LinearProgressIndicator(
+                                    progress = { currentProgress },
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(5.dp)
+                                        .clip(RoundedCornerShape(3.dp)),
+                                    color = if (currentWaqtData.isForbidden) Color(0xFFDC2626) else themeColors.titleBarBg,
+                                    trackColor = if (currentWaqtData.isForbidden) Color(0xFFFCA5A5).copy(alpha = 0.4f) else themeColors.titleBarBg.copy(alpha = 0.2f)
+                                )
+                            }
                         }
                     }
                 }
@@ -913,32 +944,53 @@ fun ModernPrayerTimesCard(
                                 color = Color(0xFFE0F2FE),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
+                                val timeFormatted = formatTimerClock(nextCountdownMillis)
+                                val finalDisplayTime = if (isBn) convertDigitsToBn(timeFormatted) else timeFormatted
+                                val finalLabel = if (isBn) "শুরু হতে বাকি $finalDisplayTime" else "Starts in $finalDisplayTime"
                                 Text(
-                                    text = "-${formatTimerClock(nextCountdownMillis)}",
-                                    fontSize = 12.5.sp,
+                                    text = finalLabel,
+                                    fontSize = 11.sp,
                                     fontWeight = FontWeight.ExtraBold,
-                                    fontFamily = FontFamily.Monospace,
                                     color = Color(0xFF0284C7),
                                     textAlign = TextAlign.Center,
-                                    modifier = Modifier.padding(vertical = 4.dp, horizontal = 4.dp)
+                                    modifier = Modifier.padding(vertical = 5.dp, horizontal = 4.dp)
                                 )
                             }
 
-                            // Progress towards next waqt start
+                            // Progress towards next waqt start with percentage
                             val nextProgress = remember(currentWaqtData, currentTimeMillis) {
                                 val total = (currentWaqtData.nextStartMillis - currentWaqtData.currentStartMillis).coerceAtLeast(1L)
                                 val elapsed = (currentTimeMillis - currentWaqtData.currentStartMillis).coerceAtLeast(0L)
                                 (elapsed.toFloat() / total.toFloat()).coerceIn(0f, 1f)
                             }
-                            LinearProgressIndicator(
-                                progress = { nextProgress },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(5.dp)
-                                    .clip(RoundedCornerShape(3.dp)),
-                                color = Color(0xFF0284C7),
-                                trackColor = Color(0xFFBAE6FD).copy(alpha = 0.5f)
-                            )
+                            val nextRemainingPercent = remember(currentWaqtData, currentTimeMillis) {
+                                val total = (currentWaqtData.nextStartMillis - currentWaqtData.currentStartMillis).coerceAtLeast(1L)
+                                val remaining = (currentWaqtData.nextStartMillis - currentTimeMillis).coerceAtLeast(0L)
+                                ((remaining.toFloat() / total.toFloat()) * 100).toInt().coerceIn(0, 100)
+                            }
+                            val nextPercentStr = if (isBn) convertDigitsToBn(nextRemainingPercent.toString()) + "%" else "$nextRemainingPercent%"
+
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = nextPercentStr,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF0284C7)
+                                )
+                                LinearProgressIndicator(
+                                    progress = { nextProgress },
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(5.dp)
+                                        .clip(RoundedCornerShape(3.dp)),
+                                    color = Color(0xFF0284C7),
+                                    trackColor = Color(0xFFBAE6FD).copy(alpha = 0.5f)
+                                )
+                            }
                         }
                     }
                 }
@@ -1846,6 +1898,11 @@ private fun formatTimerClock(diffMillis: Long): String {
     val minutes = (totalSeconds % 3600) / 60
     val seconds = totalSeconds % 60
     return String.format(Locale.ENGLISH, "%02d:%02d:%02d", hours, minutes, seconds)
+}
+
+private fun convertDigitsToBn(str: String): String {
+    val bnDigits = mapOf('0' to '০', '1' to '১', '2' to '২', '3' to '৩', '4' to '৪', '5' to '৫', '6' to '৬', '7' to '৭', '8' to '৮', '9' to '৯')
+    return str.map { bnDigits[it] ?: it }.joinToString("")
 }
 
 @Composable
