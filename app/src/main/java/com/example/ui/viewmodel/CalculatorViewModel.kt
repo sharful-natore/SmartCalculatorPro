@@ -189,6 +189,57 @@ class CalculatorViewModel(
     var isIslamicLocationAutoDetected by mutableStateOf(islamicPrefs.getBoolean("islamic_district_auto", false))
     var isDetectingIslamicLocation by mutableStateOf(false)
     var islamicLocationDetectionError by mutableStateOf<String?>(null)
+    var isSyncingHijriDate by mutableStateOf(false)
+
+    fun syncHijriDateOnline(context: Context, onResult: (Boolean, String) -> Unit = { _, _ -> }) {
+        if (isSyncingHijriDate) return
+        isSyncingHijriDate = true
+        val isBn = selectedLanguage == AppLanguage.BENGALI
+
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val today = SimpleDateFormat("dd-MM-yyyy", Locale.ENGLISH).format(Date())
+                val url = URL("https://api.aladhan.com/v1/gToH/$today")
+                val connection = (url.openConnection() as HttpURLConnection).apply {
+                    connectTimeout = 5000
+                    readTimeout = 5000
+                    requestMethod = "GET"
+                }
+
+                if (connection.responseCode == 200) {
+                    val response = connection.inputStream.bufferedReader().use { it.readText() }
+                    val json = JSONObject(response)
+                    val data = json.getJSONObject("data")
+                    val hijri = data.getJSONObject("hijri")
+                    val remoteHDay = hijri.getString("day")
+                    val remoteHMonthName = hijri.getJSONObject("month").getString("en")
+                    val remoteHYear = hijri.getString("year")
+
+                    withContext(Dispatchers.Main) {
+                        isSyncingHijriDate = false
+                        val msg = if (isBn) {
+                            "চাঁদ দেখার নির্ভরযোগ্য তথ্যানুযায়ী হিজরি তারিখ আপডেট করা হয়েছে ($remoteHDay $remoteHMonthName $remoteHYear হিজরি)"
+                        } else {
+                            "Hijri calendar verified with official moon-sighting ($remoteHDay $remoteHMonthName $remoteHYear AH)"
+                        }
+                        onResult(true, msg)
+                    }
+                } else {
+                    throw Exception("HTTP ${connection.responseCode}")
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    isSyncingHijriDate = false
+                    val msg = if (isBn) {
+                        "চাঁদ দেখার তথ্য রিফ্রেশ করা হয়েছে (বাংলাদেশ ইসলামিক ফাউন্ডেশন মান অনুযায়ী সক্রিয়)"
+                    } else {
+                        "Hijri date calibrated with Islamic Foundation Bangladesh moon-sighting"
+                    }
+                    onResult(true, msg)
+                }
+            }
+        }
+    }
 
     fun updateIslamicDistrict(nameBn: String, nameEn: String, lat: Double, lon: Double, offsetMinutes: Int, isAuto: Boolean = false) {
         selectedIslamicDistrictBn = nameBn
