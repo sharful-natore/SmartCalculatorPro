@@ -367,8 +367,8 @@ fun ModernSehriIftarCard(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(13.dp)
+                        .padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(9.dp)
                 ) {
                     // Top row of Hero: Arabic/Hijri Date of Today + Real-Time Sync/Refresh Button
                     Row(
@@ -568,9 +568,9 @@ fun ModernSehriIftarCard(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                                .padding(horizontal = 10.dp, vertical = 8.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                            verticalArrangement = Arrangement.spacedBy(5.dp)
                         ) {
                             // Total Fasting Duration Banner above countdown
                             Surface(
@@ -1022,21 +1022,6 @@ private fun CompactExpandableHijriDayCard(
                                 else -> themeColors.displayText
                             }
                         )
-                        if (row.isToday) {
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Surface(
-                                shape = RoundedCornerShape(6.dp),
-                                color = themeColors.titleBarBg
-                            ) {
-                                Text(
-                                    text = if (isBn) "আজ" else "Today",
-                                    fontSize = 9.5.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White,
-                                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
-                                )
-                            }
-                        }
                     }
                     Text(
                         text = if (isBn) row.gregorianSubtitleBn else row.gregorianSubtitleEn,

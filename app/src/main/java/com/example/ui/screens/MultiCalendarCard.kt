@@ -140,28 +140,6 @@ fun MultiCalendarCard(
                         }
                     }
 
-                    Button(
-                        onClick = { selectedCalendar = Calendar.getInstance() },
-                        colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
-                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.height(34.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Today,
-                            contentDescription = "Today",
-                            tint = Color.White,
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = if (isBn) "আজ" else "Today",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                    }
-
                     if (onCloseRequest != null) {
                         Spacer(modifier = Modifier.width(4.dp))
                         IconButton(onClick = onCloseRequest) {
