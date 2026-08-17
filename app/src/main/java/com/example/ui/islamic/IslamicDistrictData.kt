@@ -308,6 +308,9 @@ fun DistrictSelectionSheet(
                 singleLine = true,
                 shape = RoundedCornerShape(14.dp),
                 colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = themeColors.displayText,
+                    unfocusedTextColor = themeColors.displayText,
+                    cursorColor = Color(0xFF0284C7),
                     focusedBorderColor = Color(0xFF0284C7),
                     unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.15f),
                     focusedContainerColor = themeColors.background,

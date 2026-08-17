@@ -10,6 +10,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -53,8 +55,10 @@ data class PrayerWaqtItem(
     val icon: ImageVector,
     val isForbidden: Boolean = false,
     val isNafl: Boolean = false,
-    val noteBn: String? = null,
-    val noteEn: String? = null
+    val infoTitleBn: String? = null,
+    val infoTitleEn: String? = null,
+    val infoDetailBn: String? = null,
+    val infoDetailEn: String? = null
 )
 
 // Helper object for Triple Calendar calculation (Gregorian, Bangla, Hijri)
@@ -219,7 +223,9 @@ fun ModernPrayerTimesCard(
     val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
 
     var showDistrictSheet by remember { mutableStateOf(false) }
+    var showMonthlySheet by remember { mutableStateOf(false) }
     var showFiqhInfoDialog by remember { mutableStateOf(false) }
+    var selectedForbiddenItem by remember { mutableStateOf<PrayerWaqtItem?>(null) }
 
     // Live Ticker for 1-second dynamic countdown updates
     var currentTimeMillis by remember { mutableLongStateOf(System.currentTimeMillis()) }
@@ -336,6 +342,7 @@ fun ModernPrayerTimesCard(
                 activeTitleBn = "তাহাজ্জুদ / এশা",
                 activeTitleEn = "Tahajjud / Isha",
                 activeTimeStr = liveTodayTimings.isha,
+                currentStartMillis = calIsha.timeInMillis - 86400000L,
                 currentEndMillis = calFajr.timeInMillis,
                 nextTitleBn = "ফজর",
                 nextTitleEn = "Fajr",
@@ -350,6 +357,7 @@ fun ModernPrayerTimesCard(
                 activeTitleBn = "ফজর",
                 activeTitleEn = "Fajr",
                 activeTimeStr = liveTodayTimings.fajr,
+                currentStartMillis = calFajr.timeInMillis,
                 currentEndMillis = calSunrise.timeInMillis,
                 nextTitleBn = "সূর্যোদয় (নিষিদ্ধ)",
                 nextTitleEn = "Sunrise (Forbidden)",
@@ -364,6 +372,7 @@ fun ModernPrayerTimesCard(
                 activeTitleBn = "নিষিদ্ধ সময়",
                 activeTitleEn = "Forbidden Time",
                 activeTimeStr = liveTodayTimings.sunrise,
+                currentStartMillis = calSunrise.timeInMillis,
                 currentEndMillis = calIshraq.timeInMillis,
                 nextTitleBn = "ইশরাক ও চাশত",
                 nextTitleEn = "Ishraq & Duha",
@@ -378,6 +387,7 @@ fun ModernPrayerTimesCard(
                 activeTitleBn = "ইশরাক ও চাশত",
                 activeTitleEn = "Ishraq & Duha",
                 activeTimeStr = liveIshraqStr,
+                currentStartMillis = calIshraq.timeInMillis,
                 currentEndMillis = calZawaal.timeInMillis,
                 nextTitleBn = "ঠিক দুপুর (নিষিদ্ধ)",
                 nextTitleEn = "Midday (Forbidden)",
@@ -392,6 +402,7 @@ fun ModernPrayerTimesCard(
                 activeTitleBn = "নিষিদ্ধ সময়",
                 activeTitleEn = "Forbidden Time",
                 activeTimeStr = liveZawaalStr,
+                currentStartMillis = calZawaal.timeInMillis,
                 currentEndMillis = calDhuhr.timeInMillis,
                 nextTitleBn = "যোহর",
                 nextTitleEn = "Dhuhr",
@@ -406,6 +417,7 @@ fun ModernPrayerTimesCard(
                 activeTitleBn = "যোহর",
                 activeTitleEn = "Dhuhr",
                 activeTimeStr = liveTodayTimings.dhuhr,
+                currentStartMillis = calDhuhr.timeInMillis,
                 currentEndMillis = calAsr.timeInMillis,
                 nextTitleBn = "আসর",
                 nextTitleEn = "Asr",
@@ -420,6 +432,7 @@ fun ModernPrayerTimesCard(
                 activeTitleBn = "আসর",
                 activeTitleEn = "Asr",
                 activeTimeStr = liveTodayTimings.asr,
+                currentStartMillis = calAsr.timeInMillis,
                 currentEndMillis = calSunsetForbidden.timeInMillis,
                 nextTitleBn = "সূর্যাস্তকাল (নিষিদ্ধ)",
                 nextTitleEn = "Sunset (Forbidden)",
@@ -434,6 +447,7 @@ fun ModernPrayerTimesCard(
                 activeTitleBn = "নিষিদ্ধ সময়",
                 activeTitleEn = "Forbidden Time",
                 activeTimeStr = liveSunsetForbiddenStr,
+                currentStartMillis = calSunsetForbidden.timeInMillis,
                 currentEndMillis = calMaghrib.timeInMillis,
                 nextTitleBn = "মাগরিব",
                 nextTitleEn = "Maghrib",
@@ -448,6 +462,7 @@ fun ModernPrayerTimesCard(
                 activeTitleBn = "মাগরিব",
                 activeTitleEn = "Maghrib",
                 activeTimeStr = liveTodayTimings.maghrib,
+                currentStartMillis = calMaghrib.timeInMillis,
                 currentEndMillis = calIsha.timeInMillis,
                 nextTitleBn = "এশা",
                 nextTitleEn = "Isha",
@@ -462,6 +477,7 @@ fun ModernPrayerTimesCard(
                 activeTitleBn = "এশা",
                 activeTitleEn = "Isha",
                 activeTimeStr = liveTodayTimings.isha,
+                currentStartMillis = calIsha.timeInMillis,
                 currentEndMillis = calFajrTomorrow.timeInMillis,
                 nextTitleBn = "ফজর",
                 nextTitleEn = "Fajr",
@@ -475,6 +491,20 @@ fun ModernPrayerTimesCard(
     val currentRemainingMillis = maxOf(0L, currentWaqtData.currentEndMillis - now)
     val nextCountdownMillis = maxOf(0L, currentWaqtData.nextStartMillis - now)
 
+    // Calculate day length between sunrise and sunset (maghrib)
+    val dayLengthMinutes = remember(timings) {
+        val sr = NamazTimeService.timeStrToMinutes(timings.sunrise)
+        val ss = NamazTimeService.timeStrToMinutes(timings.maghrib)
+        (ss - sr).coerceAtLeast(0)
+    }
+    val dayLengthHours = dayLengthMinutes / 60
+    val dayLengthMins = dayLengthMinutes % 60
+    val dayLengthStr = if (isBn) {
+        "${IslamicCalendarHelper.toBnDigits(dayLengthHours)} ঘণ্টা ${IslamicCalendarHelper.toBnDigits(dayLengthMins)} মিনিট"
+    } else {
+        "${dayLengthHours}h ${dayLengthMins}m"
+    }
+
     // Complete Prayer & Forbidden Timetable List (100% Calibrated)
     val prayerList = remember(timings, ishraqTimeStr, zawaalTimeStr, sunsetForbiddenTimeStr, duhaEndTimeStr) {
         listOf(
@@ -485,9 +515,7 @@ fun ModernPrayerTimesCard(
                 startTimeStr = timings.fajr,
                 endTimeStr = timings.sunrise,
                 timeRangeStr = "${timings.fajr} - ${timings.sunrise}",
-                icon = Icons.Default.WbTwilight,
-                noteBn = "সাহরি শেষ ও ফজরের শুরু",
-                noteEn = "End of Sahri & Start of Fajr"
+                icon = Icons.Default.WbTwilight
             ),
             PrayerWaqtItem(
                 id = "sunrise",
@@ -497,8 +525,10 @@ fun ModernPrayerTimesCard(
                 endTimeStr = ishraqTimeStr,
                 timeRangeStr = "${timings.sunrise} - ${ishraqTimeStr}",
                 icon = Icons.Default.WbSunny,
-                noteBn = "সূর্যোদয়কাল",
-                noteEn = "Sunrise time"
+                infoTitleBn = "সূর্যোদয়কাল",
+                infoTitleEn = "Sunrise Period",
+                infoDetailBn = "সূর্য উদয় হওয়ার সময়। এ সময় থেকে প্রায় ১৫ মিনিট সূর্য এক বর্শা পরিমাণ ওপরে ওঠার পূর্ব পর্যন্ত যেকোনো প্রকার সালাত আদায় করা হারাম।",
+                infoDetailEn = "Sunrise period. Prayers are forbidden until the sun rises sufficiently (about 15 minutes)."
             ),
             PrayerWaqtItem(
                 id = "sunrise_forbidden",
@@ -507,10 +537,12 @@ fun ModernPrayerTimesCard(
                 startTimeStr = timings.sunrise,
                 endTimeStr = ishraqTimeStr,
                 timeRangeStr = "${timings.sunrise} - ${ishraqTimeStr}",
-                icon = Icons.Default.WarningAmber,
+                icon = Icons.Default.WbSunny,
                 isForbidden = true,
-                noteBn = "সূর্য ওঠার সময় ১৫ মিনিট সকল নামাজ হারাম",
-                noteEn = "Prayers forbidden during 15m sunrise"
+                infoTitleBn = "সূর্যোদয়কালীন নিষিদ্ধ সময়",
+                infoTitleEn = "Sunrise Forbidden Period",
+                infoDetailBn = "সূর্য ওঠার সময় থেকে শুরু করে প্রায় ১৫-২০ মিনিট (ইশরাকের ওয়াক্ত শুরু হওয়া পর্যন্ত) সব ধরণের নামাজ (ফরজ, নফল বা কাজা) আদায় করা সম্পূর্ণ হারাম ও নিষিদ্ধ।\n\n• দলীল: রাসূলুল্লাহ (সা.) সূর্য উদয়ের সময় নামাজ পড়তে নিষেধ করেছেন (সহীহ মুসলিম: ৮৩১)।",
+                infoDetailEn = "All prayers (Fard, Nafl, Qada) are strictly prohibited during the 15-20 minutes after sunrise until Ishraq starts (Sahih Muslim: 831)."
             ),
             PrayerWaqtItem(
                 id = "ishraq",
@@ -521,8 +553,10 @@ fun ModernPrayerTimesCard(
                 timeRangeStr = "${ishraqTimeStr} - ${duhaEndTimeStr}",
                 icon = Icons.Default.Brightness5,
                 isNafl = true,
-                noteBn = "অসীম সওয়াবের নফল সালাত",
-                noteEn = "Voluntary morning prayers"
+                infoTitleBn = "ইশরাক ও চাশতের সালাত (নফল)",
+                infoTitleEn = "Ishraq & Duha Prayer",
+                infoDetailBn = "সূর্যোদয়ের ১৫-২০ মিনিট পর থেকে ঠিক দুপুর (জাওয়াল)-এর পূর্ব পর্যন্ত ইশরাক ও চাশতের সালাত আদায় করার সময়।\n\n• ফজিলত: রাসূলুল্লাহ (সা.) বলেছেন, যে ব্যক্তি ফজরের পর বসে জিকির করে সূর্য ওঠার পর ২ রাকাত ইশরাক পড়বে, সে একটি পূর্ণ হজ ও ওমরার সওয়াব পাবে (তিরমিজি: ৫৮৬)।",
+                infoDetailEn = "Voluntary morning prayer with tremendous rewards (Tirmidhi: 586)."
             ),
             PrayerWaqtItem(
                 id = "zawaal_forbidden",
@@ -531,10 +565,12 @@ fun ModernPrayerTimesCard(
                 startTimeStr = zawaalTimeStr,
                 endTimeStr = timings.dhuhr,
                 timeRangeStr = "${zawaalTimeStr} - ${timings.dhuhr}",
-                icon = Icons.Default.WarningAmber,
+                icon = Icons.Default.LightMode,
                 isForbidden = true,
-                noteBn = "ঠিক দুপুর / জাওয়াল (মাথার উপর সূর্য)",
-                noteEn = "Zenith midday forbidden period"
+                infoTitleBn = "দ্বিপ্রহরের নিষিদ্ধ সময় (জাওয়াল)",
+                infoTitleEn = "Midday (Zawaal) Forbidden Time",
+                infoDetailBn = "ঠিক দুপুরবেলা সূর্য যখন ঠিক মাথার ওপর থাকে (যোহরের ওয়াক্ত শুরু হওয়ার পূর্ববর্তী ১০-১৫ মিনিট), তখন যেকোনো প্রকার সালাত আদায় নিষিদ্ধ। সূর্য পশ্চিমাকাশে ঢলে পড়ার পর যোহরের ওয়াক্ত শুরু হয়।\n\n• দলীল: সহীহ মুসলিম: ৮৩১।",
+                infoDetailEn = "Midday zenith when the sun is at the highest meridian. Prayers are strictly prohibited until the sun passes meridian (Sahih Muslim: 831)."
             ),
             PrayerWaqtItem(
                 id = "dhuhr",
@@ -543,9 +579,7 @@ fun ModernPrayerTimesCard(
                 startTimeStr = timings.dhuhr,
                 endTimeStr = timings.asr,
                 timeRangeStr = "${timings.dhuhr} - ${timings.asr}",
-                icon = Icons.Default.LightMode,
-                noteBn = "৪ সুন্নত, ৪ ফরজ, ২ সুন্নত",
-                noteEn = "4 Sunnah, 4 Fard, 2 Sunnah"
+                icon = Icons.Default.LightMode
             ),
             PrayerWaqtItem(
                 id = "asr",
@@ -554,9 +588,7 @@ fun ModernPrayerTimesCard(
                 startTimeStr = timings.asr,
                 endTimeStr = sunsetForbiddenTimeStr,
                 timeRangeStr = "${timings.asr} - ${sunsetForbiddenTimeStr}",
-                icon = Icons.Default.WbSunny,
-                noteBn = "৪ রাকাত ফরজ (সালাতুল উস্তা)",
-                noteEn = "4 Rakat Fard"
+                icon = Icons.Default.Brightness6
             ),
             PrayerWaqtItem(
                 id = "sunset_forbidden",
@@ -565,10 +597,12 @@ fun ModernPrayerTimesCard(
                 startTimeStr = sunsetForbiddenTimeStr,
                 endTimeStr = timings.maghrib,
                 timeRangeStr = "${sunsetForbiddenTimeStr} - ${timings.maghrib}",
-                icon = Icons.Default.WarningAmber,
+                icon = Icons.Default.WbTwilight,
                 isForbidden = true,
-                noteBn = "সূর্যাস্তের সময় নামাজ নিষেধ (ঐ দিনের আসর ছাড়া)",
-                noteEn = "Sunset 15m forbidden period"
+                infoTitleBn = "সূর্যাস্তকালীন নিষিদ্ধ সময়",
+                infoTitleEn = "Sunset Forbidden Period",
+                infoDetailBn = "সূর্য হলুদ বর্ণ ধারণ করা থেকে ডোবা পর্যন্ত (মাগরিবের ওয়াক্ত শুরুর পূর্ববর্তী প্রায় ১৫ মিনিট) সালাত আদায় নিষিদ্ধ।\n\n• বিশেষ নিয়ম: কোনো কারণে ঐ দিনের আসরের নামাজ আদায় করতে দেরি হয়ে থাকলে তা সূর্যাস্তের আগ মুহূর্তে হলেও দ্রুত আদায় করে নিতে হবে।",
+                infoDetailEn = "Prayers prohibited during the 15 minutes before sunset, except same day's Asr if missed (Sahih Bukhari: 579)."
             ),
             PrayerWaqtItem(
                 id = "maghrib",
@@ -577,9 +611,7 @@ fun ModernPrayerTimesCard(
                 startTimeStr = timings.maghrib,
                 endTimeStr = timings.isha,
                 timeRangeStr = "${timings.maghrib} - ${timings.isha}",
-                icon = Icons.Default.DarkMode,
-                noteBn = "ইফতার ও মাগরিব: ৩ ফরজ, ২ সুন্নত",
-                noteEn = "Iftar & Maghrib: 3 Fard, 2 Sunnah"
+                icon = Icons.Default.DarkMode
             ),
             PrayerWaqtItem(
                 id = "isha",
@@ -588,9 +620,7 @@ fun ModernPrayerTimesCard(
                 startTimeStr = timings.isha,
                 endTimeStr = timings.sahri,
                 timeRangeStr = "${timings.isha} - ${timings.sahri}",
-                icon = Icons.Default.NightsStay,
-                noteBn = "৪ ফরজ, ২ সুন্নত, ৩ বিতর, তাহাজ্জুদ",
-                noteEn = "4 Fard, 2 Sunnah, 3 Witr"
+                icon = Icons.Default.NightsStay
             )
         )
     }
@@ -606,7 +636,7 @@ fun ModernPrayerTimesCard(
                 .padding(horizontal = 14.dp, vertical = 6.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // --- TOP HEADER BAR: Section Title & District Pill ---
+            // --- TOP HEADER BAR: Section Title, Monthly Calendar & District Pill ---
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -616,11 +646,11 @@ fun ModernPrayerTimesCard(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = if (isBn) "নামাজের সময়সূচি" else "Prayer Times",
-                            fontSize = 20.sp,
+                            fontSize = 19.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = themeColors.displayText
                         )
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
                         IconButton(
                             onClick = { showFiqhInfoDialog = true },
                             modifier = Modifier.size(24.dp)
@@ -629,63 +659,99 @@ fun ModernPrayerTimesCard(
                                 imageVector = Icons.Default.Info,
                                 contentDescription = "Fiqh Info",
                                 tint = Color(0xFF0D9488),
-                                modifier = Modifier.size(19.dp)
+                                modifier = Modifier.size(18.dp)
                             )
                         }
                     }
                     Text(
                         text = if (isBn) "লাইভ ওয়াক্ত ও ৫ ওয়াক্ত ট্র্যাকার" else "Live Waqt & Salah Tracker",
-                        fontSize = 12.sp,
+                        fontSize = 11.5.sp,
                         color = themeColors.displayText.copy(alpha = 0.65f)
                     )
                 }
 
-                // District Switcher Pill
-                Surface(
-                    shape = RoundedCornerShape(20.dp),
-                    color = Color(0xFF0D9488).copy(alpha = 0.12f),
-                    border = BorderStroke(1.dp, Color(0xFF0D9488).copy(alpha = 0.35f)),
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(20.dp))
-                        .clickable { showDistrictSheet = true }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp)
+                    // Monthly Calendar Button
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color(0xFF0284C7).copy(alpha = 0.12f),
+                        border = BorderStroke(1.dp, Color(0xFF0284C7).copy(alpha = 0.35f)),
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(16.dp))
+                            .clickable { showMonthlySheet = true }
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.LocationOn,
-                            contentDescription = "District",
-                            tint = Color(0xFF0D9488),
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = if (isBn) viewModel.selectedIslamicDistrictBn.split(" ")[0] else viewModel.selectedIslamicDistrictEn,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF0D9488)
-                        )
-                        Spacer(modifier = Modifier.width(2.dp))
-                        Icon(
-                            imageVector = Icons.Default.ArrowDropDown,
-                            contentDescription = null,
-                            tint = Color(0xFF0D9488),
-                            modifier = Modifier.size(18.dp)
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 9.dp, vertical = 6.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CalendarMonth,
+                                contentDescription = "Monthly Schedule",
+                                tint = Color(0xFF0284C7),
+                                modifier = Modifier.size(15.dp)
+                            )
+                            Spacer(modifier = Modifier.width(3.dp))
+                            Text(
+                                text = if (isBn) "মাসিক" else "Monthly",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF0284C7)
+                            )
+                        }
+                    }
+
+                    // District Switcher Pill
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color(0xFF0D9488).copy(alpha = 0.12f),
+                        border = BorderStroke(1.dp, Color(0xFF0D9488).copy(alpha = 0.35f)),
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(16.dp))
+                            .clickable { showDistrictSheet = true }
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 9.dp, vertical = 6.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.LocationOn,
+                                contentDescription = "District",
+                                tint = Color(0xFF0D9488),
+                                modifier = Modifier.size(15.dp)
+                            )
+                            Spacer(modifier = Modifier.width(3.dp))
+                            Text(
+                                text = if (isBn) viewModel.selectedIslamicDistrictBn.split(" ")[0] else viewModel.selectedIslamicDistrictEn,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF0D9488)
+                            )
+                            Icon(
+                                imageVector = Icons.Default.ArrowDropDown,
+                                contentDescription = null,
+                                tint = Color(0xFF0D9488),
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
                     }
                 }
             }
 
-            // --- 1. DUAL HERO STATUS CARDS (এখন & পরবর্তী) ---
+            // --- 1. DUAL HERO STATUS CARDS (এখন & পরবর্তী - EQUAL HEIGHT WITH PROGRESS BARS) ---
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Max),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 // LEFT CARD: এখন (Current Waqt)
                 Card(
                     modifier = Modifier
                         .weight(1f)
+                        .fillMaxHeight()
                         .shadow(4.dp, RoundedCornerShape(20.dp)),
                     shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(
@@ -698,60 +764,82 @@ fun ModernPrayerTimesCard(
                 ) {
                     Column(
                         modifier = Modifier
-                            .fillMaxWidth()
+                            .fillMaxSize()
                             .padding(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                        verticalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = if (isBn) "এখন" else "Now",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (currentWaqtData.isForbidden) Color(0xFFDC2626) else Color(0xFF047857)
+                                )
+                                // Live Pulse Status Dot
+                                Box(
+                                    modifier = Modifier
+                                        .size(8.dp)
+                                        .clip(CircleShape)
+                                        .background(if (currentWaqtData.isForbidden) Color(0xFFDC2626) else Color(0xFF10B981))
+                                )
+                            }
+
                             Text(
-                                text = if (isBn) "এখন" else "Now",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (currentWaqtData.isForbidden) Color(0xFFDC2626) else Color(0xFF047857)
+                                text = if (isBn) currentWaqtData.activeTitleBn else currentWaqtData.activeTitleEn,
+                                fontSize = 19.sp,
+                                fontWeight = FontWeight.Black,
+                                color = if (currentWaqtData.isForbidden) Color(0xFF991B1B) else Color(0xFF064E3B),
+                                maxLines = 2
                             )
-                            // Live Pulse Status Dot
-                            Box(
-                                modifier = Modifier
-                                    .size(8.dp)
-                                    .clip(CircleShape)
-                                    .background(if (currentWaqtData.isForbidden) Color(0xFFDC2626) else Color(0xFF10B981))
+
+                            Text(
+                                text = currentWaqtData.activeTimeStr,
+                                fontSize = 14.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.displayText.copy(alpha = 0.8f)
                             )
                         }
 
-                        Text(
-                            text = if (isBn) currentWaqtData.activeTitleBn else currentWaqtData.activeTitleEn,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Black,
-                            color = if (currentWaqtData.isForbidden) Color(0xFF991B1B) else Color(0xFF064E3B)
-                        )
-
-                        Text(
-                            text = currentWaqtData.activeTimeStr,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = themeColors.displayText.copy(alpha = 0.8f)
-                        )
-
-                        Spacer(modifier = Modifier.height(2.dp))
-
-                        // Countdown remaining
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = if (currentWaqtData.isForbidden) Color(0xFFFEE2E2) else Color(0xFFDCFCE7),
-                            modifier = Modifier.fillMaxWidth()
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            Text(
-                                text = "-${formatTimerClock(currentRemainingMillis)}",
-                                fontSize = 13.5.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                fontFamily = FontFamily.Monospace,
-                                color = if (currentWaqtData.isForbidden) Color(0xFFB91C1C) else Color(0xFF047857),
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(vertical = 4.dp, horizontal = 6.dp)
+                            // Countdown remaining
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = if (currentWaqtData.isForbidden) Color(0xFFFEE2E2) else Color(0xFFDCFCE7),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = "-${formatTimerClock(currentRemainingMillis)}",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    fontFamily = FontFamily.Monospace,
+                                    color = if (currentWaqtData.isForbidden) Color(0xFFB91C1C) else Color(0xFF047857),
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.padding(vertical = 4.dp, horizontal = 6.dp)
+                                )
+                            }
+
+                            // Elapsed progress bar
+                            val currentProgress = remember(currentWaqtData, currentTimeMillis) {
+                                val total = (currentWaqtData.currentEndMillis - currentWaqtData.currentStartMillis).coerceAtLeast(1L)
+                                val elapsed = (currentTimeMillis - currentWaqtData.currentStartMillis).coerceAtLeast(0L)
+                                (elapsed.toFloat() / total.toFloat()).coerceIn(0f, 1f)
+                            }
+                            LinearProgressIndicator(
+                                progress = { currentProgress },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(5.dp)
+                                    .clip(RoundedCornerShape(3.dp)),
+                                color = if (currentWaqtData.isForbidden) Color(0xFFDC2626) else Color(0xFF059669),
+                                trackColor = if (currentWaqtData.isForbidden) Color(0xFFFCA5A5).copy(alpha = 0.4f) else Color(0xFFA7F3D0).copy(alpha = 0.5f)
                             )
                         }
                     }
@@ -761,6 +849,7 @@ fun ModernPrayerTimesCard(
                 Card(
                     modifier = Modifier
                         .weight(1f)
+                        .fillMaxHeight()
                         .shadow(4.dp, RoundedCornerShape(20.dp)),
                     shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(
@@ -770,66 +859,222 @@ fun ModernPrayerTimesCard(
                 ) {
                     Column(
                         modifier = Modifier
-                            .fillMaxWidth()
+                            .fillMaxSize()
                             .padding(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                        verticalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = if (isBn) "পরবর্তী" else "Next",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF0369A1)
+                                )
+                                Icon(
+                                    imageVector = Icons.Default.AccessTime,
+                                    contentDescription = null,
+                                    tint = Color(0xFF0284C7),
+                                    modifier = Modifier.size(14.dp)
+                                )
+                            }
+
                             Text(
-                                text = if (isBn) "পরবর্তী" else "Next",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF0369A1)
+                                text = if (isBn) currentWaqtData.nextTitleBn else currentWaqtData.nextTitleEn,
+                                fontSize = 19.sp,
+                                fontWeight = FontWeight.Black,
+                                color = Color(0xFF0C4A6E),
+                                maxLines = 2
                             )
-                            Icon(
-                                imageVector = Icons.Default.AccessTime,
-                                contentDescription = null,
-                                tint = Color(0xFF0284C7),
-                                modifier = Modifier.size(14.dp)
+
+                            Text(
+                                text = currentWaqtData.nextTimeStr,
+                                fontSize = 14.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.displayText.copy(alpha = 0.8f)
                             )
                         }
 
-                        Text(
-                            text = if (isBn) currentWaqtData.nextTitleBn else currentWaqtData.nextTitleEn,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Black,
-                            color = Color(0xFF0C4A6E)
-                        )
-
-                        Text(
-                            text = currentWaqtData.nextTimeStr,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = themeColors.displayText.copy(alpha = 0.8f)
-                        )
-
-                        Spacer(modifier = Modifier.height(2.dp))
-
-                        // Countdown to next waqt
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = Color(0xFFE0F2FE),
-                            modifier = Modifier.fillMaxWidth()
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            Text(
-                                text = "-${formatTimerClock(nextCountdownMillis)}",
-                                fontSize = 13.5.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                fontFamily = FontFamily.Monospace,
+                            // Countdown to next waqt
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = Color(0xFFE0F2FE),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = "-${formatTimerClock(nextCountdownMillis)}",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    fontFamily = FontFamily.Monospace,
+                                    color = Color(0xFF0284C7),
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.padding(vertical = 4.dp, horizontal = 6.dp)
+                                )
+                            }
+
+                            // Progress towards next waqt start
+                            val nextProgress = remember(currentWaqtData, currentTimeMillis) {
+                                val total = (currentWaqtData.nextStartMillis - currentWaqtData.currentStartMillis).coerceAtLeast(1L)
+                                val elapsed = (currentTimeMillis - currentWaqtData.currentStartMillis).coerceAtLeast(0L)
+                                (elapsed.toFloat() / total.toFloat()).coerceIn(0f, 1f)
+                            }
+                            LinearProgressIndicator(
+                                progress = { nextProgress },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(5.dp)
+                                    .clip(RoundedCornerShape(3.dp)),
                                 color = Color(0xFF0284C7),
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(vertical = 4.dp, horizontal = 6.dp)
+                                trackColor = Color(0xFFBAE6FD).copy(alpha = 0.5f)
                             )
                         }
                     }
                 }
             }
 
-            // --- 2. DATE NAVIGATION BAR (TRIPLE CALENDAR SELECTOR) ---
+            // --- 2. SUNRISE & SUNSET CARD (সূর্যোদয়, সূর্যাস্ত ও দিনের দৈর্ঘ্য) ---
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
+                border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.08f))
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Sunrise (সূর্যোদয়)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f),
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFFFEF3C7)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.WbSunny,
+                                    contentDescription = "Sunrise",
+                                    tint = Color(0xFFD97706),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = if (isBn) "সূর্যোদয়" else "Sunrise",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = themeColors.displayText.copy(alpha = 0.65f)
+                                )
+                                Text(
+                                    text = timings.sunrise,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.displayText
+                                )
+                            }
+                        }
+
+                        // Vertical Divider
+                        Box(
+                            modifier = Modifier
+                                .width(1.dp)
+                                .height(34.dp)
+                                .background(themeColors.displayText.copy(alpha = 0.12f))
+                        )
+
+                        // Sunset (সূর্যাস্ত)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f),
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFFFFEDD5)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.WbTwilight,
+                                    contentDescription = "Sunset",
+                                    tint = Color(0xFFEA580C),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = if (isBn) "সূর্যাস্ত" else "Sunset",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = themeColors.displayText.copy(alpha = 0.65f)
+                                )
+                                Text(
+                                    text = timings.maghrib,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.displayText
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Day Length Badge Banner
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = themeColors.displayText.copy(alpha = 0.04f),
+                        border = BorderStroke(0.7.dp, themeColors.displayText.copy(alpha = 0.08f)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 6.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.HourglassBottom,
+                                contentDescription = null,
+                                tint = Color(0xFF0D9488),
+                                modifier = Modifier.size(15.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = if (isBn) "দিনের মোট দৈর্ঘ্য: $dayLengthStr" else "Total Day Length: $dayLengthStr",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = themeColors.displayText.copy(alpha = 0.85f)
+                            )
+                        }
+                    }
+                }
+            }
+
+            // --- 3. DATE NAVIGATION BAR (TRIPLE CALENDAR SELECTOR) ---
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(18.dp),
@@ -909,7 +1154,7 @@ fun ModernPrayerTimesCard(
                 }
             }
 
-            // --- 3. PRAYER SCHEDULE TIMETABLE (LIST / TABLE) ---
+            // --- 4. PRAYER SCHEDULE TIMETABLE (LIST / TABLE) ---
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(22.dp),
@@ -934,11 +1179,11 @@ fun ModernPrayerTimesCard(
 
                         val hasAlert = alertsMap[item.id] ?: false
 
-                        // Check if row has active highlight (forest green for active waqt like in wireframe, amber for forbidden)
+                        // Active row background highlight (forest green for active, amber for forbidden)
                         val rowBg = when {
-                            isItemActive && item.isForbidden -> Color(0xFFDC2626) // Forbidden active highlight
-                            isItemActive -> Color(0xFF065F46) // Green active highlight matching user wireframe!
-                            item.isForbidden -> Color(0xFFFEF3C7).copy(alpha = 0.4f)
+                            isItemActive && item.isForbidden -> Color(0xFFDC2626)
+                            isItemActive -> Color(0xFF065F46)
+                            item.isForbidden -> Color(0xFFFEF3C7).copy(alpha = 0.45f)
                             else -> Color.Transparent
                         }
 
@@ -948,85 +1193,73 @@ fun ModernPrayerTimesCard(
                             else -> themeColors.displayText
                         }
 
-                        val subTextColor = when {
-                            isItemActive -> Color.White.copy(alpha = 0.8f)
-                            item.isForbidden -> Color(0xFFB45309)
-                            else -> themeColors.displayText.copy(alpha = 0.55f)
+                        val iconColor = when {
+                            isItemActive -> Color.White
+                            item.isForbidden -> Color(0xFFD97706)
+                            else -> Color(0xFF0D9488)
                         }
 
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .background(rowBg)
-                                .padding(horizontal = 16.dp, vertical = 12.dp)
+                                .padding(horizontal = 14.dp, vertical = 11.dp)
                         ) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                // Waqt Name & Category / Note
+                                // Left: Time of Day Icon + Waqt Name (single line, no subtitle)
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.weight(1f)
+                                    modifier = Modifier.weight(1.05f)
                                 ) {
-                                    if (item.isForbidden) {
-                                        Icon(
-                                            imageVector = Icons.Default.WarningAmber,
-                                            contentDescription = "Forbidden",
-                                            tint = if (isItemActive) Color.White else Color(0xFFD97706),
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                    }
-
-                                    Column {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Text(
-                                                text = if (isBn) item.nameBn else item.nameEn,
-                                                fontSize = 15.sp,
-                                                fontWeight = if (isItemActive || item.isForbidden) FontWeight.Bold else FontWeight.SemiBold,
-                                                color = textColor
-                                            )
-                                            if (isItemActive) {
-                                                Spacer(modifier = Modifier.width(6.dp))
-                                                Surface(
-                                                    shape = RoundedCornerShape(6.dp),
-                                                    color = Color.White.copy(alpha = 0.25f)
-                                                ) {
-                                                    Text(
-                                                        text = if (isBn) "সক্রিয়" else "Active",
-                                                        fontSize = 9.5.sp,
-                                                        fontWeight = FontWeight.Black,
-                                                        color = Color.White,
-                                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.5.dp)
-                                                    )
-                                                }
-                                            }
-                                        }
-
-                                        val note = if (isBn) item.noteBn else item.noteEn
-                                        if (note != null && (item.isForbidden || item.isNafl)) {
-                                            Text(
-                                                text = note,
-                                                fontSize = 11.sp,
-                                                color = subTextColor
-                                            )
-                                        }
-                                    }
+                                    Icon(
+                                        imageVector = item.icon,
+                                        contentDescription = null,
+                                        tint = iconColor,
+                                        modifier = Modifier.size(19.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = if (isBn) item.nameBn else item.nameEn,
+                                        fontSize = 14.sp,
+                                        fontWeight = if (isItemActive || item.isForbidden) FontWeight.Bold else FontWeight.SemiBold,
+                                        color = textColor,
+                                        maxLines = 1
+                                    )
                                 }
 
-                                // Time Range: e.g. "04:32 - 06:03" or "00:00 - 00:00"
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        text = item.timeRangeStr,
-                                        fontSize = 14.sp,
-                                        fontWeight = if (isItemActive || item.isForbidden) FontWeight.ExtraBold else FontWeight.Bold,
-                                        color = textColor
-                                    )
+                                // Center / Time Range: e.g. "04:16 AM - 05:34 AM"
+                                Text(
+                                    text = item.timeRangeStr,
+                                    fontSize = 13.sp,
+                                    fontWeight = if (isItemActive || item.isForbidden) FontWeight.ExtraBold else FontWeight.Bold,
+                                    color = textColor,
+                                    maxLines = 1,
+                                    textAlign = TextAlign.End,
+                                    modifier = Modifier.padding(horizontal = 4.dp)
+                                )
 
-                                    if (!item.isForbidden && !item.isNafl) {
-                                        Spacer(modifier = Modifier.width(10.dp))
+                                // Far Right: Info button for forbidden/nafl/sunrise times, Notification alarm for regular wakts
+                                Box(
+                                    modifier = Modifier.size(28.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    if (item.isForbidden || item.isNafl || item.id == "sunrise") {
+                                        IconButton(
+                                            onClick = { selectedForbiddenItem = item },
+                                            modifier = Modifier.size(28.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Info,
+                                                contentDescription = "Details",
+                                                tint = if (isItemActive) Color.White else (if (item.isForbidden) Color(0xFFD97706) else Color(0xFF0D9488)),
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
+                                    } else {
                                         IconButton(
                                             onClick = {
                                                 val newAlerts = alertsMap.toMutableMap()
@@ -1039,13 +1272,13 @@ fun ModernPrayerTimesCard(
                                                     Toast.LENGTH_SHORT
                                                 ).show()
                                             },
-                                            modifier = Modifier.size(24.dp)
+                                            modifier = Modifier.size(28.dp)
                                         ) {
                                             Icon(
                                                 imageVector = if (hasAlert) Icons.Default.NotificationsActive else Icons.Default.NotificationsNone,
                                                 contentDescription = "Alert",
-                                                tint = if (isItemActive) Color.White else (if (hasAlert) Color(0xFF0D9488) else themeColors.displayText.copy(alpha = 0.3f)),
-                                                modifier = Modifier.size(16.dp)
+                                                tint = if (isItemActive) Color.White else (if (hasAlert) Color(0xFF0D9488) else themeColors.displayText.copy(alpha = 0.35f)),
+                                                modifier = Modifier.size(17.dp)
                                             )
                                         }
                                     }
@@ -1174,6 +1407,14 @@ fun ModernPrayerTimesCard(
         )
     }
 
+    if (showMonthlySheet) {
+        MonthlyPrayerTimesSheet(
+            viewModel = viewModel,
+            themeColors = themeColors,
+            onDismiss = { showMonthlySheet = false }
+        )
+    }
+
     if (showFiqhInfoDialog) {
         AlertDialog(
             onDismissRequest = { showFiqhInfoDialog = false },
@@ -1184,7 +1425,8 @@ fun ModernPrayerTimesCard(
                     Text(
                         text = if (isBn) "নামাজের গুরুত্বপূর্ণ মাসআলা" else "Salah & Fiqh Guidelines",
                         fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
+                        fontSize = 16.sp,
+                        color = themeColors.displayText
                     )
                 }
             },
@@ -1202,7 +1444,10 @@ fun ModernPrayerTimesCard(
                     )
                     Text(
                         text = if (isBn) "• সূর্যোদয়ের সময় (সূর্য ওঠার পর ১৫ মিনিট পর্যন্ত)।\n• ঠিক দুপুরবেলা (সূর্য ঠিক মাথার উপর থেকে পশ্চিমাকাশে ঢলে পড়ার পূর্ব পর্যন্ত প্রায় ১৫ মিনিট)।\n• সূর্যাস্তের সময় (সূর্য হলুদ বর্ণ ধারণ করা থেকে ডোবা পর্যন্ত ১৫ মিনিট, তবে ঐ দিনের আসর পড়া না থাকলে তা আদায় করা যাবে)।"
-                        else "• During sunrise (approx 15 mins after rising).\n• At exact zenith/midday (until sun moves past the meridian).\n• During sunset (approx 15 mins before sunset, except same day's Asr if missed)."
+                        else "• During sunrise (approx 15 mins after rising).\n• At exact zenith/midday (until sun moves past the meridian).\n• During sunset (approx 15 mins before sunset, except same day's Asr if missed).",
+                        color = themeColors.displayText,
+                        fontSize = 13.5.sp,
+                        lineHeight = 20.sp
                     )
                     Text(
                         text = if (isBn) "২. আউয়াল ওয়াক্তের ফজিলত:" else "2. Virtues of Praying on Time:",
@@ -1211,7 +1456,10 @@ fun ModernPrayerTimesCard(
                     )
                     Text(
                         text = if (isBn) "রাসূলুল্লাহ (সা.) ইরশাদ করেছেন: 'আল্লাহর নিকট সর্বাধিক প্রিয় আমল হলো সময়মতো নামাজ আদায় করা।' (সহীহ বুখারী)"
-                        else "Prophet Muhammad (PBUH) said: 'The dearest deed to Allah is performing prayer at its earliest appointed time.' (Sahih Bukhari)"
+                        else "Prophet Muhammad (PBUH) said: 'The dearest deed to Allah is performing prayer at its earliest appointed time.' (Sahih Bukhari)",
+                        color = themeColors.displayText.copy(alpha = 0.9f),
+                        fontSize = 13.5.sp,
+                        lineHeight = 20.sp
                     )
                 }
             },
@@ -1221,9 +1469,368 @@ fun ModernPrayerTimesCard(
                 }
             },
             containerColor = themeColors.cardBg,
+            titleContentColor = themeColors.displayText,
+            textContentColor = themeColors.displayText,
             shape = RoundedCornerShape(20.dp)
         )
     }
+
+    if (selectedForbiddenItem != null) {
+        val item = selectedForbiddenItem!!
+        AlertDialog(
+            onDismissRequest = { selectedForbiddenItem = null },
+            icon = {
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(if (item.isForbidden) Color(0xFFFEF2F2) else Color(0xFFF0FDFA)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = item.icon,
+                        contentDescription = null,
+                        tint = if (item.isForbidden) Color(0xFFDC2626) else Color(0xFF0D9488),
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            },
+            title = {
+                Text(
+                    text = (if (isBn) item.infoTitleBn ?: item.nameBn else item.infoTitleEn ?: item.nameEn),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    textAlign = TextAlign.Center,
+                    color = themeColors.displayText,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (item.isForbidden) Color(0xFFFEF3C7) else Color(0xFFCCFBF1)
+                    ) {
+                        Text(
+                            text = item.timeRangeStr,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (item.isForbidden) Color(0xFFB45309) else Color(0xFF0F766E),
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                        )
+                    }
+
+                    Text(
+                        text = (if (isBn) item.infoDetailBn ?: "" else item.infoDetailEn ?: ""),
+                        fontSize = 13.5.sp,
+                        color = themeColors.displayText,
+                        textAlign = TextAlign.Start,
+                        lineHeight = 20.sp
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { selectedForbiddenItem = null }) {
+                    Text(
+                        text = if (isBn) "বুঝতে পেরেছি" else "Understood",
+                        color = Color(0xFF0D9488),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            },
+            containerColor = themeColors.cardBg,
+            titleContentColor = themeColors.displayText,
+            textContentColor = themeColors.displayText,
+            shape = RoundedCornerShape(20.dp)
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MonthlyPrayerTimesSheet(
+    viewModel: CalculatorViewModel,
+    themeColors: CalculatorThemeColors,
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+    val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
+
+    var monthOffset by remember { mutableIntStateOf(0) }
+    val currentCal = remember(monthOffset) {
+        Calendar.getInstance().apply {
+            add(Calendar.MONTH, monthOffset)
+            set(Calendar.DAY_OF_MONTH, 1)
+        }
+    }
+
+    val daysInMonth = currentCal.getActualMaximum(Calendar.DAY_OF_MONTH)
+    val monthName = remember(currentCal, isBn) {
+        val mIdx = currentCal.get(Calendar.MONTH)
+        val y = currentCal.get(Calendar.YEAR)
+        if (isBn) {
+            val banglaGregorianMonths = listOf(
+                "জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল", "মে", "জুন",
+                "জুলাই", "আগস্ট", "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর"
+            )
+            "${banglaGregorianMonths[mIdx]} ${IslamicCalendarHelper.toBnDigits(y.toString())}"
+        } else {
+            val englishGregorianMonths = listOf(
+                "January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"
+            )
+            "${englishGregorianMonths[mIdx]} $y"
+        }
+    }
+
+    val todayCalendar = Calendar.getInstance()
+    val isCurrentMonth = todayCalendar.get(Calendar.MONTH) == currentCal.get(Calendar.MONTH) &&
+            todayCalendar.get(Calendar.YEAR) == currentCal.get(Calendar.YEAR)
+    val todayDayOfMonth = todayCalendar.get(Calendar.DAY_OF_MONTH)
+
+    val banglaDayShort = listOf("রবি", "সোম", "মঙ্গল", "বুধ", "বৃহঃ", "শুক্র", "শনি")
+    val englishDayShort = listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
+
+    val monthData = remember(currentCal, viewModel.selectedIslamicDistrictEn) {
+        (1..daysInMonth).map { day ->
+            val dayCal = (currentCal.clone() as Calendar).apply {
+                set(Calendar.DAY_OF_MONTH, day)
+            }
+            val dayOfWeek = (dayCal.get(Calendar.DAY_OF_WEEK) - 1 + 7) % 7
+            val timings = NamazTimeService.getPrayerTimesForDistrict(context, viewModel.selectedIslamicDistrictEn, dayCal)
+            val isToday = isCurrentMonth && (day == todayDayOfMonth)
+            val isFriday = (dayCal.get(Calendar.DAY_OF_WEEK) == Calendar.FRIDAY)
+
+            MonthlyDayRowData(
+                day = day,
+                dayOfWeekName = if (isBn) banglaDayShort[dayOfWeek] else englishDayShort[dayOfWeek],
+                fajr = timings.fajr,
+                sunrise = timings.sunrise,
+                dhuhr = timings.dhuhr,
+                asr = timings.asr,
+                maghrib = timings.maghrib,
+                isha = timings.isha,
+                isToday = isToday,
+                isFriday = isFriday
+            )
+        }
+    }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = themeColors.cardBg,
+        dragHandle = {
+            Surface(
+                modifier = Modifier.padding(vertical = 8.dp),
+                color = themeColors.displayText.copy(alpha = 0.2f),
+                shape = RoundedCornerShape(4.dp)
+            ) {
+                Box(modifier = Modifier.size(width = 38.dp, height = 4.dp))
+            }
+        },
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 6.dp)
+        ) {
+            // Header: Title & Close Button
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = if (isBn) "মাসিক নামাজের সময়সূচি" else "Monthly Prayer Timetable",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.displayText
+                    )
+                    Text(
+                        text = if (isBn) "${viewModel.selectedIslamicDistrictBn.split(" ")[0]} জেলা" else "${viewModel.selectedIslamicDistrictEn} District",
+                        fontSize = 12.sp,
+                        color = Color(0xFF0D9488),
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+
+                IconButton(onClick = onDismiss) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Close",
+                        tint = themeColors.displayText.copy(alpha = 0.6f)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Month Navigator Bar
+            Surface(
+                shape = RoundedCornerShape(14.dp),
+                color = themeColors.background,
+                border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.08f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = { monthOffset-- }) {
+                        Icon(
+                            imageVector = Icons.Default.ChevronLeft,
+                            contentDescription = "Previous Month",
+                            tint = Color(0xFF0D9488)
+                        )
+                    }
+
+                    Text(
+                        text = monthName,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.displayText
+                    )
+
+                    IconButton(onClick = { monthOffset++ }) {
+                        Icon(
+                            imageVector = Icons.Default.ChevronRight,
+                            contentDescription = "Next Month",
+                            tint = Color(0xFF0D9488)
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Table with Horizontal Scroll
+            val scrollState = rememberScrollState()
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f, fill = false)
+                    .heightIn(max = 420.dp)
+            ) {
+                Column(modifier = Modifier.horizontalScroll(scrollState)) {
+                    // Table Header Row
+                    Row(
+                        modifier = Modifier
+                            .background(Color(0xFF0D9488).copy(alpha = 0.12f), RoundedCornerShape(8.dp))
+                            .padding(vertical = 8.dp, horizontal = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        MonthlyTableCell(text = if (isBn) "তারিখ" else "Date", width = 50.dp, isHeader = true, themeColors = themeColors)
+                        MonthlyTableCell(text = if (isBn) "বার" else "Day", width = 45.dp, isHeader = true, themeColors = themeColors)
+                        MonthlyTableCell(text = if (isBn) "ফজর" else "Fajr", width = 75.dp, isHeader = true, themeColors = themeColors)
+                        MonthlyTableCell(text = if (isBn) "সূর্যোদয়" else "Sunrise", width = 75.dp, isHeader = true, themeColors = themeColors)
+                        MonthlyTableCell(text = if (isBn) "যোহর" else "Dhuhr", width = 75.dp, isHeader = true, themeColors = themeColors)
+                        MonthlyTableCell(text = if (isBn) "আসর" else "Asr", width = 75.dp, isHeader = true, themeColors = themeColors)
+                        MonthlyTableCell(text = if (isBn) "মাগরিব" else "Maghrib", width = 75.dp, isHeader = true, themeColors = themeColors)
+                        MonthlyTableCell(text = if (isBn) "এশা" else "Isha", width = 75.dp, isHeader = true, themeColors = themeColors)
+                    }
+
+                    // Table Body Rows
+                    LazyColumn(
+                        modifier = Modifier.heightIn(max = 360.dp),
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        items(monthData) { row ->
+                            val rowBg = when {
+                                row.isToday -> Color(0xFF10B981).copy(alpha = 0.18f)
+                                row.isFriday -> Color(0xFF0284C7).copy(alpha = 0.06f)
+                                else -> Color.Transparent
+                            }
+
+                            Row(
+                                modifier = Modifier
+                                    .background(rowBg, RoundedCornerShape(6.dp))
+                                    .padding(vertical = 6.dp, horizontal = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                MonthlyTableCell(
+                                    text = if (isBn) IslamicCalendarHelper.toBnDigits(row.day) else row.day.toString(),
+                                    width = 50.dp,
+                                    isHighlight = row.isToday,
+                                    themeColors = themeColors
+                                )
+                                MonthlyTableCell(
+                                    text = row.dayOfWeekName,
+                                    width = 45.dp,
+                                    isFriday = row.isFriday,
+                                    isHighlight = row.isToday,
+                                    themeColors = themeColors
+                                )
+                                MonthlyTableCell(text = row.fajr, width = 75.dp, themeColors = themeColors)
+                                MonthlyTableCell(text = row.sunrise, width = 75.dp, themeColors = themeColors)
+                                MonthlyTableCell(text = row.dhuhr, width = 75.dp, themeColors = themeColors)
+                                MonthlyTableCell(text = row.asr, width = 75.dp, themeColors = themeColors)
+                                MonthlyTableCell(text = row.maghrib, width = 75.dp, themeColors = themeColors)
+                                MonthlyTableCell(text = row.isha, width = 75.dp, themeColors = themeColors)
+                            }
+
+                            HorizontalDivider(
+                                thickness = 0.5.dp,
+                                color = themeColors.displayText.copy(alpha = 0.04f)
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}
+
+private data class MonthlyDayRowData(
+    val day: Int,
+    val dayOfWeekName: String,
+    val fajr: String,
+    val sunrise: String,
+    val dhuhr: String,
+    val asr: String,
+    val maghrib: String,
+    val isha: String,
+    val isToday: Boolean,
+    val isFriday: Boolean
+)
+
+@Composable
+private fun MonthlyTableCell(
+    text: String,
+    width: androidx.compose.ui.unit.Dp,
+    isHeader: Boolean = false,
+    isHighlight: Boolean = false,
+    isFriday: Boolean = false,
+    themeColors: CalculatorThemeColors
+) {
+    Text(
+        text = text,
+        fontSize = 12.sp,
+        fontWeight = when {
+            isHeader -> FontWeight.Bold
+            isHighlight -> FontWeight.ExtraBold
+            isFriday -> FontWeight.Bold
+            else -> FontWeight.Normal
+        },
+        color = when {
+            isHeader -> Color(0xFF0D9488)
+            isHighlight -> Color(0xFF047857)
+            isFriday -> Color(0xFF0284C7)
+            else -> themeColors.displayText
+        },
+        textAlign = TextAlign.Center,
+        modifier = Modifier.width(width)
+    )
 }
 
 private fun formatTimerClock(diffMillis: Long): String {
@@ -1276,6 +1883,7 @@ private data class ActiveWaqtData(
     val activeTitleBn: String,
     val activeTitleEn: String,
     val activeTimeStr: String,
+    val currentStartMillis: Long,
     val currentEndMillis: Long,
     val nextTitleBn: String,
     val nextTitleEn: String,
