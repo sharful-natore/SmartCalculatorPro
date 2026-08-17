@@ -139,12 +139,31 @@ fun ModernSehriIftarCard(
         Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
     }
 
+    val todayCal = remember(currentTimeMillis) {
+        Calendar.getInstance().apply { timeInMillis = currentTimeMillis }
+    }
+    val currentDayOfYear = todayCal.get(Calendar.DAY_OF_YEAR)
+    val timingsToday = remember(viewModel.selectedIslamicDistrictEn, currentDayOfYear) {
+        NamazTimeService.getPrayerTimesForDistrict(context, viewModel.selectedIslamicDistrictEn, todayCal)
+    }
+
+    val tomorrowCal = remember(currentTimeMillis) {
+        Calendar.getInstance().apply {
+            timeInMillis = currentTimeMillis
+            add(Calendar.DAY_OF_YEAR, 1)
+        }
+    }
+    val currentDayOfYearTomorrow = tomorrowCal.get(Calendar.DAY_OF_YEAR)
+    val timingsTomorrow = remember(viewModel.selectedIslamicDistrictEn, currentDayOfYearTomorrow) {
+        NamazTimeService.getPrayerTimesForDistrict(context, viewModel.selectedIslamicDistrictEn, tomorrowCal)
+    }
+
     // Base Timings
-    val calSehriToday = parseTimeToCal("04:46 AM", offset, 0)
-    val calFajrToday = parseTimeToCal("04:52 AM", offset, 0)
-    val calIftarToday = parseTimeToCal("06:18 PM", offset, 0)
-    val calMaghribToday = parseTimeToCal("06:20 PM", offset, 0)
-    val calSehriTomorrow = parseTimeToCal("04:46 AM", offset, 1)
+    val calSehriToday = parseTimeToCal(timingsToday.sahri, 0, 0)
+    val calFajrToday = parseTimeToCal(timingsToday.fajr, 0, 0)
+    val calIftarToday = parseTimeToCal(timingsToday.maghrib, 0, 0)
+    val calMaghribToday = parseTimeToCal(timingsToday.maghrib, 0, 0)
+    val calSehriTomorrow = parseTimeToCal(timingsTomorrow.sahri, 0, 1)
 
     val now = currentTimeMillis
 
@@ -173,50 +192,49 @@ fun ModernSehriIftarCard(
         else -> listOf(Color(0xFF4C1D95), Color(0xFF701A75), Color(0xFFBE185D))
     }
 
-    // 30 Days Ramadan Timetable Model
-    val ramadanDays = remember {
+    // 30 Days Ramadan Timetable Model (Dynamically generated using real offline engine starting from today)
+    val ramadanDays = remember(viewModel.selectedIslamicDistrictEn) {
         val days = mutableListOf<RamadanDayData>()
         val weekdaysBn = listOf("রবিবার", "সোমবার", "মঙ্গলবার", "বুধবার", "বৃহস্পতিবার", "শুক্রবার", "শনিবার")
         val weekdaysEn = listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
 
-        var curSehriMinutes = 4 * 60 + 58
-        var curIftarMinutes = 18 * 60 + 8
-
+        val cal = Calendar.getInstance()
         for (i in 1..30) {
-            val sHour = curSehriMinutes / 60
-            val sMin = curSehriMinutes % 60
-            val iHour = curIftarMinutes / 60 - 12
-            val iMin = curIftarMinutes % 60
-
-            val sStr = String.format(Locale.ENGLISH, "%02d:%02d AM", sHour, sMin)
-            val iStr = String.format(Locale.ENGLISH, "%02d:%02d PM", iHour, iMin)
+            val timings = NamazTimeService.getPrayerTimesForDistrict(context, viewModel.selectedIslamicDistrictEn, cal)
+            val dayOfWeek = cal.get(Calendar.DAY_OF_WEEK)
+            val weekdayIdx = (dayOfWeek - 1) % 7
 
             days.add(
                 RamadanDayData(
                     dayNumber = i,
-                    baseSehriTime = sStr,
-                    baseIftarTime = iStr,
-                    weekdayBn = weekdaysBn[(i - 1) % 7],
-                    weekdayEn = weekdaysEn[(i - 1) % 7]
+                    baseSehriTime = timings.sahri,
+                    baseIftarTime = timings.maghrib,
+                    weekdayBn = weekdaysBn[weekdayIdx],
+                    weekdayEn = weekdaysEn[weekdayIdx]
                 )
             )
-            // Gradual shifting over 30 days
-            if (i % 3 == 0) curSehriMinutes -= 1
-            if (i % 2 == 0) curIftarMinutes += 1
+            cal.add(Calendar.DAY_OF_YEAR, 1)
         }
         days
     }
 
-    Column(
+    Box(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        contentAlignment = Alignment.TopCenter
     ) {
-        // Top Header
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .widthIn(max = 600.dp)
+                .padding(horizontal = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Top Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
@@ -706,100 +724,108 @@ fun ModernSehriIftarCard(
                 selectedDecade == RamadanDecade.ALL || day.dayNumber in selectedDecade.dayRange
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                displayedDays.forEach { item ->
-                    val isToday = (item.dayNumber == 1) // Highlight Day 1 or current
-                    val adjustedSehri = adjustIslamicTimeStr(item.baseSehriTime, offset)
-                    val adjustedIftar = adjustIslamicTimeStr(item.baseIftarTime, offset)
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
+                border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.06f))
+            ) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    displayedDays.forEachIndexed { index, item ->
+                        val isToday = (item.dayNumber == 1) // Highlight Day 1 or current
+                        val adjustedSehri = adjustIslamicTimeStr(item.baseSehriTime, offset)
+                        val adjustedIftar = adjustIslamicTimeStr(item.baseIftarTime, offset)
 
-                    val decadeTag = when (item.dayNumber) {
-                        in 1..10 -> if (isBn) "রহমত" else "Mercy"
-                        in 11..20 -> if (isBn) "মাগফিরাত" else "Forgiveness"
-                        else -> if (isBn) "নাজাত" else "Salvation"
-                    }
-                    val decadeColor = when (item.dayNumber) {
-                        in 1..10 -> Color(0xFF10B981)
-                        in 11..20 -> Color(0xFF0284C7)
-                        else -> Color(0xFF8B5CF6)
-                    }
+                        val decadeTag = when (item.dayNumber) {
+                            in 1..10 -> if (isBn) "রহমত" else "Mercy"
+                            in 11..20 -> if (isBn) "মাগফিরাত" else "Forgiveness"
+                            else -> if (isBn) "নাজাত" else "Salvation"
+                        }
+                        val decadeColor = when (item.dayNumber) {
+                            in 1..10 -> Color(0xFF10B981)
+                            in 11..20 -> Color(0xFF0284C7)
+                            else -> Color(0xFF8B5CF6)
+                        }
 
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(14.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = if (isToday) Color(0xFFD97706).copy(alpha = 0.12f) else themeColors.cardBg
-                        ),
-                        border = BorderStroke(
-                            1.dp,
-                            if (isToday) Color(0xFFD97706) else themeColors.displayText.copy(alpha = 0.08f)
-                        )
-                    ) {
-                        Row(
+                        Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 14.dp, vertical = 11.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                                .background(if (isToday) Color(0xFFD97706).copy(alpha = 0.08f) else Color.Transparent)
+                                .padding(horizontal = 14.dp, vertical = 11.dp)
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(36.dp)
-                                        .clip(CircleShape)
-                                        .background(if (isToday) Color(0xFFD97706) else themeColors.displayText.copy(alpha = 0.08f)),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = if (isBn) "${item.dayNumber}ম" else "${item.dayNumber}",
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = if (isToday) Color.White else themeColors.displayText
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.width(10.dp))
-
-                                Column {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .clip(CircleShape)
+                                            .background(if (isToday) Color(0xFFD97706) else themeColors.displayText.copy(alpha = 0.08f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
                                         Text(
-                                            text = if (isBn) "${item.dayNumber} রমজান (${item.weekdayBn})" else "Ramadan ${item.dayNumber} (${item.weekdayEn})",
-                                            fontSize = 13.5.sp,
+                                            text = if (isBn) "${item.dayNumber}ম" else "${item.dayNumber}",
+                                            fontSize = 12.sp,
                                             fontWeight = FontWeight.Bold,
-                                            color = if (isToday) Color(0xFFD97706) else themeColors.displayText
+                                            color = if (isToday) Color.White else themeColors.displayText
                                         )
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Surface(
-                                            shape = RoundedCornerShape(6.dp),
-                                            color = decadeColor.copy(alpha = 0.15f)
-                                        ) {
-                                            Text(
-                                                text = decadeTag,
-                                                fontSize = 9.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = decadeColor,
-                                                modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
-                                            )
-                                        }
                                     }
 
+                                    Spacer(modifier = Modifier.width(10.dp))
+
+                                    Column {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text(
+                                                text = if (isBn) "${item.dayNumber} রমজান (${item.weekdayBn})" else "Ramadan ${item.dayNumber} (${item.weekdayEn})",
+                                                fontSize = 13.5.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = if (isToday) Color(0xFFD97706) else themeColors.displayText
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Surface(
+                                                shape = RoundedCornerShape(6.dp),
+                                                color = decadeColor.copy(alpha = 0.15f)
+                                            ) {
+                                                Text(
+                                                    text = decadeTag,
+                                                    fontSize = 9.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = decadeColor,
+                                                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
+                                                )
+                                            }
+                                        }
+
+                                        Text(
+                                            text = if (isBn) "সেহরি শেষ: $adjustedSehri" else "Sehri: $adjustedSehri",
+                                            fontSize = 11.sp,
+                                            color = Color(0xFF0284C7),
+                                            fontWeight = FontWeight.Medium,
+                                            modifier = Modifier.padding(top = 2.dp)
+                                        )
+                                    }
+                                }
+
+                                Column(horizontalAlignment = Alignment.End) {
                                     Text(
-                                        text = if (isBn) "সেহরি শেষ: $adjustedSehri" else "Sehri: $adjustedSehri",
-                                        fontSize = 11.sp,
-                                        color = Color(0xFF0284C7),
-                                        fontWeight = FontWeight.Medium,
-                                        modifier = Modifier.padding(top = 2.dp)
+                                        text = if (isBn) "ইফতার: $adjustedIftar" else "Iftar: $adjustedIftar",
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = Color(0xFFD97706)
                                     )
                                 }
                             }
+                        }
 
-                            Column(horizontalAlignment = Alignment.End) {
-                                Text(
-                                    text = if (isBn) "ইফতার: $adjustedIftar" else "Iftar: $adjustedIftar",
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = Color(0xFFD97706)
-                                )
-                            }
+                        if (index < displayedDays.size - 1) {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 14.dp),
+                                thickness = 0.5.dp,
+                                color = themeColors.displayText.copy(alpha = 0.05f)
+                            )
                         }
                     }
                 }
@@ -807,6 +833,7 @@ fun ModernSehriIftarCard(
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+        }
     }
 
     if (showDistrictSheet) {
