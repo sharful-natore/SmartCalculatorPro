@@ -41,6 +41,19 @@ object NamazTimeService {
         )
     }
 
+    fun getPrayerTimesForCoordinates(latitude: Double, longitude: Double, calendar: Calendar): PrayerTimings {
+        val times = NamazTimeManager.getDailyPrayerTimes(latitude, longitude, calendar.time)
+        return PrayerTimings(
+            sahri = times["sahri"] ?: "",
+            fajr = times["fajr"] ?: "",
+            sunrise = times["sunrise"] ?: "",
+            dhuhr = times["dhuhr"] ?: "",
+            asr = times["asr"] ?: "",
+            maghrib = times["maghrib"] ?: "",
+            isha = times["isha"] ?: ""
+        )
+    }
+
     fun timeStrToMinutes(timeStr: String): Int = NamazTimeManager.timeStrToMinutes(timeStr)
 
     fun minutesToTimeStr(minutes: Int): String = NamazTimeManager.minutesToTimeStr(minutes)

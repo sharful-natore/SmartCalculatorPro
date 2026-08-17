@@ -1,11 +1,14 @@
 package com.example.ui.islamic
 
+import android.Manifest
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.speech.tts.TextToSpeech
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
@@ -143,12 +146,27 @@ fun ModernSehriIftarCard(
         Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
     }
 
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val granted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        if (granted) {
+            viewModel.autoDetectIslamicLocation(context) { success, msg ->
+                if (msg != null) Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            val msg = if (isBn) "স্বয়ংক্রিয় লোকেশন শনাক্তের জন্য লোকেশন পারমিশন দিন" else "Location permission needed for auto-detect"
+            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+        }
+    }
+
     val todayCal = remember(currentTimeMillis) {
         Calendar.getInstance().apply { timeInMillis = currentTimeMillis }
     }
     val currentDayOfYear = todayCal.get(Calendar.DAY_OF_YEAR)
-    val timingsToday = remember(viewModel.selectedIslamicDistrictEn, currentDayOfYear) {
-        NamazTimeService.getPrayerTimesForDistrict(context, viewModel.selectedIslamicDistrictEn, todayCal)
+    val timingsToday = remember(viewModel.selectedIslamicDistrictLat, viewModel.selectedIslamicDistrictLon, currentDayOfYear) {
+        NamazTimeService.getPrayerTimesForCoordinates(viewModel.selectedIslamicDistrictLat, viewModel.selectedIslamicDistrictLon, todayCal)
     }
 
     val tomorrowCal = remember(currentTimeMillis) {
@@ -158,8 +176,8 @@ fun ModernSehriIftarCard(
         }
     }
     val currentDayOfYearTomorrow = tomorrowCal.get(Calendar.DAY_OF_YEAR)
-    val timingsTomorrow = remember(viewModel.selectedIslamicDistrictEn, currentDayOfYearTomorrow) {
-        NamazTimeService.getPrayerTimesForDistrict(context, viewModel.selectedIslamicDistrictEn, tomorrowCal)
+    val timingsTomorrow = remember(viewModel.selectedIslamicDistrictLat, viewModel.selectedIslamicDistrictLon, currentDayOfYearTomorrow) {
+        NamazTimeService.getPrayerTimesForCoordinates(viewModel.selectedIslamicDistrictLat, viewModel.selectedIslamicDistrictLon, tomorrowCal)
     }
 
     // Accurate Timings & Timestamps
@@ -215,7 +233,7 @@ fun ModernSehriIftarCard(
     }
 
     // 30-Day Ramadan Timetable Data (Generated offline using exact prayer calculations)
-    val ramadanDays = remember(viewModel.selectedIslamicDistrictEn, isBn) {
+    val ramadanDays = remember(viewModel.selectedIslamicDistrictLat, viewModel.selectedIslamicDistrictLon, isBn) {
         val days = mutableListOf<RamadanDayData>()
         val banglaDayShort = listOf("রবি", "সোম", "মঙ্গল", "বুধ", "বৃহঃ", "শুক্র", "শনি")
         val englishDayShort = listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
@@ -230,7 +248,7 @@ fun ModernSehriIftarCard(
 
         val cal = Calendar.getInstance()
         for (i in 1..30) {
-            val timings = NamazTimeService.getPrayerTimesForDistrict(context, viewModel.selectedIslamicDistrictEn, cal)
+            val timings = NamazTimeService.getPrayerTimesForCoordinates(viewModel.selectedIslamicDistrictLat, viewModel.selectedIslamicDistrictLon, cal)
             val dayOfWeek = (cal.get(Calendar.DAY_OF_WEEK) - 1 + 7) % 7
             val dNum = cal.get(Calendar.DAY_OF_MONTH)
             val mIdx = cal.get(Calendar.MONTH)
@@ -306,38 +324,85 @@ fun ModernSehriIftarCard(
                     )
                 }
 
-                // District Switcher Pill
-                Surface(
-                    shape = RoundedCornerShape(16.dp),
-                    color = Color(0xFFD97706).copy(alpha = 0.12f),
-                    border = BorderStroke(1.dp, Color(0xFFD97706).copy(alpha = 0.35f)),
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(16.dp))
-                        .clickable { showDistrictSheet = true }
+                // Location Actions (GPS Auto Detect + District Switcher Pill)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp)
+                    // Quick GPS Auto-Detect Button
+                    Surface(
+                        shape = CircleShape,
+                        color = if (viewModel.isIslamicLocationAutoDetected) Color(0xFF10B981).copy(alpha = 0.15f) else Color(0xFF0284C7).copy(alpha = 0.12f),
+                        border = BorderStroke(1.dp, if (viewModel.isIslamicLocationAutoDetected) Color(0xFF10B981) else Color(0xFF0284C7).copy(alpha = 0.35f)),
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clip(CircleShape)
+                            .clickable(enabled = !viewModel.isDetectingIslamicLocation) {
+                                if (IslamicLocationHelper.hasLocationPermission(context)) {
+                                    viewModel.autoDetectIslamicLocation(context) { success, msg ->
+                                        if (msg != null) Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                                    }
+                                } else {
+                                    locationPermissionLauncher.launch(
+                                        arrayOf(
+                                            Manifest.permission.ACCESS_FINE_LOCATION,
+                                            Manifest.permission.ACCESS_COARSE_LOCATION
+                                        )
+                                    )
+                                }
+                            }
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.LocationOn,
-                            contentDescription = "District",
-                            tint = Color(0xFFD97706),
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Spacer(modifier = Modifier.width(3.dp))
-                        Text(
-                            text = if (isBn) viewModel.selectedIslamicDistrictBn.split(" ")[0] else viewModel.selectedIslamicDistrictEn,
-                            fontSize = 11.5.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFFD97706)
-                        )
-                        Icon(
-                            imageVector = Icons.Default.ArrowDropDown,
-                            contentDescription = null,
-                            tint = Color(0xFFD97706),
-                            modifier = Modifier.size(15.dp)
-                        )
+                        Box(contentAlignment = Alignment.Center) {
+                            if (viewModel.isDetectingIslamicLocation) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(14.dp),
+                                    strokeWidth = 1.8.dp,
+                                    color = Color(0xFF0284C7)
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = if (viewModel.isIslamicLocationAutoDetected) Icons.Default.MyLocation else Icons.Default.GpsFixed,
+                                    contentDescription = "GPS Auto Location",
+                                    tint = if (viewModel.isIslamicLocationAutoDetected) Color(0xFF10B981) else Color(0xFF0284C7),
+                                    modifier = Modifier.size(15.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    // District Switcher Pill
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = if (viewModel.isIslamicLocationAutoDetected) Color(0xFF10B981).copy(alpha = 0.12f) else Color(0xFFD97706).copy(alpha = 0.12f),
+                        border = BorderStroke(1.dp, if (viewModel.isIslamicLocationAutoDetected) Color(0xFF10B981).copy(alpha = 0.35f) else Color(0xFFD97706).copy(alpha = 0.35f)),
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(16.dp))
+                            .clickable { showDistrictSheet = true }
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (viewModel.isIslamicLocationAutoDetected) Icons.Default.MyLocation else Icons.Default.LocationOn,
+                                contentDescription = "District",
+                                tint = if (viewModel.isIslamicLocationAutoDetected) Color(0xFF10B981) else Color(0xFFD97706),
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(3.dp))
+                            Text(
+                                text = if (isBn) viewModel.selectedIslamicDistrictBn.split(" ")[0] else viewModel.selectedIslamicDistrictEn,
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (viewModel.isIslamicLocationAutoDetected) Color(0xFF10B981) else Color(0xFFD97706)
+                            )
+                            Icon(
+                                imageVector = Icons.Default.ArrowDropDown,
+                                contentDescription = null,
+                                tint = if (viewModel.isIslamicLocationAutoDetected) Color(0xFF10B981) else Color(0xFFD97706),
+                                modifier = Modifier.size(15.dp)
+                            )
+                        }
                     }
                 }
             }

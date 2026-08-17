@@ -41,6 +41,7 @@ class CalculatorViewModel(
 ) : ViewModel() {
 
     private val chatPrefs = context.getSharedPreferences("ai_chat_prefs", Context.MODE_PRIVATE)
+    private val islamicPrefs = context.getSharedPreferences("islamic_location_prefs", Context.MODE_PRIVATE)
     private val moshi = try {
         com.squareup.moshi.Moshi.Builder().build()
     } catch (e: Throwable) {
@@ -179,12 +180,77 @@ class CalculatorViewModel(
         changeActiveTab(tab, "Tab $tab Activated", "ট্যাব $tab সক্রিয় করা হয়েছে")
     }
 
-    // Selected Bangladesh District for Islamic Prayer & Sehri/Iftar Times
-    var selectedIslamicDistrictBn by mutableStateOf("ঢাকা")
-    var selectedIslamicDistrictEn by mutableStateOf("Dhaka")
-    var selectedIslamicDistrictLat by mutableStateOf(23.8103)
-    var selectedIslamicDistrictLon by mutableStateOf(90.4125)
-    var selectedIslamicDistrictOffsetMinutes by mutableStateOf(0)
+    // Selected Bangladesh District / Location for Islamic Prayer & Sehri/Iftar Times
+    var selectedIslamicDistrictBn by mutableStateOf(islamicPrefs.getString("islamic_district_bn", "ঢাকা") ?: "ঢাকা")
+    var selectedIslamicDistrictEn by mutableStateOf(islamicPrefs.getString("islamic_district_en", "Dhaka") ?: "Dhaka")
+    var selectedIslamicDistrictLat by mutableStateOf(islamicPrefs.getFloat("islamic_district_lat", 23.8103f).toDouble())
+    var selectedIslamicDistrictLon by mutableStateOf(islamicPrefs.getFloat("islamic_district_lon", 90.4125f).toDouble())
+    var selectedIslamicDistrictOffsetMinutes by mutableStateOf(islamicPrefs.getInt("islamic_district_offset", 0))
+    var isIslamicLocationAutoDetected by mutableStateOf(islamicPrefs.getBoolean("islamic_district_auto", false))
+    var isDetectingIslamicLocation by mutableStateOf(false)
+    var islamicLocationDetectionError by mutableStateOf<String?>(null)
+
+    fun updateIslamicDistrict(nameBn: String, nameEn: String, lat: Double, lon: Double, offsetMinutes: Int, isAuto: Boolean = false) {
+        selectedIslamicDistrictBn = nameBn
+        selectedIslamicDistrictEn = nameEn
+        selectedIslamicDistrictLat = lat
+        selectedIslamicDistrictLon = lon
+        selectedIslamicDistrictOffsetMinutes = offsetMinutes
+        isIslamicLocationAutoDetected = isAuto
+        islamicLocationDetectionError = null
+        islamicPrefs.edit()
+            .putString("islamic_district_bn", nameBn)
+            .putString("islamic_district_en", nameEn)
+            .putFloat("islamic_district_lat", lat.toFloat())
+            .putFloat("islamic_district_lon", lon.toFloat())
+            .putInt("islamic_district_offset", offsetMinutes)
+            .putBoolean("islamic_district_auto", isAuto)
+            .apply()
+    }
+
+    fun autoDetectIslamicLocation(context: Context, onResult: (Boolean, String?) -> Unit = { _, _ -> }) {
+        if (isDetectingIslamicLocation) return
+        isDetectingIslamicLocation = true
+        islamicLocationDetectionError = null
+        val isBn = selectedLanguage == AppLanguage.BENGALI
+
+        viewModelScope.launch {
+            try {
+                val result = com.example.ui.islamic.IslamicLocationHelper.detectCurrentLocation(context)
+                result.onSuccess { loc ->
+                    updateIslamicDistrict(
+                        nameBn = loc.districtBn,
+                        nameEn = loc.districtEn,
+                        lat = loc.latitude,
+                        lon = loc.longitude,
+                        offsetMinutes = loc.offsetMinutes,
+                        isAuto = true
+                    )
+                    isDetectingIslamicLocation = false
+                    val successMsg = if (isBn) {
+                        "আপনার বর্তমান অবস্থান '${loc.districtBn}' অনুযায়ী সেহরি ও ইফতারের সময় নিখুঁতভাবে নির্ধারণ করা হয়েছে।"
+                    } else {
+                        "Accurately updated Sehri & Iftar timings for '${loc.districtEn}'."
+                    }
+                    onResult(true, successMsg)
+                }.onFailure { err ->
+                    isDetectingIslamicLocation = false
+                    val errorMsg = if (isBn) {
+                        "লোকেশন শনাক্ত করা যায়নি: ${err.message ?: "অনুগ্রহ করে জিপিএস চালু করুন"}"
+                    } else {
+                        "Failed to detect location: ${err.message ?: "Please turn on GPS"}"
+                    }
+                    islamicLocationDetectionError = errorMsg
+                    onResult(false, errorMsg)
+                }
+            } catch (e: Exception) {
+                isDetectingIslamicLocation = false
+                val errorMsg = if (isBn) "লোকেশন ত্রুটি: ${e.message}" else "Location error: ${e.message}"
+                islamicLocationDetectionError = errorMsg
+                onResult(false, errorMsg)
+            }
+        }
+    }
 
     // History deletion confirmation state
     var showClearHistoryDialog by mutableStateOf(false)

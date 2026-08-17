@@ -1,5 +1,9 @@
 package com.example.ui.islamic
 
+import android.Manifest
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -202,9 +207,30 @@ fun DistrictSelectionSheet(
     themeColors: CalculatorThemeColors,
     onDismiss: () -> Unit
 ) {
+    val context = LocalContext.current
     var searchQuery by remember { mutableStateOf("") }
     var selectedDivision by remember { mutableStateOf(BdDivision.ALL) }
     val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
+
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val granted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        if (granted) {
+            viewModel.autoDetectIslamicLocation(context) { success, msg ->
+                if (success) {
+                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                    onDismiss()
+                } else if (msg != null) {
+                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                }
+            }
+        } else {
+            val msg = if (isBn) "লোকেশন পারমিশন ছাড়া স্বয়ংক্রিয় লোকেশন শনাক্ত করা সম্ভব নয়" else "Location permission is required for auto detection"
+            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+        }
+    }
 
     val filteredDistricts = remember(searchQuery, selectedDivision) {
         allBdDistrictsList.filter { district ->
@@ -251,13 +277,13 @@ fun DistrictSelectionSheet(
                     Spacer(modifier = Modifier.width(10.dp))
                     Column {
                         Text(
-                            text = if (isBn) "জেলা নির্বাচন করুন" else "Select Your District",
+                            text = if (isBn) "জেলা ও লোকেশন নির্বাচন" else "Select District & Location",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = themeColors.displayText
                         )
                         Text(
-                            text = if (isBn) "বাংলাদেশের ৬৪টি জেলার নিখুঁত সময়সূচি" else "Accurate timings for 64 districts",
+                            text = if (isBn) "বাংলাদেশের ৬৪টি জেলা ও জিপিএস অটো-লোকেশন" else "64 districts & GPS Auto Detection",
                             fontSize = 12.sp,
                             color = themeColors.displayText.copy(alpha = 0.65f)
                         )
@@ -273,7 +299,115 @@ fun DistrictSelectionSheet(
                 }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // GPS Auto-Detect Button Card
+            Card(
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (viewModel.isIslamicLocationAutoDetected) Color(0xFF10B981).copy(alpha = 0.15f) else Color(0xFF0284C7).copy(alpha = 0.12f)
+                ),
+                border = BorderStroke(
+                    1.dp,
+                    if (viewModel.isIslamicLocationAutoDetected) Color(0xFF10B981) else Color(0xFF0284C7).copy(alpha = 0.4f)
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(enabled = !viewModel.isDetectingIslamicLocation) {
+                        if (IslamicLocationHelper.hasLocationPermission(context)) {
+                            viewModel.autoDetectIslamicLocation(context) { success, msg ->
+                                if (success) {
+                                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                                    onDismiss()
+                                } else if (msg != null) {
+                                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        } else {
+                            locationPermissionLauncher.launch(
+                                arrayOf(
+                                    Manifest.permission.ACCESS_FINE_LOCATION,
+                                    Manifest.permission.ACCESS_COARSE_LOCATION
+                                )
+                            )
+                        }
+                    }
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(34.dp)
+                                .clip(CircleShape)
+                                .background(if (viewModel.isIslamicLocationAutoDetected) Color(0xFF10B981) else Color(0xFF0284C7)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (viewModel.isDetectingIslamicLocation) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(18.dp),
+                                    strokeWidth = 2.dp,
+                                    color = Color.White
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.MyLocation,
+                                    contentDescription = "Auto GPS",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text(
+                                text = if (viewModel.isDetectingIslamicLocation) {
+                                    if (isBn) "জিপিএস লোকেশন শনাক্ত হচ্ছে..." else "Detecting GPS location..."
+                                } else {
+                                    if (isBn) "আমার বর্তমান লোকেশন অটো-ডিটেক্ট করুন" else "Auto-Detect My Current Location"
+                                },
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (viewModel.isIslamicLocationAutoDetected) Color(0xFF10B981) else Color(0xFF0284C7)
+                            )
+                            Text(
+                                text = if (viewModel.isIslamicLocationAutoDetected) {
+                                    if (isBn) "বর্তমান জিপিএস শহর: ${viewModel.selectedIslamicDistrictBn}" else "GPS Detected: ${viewModel.selectedIslamicDistrictEn}"
+                                } else {
+                                    if (isBn) "জিপিএস দিয়ে নিকটস্থ জেলা ও নির্ভুল সময়সূচি পান" else "Accurate Sehri & Iftar for your exact city"
+                                },
+                                fontSize = 11.sp,
+                                color = themeColors.displayText.copy(alpha = 0.65f)
+                            )
+                        }
+                    }
+
+                    if (viewModel.isIslamicLocationAutoDetected) {
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = Color(0xFF10B981)
+                        ) {
+                            Text(
+                                text = if (isBn) "সক্রিয়" else "Active",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
 
             // Search Bar
             OutlinedTextField(
@@ -377,11 +511,14 @@ fun DistrictSelectionSheet(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
-                                viewModel.selectedIslamicDistrictBn = district.nameBn
-                                viewModel.selectedIslamicDistrictEn = district.nameEn
-                                viewModel.selectedIslamicDistrictLat = district.lat
-                                viewModel.selectedIslamicDistrictLon = district.lon
-                                viewModel.selectedIslamicDistrictOffsetMinutes = district.offsetMinutes
+                                viewModel.updateIslamicDistrict(
+                                    nameBn = district.nameBn,
+                                    nameEn = district.nameEn,
+                                    lat = district.lat,
+                                    lon = district.lon,
+                                    offsetMinutes = district.offsetMinutes,
+                                    isAuto = false
+                                )
                                 onDismiss()
                             }
                     ) {

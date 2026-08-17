@@ -289,8 +289,8 @@ fun ModernPrayerTimesCard(
     }
 
     // High precision calculation via Adhan engine for selected calendar
-    val timings = remember(viewModel.selectedIslamicDistrictEn, displayCalendar.get(Calendar.DAY_OF_YEAR), displayCalendar.get(Calendar.YEAR)) {
-        NamazTimeService.getPrayerTimesForDistrict(context, viewModel.selectedIslamicDistrictEn, displayCalendar)
+    val timings = remember(viewModel.selectedIslamicDistrictLat, viewModel.selectedIslamicDistrictLon, displayCalendar.get(Calendar.DAY_OF_YEAR), displayCalendar.get(Calendar.YEAR)) {
+        NamazTimeService.getPrayerTimesForCoordinates(viewModel.selectedIslamicDistrictLat, viewModel.selectedIslamicDistrictLon, displayCalendar)
     }
 
     val ishraqTimeStr = remember(timings) {
@@ -306,9 +306,9 @@ fun ModernPrayerTimesCard(
     val duhaEndTimeStr = remember(dhuhrMinutes) { NamazTimeService.minutesToTimeStr(dhuhrMinutes - 20) }
 
     // Parse today's live milestones for "এখন" & "পরবর্তী" Cockpit
-    val liveTodayTimings = remember(viewModel.selectedIslamicDistrictEn, currentTimeMillis) {
+    val liveTodayTimings = remember(viewModel.selectedIslamicDistrictLat, viewModel.selectedIslamicDistrictLon, currentTimeMillis) {
         val todayCal = Calendar.getInstance().apply { timeInMillis = currentTimeMillis }
-        NamazTimeService.getPrayerTimesForDistrict(context, viewModel.selectedIslamicDistrictEn, todayCal)
+        NamazTimeService.getPrayerTimesForCoordinates(viewModel.selectedIslamicDistrictLat, viewModel.selectedIslamicDistrictLon, todayCal)
     }
 
     val liveIshraqStr = remember(liveTodayTimings) {
@@ -633,12 +633,14 @@ fun ModernPrayerTimesCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .widthIn(max = 600.dp)
-                .padding(horizontal = 14.dp, vertical = 6.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(horizontal = 2.dp, vertical = 4.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // --- TOP HEADER BAR: Section Title, Monthly Calendar & District Pill ---
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 2.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -745,15 +747,15 @@ fun ModernPrayerTimesCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(IntrinsicSize.Max),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 // LEFT CARD: এখন (Current Waqt)
                 Card(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
-                        .shadow(4.dp, RoundedCornerShape(20.dp)),
-                    shape = RoundedCornerShape(20.dp),
+                        .shadow(4.dp, RoundedCornerShape(18.dp)),
+                    shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = if (currentWaqtData.isForbidden) Color(0xFFFEF2F2) else Color(0xFFF0FDF4)
                     ),
@@ -765,10 +767,10 @@ fun ModernPrayerTimesCard(
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(14.dp),
+                            .padding(10.dp),
                         verticalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -776,7 +778,7 @@ fun ModernPrayerTimesCard(
                             ) {
                                 Text(
                                     text = if (isBn) "এখন" else "Now",
-                                    fontSize = 12.sp,
+                                    fontSize = 11.5.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = if (currentWaqtData.isForbidden) Color(0xFFDC2626) else Color(0xFF047857)
                                 )
@@ -791,7 +793,7 @@ fun ModernPrayerTimesCard(
 
                             Text(
                                 text = if (isBn) currentWaqtData.activeTitleBn else currentWaqtData.activeTitleEn,
-                                fontSize = 19.sp,
+                                fontSize = 18.sp,
                                 fontWeight = FontWeight.Black,
                                 color = if (currentWaqtData.isForbidden) Color(0xFF991B1B) else Color(0xFF064E3B),
                                 maxLines = 2
@@ -799,7 +801,7 @@ fun ModernPrayerTimesCard(
 
                             Text(
                                 text = currentWaqtData.activeTimeStr,
-                                fontSize = 14.5.sp,
+                                fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = themeColors.displayText.copy(alpha = 0.8f)
                             )
@@ -807,7 +809,7 @@ fun ModernPrayerTimesCard(
 
                         Column(
                             modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                            verticalArrangement = Arrangement.spacedBy(5.dp)
                         ) {
                             // Countdown remaining
                             Surface(
@@ -817,12 +819,12 @@ fun ModernPrayerTimesCard(
                             ) {
                                 Text(
                                     text = "-${formatTimerClock(currentRemainingMillis)}",
-                                    fontSize = 13.sp,
+                                    fontSize = 12.5.sp,
                                     fontWeight = FontWeight.ExtraBold,
                                     fontFamily = FontFamily.Monospace,
                                     color = if (currentWaqtData.isForbidden) Color(0xFFB91C1C) else Color(0xFF047857),
                                     textAlign = TextAlign.Center,
-                                    modifier = Modifier.padding(vertical = 4.dp, horizontal = 6.dp)
+                                    modifier = Modifier.padding(vertical = 4.dp, horizontal = 4.dp)
                                 )
                             }
 
@@ -850,8 +852,8 @@ fun ModernPrayerTimesCard(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
-                        .shadow(4.dp, RoundedCornerShape(20.dp)),
-                    shape = RoundedCornerShape(20.dp),
+                        .shadow(4.dp, RoundedCornerShape(18.dp)),
+                    shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = Color(0xFFF0F9FF)
                     ),
@@ -860,10 +862,10 @@ fun ModernPrayerTimesCard(
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(14.dp),
+                            .padding(10.dp),
                         verticalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -871,7 +873,7 @@ fun ModernPrayerTimesCard(
                             ) {
                                 Text(
                                     text = if (isBn) "পরবর্তী" else "Next",
-                                    fontSize = 12.sp,
+                                    fontSize = 11.5.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFF0369A1)
                                 )
@@ -885,7 +887,7 @@ fun ModernPrayerTimesCard(
 
                             Text(
                                 text = if (isBn) currentWaqtData.nextTitleBn else currentWaqtData.nextTitleEn,
-                                fontSize = 19.sp,
+                                fontSize = 18.sp,
                                 fontWeight = FontWeight.Black,
                                 color = Color(0xFF0C4A6E),
                                 maxLines = 2
@@ -893,7 +895,7 @@ fun ModernPrayerTimesCard(
 
                             Text(
                                 text = currentWaqtData.nextTimeStr,
-                                fontSize = 14.5.sp,
+                                fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = themeColors.displayText.copy(alpha = 0.8f)
                             )
@@ -901,7 +903,7 @@ fun ModernPrayerTimesCard(
 
                         Column(
                             modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                            verticalArrangement = Arrangement.spacedBy(5.dp)
                         ) {
                             // Countdown to next waqt
                             Surface(
@@ -911,12 +913,12 @@ fun ModernPrayerTimesCard(
                             ) {
                                 Text(
                                     text = "-${formatTimerClock(nextCountdownMillis)}",
-                                    fontSize = 13.sp,
+                                    fontSize = 12.5.sp,
                                     fontWeight = FontWeight.ExtraBold,
                                     fontFamily = FontFamily.Monospace,
                                     color = Color(0xFF0284C7),
                                     textAlign = TextAlign.Center,
-                                    modifier = Modifier.padding(vertical = 4.dp, horizontal = 6.dp)
+                                    modifier = Modifier.padding(vertical = 4.dp, horizontal = 4.dp)
                                 )
                             }
 
@@ -943,14 +945,14 @@ fun ModernPrayerTimesCard(
             // --- 2. SUNRISE & SUNSET CARD (সূর্যোদয়, সূর্যাস্ত ও দিনের দৈর্ঘ্য) ---
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
+                shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
                 border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.08f))
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 14.dp, vertical = 12.dp)
+                        .padding(horizontal = 10.dp, vertical = 10.dp)
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -1077,14 +1079,14 @@ fun ModernPrayerTimesCard(
             // --- 3. DATE NAVIGATION BAR (TRIPLE CALENDAR SELECTOR) ---
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
+                shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
                 border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.08f))
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 8.dp, vertical = 8.dp),
+                        .padding(horizontal = 4.dp, vertical = 6.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -1203,7 +1205,7 @@ fun ModernPrayerTimesCard(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .background(rowBg)
-                                .padding(horizontal = 14.dp, vertical = 11.dp)
+                                .padding(horizontal = 8.dp, vertical = 9.dp)
                         ) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -1299,11 +1301,11 @@ fun ModernPrayerTimesCard(
             // --- 4. DAILY SALAH TRACKER (দৈনিক ৫ ওয়াক্ত সালাত ট্র্যাকার) ---
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
                 border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.08f))
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 12.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -1595,13 +1597,13 @@ fun MonthlyPrayerTimesSheet(
     val banglaDayShort = listOf("রবি", "সোম", "মঙ্গল", "বুধ", "বৃহঃ", "শুক্র", "শনি")
     val englishDayShort = listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
 
-    val monthData = remember(currentCal, viewModel.selectedIslamicDistrictEn) {
+    val monthData = remember(currentCal, viewModel.selectedIslamicDistrictLat, viewModel.selectedIslamicDistrictLon) {
         (1..daysInMonth).map { day ->
             val dayCal = (currentCal.clone() as Calendar).apply {
                 set(Calendar.DAY_OF_MONTH, day)
             }
             val dayOfWeek = (dayCal.get(Calendar.DAY_OF_WEEK) - 1 + 7) % 7
-            val timings = NamazTimeService.getPrayerTimesForDistrict(context, viewModel.selectedIslamicDistrictEn, dayCal)
+            val timings = NamazTimeService.getPrayerTimesForCoordinates(viewModel.selectedIslamicDistrictLat, viewModel.selectedIslamicDistrictLon, dayCal)
             val isToday = isCurrentMonth && (day == todayDayOfMonth)
             val isFriday = (dayCal.get(Calendar.DAY_OF_WEEK) == Calendar.FRIDAY)
 
