@@ -69,6 +69,24 @@
             android:taskAffinity=""
             android:windowSoftInputMode="adjustResize" />
 
+        <activity
+            android:name=".QuickPrayerActivity"
+            android:exported="true"
+            android:label="Prayer Times &amp; Sehri-Iftar"
+            android:theme="@style/Theme.TransparentDialog"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".QuickQuranActivity"
+            android:exported="true"
+            android:label="Al-Quran"
+            android:theme="@style/Theme.TransparentDialog"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:windowSoftInputMode="adjustResize" />
+
         <receiver
             android:name=".data.quran.QuranAudioReceiver"
             android:exported="false">

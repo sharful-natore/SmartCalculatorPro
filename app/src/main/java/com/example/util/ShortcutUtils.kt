@@ -5,10 +5,19 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.graphics.drawable.Icon
 import android.os.Build
 import android.widget.Toast
+import androidx.annotation.DrawableRes
+import androidx.core.content.ContextCompat
 import com.example.MainActivity
+import com.example.QuickCalculatorActivity
+import com.example.QuickCalendarActivity
+import com.example.QuickMarketActivity
+import com.example.QuickPrayerActivity
+import com.example.QuickQuranActivity
 import com.example.R
 import com.example.data.model.ConverterType
 import com.example.data.model.ToolType
@@ -17,13 +26,28 @@ object ShortcutUtils {
 
     fun pinToolShortcut(context: Context, toolType: ToolType, isBn: Boolean) {
         val title = toolType.getTitle(if (isBn) AppLanguage.BENGALI else AppLanguage.ENGLISH)
-        val intent = Intent(context, MainActivity::class.java).apply {
+        val targetActivityClass = when (toolType) {
+            ToolType.MULTI_CALENDAR -> QuickCalendarActivity::class.java
+            ToolType.NOTES_CHECKLIST -> QuickMarketActivity::class.java
+            ToolType.SEHRI_IFTAR, ToolType.NAMAZ_EDUCATION, ToolType.PRAYER_TIMES -> QuickPrayerActivity::class.java
+            ToolType.HOLY_QURAN -> QuickQuranActivity::class.java
+            else -> MainActivity::class.java
+        }
+        val intent = Intent(context, targetActivityClass).apply {
             action = Intent.ACTION_VIEW
-            putExtra("target_tool", toolType.name)
+            if (targetActivityClass == MainActivity::class.java) {
+                putExtra("target_tool", toolType.name)
+            }
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
-        val iconRes = R.drawable.app_logo
-        val icon = Icon.createWithResource(context, iconRes)
+        val iconRes = when (toolType) {
+            ToolType.MULTI_CALENDAR -> R.drawable.ic_shortcut_calendar
+            ToolType.NOTES_CHECKLIST -> R.drawable.ic_shortcut_market
+            ToolType.SEHRI_IFTAR, ToolType.NAMAZ_EDUCATION, ToolType.PRAYER_TIMES -> R.drawable.ic_shortcut_calendar
+            ToolType.HOLY_QURAN, ToolType.ISLAMIC_DUAS -> R.drawable.ic_shortcut_converter
+            else -> R.drawable.ic_shortcut_dashboard
+        }
+        val icon = getBitmapIcon(context, iconRes)
         createPinnedShortcut(context, "tool_${toolType.name}", title, intent, icon, isBn)
     }
 
@@ -34,8 +58,20 @@ object ShortcutUtils {
             putExtra("target_converter", converterType.name)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
-        val icon = Icon.createWithResource(context, R.drawable.ic_shortcut_converter)
+        val icon = getBitmapIcon(context, R.drawable.ic_shortcut_converter)
         createPinnedShortcut(context, "conv_${converterType.name}", title, intent, icon, isBn)
+    }
+
+    private fun getBitmapIcon(context: Context, @DrawableRes resId: Int): Icon {
+        val drawable = ContextCompat.getDrawable(context, resId) ?: ContextCompat.getDrawable(context, R.drawable.app_logo)!!
+        val bitmap = Bitmap.createBitmap(
+            192, 192,
+            Bitmap.Config.ARGB_8888
+        )
+        val canvas = Canvas(bitmap)
+        drawable.setBounds(0, 0, canvas.width, canvas.height)
+        drawable.draw(canvas)
+        return Icon.createWithBitmap(bitmap)
     }
 
     private fun createPinnedShortcut(
@@ -81,6 +117,52 @@ object ShortcutUtils {
                 if (isBn) "হোমস্ক্রিন শর্টকাট ফিচারটি অ্যান্ড্রয়েড ৮.০ বা তার পরের ভার্সনে উপলব্ধ" else "Home screen shortcuts require Android 8.0+",
                 Toast.LENGTH_SHORT
             ).show()
+        }
+    }
+
+    fun updateDynamicShortcuts(context: Context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val shortcutManager = context.getSystemService(ShortcutManager::class.java) ?: return
+            val isBn = context.resources.configuration.locales[0].language == "bn"
+
+            val shortcuts = listOf(
+                ShortcutInfo.Builder(context, "shortcut_calculator")
+                    .setShortLabel(if (isBn) "ক্যালকুলেটর" else "Calculator")
+                    .setLongLabel(if (isBn) "কুইক ক্যালকুলেটর" else "Quick Calculator")
+                    .setIcon(getBitmapIcon(context, R.drawable.ic_shortcut_calculator))
+                    .setIntent(Intent(context, QuickCalculatorActivity::class.java).apply { action = Intent.ACTION_VIEW })
+                    .build(),
+                ShortcutInfo.Builder(context, "shortcut_calendar")
+                    .setShortLabel(if (isBn) "ক্যালেন্ডার" else "Calendar")
+                    .setLongLabel(if (isBn) "কুইক ক্যালেন্ডার" else "Quick Calendar")
+                    .setIcon(getBitmapIcon(context, R.drawable.ic_shortcut_calendar))
+                    .setIntent(Intent(context, QuickCalendarActivity::class.java).apply { action = Intent.ACTION_VIEW })
+                    .build(),
+                ShortcutInfo.Builder(context, "shortcut_market")
+                    .setShortLabel(if (isBn) "বাজার ফর্দ" else "Market List")
+                    .setLongLabel(if (isBn) "কুইক বাজার ফর্দ" else "Quick Market List")
+                    .setIcon(getBitmapIcon(context, R.drawable.ic_shortcut_market))
+                    .setIntent(Intent(context, QuickMarketActivity::class.java).apply { action = Intent.ACTION_VIEW })
+                    .build(),
+                ShortcutInfo.Builder(context, "shortcut_prayer")
+                    .setShortLabel(if (isBn) "নামাজের সময়" else "Prayer Times")
+                    .setLongLabel(if (isBn) "নামাজের সময়সূচি ও সেহরি-ইফতার" else "Prayer Times & Sehri-Iftar")
+                    .setIcon(getBitmapIcon(context, R.drawable.ic_shortcut_calendar))
+                    .setIntent(Intent(context, QuickPrayerActivity::class.java).apply { action = Intent.ACTION_VIEW })
+                    .build(),
+                ShortcutInfo.Builder(context, "shortcut_quran")
+                    .setShortLabel(if (isBn) "আল কুরআন" else "Al-Quran")
+                    .setLongLabel(if (isBn) "আল কুরআনুল কারীম" else "Al-Quran Kareem")
+                    .setIcon(getBitmapIcon(context, R.drawable.ic_shortcut_converter))
+                    .setIntent(Intent(context, QuickQuranActivity::class.java).apply { action = Intent.ACTION_VIEW })
+                    .build()
+            )
+
+            try {
+                shortcutManager.dynamicShortcuts = shortcuts
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 }

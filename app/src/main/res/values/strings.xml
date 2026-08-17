@@ -6,4 +6,6 @@
     <string name="shortcut_dashboard">Dashboard</string>
     <string name="shortcut_history">History</string>
     <string name="shortcut_converter">Unit Converter</string>
+    <string name="shortcut_prayer">Prayer &amp; Sehri</string>
+    <string name="shortcut_quran">Al-Quran</string>
 </resources>

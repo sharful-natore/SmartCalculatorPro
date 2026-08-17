@@ -218,7 +218,7 @@ fun PrayerStepCard(
                                         modifier = Modifier.size(34.dp)
                                     ) {
                                         Icon(
-                                            imageVector = if (isPlaying) Icons.Default.PauseCircle else Icons.Default.VolumeUp,
+                                            imageVector = if (isPlaying) Icons.Default.PauseCircle else Icons.Default.PlayCircle,
                                             contentDescription = "Play Audio",
                                             tint = activeAccent,
                                             modifier = Modifier.size(24.dp)

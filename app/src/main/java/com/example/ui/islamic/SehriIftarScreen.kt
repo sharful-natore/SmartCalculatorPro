@@ -252,7 +252,7 @@ fun ModernSehriIftarCard(
                         modifier = Modifier.size(18.dp)
                     )
                     Text(
-                        text = if (isBn) "আপনার লোকেশন সিলেক্ট করুন" else "Select your location",
+                        text = if (isBn) "আপনার জেলা" else "Your District",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         color = themeColors.displayText,
@@ -268,47 +268,6 @@ fun ModernSehriIftarCard(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    // Quick GPS Auto-Detect Button
-                    Surface(
-                        shape = CircleShape,
-                        color = if (viewModel.isIslamicLocationAutoDetected) Color(0xFF10B981).copy(alpha = 0.15f) else Color(0xFF0284C7).copy(alpha = 0.12f),
-                        border = BorderStroke(1.dp, if (viewModel.isIslamicLocationAutoDetected) Color(0xFF10B981) else Color(0xFF0284C7).copy(alpha = 0.35f)),
-                        modifier = Modifier
-                            .size(32.dp)
-                            .clip(CircleShape)
-                            .clickable(enabled = !viewModel.isDetectingIslamicLocation) {
-                                if (IslamicLocationHelper.hasLocationPermission(context)) {
-                                    viewModel.autoDetectIslamicLocation(context) { _, msg ->
-                                        if (msg != null) Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-                                    }
-                                } else {
-                                    locationPermissionLauncher.launch(
-                                        arrayOf(
-                                            Manifest.permission.ACCESS_FINE_LOCATION,
-                                            Manifest.permission.ACCESS_COARSE_LOCATION
-                                        )
-                                    )
-                                }
-                            }
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            if (viewModel.isDetectingIslamicLocation) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(15.dp),
-                                    strokeWidth = 2.dp,
-                                    color = Color(0xFF0284C7)
-                                )
-                            } else {
-                                Icon(
-                                    imageVector = if (viewModel.isIslamicLocationAutoDetected) Icons.Default.MyLocation else Icons.Default.GpsFixed,
-                                    contentDescription = "GPS Auto Location",
-                                    tint = if (viewModel.isIslamicLocationAutoDetected) Color(0xFF10B981) else Color(0xFF0284C7),
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
-                        }
-                    }
-
                     // District Switcher Pill
                     val districtName = if (isBn) viewModel.selectedIslamicDistrictBn.split(" ")[0] else viewModel.selectedIslamicDistrictEn
                     Surface(
@@ -348,6 +307,47 @@ fun ModernSehriIftarCard(
                                 tint = if (viewModel.isIslamicLocationAutoDetected) Color(0xFF10B981) else Color(0xFFD97706),
                                 modifier = Modifier.size(16.dp)
                             )
+                        }
+                    }
+
+                    // Quick GPS Auto-Detect Button (To the right of district selector)
+                    Surface(
+                        shape = CircleShape,
+                        color = if (viewModel.isIslamicLocationAutoDetected) Color(0xFF10B981).copy(alpha = 0.15f) else Color(0xFF0284C7).copy(alpha = 0.12f),
+                        border = BorderStroke(1.dp, if (viewModel.isIslamicLocationAutoDetected) Color(0xFF10B981) else Color(0xFF0284C7).copy(alpha = 0.35f)),
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .clickable(enabled = !viewModel.isDetectingIslamicLocation) {
+                                if (IslamicLocationHelper.hasLocationPermission(context)) {
+                                    viewModel.autoDetectIslamicLocation(context) { _, msg ->
+                                        if (msg != null) Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                                    }
+                                } else {
+                                    locationPermissionLauncher.launch(
+                                        arrayOf(
+                                            Manifest.permission.ACCESS_FINE_LOCATION,
+                                            Manifest.permission.ACCESS_COARSE_LOCATION
+                                        )
+                                    )
+                                }
+                            }
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            if (viewModel.isDetectingIslamicLocation) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(15.dp),
+                                    strokeWidth = 2.dp,
+                                    color = Color(0xFF0284C7)
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = if (viewModel.isIslamicLocationAutoDetected) Icons.Default.MyLocation else Icons.Default.GpsFixed,
+                                    contentDescription = "GPS Auto Location",
+                                    tint = if (viewModel.isIslamicLocationAutoDetected) Color(0xFF10B981) else Color(0xFF0284C7),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -981,12 +981,13 @@ private fun CompactExpandableHijriDayCard(
     val cardBg = when {
         isForbidden -> Color(0xFFEF4444).copy(alpha = 0.06f)
         row.isToday -> themeColors.titleBarBg.copy(alpha = 0.1f)
-        row.isFriday -> Color(0xFF0284C7).copy(alpha = 0.04f)
+        row.isFriday -> Color(0xFFFEF08A).copy(alpha = 0.35f)
         else -> themeColors.cardBg
     }
     val cardBorder = when {
         isForbidden -> Color(0xFFEF4444).copy(alpha = 0.4f)
         row.isToday -> themeColors.titleBarBg
+        row.isFriday -> Color(0xFFEAB308).copy(alpha = 0.6f)
         isExpanded -> Color(0xFFD97706).copy(alpha = 0.5f)
         else -> themeColors.displayText.copy(alpha = 0.07f)
     }

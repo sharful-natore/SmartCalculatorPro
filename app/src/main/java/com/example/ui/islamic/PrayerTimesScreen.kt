@@ -487,19 +487,6 @@ fun ModernPrayerTimesCard(
                 icon = Icons.Default.WbTwilight
             ),
             PrayerWaqtItem(
-                id = "sunrise",
-                nameBn = "সূর্যোদয়",
-                nameEn = "Sunrise",
-                startTimeStr = timings.sunrise,
-                endTimeStr = ishraqTimeStr,
-                timeRangeStr = "${timings.sunrise} - ${ishraqTimeStr}",
-                icon = Icons.Default.WbSunny,
-                infoTitleBn = "সূর্যোদয়কাল",
-                infoTitleEn = "Sunrise Period",
-                infoDetailBn = "সূর্য উদয় হওয়ার সময়। এ সময় থেকে প্রায় ১৫ মিনিট সূর্য এক বর্শা পরিমাণ ওপরে ওঠার পূর্ব পর্যন্ত যেকোনো প্রকার সালাত আদায় করা হারাম।",
-                infoDetailEn = "Sunrise period. Prayers are forbidden until the sun rises sufficiently (about 15 minutes)."
-            ),
-            PrayerWaqtItem(
                 id = "sunrise_forbidden",
                 nameBn = "নিষিদ্ধ সময়",
                 nameEn = "Forbidden Time",
@@ -614,7 +601,7 @@ fun ModernPrayerTimesCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (isBn) "আপনার জেলা" else "Your District",
+                    text = if (isBn) "জেলা" else "District",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = themeColors.displayText
@@ -624,7 +611,45 @@ fun ModernPrayerTimesCard(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    // Auto Location Detect Button
+                    // District Switcher Pill
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = themeColors.titleBarBg.copy(alpha = 0.12f),
+                        border = BorderStroke(1.dp, themeColors.titleBarBg.copy(alpha = 0.35f)),
+                        modifier = Modifier
+                            .widthIn(max = 140.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .clickable { showDistrictSheet = true }
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 9.dp, vertical = 6.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.LocationOn,
+                                contentDescription = "District",
+                                tint = themeColors.titleBarBg,
+                                modifier = Modifier.size(15.dp)
+                            )
+                            Spacer(modifier = Modifier.width(3.dp))
+                            Text(
+                                text = if (isBn) viewModel.selectedIslamicDistrictBn.split(" ")[0] else viewModel.selectedIslamicDistrictEn,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.titleBarBg,
+                                maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                            )
+                            Icon(
+                                imageVector = Icons.Default.ArrowDropDown,
+                                contentDescription = null,
+                                tint = themeColors.titleBarBg,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+
+                    // Auto Location Detect Button (Right of District Selector)
                     Surface(
                         shape = CircleShape,
                         color = themeColors.titleBarBg.copy(alpha = 0.12f),
@@ -655,41 +680,6 @@ fun ModernPrayerTimesCard(
                                     modifier = Modifier.size(16.dp)
                                 )
                             }
-                        }
-                    }
-
-                    // District Switcher Pill
-                    Surface(
-                        shape = RoundedCornerShape(16.dp),
-                        color = themeColors.titleBarBg.copy(alpha = 0.12f),
-                        border = BorderStroke(1.dp, themeColors.titleBarBg.copy(alpha = 0.35f)),
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(16.dp))
-                            .clickable { showDistrictSheet = true }
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(horizontal = 9.dp, vertical = 6.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.LocationOn,
-                                contentDescription = "District",
-                                tint = themeColors.titleBarBg,
-                                modifier = Modifier.size(15.dp)
-                            )
-                            Spacer(modifier = Modifier.width(3.dp))
-                            Text(
-                                text = if (isBn) viewModel.selectedIslamicDistrictBn.split(" ")[0] else viewModel.selectedIslamicDistrictEn,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = themeColors.titleBarBg
-                            )
-                            Icon(
-                                imageVector = Icons.Default.ArrowDropDown,
-                                contentDescription = null,
-                                tint = themeColors.titleBarBg,
-                                modifier = Modifier.size(16.dp)
-                            )
                         }
                     }
 

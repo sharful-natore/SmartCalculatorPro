@@ -1553,11 +1553,11 @@ How can I help you today?"""
         private set
 
     fun loadOrderedFavorites(): List<String> {
-        val raw = sharedPrefs.getString("ordered_favorite_tools_list2", "") ?: ""
+        val raw = sharedPrefs.getString("ordered_favorite_tools_list3", "") ?: ""
         if (raw.isBlank()) {
             val set = sharedPrefs.getStringSet("favorite_tools", emptySet()) ?: emptySet()
             if (set.isEmpty()) {
-                return listOf("AGE", "BMI", "CONV_CURRENCY", "DISCOUNT", "WATER_INTAKE", "CONV_LENGTH")
+                return listOf("MULTI_CALENDAR", "HOLY_QURAN", "PRAYER_TIMES", "SEHRI_IFTAR", "AGE", "BMI", "CONV_CURRENCY")
             }
             return set.toList()
         }
@@ -1797,7 +1797,11 @@ How can I help you today?"""
     }
 
     private fun loadFavorites(key: String): Set<String> {
-        return sharedPrefs.getStringSet(key, emptySet()) ?: emptySet()
+        val saved = sharedPrefs.getStringSet(key, null)
+        if (saved == null && key == "favorite_tools") {
+            return setOf("MULTI_CALENDAR", "HOLY_QURAN", "PRAYER_TIMES", "SEHRI_IFTAR", "AGE", "BMI")
+        }
+        return saved ?: emptySet()
     }
 
     data class FavoriteConfirmAction(
@@ -1885,7 +1889,9 @@ How can I help you today?"""
                 if (res != null) return res
             } catch (e: Exception) { e.printStackTrace() }
         }
-        return emptyMap()
+        return mapOf(
+            "ISLAMIC" to listOf("HOLY_QURAN", "QIBLA_COMPASS", "PRAYER_TIMES", "SEHRI_IFTAR", "DIGITAL_TASBIH", "ISLAMIC_DUAS", "NAMAZ_EDUCATION")
+        )
     }
 
     fun getCategoryTopTools(category: com.example.data.model.ToolCategory): List<com.example.data.model.ToolType> {

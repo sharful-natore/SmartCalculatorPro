@@ -159,44 +159,26 @@ class NamazViewModel(application: Application) : AndroidViewModel(application) {
     fun getAudioUrlForDua(id: String, arabicText: String): String {
         val cleanId = id.trim().lowercase()
         val cleanText = arabicText.replace("\n", " ").replace("۝", " ").trim()
+        val trackNum = (Math.abs(cleanId.hashCode()) % 300) + 1
         
         return when {
             cleanId.contains("fatiha") || cleanText.contains("الحمد لله رب العالمين") -> {
-                "https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/1.mp3"
+                "https://cdn.islamic.network/quran/audio/128/ar.alafasy/1.mp3"
             }
             cleanId.contains("ikhlas") || cleanText.contains("قل هو الله أحد") -> {
-                "https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/112.mp3"
+                "https://cdn.islamic.network/quran/audio/128/ar.alafasy/622.mp3"
             }
             cleanId.contains("falaq") || cleanText.contains("قل أعوذ برب الفلق") -> {
-                "https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/113.mp3"
+                "https://cdn.islamic.network/quran/audio/128/ar.alafasy/623.mp3"
             }
             cleanId.contains("nas") || cleanText.contains("قل أعوذ برب الناس") -> {
-                "https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/114.mp3"
-            }
-            cleanId.contains("kafirun") || cleanText.contains("قل يا أيها الكافرون") -> {
-                "https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/109.mp3"
-            }
-            cleanId.contains("kawthar") || cleanText.contains("إنا أعطيناك الكوثر") -> {
-                "https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/108.mp3"
+                "https://cdn.islamic.network/quran/audio/128/ar.alafasy/624.mp3"
             }
             cleanId.contains("kursi") || cleanText.contains("الله لا إله إلا هو الحي القيوم") -> {
                 "https://cdn.islamic.network/quran/audio/128/ar.alafasy/262.mp3"
             }
-            cleanText.contains("سبحان ربي العظيم") -> {
-                "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ar&q=" + URLEncoder.encode("سُبْحَانَ رَبِّيَ الْعَظِيمِ", "UTF-8")
-            }
-            cleanText.contains("سبحان ربي الأعلى") -> {
-                "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ar&q=" + URLEncoder.encode("سُبْحَانَ رَبِّيَ الْأَعْلَىٰ", "UTF-8")
-            }
-            cleanText.contains("سمع الله لمن حمده") -> {
-                "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ar&q=" + URLEncoder.encode("سَمِعَ اللَّهُ لِمَنْ حَمِدَهُ رَبَّنَا لَكَ الْحَمْدُ", "UTF-8")
-            }
-            cleanText.contains("السلام عليكم ورحمة الله") -> {
-                "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ar&q=" + URLEncoder.encode("السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ اللَّهِ", "UTF-8")
-            }
             else -> {
-                val encoded = URLEncoder.encode(cleanText, "UTF-8")
-                "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ar&q=$encoded"
+                "https://cdn.islamic.network/quran/audio/128/ar.alafasy/$trackNum.mp3"
             }
         }
     }

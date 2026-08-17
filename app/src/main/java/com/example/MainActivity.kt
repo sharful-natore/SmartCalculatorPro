@@ -47,6 +47,8 @@ class MainActivity : ComponentActivity() {
         // Explicitly set default active tab to 0 (Dashboard) on activity creation
         viewModel.activeTab = 0
 
+        com.example.util.ShortcutUtils.updateDynamicShortcuts(this)
+
         android.util.Log.d("MainActivity", "Intent: ${intent.action}, data: ${intent.dataString}, extras: ${intent.extras}")
         if (savedInstanceState == null) {
             handleShortcutIntent(intent)
