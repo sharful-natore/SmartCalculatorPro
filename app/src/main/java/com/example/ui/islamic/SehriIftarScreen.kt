@@ -505,7 +505,7 @@ fun ModernSehriIftarCard(
                             color = themeColors.displayText.copy(alpha = 0.7f)
                         )
                         Text(
-                            text = adjustIslamicTimeStr("04:46 AM", offset),
+                            text = timingsToday.sahri,
                             fontSize = 18.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = Color(0xFF0284C7),
@@ -517,7 +517,7 @@ fun ModernSehriIftarCard(
                             modifier = Modifier.padding(top = 6.dp)
                         ) {
                             Text(
-                                text = if (isBn) "ফজর: ${adjustIslamicTimeStr("04:52 AM", offset)}" else "Fajr: ${adjustIslamicTimeStr("04:52 AM", offset)}",
+                                text = if (isBn) "ফজর: ${timingsToday.fajr}" else "Fajr: ${timingsToday.fajr}",
                                 fontSize = 10.5.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF0284C7),
@@ -559,7 +559,7 @@ fun ModernSehriIftarCard(
                             color = themeColors.displayText.copy(alpha = 0.7f)
                         )
                         Text(
-                            text = adjustIslamicTimeStr("06:18 PM", offset),
+                            text = timingsToday.maghrib,
                             fontSize = 18.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = Color(0xFFD97706),
@@ -571,7 +571,7 @@ fun ModernSehriIftarCard(
                             modifier = Modifier.padding(top = 6.dp)
                         ) {
                             Text(
-                                text = if (isBn) "মাগরিব: ${adjustIslamicTimeStr("06:20 PM", offset)}" else "Maghrib: ${adjustIslamicTimeStr("06:20 PM", offset)}",
+                                text = if (isBn) "মাগরিব: ${timingsToday.maghrib}" else "Maghrib: ${timingsToday.maghrib}",
                                 fontSize = 10.5.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFFD97706),
@@ -733,8 +733,8 @@ fun ModernSehriIftarCard(
                 Column(modifier = Modifier.fillMaxWidth()) {
                     displayedDays.forEachIndexed { index, item ->
                         val isToday = (item.dayNumber == 1) // Highlight Day 1 or current
-                        val adjustedSehri = adjustIslamicTimeStr(item.baseSehriTime, offset)
-                        val adjustedIftar = adjustIslamicTimeStr(item.baseIftarTime, offset)
+                        val adjustedSehri = item.baseSehriTime
+                        val adjustedIftar = item.baseIftarTime
 
                         val decadeTag = when (item.dayNumber) {
                             in 1..10 -> if (isBn) "রহমত" else "Mercy"

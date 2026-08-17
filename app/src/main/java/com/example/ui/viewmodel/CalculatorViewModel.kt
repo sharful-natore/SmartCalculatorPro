@@ -182,6 +182,8 @@ class CalculatorViewModel(
     // Selected Bangladesh District for Islamic Prayer & Sehri/Iftar Times
     var selectedIslamicDistrictBn by mutableStateOf("ঢাকা")
     var selectedIslamicDistrictEn by mutableStateOf("Dhaka")
+    var selectedIslamicDistrictLat by mutableStateOf(23.8103)
+    var selectedIslamicDistrictLon by mutableStateOf(90.4125)
     var selectedIslamicDistrictOffsetMinutes by mutableStateOf(0)
 
     // History deletion confirmation state

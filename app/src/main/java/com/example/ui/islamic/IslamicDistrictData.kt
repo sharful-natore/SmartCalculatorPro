@@ -43,89 +43,91 @@ data class BdDistrict(
     val nameBn: String,
     val nameEn: String,
     val division: BdDivision,
+    val lat: Double,
+    val lon: Double,
     val offsetMinutes: Int
 )
 
 val allBdDistrictsList = listOf(
     // ঢাকা বিভাগ (Dhaka Division)
-    BdDistrict("ঢাকা (Dhaka)", "Dhaka", BdDivision.DHAKA, 0),
-    BdDistrict("গাজীপুর (Gazipur)", "Gazipur", BdDivision.DHAKA, 0),
-    BdDistrict("নারায়ণগঞ্জ (Narayanganj)", "Narayanganj", BdDivision.DHAKA, 0),
-    BdDistrict("মুন্সীগঞ্জ (Munshiganj)", "Munshiganj", BdDivision.DHAKA, 0),
-    BdDistrict("মানিকগঞ্জ (Manikganj)", "Manikganj", BdDivision.DHAKA, 2),
-    BdDistrict("নরসিংদী (Narsingdi)", "Narsingdi", BdDivision.DHAKA, -1),
-    BdDistrict("টাঙ্গাইল (Tangail)", "Tangail", BdDivision.DHAKA, 2),
-    BdDistrict("ফরিদপুর (Faridpur)", "Faridpur", BdDivision.DHAKA, 2),
-    BdDistrict("রাজবাড়ী (Rajbari)", "Rajbari", BdDivision.DHAKA, 4),
-    BdDistrict("গোপালগঞ্জ (Gopalganj)", "Gopalganj", BdDivision.DHAKA, 3),
-    BdDistrict("মাদারীপুর (Madaripur)", "Madaripur", BdDivision.DHAKA, 2),
-    BdDistrict("শরীয়তপুর (Shariatpur)", "Shariatpur", BdDivision.DHAKA, 1),
-    BdDistrict("কিশোরগঞ্জ (Kishoreganj)", "Kishoreganj", BdDivision.DHAKA, -2),
+    BdDistrict("ঢাকা (Dhaka)", "Dhaka", BdDivision.DHAKA, 23.8103, 90.4125, 0),
+    BdDistrict("গাজীপুর (Gazipur)", "Gazipur", BdDivision.DHAKA, 23.9999, 90.4203, 0),
+    BdDistrict("নারায়ণগঞ্জ (Narayanganj)", "Narayanganj", BdDivision.DHAKA, 23.6238, 90.4998, 0),
+    BdDistrict("মুন্সীগঞ্জ (Munshiganj)", "Munshiganj", BdDivision.DHAKA, 23.5433, 90.5354, 0),
+    BdDistrict("মানিকগঞ্জ (Manikganj)", "Manikganj", BdDivision.DHAKA, 23.8644, 89.9967, 2),
+    BdDistrict("নরসিংদী (Narsingdi)", "Narsingdi", BdDivision.DHAKA, 23.9229, 90.7177, -1),
+    BdDistrict("টাঙ্গাইল (Tangail)", "Tangail", BdDivision.DHAKA, 24.2513, 89.9167, 2),
+    BdDistrict("ফরিপুর (Faridpur)", "Faridpur", BdDivision.DHAKA, 23.6071, 89.8429, 2),
+    BdDistrict("রাজবাড়ী (Rajbari)", "Rajbari", BdDivision.DHAKA, 23.7574, 89.6444, 4),
+    BdDistrict("গোপালগঞ্জ (Gopalganj)", "Gopalganj", BdDivision.DHAKA, 23.0059, 89.8266, 3),
+    BdDistrict("মাদারীপুর (Madaripur)", "Madaripur", BdDivision.DHAKA, 23.1641, 90.1896, 2),
+    BdDistrict("শরীয়তপুর (Shariatpur)", "Shariatpur", BdDivision.DHAKA, 23.2423, 90.3412, 1),
+    BdDistrict("কিশোরগঞ্জ (Kishoreganj)", "Kishoreganj", BdDivision.DHAKA, 24.4449, 90.7766, -2),
 
     // চট্টগ্রাম বিভাগ (Chittagong Division)
-    BdDistrict("চট্টগ্রাম (Chittagong)", "Chittagong", BdDivision.CHITTAGONG, -5),
-    BdDistrict("কক্সবাজার (Cox's Bazar)", "Cox's Bazar", BdDivision.CHITTAGONG, -7),
-    BdDistrict("কুমিল্লা (Comilla)", "Comilla", BdDivision.CHITTAGONG, -3),
-    BdDistrict("ফেনী (Feni)", "Feni", BdDivision.CHITTAGONG, -4),
-    BdDistrict("ব্রাহ্মণবাড়িয়া (Brahmanbaria)", "Brahmanbaria", BdDivision.CHITTAGONG, -3),
-    BdDistrict("নোয়াখালী (Noakhali)", "Noakhali", BdDivision.CHITTAGONG, -3),
-    BdDistrict("লক্ষ্মীপুর (Lakshmipur)", "Lakshmipur", BdDivision.CHITTAGONG, -2),
-    BdDistrict("চাঁদপুর (Chandpur)", "Chandpur", BdDivision.CHITTAGONG, -2),
-    BdDistrict("খাগড়াছড়ি (Khagrachhari)", "Khagrachhari", BdDivision.CHITTAGONG, -6),
-    BdDistrict("রাঙ্গামাটি (Rangamati)", "Rangamati", BdDivision.CHITTAGONG, -6),
-    BdDistrict("বান্দরবান (Bandarban)", "Bandarban", BdDivision.CHITTAGONG, -6),
+    BdDistrict("চট্টগ্রাম (Chittagong)", "Chittagong", BdDivision.CHITTAGONG, 22.3569, 91.7832, -5),
+    BdDistrict("কক্সবাজার (Cox's Bazar)", "Cox's Bazar", BdDivision.CHITTAGONG, 21.4272, 92.0058, -7),
+    BdDistrict("কুমিল্লা (Comilla)", "Comilla", BdDivision.CHITTAGONG, 23.4607, 91.1809, -3),
+    BdDistrict("ফেনী (Feni)", "Feni", BdDivision.CHITTAGONG, 23.0159, 91.3976, -4),
+    BdDistrict("ব্রাহ্মণবাড়িয়া (Brahmanbaria)", "Brahmanbaria", BdDivision.CHITTAGONG, 23.9571, 91.1109, -3),
+    BdDistrict("নোয়াখালী (Noakhali)", "Noakhali", BdDivision.CHITTAGONG, 22.8696, 91.0992, -3),
+    BdDistrict("লক্ষ্মীপুর (Lakshmipur)", "Lakshmipur", BdDivision.CHITTAGONG, 22.9429, 90.8417, -2),
+    BdDistrict("চাঁদপুর (Chandpur)", "Chandpur", BdDivision.CHITTAGONG, 23.2333, 90.6500, -2),
+    BdDistrict("খাগড়াছড়ি (Khagrachhari)", "Khagrachhari", BdDivision.CHITTAGONG, 23.1192, 91.9841, -6),
+    BdDistrict("রাঙ্গামাটি (Rangamati)", "Rangamati", BdDivision.CHITTAGONG, 22.6574, 92.1733, -6),
+    BdDistrict("বান্দরবান (Bandarban)", "Bandarban", BdDivision.CHITTAGONG, 22.1953, 92.2184, -6),
 
     // রাজশাহী বিভাগ (Rajshahi Division)
-    BdDistrict("রাজশাহী (Rajshahi)", "Rajshahi", BdDivision.RAJSHAHI, 7),
-    BdDistrict("বগুড়া (Bogra)", "Bogra", BdDivision.RAJSHAHI, 5),
-    BdDistrict("পাবনা (Pabna)", "Pabna", BdDivision.RAJSHAHI, 6),
-    BdDistrict("সিরাজগঞ্জ (Sirajganj)", "Sirajganj", BdDivision.RAJSHAHI, 3),
-    BdDistrict("নওগাঁ (Naogaon)", "Naogaon", BdDivision.RAJSHAHI, 8),
-    BdDistrict("নাটোর (Natore)", "Natore", BdDivision.RAJSHAHI, 7),
-    BdDistrict("চাঁপাইনবাবগঞ্জ (Chapainawabganj)", "Chapainawabganj", BdDivision.RAJSHAHI, 9),
-    BdDistrict("জয়পুরহাট (Joypurhat)", "Joypurhat", BdDivision.RAJSHAHI, 6),
+    BdDistrict("রাজশাহী (Rajshahi)", "Rajshahi", BdDivision.RAJSHAHI, 24.3745, 88.6042, 7),
+    BdDistrict("বগুড়া (Bogra)", "Bogra", BdDivision.RAJSHAHI, 24.8481, 89.3730, 5),
+    BdDistrict("পাবনা (Pabna)", "Pabna", BdDivision.RAJSHAHI, 24.0063, 89.2493, 6),
+    BdDistrict("সিরাজগঞ্জ (Sirajganj)", "Sirajganj", BdDivision.RAJSHAHI, 24.4534, 89.7084, 3),
+    BdDistrict("নওগাঁ (Naogaon)", "Naogaon", BdDivision.RAJSHAHI, 24.7936, 88.9318, 8),
+    BdDistrict("নাটোর (Natore)", "Natore", BdDivision.RAJSHAHI, 24.4102, 88.9595, 7),
+    BdDistrict("চাঁপাইনবাবগঞ্জ (Chapainawabganj)", "Chapainawabganj", BdDivision.RAJSHAHI, 24.5965, 88.2753, 9),
+    BdDistrict("জয়পুরহাট (Joypurhat)", "Joypurhat", BdDivision.RAJSHAHI, 25.0947, 89.0209, 6),
 
     // খুলনা বিভাগ (Khulna Division)
-    BdDistrict("খুলনা (Khulna)", "Khulna", BdDivision.KHULNA, 5),
-    BdDistrict("যশোর (Jessore)", "Jessore", BdDivision.KHULNA, 6),
-    BdDistrict("কুষ্টিয়া (Kushtia)", "Kushtia", BdDivision.KHULNA, 6),
-    BdDistrict("সাতক্ষীরা (Satkhira)", "Satkhira", BdDivision.KHULNA, 7),
-    BdDistrict("বাগেরহাট (Bagerhat)", "Bagerhat", BdDivision.KHULNA, 4),
-    BdDistrict("ঝিনাইদহ (Jhenaidah)", "Jhenaidah", BdDivision.KHULNA, 6),
-    BdDistrict("চুয়াডাঙ্গা (Chuadanga)", "Chuadanga", BdDivision.KHULNA, 7),
-    BdDistrict("মেহেরপুর (Meherpur)", "Meherpur", BdDivision.KHULNA, 7),
-    BdDistrict("মাগুরা (Magura)", "Magura", BdDivision.KHULNA, 5),
-    BdDistrict("নড়াইল (Narail)", "Narail", BdDivision.KHULNA, 5),
+    BdDistrict("খুলনা (Khulna)", "Khulna", BdDivision.KHULNA, 22.8456, 89.5403, 5),
+    BdDistrict("যশোর (Jessore)", "Jessore", BdDivision.KHULNA, 23.1664, 89.2081, 6),
+    BdDistrict("কুষ্টিয়া (Kushtia)", "Kushtia", BdDivision.KHULNA, 23.9013, 89.1204, 6),
+    BdDistrict("সাতক্ষীরা (Satkhira)", "Satkhira", BdDivision.KHULNA, 22.7185, 89.0705, 7),
+    BdDistrict("বাগেরহাট (Bagerhat)", "Bagerhat", BdDivision.KHULNA, 22.6516, 89.7859, 4),
+    BdDistrict("ঝিনাইদহ (Jhenaidah)", "Jhenaidah", BdDivision.KHULNA, 23.5450, 89.1726, 6),
+    BdDistrict("চুয়াডাঙ্গা (Chuadanga)", "Chuadanga", BdDivision.KHULNA, 23.6401, 88.8504, 7),
+    BdDistrict("মেহেরপুর (Meherpur)", "Meherpur", BdDivision.KHULNA, 23.7622, 88.6318, 7),
+    BdDistrict("মাগুরা (Magura)", "Magura", BdDivision.KHULNA, 23.4873, 89.4199, 5),
+    BdDistrict("নড়াইল (Narail)", "Narail", BdDivision.KHULNA, 23.1725, 89.5126, 5),
 
     // বরিশাল বিভাগ (Barisal Division)
-    BdDistrict("বরিশাল (Barisal)", "Barisal", BdDivision.BARISAL, 2),
-    BdDistrict("পটুয়াখালী (Patuakhali)", "Patuakhali", BdDivision.BARISAL, 2),
-    BdDistrict("ভোলা (Bhola)", "Bhola", BdDivision.BARISAL, 0),
-    BdDistrict("পিরোজপুর (Pirojpur)", "Pirojpur", BdDivision.BARISAL, 3),
-    BdDistrict("বরগুনা (Barguna)", "Barguna", BdDivision.BARISAL, 3),
-    BdDistrict("ঝালকাঠি (Jhalokati)", "Jhalokati", BdDivision.BARISAL, 2),
+    BdDistrict("বরিশাল (Barisal)", "Barisal", BdDivision.BARISAL, 22.7010, 90.3535, 2),
+    BdDistrict("পটুয়াখালী (Patuakhali)", "Patuakhali", BdDivision.BARISAL, 22.3596, 90.3297, 2),
+    BdDistrict("ভোলা (Bhola)", "Bhola", BdDivision.BARISAL, 22.6851, 90.6440, 0),
+    BdDistrict("পিরোজপুর (Pirojpur)", "Pirojpur", BdDivision.BARISAL, 22.5781, 89.9699, 3),
+    BdDistrict("বরগুনা (Barguna)", "Barguna", BdDivision.BARISAL, 22.1591, 90.1245, 3),
+    BdDistrict("ঝালকাঠি (Jhalokati)", "Jhalokati", BdDivision.BARISAL, 22.6395, 90.1987, 2),
 
     // সিলেট বিভাগ (Sylhet Division)
-    BdDistrict("সিলেট (Sylhet)", "Sylhet", BdDivision.SYLHET, -6),
-    BdDistrict("মৌলভীবাজার (Moulvibazar)", "Moulvibazar", BdDivision.SYLHET, -7),
-    BdDistrict("হবিগঞ্জ (Habiganj)", "Habiganj", BdDivision.SYLHET, -5),
-    BdDistrict("সুনামগঞ্জ (Sunamganj)", "Sunamganj", BdDivision.SYLHET, -5),
+    BdDistrict("সিলেট (Sylhet)", "Sylhet", BdDivision.SYLHET, 24.8949, 91.8687, -6),
+    BdDistrict("মৌলভীবাজার (Moulvibazar)", "Moulvibazar", BdDivision.SYLHET, 24.4829, 91.7476, -7),
+    BdDistrict("হবিগঞ্জ (Habiganj)", "Habiganj", BdDivision.SYLHET, 24.3749, 91.4133, -5),
+    BdDistrict("সুনামগঞ্জ (Sunamganj)", "Sunamganj", BdDivision.SYLHET, 25.0658, 91.3950, -5),
 
     // রংপুর বিভাগ (Rangpur Division)
-    BdDistrict("রংপুর (Rangpur)", "Rangpur", BdDivision.RANGPUR, 8),
-    BdDistrict("দিনাজপুর (Dinajpur)", "Dinajpur", BdDivision.RANGPUR, 10),
-    BdDistrict("গাইবান্ধা (Gaibandha)", "Gaibandha", BdDivision.RANGPUR, 6),
-    BdDistrict("কুড়িগ্রাম (Kurigram)", "Kurigram", BdDivision.RANGPUR, 7),
-    BdDistrict("লালমনিরহাট (Lalmonirhat)", "Lalmonirhat", BdDivision.RANGPUR, 8),
-    BdDistrict("নীলফামারী (Nilphamari)", "Nilphamari", BdDivision.RANGPUR, 9),
-    BdDistrict("পঞ্চগড় (Panchagarh)", "Panchagarh", BdDivision.RANGPUR, 12),
-    BdDistrict("ঠাকুরগাঁও (Thakurgaon)", "Thakurgaon", BdDivision.RANGPUR, 11),
+    BdDistrict("রংপুর (Rangpur)", "Rangpur", BdDivision.RANGPUR, 25.7439, 89.2752, 8),
+    BdDistrict("দিনাজপুর (Dinajpur)", "Dinajpur", BdDivision.RANGPUR, 25.6217, 88.6354, 10),
+    BdDistrict("গাইবান্ধা (Gaibandha)", "Gaibandha", BdDivision.RANGPUR, 25.3288, 89.5280, 6),
+    BdDistrict("কুড়িগ্রাম (Kurigram)", "Kurigram", BdDivision.RANGPUR, 25.8054, 89.6361, 7),
+    BdDistrict("লালমনিরহাট (Lalmonirhat)", "Lalmonirhat", BdDivision.RANGPUR, 25.9125, 89.4426, 8),
+    BdDistrict("নীলফামারী (Nilphamari)", "Nilphamari", BdDivision.RANGPUR, 25.9317, 88.8560, 9),
+    BdDistrict("পঞ্চগড় (Panchagarh)", "Panchagarh", BdDivision.RANGPUR, 26.3411, 88.5542, 12),
+    BdDistrict("ঠাকুরগাঁও (Thakurgaon)", "Thakurgaon", BdDivision.RANGPUR, 26.0337, 88.4617, 11),
 
     // ময়মনসিংহ বিভাগ (Mymensingh Division)
-    BdDistrict("ময়মনসিংহ (Mymensingh)", "Mymensingh", BdDivision.MYMENSINGH, -1),
-    BdDistrict("জামালপুর (Jamalpur)", "Jamalpur", BdDivision.MYMENSINGH, 3),
-    BdDistrict("শেরপুর (Sherpur)", "Sherpur", BdDivision.MYMENSINGH, 2),
-    BdDistrict("নেত্রকোনা (Netrokona)", "Netrokona", BdDivision.MYMENSINGH, -2)
+    BdDistrict("ময়মনসিংহ (Mymensingh)", "Mymensingh", BdDivision.MYMENSINGH, 24.7471, 90.4203, -1),
+    BdDistrict("জামালপুর (Jamalpur)", "Jamalpur", BdDivision.MYMENSINGH, 24.9197, 89.9481, 3),
+    BdDistrict("শেরপুর (Sherpur)", "Sherpur", BdDivision.MYMENSINGH, 25.0188, 90.0175, 2),
+    BdDistrict("নেত্রকোনা (Netrokona)", "Netrokona", BdDivision.MYMENSINGH, 24.8701, 90.7275, -2)
 )
 
 fun adjustIslamicTimeStr(timeStr: String, offsetMinutes: Int): String {
@@ -374,6 +376,8 @@ fun DistrictSelectionSheet(
                             .clickable {
                                 viewModel.selectedIslamicDistrictBn = district.nameBn
                                 viewModel.selectedIslamicDistrictEn = district.nameEn
+                                viewModel.selectedIslamicDistrictLat = district.lat
+                                viewModel.selectedIslamicDistrictLon = district.lon
                                 viewModel.selectedIslamicDistrictOffsetMinutes = district.offsetMinutes
                                 onDismiss()
                             }

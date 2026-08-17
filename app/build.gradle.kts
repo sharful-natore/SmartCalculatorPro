@@ -149,6 +149,7 @@ dependencies {
   implementation(libs.androidx.media3.ui)
   implementation("androidx.media:media:1.7.0")
   implementation(libs.androidx.work.runtime.ktx)
+  implementation(libs.adhan)
   implementation(libs.coil.compose)
   implementation(libs.converter.moshi)
   implementation(libs.firebase.ai)
