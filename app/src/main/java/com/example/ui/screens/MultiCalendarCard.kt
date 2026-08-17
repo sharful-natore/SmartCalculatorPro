@@ -37,13 +37,14 @@ fun MultiCalendarCard(
 ) {
     val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
 
+    val context = androidx.compose.ui.platform.LocalContext.current
     var selectedCalendar by remember { mutableStateOf(Calendar.getInstance()) }
     val todayCalendar = remember { Calendar.getInstance() }
 
     val currentYear = selectedCalendar.get(Calendar.YEAR)
     val currentMonth = selectedCalendar.get(Calendar.MONTH) // 0-indexed
 
-    val selectedDateInfo = remember(selectedCalendar.timeInMillis) {
+    val selectedDateInfo = remember(selectedCalendar.timeInMillis, isBn, viewModel.hijriSyncVersion) {
         CalendarUtils.getMultiDateInfo(selectedCalendar, isBn)
     }
     val selectedEvents = remember(selectedCalendar.timeInMillis) {
@@ -110,7 +111,35 @@ fun MultiCalendarCard(
                     }
                 }
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    // Global Hijri Sync / Refresh Button (Icon only)
+                    IconButton(
+                        onClick = {
+                            viewModel.syncHijriDateOnline(context) { _, msg ->
+                                android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        modifier = Modifier.size(34.dp)
+                    ) {
+                        if (viewModel.isSyncingHijriDate) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                strokeWidth = 2.dp,
+                                color = themeColors.buttonEqualBg
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.Sync,
+                                contentDescription = "Sync Hijri Date",
+                                tint = themeColors.buttonEqualBg,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+
                     Button(
                         onClick = { selectedCalendar = Calendar.getInstance() },
                         colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),

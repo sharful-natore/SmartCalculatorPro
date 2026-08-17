@@ -1724,9 +1724,17 @@ fun DistrictSelectorDropdown(
                         )
                     },
                     onClick = {
-                        viewModel.selectedIslamicDistrictBn = district.nameBn
-                        viewModel.selectedIslamicDistrictEn = district.nameEn
-                        viewModel.selectedIslamicDistrictOffsetMinutes = district.offsetMinutes
+                        val fullDistrict = com.example.ui.islamic.allBdDistrictsList.find { it.nameEn.equals(district.nameEn, ignoreCase = true) }
+                        val lat = fullDistrict?.lat ?: 23.8103
+                        val lon = fullDistrict?.lon ?: 90.4125
+                        viewModel.updateIslamicDistrict(
+                            nameBn = district.nameBn,
+                            nameEn = district.nameEn,
+                            lat = lat,
+                            lon = lon,
+                            offsetMinutes = district.offsetMinutes,
+                            isAuto = false
+                        )
                         expanded = false
                     }
                 )

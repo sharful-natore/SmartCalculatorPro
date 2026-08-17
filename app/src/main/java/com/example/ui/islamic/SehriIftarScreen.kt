@@ -166,6 +166,20 @@ fun ModernSehriIftarCard(
         "${fastingHours} hours ${fastingMins} mins"
     }
 
+    // Total Day Length Calculation (Sunrise to Sunset)
+    val totalDayMinutes = remember(timingsToday) {
+        val srMin = NamazTimeService.timeStrToMinutes(timingsToday.sunrise)
+        val ssMin = NamazTimeService.timeStrToMinutes(timingsToday.maghrib)
+        (ssMin - srMin).coerceAtLeast(0)
+    }
+    val dayHours = totalDayMinutes / 60
+    val dayMins = totalDayMinutes % 60
+    val dayLengthStr = if (isBn) {
+        "${IslamicCalendarHelper.toBnDigits(dayHours)} ঘণ্টা ${IslamicCalendarHelper.toBnDigits(dayMins)} মিনিট"
+    } else {
+        "${dayHours} hours ${dayMins} mins"
+    }
+
     // Hijri Month Schedule Generation
     val hijriMonthsBn = listOf(
         "মুহাররম", "সফর", "রবিউল আউয়াল", "রবিউস সানি", "জমাদিউল আউয়াল", "জমাদিউস সানি",
@@ -181,7 +195,8 @@ fun ModernSehriIftarCard(
         hijriMonthOffset,
         viewModel.selectedIslamicDistrictLat,
         viewModel.selectedIslamicDistrictLon,
-        isBn
+        isBn,
+        viewModel.hijriSyncVersion
     ) {
         generateHijriMonthSchedule(
             anchorCal = todayCal,
@@ -217,27 +232,36 @@ fun ModernSehriIftarCard(
                 .padding(horizontal = 4.dp, vertical = 6.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            // --- TOP BAR: Title & District / Location Pill ---
+            // --- TOP BAR: Location Selection Prompt & District / GPS Selector ---
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 4.dp),
+                    .padding(horizontal = 4.dp, vertical = 2.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    Text(
-                        text = if (isBn) "সেহরি ও ইফতারের সময়সূচি" else "Sehri & Iftar Schedule",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = themeColors.displayText
+                Row(
+                    modifier = Modifier.weight(1f, fill = false),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.LocationOn,
+                        contentDescription = null,
+                        tint = themeColors.titleBarBg,
+                        modifier = Modifier.size(18.dp)
                     )
                     Text(
-                        text = if (isBn) "হিজরি আরবি মাস ভিত্তিক নিখুঁত সময়সূচি" else "Accurate Islamic Hijri Month Schedule",
-                        fontSize = 11.5.sp,
-                        color = themeColors.displayText.copy(alpha = 0.65f)
+                        text = if (isBn) "আপনার লোকেশন সিলেক্ট করুন" else "Select your location",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.displayText,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
+
+                Spacer(modifier = Modifier.width(8.dp))
 
                 // Location Pill & GPS Detection Button
                 Row(
@@ -250,7 +274,7 @@ fun ModernSehriIftarCard(
                         color = if (viewModel.isIslamicLocationAutoDetected) Color(0xFF10B981).copy(alpha = 0.15f) else Color(0xFF0284C7).copy(alpha = 0.12f),
                         border = BorderStroke(1.dp, if (viewModel.isIslamicLocationAutoDetected) Color(0xFF10B981) else Color(0xFF0284C7).copy(alpha = 0.35f)),
                         modifier = Modifier
-                            .size(30.dp)
+                            .size(32.dp)
                             .clip(CircleShape)
                             .clickable(enabled = !viewModel.isDetectingIslamicLocation) {
                                 if (IslamicLocationHelper.hasLocationPermission(context)) {
@@ -286,6 +310,7 @@ fun ModernSehriIftarCard(
                     }
 
                     // District Switcher Pill
+                    val districtName = if (isBn) viewModel.selectedIslamicDistrictBn.split(" ")[0] else viewModel.selectedIslamicDistrictEn
                     Surface(
                         shape = RoundedCornerShape(16.dp),
                         color = if (viewModel.isIslamicLocationAutoDetected) Color(0xFF10B981).copy(alpha = 0.12f) else Color(0xFFD97706).copy(alpha = 0.12f),
@@ -296,7 +321,9 @@ fun ModernSehriIftarCard(
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                            modifier = Modifier
+                                .padding(horizontal = 10.dp, vertical = 6.dp)
+                                .widthIn(max = 135.dp)
                         ) {
                             Icon(
                                 imageVector = if (viewModel.isIslamicLocationAutoDetected) Icons.Default.MyLocation else Icons.Default.LocationOn,
@@ -306,11 +333,15 @@ fun ModernSehriIftarCard(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = if (isBn) viewModel.selectedIslamicDistrictBn.split(" ")[0] else viewModel.selectedIslamicDistrictEn,
-                                fontSize = 12.sp,
+                                text = districtName,
+                                fontSize = 12.5.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (viewModel.isIslamicLocationAutoDetected) Color(0xFF10B981) else Color(0xFFD97706)
+                                color = if (viewModel.isIslamicLocationAutoDetected) Color(0xFF10B981) else Color(0xFFD97706),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f, fill = false)
                             )
+                            Spacer(modifier = Modifier.width(2.dp))
                             Icon(
                                 imageVector = Icons.Default.ArrowDropDown,
                                 contentDescription = null,
@@ -371,8 +402,8 @@ fun ModernSehriIftarCard(
                         // Real-Time Moon Sighting / Hijri Date Sync Button
                         Surface(
                             shape = RoundedCornerShape(12.dp),
-                            color = Color(0xFF0F766E).copy(alpha = 0.12f),
-                            border = BorderStroke(1.dp, Color(0xFF0F766E).copy(alpha = 0.3f)),
+                            color = themeColors.titleBarBg.copy(alpha = 0.12f),
+                            border = BorderStroke(1.dp, themeColors.titleBarBg.copy(alpha = 0.3f)),
                             modifier = Modifier
                                 .clip(RoundedCornerShape(12.dp))
                                 .clickable(enabled = !viewModel.isSyncingHijriDate) {
@@ -388,7 +419,7 @@ fun ModernSehriIftarCard(
                                 Icon(
                                     imageVector = Icons.Default.Sync,
                                     contentDescription = "Sync Moon Sighting Hijri Date",
-                                    tint = Color(0xFF0F766E),
+                                    tint = themeColors.titleBarBg,
                                     modifier = Modifier
                                         .size(15.dp)
                                         .then(
@@ -404,7 +435,7 @@ fun ModernSehriIftarCard(
                                     },
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF0F766E)
+                                    color = themeColors.titleBarBg
                                 )
                             }
                         }
@@ -541,6 +572,32 @@ fun ModernSehriIftarCard(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
+                            // Total Fasting Duration Banner above countdown
+                            Surface(
+                                shape = RoundedCornerShape(20.dp),
+                                color = Color(0xFFD97706).copy(alpha = 0.12f),
+                                border = BorderStroke(1.dp, Color(0xFFD97706).copy(alpha = 0.3f))
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.HourglassBottom,
+                                        contentDescription = null,
+                                        tint = Color(0xFFD97706),
+                                        modifier = Modifier.size(13.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = if (isBn) "আজকের রোজার মোট সময়: $fastingDurationStr" else "Total Fasting Time: $fastingDurationStr",
+                                        fontSize = 11.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFFD97706)
+                                    )
+                                }
+                            }
+
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.Center
@@ -689,11 +746,11 @@ fun ModernSehriIftarCard(
                         }
                     }
 
-                    // Total Fasting Duration Banner (রোজার মোট সময়)
+                    // Total Day Length Banner (দিনের মোট দৈর্ঘ্য)
                     Surface(
                         shape = RoundedCornerShape(12.dp),
-                        color = Color(0xFF0F766E).copy(alpha = 0.08f),
-                        border = BorderStroke(1.dp, Color(0xFF0F766E).copy(alpha = 0.22f)),
+                        color = themeColors.titleBarBg.copy(alpha = 0.08f),
+                        border = BorderStroke(1.dp, themeColors.titleBarBg.copy(alpha = 0.22f)),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
@@ -704,23 +761,23 @@ fun ModernSehriIftarCard(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
-                                imageVector = Icons.Default.HourglassBottom,
+                                imageVector = Icons.Default.WbSunny,
                                 contentDescription = null,
-                                tint = Color(0xFF0F766E),
+                                tint = themeColors.titleBarBg,
                                 modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = if (isBn) "আজকের রোজার মোট সময়: " else "Total Fasting Duration: ",
+                                text = if (isBn) "দিনের মোট দৈর্ঘ্য: " else "Total Day Length: ",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Medium,
                                 color = themeColors.displayText.copy(alpha = 0.8f)
                             )
                             Text(
-                                text = fastingDurationStr,
+                                text = dayLengthStr,
                                 fontSize = 12.5.sp,
                                 fontWeight = FontWeight.ExtraBold,
-                                color = Color(0xFF0F766E)
+                                color = themeColors.titleBarBg
                             )
                         }
                     }
@@ -789,8 +846,8 @@ fun ModernSehriIftarCard(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFF0F766E).copy(alpha = 0.1f)),
-                    border = BorderStroke(0.8.dp, Color(0xFF0F766E).copy(alpha = 0.25f))
+                    colors = CardDefaults.cardColors(containerColor = themeColors.titleBarBg.copy(alpha = 0.1f)),
+                    border = BorderStroke(0.8.dp, themeColors.titleBarBg.copy(alpha = 0.25f))
                 ) {
                     Row(
                         modifier = Modifier
@@ -803,8 +860,8 @@ fun ModernSehriIftarCard(
                             text = if (isBn) "আরবি তারিখ ও বার" else "Hijri Date & Day",
                             fontSize = 11.5.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF0F766E),
-                            modifier = Modifier.weight(1.5f)
+                            color = themeColors.titleBarBg,
+                            modifier = Modifier.weight(2.0f)
                         )
                         Text(
                             text = if (isBn) "সেহরি" else "Sehri",
@@ -812,7 +869,7 @@ fun ModernSehriIftarCard(
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF0284C7),
                             textAlign = TextAlign.Center,
-                            modifier = Modifier.weight(0.9f)
+                            modifier = Modifier.weight(0.7f)
                         )
                         Text(
                             text = if (isBn) "ইফতার" else "Iftar",
@@ -820,13 +877,13 @@ fun ModernSehriIftarCard(
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFFD97706),
                             textAlign = TextAlign.Center,
-                            modifier = Modifier.weight(0.9f)
+                            modifier = Modifier.weight(0.7f)
                         )
                         Text(
                             text = if (isBn) "ওয়াক্ত" else "Times",
                             fontSize = 10.5.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF0F766E).copy(alpha = 0.7f),
+                            color = themeColors.titleBarBg.copy(alpha = 0.7f),
                             textAlign = TextAlign.End,
                             modifier = Modifier.width(32.dp)
                         )
@@ -923,13 +980,13 @@ private fun CompactExpandableHijriDayCard(
 
     val cardBg = when {
         isForbidden -> Color(0xFFEF4444).copy(alpha = 0.06f)
-        row.isToday -> Color(0xFF0F766E).copy(alpha = 0.1f)
+        row.isToday -> themeColors.titleBarBg.copy(alpha = 0.1f)
         row.isFriday -> Color(0xFF0284C7).copy(alpha = 0.04f)
         else -> themeColors.cardBg
     }
     val cardBorder = when {
         isForbidden -> Color(0xFFEF4444).copy(alpha = 0.4f)
-        row.isToday -> Color(0xFF0F766E)
+        row.isToday -> themeColors.titleBarBg
         isExpanded -> Color(0xFFD97706).copy(alpha = 0.5f)
         else -> themeColors.displayText.copy(alpha = 0.07f)
     }
@@ -953,7 +1010,7 @@ private fun CompactExpandableHijriDayCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 // Column 1: Hijri Date + Bar (Primary) and English Date (Subtitle)
-                Column(modifier = Modifier.weight(1.5f)) {
+                Column(modifier = Modifier.weight(2.0f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = if (isBn) row.hijriTitleBn else row.hijriTitleEn,
@@ -961,7 +1018,7 @@ private fun CompactExpandableHijriDayCard(
                             fontWeight = if (row.isToday) FontWeight.ExtraBold else FontWeight.Bold,
                             color = when {
                                 isForbidden -> Color(0xFFDC2626)
-                                row.isToday -> Color(0xFF0F766E)
+                                row.isToday -> themeColors.titleBarBg
                                 else -> themeColors.displayText
                             }
                         )
@@ -969,7 +1026,7 @@ private fun CompactExpandableHijriDayCard(
                             Spacer(modifier = Modifier.width(4.dp))
                             Surface(
                                 shape = RoundedCornerShape(6.dp),
-                                color = Color(0xFF0F766E)
+                                color = themeColors.titleBarBg
                             ) {
                                 Text(
                                     text = if (isBn) "আজ" else "Today",
@@ -1011,7 +1068,7 @@ private fun CompactExpandableHijriDayCard(
                     fontWeight = FontWeight.Bold,
                     color = if (isForbidden) themeColors.displayText.copy(alpha = 0.5f) else Color(0xFF0284C7),
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.weight(0.9f)
+                    modifier = Modifier.weight(0.7f)
                 )
 
                 // Column 3: Iftar Time (Compact, e.g. ০৬:৩২)
@@ -1021,7 +1078,7 @@ private fun CompactExpandableHijriDayCard(
                     fontWeight = FontWeight.Bold,
                     color = if (isForbidden) themeColors.displayText.copy(alpha = 0.5f) else Color(0xFFD97706),
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.weight(0.9f)
+                    modifier = Modifier.weight(0.7f)
                 )
 
                 // Column 4: Expand Icon
@@ -1038,7 +1095,7 @@ private fun CompactExpandableHijriDayCard(
                 }
             }
 
-            // Expanded Section: All Waqt Times for this Day
+            // Expanded Section: All 5 Waqt Start and End Times for this Day
             AnimatedVisibility(
                 visible = isExpanded,
                 enter = expandVertically() + fadeIn(),
@@ -1077,36 +1134,101 @@ private fun CompactExpandableHijriDayCard(
                     }
 
                     Text(
-                        text = if (isBn) "এই দিনের সকল ওয়াক্তের সময়সূচি:" else "All Prayer Times for this day:",
+                        text = if (isBn) "৫ ওয়াক্তের নামাজের শুরুর ও শেষের সময়সূচি:" else "5 Daily Prayer Start & End Times:",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        color = themeColors.displayText.copy(alpha = 0.7f)
+                        color = themeColors.displayText.copy(alpha = 0.8f)
                     )
 
-                    // 6 Prayer Milestones Grid
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                    // 5 Waqt Start & End Times Table
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = themeColors.displayText.copy(alpha = 0.04f),
+                        border = BorderStroke(0.8.dp, themeColors.displayText.copy(alpha = 0.08f)),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        WaqtMiniItem(label = if (isBn) "সেহরির শেষ" else "Sehri Ends", time = row.sehriTime, color = Color(0xFF0284C7), themeColors = themeColors)
-                        WaqtMiniItem(label = if (isBn) "ফজর" else "Fajr", time = row.fajrTime, color = Color(0xFF0284C7), themeColors = themeColors)
-                        WaqtMiniItem(label = if (isBn) "সূর্যোদয়" else "Sunrise", time = row.sunriseTime, color = Color(0xFFD97706), themeColors = themeColors)
-                    }
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            // Table Header
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(themeColors.titleBarBg.copy(alpha = 0.12f), RoundedCornerShape(6.dp))
+                                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = if (isBn) "ওয়াক্ত" else "Waqt",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.titleBarBg,
+                                    modifier = Modifier.weight(1.2f)
+                                )
+                                Text(
+                                    text = if (isBn) "শুরুর সময়" else "Start Time",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.titleBarBg,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Text(
+                                    text = if (isBn) "শেষ সময়" else "End Time",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.titleBarBg,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        WaqtMiniItem(label = if (isBn) "যোহর" else "Dhuhr", time = row.dhuhrTime, color = Color(0xFF0F766E), themeColors = themeColors)
-                        WaqtMiniItem(label = if (isBn) "আসর" else "Asr", time = row.asrTime, color = Color(0xFF0F766E), themeColors = themeColors)
-                        WaqtMiniItem(label = if (isBn) "মাগরিব (ইফতার)" else "Iftar/Maghrib", time = row.iftarTime, color = Color(0xFFD97706), themeColors = themeColors)
-                    }
+                            val prayerWaqts = listOf(
+                                Triple(if (isBn) "ফজর" else "Fajr", row.fajrTime, row.sunriseTime),
+                                Triple(if (isBn) "যোহর" else "Dhuhr", row.dhuhrTime, row.asrTime),
+                                Triple(if (isBn) "আসর" else "Asr", row.asrTime, row.iftarTime),
+                                Triple(if (isBn) "মাগরিব (ইফতার)" else "Maghrib", row.iftarTime, row.ishaTime),
+                                Triple(if (isBn) "এশা" else "Isha", row.ishaTime, row.fajrTime)
+                            )
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Start
-                    ) {
-                        WaqtMiniItem(label = if (isBn) "এশা" else "Isha", time = row.ishaTime, color = Color(0xFF6366F1), themeColors = themeColors)
+                            prayerWaqts.forEach { (name, startTime, endTime) ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 8.dp, vertical = 3.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = name,
+                                        fontSize = 11.5.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = themeColors.displayText,
+                                        modifier = Modifier.weight(1.2f)
+                                    )
+                                    Text(
+                                        text = startTime,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF0284C7),
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    Text(
+                                        text = endTime,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = themeColors.displayText.copy(alpha = 0.75f),
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -1211,7 +1333,7 @@ private fun DuaActionCard(
                         Icon(
                             imageVector = if (isSpeaking) Icons.Default.VolumeOff else Icons.Default.VolumeUp,
                             contentDescription = "Play Audio",
-                            tint = Color(0xFF0F766E),
+                            tint = themeColors.titleBarBg,
                             modifier = Modifier.size(17.dp)
                         )
                     }
@@ -1259,8 +1381,8 @@ private fun DuaActionCard(
             // Arabic Text
             Surface(
                 shape = RoundedCornerShape(10.dp),
-                color = Color(0xFF0F766E).copy(alpha = 0.06f),
-                border = BorderStroke(0.8.dp, Color(0xFF0F766E).copy(alpha = 0.2f)),
+                color = themeColors.titleBarBg.copy(alpha = 0.06f),
+                border = BorderStroke(0.8.dp, themeColors.titleBarBg.copy(alpha = 0.2f)),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(

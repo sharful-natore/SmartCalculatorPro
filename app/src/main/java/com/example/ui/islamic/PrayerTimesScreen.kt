@@ -171,44 +171,13 @@ object IslamicCalendarHelper {
      * Standard Astronomical Hijri Converter
      */
     fun getHijriDateString(cal: Calendar, isBn: Boolean): String {
-        val gYear = cal.get(Calendar.YEAR)
-        val gMonth = cal.get(Calendar.MONTH) + 1
-        val gDay = cal.get(Calendar.DAY_OF_MONTH)
-
-        // Julian Day Number Calculation
-        var y = gYear
-        var m = gMonth
-        if (m <= 2) {
-            y -= 1
-            m += 12
-        }
-        val a = y / 100
-        val b = 2 - a + (a / 4)
-        val jd = (365.25 * (y + 4716)).toInt() + (30.6001 * (m + 1)).toInt() + gDay + b - 1524.5
-
-        // Approximate Islamic date offset calibration for Bangladesh
-        val islamicEpoch = 1948439.5
-        val daysSinceEpoch = jd - islamicEpoch
-        val hijriCycle = (daysSinceEpoch / 10631.0).toInt()
-        val remainingDays = daysSinceEpoch - (hijriCycle * 10631.0)
-        val hijriYear = (hijriCycle * 30) + ((remainingDays - 1.0) / 354.366).toInt() + 1
-        val yearStartJd = islamicEpoch + ((hijriYear - 1) * 354) + (((11 * (hijriYear - 1)) + 3) / 30)
-        var dayInYear = (jd - yearStartJd).toInt()
-
-        if (dayInYear < 0) dayInYear = 0
-
-        var hijriMonth = (dayInYear / 29.5).toInt()
-        if (hijriMonth > 11) hijriMonth = 11
-        if (hijriMonth < 0) hijriMonth = 0
-
-        val hijriDay = ((dayInYear - (hijriMonth * 29.5)).toInt() + 1).coerceIn(1, 30)
-
+        val (hDay, hMonth, hYear) = com.example.util.CalendarUtils.getHijriDateComponents(cal)
         return if (isBn) {
-            val monthName = hijriMonthsBn.getOrElse(hijriMonth) { "মুহাররম" }
-            "${toBnDigits(hijriDay)} $monthName ${toBnDigits(hijriYear.toString())} হিজরি"
+            val monthName = hijriMonthsBn.getOrElse(hMonth) { "মুহাররম" }
+            "${toBnDigits(hDay)} $monthName ${toBnDigits(hYear.toString())} হিজরি"
         } else {
-            val monthName = hijriMonthsEn.getOrElse(hijriMonth) { "Muharram" }
-            "$hijriDay $monthName $hijriYear AH"
+            val monthName = hijriMonthsEn.getOrElse(hMonth) { "Muharram" }
+            "$hDay $monthName $hYear AH"
         }
     }
 }
@@ -660,14 +629,15 @@ fun ModernPrayerTimesCard(
                             Icon(
                                 imageVector = Icons.Default.Info,
                                 contentDescription = "Fiqh Info",
-                                tint = Color(0xFF0D9488),
+                                tint = themeColors.titleBarBg,
                                 modifier = Modifier.size(18.dp)
                             )
                         }
                     }
                     Text(
-                        text = if (isBn) "লাইভ ওয়াক্ত ও ৫ ওয়াক্ত ট্র্যাকার" else "Live Waqt & Salah Tracker",
+                        text = if (isBn) "আপনার জেলা" else "Your District",
                         fontSize = 11.5.sp,
+                        fontWeight = FontWeight.SemiBold,
                         color = themeColors.displayText.copy(alpha = 0.65f)
                     )
                 }
@@ -676,6 +646,37 @@ fun ModernPrayerTimesCard(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
+                    // Global Hijri Date Moon Sync / Refresh Button (Icon Only)
+                    Surface(
+                        shape = CircleShape,
+                        color = themeColors.titleBarBg.copy(alpha = 0.12f),
+                        border = BorderStroke(1.dp, themeColors.titleBarBg.copy(alpha = 0.35f)),
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .clickable(enabled = !viewModel.isSyncingHijriDate) {
+                                viewModel.syncHijriDateOnline(context) { _, msg ->
+                                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            if (viewModel.isSyncingHijriDate) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(15.dp),
+                                    strokeWidth = 2.dp,
+                                    color = themeColors.titleBarBg
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.Sync,
+                                    contentDescription = "Sync Hijri Date",
+                                    tint = themeColors.titleBarBg,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+                    }
                     // Monthly Calendar Button
                     Surface(
                         shape = RoundedCornerShape(16.dp),
@@ -708,8 +709,8 @@ fun ModernPrayerTimesCard(
                     // District Switcher Pill
                     Surface(
                         shape = RoundedCornerShape(16.dp),
-                        color = Color(0xFF0D9488).copy(alpha = 0.12f),
-                        border = BorderStroke(1.dp, Color(0xFF0D9488).copy(alpha = 0.35f)),
+                        color = themeColors.titleBarBg.copy(alpha = 0.12f),
+                        border = BorderStroke(1.dp, themeColors.titleBarBg.copy(alpha = 0.35f)),
                         modifier = Modifier
                             .clip(RoundedCornerShape(16.dp))
                             .clickable { showDistrictSheet = true }
@@ -721,7 +722,7 @@ fun ModernPrayerTimesCard(
                             Icon(
                                 imageVector = Icons.Default.LocationOn,
                                 contentDescription = "District",
-                                tint = Color(0xFF0D9488),
+                                tint = themeColors.titleBarBg,
                                 modifier = Modifier.size(15.dp)
                             )
                             Spacer(modifier = Modifier.width(3.dp))
@@ -729,12 +730,12 @@ fun ModernPrayerTimesCard(
                                 text = if (isBn) viewModel.selectedIslamicDistrictBn.split(" ")[0] else viewModel.selectedIslamicDistrictEn,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF0D9488)
+                                color = themeColors.titleBarBg
                             )
                             Icon(
                                 imageVector = Icons.Default.ArrowDropDown,
                                 contentDescription = null,
-                                tint = Color(0xFF0D9488),
+                                tint = themeColors.titleBarBg,
                                 modifier = Modifier.size(16.dp)
                             )
                         }
@@ -757,11 +758,11 @@ fun ModernPrayerTimesCard(
                         .shadow(4.dp, RoundedCornerShape(18.dp)),
                     shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = if (currentWaqtData.isForbidden) Color(0xFFFEF2F2) else Color(0xFFF0FDF4)
+                        containerColor = if (currentWaqtData.isForbidden) Color(0xFFFEF2F2) else themeColors.titleBarBg.copy(alpha = 0.08f)
                     ),
                     border = BorderStroke(
                         1.5.dp,
-                        if (currentWaqtData.isForbidden) Color(0xFFEF4444).copy(alpha = 0.4f) else Color(0xFF10B981).copy(alpha = 0.4f)
+                        if (currentWaqtData.isForbidden) Color(0xFFEF4444).copy(alpha = 0.4f) else themeColors.titleBarBg.copy(alpha = 0.35f)
                     )
                 ) {
                     Column(
@@ -780,14 +781,14 @@ fun ModernPrayerTimesCard(
                                     text = if (isBn) "এখন" else "Now",
                                     fontSize = 11.5.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (currentWaqtData.isForbidden) Color(0xFFDC2626) else Color(0xFF047857)
+                                    color = if (currentWaqtData.isForbidden) Color(0xFFDC2626) else themeColors.titleBarBg
                                 )
                                 // Live Pulse Status Dot
                                 Box(
                                     modifier = Modifier
                                         .size(8.dp)
                                         .clip(CircleShape)
-                                        .background(if (currentWaqtData.isForbidden) Color(0xFFDC2626) else Color(0xFF10B981))
+                                        .background(if (currentWaqtData.isForbidden) Color(0xFFDC2626) else themeColors.titleBarBg)
                                 )
                             }
 
@@ -795,7 +796,7 @@ fun ModernPrayerTimesCard(
                                 text = if (isBn) currentWaqtData.activeTitleBn else currentWaqtData.activeTitleEn,
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Black,
-                                color = if (currentWaqtData.isForbidden) Color(0xFF991B1B) else Color(0xFF064E3B),
+                                color = if (currentWaqtData.isForbidden) Color(0xFF991B1B) else themeColors.displayText,
                                 maxLines = 2
                             )
 
@@ -814,7 +815,7 @@ fun ModernPrayerTimesCard(
                             // Countdown remaining
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
-                                color = if (currentWaqtData.isForbidden) Color(0xFFFEE2E2) else Color(0xFFDCFCE7),
+                                color = if (currentWaqtData.isForbidden) Color(0xFFFEE2E2) else themeColors.titleBarBg.copy(alpha = 0.12f),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Text(
@@ -822,7 +823,7 @@ fun ModernPrayerTimesCard(
                                     fontSize = 12.5.sp,
                                     fontWeight = FontWeight.ExtraBold,
                                     fontFamily = FontFamily.Monospace,
-                                    color = if (currentWaqtData.isForbidden) Color(0xFFB91C1C) else Color(0xFF047857),
+                                    color = if (currentWaqtData.isForbidden) Color(0xFFB91C1C) else themeColors.titleBarBg,
                                     textAlign = TextAlign.Center,
                                     modifier = Modifier.padding(vertical = 4.dp, horizontal = 4.dp)
                                 )
@@ -840,8 +841,8 @@ fun ModernPrayerTimesCard(
                                     .fillMaxWidth()
                                     .height(5.dp)
                                     .clip(RoundedCornerShape(3.dp)),
-                                color = if (currentWaqtData.isForbidden) Color(0xFFDC2626) else Color(0xFF059669),
-                                trackColor = if (currentWaqtData.isForbidden) Color(0xFFFCA5A5).copy(alpha = 0.4f) else Color(0xFFA7F3D0).copy(alpha = 0.5f)
+                                color = if (currentWaqtData.isForbidden) Color(0xFFDC2626) else themeColors.titleBarBg,
+                                trackColor = if (currentWaqtData.isForbidden) Color(0xFFFCA5A5).copy(alpha = 0.4f) else themeColors.titleBarBg.copy(alpha = 0.2f)
                             )
                         }
                     }
@@ -1061,7 +1062,7 @@ fun ModernPrayerTimesCard(
                             Icon(
                                 imageVector = Icons.Default.HourglassBottom,
                                 contentDescription = null,
-                                tint = Color(0xFF0D9488),
+                                tint = themeColors.titleBarBg,
                                 modifier = Modifier.size(15.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
@@ -1098,7 +1099,7 @@ fun ModernPrayerTimesCard(
                         Icon(
                             imageVector = Icons.Default.ChevronLeft,
                             contentDescription = "Previous Day",
-                            tint = Color(0xFF0D9488),
+                            tint = themeColors.titleBarBg,
                             modifier = Modifier.size(24.dp)
                         )
                     }
@@ -1128,13 +1129,13 @@ fun ModernPrayerTimesCard(
                             Spacer(modifier = Modifier.height(3.dp))
                             Surface(
                                 shape = RoundedCornerShape(10.dp),
-                                color = Color(0xFF0D9488).copy(alpha = 0.15f)
+                                color = themeColors.titleBarBg.copy(alpha = 0.12f)
                             ) {
                                 Text(
                                     text = if (isBn) "আজকের দিনে ফিরুন ↺" else "Back to Today ↺",
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF0D9488),
+                                    color = themeColors.titleBarBg,
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
                                 )
                             }
@@ -1149,7 +1150,7 @@ fun ModernPrayerTimesCard(
                         Icon(
                             imageVector = Icons.Default.ChevronRight,
                             contentDescription = "Next Day",
-                            tint = Color(0xFF0D9488),
+                            tint = themeColors.titleBarBg,
                             modifier = Modifier.size(24.dp)
                         )
                     }
@@ -1181,10 +1182,10 @@ fun ModernPrayerTimesCard(
 
                         val hasAlert = alertsMap[item.id] ?: false
 
-                        // Active row background highlight (forest green for active, amber for forbidden)
+                        // Active row background highlight (accent for active, amber for forbidden)
                         val rowBg = when {
                             isItemActive && item.isForbidden -> Color(0xFFDC2626)
-                            isItemActive -> Color(0xFF065F46)
+                            isItemActive -> themeColors.titleBarBg
                             item.isForbidden -> Color(0xFFFEF3C7).copy(alpha = 0.45f)
                             else -> Color.Transparent
                         }
@@ -1198,7 +1199,7 @@ fun ModernPrayerTimesCard(
                         val iconColor = when {
                             isItemActive -> Color.White
                             item.isForbidden -> Color(0xFFD97706)
-                            else -> Color(0xFF0D9488)
+                            else -> themeColors.titleBarBg
                         }
 
                         Box(
@@ -1257,7 +1258,7 @@ fun ModernPrayerTimesCard(
                                             Icon(
                                                 imageVector = Icons.Default.Info,
                                                 contentDescription = "Details",
-                                                tint = if (isItemActive) Color.White else (if (item.isForbidden) Color(0xFFD97706) else Color(0xFF0D9488)),
+                                                tint = if (isItemActive) Color.White else (if (item.isForbidden) Color(0xFFD97706) else themeColors.titleBarBg),
                                                 modifier = Modifier.size(18.dp)
                                             )
                                         }
@@ -1279,7 +1280,7 @@ fun ModernPrayerTimesCard(
                                             Icon(
                                                 imageVector = if (hasAlert) Icons.Default.NotificationsActive else Icons.Default.NotificationsNone,
                                                 contentDescription = "Alert",
-                                                tint = if (isItemActive) Color.White else (if (hasAlert) Color(0xFF0D9488) else themeColors.displayText.copy(alpha = 0.35f)),
+                                                tint = if (isItemActive) Color.White else (if (hasAlert) themeColors.titleBarBg else themeColors.displayText.copy(alpha = 0.35f)),
                                                 modifier = Modifier.size(17.dp)
                                             )
                                         }
@@ -1328,7 +1329,7 @@ fun ModernPrayerTimesCard(
                         // Progress Score Badge
                         Surface(
                             shape = RoundedCornerShape(12.dp),
-                            color = if (completedCount == 5) Color(0xFF10B981).copy(alpha = 0.2f) else Color(0xFF0D9488).copy(alpha = 0.15f)
+                            color = if (completedCount == 5) Color(0xFF10B981).copy(alpha = 0.2f) else themeColors.titleBarBg.copy(alpha = 0.12f)
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -1337,7 +1338,7 @@ fun ModernPrayerTimesCard(
                                 Icon(
                                     imageVector = if (completedCount == 5) Icons.Default.CheckCircle else Icons.Default.Flag,
                                     contentDescription = null,
-                                    tint = if (completedCount == 5) Color(0xFF10B981) else Color(0xFF0D9488),
+                                    tint = if (completedCount == 5) Color(0xFF10B981) else themeColors.titleBarBg,
                                     modifier = Modifier.size(15.dp)
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
@@ -1345,7 +1346,7 @@ fun ModernPrayerTimesCard(
                                     text = if (isBn) "$completedCount/৫ ওয়াক্ত" else "$completedCount/5 Done",
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (completedCount == 5) Color(0xFF10B981) else Color(0xFF0D9488)
+                                    color = if (completedCount == 5) Color(0xFF10B981) else themeColors.titleBarBg
                                 )
                             }
                         }
@@ -1422,7 +1423,7 @@ fun ModernPrayerTimesCard(
             onDismissRequest = { showFiqhInfoDialog = false },
             title = {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.MenuBook, contentDescription = null, tint = Color(0xFF0D9488))
+                    Icon(Icons.Default.MenuBook, contentDescription = null, tint = themeColors.titleBarBg)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = if (isBn) "নামাজের গুরুত্বপূর্ণ মাসআলা" else "Salah & Fiqh Guidelines",
@@ -1454,7 +1455,7 @@ fun ModernPrayerTimesCard(
                     Text(
                         text = if (isBn) "২. আউয়াল ওয়াক্তের ফজিলত:" else "2. Virtues of Praying on Time:",
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF0D9488)
+                        color = themeColors.titleBarBg
                     )
                     Text(
                         text = if (isBn) "রাসূলুল্লাহ (সা.) ইরশাদ করেছেন: 'আল্লাহর নিকট সর্বাধিক প্রিয় আমল হলো সময়মতো নামাজ আদায় করা।' (সহীহ বুখারী)"
@@ -1467,7 +1468,7 @@ fun ModernPrayerTimesCard(
             },
             confirmButton = {
                 TextButton(onClick = { showFiqhInfoDialog = false }) {
-                    Text(text = if (isBn) "ঠিক আছে" else "Close", color = Color(0xFF0D9488), fontWeight = FontWeight.Bold)
+                    Text(text = if (isBn) "ঠিক আছে" else "Close", color = themeColors.titleBarBg, fontWeight = FontWeight.Bold)
                 }
             },
             containerColor = themeColors.cardBg,
@@ -1486,13 +1487,13 @@ fun ModernPrayerTimesCard(
                     modifier = Modifier
                         .size(44.dp)
                         .clip(CircleShape)
-                        .background(if (item.isForbidden) Color(0xFFFEF2F2) else Color(0xFFF0FDFA)),
+                        .background(if (item.isForbidden) Color(0xFFFEF2F2) else themeColors.titleBarBg.copy(alpha = 0.12f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = item.icon,
                         contentDescription = null,
-                        tint = if (item.isForbidden) Color(0xFFDC2626) else Color(0xFF0D9488),
+                        tint = if (item.isForbidden) Color(0xFFDC2626) else themeColors.titleBarBg,
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -1515,13 +1516,13 @@ fun ModernPrayerTimesCard(
                 ) {
                     Surface(
                         shape = RoundedCornerShape(8.dp),
-                        color = if (item.isForbidden) Color(0xFFFEF3C7) else Color(0xFFCCFBF1)
+                        color = if (item.isForbidden) Color(0xFFFEF3C7) else themeColors.titleBarBg.copy(alpha = 0.12f)
                     ) {
                         Text(
                             text = item.timeRangeStr,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (item.isForbidden) Color(0xFFB45309) else Color(0xFF0F766E),
+                            color = if (item.isForbidden) Color(0xFFB45309) else themeColors.titleBarBg,
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                         )
                     }
@@ -1539,7 +1540,7 @@ fun ModernPrayerTimesCard(
                 TextButton(onClick = { selectedForbiddenItem = null }) {
                     Text(
                         text = if (isBn) "বুঝতে পেরেছি" else "Understood",
-                        color = Color(0xFF0D9488),
+                        color = themeColors.titleBarBg,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -1657,7 +1658,7 @@ fun MonthlyPrayerTimesSheet(
                     Text(
                         text = if (isBn) "${viewModel.selectedIslamicDistrictBn.split(" ")[0]} জেলা" else "${viewModel.selectedIslamicDistrictEn} District",
                         fontSize = 12.sp,
-                        color = Color(0xFF0D9488),
+                        color = themeColors.titleBarBg,
                         fontWeight = FontWeight.SemiBold
                     )
                 }
@@ -1691,7 +1692,7 @@ fun MonthlyPrayerTimesSheet(
                         Icon(
                             imageVector = Icons.Default.ChevronLeft,
                             contentDescription = "Previous Month",
-                            tint = Color(0xFF0D9488)
+                            tint = themeColors.titleBarBg
                         )
                     }
 
@@ -1706,7 +1707,7 @@ fun MonthlyPrayerTimesSheet(
                         Icon(
                             imageVector = Icons.Default.ChevronRight,
                             contentDescription = "Next Month",
-                            tint = Color(0xFF0D9488)
+                            tint = themeColors.titleBarBg
                         )
                     }
                 }
@@ -1726,7 +1727,7 @@ fun MonthlyPrayerTimesSheet(
                     // Table Header Row
                     Row(
                         modifier = Modifier
-                            .background(Color(0xFF0D9488).copy(alpha = 0.12f), RoundedCornerShape(8.dp))
+                            .background(themeColors.titleBarBg.copy(alpha = 0.12f), RoundedCornerShape(8.dp))
                             .padding(vertical = 8.dp, horizontal = 6.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -1825,8 +1826,8 @@ private fun MonthlyTableCell(
             else -> FontWeight.Normal
         },
         color = when {
-            isHeader -> Color(0xFF0D9488)
-            isHighlight -> Color(0xFF047857)
+            isHeader -> themeColors.titleBarBg
+            isHighlight -> themeColors.titleBarBg
             isFriday -> Color(0xFF0284C7)
             else -> themeColors.displayText
         },
@@ -1855,8 +1856,8 @@ private fun PrayerTrackerPill(
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(12.dp),
-        color = if (isDone) Color(0xFF10B981).copy(alpha = 0.12f) else themeColors.cardBg,
-        border = BorderStroke(1.dp, if (isDone) Color(0xFF10B981) else themeColors.displayText.copy(alpha = 0.08f)),
+        color = if (isDone) themeColors.titleBarBg.copy(alpha = 0.12f) else themeColors.cardBg,
+        border = BorderStroke(1.dp, if (isDone) themeColors.titleBarBg else themeColors.displayText.copy(alpha = 0.08f)),
         modifier = modifier
     ) {
         Column(
@@ -1866,7 +1867,7 @@ private fun PrayerTrackerPill(
             Icon(
                 imageVector = if (isDone) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
                 contentDescription = null,
-                tint = if (isDone) Color(0xFF10B981) else themeColors.displayText.copy(alpha = 0.4f),
+                tint = if (isDone) themeColors.titleBarBg else themeColors.displayText.copy(alpha = 0.4f),
                 modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.height(4.dp))
@@ -1874,7 +1875,7 @@ private fun PrayerTrackerPill(
                 text = name,
                 fontSize = 11.5.sp,
                 fontWeight = if (isDone) FontWeight.Bold else FontWeight.Medium,
-                color = if (isDone) Color(0xFF10B981) else themeColors.displayText
+                color = if (isDone) themeColors.titleBarBg else themeColors.displayText
             )
         }
     }

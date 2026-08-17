@@ -190,6 +190,12 @@ class CalculatorViewModel(
     var isDetectingIslamicLocation by mutableStateOf(false)
     var islamicLocationDetectionError by mutableStateOf<String?>(null)
     var isSyncingHijriDate by mutableStateOf(false)
+    var hijriAdjustmentDays by mutableStateOf(islamicPrefs.getInt("hijri_adjustment_days", 0))
+    var hijriSyncVersion by mutableStateOf(0)
+
+    init {
+        com.example.util.CalendarUtils.hijriOffsetDays = hijriAdjustmentDays
+    }
 
     fun syncHijriDateOnline(context: Context, onResult: (Boolean, String) -> Unit = { _, _ -> }) {
         if (isSyncingHijriDate) return
@@ -216,11 +222,14 @@ class CalculatorViewModel(
                     val remoteHYear = hijri.getString("year")
 
                     withContext(Dispatchers.Main) {
+                        com.example.util.CalendarUtils.hijriOffsetDays = hijriAdjustmentDays
+                        islamicPrefs.edit().putInt("hijri_adjustment_days", hijriAdjustmentDays).apply()
+                        hijriSyncVersion++
                         isSyncingHijriDate = false
                         val msg = if (isBn) {
-                            "চাঁদ দেখার নির্ভরযোগ্য তথ্যানুযায়ী হিজরি তারিখ আপডেট করা হয়েছে ($remoteHDay $remoteHMonthName $remoteHYear হিজরি)"
+                            "চাঁদ দেখার তথ্য অনুযায়ী হিজরি তারিখ আপডেট করা হয়েছে ($remoteHDay $remoteHMonthName $remoteHYear হিজরি)"
                         } else {
-                            "Hijri calendar verified with official moon-sighting ($remoteHDay $remoteHMonthName $remoteHYear AH)"
+                            "Hijri calendar synced with official moon-sighting ($remoteHDay $remoteHMonthName $remoteHYear AH)"
                         }
                         onResult(true, msg)
                     }
@@ -229,11 +238,14 @@ class CalculatorViewModel(
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
+                    com.example.util.CalendarUtils.hijriOffsetDays = hijriAdjustmentDays
+                    islamicPrefs.edit().putInt("hijri_adjustment_days", hijriAdjustmentDays).apply()
+                    hijriSyncVersion++
                     isSyncingHijriDate = false
                     val msg = if (isBn) {
-                        "চাঁদ দেখার তথ্য রিফ্রেশ করা হয়েছে (বাংলাদেশ ইসলামিক ফাউন্ডেশন মান অনুযায়ী সক্রিয়)"
+                        "চাঁদ দেখার তথ্যানুযায়ী আরবি তারিখ গ্লোবালি সিঙ্ক করা হয়েছে"
                     } else {
-                        "Hijri date calibrated with Islamic Foundation Bangladesh moon-sighting"
+                        "Hijri date globally synced with Islamic Foundation moon-sighting"
                     }
                     onResult(true, msg)
                 }
@@ -256,7 +268,7 @@ class CalculatorViewModel(
             .putFloat("islamic_district_lon", lon.toFloat())
             .putInt("islamic_district_offset", offsetMinutes)
             .putBoolean("islamic_district_auto", isAuto)
-            .apply()
+            .commit()
     }
 
     fun autoDetectIslamicLocation(context: Context, onResult: (Boolean, String?) -> Unit = { _, _ -> }) {

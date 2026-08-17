@@ -239,9 +239,11 @@ object CalendarUtils {
         return Triple(bDay, bMonthIdx.coerceIn(0, 11), bYear)
     }
 
+    var hijriOffsetDays: Int = 0
+
     fun getHijriDateComponents(calendar: Calendar): Triple<Int, Int, Int> {
         val cal = calendar.clone() as Calendar
-        cal.add(Calendar.DAY_OF_MONTH, -1) // Adjust -1 day for Bangladesh moon sighting standard
+        cal.add(Calendar.DAY_OF_MONTH, -1 + hijriOffsetDays) // Adjust for Bangladesh moon sighting standard and global offset
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             try {
                 val localDate = LocalDate.of(

@@ -187,10 +187,13 @@ fun MainContent(
         uri?.let { viewModel.restoreHistoryFromUri(it) }
     }
 
-    // Quick Calculator Windows Window Controls State
+    // Quick Shortcut Windows Controls State
     var isCalcMinimized by remember { mutableStateOf(false) }
     var isCalcMaximized by remember { mutableStateOf(false) }
     var showQuickCalcCloseConfirm by remember { mutableStateOf(false) }
+
+    var isCalMinimized by remember { mutableStateOf(false) }
+    var isMarketMinimized by remember { mutableStateOf(false) }
 
     // --- App Update State ---
     var showUpdateDialog by remember { mutableStateOf(false) }
@@ -2750,141 +2753,211 @@ fun MainContent(
         var showCalCloseConfirm by remember { mutableStateOf(false) }
         val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
 
-        Dialog(
-            onDismissRequest = { showCalCloseConfirm = true },
-            properties = DialogProperties(usePlatformDefaultWidth = false)
-        ) {
-            Surface(
-                modifier = if (isCalMaximized) {
-                    Modifier.fillMaxSize()
-                } else {
-                    Modifier
-                        .fillMaxWidth(0.96f)
-                        .fillMaxHeight(0.92f)
-                },
-                shape = if (isCalMaximized) RoundedCornerShape(0.dp) else RoundedCornerShape(24.dp),
-                color = themeColors.background,
-                tonalElevation = 8.dp
+        if (isCalMinimized) {
+            // Minimized Floating Pill for Quick Calendar
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(bottom = if (isCalcMinimized) 145.dp else 85.dp, end = 16.dp),
+                contentAlignment = Alignment.BottomEnd
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(12.dp)
+                Surface(
+                    onClick = { isCalMinimized = false },
+                    shape = RoundedCornerShape(16.dp),
+                    color = themeColors.cardBg,
+                    shadowElevation = 10.dp,
+                    modifier = Modifier.border(1.5.dp, themeColors.buttonEqualBg, RoundedCornerShape(16.dp))
                 ) {
-                    // Titlebar with Window Controls
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        Icon(
+                            imageVector = Icons.Default.CalendarMonth,
+                            contentDescription = "Quick Calendar",
+                            tint = themeColors.buttonEqualBg,
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Text(
+                            text = if (isBn) "ক্যালেন্ডার (মিনিমাইজড)" else "Calendar (Minimized)",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = themeColors.displayText
+                        )
+                        Box(
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(CircleShape)
+                                .background(themeColors.buttonEqualBg.copy(alpha = 0.15f))
+                                .clickable { isCalMinimized = false },
+                            contentAlignment = Alignment.Center
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .clip(CircleShape)
-                                    .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.CalendarMonth,
-                                    contentDescription = null,
-                                    tint = themeColors.buttonEqualBg,
-                                    modifier = Modifier.size(22.dp)
-                                )
-                            }
-                            Text(
-                                text = if (isBn) "কুইক ক্যালেন্ডার" else "Quick Calendar",
-                                fontSize = 17.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = themeColors.displayText
+                            Icon(
+                                imageVector = Icons.Default.OpenInNew,
+                                contentDescription = "Restore",
+                                tint = themeColors.buttonEqualBg,
+                                modifier = Modifier.size(16.dp)
                             )
                         }
-
-                        Windows11TitlebarButtons(
-                            isMaximized = isCalMaximized,
-                            onMinimize = { viewModel.showCalendarDialog = false },
-                            onMaximizeToggle = { isCalMaximized = !isCalMaximized },
-                            onClose = { showCalCloseConfirm = true },
-                            themeColors = themeColors
-                        )
-                    }
-
-                    HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.1f))
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Calendar Content inside Dialog with Vertical Scroll
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f)
-                            .verticalScroll(rememberScrollState())
-                    ) {
-                        com.example.ui.screens.MultiCalendarCard(
-                            viewModel = viewModel,
-                            themeColors = themeColors
-                        )
+                        Box(
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFFE81123))
+                                .clickable {
+                                    showCalCloseConfirm = true
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Close",
+                                tint = Color.White,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
                     }
                 }
             }
+        } else {
+            Dialog(
+                onDismissRequest = { isCalMinimized = true },
+                properties = DialogProperties(usePlatformDefaultWidth = false)
+            ) {
+                Surface(
+                    modifier = if (isCalMaximized) {
+                        Modifier.fillMaxSize()
+                    } else {
+                        Modifier
+                            .fillMaxWidth(0.96f)
+                            .fillMaxHeight(0.92f)
+                    },
+                    shape = if (isCalMaximized) RoundedCornerShape(0.dp) else RoundedCornerShape(24.dp),
+                    color = themeColors.background,
+                    tonalElevation = 8.dp
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(12.dp)
+                    ) {
+                        // Titlebar with Window Controls
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(CircleShape)
+                                        .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.CalendarMonth,
+                                        contentDescription = null,
+                                        tint = themeColors.buttonEqualBg,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
+                                Text(
+                                    text = if (isBn) "কুইক ক্যালেন্ডার" else "Quick Calendar",
+                                    fontSize = 17.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.displayText
+                                )
+                            }
 
-            // Quick Calendar Close Confirmation Dialog
-            if (showCalCloseConfirm) {
-                AlertDialog(
-                    onDismissRequest = { showCalCloseConfirm = false },
-                    title = {
+                            Windows11TitlebarButtons(
+                                isMaximized = isCalMaximized,
+                                onMinimize = { isCalMinimized = true },
+                                onMaximizeToggle = { isCalMaximized = !isCalMaximized },
+                                onClose = { showCalCloseConfirm = true },
+                                themeColors = themeColors
+                            )
+                        }
+
+                        HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.1f))
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Calendar Content inside Dialog with Vertical Scroll
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                                .verticalScroll(rememberScrollState())
+                        ) {
+                            com.example.ui.screens.MultiCalendarCard(
+                                viewModel = viewModel,
+                                themeColors = themeColors
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // Quick Calendar Close Confirmation Dialog
+        if (showCalCloseConfirm) {
+            AlertDialog(
+                onDismissRequest = { showCalCloseConfirm = false },
+                title = {
+                    Text(
+                        text = if (isBn) "কুইক ক্যালেন্ডার বন্ধ করুন" else "Close Quick Calendar",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = themeColors.displayText
+                    )
+                },
+                text = {
+                    Text(
+                        text = if (isBn)
+                            "আপনি কি কুইক ক্যালেন্ডার বন্ধ করতে চান?"
+                        else
+                            "Do you want to close Quick Calendar?",
+                        fontSize = 14.sp,
+                        color = themeColors.displayText.copy(alpha = 0.85f)
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            showCalCloseConfirm = false
+                            viewModel.showCalendarDialog = false
+                            isCalMinimized = false
+                            isCalMaximized = false
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))
+                    ) {
                         Text(
-                            text = if (isBn) "কুইক ক্যালেন্ডার বন্ধ করুন" else "Close Quick Calendar",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp,
+                            text = if (isBn) "হ্যাঁ" else "Yes",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { showCalCloseConfirm = false }
+                    ) {
+                        Text(
+                            text = if (isBn) "না" else "No",
                             color = themeColors.displayText
                         )
-                    },
-                    text = {
-                        Text(
-                            text = if (isBn)
-                                "আপনি কি কুইক ক্যালেন্ডার বন্ধ করতে চান?"
-                            else
-                                "Do you want to close Quick Calendar?",
-                            fontSize = 14.sp,
-                            color = themeColors.displayText.copy(alpha = 0.85f)
-                        )
-                    },
-                    confirmButton = {
-                        Button(
-                            onClick = {
-                                showCalCloseConfirm = false
-                                viewModel.showCalendarDialog = false
-                                isCalMaximized = false
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))
-                        ) {
-                            Text(
-                                text = if (isBn) "হ্যাঁ" else "Yes",
-                                color = Color.White,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    },
-                    dismissButton = {
-                        TextButton(
-                            onClick = { showCalCloseConfirm = false }
-                        ) {
-                            Text(
-                                text = if (isBn) "না" else "No",
-                                color = themeColors.displayText
-                            )
-                        }
-                    },
-                    containerColor = themeColors.cardBg,
-                    shape = RoundedCornerShape(16.dp)
-                )
-            }
+                    }
+                },
+                containerColor = themeColors.cardBg,
+                shape = RoundedCornerShape(16.dp)
+            )
         }
     }
 
@@ -2893,142 +2966,217 @@ fun MainContent(
         var showMarketCloseConfirm by remember { mutableStateOf(false) }
         val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
 
-        Dialog(
-            onDismissRequest = { showMarketCloseConfirm = true },
-            properties = DialogProperties(usePlatformDefaultWidth = false)
-        ) {
-            Surface(
-                modifier = if (isMarketMaximized) {
-                    Modifier.fillMaxSize()
-                } else {
-                    Modifier
-                        .fillMaxWidth(0.96f)
-                        .fillMaxHeight(0.94f)
-                },
-                shape = if (isMarketMaximized) RoundedCornerShape(0.dp) else RoundedCornerShape(24.dp),
-                color = themeColors.background,
-                tonalElevation = 8.dp,
-                shadowElevation = 16.dp
+        if (isMarketMinimized) {
+            // Minimized Floating Pill for Quick Market List
+            val bottomPadding = when {
+                isCalcMinimized && isCalMinimized -> 205.dp
+                isCalcMinimized || isCalMinimized -> 145.dp
+                else -> 85.dp
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(bottom = bottomPadding, end = 16.dp),
+                contentAlignment = Alignment.BottomEnd
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(12.dp)
+                Surface(
+                    onClick = { isMarketMinimized = false },
+                    shape = RoundedCornerShape(16.dp),
+                    color = themeColors.cardBg,
+                    shadowElevation = 10.dp,
+                    modifier = Modifier.border(1.5.dp, themeColors.buttonEqualBg, RoundedCornerShape(16.dp))
                 ) {
-                    // Header Bar (Windows 11 Style)
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        Icon(
+                            imageVector = Icons.Default.ShoppingBasket,
+                            contentDescription = "Quick Market List",
+                            tint = themeColors.buttonEqualBg,
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Text(
+                            text = if (isBn) "বাজার ফর্দ (মিনিমাইজড)" else "Market List (Minimized)",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = themeColors.displayText
+                        )
+                        Box(
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(CircleShape)
+                                .background(themeColors.buttonEqualBg.copy(alpha = 0.15f))
+                                .clickable { isMarketMinimized = false },
+                            contentAlignment = Alignment.Center
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .clip(CircleShape)
-                                    .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.ShoppingBasket,
-                                    contentDescription = null,
-                                    tint = themeColors.buttonEqualBg,
-                                    modifier = Modifier.size(22.dp)
-                                )
-                            }
-                            Text(
-                                text = if (isBn) "কুইক বাজার ফর্দ" else "Quick Market List",
-                                fontSize = 17.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = themeColors.displayText
+                            Icon(
+                                imageVector = Icons.Default.OpenInNew,
+                                contentDescription = "Restore",
+                                tint = themeColors.buttonEqualBg,
+                                modifier = Modifier.size(16.dp)
                             )
                         }
-
-                        Windows11TitlebarButtons(
-                            isMaximized = isMarketMaximized,
-                            onMinimize = { viewModel.showMarketDialog = false },
-                            onMaximizeToggle = { isMarketMaximized = !isMarketMaximized },
-                            onClose = { showMarketCloseConfirm = true },
-                            themeColors = themeColors
-                        )
-                    }
-
-                    HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.1f))
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    // Market List Content inside Dialog
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f)
-                    ) {
-                        com.example.ui.screens.MarketListScreen(
-                            viewModel = viewModel,
-                            themeColors = themeColors,
-                            modifier = Modifier.fillMaxSize()
-                        )
+                        Box(
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFFE81123))
+                                .clickable {
+                                    showMarketCloseConfirm = true
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Close",
+                                tint = Color.White,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
                     }
                 }
             }
+        } else {
+            Dialog(
+                onDismissRequest = { isMarketMinimized = true },
+                properties = DialogProperties(usePlatformDefaultWidth = false)
+            ) {
+                Surface(
+                    modifier = if (isMarketMaximized) {
+                        Modifier.fillMaxSize()
+                    } else {
+                        Modifier
+                            .fillMaxWidth(0.96f)
+                            .fillMaxHeight(0.94f)
+                    },
+                    shape = if (isMarketMaximized) RoundedCornerShape(0.dp) else RoundedCornerShape(24.dp),
+                    color = themeColors.background,
+                    tonalElevation = 8.dp,
+                    shadowElevation = 16.dp
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(12.dp)
+                    ) {
+                        // Header Bar (Windows 11 Style)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(CircleShape)
+                                        .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.ShoppingBasket,
+                                        contentDescription = null,
+                                        tint = themeColors.buttonEqualBg,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
+                                Text(
+                                    text = if (isBn) "কুইক বাজার ফর্দ" else "Quick Market List",
+                                    fontSize = 17.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.displayText
+                                )
+                            }
 
-            // Quick Market List Close Confirmation Dialog
-            if (showMarketCloseConfirm) {
-                AlertDialog(
-                    onDismissRequest = { showMarketCloseConfirm = false },
-                    title = {
+                            Windows11TitlebarButtons(
+                                isMaximized = isMarketMaximized,
+                                onMinimize = { isMarketMinimized = true },
+                                onMaximizeToggle = { isMarketMaximized = !isMarketMaximized },
+                                onClose = { showMarketCloseConfirm = true },
+                                themeColors = themeColors
+                            )
+                        }
+
+                        HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.1f))
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        // Market List Content inside Dialog
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                        ) {
+                            com.example.ui.screens.MarketListScreen(
+                                viewModel = viewModel,
+                                themeColors = themeColors,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // Quick Market List Close Confirmation Dialog
+        if (showMarketCloseConfirm) {
+            AlertDialog(
+                onDismissRequest = { showMarketCloseConfirm = false },
+                title = {
+                    Text(
+                        text = if (isBn) "কুইক বাজার ফর্দ বন্ধ করুন" else "Close Quick Market List",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = themeColors.displayText
+                    )
+                },
+                text = {
+                    Text(
+                        text = if (isBn)
+                            "আপনি কি কুইক বাজার ফর্দ বন্ধ করতে চান?"
+                        else
+                            "Do you want to close Quick Market List?",
+                        fontSize = 14.sp,
+                        color = themeColors.displayText.copy(alpha = 0.85f)
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            showMarketCloseConfirm = false
+                            viewModel.showMarketDialog = false
+                            isMarketMinimized = false
+                            isMarketMaximized = false
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))
+                    ) {
                         Text(
-                            text = if (isBn) "কুইক বাজার ফর্দ বন্ধ করুন" else "Close Quick Market List",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp,
+                            text = if (isBn) "হ্যাঁ" else "Yes",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { showMarketCloseConfirm = false }
+                    ) {
+                        Text(
+                            text = if (isBn) "না" else "No",
                             color = themeColors.displayText
                         )
-                    },
-                    text = {
-                        Text(
-                            text = if (isBn)
-                                "আপনি কি কুইক বাজার ফর্দ বন্ধ করতে চান?"
-                            else
-                                "Do you want to close Quick Market List?",
-                            fontSize = 14.sp,
-                            color = themeColors.displayText.copy(alpha = 0.85f)
-                        )
-                    },
-                    confirmButton = {
-                        Button(
-                            onClick = {
-                                showMarketCloseConfirm = false
-                                viewModel.showMarketDialog = false
-                                isMarketMaximized = false
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))
-                        ) {
-                            Text(
-                                text = if (isBn) "হ্যাঁ" else "Yes",
-                                color = Color.White,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    },
-                    dismissButton = {
-                        TextButton(
-                            onClick = { showMarketCloseConfirm = false }
-                        ) {
-                            Text(
-                                text = if (isBn) "না" else "No",
-                                color = themeColors.displayText
-                            )
-                        }
-                    },
-                    containerColor = themeColors.cardBg,
-                    shape = RoundedCornerShape(16.dp)
-                )
-            }
+                    }
+                },
+                containerColor = themeColors.cardBg,
+                shape = RoundedCornerShape(16.dp)
+            )
         }
     }
 }
