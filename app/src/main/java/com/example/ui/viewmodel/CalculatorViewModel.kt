@@ -157,6 +157,7 @@ class CalculatorViewModel(
     var showCalculatorDialog by mutableStateOf(false)
     var showCalendarDialog by mutableStateOf(false)
     var showMarketDialog by mutableStateOf(false)
+    var showDistrictSelectionDialog by mutableStateOf(false)
 
     // Current Active Tab: 0 = Dashboard, 1 = Smart Converter, 2 = Calculator, 3 = History, 4 = Visual Themes
     var activeTab by mutableStateOf(0)

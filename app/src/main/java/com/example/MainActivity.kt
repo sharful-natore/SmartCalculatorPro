@@ -133,6 +133,10 @@ class MainActivity : ComponentActivity() {
                     viewModel.activeTab = 0
                     viewModel.showMarketDialog = true
                 }
+                "district" -> {
+                    viewModel.activeTab = 0
+                    viewModel.showDistrictSelectionDialog = true
+                }
                 "history" -> {
                     viewModel.activeTab = 3
                 }

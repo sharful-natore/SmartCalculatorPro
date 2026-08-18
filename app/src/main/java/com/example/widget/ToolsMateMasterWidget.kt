@@ -221,6 +221,7 @@ class ToolsMateMasterWidget : AppWidgetProvider() {
 
                 views.setInt(R.id.widget_sunrise_icon, "setColorFilter", Color.parseColor("#FDE047"))
                 views.setInt(R.id.widget_sunset_icon, "setColorFilter", Color.parseColor("#F87171"))
+                views.setInt(R.id.widget_icon_location, "setColorFilter", Color.parseColor("#38BDF8"))
                 views.setInt(R.id.widget_icon_clock, "setColorFilter", Color.parseColor("#38BDF8"))
                 views.setInt(R.id.widget_icon_timer, "setColorFilter", Color.parseColor("#F59E0B"))
                 views.setInt(R.id.widget_icon_sehri, "setColorFilter", Color.parseColor("#34D399"))
@@ -266,6 +267,7 @@ class ToolsMateMasterWidget : AppWidgetProvider() {
 
                 views.setInt(R.id.widget_sunrise_icon, "setColorFilter", Color.parseColor("#D97706"))
                 views.setInt(R.id.widget_sunset_icon, "setColorFilter", Color.parseColor("#DC2626"))
+                views.setInt(R.id.widget_icon_location, "setColorFilter", Color.parseColor("#0284C7"))
                 views.setInt(R.id.widget_icon_clock, "setColorFilter", Color.parseColor("#0284C7"))
                 views.setInt(R.id.widget_icon_timer, "setColorFilter", Color.parseColor("#D97706"))
                 views.setInt(R.id.widget_icon_sehri, "setColorFilter", Color.parseColor("#059669"))
@@ -512,6 +514,15 @@ class ToolsMateMasterWidget : AppWidgetProvider() {
             }
             val prayerPendingIntent = PendingIntent.getActivity(context, 104, prayerIntent, flags)
             views.setOnClickPendingIntent(R.id.widget_btn_islamic, prayerPendingIntent)
+
+            // District Selection Action (Click Location in Widget)
+            val districtIntent = Intent(context, com.example.MainActivity::class.java).apply {
+                action = Intent.ACTION_VIEW
+                putExtra("target_tab", "district")
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            }
+            val districtPendingIntent = PendingIntent.getActivity(context, 105, districtIntent, flags)
+            views.setOnClickPendingIntent(R.id.widget_location_click_container, districtPendingIntent)
 
             appWidgetManager.updateAppWidget(appWidgetId, views)
         } catch (e: Exception) {

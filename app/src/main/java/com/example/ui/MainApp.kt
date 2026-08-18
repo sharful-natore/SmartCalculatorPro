@@ -2557,6 +2557,14 @@ fun MainContent(
         )
     }
 
+    if (viewModel.showDistrictSelectionDialog) {
+        com.example.ui.islamic.DistrictSelectionSheet(
+            viewModel = viewModel,
+            themeColors = themeColors,
+            onDismiss = { viewModel.showDistrictSelectionDialog = false }
+        )
+    }
+
     if (viewModel.showCalculatorDialog) {
         if (isCalcMinimized) {
             // Minimized Floating Bar (Windows Taskbar style bubble)
