@@ -1,121 +1,288 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_background"
     android:orientation="vertical"
-    android:padding="12dp">
+    android:padding="10dp">
 
-    <!-- 1. TOP HEADER: Location + Multi Date + Refresh -->
+    <!-- 1. TOP HEADER BAR: Brand + Location (Shifted Left) + Mode Toggle + Refresh -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
+        <!-- Left: Brand Logo + Location Name together -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:orientation="vertical">
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_marginEnd="3dp"
+                android:contentDescription="Brand"
+                android:src="@drawable/ic_widget_settings" />
+
+            <TextView
+                android:id="@+id/widget_app_brand"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ToolsMate"
+                android:textColor="#0F172A"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <!-- Divider Dot -->
+            <TextView
+                android:id="@+id/widget_header_dot"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="4dp"
+                android:text="•"
+                android:textColor="#0284C7"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <!-- Location Pin & Name -->
+            <ImageView
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:layout_marginEnd="2dp"
+                android:contentDescription="Location"
+                android:src="@drawable/ic_widget_location" />
 
             <TextView
                 android:id="@+id/widget_location_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="📍 ঢাকা • ToolsMate"
-                android:textColor="#38BDF8"
+                android:text="ঢাকা"
+                android:textColor="#0284C7"
                 android:textSize="12sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Right: Theme Toggle & Refresh -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/widget_btn_theme_toggle"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:layout_marginEnd="6dp"
+                android:background="@drawable/widget_badge_bg"
+                android:contentDescription="Toggle Light/Dark Theme"
+                android:padding="5dp"
+                android:src="@drawable/ic_widget_moon" />
+
+            <ImageView
+                android:id="@+id/widget_btn_refresh"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:background="@drawable/widget_badge_bg"
+                android:contentDescription="Refresh Widget"
+                android:padding="5dp"
+                android:src="@drawable/ic_widget_refresh" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Sub-header Date Line -->
+    <TextView
+        android:id="@+id/widget_date_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:layout_marginBottom="6dp"
+        android:gravity="start"
+        android:text="১৮ আগস্ট ২০২৬ | ৩ ভাদ্র ১৪৩২ | ৬ সফর ১৪ ৪৮ রোববার"
+        android:textColor="#475569"
+        android:textSize="10sp" />
+
+    <!-- 2. CARD 1: WEATHER DATA CARD -->
+    <LinearLayout
+        android:id="@+id/widget_weather_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="6dp"
+        android:background="@drawable/widget_card_inner_bg"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="7dp">
+
+        <ImageView
+            android:id="@+id/widget_weather_icon"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_marginEnd="6dp"
+            android:contentDescription="Weather"
+            android:src="@drawable/ic_widget_weather" />
+
+        <TextView
+            android:id="@+id/widget_weather_temp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="২৮°C"
+            android:textColor="#0284C7"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/widget_weather_condition"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="আংশিক মেঘলা • অনুভূত ৩০°C"
+                android:textColor="#0F172A"
+                android:textSize="10sp"
                 android:textStyle="bold" />
 
             <TextView
-                android:id="@+id/widget_date_text"
+                android:id="@+id/widget_weather_details"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="১৮ আগস্ট ২০২৬ | ৪ রবিউল আউয়াল"
-                android:textColor="#E2E8F0"
-                android:textSize="11sp" />
+                android:text="আর্দ্রতা ৬৮% • বাতাস ১০ কিমি/ঘ"
+                android:textColor="#475569"
+                android:textSize="9sp" />
         </LinearLayout>
-
-        <ImageView
-            android:id="@+id/widget_btn_refresh"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:background="@drawable/widget_badge_bg"
-            android:contentDescription="Refresh Widget"
-            android:padding="5dp"
-            android:src="@drawable/ic_shortcut_calendar" />
     </LinearLayout>
 
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_marginTop="6dp"
-        android:layout_marginBottom="6dp"
-        android:background="#334155" />
-
-    <!-- 2. MIDDLE HERO SECTION: Active Waqt & Sehri/Iftar Timings -->
+    <!-- 3. CARD 2: PRAYER & FASTING TIMINGS CARD -->
     <LinearLayout
+        android:id="@+id/widget_card_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/widget_card_inner_bg"
-        android:gravity="center_vertical"
         android:orientation="vertical"
         android:padding="8dp">
 
+        <!-- Row 1: Active Waqt & Waqt Time Range -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
+            <ImageView
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:layout_marginEnd="4dp"
+                android:contentDescription="Clock"
+                android:src="@drawable/ic_widget_clock" />
+
             <TextView
                 android:id="@+id/widget_active_waqt_title"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="🕌 বর্তমান ওয়াক্ত: আসর"
-                android:textColor="#FFFFFF"
-                android:textSize="13sp"
+                android:text="বর্তমান ওয়াক্তঃ মাগরিব"
+                android:textColor="#0284C7"
+                android:textSize="11sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/widget_active_waqt_time"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="০৪:১৫ - ০৫:৩০ PM"
-                android:textColor="#93C5FD"
-                android:textSize="12sp"
+                android:text="৬:৩১ pm - ৭:১০ pm"
+                android:textColor="#0369A1"
+                android:textSize="11sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/widget_countdown_text"
+        <!-- Row 2: Countdown & Next Waqt Info -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="3dp"
-            android:layout_marginBottom="3dp"
-            android:background="@drawable/widget_badge_bg"
-            android:gravity="center"
-            android:paddingTop="3dp"
-            android:paddingBottom="3dp"
-            android:text="⏳ শেষ হতে বাকি: ০০ঘণ্টা ৪২মি"
-            android:textColor="#FFFFFF"
-            android:textSize="11sp"
-            android:textStyle="bold" />
+            android:layout_marginTop="4dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/widget_sehri_iftar_text"
+            <ImageView
+                android:layout_width="13dp"
+                android:layout_height="13dp"
+                android:layout_marginEnd="4dp"
+                android:contentDescription="Timer"
+                android:src="@drawable/ic_widget_timer" />
+
+            <TextView
+                android:id="@+id/widget_countdown_text"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="শেষ হতে বাকিঃ ২৪ মিনিট"
+                android:textColor="#D97706"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/widget_next_waqt_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="পরবর্তীঃ এশা (৭:১১ pm)"
+                android:textColor="#334155"
+                android:textSize="10sp" />
+        </LinearLayout>
+
+        <!-- Row 3: Sehri & Iftar Timings -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="🌅 সেহরি: ০৪:১৪ AM  |  🌇 ইফতার: ০৬:৩২ PM"
-            android:textColor="#FDE047"
-            android:textSize="11sp"
-            android:textStyle="bold" />
+            android:layout_marginTop="4dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="13dp"
+                android:layout_height="13dp"
+                android:layout_marginEnd="3dp"
+                android:contentDescription="Sunrise"
+                android:src="@drawable/ic_widget_sunrise" />
+
+            <TextView
+                android:id="@+id/widget_sehri_text"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="সেহরিঃ ৪:২৬ AM"
+                android:textColor="#059669"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:layout_width="13dp"
+                android:layout_height="13dp"
+                android:layout_marginEnd="3dp"
+                android:contentDescription="Sunset"
+                android:src="@drawable/ic_widget_sunset" />
+
+            <TextView
+                android:id="@+id/widget_iftar_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ইফতারঃ ৬:৫৬ PM"
+                android:textColor="#DC2626"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+        </LinearLayout>
     </LinearLayout>
 
-    <!-- 3. BOTTOM QUICK ACTIONS ROW -->
+    <!-- 4. BOTTOM QUICK ACTION PILLS (4 Capsules) -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -123,111 +290,121 @@
         android:gravity="center"
         android:orientation="horizontal">
 
-        <!-- Prayer Times -->
+        <!-- 1. Calculator -->
         <LinearLayout
-            android:id="@+id/widget_btn_prayer"
+            android:id="@+id/widget_btn_calc"
             android:layout_width="0dp"
-            android:layout_height="36dp"
+            android:layout_height="28dp"
             android:layout_weight="1"
             android:layout_marginEnd="3dp"
             android:background="@drawable/widget_shortcut_bg"
             android:gravity="center"
             android:orientation="horizontal"
-            android:padding="2dp">
+            android:paddingHorizontal="4dp">
+
+            <ImageView
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:layout_marginEnd="3dp"
+                android:contentDescription="Calculator"
+                android:src="@drawable/ic_widget_calc" />
 
             <TextView
+                android:id="@+id/widget_btn_calc_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="🕌 নামায"
-                android:textColor="#FFFFFF"
-                android:textSize="11sp"
+                android:text="ক্যালকুলেটর"
+                android:textColor="#0284C7"
+                android:textSize="9sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- Quran -->
+        <!-- 2. Calendar -->
         <LinearLayout
-            android:id="@+id/widget_btn_quran"
+            android:id="@+id/widget_btn_calendar"
             android:layout_width="0dp"
-            android:layout_height="36dp"
+            android:layout_height="28dp"
             android:layout_weight="1"
             android:layout_marginStart="2dp"
             android:layout_marginEnd="2dp"
             android:background="@drawable/widget_shortcut_bg"
             android:gravity="center"
             android:orientation="horizontal"
-            android:padding="2dp">
+            android:paddingHorizontal="4dp">
+
+            <ImageView
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:layout_marginEnd="3dp"
+                android:contentDescription="Calendar"
+                android:src="@drawable/ic_widget_calendar" />
 
             <TextView
+                android:id="@+id/widget_btn_calendar_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="📖 কুরআন"
-                android:textColor="#FFFFFF"
-                android:textSize="11sp"
+                android:text="ক্যালেন্ডার"
+                android:textColor="#0284C7"
+                android:textSize="9sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- Tasbih -->
+        <!-- 3. Market List -->
         <LinearLayout
-            android:id="@+id/widget_btn_tasbih"
+            android:id="@+id/widget_btn_market"
             android:layout_width="0dp"
-            android:layout_height="36dp"
+            android:layout_height="28dp"
             android:layout_weight="1"
             android:layout_marginStart="2dp"
             android:layout_marginEnd="2dp"
             android:background="@drawable/widget_shortcut_bg"
             android:gravity="center"
             android:orientation="horizontal"
-            android:padding="2dp">
+            android:paddingHorizontal="4dp">
+
+            <ImageView
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:layout_marginEnd="3dp"
+                android:contentDescription="Market"
+                android:src="@drawable/ic_widget_market" />
 
             <TextView
+                android:id="@+id/widget_btn_market_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="📿 তাসবিহ"
-                android:textColor="#FFFFFF"
-                android:textSize="11sp"
+                android:text="বাজার ফর্দ"
+                android:textColor="#0284C7"
+                android:textSize="9sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- Notes -->
+        <!-- 4. Islamic Tools -->
         <LinearLayout
-            android:id="@+id/widget_btn_notes"
+            android:id="@+id/widget_btn_islamic"
             android:layout_width="0dp"
-            android:layout_height="36dp"
-            android:layout_weight="1"
-            android:layout_marginStart="2dp"
-            android:layout_marginEnd="2dp"
-            android:background="@drawable/widget_shortcut_bg"
-            android:gravity="center"
-            android:orientation="horizontal"
-            android:padding="2dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="📝 নোটস"
-                android:textColor="#FFFFFF"
-                android:textSize="11sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <!-- Calculator -->
-        <LinearLayout
-            android:id="@+id/widget_btn_calc"
-            android:layout_width="0dp"
-            android:layout_height="36dp"
+            android:layout_height="28dp"
             android:layout_weight="1"
             android:layout_marginStart="3dp"
             android:background="@drawable/widget_shortcut_bg"
             android:gravity="center"
             android:orientation="horizontal"
-            android:padding="2dp">
+            android:paddingHorizontal="4dp">
+
+            <ImageView
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:layout_marginEnd="3dp"
+                android:contentDescription="Islamic"
+                android:src="@drawable/ic_widget_mosque" />
 
             <TextView
+                android:id="@+id/widget_btn_islamic_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="🧮 হিসাব"
-                android:textColor="#FFFFFF"
-                android:textSize="11sp"
+                android:text="ইসলামিক"
+                android:textColor="#0284C7"
+                android:textSize="9sp"
                 android:textStyle="bold" />
         </LinearLayout>
     </LinearLayout>
