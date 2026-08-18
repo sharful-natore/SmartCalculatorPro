@@ -3286,13 +3286,13 @@ fun DynamicGreetingIllustrationBackground(
 
     val imageResId = remember(currentHour, weatherCode) {
         when {
-            isRainyOrSnowy -> if (isDay) com.example.R.drawable.rainy_day_scene_v4 else com.example.R.drawable.rainy_night_scene_v4
-            isCloudy -> if (isDay) com.example.R.drawable.cloudy_day_scene_v4 else com.example.R.drawable.cloudy_night_scene_v4
+            isRainyOrSnowy -> if (isDay) com.example.R.drawable.bg_scene_rainy_day else com.example.R.drawable.bg_scene_rainy_night
+            isCloudy -> if (isDay) com.example.R.drawable.bg_scene_cloudy_day else com.example.R.drawable.bg_scene_cloudy_night
             else -> when (currentHour) {
-                in 5..11 -> com.example.R.drawable.morning_scene_v4
-                in 12..15 -> com.example.R.drawable.afternoon_scene_v4
-                in 16..19 -> com.example.R.drawable.evening_scene_v4
-                else -> com.example.R.drawable.night_scene_v4
+                in 5..11 -> com.example.R.drawable.bg_scene_morning
+                in 12..15 -> com.example.R.drawable.bg_scene_afternoon
+                in 16..19 -> com.example.R.drawable.bg_scene_evening
+                else -> com.example.R.drawable.bg_scene_night
             }
         }
     }

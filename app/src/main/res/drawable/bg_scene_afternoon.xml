@@ -1,0 +1,105 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="800dp"
+    android:height="450dp"
+    android:viewportWidth="800"
+    android:viewportHeight="450">
+
+    <!-- Sky Background -->
+    <path
+        android:fillColor="#E67E22"
+        android:pathData="M0,0h800v450h-800z" />
+
+    <!-- Sky Horizon Warmth -->
+    <path
+        android:fillColor="#F39C12"
+        android:pathData="M0,100h800v350h-800z" />
+
+    <!-- Afternoon Sun Halos & Sun -->
+    <path
+        android:fillColor="#22FFFFFF"
+        android:pathData="M400,160m-140,0a140,140 0,1 1,280 0a140,140 0,1 1,-280 0" />
+    <path
+        android:fillColor="#44FFF9C4"
+        android:pathData="M400,160m-95,0a95,95 0,1 1,190 0a95,95 0,1 1,-190 0" />
+    <path
+        android:fillColor="#FFF9C4"
+        android:pathData="M400,160m-55,0a55,55 0,1 1,110 0a55,55 0,1 1,-110 0" />
+
+    <!-- Stylized Afternoon Clouds -->
+    <path
+        android:fillColor="#33FFFFFF"
+        android:pathData="M70,80q60,-30 130,0t110,5t70,-15t-310,10z" />
+    <path
+        android:fillColor="#26FFFFFF"
+        android:pathData="M500,60q80,-35 170,-5t100,15t-270,-10z" />
+
+    <!-- Mountain Layer 1 (Distant Terracotta) -->
+    <path
+        android:fillColor="#B03A2E"
+        android:pathData="M0,260L80,210L200,245L310,195L420,240L540,190L660,235L750,205L800,230L800,450L0,450Z" />
+
+    <!-- Mountain Layer 2 (Mid-range Warm Rust) -->
+    <path
+        android:fillColor="#CA6F1E"
+        android:pathData="M0,285L120,240L230,280L360,225L490,285L610,235L720,270L800,250L800,450L0,450Z" />
+
+    <!-- Mountain Layer 3 (Closer Golden Hills) -->
+    <path
+        android:fillColor="#E59866"
+        android:pathData="M0,320Q150,270 300,315T600,290T800,310L800,450L0,450Z" />
+
+    <!-- Winding River -->
+    <path
+        android:fillColor="#FAD7A0"
+        android:pathData="M390,260Q405,300 370,340Q320,390 410,450L490,450Q430,380 435,335Q440,290 410,260Z" />
+
+    <!-- River Light Reflection Highlights -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.45"
+        android:pathData="M385,290h25v4h-25z M375,325h40v5h-40z M355,365h65v6h-65z M380,410h90v7h-90z" />
+
+    <!-- Foreground Banks & Shore -->
+    <path
+        android:fillColor="#6E2C00"
+        android:pathData="M0,360Q160,330 330,370L300,450L0,450Z" />
+    <path
+        android:fillColor="#6E2C00"
+        android:pathData="M800,350Q640,330 470,380L510,450L800,450Z" />
+
+    <!-- Pine Trees (Left Forest Cluster) -->
+    <!-- Tree 1 -->
+    <path
+        android:fillColor="#3E1900"
+        android:pathData="M60,290L85,340L75,340L95,380L85,380L105,420L15,420L35,380L25,380L45,340L35,340Z" />
+    <!-- Tree 2 -->
+    <path
+        android:fillColor="#2C1200"
+        android:pathData="M120,260L145,310L135,310L155,355L145,355L170,410L70,410L95,355L85,355L105,310L95,310Z" />
+    <!-- Tree 3 -->
+    <path
+        android:fillColor="#3E1900"
+        android:pathData="M190,310L210,350L202,350L218,385L210,385L228,425L152,425L170,385L162,385L178,350L170,350Z" />
+    <path
+        android:fillColor="#2C1200"
+        android:pathData="M245,345L260,375L254,375L268,405L222,405L236,375L230,375Z" />
+
+    <!-- Pine Trees (Right Forest Cluster) -->
+    <!-- Tree 4 -->
+    <path
+        android:fillColor="#2C1200"
+        android:pathData="M680,250L705,300L695,300L718,350L708,350L735,410L625,410L652,350L642,350L665,300L655,300Z" />
+    <!-- Tree 5 -->
+    <path
+        android:fillColor="#3E1900"
+        android:pathData="M605,290L625,335L617,335L635,375L627,375L648,420L562,420L583,375L575,375L593,335L585,335Z" />
+    <!-- Tree 6 -->
+    <path
+        android:fillColor="#2C1200"
+        android:pathData="M530,335L545,365L539,365L553,398L507,398L521,365L515,365Z" />
+    <!-- Tree 7 -->
+    <path
+        android:fillColor="#3E1900"
+        android:pathData="M745,300L765,340L757,340L775,380L767,380L788,425L702,425L723,380L715,380L733,340L725,340Z" />
+
+</vector>
