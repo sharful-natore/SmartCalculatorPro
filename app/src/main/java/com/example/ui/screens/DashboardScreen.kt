@@ -3279,10 +3279,10 @@ fun DynamicGreetingIllustrationBackground(
 ) {
     val imageResId = remember(currentHour) {
         when (currentHour) {
-            in 5..11 -> com.example.R.drawable.morning_nature_landscape_1787026195926
-            in 12..15 -> com.example.R.drawable.afternoon_nature_landscape_1787026213188
-            in 16..19 -> com.example.R.drawable.evening_nature_landscape_1787026228348
-            else -> com.example.R.drawable.night_nature_landscape_1787026240594
+            in 5..11 -> com.example.R.drawable.morning_scene_v2
+            in 12..15 -> com.example.R.drawable.afternoon_scene_v2
+            in 16..19 -> com.example.R.drawable.evening_scene_v2
+            else -> com.example.R.drawable.night_scene_v2
         }
     }
 

@@ -64,6 +64,7 @@ fun QuranScreen(
 
     Scaffold(
         containerColor = themeColors.background,
+        contentWindowInsets = WindowInsets(0.dp),
         topBar = {
             Surface(
                 color = themeColors.cardBg,
