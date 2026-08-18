@@ -77,7 +77,7 @@
                 android:layout_weight="1"
                 android:text="🕌 বর্তমান ওয়াক্ত: আসর"
                 android:textColor="#FFFFFF"
-                android:textSize="13.5sp"
+                android:textSize="13sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -141,7 +141,7 @@
                 android:layout_height="wrap_content"
                 android:text="🕌 নামায"
                 android:textColor="#FFFFFF"
-                android:textSize="10.5sp"
+                android:textSize="11sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
@@ -163,7 +163,7 @@
                 android:layout_height="wrap_content"
                 android:text="📖 কুরআন"
                 android:textColor="#FFFFFF"
-                android:textSize="10.5sp"
+                android:textSize="11sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
@@ -185,7 +185,7 @@
                 android:layout_height="wrap_content"
                 android:text="📿 তাসবিহ"
                 android:textColor="#FFFFFF"
-                android:textSize="10.5sp"
+                android:textSize="11sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
@@ -207,7 +207,7 @@
                 android:layout_height="wrap_content"
                 android:text="📝 নোটস"
                 android:textColor="#FFFFFF"
-                android:textSize="10.5sp"
+                android:textSize="11sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
@@ -228,7 +228,7 @@
                 android:layout_height="wrap_content"
                 android:text="🧮 হিসাব"
                 android:textColor="#FFFFFF"
-                android:textSize="10.5sp"
+                android:textSize="11sp"
                 android:textStyle="bold" />
         </LinearLayout>
     </LinearLayout>

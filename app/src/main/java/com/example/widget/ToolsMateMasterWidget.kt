@@ -53,38 +53,57 @@ class ToolsMateMasterWidget : AppWidgetProvider() {
 
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         for (appWidgetId in appWidgetIds) {
-            updateAppWidget(context, appWidgetManager, appWidgetId)
+            try {
+                updateAppWidget(context, appWidgetManager, appWidgetId)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        super.onReceive(context, intent)
-        if (intent.action == ACTION_REFRESH_WIDGET) {
-            val appWidgetManager = AppWidgetManager.getInstance(context)
-            val thisWidget = ComponentName(context, ToolsMateMasterWidget::class.java)
-            val appWidgetIds = appWidgetManager.getAppWidgetIds(thisWidget)
-            onUpdate(context, appWidgetManager, appWidgetIds)
+        try {
+            super.onReceive(context, intent)
+            if (intent.action == ACTION_REFRESH_WIDGET) {
+                val appWidgetManager = AppWidgetManager.getInstance(context)
+                val thisWidget = ComponentName(context, ToolsMateMasterWidget::class.java)
+                val appWidgetIds = appWidgetManager.getAppWidgetIds(thisWidget)
+                if (appWidgetIds != null) {
+                    onUpdate(context, appWidgetManager, appWidgetIds)
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
     private fun updateAppWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
-        val views = RemoteViews(context.packageName, R.layout.widget_master_layout)
+        try {
+            val views = RemoteViews(context.packageName, R.layout.widget_master_layout)
 
-        // 1. SharedPreferences Location Data
-        val prefs = context.getSharedPreferences("islamic_district_prefs", Context.MODE_PRIVATE)
-        val districtBn = prefs.getString("islamic_district_bn", "ঢাকা") ?: "ঢাকা"
-        val lat = prefs.getFloat("islamic_district_lat", 23.8103f).toDouble()
-        val lon = prefs.getFloat("islamic_district_lon", 90.4125f).toDouble()
+            // 1. SharedPreferences Location Data
+            val prefs = context.getSharedPreferences("islamic_district_prefs", Context.MODE_PRIVATE)
+            val districtBn = prefs.getString("islamic_district_bn", "ঢাকা") ?: "ঢাকা"
+            val lat = prefs.getFloat("islamic_district_lat", 23.8103f).toDouble()
+            val lon = prefs.getFloat("islamic_district_lon", 90.4125f).toDouble()
 
-        // 2. Dates
-        val nowCal = Calendar.getInstance()
-        val multiDate = CalendarUtils.getMultiDateInfo(nowCal, isBn = true)
+            // 2. Dates
+            val nowCal = Calendar.getInstance()
+            val multiDate = try {
+                CalendarUtils.getMultiDateInfo(nowCal, isBn = true)
+            } catch (e: Exception) {
+                null
+            }
 
-        val headerLocationStr = "📍 $districtBn • ToolsMate"
-        val headerDateStr = "${multiDate.englishDate} | ${multiDate.hijriDate.replace(" হিজরী", "")}"
+            val headerLocationStr = "📍 $districtBn • ToolsMate"
+            val headerDateStr = if (multiDate != null) {
+                "${multiDate.englishDate} | ${multiDate.hijriDate.replace(" হিজরী", "")}"
+            } else {
+                "ToolsMate Widget"
+            }
 
-        views.setTextViewText(R.id.widget_location_text, headerLocationStr)
-        views.setTextViewText(R.id.widget_date_text, headerDateStr)
+            views.setTextViewText(R.id.widget_location_text, headerLocationStr)
+            views.setTextViewText(R.id.widget_date_text, headerDateStr)
 
         // 3. Timings & Active Waqt Calculation
         try {
@@ -205,5 +224,8 @@ class ToolsMateMasterWidget : AppWidgetProvider() {
         views.setOnClickPendingIntent(R.id.widget_btn_calc, calcPendingIntent)
 
         appWidgetManager.updateAppWidget(appWidgetId, views)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 }
