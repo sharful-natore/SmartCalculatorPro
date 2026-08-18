@@ -43,7 +43,7 @@ object ShortcutUtils {
         val iconRes = when (toolType) {
             ToolType.MULTI_CALENDAR -> R.drawable.ic_shortcut_calendar
             ToolType.NOTES_CHECKLIST -> R.drawable.ic_shortcut_market
-            ToolType.SEHRI_IFTAR, ToolType.NAMAZ_EDUCATION, ToolType.PRAYER_TIMES -> R.drawable.ic_shortcut_calendar
+            ToolType.SEHRI_IFTAR, ToolType.NAMAZ_EDUCATION, ToolType.PRAYER_TIMES -> R.drawable.ic_shortcut_prayer
             ToolType.HOLY_QURAN, ToolType.ISLAMIC_DUAS -> R.drawable.ic_shortcut_converter
             else -> R.drawable.ic_shortcut_dashboard
         }
@@ -133,8 +133,8 @@ object ShortcutUtils {
                     .setIntent(Intent(context, QuickCalculatorActivity::class.java).apply { action = Intent.ACTION_VIEW })
                     .build(),
                 ShortcutInfo.Builder(context, "shortcut_calendar")
-                    .setShortLabel("Caender")
-                    .setLongLabel("Caender")
+                    .setShortLabel("Calendar")
+                    .setLongLabel("Calendar")
                     .setIcon(getBitmapIcon(context, R.drawable.ic_shortcut_calendar))
                     .setIntent(Intent(context, QuickCalendarActivity::class.java).apply { action = Intent.ACTION_VIEW })
                     .build(),

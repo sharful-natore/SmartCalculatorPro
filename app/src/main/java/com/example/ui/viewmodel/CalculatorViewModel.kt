@@ -42,6 +42,7 @@ class CalculatorViewModel(
 
     private val chatPrefs = context.getSharedPreferences("ai_chat_prefs", Context.MODE_PRIVATE)
     private val islamicPrefs = context.getSharedPreferences("islamic_location_prefs", Context.MODE_PRIVATE)
+    private val sharedPrefs = context.getSharedPreferences("smart_calc_prefs", Context.MODE_PRIVATE)
     private val moshi = try {
         com.squareup.moshi.Moshi.Builder().build()
     } catch (e: Throwable) {
@@ -195,6 +196,17 @@ class CalculatorViewModel(
 
     init {
         com.example.util.CalendarUtils.hijriOffsetDays = hijriAdjustmentDays
+        try {
+            val savedExpr = sharedPrefs.getString("saved_calc_expression", null)
+            val savedSel = sharedPrefs.getInt("saved_calc_selection", 0)
+            val savedRes = sharedPrefs.getString("saved_calc_result", "") ?: ""
+            if (!savedExpr.isNullOrBlank() && savedExpr != "0") {
+                expressionValue = TextFieldValue(savedExpr, selection = TextRange(savedSel.coerceIn(0, savedExpr.length)))
+                result = savedRes
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     fun syncHijriDateOnline(context: Context, onResult: (Boolean, String) -> Unit = { _, _ -> }) {
@@ -1459,8 +1471,6 @@ How can I help you today?"""
     }
 
     // Theme & Language Selection
-    private val sharedPrefs = context.getSharedPreferences("smart_calc_prefs", Context.MODE_PRIVATE)
-
     var fabGradientHexColors by mutableStateOf(loadFabColors())
         private set
         
@@ -1598,7 +1608,7 @@ How can I help you today?"""
     var isOfflineWeatherData by mutableStateOf(false)
         private set
 
-    private var lastWeatherFetchTime = sharedPrefs.getLong("cached_weather_time", 0L)
+    var lastWeatherFetchTime by mutableStateOf(sharedPrefs.getLong("cached_weather_time", 0L))
 
     private val weatherResponseAdapter by lazy {
         moshi.adapter(com.example.data.network.WeatherResponse::class.java)
@@ -2529,9 +2539,22 @@ How can I help you today?"""
         }
     }
 
+    fun persistActiveExpression() {
+        try {
+            sharedPrefs.edit()
+                .putString("saved_calc_expression", expressionValue.text)
+                .putInt("saved_calc_selection", expressionValue.selection.start)
+                .putString("saved_calc_result", result)
+                .apply()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
     fun onExpressionValueChange(newValue: TextFieldValue) {
         expressionValue = newValue
         tryEvaluatePreview()
+        persistActiveExpression()
     }
 
     fun onPaste(pastedText: String) {
@@ -2547,6 +2570,7 @@ How can I help you today?"""
             selection = TextRange(selection.start + pastedText.length)
         )
         tryEvaluatePreview()
+        persistActiveExpression()
     }
 
     fun onBtnClick(char: String) {
@@ -2704,6 +2728,7 @@ How can I help you today?"""
                 tryEvaluatePreview()
             }
         }
+        persistActiveExpression()
     }
 
     private fun tryEvaluatePreview() {
@@ -2775,6 +2800,7 @@ How can I help you today?"""
             result = "Error"
             isEvaluated = true
         }
+        persistActiveExpression()
     }
 
     private fun saveToHistory(expr: String, res: String) {

@@ -206,7 +206,7 @@ fun SurahDetailScreen(
                         TajweedLegendBar(
                             themeColors = themeColors,
                             modifier = Modifier.padding(bottom = 12.dp),
-                            initialExpanded = true,
+                            initialExpanded = false,
                             isBn = isBn
                         )
                     }
@@ -353,14 +353,14 @@ fun AyahCard(
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                // Play Verse Icon Button
+                // Play/Pause Verse Icon Button
                 IconButton(
                     onClick = onPlayAyah,
                     modifier = Modifier.size(32.dp)
                 ) {
                     Icon(
-                        imageVector = if (isCurrentPlaying) Icons.Default.VolumeUp else Icons.Default.PlayArrow,
-                        contentDescription = "Play Verse",
+                        imageVector = if (isCurrentPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                        contentDescription = if (isCurrentPlaying) "Pause Verse" else "Play Verse",
                         tint = arabicColor
                     )
                 }

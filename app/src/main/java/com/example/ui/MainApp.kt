@@ -1683,15 +1683,13 @@ fun MainContent(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Box(
-                            modifier = Modifier
-                                .size(72.dp)
-                                .background(themeColors.buttonEqualBg, shape = RoundedCornerShape(18.dp)),
+                            modifier = Modifier.size(72.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             androidx.compose.foundation.Image(
                                 painter = androidx.compose.ui.res.painterResource(id = com.example.R.drawable.app_logo),
                                 contentDescription = null,
-                                modifier = Modifier.size(56.dp)
+                                modifier = Modifier.size(72.dp)
                             )
                         }
                         Spacer(modifier = Modifier.height(12.dp))

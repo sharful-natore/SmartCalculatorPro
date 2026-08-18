@@ -81,21 +81,16 @@ fun ModernSehriIftarCard(
     // Hijri Month Navigation Offset (0 = Current Islamic Month, +1 = Next Islamic Month, -1 = Previous)
     var hijriMonthOffset by remember { mutableIntStateOf(0) }
 
-    // TTS Setup for Arabic Duas
-    var tts: TextToSpeech? by remember { mutableStateOf(null) }
+    // CDN Islamic Audio Player for Sehri & Iftar Duas
+    val audioPlayer = remember { com.example.data.islamic.IslamicAudioPlayer.getInstance(context) }
+    val isAudioPlaying by audioPlayer.isPlaying.collectAsState()
+    val activeAudioId by audioPlayer.activeAudioId.collectAsState()
+    val downloadProgressMap by audioPlayer.downloadProgress.collectAsState()
+    val downloadedAudioIds by audioPlayer.downloadedAudioIds.collectAsState()
+
     DisposableEffect(Unit) {
-        tts = TextToSpeech(context) { status ->
-            if (status == TextToSpeech.SUCCESS) {
-                try {
-                    tts?.language = Locale("ar")
-                } catch (e: Exception) {
-                    tts?.language = Locale.ENGLISH
-                }
-            }
-        }
         onDispose {
-            tts?.stop()
-            tts?.shutdown()
+            audioPlayer.stop()
         }
     }
 
@@ -926,25 +921,35 @@ fun ModernSehriIftarCard(
 
                 // 1. Sehri Dua (রোজার নিয়ত)
                 DuaActionCard(
+                    id = "sehri_niyyat",
                     title = if (isBn) "১. রোজার নিয়ত (সেহরির দোয়া)" else "1. Intention for Fasting (Sehri Niyyah)",
                     arabic = "نَوَيْتُ اَنْ اُصُوْمَ غَدًا مِّنْ شَهْرِ رَمَضَانَ الْمُبَارَكِ فَرْضًا لَّكَ يَا اللهُ فَتَقَبَّلْ مِنِّى اِنَّكَ اَنْتَ السَّمِيْعُ الْعَلِيْمُ",
                     transliteration = if (isBn) "উচ্চারণ: নাওয়াইতু আন আসুমা গাদাম মিন শাহরি রামাদানাল মুবারাকি ফারদাল্লাকা ইয়া আল্লাহু ফাতাকাব্বাল মিন্নি ইন্নাকা আনতাস সামিউল আলিম।" else "Pronunciation: Nawaitu an asuma ghadam min shahri ramadanal mubaraki fardallaka ya Allahu fataqabbal minni innaka antas-sami'ul 'aleem.",
                     meaning = if (isBn) "অর্থ: হে আল্লাহ! আমি আগামীকাল পবিত্র রমজান মাসের তোমার নির্ধারিত ফরজ রোজা রাখার নিয়ত করলাম। অতএব তুমি আমার পক্ষ থেকে তা কবুল করো। নিশ্চয়ই তুমি সর্বশ্রোতা ও সর্বজ্ঞানী।" else "Meaning: O Allah! I intend to fast tomorrow for Your sake in the blessed month of Ramadan. So accept it from me, indeed You are the All-Hearing, All-Knowing.",
                     themeColors = themeColors,
                     context = context,
-                    tts = tts,
+                    isPlaying = isAudioPlaying && activeAudioId == "sehri_niyyat",
+                    onPlayAudio = { audioPlayer.playOrPause("sehri_niyyat", "نَوَيْتُ اَنْ اُصُوْمَ غَدًا مِّنْ شَهْرِ رَمَضَانَ") },
+                    isDownloaded = downloadedAudioIds.contains("sehri_niyyat"),
+                    downloadProgress = downloadProgressMap["sehri_niyyat"],
+                    onDownloadAudio = { audioPlayer.downloadAudio("sehri_niyyat", "نَوَيْتُ اَنْ اُصُوْمَ غَدًا مِّنْ شَهْرِ رَمَضَانَ") },
                     isBn = isBn
                 )
 
                 // 2. Iftar Dua (ইফতারের দোয়া)
                 DuaActionCard(
+                    id = "iftar_dua",
                     title = if (isBn) "২. ইফতারের দোয়া" else "2. Dua for Breaking Fast (Iftar)",
                     arabic = "اللَّهُمَّ لَكَ صُمْتُ وَعَلَى رِزْقِكَ أَفْطَرْتُ",
                     transliteration = if (isBn) "উচ্চারণ: আল্লাহুম্মা লাকা সুমতু ওয়া 'আলা রিযক্বিকা আফতারতু।" else "Pronunciation: Allahumma laka sumtu wa 'ala rizqika aftartu.",
                     meaning = if (isBn) "অর্থ: হে আল্লাহ! আমি তোমার সন্তুষ্টির জন্যই রোজা রেখেছিলাম এবং তোমারই দেওয়া রিজিক দ্বারা ইফতার করলাম।" else "Meaning: O Allah! I fasted for Your sake and I am breaking my fast with Your provision. (Abu Dawud)",
                     themeColors = themeColors,
                     context = context,
-                    tts = tts,
+                    isPlaying = isAudioPlaying && activeAudioId == "iftar_dua",
+                    onPlayAudio = { audioPlayer.playOrPause("iftar_dua", "اللَّهُمَّ لَكَ صُمْتُ وَعَلَى رِزْقِكَ أَفْطَرْتُ") },
+                    isDownloaded = downloadedAudioIds.contains("iftar_dua"),
+                    downloadProgress = downloadProgressMap["iftar_dua"],
+                    onDownloadAudio = { audioPlayer.downloadAudio("iftar_dua", "اللَّهُمَّ لَكَ صُمْتُ وَعَلَى رِزْقِكَ أَفْطَرْتُ") },
                     isBn = isBn
                 )
             }
@@ -1260,21 +1265,24 @@ private fun WaqtMiniItem(
 }
 
 /**
- * Dua Action Card with Audio Player, Copy & Share buttons
+ * Dua Action Card with Audio Player, Download, Copy & Share buttons
  */
 @Composable
 private fun DuaActionCard(
+    id: String,
     title: String,
     arabic: String,
     transliteration: String,
     meaning: String,
     themeColors: CalculatorThemeColors,
     context: Context,
-    tts: TextToSpeech?,
+    isPlaying: Boolean,
+    onPlayAudio: () -> Unit,
+    isDownloaded: Boolean,
+    downloadProgress: Int?,
+    onDownloadAudio: () -> Unit,
     isBn: Boolean
 ) {
-    var isSpeaking by remember { mutableStateOf(false) }
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -1289,7 +1297,7 @@ private fun DuaActionCard(
                 .padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // Header Row: Title & Action Buttons (Audio, Copy, Share)
+            // Header Row: Title & Action Buttons (Audio, Download, Copy, Share)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -1299,29 +1307,58 @@ private fun DuaActionCard(
                     text = title,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.ExtraBold,
-                    color = Color(0xFFD97706)
+                    color = Color(0xFFD97706),
+                    modifier = Modifier.weight(1f)
                 )
 
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    // Audio / TTS
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Play / Pause Audio Button
                     IconButton(
-                        onClick = {
-                            if (isSpeaking) {
-                                tts?.stop()
-                                isSpeaking = false
-                            } else {
-                                isSpeaking = true
-                                tts?.speak(arabic, TextToSpeech.QUEUE_FLUSH, null, "dua_tts")
-                            }
-                        },
-                        modifier = Modifier.size(30.dp)
+                        onClick = onPlayAudio,
+                        modifier = Modifier.size(32.dp)
                     ) {
                         Icon(
-                            imageVector = if (isSpeaking) Icons.Default.VolumeOff else Icons.Default.VolumeUp,
-                            contentDescription = "Play Audio",
-                            tint = themeColors.titleBarBg,
-                            modifier = Modifier.size(17.dp)
+                            imageVector = if (isPlaying) Icons.Default.PauseCircle else Icons.Default.PlayCircle,
+                            contentDescription = if (isPlaying) "Pause Audio" else "Play Audio",
+                            tint = if (isPlaying) Color(0xFF10B981) else themeColors.titleBarBg,
+                            modifier = Modifier.size(22.dp)
                         )
+                    }
+
+                    // Download Button / Status
+                    if (downloadProgress != null && downloadProgress in 1..99) {
+                        CircularProgressIndicator(
+                            progress = { downloadProgress / 100f },
+                            modifier = Modifier
+                                .padding(horizontal = 4.dp)
+                                .size(18.dp),
+                            strokeWidth = 2.dp,
+                            color = themeColors.titleBarBg
+                        )
+                    } else if (isDownloaded) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = "Downloaded Offline",
+                            tint = Color(0xFF10B981),
+                            modifier = Modifier
+                                .padding(horizontal = 4.dp)
+                                .size(18.dp)
+                        )
+                    } else {
+                        IconButton(
+                            onClick = onDownloadAudio,
+                            modifier = Modifier.size(30.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Download,
+                                contentDescription = "Download Offline Audio",
+                                tint = themeColors.displayText.copy(alpha = 0.6f),
+                                modifier = Modifier.size(17.dp)
+                            )
+                        }
                     }
 
                     // Copy

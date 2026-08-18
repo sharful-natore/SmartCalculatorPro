@@ -1,5 +1,6 @@
 package com.example.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -360,6 +361,7 @@ fun StopwatchTimerCard(viewModel: CalculatorViewModel, themeColors: CalculatorTh
 
 @Composable
 fun NotesChecklistCard(viewModel: CalculatorViewModel, themeColors: CalculatorThemeColors) {
+    val context = LocalContext.current
     val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
     val clipboardManager = LocalClipboardManager.current
 
@@ -376,6 +378,44 @@ fun NotesChecklistCard(viewModel: CalculatorViewModel, themeColors: CalculatorTh
     val currentChecklistItems = remember { mutableStateListOf<com.example.data.model.ChecklistItem>() }
     var selectedColorIndex by remember { mutableStateOf(0) }
     var selectedTag by remember { mutableStateOf("General") }
+
+    // Helper to auto-save current note
+    val saveCurrentNote = {
+        if (noteTitle.isNotBlank() || noteContent.isNotBlank() || currentChecklistItems.isNotEmpty()) {
+            val now = SimpleDateFormat(
+                "dd MMM yyyy, hh:mm a",
+                Locale.getDefault()
+            ).format(Date())
+            val newNote = com.example.data.model.ProfessionalNote(
+                id = editingNoteId ?: UUID.randomUUID().toString(),
+                title = noteTitle.ifBlank { if (isBn) "শিরোনামহীন নোট" else "Untitled Note" },
+                content = noteContent,
+                dateString = now,
+                isChecklist = isChecklistMode,
+                checklistItems = currentChecklistItems.toList(),
+                colorIndex = selectedColorIndex,
+                tag = selectedTag
+            )
+            viewModel.saveNote(newNote)
+        }
+    }
+
+    // Auto-save on Back press
+    BackHandler(enabled = isEditing) {
+        if (noteTitle.isNotBlank() || noteContent.isNotBlank() || currentChecklistItems.isNotEmpty()) {
+            saveCurrentNote()
+            Toast.makeText(context, if (isBn) "নোট অটো-সেভ হয়েছে" else "Note auto-saved", Toast.LENGTH_SHORT).show()
+        }
+        isEditing = false
+        editingNoteId = null
+        noteTitle = ""
+        noteContent = ""
+        isChecklistMode = false
+        checklistInputItem = ""
+        currentChecklistItems.clear()
+        selectedColorIndex = 0
+        selectedTag = "General"
+    }
 
     // Search and Filters
     var searchQuery by remember { mutableStateOf("") }
@@ -403,6 +443,7 @@ fun NotesChecklistCard(viewModel: CalculatorViewModel, themeColors: CalculatorTh
 
     // Helper to clear editor
     val resetEditor = {
+        saveCurrentNote()
         isEditing = false
         editingNoteId = null
         noteTitle = ""

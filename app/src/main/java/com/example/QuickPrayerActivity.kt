@@ -63,16 +63,21 @@ class QuickPrayerActivity : ComponentActivity() {
                 var showCloseConfirmDialog by remember { mutableStateOf(false) }
 
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.55f))
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            onClick = { showCloseConfirmDialog = true }
-                        ),
+                    modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
+                    // Dimmed backdrop
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.55f))
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                onClick = { showCloseConfirmDialog = true }
+                            )
+                    )
+
                     Surface(
                         modifier = if (isMaximized) {
                             Modifier.fillMaxSize()
@@ -80,11 +85,7 @@ class QuickPrayerActivity : ComponentActivity() {
                             Modifier
                                 .fillMaxWidth(0.96f)
                                 .fillMaxHeight(0.92f)
-                        }.clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            onClick = { }
-                        ),
+                        },
                         shape = if (isMaximized) RoundedCornerShape(0.dp) else RoundedCornerShape(24.dp),
                         color = themeColors.background,
                         tonalElevation = 8.dp,

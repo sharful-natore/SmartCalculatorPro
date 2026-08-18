@@ -106,11 +106,53 @@ fun DynamicWeatherScreen(
                         }
                     }
                 }
-                Text(
-                    text = if (isBn) "বর্তমান আবহাওয়া" else "Current Weather",
-                    fontSize = 14.sp,
-                    color = themeColors.displayText.copy(alpha = 0.7f)
-                )
+                val updateTimeFormatted = remember(viewModel.lastWeatherFetchTime, isBn) {
+                    val fetchTime = if (viewModel.lastWeatherFetchTime > 0L) viewModel.lastWeatherFetchTime else System.currentTimeMillis()
+                    val date = java.util.Date(fetchTime)
+                    val timeFormat = java.text.SimpleDateFormat("hh:mm a", java.util.Locale.ENGLISH)
+                    val timeStr = timeFormat.format(date)
+                    if (isBn) {
+                        val bnDigits = timeStr
+                            .replace("0", "০")
+                            .replace("1", "১")
+                            .replace("2", "২")
+                            .replace("3", "৩")
+                            .replace("4", "৪")
+                            .replace("5", "৫")
+                            .replace("6", "৬")
+                            .replace("7", "৭")
+                            .replace("8", "৮")
+                            .replace("9", "৯")
+                            .replace("AM", "AM")
+                            .replace("PM", "PM")
+                        "হালনাগাদ হয়েছেঃ $bnDigits"
+                    } else {
+                        "Updated on: $timeStr"
+                    }
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        text = if (isBn) "বর্তমান আবহাওয়া" else "Current Weather",
+                        fontSize = 13.5.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = themeColors.displayText.copy(alpha = 0.85f)
+                    )
+                    Text(
+                        text = "•",
+                        fontSize = 12.sp,
+                        color = themeColors.displayText.copy(alpha = 0.4f)
+                    )
+                    Text(
+                        text = updateTimeFormatted,
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = themeColors.displayText.copy(alpha = 0.65f)
+                    )
+                }
             }
             IconButton(onClick = { showSearchDialog = true }) {
                 Icon(

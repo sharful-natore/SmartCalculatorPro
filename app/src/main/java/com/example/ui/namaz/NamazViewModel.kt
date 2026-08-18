@@ -157,30 +157,7 @@ class NamazViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun getAudioUrlForDua(id: String, arabicText: String): String {
-        val cleanId = id.trim().lowercase()
-        val cleanText = arabicText.replace("\n", " ").replace("۝", " ").trim()
-        val trackNum = (Math.abs(cleanId.hashCode()) % 300) + 1
-        
-        return when {
-            cleanId.contains("fatiha") || cleanText.contains("الحمد لله رب العالمين") -> {
-                "https://cdn.islamic.network/quran/audio/128/ar.alafasy/1.mp3"
-            }
-            cleanId.contains("ikhlas") || cleanText.contains("قل هو الله أحد") -> {
-                "https://cdn.islamic.network/quran/audio/128/ar.alafasy/622.mp3"
-            }
-            cleanId.contains("falaq") || cleanText.contains("قل أعوذ برب الفلق") -> {
-                "https://cdn.islamic.network/quran/audio/128/ar.alafasy/623.mp3"
-            }
-            cleanId.contains("nas") || cleanText.contains("قل أعوذ برب الناس") -> {
-                "https://cdn.islamic.network/quran/audio/128/ar.alafasy/624.mp3"
-            }
-            cleanId.contains("kursi") || cleanText.contains("الله لا إله إلا هو الحي القيوم") -> {
-                "https://cdn.islamic.network/quran/audio/128/ar.alafasy/262.mp3"
-            }
-            else -> {
-                "https://cdn.islamic.network/quran/audio/128/ar.alafasy/$trackNum.mp3"
-            }
-        }
+        return com.example.data.islamic.IslamicAudioPlayer.getCdnAudioUrl(id, arabicText)
     }
 
     fun downloadDuaAudio(duaId: String, arabicText: String) {
@@ -245,7 +222,7 @@ class NamazViewModel(application: Application) : AndroidViewModel(application) {
                 e.printStackTrace()
             }
         } else {
-            val remoteUrl = getAudioUrlForDua(duaId, arabicText)
+            val remoteUrl = audioUrl?.takeIf { it.isNotEmpty() } ?: getAudioUrlForDua(duaId, arabicText)
             try {
                 exoPlayer?.let { player ->
                     player.setMediaItem(MediaItem.fromUri(android.net.Uri.parse(remoteUrl)))
@@ -257,17 +234,6 @@ class NamazViewModel(application: Application) : AndroidViewModel(application) {
                 downloadDuaAudio(duaId, arabicText)
             } catch (e: Exception) {
                 e.printStackTrace()
-                
-                // Fallback to TTS recitation if ExoPlayer stream fails
-                if (isTtsInitialized && textToSpeech != null) {
-                    try {
-                        textToSpeech?.setLanguage(Locale("ar"))
-                        textToSpeech?.speak(arabicText, TextToSpeech.QUEUE_FLUSH, null, duaId)
-                        _isPlaying.value = true
-                    } catch (ex: Exception) {
-                        ex.printStackTrace()
-                    }
-                }
             }
         }
     }

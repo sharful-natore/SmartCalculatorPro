@@ -3439,6 +3439,53 @@ fun DynamicGreetingIllustrationBackground(
         }
     }
 
+    val infiniteTransition = rememberInfiniteTransition(label = "greeting_anim")
+    val cloudShift by infiniteTransition.animateFloat(
+        initialValue = -0.035f,
+        targetValue = 0.035f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(12000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "clouds"
+    )
+    val haloScale by infiniteTransition.animateFloat(
+        initialValue = 0.94f,
+        targetValue = 1.06f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(4000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "halo"
+    )
+    val riverShimmer by infiniteTransition.animateFloat(
+        initialValue = 0.75f,
+        targetValue = 1.2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2800, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "river"
+    )
+    val starTwinkle by infiniteTransition.animateFloat(
+        initialValue = 0.45f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(3200, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "stars"
+    )
+    val rainProgress by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(700, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "rain"
+    )
+
     androidx.compose.foundation.Canvas(modifier = modifier.fillMaxSize()) {
         val w = size.width
         val h = size.height
@@ -3448,7 +3495,7 @@ fun DynamicGreetingIllustrationBackground(
             brush = androidx.compose.ui.graphics.Brush.verticalGradient(palette.skyGradient)
         )
 
-        // 2. Stars for Night
+        // 2. Stars for Night with gentle twinkle
         if (palette.isNight && !palette.isRainy) {
             val starPositions = listOf(
                 Pair(0.15f, 0.12f), Pair(0.28f, 0.22f), Pair(0.42f, 0.08f),
@@ -3458,16 +3505,16 @@ fun DynamicGreetingIllustrationBackground(
             )
             starPositions.forEachIndexed { i, (sx, sy) ->
                 val starRadius = if (i % 3 == 0) 2.2f else 1.4f
-                val starAlpha = if (i % 2 == 0) 0.85f else 0.55f
+                val dynamicAlpha = if (i % 2 == 0) (0.85f * starTwinkle).coerceIn(0.2f, 1f) else (0.55f * (1.45f - starTwinkle)).coerceIn(0.2f, 1f)
                 drawCircle(
-                    color = Color.White.copy(alpha = starAlpha),
+                    color = Color.White.copy(alpha = dynamicAlpha),
                     radius = starRadius,
                     center = androidx.compose.ui.geometry.Offset(w * sx, h * sy)
                 )
             }
         }
 
-        // 3. Sun or Moon & Celestial Halos
+        // 3. Sun or Moon & Pulsing Celestial Halos
         if (palette.sunColor != Color.Transparent) {
             val cx = w * 0.5f
             val cy = h * 0.40f
@@ -3475,12 +3522,12 @@ fun DynamicGreetingIllustrationBackground(
             if (palette.haloColor != Color.Transparent) {
                 drawCircle(
                     color = palette.haloColor.copy(alpha = 0.18f),
-                    radius = w * 0.18f,
+                    radius = w * 0.18f * haloScale,
                     center = androidx.compose.ui.geometry.Offset(cx, cy)
                 )
                 drawCircle(
                     color = palette.haloColor.copy(alpha = 0.32f),
-                    radius = w * 0.12f,
+                    radius = w * 0.12f * haloScale,
                     center = androidx.compose.ui.geometry.Offset(cx, cy)
                 )
             }
@@ -3491,15 +3538,15 @@ fun DynamicGreetingIllustrationBackground(
             )
         }
 
-        // 4. Stylized Floating Clouds
+        // 4. Stylized Floating Animated Clouds
         drawOval(
             color = palette.cloudColor,
-            topLeft = androidx.compose.ui.geometry.Offset(w * 0.08f, h * 0.15f),
+            topLeft = androidx.compose.ui.geometry.Offset(w * (0.08f + cloudShift), h * 0.15f),
             size = androidx.compose.ui.geometry.Size(w * 0.32f, h * 0.12f)
         )
         drawOval(
             color = palette.cloudColor,
-            topLeft = androidx.compose.ui.geometry.Offset(w * 0.62f, h * 0.12f),
+            topLeft = androidx.compose.ui.geometry.Offset(w * (0.62f - cloudShift * 0.8f), h * 0.12f),
             size = androidx.compose.ui.geometry.Size(w * 0.30f, h * 0.10f)
         )
 
@@ -3557,17 +3604,17 @@ fun DynamicGreetingIllustrationBackground(
         }
         drawPath(riverPath, color = palette.riverColor)
 
-        // River Reflections
-        val reflectionAlpha = palette.riverHighlightColor.alpha
+        // River Reflections with undulating shimmer
+        val reflectionAlpha = (palette.riverHighlightColor.alpha * riverShimmer).coerceIn(0.2f, 1f)
         val reflectionBaseColor = palette.riverHighlightColor.copy(alpha = 1f)
         drawLine(
-            color = reflectionBaseColor.copy(alpha = reflectionAlpha * 0.8f),
+            color = reflectionBaseColor.copy(alpha = (reflectionAlpha * 0.8f).coerceIn(0f, 1f)),
             start = androidx.compose.ui.geometry.Offset(w * 0.48f, h * 0.65f),
             end = androidx.compose.ui.geometry.Offset(w * 0.52f, h * 0.65f),
             strokeWidth = 2.5f
         )
         drawLine(
-            color = reflectionBaseColor.copy(alpha = reflectionAlpha * 0.9f),
+            color = reflectionBaseColor.copy(alpha = (reflectionAlpha * 0.9f).coerceIn(0f, 1f)),
             start = androidx.compose.ui.geometry.Offset(w * 0.46f, h * 0.73f),
             end = androidx.compose.ui.geometry.Offset(w * 0.54f, h * 0.73f),
             strokeWidth = 3f
@@ -3616,22 +3663,23 @@ fun DynamicGreetingIllustrationBackground(
         drawPineTree(this, cx = w * 0.67f, baseY = h * 0.97f, width = w * 0.08f, height = h * 0.22f, color = palette.treeColor2)
         drawPineTree(this, cx = w * 0.94f, baseY = h * 0.96f, width = w * 0.10f, height = h * 0.29f, color = palette.treeColor1)
 
-        // 12. Rain Streaks for Rainy Weather
+        // 12. Animated Falling Rain Streaks for Rainy Weather
         if (palette.isRainy) {
             val rainDrops = listOf(
-                Pair(0.12f, 0.30f), Pair(0.28f, 0.25f), Pair(0.44f, 0.28f), Pair(0.60f, 0.22f), Pair(0.76f, 0.32f), Pair(0.90f, 0.28f),
-                Pair(0.18f, 0.45f), Pair(0.35f, 0.42f), Pair(0.52f, 0.48f), Pair(0.70f, 0.44f), Pair(0.85f, 0.46f),
-                Pair(0.24f, 0.60f), Pair(0.48f, 0.62f), Pair(0.65f, 0.60f), Pair(0.82f, 0.64f),
-                Pair(0.15f, 0.75f), Pair(0.38f, 0.78f), Pair(0.58f, 0.74f), Pair(0.78f, 0.76f)
+                Pair(0.12f, 0.15f), Pair(0.28f, 0.35f), Pair(0.44f, 0.20f), Pair(0.60f, 0.45f), Pair(0.76f, 0.18f), Pair(0.90f, 0.38f),
+                Pair(0.18f, 0.60f), Pair(0.35f, 0.75f), Pair(0.52f, 0.65f), Pair(0.70f, 0.80f), Pair(0.85f, 0.55f),
+                Pair(0.24f, 0.90f), Pair(0.48f, 0.10f), Pair(0.65f, 0.30f), Pair(0.82f, 0.95f),
+                Pair(0.15f, 0.40f), Pair(0.38f, 0.50f), Pair(0.58f, 0.25f), Pair(0.78f, 0.60f)
             )
-            rainDrops.forEach { (rx, ry) ->
+            rainDrops.forEach { (rx, baseRy) ->
+                val currentYFraction = (baseRy + rainProgress) % 1.0f
                 val startX = w * rx
-                val startY = h * ry
+                val startY = h * currentYFraction
                 drawLine(
-                    color = Color.White.copy(alpha = 0.35f),
+                    color = Color.White.copy(alpha = 0.38f),
                     start = androidx.compose.ui.geometry.Offset(startX, startY),
                     end = androidx.compose.ui.geometry.Offset(startX - (w * 0.025f), startY + (h * 0.09f)),
-                    strokeWidth = 2.0f
+                    strokeWidth = 2.2f
                 )
             }
         }

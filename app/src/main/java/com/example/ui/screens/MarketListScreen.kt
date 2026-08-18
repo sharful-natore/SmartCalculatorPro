@@ -10,6 +10,7 @@ import android.graphics.pdf.PdfDocument
 import android.net.Uri
 import android.speech.RecognizerIntent
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
@@ -227,6 +228,31 @@ object MarketStorageManager {
         val arr = JSONArray()
         memos.forEach { arr.put(it.toJson()) }
         prefs.edit().putString(KEY_COMPLETED_MEMOS, arr.toString()).apply()
+    }
+
+    fun saveDraftPlan(context: Context, plan: MarketPlanList?) {
+        val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+        if (plan == null || (plan.items.isEmpty() && plan.title.isBlank())) {
+            prefs.edit().remove("draft_plan").apply()
+        } else {
+            prefs.edit().putString("draft_plan", plan.toJson().toString()).apply()
+        }
+    }
+
+    fun loadDraftPlan(context: Context): MarketPlanList? {
+        val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+        val raw = prefs.getString("draft_plan", null) ?: return null
+        return try {
+            val plan = MarketPlanList.fromJson(JSONObject(raw))
+            if (plan.items.any { it.name.isNotBlank() } || plan.title.isNotBlank()) plan else null
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    fun clearDraftPlan(context: Context) {
+        val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+        prefs.edit().remove("draft_plan").apply()
     }
 }
 
@@ -1009,11 +1035,12 @@ fun CreateOrBazaarModalDialog(
     editingPlan: MarketPlanList? = null
 ) {
     val context = LocalContext.current
+    val savedDraft = remember { if (editingPlan == null) MarketStorageManager.loadDraftPlan(context) else null }
     // 0 -> ফর্দ তৈরি, 1 -> বাজার সম্পন্ন
     var dialogTab by remember { mutableStateOf(if (editingPlan != null) 0 else initialTab) }
     var listTitle by remember {
         mutableStateOf(
-            editingPlan?.title ?: (
+            editingPlan?.title ?: savedDraft?.title ?: (
                 if (isBn) "বাজারের ফর্দ - " + SimpleDateFormat("dd MMM", Locale("bn")).format(Date())
                 else "Market List - " + SimpleDateFormat("dd MMM", Locale.US).format(Date())
             )
@@ -1027,10 +1054,33 @@ fun CreateOrBazaarModalDialog(
         val list = mutableStateListOf<MarketItem>()
         if (editingPlan != null) {
             list.addAll(editingPlan.items.map { it.copy() })
+        } else if (savedDraft != null && savedDraft.items.isNotEmpty()) {
+            list.addAll(savedDraft.items.map { it.copy() })
         } else {
             list.add(MarketItem(name = "", unitPrice = 0.0, quantity = 1.0, unit = if (isBn) "কেজি" else "kg", isChecked = true))
         }
         list
+    }
+
+    // Auto-save draft on every change
+    LaunchedEffect(listTitle, items.map { "${it.name}_${it.unitPrice}_${it.quantity}_${it.unit}_${it.isChecked}" }) {
+        if (editingPlan == null) {
+            val valid = items.any { it.name.isNotBlank() || it.unitPrice > 0 }
+            if (valid || listTitle.isNotBlank()) {
+                MarketStorageManager.saveDraftPlan(context, MarketPlanList(title = listTitle, items = items.toList()))
+            }
+        }
+    }
+
+    // Auto-save and close on Back Press
+    BackHandler {
+        if (editingPlan == null) {
+            val valid = items.filter { it.name.isNotBlank() }
+            if (valid.isNotEmpty()) {
+                MarketStorageManager.saveDraftPlan(context, MarketPlanList(title = listTitle, items = items.toList()))
+            }
+        }
+        onDismiss()
     }
 
     // Voice recognition targeting
@@ -1807,6 +1857,21 @@ fun ExecuteBazaarFromPlanDialog(
     var deleteOriginalPlanAfterCompletion by remember { mutableStateOf(true) }
     var itemIndexToDelete by remember { mutableStateOf<Int?>(null) }
     var validationErrorMsg by remember { mutableStateOf<String?>(null) }
+
+    // Auto-sync changes back to plan on change / back press so user never loses live shopping edits
+    val syncChangesToPlan = {
+        val currentLists = MarketStorageManager.loadPlanLists(context).toMutableList()
+        val idx = currentLists.indexOfFirst { it.id == plan.id }
+        if (idx != -1) {
+            currentLists[idx] = plan.copy(title = memoTitle, items = executionItems.toList())
+            MarketStorageManager.savePlanLists(context, currentLists)
+        }
+    }
+
+    BackHandler {
+        syncChangesToPlan()
+        onDismiss()
+    }
 
     // Voice recognition targeting
     var voiceTargetItemIndex by remember { mutableStateOf<Int?>(null) }

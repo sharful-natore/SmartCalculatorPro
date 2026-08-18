@@ -310,6 +310,7 @@ fun ModernPrayerTimesCard(
     val calMaghrib = parseTimeToCal(liveTodayTimings.maghrib, 0, 0)
     val calIsha = parseTimeToCal(liveTodayTimings.isha, 0, 0)
     val calFajrTomorrow = parseTimeToCal(liveTodayTimings.fajr, 0, 1)
+    val calSunriseTomorrow = parseTimeToCal(liveTodayTimings.sunrise, 0, 1)
 
     val now = currentTimeMillis
 
@@ -320,13 +321,16 @@ fun ModernPrayerTimesCard(
                 activeId = "isha",
                 activeTitleBn = "তাহাজ্জুদ / এশা",
                 activeTitleEn = "Tahajjud / Isha",
-                activeTimeStr = liveTodayTimings.isha,
+                activeTimeStr = "${liveTodayTimings.isha} - ${liveTodayTimings.fajr}",
                 currentStartMillis = calIsha.timeInMillis - 86400000L,
                 currentEndMillis = calFajr.timeInMillis,
                 nextTitleBn = "ফজর",
                 nextTitleEn = "Fajr",
-                nextTimeStr = liveTodayTimings.fajr,
+                nextTimeStr = "${liveTodayTimings.fajr} - ${liveTodayTimings.sunrise}",
                 nextStartMillis = calFajr.timeInMillis,
+                nextEndMillis = calSunrise.timeInMillis,
+                nextDurationStrBn = formatWaqtDuration(calFajr.timeInMillis, calSunrise.timeInMillis, true),
+                nextDurationStrEn = formatWaqtDuration(calFajr.timeInMillis, calSunrise.timeInMillis, false),
                 isForbidden = false
             )
         }
@@ -335,28 +339,34 @@ fun ModernPrayerTimesCard(
                 activeId = "fajr",
                 activeTitleBn = "ফজর",
                 activeTitleEn = "Fajr",
-                activeTimeStr = liveTodayTimings.fajr,
+                activeTimeStr = "${liveTodayTimings.fajr} - ${liveTodayTimings.sunrise}",
                 currentStartMillis = calFajr.timeInMillis,
                 currentEndMillis = calSunrise.timeInMillis,
-                nextTitleBn = "সূর্যোদয় (নিষিদ্ধ)",
-                nextTitleEn = "Sunrise (Forbidden)",
-                nextTimeStr = liveTodayTimings.sunrise,
-                nextStartMillis = calSunrise.timeInMillis,
+                nextTitleBn = "যোহর (পরবর্তী ফরজ)",
+                nextTitleEn = "Dhuhr (Next Fard)",
+                nextTimeStr = "${liveTodayTimings.dhuhr} - ${liveTodayTimings.asr}",
+                nextStartMillis = calDhuhr.timeInMillis,
+                nextEndMillis = calAsr.timeInMillis,
+                nextDurationStrBn = formatWaqtDuration(calDhuhr.timeInMillis, calAsr.timeInMillis, true),
+                nextDurationStrEn = formatWaqtDuration(calDhuhr.timeInMillis, calAsr.timeInMillis, false),
                 isForbidden = false
             )
         }
         now < calIshraq.timeInMillis -> {
             ActiveWaqtData(
                 activeId = "sunrise_forbidden",
-                activeTitleBn = "নিষিদ্ধ সময়",
-                activeTitleEn = "Forbidden Time",
-                activeTimeStr = liveTodayTimings.sunrise,
+                activeTitleBn = "নিষিদ্ধ সময় (সূর্যোদয়)",
+                activeTitleEn = "Forbidden (Sunrise)",
+                activeTimeStr = "${liveTodayTimings.sunrise} - $liveIshraqStr",
                 currentStartMillis = calSunrise.timeInMillis,
                 currentEndMillis = calIshraq.timeInMillis,
                 nextTitleBn = "ইশরাক ও চাশত",
                 nextTitleEn = "Ishraq & Duha",
-                nextTimeStr = liveIshraqStr,
+                nextTimeStr = "$liveIshraqStr - $liveZawaalStr",
                 nextStartMillis = calIshraq.timeInMillis,
+                nextEndMillis = calZawaal.timeInMillis,
+                nextDurationStrBn = formatWaqtDuration(calIshraq.timeInMillis, calZawaal.timeInMillis, true),
+                nextDurationStrEn = formatWaqtDuration(calIshraq.timeInMillis, calZawaal.timeInMillis, false),
                 isForbidden = true
             )
         }
@@ -365,28 +375,34 @@ fun ModernPrayerTimesCard(
                 activeId = "ishraq_duha",
                 activeTitleBn = "ইশরাক ও চাশত",
                 activeTitleEn = "Ishraq & Duha",
-                activeTimeStr = liveIshraqStr,
+                activeTimeStr = "$liveIshraqStr - $liveZawaalStr",
                 currentStartMillis = calIshraq.timeInMillis,
                 currentEndMillis = calZawaal.timeInMillis,
-                nextTitleBn = "ঠিক দুপুর (নিষিদ্ধ)",
-                nextTitleEn = "Midday (Forbidden)",
-                nextTimeStr = liveZawaalStr,
-                nextStartMillis = calZawaal.timeInMillis,
+                nextTitleBn = "যোহর",
+                nextTitleEn = "Dhuhr",
+                nextTimeStr = "${liveTodayTimings.dhuhr} - ${liveTodayTimings.asr}",
+                nextStartMillis = calDhuhr.timeInMillis,
+                nextEndMillis = calAsr.timeInMillis,
+                nextDurationStrBn = formatWaqtDuration(calDhuhr.timeInMillis, calAsr.timeInMillis, true),
+                nextDurationStrEn = formatWaqtDuration(calDhuhr.timeInMillis, calAsr.timeInMillis, false),
                 isForbidden = false
             )
         }
         now < calDhuhr.timeInMillis -> {
             ActiveWaqtData(
                 activeId = "midday_forbidden",
-                activeTitleBn = "নিষিদ্ধ সময়",
-                activeTitleEn = "Forbidden Time",
-                activeTimeStr = liveZawaalStr,
+                activeTitleBn = "নিষিদ্ধ সময় (দ্বিপ্রহর)",
+                activeTitleEn = "Forbidden (Midday)",
+                activeTimeStr = "$liveZawaalStr - ${liveTodayTimings.dhuhr}",
                 currentStartMillis = calZawaal.timeInMillis,
                 currentEndMillis = calDhuhr.timeInMillis,
                 nextTitleBn = "যোহর",
                 nextTitleEn = "Dhuhr",
-                nextTimeStr = liveTodayTimings.dhuhr,
+                nextTimeStr = "${liveTodayTimings.dhuhr} - ${liveTodayTimings.asr}",
                 nextStartMillis = calDhuhr.timeInMillis,
+                nextEndMillis = calAsr.timeInMillis,
+                nextDurationStrBn = formatWaqtDuration(calDhuhr.timeInMillis, calAsr.timeInMillis, true),
+                nextDurationStrEn = formatWaqtDuration(calDhuhr.timeInMillis, calAsr.timeInMillis, false),
                 isForbidden = true
             )
         }
@@ -395,13 +411,16 @@ fun ModernPrayerTimesCard(
                 activeId = "dhuhr",
                 activeTitleBn = "যোহর",
                 activeTitleEn = "Dhuhr",
-                activeTimeStr = liveTodayTimings.dhuhr,
+                activeTimeStr = "${liveTodayTimings.dhuhr} - ${liveTodayTimings.asr}",
                 currentStartMillis = calDhuhr.timeInMillis,
                 currentEndMillis = calAsr.timeInMillis,
                 nextTitleBn = "আসর",
                 nextTitleEn = "Asr",
-                nextTimeStr = liveTodayTimings.asr,
+                nextTimeStr = "${liveTodayTimings.asr} - $liveSunsetForbiddenStr",
                 nextStartMillis = calAsr.timeInMillis,
+                nextEndMillis = calSunsetForbidden.timeInMillis,
+                nextDurationStrBn = formatWaqtDuration(calAsr.timeInMillis, calSunsetForbidden.timeInMillis, true),
+                nextDurationStrEn = formatWaqtDuration(calAsr.timeInMillis, calSunsetForbidden.timeInMillis, false),
                 isForbidden = false
             )
         }
@@ -410,28 +429,34 @@ fun ModernPrayerTimesCard(
                 activeId = "asr",
                 activeTitleBn = "আসর",
                 activeTitleEn = "Asr",
-                activeTimeStr = liveTodayTimings.asr,
+                activeTimeStr = "${liveTodayTimings.asr} - $liveSunsetForbiddenStr",
                 currentStartMillis = calAsr.timeInMillis,
                 currentEndMillis = calSunsetForbidden.timeInMillis,
-                nextTitleBn = "সূর্যাস্তকাল (নিষিদ্ধ)",
-                nextTitleEn = "Sunset (Forbidden)",
-                nextTimeStr = liveSunsetForbiddenStr,
-                nextStartMillis = calSunsetForbidden.timeInMillis,
+                nextTitleBn = "মাগরিব",
+                nextTitleEn = "Maghrib",
+                nextTimeStr = "${liveTodayTimings.maghrib} - ${liveTodayTimings.isha}",
+                nextStartMillis = calMaghrib.timeInMillis,
+                nextEndMillis = calIsha.timeInMillis,
+                nextDurationStrBn = formatWaqtDuration(calMaghrib.timeInMillis, calIsha.timeInMillis, true),
+                nextDurationStrEn = formatWaqtDuration(calMaghrib.timeInMillis, calIsha.timeInMillis, false),
                 isForbidden = false
             )
         }
         now < calMaghrib.timeInMillis -> {
             ActiveWaqtData(
                 activeId = "sunset_forbidden",
-                activeTitleBn = "নিষিদ্ধ সময়",
-                activeTitleEn = "Forbidden Time",
-                activeTimeStr = liveSunsetForbiddenStr,
+                activeTitleBn = "নিষিদ্ধ সময় (সূর্যাস্ত)",
+                activeTitleEn = "Forbidden (Sunset)",
+                activeTimeStr = "$liveSunsetForbiddenStr - ${liveTodayTimings.maghrib}",
                 currentStartMillis = calSunsetForbidden.timeInMillis,
                 currentEndMillis = calMaghrib.timeInMillis,
                 nextTitleBn = "মাগরিব",
                 nextTitleEn = "Maghrib",
-                nextTimeStr = liveTodayTimings.maghrib,
+                nextTimeStr = "${liveTodayTimings.maghrib} - ${liveTodayTimings.isha}",
                 nextStartMillis = calMaghrib.timeInMillis,
+                nextEndMillis = calIsha.timeInMillis,
+                nextDurationStrBn = formatWaqtDuration(calMaghrib.timeInMillis, calIsha.timeInMillis, true),
+                nextDurationStrEn = formatWaqtDuration(calMaghrib.timeInMillis, calIsha.timeInMillis, false),
                 isForbidden = true
             )
         }
@@ -440,13 +465,16 @@ fun ModernPrayerTimesCard(
                 activeId = "maghrib",
                 activeTitleBn = "মাগরিব",
                 activeTitleEn = "Maghrib",
-                activeTimeStr = liveTodayTimings.maghrib,
+                activeTimeStr = "${liveTodayTimings.maghrib} - ${liveTodayTimings.isha}",
                 currentStartMillis = calMaghrib.timeInMillis,
                 currentEndMillis = calIsha.timeInMillis,
                 nextTitleBn = "এশা",
                 nextTitleEn = "Isha",
-                nextTimeStr = liveTodayTimings.isha,
+                nextTimeStr = "${liveTodayTimings.isha} - ${liveTodayTimings.fajr}",
                 nextStartMillis = calIsha.timeInMillis,
+                nextEndMillis = calFajrTomorrow.timeInMillis,
+                nextDurationStrBn = formatWaqtDuration(calIsha.timeInMillis, calFajrTomorrow.timeInMillis, true),
+                nextDurationStrEn = formatWaqtDuration(calIsha.timeInMillis, calFajrTomorrow.timeInMillis, false),
                 isForbidden = false
             )
         }
@@ -455,13 +483,16 @@ fun ModernPrayerTimesCard(
                 activeId = "isha",
                 activeTitleBn = "এশা",
                 activeTitleEn = "Isha",
-                activeTimeStr = liveTodayTimings.isha,
+                activeTimeStr = "${liveTodayTimings.isha} - ${liveTodayTimings.fajr}",
                 currentStartMillis = calIsha.timeInMillis,
                 currentEndMillis = calFajrTomorrow.timeInMillis,
                 nextTitleBn = "ফজর",
                 nextTitleEn = "Fajr",
-                nextTimeStr = liveTodayTimings.fajr,
+                nextTimeStr = "${liveTodayTimings.fajr} - ${liveTodayTimings.sunrise}",
                 nextStartMillis = calFajrTomorrow.timeInMillis,
+                nextEndMillis = calSunriseTomorrow.timeInMillis,
+                nextDurationStrBn = formatWaqtDuration(calFajrTomorrow.timeInMillis, calSunriseTomorrow.timeInMillis, true),
+                nextDurationStrEn = formatWaqtDuration(calFajrTomorrow.timeInMillis, calSunriseTomorrow.timeInMillis, false),
                 isForbidden = false
             )
         }
@@ -756,26 +787,31 @@ fun ModernPrayerTimesCard(
                 }
             }
 
-            // --- 1. DUAL HERO STATUS CARDS (এখন & পরবর্তী - EQUAL HEIGHT WITH PROGRESS BARS) ---
+            // --- 1. DUAL HERO STATUS CARDS (এখন & পরবর্তী - ENHANCED VISIBILITY & DISTINCT TIMINGS) ---
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(IntrinsicSize.Max),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // LEFT CARD: এখন (Current Waqt)
+                // LEFT CARD: এখন (Current Waqt - HIGH VISIBILITY)
                 Card(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight(),
                     shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = if (currentWaqtData.isForbidden) Color(0xFFFFF1F1) else themeColors.titleBarBg.copy(alpha = 0.08f)
+                        containerColor = if (currentWaqtData.isForbidden) {
+                            if (themeColors.isDark) Color(0xFF3B1010) else Color(0xFFFEF2F2)
+                        } else {
+                            if (themeColors.isDark) themeColors.buttonEqualBg.copy(alpha = 0.22f) else themeColors.titleBarBg.copy(alpha = 0.12f)
+                        }
                     ),
                     border = BorderStroke(
-                        1.dp,
-                        if (currentWaqtData.isForbidden) Color(0xFFFCA5A5).copy(alpha = 0.45f) else themeColors.titleBarBg.copy(alpha = 0.25f)
-                    )
+                        2.dp,
+                        if (currentWaqtData.isForbidden) Color(0xFFEF4444) else themeColors.titleBarBg
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
                     Column(
                         modifier = Modifier
@@ -783,30 +819,47 @@ fun ModernPrayerTimesCard(
                             .padding(10.dp),
                         verticalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                Text(
-                                    text = if (isBn) "এখন" else "Now",
-                                    fontSize = 11.5.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (currentWaqtData.isForbidden) Color(0xFFDC2626) else themeColors.titleBarBg
-                                )
-                                // Live Pulse Status Dot
-                                Box(
-                                    modifier = Modifier
-                                        .size(8.dp)
-                                        .clip(CircleShape)
-                                        .background(if (currentWaqtData.isForbidden) Color(0xFFDC2626) else themeColors.titleBarBg)
-                                )
+                                Surface(
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = if (currentWaqtData.isForbidden) Color(0xFFDC2626).copy(alpha = 0.15f) else themeColors.titleBarBg.copy(alpha = 0.18f)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(5.dp),
+                                        modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(7.dp)
+                                                .clip(CircleShape)
+                                                .background(if (currentWaqtData.isForbidden) Color(0xFFDC2626) else Color(0xFF10B981))
+                                        )
+                                        Text(
+                                            text = if (isBn) "বর্তমান ওয়াক্ত" else "Active Waqt",
+                                            fontSize = 10.5.sp,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = if (currentWaqtData.isForbidden) Color(0xFFDC2626) else themeColors.titleBarBg
+                                        )
+                                    }
+                                }
+
+                                if (currentWaqtData.isForbidden) {
+                                    Text(
+                                        text = "⚠️",
+                                        fontSize = 12.sp
+                                    )
+                                }
                             }
 
                             Text(
                                 text = if (isBn) currentWaqtData.activeTitleBn else currentWaqtData.activeTitleEn,
-                                fontSize = 18.sp,
+                                fontSize = 18.5.sp,
                                 fontWeight = FontWeight.Black,
                                 color = if (currentWaqtData.isForbidden) Color(0xFF991B1B) else themeColors.displayText,
                                 maxLines = 2
@@ -814,9 +867,9 @@ fun ModernPrayerTimesCard(
 
                             Text(
                                 text = currentWaqtData.activeTimeStr,
-                                fontSize = 14.sp,
+                                fontSize = 13.5.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = themeColors.displayText.copy(alpha = 0.8f)
+                                color = themeColors.displayText.copy(alpha = 0.85f)
                             )
                         }
 
@@ -824,20 +877,20 @@ fun ModernPrayerTimesCard(
                             modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(5.dp)
                         ) {
-                            // Countdown remaining
+                            // Countdown remaining to current waqt end
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
-                                color = if (currentWaqtData.isForbidden) Color(0xFFFEE2E2) else themeColors.titleBarBg.copy(alpha = 0.12f),
+                                color = if (currentWaqtData.isForbidden) Color(0xFFDC2626) else themeColors.titleBarBg,
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 val timeFormatted = formatTimerClock(currentRemainingMillis)
                                 val finalDisplayTime = if (isBn) convertDigitsToBn(timeFormatted) else timeFormatted
                                 val finalLabel = if (isBn) "শেষ হতে বাকি $finalDisplayTime" else "Ends in $finalDisplayTime"
                                 Text(
-                                    text = finalLabel,
+                                    text = "⏳ $finalLabel",
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.ExtraBold,
-                                    color = if (currentWaqtData.isForbidden) Color(0xFFB91C1C) else themeColors.titleBarBg,
+                                    color = Color.White,
                                     textAlign = TextAlign.Center,
                                     modifier = Modifier.padding(vertical = 5.dp, horizontal = 4.dp)
                                 )
@@ -881,16 +934,17 @@ fun ModernPrayerTimesCard(
                     }
                 }
 
-                // RIGHT CARD: পরবর্তী (Next Waqt)
+                // RIGHT CARD: পরবর্তী (Next Waqt - DISTINCT INFORMATION & TIMINGS)
                 Card(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight(),
                     shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFFF0F9FF)
+                        containerColor = if (themeColors.isDark) Color(0xFF0D2538) else Color(0xFFF0F9FF)
                     ),
-                    border = BorderStroke(1.dp, Color(0xFF0284C7).copy(alpha = 0.25f))
+                    border = BorderStroke(1.2.dp, Color(0xFF0284C7).copy(alpha = 0.4f)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                 ) {
                     Column(
                         modifier = Modifier
@@ -898,37 +952,48 @@ fun ModernPrayerTimesCard(
                             .padding(10.dp),
                         verticalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                Text(
-                                    text = if (isBn) "পরবর্তী" else "Next",
-                                    fontSize = 11.5.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF0369A1)
-                                )
-                                Icon(
-                                    imageVector = Icons.Default.AccessTime,
-                                    contentDescription = null,
-                                    tint = Color(0xFF0284C7),
-                                    modifier = Modifier.size(14.dp)
-                                )
+                                Surface(
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = Color(0xFF0284C7).copy(alpha = 0.15f)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                        modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Schedule,
+                                            contentDescription = null,
+                                            tint = Color(0xFF0284C7),
+                                            modifier = Modifier.size(11.dp)
+                                        )
+                                        Text(
+                                            text = if (isBn) "পরবর্তী ওয়াক্ত" else "Next Waqt",
+                                            fontSize = 10.5.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFF0369A1)
+                                        )
+                                    }
+                                }
                             }
 
                             Text(
                                 text = if (isBn) currentWaqtData.nextTitleBn else currentWaqtData.nextTitleEn,
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Black,
-                                color = Color(0xFF0C4A6E),
+                                color = if (themeColors.isDark) Color(0xFF38BDF8) else Color(0xFF0369A1),
                                 maxLines = 2
                             )
 
                             Text(
                                 text = currentWaqtData.nextTimeStr,
-                                fontSize = 14.sp,
+                                fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = themeColors.displayText.copy(alpha = 0.8f)
                             )
@@ -938,57 +1003,55 @@ fun ModernPrayerTimesCard(
                             modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(5.dp)
                         ) {
-                            // Countdown to next waqt
+                            // If start of next is different from end of current (e.g. during Fajr next Fard is Dhuhr, or during forbidden periods)
+                            val isDifferentFromCurrentEnd = (currentWaqtData.nextStartMillis != currentWaqtData.currentEndMillis)
+                            
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
-                                color = Color(0xFFE0F2FE),
+                                color = Color(0xFF0284C7).copy(alpha = 0.14f),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                val timeFormatted = formatTimerClock(nextCountdownMillis)
-                                val finalDisplayTime = if (isBn) convertDigitsToBn(timeFormatted) else timeFormatted
-                                val finalLabel = if (isBn) "শুরু হতে বাকি $finalDisplayTime" else "Starts in $finalDisplayTime"
-                                Text(
-                                    text = finalLabel,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = Color(0xFF0284C7),
-                                    textAlign = TextAlign.Center,
-                                    modifier = Modifier.padding(vertical = 5.dp, horizontal = 4.dp)
-                                )
+                                if (isDifferentFromCurrentEnd && nextCountdownMillis > 0L) {
+                                    val timeFormatted = formatTimerClock(nextCountdownMillis)
+                                    val finalDisplayTime = if (isBn) convertDigitsToBn(timeFormatted) else timeFormatted
+                                    val finalLabel = if (isBn) "শুরু হতে বাকি $finalDisplayTime" else "Starts in $finalDisplayTime"
+                                    Text(
+                                        text = "⏱️ $finalLabel",
+                                        fontSize = 10.5.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = Color(0xFF0284C7),
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.padding(vertical = 5.dp, horizontal = 4.dp)
+                                    )
+                                } else {
+                                    val durationLabel = if (isBn) "ওয়াক্ত স্থায়ী: ${currentWaqtData.nextDurationStrBn}" else "Duration: ${currentWaqtData.nextDurationStrEn}"
+                                    Text(
+                                        text = "⏱️ $durationLabel",
+                                        fontSize = 10.5.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = Color(0xFF0284C7),
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.padding(vertical = 5.dp, horizontal = 4.dp)
+                                    )
+                                }
                             }
-
-                            // Progress towards next waqt start with percentage
-                            val nextProgress = remember(currentWaqtData, currentTimeMillis) {
-                                val total = (currentWaqtData.nextStartMillis - currentWaqtData.currentStartMillis).coerceAtLeast(1L)
-                                val elapsed = (currentTimeMillis - currentWaqtData.currentStartMillis).coerceAtLeast(0L)
-                                (elapsed.toFloat() / total.toFloat()).coerceIn(0f, 1f)
-                            }
-                            val nextRemainingPercent = remember(currentWaqtData, currentTimeMillis) {
-                                val total = (currentWaqtData.nextStartMillis - currentWaqtData.currentStartMillis).coerceAtLeast(1L)
-                                val remaining = (currentWaqtData.nextStartMillis - currentTimeMillis).coerceAtLeast(0L)
-                                ((remaining.toFloat() / total.toFloat()) * 100).toInt().coerceIn(0, 100)
-                            }
-                            val nextPercentStr = if (isBn) convertDigitsToBn(nextRemainingPercent.toString()) + "%" else "$nextRemainingPercent%"
 
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Text(
-                                    text = nextPercentStr,
-                                    fontSize = 11.sp,
+                                    text = if (isBn) "মোট স্থায়িত্ব:" else "Total Length:",
+                                    fontSize = 10.5.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = themeColors.displayText.copy(alpha = 0.6f)
+                                )
+                                Text(
+                                    text = if (isBn) currentWaqtData.nextDurationStrBn else currentWaqtData.nextDurationStrEn,
+                                    fontSize = 10.5.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFF0284C7)
-                                )
-                                LinearProgressIndicator(
-                                    progress = { nextProgress },
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(5.dp)
-                                        .clip(RoundedCornerShape(3.dp)),
-                                    color = Color(0xFF0284C7),
-                                    trackColor = Color(0xFFBAE6FD).copy(alpha = 0.5f)
                                 )
                             }
                         }
@@ -1941,6 +2004,29 @@ private fun PrayerTrackerPill(
     }
 }
 
+private fun formatWaqtDuration(startMillis: Long, endMillis: Long, isBn: Boolean): String {
+    val totalMinutes = maxOf(0L, (endMillis - startMillis) / 60000L).toInt()
+    val hours = totalMinutes / 60
+    val mins = totalMinutes % 60
+    return if (isBn) {
+        if (hours > 0 && mins > 0) {
+            "${IslamicCalendarHelper.toBnDigits(hours)} ঘণ্টা ${IslamicCalendarHelper.toBnDigits(mins)} মি."
+        } else if (hours > 0) {
+            "${IslamicCalendarHelper.toBnDigits(hours)} ঘণ্টা"
+        } else {
+            "${IslamicCalendarHelper.toBnDigits(mins)} মিনিট"
+        }
+    } else {
+        if (hours > 0 && mins > 0) {
+            "${hours}h ${mins}m"
+        } else if (hours > 0) {
+            "${hours}h"
+        } else {
+            "${mins}m"
+        }
+    }
+}
+
 private data class ActiveWaqtData(
     val activeId: String,
     val activeTitleBn: String,
@@ -1952,5 +2038,8 @@ private data class ActiveWaqtData(
     val nextTitleEn: String,
     val nextTimeStr: String,
     val nextStartMillis: Long,
+    val nextEndMillis: Long,
+    val nextDurationStrBn: String,
+    val nextDurationStrEn: String,
     val isForbidden: Boolean
 )
