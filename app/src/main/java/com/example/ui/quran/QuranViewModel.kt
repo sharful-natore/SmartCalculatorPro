@@ -28,6 +28,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.FileOutputStream
+import kotlinx.coroutines.flow.update
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -82,6 +84,12 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _isAyahsLoading = MutableStateFlow(false)
     val isAyahsLoading: StateFlow<Boolean> = _isAyahsLoading.asStateFlow()
+
+    private val _ayahDownloadProgress = MutableStateFlow<Map<String, Int>>(emptyMap())
+    val ayahDownloadProgress: StateFlow<Map<String, Int>> = _ayahDownloadProgress.asStateFlow()
+
+    private val _downloadedAyahKeys = MutableStateFlow<Set<String>>(emptySet())
+    val downloadedAyahKeys: StateFlow<Set<String>> = _downloadedAyahKeys.asStateFlow()
 
     private val _isWordByWord = MutableStateFlow(false)
     val isWordByWord: StateFlow<Boolean> = _isWordByWord.asStateFlow()
@@ -140,6 +148,84 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
             val ayahs = repository.ensureAyahsLoaded(surah.number)
             _currentAyahs.value = ayahs
             _isAyahsLoading.value = false
+            checkAyahsDownloaded(surah.number, ayahs)
+        }
+    }
+
+    fun checkAyahsDownloaded(surahNumber: Int, ayahs: List<AyahEntity>) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val dir = repository.getAudioDirectory(getApplication(), surahNumber)
+            val downloaded = mutableSetOf<String>()
+            if (dir.exists()) {
+                ayahs.forEach { ayah ->
+                    val file = File(dir, "ayah_${ayah.numberInSurah}.mp3")
+                    if (file.exists() && file.length() > 0) {
+                        downloaded.add("${surahNumber}_${ayah.numberInSurah}")
+                    }
+                }
+            }
+            _downloadedAyahKeys.value = downloaded
+        }
+    }
+
+    fun downloadAyahAudio(surahNumber: Int, ayah: AyahEntity) {
+        val key = "${surahNumber}_${ayah.numberInSurah}"
+        if (!NetworkUtil.isOnline(getApplication())) {
+            viewModelScope.launch(Dispatchers.Main) {
+                Toast.makeText(
+                    getApplication(),
+                    "ইন্টারনেট সংযোগ নেই! আয়াত ডাউনলোড করতে ইন্টারনেট সংযোগ চালু করুন।",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+            return
+        }
+
+        viewModelScope.launch(Dispatchers.IO) {
+            _ayahDownloadProgress.update { it + (key to 1) }
+            try {
+                val dir = repository.getAudioDirectory(getApplication(), surahNumber)
+                if (!dir.exists()) dir.mkdirs()
+                val targetFile = File(dir, "ayah_${ayah.numberInSurah}.mp3")
+                val client = OkHttpClient()
+                val request = Request.Builder().url(ayah.audioUrl).build()
+                val response = client.newCall(request).execute()
+                val body = response.body
+                if (response.isSuccessful && body != null) {
+                    val totalBytes = body.contentLength()
+                    val inputStream = body.byteStream()
+                    val outputStream = FileOutputStream(targetFile)
+                    val buffer = ByteArray(8192)
+                    var bytesRead: Int
+                    var downloadedBytes = 0L
+                    while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                        outputStream.write(buffer, 0, bytesRead)
+                        downloadedBytes += bytesRead
+                        if (totalBytes > 0) {
+                            val progress = ((downloadedBytes.toFloat() / totalBytes) * 100).toInt()
+                            _ayahDownloadProgress.update { it + (key to progress.coerceIn(1, 99)) }
+                        }
+                    }
+                    outputStream.flush()
+                    outputStream.close()
+                    inputStream.close()
+
+                    _ayahDownloadProgress.update { it + (key to 100) }
+                    _downloadedAyahKeys.update { it + key }
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(
+                            getApplication(),
+                            "আয়াত ${ayah.numberInSurah} ডাউনলোড সম্পন্ন হয়েছে!",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                } else {
+                    _ayahDownloadProgress.update { it + (key to -1) }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _ayahDownloadProgress.update { it + (key to -1) }
+            }
         }
     }
 
@@ -156,7 +242,8 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
             val ayahs = repository.ensureAyahsLoaded(surah.number)
             if (ayahs.isEmpty()) return@launch
 
-            val isDownloaded = surah.isAudioDownloaded || isSurahAudioLocallyAvailable(surah.number)
+            val isDownloaded = surah.isAudioDownloaded || isSurahAudioLocallyAvailable(surah.number) ||
+                    (startAyahIndex in ayahs.indices && isAyahLocallyAvailable(surah.number, ayahs[startAyahIndex].numberInSurah))
             val isOnline = NetworkUtil.isOnline(getApplication())
 
             if (!isDownloaded && !isOnline) {
@@ -181,6 +268,13 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    private fun isAyahLocallyAvailable(surahNumber: Int, ayahNumberInSurah: Int): Boolean {
+        val dir = repository.getAudioDirectory(getApplication(), surahNumber)
+        if (!dir.exists()) return false
+        val file = File(dir, "ayah_${ayahNumberInSurah}.mp3")
+        return file.exists() && file.length() > 0
+    }
+
     private fun isSurahAudioLocallyAvailable(surahNumber: Int): Boolean {
         val dir = repository.getAudioDirectory(getApplication(), surahNumber)
         if (!dir.exists()) return false
@@ -200,6 +294,15 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun downloadSurahAudio(context: Context, surahNumber: Int) {
+        if (!NetworkUtil.isOnline(context)) {
+            Toast.makeText(
+                context,
+                "ইন্টারনেট সংযোগ নেই! সূরা ডাউনলোড করতে ইন্টারনেট সংযোগ চালু করুন।",
+                Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+
         val workData = Data.Builder()
             .putInt(QuranDownloadWorker.KEY_SURAH_NUMBER, surahNumber)
             .build()
@@ -210,6 +313,7 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
             .build()
 
         WorkManager.getInstance(context).enqueue(downloadWork)
+        Toast.makeText(context, "সূরা $surahNumber ডাউনলোড শুরু হয়েছে...", Toast.LENGTH_SHORT).show()
     }
 
     fun deleteSurahAudio(context: Context, surahNumber: Int) {

@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.Mosque
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
@@ -22,11 +23,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.data.islamic.IslamicAudioPlayer
 import com.example.data.quran.QuranAudioPlayer
 import com.example.ui.theme.CalculatorThemeColors
 
@@ -35,20 +38,37 @@ fun QuranMiniPlayerBanner(
     audioPlayer: QuranAudioPlayer,
     themeColors: CalculatorThemeColors,
     modifier: Modifier = Modifier,
-    onOpenSurah: (Int) -> Unit
+    onOpenSurah: (Int) -> Unit = {},
+    onOpenIslamicCategory: (String) -> Unit = {}
 ) {
-    val isPlayerActive by audioPlayer.isPlayerActive.collectAsStateWithLifecycle()
-    val isPlaying by audioPlayer.isPlaying.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val islamicAudioPlayer = remember { IslamicAudioPlayer.getInstance(context) }
+
+    // Quran Audio Player State
+    val quranActive by audioPlayer.isPlayerActive.collectAsStateWithLifecycle()
+    val quranPlaying by audioPlayer.isPlaying.collectAsStateWithLifecycle()
     val currentSurahNum by audioPlayer.currentSurahNumber.collectAsStateWithLifecycle()
     val currentSurahBangla by audioPlayer.currentSurahNameBangla.collectAsStateWithLifecycle()
     val currentSurahArabic by audioPlayer.currentSurahNameArabic.collectAsStateWithLifecycle()
     val currentAyahIndex by audioPlayer.currentAyahIndex.collectAsStateWithLifecycle()
     val totalAyahs by audioPlayer.totalAyahs.collectAsStateWithLifecycle()
-    val currentPos by audioPlayer.currentPositionMs.collectAsStateWithLifecycle()
-    val duration by audioPlayer.durationMs.collectAsStateWithLifecycle()
+    val quranPos by audioPlayer.currentPositionMs.collectAsStateWithLifecycle()
+    val quranDur by audioPlayer.durationMs.collectAsStateWithLifecycle()
     val isDetailScreenOpen by audioPlayer.isDetailScreenOpen.collectAsStateWithLifecycle()
 
-    val visible = isPlayerActive && currentSurahNum != null && !isDetailScreenOpen
+    // Islamic Audio Player State (Namaz, Dua, Sehri)
+    val islamicActive by islamicAudioPlayer.isPlayerActive.collectAsStateWithLifecycle()
+    val islamicPlaying by islamicAudioPlayer.isPlaying.collectAsStateWithLifecycle()
+    val islamicTitle by islamicAudioPlayer.activeTitle.collectAsStateWithLifecycle()
+    val islamicSubtitle by islamicAudioPlayer.activeSubtitle.collectAsStateWithLifecycle()
+    val islamicCategory by islamicAudioPlayer.activeCategory.collectAsStateWithLifecycle()
+    val islamicPos by islamicAudioPlayer.currentPositionMs.collectAsStateWithLifecycle()
+    val islamicDur by islamicAudioPlayer.durationMs.collectAsStateWithLifecycle()
+
+    val isQuranVisible = quranActive && currentSurahNum != null && !isDetailScreenOpen
+    val isIslamicVisible = islamicActive && !isQuranVisible
+
+    val visible = isQuranVisible || isIslamicVisible
 
     AnimatedVisibility(
         visible = visible,
@@ -57,15 +77,39 @@ fun QuranMiniPlayerBanner(
         modifier = modifier.background(Color.Transparent)
     ) {
         val primaryColor = themeColors.buttonEqualBg
-        val progress = if (duration > 0) (currentPos.toFloat() / duration.toFloat()).coerceIn(0f, 1f) else 0f
 
-        val surahTitle = if (currentSurahBangla.isNotBlank()) {
-            "$currentSurahBangla ${if (currentSurahArabic.isNotBlank()) "($currentSurahArabic)" else ""}"
+        val title: String
+        val subtitle: String
+        val isPlaying: Boolean
+        val progress: Float
+        val icon = if (isQuranVisible) Icons.Default.MenuBook else Icons.Default.Mosque
+        val onPlayPauseToggle: () -> Unit
+        val onClose: () -> Unit
+        val onClickBanner: () -> Unit
+
+        if (isQuranVisible) {
+            val surahTitle = if (currentSurahBangla.isNotBlank()) {
+                "$currentSurahBangla ${if (currentSurahArabic.isNotBlank()) "($currentSurahArabic)" else ""}"
+            } else {
+                "সূরা $currentSurahNum"
+            }
+            val ayahText = if (totalAyahs > 0) "আয়াত ${currentAyahIndex + 1} / $totalAyahs" else "তেলাওয়াত চলছে..."
+            title = surahTitle
+            subtitle = "$ayahText • স্পর্শ করে দেখুন"
+            isPlaying = quranPlaying
+            progress = if (quranDur > 0) (quranPos.toFloat() / quranDur.toFloat()).coerceIn(0f, 1f) else 0f
+            onPlayPauseToggle = { audioPlayer.togglePlayPause() }
+            onClose = { audioPlayer.stopAndClose() }
+            onClickBanner = { currentSurahNum?.let { onOpenSurah(it) } }
         } else {
-            "সূরা $currentSurahNum"
+            title = islamicTitle.ifEmpty { "ইসলামিক অডিও" }
+            subtitle = if (islamicSubtitle.isNotEmpty()) "$islamicSubtitle • স্পর্শ করে দেখুন" else "তেলাওয়াত চলছে • স্পর্শ করে দেখুন"
+            isPlaying = islamicPlaying
+            progress = if (islamicDur > 0) (islamicPos.toFloat() / islamicDur.toFloat()).coerceIn(0f, 1f) else 0f
+            onPlayPauseToggle = { islamicAudioPlayer.togglePlayPause() }
+            onClose = { islamicAudioPlayer.stopAndClose() }
+            onClickBanner = { onOpenIslamicCategory(islamicCategory) }
         }
-
-        val ayahText = if (totalAyahs > 0) "আয়াত ${currentAyahIndex + 1} / $totalAyahs" else "তেলাওয়াত চলছে..."
 
         val bannerInteractionSource = remember { MutableInteractionSource() }
 
@@ -79,7 +123,7 @@ fun QuranMiniPlayerBanner(
                     interactionSource = bannerInteractionSource,
                     indication = ripple(bounded = true, color = primaryColor)
                 ) {
-                    currentSurahNum?.let { onOpenSurah(it) }
+                    onClickBanner()
                 },
             color = if (themeColors.isDark) Color(0xFF1E293B) else Color.White,
             shape = RoundedCornerShape(16.dp),
@@ -96,7 +140,7 @@ fun QuranMiniPlayerBanner(
                         .padding(horizontal = 12.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Left: Equalizer / Book Icon badge
+                    // Left: Equalizer / Icon badge
                     Box(
                         modifier = Modifier
                             .size(38.dp)
@@ -115,8 +159,8 @@ fun QuranMiniPlayerBanner(
                             EqualizerAnimation(color = Color.White)
                         } else {
                             Icon(
-                                imageVector = Icons.Default.MenuBook,
-                                contentDescription = "Quran",
+                                imageVector = icon,
+                                contentDescription = "Audio Player",
                                 tint = Color.White,
                                 modifier = Modifier.size(20.dp)
                             )
@@ -125,13 +169,13 @@ fun QuranMiniPlayerBanner(
 
                     Spacer(modifier = Modifier.width(10.dp))
 
-                    // Middle: Title & Ayah Progress
+                    // Middle: Title & Subtitle
                     Column(
                         modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = surahTitle,
+                            text = title,
                             fontSize = 13.5.sp,
                             fontWeight = FontWeight.Bold,
                             color = themeColors.displayText,
@@ -139,27 +183,19 @@ fun QuranMiniPlayerBanner(
                             overflow = TextOverflow.Ellipsis
                         )
                         Spacer(modifier = Modifier.height(2.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = ayahText,
-                                fontSize = 11.5.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = primaryColor
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "• স্পর্শ করে বিস্তারিত দেখুন",
-                                fontSize = 10.sp,
-                                color = themeColors.displayText.copy(alpha = 0.5f),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
+                        Text(
+                            text = subtitle,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = primaryColor,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
                     }
 
                     // Right: Play/Pause Button
                     IconButton(
-                        onClick = { audioPlayer.togglePlayPause() },
+                        onClick = { onPlayPauseToggle() },
                         modifier = Modifier
                             .size(36.dp)
                             .clip(CircleShape)
@@ -177,7 +213,7 @@ fun QuranMiniPlayerBanner(
 
                     // Right: Close Button
                     IconButton(
-                        onClick = { audioPlayer.stopAndClose() },
+                        onClick = { onClose() },
                         modifier = Modifier.size(32.dp)
                     ) {
                         Icon(

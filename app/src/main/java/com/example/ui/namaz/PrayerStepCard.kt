@@ -68,14 +68,25 @@ fun PrayerStepCard(
     val femaleAccentColor = Color(0xFFEC4899)
     val activeAccent = if (isFemaleMode) femaleAccentColor else primaryCyan
 
+    val cardBg = if (isPlaying) {
+        if (themeColors.isDark) activeAccent.copy(alpha = 0.16f) else activeAccent.copy(alpha = 0.08f)
+    } else {
+        themeColors.cardBg
+    }
+    val cardBorder = if (isPlaying) {
+        BorderStroke(2.dp, activeAccent)
+    } else {
+        BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.1f))
+    }
+
     Card(
         modifier = modifier
             .fillMaxWidth()
             .animateContentSize(),
         shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.1f))
+        colors = CardDefaults.cardColors(containerColor = cardBg),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isPlaying) 4.dp else 0.dp),
+        border = cardBorder
     ) {
         Column(
             modifier = Modifier
@@ -112,12 +123,29 @@ fun PrayerStepCard(
                     }
 
                     Column {
-                        Text(
-                            text = step.titleBn,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = themeColors.displayText
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = step.titleBn,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isPlaying) activeAccent else themeColors.displayText
+                            )
+                            if (isPlaying) {
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Surface(
+                                    shape = RoundedCornerShape(6.dp),
+                                    color = activeAccent
+                                ) {
+                                    Text(
+                                        text = "▶ বাজছে",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White,
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    )
+                                }
+                            }
+                        }
                         if (step.titleEn.isNotEmpty()) {
                             Text(
                                 text = step.titleEn,

@@ -2613,10 +2613,12 @@ fun IslamicDuasCard(
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(containerColor = themeColors.background),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (isCurrentPlaying) themeColors.buttonEqualBg.copy(alpha = 0.08f) else themeColors.background
+                            ),
                             border = BorderStroke(
-                                1.dp,
-                                if (isExpanded) themeColors.buttonEqualBg.copy(alpha = 0.35f) else Color.Transparent
+                                if (isCurrentPlaying) 2.dp else 1.dp,
+                                if (isCurrentPlaying) themeColors.buttonEqualBg else if (isExpanded) themeColors.buttonEqualBg.copy(alpha = 0.35f) else Color.Transparent
                             )
                         ) {
                             Column(
@@ -2891,12 +2893,94 @@ fun IslamicDuasCard(
                                         }
                                     }
 
-                                    // Right side: Play, Copy, Share buttons
+                                    // Right side: Download, Play, Copy, Share buttons
                                     Row(verticalAlignment = Alignment.CenterVertically) {
+                                        val progress = downloadProgress[dua.id]
+                                        val isDownloaded = downloadedDuaIds.contains(dua.id)
+
+                                        // Download / Status Button
+                                        when {
+                                            progress != null && progress in 1..99 -> {
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    modifier = Modifier.padding(end = 6.dp)
+                                                ) {
+                                                    CircularProgressIndicator(
+                                                        progress = { progress / 100f },
+                                                        modifier = Modifier.size(14.dp),
+                                                        strokeWidth = 2.dp,
+                                                        color = themeColors.buttonEqualBg
+                                                    )
+                                                    Spacer(modifier = Modifier.width(4.dp))
+                                                    Text(
+                                                        text = "$progress%",
+                                                        fontSize = 10.sp,
+                                                        color = themeColors.buttonEqualBg
+                                                    )
+                                                }
+                                            }
+                                            isDownloaded || progress == 100 -> {
+                                                Surface(
+                                                    shape = RoundedCornerShape(6.dp),
+                                                    color = Color(0xFF10B981).copy(alpha = 0.12f),
+                                                    modifier = Modifier.padding(end = 4.dp)
+                                                ) {
+                                                    Row(
+                                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = Icons.Default.CheckCircle,
+                                                            contentDescription = "Offline Available",
+                                                            tint = Color(0xFF10B981),
+                                                            modifier = Modifier.size(12.dp)
+                                                        )
+                                                        Spacer(modifier = Modifier.width(3.dp))
+                                                        Text(
+                                                            text = if (isBn) "সেভড" else "Saved",
+                                                            fontSize = 10.sp,
+                                                            color = Color(0xFF10B981),
+                                                            fontWeight = FontWeight.Bold
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                            else -> {
+                                                TextButton(
+                                                    onClick = {
+                                                        namazViewModel.downloadDuaAudio(dua.id, dua.arabic)
+                                                    },
+                                                    contentPadding = PaddingValues(horizontal = 6.dp, vertical = 4.dp),
+                                                    modifier = Modifier.height(32.dp)
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Download,
+                                                        contentDescription = "Download Audio",
+                                                        tint = themeColors.buttonEqualBg,
+                                                        modifier = Modifier.size(14.dp)
+                                                    )
+                                                    Spacer(modifier = Modifier.width(2.dp))
+                                                    Text(
+                                                        text = if (isBn) "ডাউনলোড" else "Download",
+                                                        fontSize = 10.5.sp,
+                                                        fontWeight = FontWeight.Medium,
+                                                        color = themeColors.buttonEqualBg
+                                                    )
+                                                }
+                                            }
+                                        }
+
                                         // Play/Pause Button
                                         TextButton(
                                             onClick = {
-                                                namazViewModel.playOrPauseDuaAudio(dua.id, null, dua.arabic, dua.pronunciationBn)
+                                                namazViewModel.playOrPauseDuaAudio(
+                                                    duaId = dua.id,
+                                                    audioUrl = null,
+                                                    arabicText = dua.arabic,
+                                                    banglaPronunciation = dua.pronunciationBn,
+                                                    title = "দৈনন্দিন দোয়া • ${if (isBn) dua.titleBn else dua.titleEn}",
+                                                    category = "DUA"
+                                                )
                                             },
                                             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
                                             modifier = Modifier.height(32.dp)

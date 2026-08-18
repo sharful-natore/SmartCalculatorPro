@@ -551,6 +551,15 @@ fun MainContent(
                             viewModel.selectedToolType = ToolType.HOLY_QURAN
                             viewModel.activeTab = 0
                             quranViewModel.selectSurahByNumber(surahNumber)
+                        },
+                        onOpenIslamicCategory = { category ->
+                            viewModel.activeTab = 0
+                            when (category) {
+                                "NAMAZ" -> viewModel.selectedToolType = ToolType.NAMAZ_EDUCATION
+                                "DUA" -> viewModel.selectedToolType = ToolType.ISLAMIC_DUAS
+                                "SEHRI" -> viewModel.selectedToolType = ToolType.SEHRI_IFTAR
+                                else -> viewModel.selectedToolType = ToolType.HOLY_QURAN
+                            }
                         }
                     )
                 }

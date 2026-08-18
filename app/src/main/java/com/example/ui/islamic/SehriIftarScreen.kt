@@ -929,7 +929,15 @@ fun ModernSehriIftarCard(
                     themeColors = themeColors,
                     context = context,
                     isPlaying = isAudioPlaying && activeAudioId == "sehri_niyyat",
-                    onPlayAudio = { audioPlayer.playOrPause("sehri_niyyat", "نَوَيْتُ اَنْ اُصُوْمَ غَدًا مِّنْ شَهْرِ رَمَضَانَ") },
+                    onPlayAudio = {
+                        audioPlayer.playOrPause(
+                            audioId = "sehri_niyyat",
+                            arabicText = "نَوَيْتُ اَنْ اُصُوْمَ غَدًا مِّنْ شَهْرِ رَمَضَانَ",
+                            title = "রমজান • রোজার নিয়ত (সেহরির দোয়া)",
+                            subtitle = "নওয়াইতু আন আসুমা গাদাম...",
+                            category = "SEHRI"
+                        )
+                    },
                     isDownloaded = downloadedAudioIds.contains("sehri_niyyat"),
                     downloadProgress = downloadProgressMap["sehri_niyyat"],
                     onDownloadAudio = { audioPlayer.downloadAudio("sehri_niyyat", "نَوَيْتُ اَنْ اُصُوْمَ غَدًا مِّنْ شَهْرِ رَمَضَانَ") },
@@ -946,7 +954,15 @@ fun ModernSehriIftarCard(
                     themeColors = themeColors,
                     context = context,
                     isPlaying = isAudioPlaying && activeAudioId == "iftar_dua",
-                    onPlayAudio = { audioPlayer.playOrPause("iftar_dua", "اللَّهُمَّ لَكَ صُمْتُ وَعَلَى رِزْقِكَ أَفْطَرْتُ") },
+                    onPlayAudio = {
+                        audioPlayer.playOrPause(
+                            audioId = "iftar_dua",
+                            arabicText = "اللَّهُمَّ لَكَ صُمْتُ وَعَلَى رِزْقِكَ أَفْطَرْتُ",
+                            title = "রমজান • ইফতারের দোয়া",
+                            subtitle = "আল্লাহুম্মা লাকা সুমতু ওয়া আলা...",
+                            category = "SEHRI"
+                        )
+                    },
                     isDownloaded = downloadedAudioIds.contains("iftar_dua"),
                     downloadProgress = downloadProgressMap["iftar_dua"],
                     onDownloadAudio = { audioPlayer.downloadAudio("iftar_dua", "اللَّهُمَّ لَكَ صُمْتُ وَعَلَى رِزْقِكَ أَفْطَرْتُ") },

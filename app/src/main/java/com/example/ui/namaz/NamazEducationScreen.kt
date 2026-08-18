@@ -341,10 +341,12 @@ fun WuduAndTaharatSection(
                         onAudioClick = {
                             if (!wuduItem.arabicText.isNullOrEmpty()) {
                                 viewModel.playOrPauseDuaAudio(
-                                    duaId,
-                                    wuduItem.audioUrl,
-                                    wuduItem.arabicText,
-                                    wuduItem.banglaPronunciation ?: ""
+                                    duaId = duaId,
+                                    audioUrl = wuduItem.audioUrl,
+                                    arabicText = wuduItem.arabicText ?: "",
+                                    banglaPronunciation = wuduItem.banglaPronunciation ?: "",
+                                    title = "অজু শিক্ষা • ${wuduItem.titleBn}",
+                                    category = "NAMAZ"
                                 )
                             }
                         },
@@ -745,10 +747,12 @@ fun DailyPrayersSection(
                 onAudioClick = {
                     if (!step.arabicText.isNullOrEmpty()) {
                         viewModel.playOrPauseDuaAudio(
-                            duaId,
-                            step.audioUrl,
-                            step.arabicText,
-                            step.banglaPronunciation ?: ""
+                            duaId = duaId,
+                            audioUrl = step.audioUrl,
+                            arabicText = step.arabicText ?: "",
+                            banglaPronunciation = step.banglaPronunciation ?: "",
+                            title = "${selectedWaqt.nameBn} নামাজ • ${step.titleBn}",
+                            category = "NAMAZ"
                         )
                     }
                 },
@@ -906,10 +910,12 @@ fun SpecialPrayersSection(
                                     onAudioClick = {
                                         if (!step.arabicText.isNullOrEmpty()) {
                                             viewModel.playOrPauseDuaAudio(
-                                                duaId,
-                                                step.audioUrl,
-                                                step.arabicText,
-                                                step.banglaPronunciation ?: ""
+                                                duaId = duaId,
+                                                audioUrl = step.audioUrl,
+                                                arabicText = step.arabicText ?: "",
+                                                banglaPronunciation = step.banglaPronunciation ?: "",
+                                                title = "${rule.titleBn} • ${step.titleBn}",
+                                                category = "NAMAZ"
                                             )
                                         }
                                     },
@@ -1033,7 +1039,14 @@ fun AllDuasAndSurahsSection(
                 themeColors = themeColors,
                 isPlaying = isCurrentPlaying,
                 onAudioClick = {
-                    viewModel.playOrPauseDuaAudio(dua.id, dua.audioUrl, dua.arabicText, dua.banglaPronunciation)
+                    viewModel.playOrPauseDuaAudio(
+                        duaId = dua.id,
+                        audioUrl = dua.audioUrl,
+                        arabicText = dua.arabicText,
+                        banglaPronunciation = dua.banglaPronunciation,
+                        title = "সূরা ও দোয়া • ${dua.titleBn}",
+                        category = "NAMAZ"
+                    )
                 },
                 downloadProgress = progress,
                 onDownloadClick = {

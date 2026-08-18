@@ -59,6 +59,10 @@ fun SurahDetailScreen(
     val playbackSpeed by viewModel.audioPlayer.playbackSpeed.collectAsStateWithLifecycle()
 
     val listState = rememberLazyListState()
+    val ayahDownloadProgress by viewModel.ayahDownloadProgress.collectAsStateWithLifecycle()
+    val downloadedAyahKeys by viewModel.downloadedAyahKeys.collectAsStateWithLifecycle()
+    val downloadedSurahs by viewModel.downloadedSurahs.collectAsStateWithLifecycle()
+    val isSurahDownloaded = surah.isAudioDownloaded || downloadedSurahs.any { it.number == surah.number }
 
     // Dynamic theme-derived palette matching main app theme
     val cyanPrimary = themeColors.buttonEqualBg
@@ -140,6 +144,18 @@ fun SurahDetailScreen(
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        IconButton(
+                            onClick = {
+                                viewModel.downloadSurahAudio(context, surah.number)
+                            }
+                        ) {
+                            Icon(
+                                imageVector = if (isSurahDownloaded) Icons.Default.CheckCircle else Icons.Default.Download,
+                                contentDescription = if (isSurahDownloaded) "Downloaded Offline" else "Download Full Surah",
+                                tint = if (isSurahDownloaded) Color(0xFF6EE7B7) else Color.White
+                            )
+                        }
                     }
                 }
             }
@@ -253,16 +269,22 @@ fun SurahDetailScreen(
                         key = { _, ayah -> ayah.id }
                     ) { index, ayah ->
                         val isCurrentPlayingAyah = currentSurahNum == surah.number && currentAyahIndex == index
+                        val ayahKey = "${surah.number}_${ayah.numberInSurah}"
+                        val progress = ayahDownloadProgress[ayahKey]
+                        val isAyahDownloaded = isSurahDownloaded || downloadedAyahKeys.contains(ayahKey)
 
                         AyahCard(
                             ayah = ayah,
                             index = index,
                             isCurrentPlaying = isCurrentPlayingAyah,
                             isWordByWord = isWordByWord,
+                            isAyahDownloaded = isAyahDownloaded,
+                            downloadProgress = progress,
                             cyanPrimary = cyanPrimary,
                             cyanDark = cyanDark,
                             themeColors = themeColors,
                             onPlayAyah = { viewModel.playSurah(surah, index) },
+                            onDownloadAyah = { viewModel.downloadAyahAudio(surah.number, ayah) },
                             onCopyAyah = {
                                 val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                                 val clip = ClipData.newPlainText(
@@ -287,12 +309,16 @@ fun AyahCard(
     index: Int,
     isCurrentPlaying: Boolean,
     isWordByWord: Boolean,
+    isAyahDownloaded: Boolean,
+    downloadProgress: Int?,
     cyanPrimary: Color,
     cyanDark: Color,
     themeColors: CalculatorThemeColors,
     onPlayAyah: () -> Unit,
+    onDownloadAyah: () -> Unit,
     onCopyAyah: () -> Unit
 ) {
+    val context = LocalContext.current
     // 3 Distinct high-contrast elegant color palettes
     val arabicColor = if (themeColors.isDark) Color(0xFF34D399) else Color(0xFF047857) // Rich Quran Emerald
     val pronunciationColor = if (themeColors.isDark) Color(0xFFFBBF24) else Color(0xFFB45309) // Warm Golden Amber
@@ -352,6 +378,48 @@ fun AyahCard(
                 }
 
                 Spacer(modifier = Modifier.weight(1f))
+
+                // Download / Downloaded / Progress Indicator Icon Button
+                when {
+                    downloadProgress != null && downloadProgress in 1..99 -> {
+                        CircularProgressIndicator(
+                            progress = { downloadProgress / 100f },
+                            modifier = Modifier
+                                .padding(horizontal = 6.dp)
+                                .size(18.dp),
+                            strokeWidth = 2.dp,
+                            color = arabicColor
+                        )
+                    }
+                    isAyahDownloaded -> {
+                        IconButton(
+                            onClick = {
+                                Toast.makeText(context, "আয়াতটি অফলাইনে সেভ করা রয়েছে", Toast.LENGTH_SHORT).show()
+                            },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = "Downloaded Offline",
+                                tint = Color(0xFF10B981),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+                    else -> {
+                        IconButton(
+                            onClick = onDownloadAyah,
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Download,
+                                contentDescription = "Download Ayah Audio",
+                                tint = themeColors.displayText.copy(alpha = 0.6f),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+                }
 
                 // Play/Pause Verse Icon Button
                 IconButton(

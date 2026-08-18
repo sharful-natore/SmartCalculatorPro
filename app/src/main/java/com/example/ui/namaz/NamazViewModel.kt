@@ -1,26 +1,17 @@
 package com.example.ui.namaz
 
 import android.app.Application
-import android.speech.tts.TextToSpeech
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.media3.common.MediaItem
-import androidx.media3.common.Player
-import androidx.media3.exoplayer.ExoPlayer
-import kotlinx.coroutines.Dispatchers
+import com.example.data.islamic.IslamicAudioPlayer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import java.io.File
-import java.io.FileOutputStream
-import java.net.URLEncoder
-import java.util.Locale
 
 class NamazViewModel(application: Application) : AndroidViewModel(application) {
+
+    val audioPlayer: IslamicAudioPlayer = IslamicAudioPlayer.getInstance(application)
 
     // Tab State: 0=Wudu & Taharat, 1=5 Daily Waqts, 2=Special Prayers, 3=Duas & Surahs, 4=Ahkam & Sahw, 5=Visual Guide
     private val _selectedTab = MutableStateFlow(0)
@@ -46,61 +37,15 @@ class NamazViewModel(application: Application) : AndroidViewModel(application) {
     private val _expandedRuleIds = MutableStateFlow<Set<String>>(setOf("jumuah", "janazah", "eid", "ahkam_arkan", "sahw_procedure"))
     val expandedRuleIds: StateFlow<Set<String>> = _expandedRuleIds.asStateFlow()
 
-    // Audio Playback State
-    private val _playingDuaId = MutableStateFlow<String?>(null)
-    val playingDuaId: StateFlow<String?> = _playingDuaId.asStateFlow()
-
-    private val _isPlaying = MutableStateFlow(false)
-    val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
+    // Audio Playback State delegated to IslamicAudioPlayer
+    val playingDuaId: StateFlow<String?> = audioPlayer.activeAudioId
+    val isPlaying: StateFlow<Boolean> = audioPlayer.isPlaying
 
     // Downloaded Duas Tracking
-    private val _downloadedDuaIds = MutableStateFlow<Set<String>>(emptySet())
-    val downloadedDuaIds: StateFlow<Set<String>> = _downloadedDuaIds.asStateFlow()
+    val downloadedDuaIds: StateFlow<Set<String>> = audioPlayer.downloadedAudioIds
 
     // Download Progress Tracking: Maps duaId -> progress percentage (1..100)
-    private val _downloadProgress = MutableStateFlow<Map<String, Int>>(emptyMap())
-    val downloadProgress: StateFlow<Map<String, Int>> = _downloadProgress.asStateFlow()
-
-    private val httpClient = OkHttpClient.Builder().build()
-    private var exoPlayer: ExoPlayer? = null
-    private var textToSpeech: TextToSpeech? = null
-    private var isTtsInitialized = false
-
-    init {
-        initExoPlayer()
-        initTts()
-        refreshDownloadedDuas()
-    }
-
-    private fun initExoPlayer() {
-        try {
-            exoPlayer = ExoPlayer.Builder(getApplication()).build().apply {
-                addListener(object : Player.Listener {
-                    override fun onIsPlayingChanged(isPlaying: Boolean) {
-                        _isPlaying.value = isPlaying
-                        if (!isPlaying && playbackState == Player.STATE_ENDED) {
-                            _playingDuaId.value = null
-                        }
-                    }
-                })
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-
-    private fun initTts() {
-        try {
-            textToSpeech = TextToSpeech(getApplication()) { status ->
-                if (status == TextToSpeech.SUCCESS) {
-                    isTtsInitialized = true
-                    textToSpeech?.language = Locale("ar")
-                }
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
+    val downloadProgress: StateFlow<Map<String, Int>> = audioPlayer.downloadProgress
 
     fun setSelectedTab(tabIndex: Int) {
         _selectedTab.value = tabIndex
@@ -133,138 +78,37 @@ class NamazViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun getLocalAudioFile(duaId: String): File {
-        val dir = getApplication<Application>().getExternalFilesDir("namaz_audio") ?: getApplication<Application>().filesDir
-        if (!dir.exists()) {
-            dir.mkdirs()
-        }
-        return File(dir, "${duaId}.mp3")
+    fun downloadDuaAudio(duaId: String, arabicText: String = "", explicitUrl: String? = null) {
+        audioPlayer.downloadAudio(audioId = duaId, arabicText = arabicText, explicitUrl = explicitUrl)
     }
 
-    fun refreshDownloadedDuas() {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val dir = getApplication<Application>().getExternalFilesDir("namaz_audio") ?: getApplication<Application>().filesDir
-                val files = dir.listFiles()
-                val downloadedSet = files?.filter { it.isFile && it.length() > 0 }
-                    ?.map { it.name.substringBeforeLast(".") }
-                    ?.toSet() ?: emptySet()
-                _downloadedDuaIds.value = downloadedSet
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-    }
-
-    fun getAudioUrlForDua(id: String, arabicText: String): String {
-        return com.example.data.islamic.IslamicAudioPlayer.getCdnAudioUrl(id, arabicText)
-    }
-
-    fun downloadDuaAudio(duaId: String, arabicText: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            _downloadProgress.update { it + (duaId to 1) }
-            try {
-                val url = getAudioUrlForDua(duaId, arabicText)
-                val targetFile = getLocalAudioFile(duaId)
-                val request = Request.Builder().url(url).build()
-                val response = httpClient.newCall(request).execute()
-                val body = response.body
-                if (response.isSuccessful && body != null) {
-                    val totalBytes = body.contentLength()
-                    val inputStream = body.byteStream()
-                    val outputStream = FileOutputStream(targetFile)
-                    val buffer = ByteArray(8192)
-                    var bytesRead: Int
-                    var downloadedBytes = 0L
-                    while (inputStream.read(buffer).also { bytesRead = it } != -1) {
-                        outputStream.write(buffer, 0, bytesRead)
-                        downloadedBytes += bytesRead
-                        if (totalBytes > 0) {
-                            val progress = ((downloadedBytes.toFloat() / totalBytes) * 100).toInt()
-                            _downloadProgress.update { it + (duaId to progress.coerceIn(1, 99)) }
-                        }
-                    }
-                    outputStream.flush()
-                    outputStream.close()
-                    inputStream.close()
-                    
-                    _downloadProgress.update { it + (duaId to 100) }
-                    _downloadedDuaIds.update { it + duaId }
-                } else {
-                    _downloadProgress.update { it + (duaId to -1) }
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                _downloadProgress.update { it + (duaId to -1) }
-            }
-        }
-    }
-
-    fun playOrPauseDuaAudio(duaId: String, audioUrl: String?, arabicText: String, banglaPronunciation: String) {
-        if (_playingDuaId.value == duaId && _isPlaying.value) {
-            pauseAudio()
-            return
-        }
-
-        stopAudio()
-        _playingDuaId.value = duaId
-
-        val localFile = getLocalAudioFile(duaId)
-        if (localFile.exists() && localFile.length() > 0) {
-            try {
-                exoPlayer?.let { player ->
-                    player.setMediaItem(MediaItem.fromUri(android.net.Uri.fromFile(localFile)))
-                    player.prepare()
-                    player.play()
-                    _isPlaying.value = true
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        } else {
-            val remoteUrl = audioUrl?.takeIf { it.isNotEmpty() } ?: getAudioUrlForDua(duaId, arabicText)
-            try {
-                exoPlayer?.let { player ->
-                    player.setMediaItem(MediaItem.fromUri(android.net.Uri.parse(remoteUrl)))
-                    player.prepare()
-                    player.play()
-                    _isPlaying.value = true
-                }
-                // Auto-download for offline access next time!
-                downloadDuaAudio(duaId, arabicText)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
+    fun playOrPauseDuaAudio(
+        duaId: String,
+        audioUrl: String? = null,
+        arabicText: String = "",
+        banglaPronunciation: String = "",
+        title: String = "",
+        category: String = "ISLAMIC"
+    ) {
+        audioPlayer.playOrPause(
+            audioId = duaId,
+            arabicText = arabicText,
+            explicitUrl = audioUrl,
+            title = title,
+            subtitle = banglaPronunciation,
+            category = category
+        )
     }
 
     fun pauseAudio() {
-        exoPlayer?.pause()
-        if (textToSpeech?.isSpeaking == true) {
-            textToSpeech?.stop()
-        }
-        _isPlaying.value = false
+        audioPlayer.pause()
     }
 
     fun stopAudio() {
-        exoPlayer?.stop()
-        if (textToSpeech?.isSpeaking == true) {
-            textToSpeech?.stop()
-        }
-        _playingDuaId.value = null
-        _isPlaying.value = false
+        audioPlayer.stop()
     }
 
     override fun onCleared() {
         super.onCleared()
-        try {
-            exoPlayer?.release()
-            exoPlayer = null
-            textToSpeech?.stop()
-            textToSpeech?.shutdown()
-            textToSpeech = null
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
     }
 }

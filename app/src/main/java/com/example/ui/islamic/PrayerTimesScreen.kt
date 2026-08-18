@@ -804,14 +804,14 @@ fun ModernPrayerTimesCard(
                         containerColor = if (currentWaqtData.isForbidden) {
                             if (themeColors.isDark) Color(0xFF3B1010) else Color(0xFFFEF2F2)
                         } else {
-                            if (themeColors.isDark) themeColors.buttonEqualBg.copy(alpha = 0.22f) else themeColors.titleBarBg.copy(alpha = 0.12f)
+                            if (themeColors.isDark) Color(0xFF0F2942) else Color(0xFFE0F2FE)
                         }
                     ),
                     border = BorderStroke(
-                        2.dp,
-                        if (currentWaqtData.isForbidden) Color(0xFFEF4444) else themeColors.titleBarBg
+                        1.5.dp,
+                        if (currentWaqtData.isForbidden) Color(0xFFEF4444) else Color(0xFF0284C7)
                     ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
                     Column(
                         modifier = Modifier
@@ -827,7 +827,7 @@ fun ModernPrayerTimesCard(
                             ) {
                                 Surface(
                                     shape = RoundedCornerShape(12.dp),
-                                    color = if (currentWaqtData.isForbidden) Color(0xFFDC2626).copy(alpha = 0.15f) else themeColors.titleBarBg.copy(alpha = 0.18f)
+                                    color = if (currentWaqtData.isForbidden) Color(0xFFDC2626).copy(alpha = 0.15f) else Color(0xFF0284C7).copy(alpha = 0.15f)
                                 ) {
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
@@ -844,7 +844,7 @@ fun ModernPrayerTimesCard(
                                             text = if (isBn) "বর্তমান ওয়াক্ত" else "Active Waqt",
                                             fontSize = 10.5.sp,
                                             fontWeight = FontWeight.ExtraBold,
-                                            color = if (currentWaqtData.isForbidden) Color(0xFFDC2626) else themeColors.titleBarBg
+                                            color = if (currentWaqtData.isForbidden) Color(0xFFDC2626) else Color(0xFF0369A1)
                                         )
                                     }
                                 }
@@ -880,7 +880,7 @@ fun ModernPrayerTimesCard(
                             // Countdown remaining to current waqt end
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
-                                color = if (currentWaqtData.isForbidden) Color(0xFFDC2626) else themeColors.titleBarBg,
+                                color = if (currentWaqtData.isForbidden) Color(0xFFDC2626) else Color(0xFF0284C7),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 val timeFormatted = formatTimerClock(currentRemainingMillis)
@@ -918,7 +918,7 @@ fun ModernPrayerTimesCard(
                                     text = remainingPercentStr,
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (currentWaqtData.isForbidden) Color(0xFFB91C1C) else themeColors.titleBarBg
+                                    color = if (currentWaqtData.isForbidden) Color(0xFFB91C1C) else Color(0xFF0369A1)
                                 )
                                 LinearProgressIndicator(
                                     progress = { currentProgress },
@@ -926,8 +926,8 @@ fun ModernPrayerTimesCard(
                                         .weight(1f)
                                         .height(5.dp)
                                         .clip(RoundedCornerShape(3.dp)),
-                                    color = if (currentWaqtData.isForbidden) Color(0xFFDC2626) else themeColors.titleBarBg,
-                                    trackColor = if (currentWaqtData.isForbidden) Color(0xFFFCA5A5).copy(alpha = 0.4f) else themeColors.titleBarBg.copy(alpha = 0.2f)
+                                    color = if (currentWaqtData.isForbidden) Color(0xFFDC2626) else Color(0xFF0284C7),
+                                    trackColor = if (currentWaqtData.isForbidden) Color(0xFFFCA5A5).copy(alpha = 0.4f) else Color(0xFF0284C7).copy(alpha = 0.2f)
                                 )
                             }
                         }
@@ -944,7 +944,7 @@ fun ModernPrayerTimesCard(
                         containerColor = if (themeColors.isDark) Color(0xFF0D2538) else Color(0xFFF0F9FF)
                     ),
                     border = BorderStroke(1.2.dp, Color(0xFF0284C7).copy(alpha = 0.4f)),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
                     Column(
                         modifier = Modifier

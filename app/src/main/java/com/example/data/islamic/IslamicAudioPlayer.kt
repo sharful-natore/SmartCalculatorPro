@@ -216,8 +216,29 @@ class IslamicAudioPlayer private constructor(private val context: Context) {
     private val _isPlaying = MutableStateFlow(false)
     val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
 
+    private val _isPlayerActive = MutableStateFlow(false)
+    val isPlayerActive: StateFlow<Boolean> = _isPlayerActive.asStateFlow()
+
     private val _activeAudioId = MutableStateFlow<String?>(null)
     val activeAudioId: StateFlow<String?> = _activeAudioId.asStateFlow()
+
+    private val _activeTitle = MutableStateFlow("")
+    val activeTitle: StateFlow<String> = _activeTitle.asStateFlow()
+
+    private val _activeSubtitle = MutableStateFlow("")
+    val activeSubtitle: StateFlow<String> = _activeSubtitle.asStateFlow()
+
+    private val _activeCategory = MutableStateFlow("ISLAMIC")
+    val activeCategory: StateFlow<String> = _activeCategory.asStateFlow()
+
+    private val _currentPositionMs = MutableStateFlow(0L)
+    val currentPositionMs: StateFlow<Long> = _currentPositionMs.asStateFlow()
+
+    private val _durationMs = MutableStateFlow(0L)
+    val durationMs: StateFlow<Long> = _durationMs.asStateFlow()
+
+    private val _playbackSpeed = MutableStateFlow(1.0f)
+    val playbackSpeed: StateFlow<Float> = _playbackSpeed.asStateFlow()
 
     private val _downloadedAudioIds = MutableStateFlow<Set<String>>(emptySet())
     val downloadedAudioIds: StateFlow<Set<String>> = _downloadedAudioIds.asStateFlow()
@@ -225,16 +246,52 @@ class IslamicAudioPlayer private constructor(private val context: Context) {
     private val _downloadProgress = MutableStateFlow<Map<String, Int>>(emptyMap())
     val downloadProgress: StateFlow<Map<String, Int>> = _downloadProgress.asStateFlow()
 
+    private var positionJob: Job? = null
+
     init {
         player.addListener(object : Player.Listener {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 _isPlaying.value = isPlaying
-                if (!isPlaying && player.playbackState == Player.STATE_ENDED) {
-                    _activeAudioId.value = null
+                if (isPlaying) {
+                    _isPlayerActive.value = true
+                    startPositionTracker()
+                } else {
+                    stopPositionTracker()
+                    if (player.playbackState == Player.STATE_ENDED) {
+                        _activeAudioId.value = null
+                    }
+                }
+            }
+
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                if (playbackState == Player.STATE_READY) {
+                    _durationMs.value = player.duration.coerceAtLeast(0L)
+                } else if (playbackState == Player.STATE_ENDED) {
+                    _isPlaying.value = false
+                    _currentPositionMs.value = 0L
+                    stopPositionTracker()
                 }
             }
         })
         refreshDownloadedAudios()
+    }
+
+    private fun startPositionTracker() {
+        positionJob?.cancel()
+        positionJob = scope.launch {
+            while (true) {
+                if (player.isPlaying) {
+                    _currentPositionMs.value = player.currentPosition.coerceAtLeast(0L)
+                    _durationMs.value = player.duration.coerceAtLeast(0L)
+                }
+                kotlinx.coroutines.delay(200)
+            }
+        }
+    }
+
+    private fun stopPositionTracker() {
+        positionJob?.cancel()
+        positionJob = null
     }
 
     fun getLocalAudioFile(audioId: String): File {
@@ -262,6 +319,17 @@ class IslamicAudioPlayer private constructor(private val context: Context) {
     }
 
     fun downloadAudio(audioId: String, arabicText: String = "", explicitUrl: String? = null) {
+        if (!com.example.util.NetworkUtil.isOnline(context)) {
+            scope.launch(Dispatchers.Main) {
+                android.widget.Toast.makeText(
+                    context,
+                    "ইন্টারনেট সংযোগ নেই! ডাউনলোড করতে ইন্টারনেট সংযোগ অন করুন।",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+            }
+            return
+        }
+
         scope.launch(Dispatchers.IO) {
             _downloadProgress.update { it + (audioId to 1) }
             try {
@@ -291,6 +359,13 @@ class IslamicAudioPlayer private constructor(private val context: Context) {
 
                     _downloadProgress.update { it + (audioId to 100) }
                     _downloadedAudioIds.update { it + audioId }
+                    scope.launch(Dispatchers.Main) {
+                        android.widget.Toast.makeText(
+                            context,
+                            "অডিও সফলভাবে ডাউনলোড হয়েছে!",
+                            android.widget.Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 } else {
                     _downloadProgress.update { it + (audioId to -1) }
                 }
@@ -301,15 +376,40 @@ class IslamicAudioPlayer private constructor(private val context: Context) {
         }
     }
 
-    fun playOrPause(audioId: String, arabicText: String = "", explicitUrl: String? = null) {
+    fun playOrPause(
+        audioId: String,
+        arabicText: String = "",
+        explicitUrl: String? = null,
+        title: String = "",
+        subtitle: String = "",
+        category: String = "ISLAMIC"
+    ) {
         if (_activeAudioId.value == audioId && _isPlaying.value) {
             player.pause()
             _isPlaying.value = false
             return
         }
 
+        if (_activeAudioId.value == audioId && !_isPlaying.value && player.playbackState == Player.STATE_READY) {
+            player.play()
+            _isPlaying.value = true
+            _isPlayerActive.value = true
+            return
+        }
+
+        // Stop any Quran playback so only one audio plays at a time
+        try {
+            com.example.data.quran.QuranAudioPlayer.getInstance(context).pause()
+        } catch (e: Exception) {
+            // ignore
+        }
+
         player.stop()
         _activeAudioId.value = audioId
+        if (title.isNotEmpty()) _activeTitle.value = title
+        if (subtitle.isNotEmpty()) _activeSubtitle.value = subtitle
+        _activeCategory.value = category
+        _isPlayerActive.value = true
 
         val localFile = getLocalAudioFile(audioId)
         if (localFile.exists() && localFile.length() > 0) {
@@ -322,6 +422,20 @@ class IslamicAudioPlayer private constructor(private val context: Context) {
                 e.printStackTrace()
             }
         } else {
+            if (!com.example.util.NetworkUtil.isOnline(context)) {
+                _activeAudioId.value = null
+                _isPlaying.value = false
+                _isPlayerActive.value = false
+                scope.launch(Dispatchers.Main) {
+                    android.widget.Toast.makeText(
+                        context,
+                        "ইন্টারনেট সংযোগ নেই! অডিও শুনতে ইন্টারনেট চালু করুন অথবা আগে ডাউনলোড করুন।",
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                }
+                return
+            }
+
             val url = explicitUrl?.takeIf { it.isNotEmpty() } ?: getCdnAudioUrl(audioId, arabicText)
             try {
                 player.setMediaItem(MediaItem.fromUri(Uri.parse(url)))
@@ -336,18 +450,55 @@ class IslamicAudioPlayer private constructor(private val context: Context) {
         }
     }
 
-    fun stop() {
+    fun togglePlayPause() {
+        if (_isPlaying.value) {
+            player.pause()
+            _isPlaying.value = false
+        } else {
+            if (_activeAudioId.value != null) {
+                player.play()
+                _isPlaying.value = true
+            }
+        }
+    }
+
+    fun seekTo(positionMs: Long) {
+        player.seekTo(positionMs.coerceIn(0L, _durationMs.value))
+    }
+
+    fun setPlaybackSpeed(speed: Float) {
+        _playbackSpeed.value = speed
+        player.setPlaybackSpeed(speed)
+    }
+
+    fun pause() {
         try {
-            player.stop()
-            _activeAudioId.value = null
+            player.pause()
             _isPlaying.value = false
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
+    fun stop() {
+        try {
+            player.stop()
+            _activeAudioId.value = null
+            _isPlaying.value = false
+            stopPositionTracker()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    fun stopAndClose() {
+        stop()
+        _isPlayerActive.value = false
+    }
+
     fun release() {
         try {
+            stopPositionTracker()
             player.release()
         } catch (e: Exception) {
             e.printStackTrace()
