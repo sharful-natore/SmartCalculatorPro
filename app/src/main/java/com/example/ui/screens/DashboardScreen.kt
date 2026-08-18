@@ -3279,32 +3279,423 @@ fun DynamicGreetingIllustrationBackground(
 ) {
     val isDay = currentHour in 6..17
     // WMO Weather interpretation codes
-    // Rain/Snow/Thunderstorm
     val isRainyOrSnowy = weatherCode in listOf(51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 71, 73, 75, 77, 80, 81, 82, 85, 86, 95, 96, 99)
-    // Fog/Overcast
     val isCloudy = weatherCode in listOf(3, 45, 48)
 
-    val imageResId = remember(currentHour, weatherCode) {
+    val palette = remember(currentHour, weatherCode) {
         when {
-            isRainyOrSnowy -> if (isDay) com.example.R.drawable.bg_scene_rainy_day else com.example.R.drawable.bg_scene_rainy_night
-            isCloudy -> if (isDay) com.example.R.drawable.bg_scene_cloudy_day else com.example.R.drawable.bg_scene_cloudy_night
+            isRainyOrSnowy -> if (isDay) {
+                // Rainy Day
+                GreetingScenePalette(
+                    skyGradient = listOf(Color(0xFF37474F), Color(0xFF455A64), Color(0xFF607D8B)),
+                    sunColor = Color.Transparent,
+                    haloColor = Color.Transparent,
+                    cloudColor = Color(0x55263238),
+                    farMountainColor = Color(0xFF546E7A),
+                    midMountainColor = Color(0xFF607D8B),
+                    nearHillsColor = Color(0xFF78909C),
+                    riverColor = Color(0xFF90A4AE),
+                    riverHighlightColor = Color(0x66ECEFF1),
+                    bankColor = Color(0xFF1C2833),
+                    treeColor1 = Color(0xFF101820),
+                    treeColor2 = Color(0xFF0A1016),
+                    isNight = false,
+                    isRainy = true
+                )
+            } else {
+                // Rainy Night
+                GreetingScenePalette(
+                    skyGradient = listOf(Color(0xFF0D1117), Color(0xFF161B22), Color(0xFF253040)),
+                    sunColor = Color.Transparent,
+                    haloColor = Color.Transparent,
+                    cloudColor = Color(0x66070A0D),
+                    farMountainColor = Color(0xFF1C2430),
+                    midMountainColor = Color(0xFF253040),
+                    nearHillsColor = Color(0xFF324257),
+                    riverColor = Color(0xFF415A77),
+                    riverHighlightColor = Color(0x66778DA9),
+                    bankColor = Color(0xFF090D12),
+                    treeColor1 = Color(0xFF040608),
+                    treeColor2 = Color(0xFF020304),
+                    isNight = true,
+                    isRainy = true
+                )
+            }
+            isCloudy -> if (isDay) {
+                // Cloudy Day
+                GreetingScenePalette(
+                    skyGradient = listOf(Color(0xFF455A64), Color(0xFF607D8B), Color(0xFF78909C)),
+                    sunColor = Color(0x44FFF9C4),
+                    haloColor = Color(0x22FFFFFF),
+                    cloudColor = Color(0x44ECEFF1),
+                    farMountainColor = Color(0xFF37474F),
+                    midMountainColor = Color(0xFF546E7A),
+                    nearHillsColor = Color(0xFF78909C),
+                    riverColor = Color(0xFFB0BEC5),
+                    riverHighlightColor = Color(0x77FFFFFF),
+                    bankColor = Color(0xFF263238),
+                    treeColor1 = Color(0xFF182126),
+                    treeColor2 = Color(0xFF10171B),
+                    isNight = false,
+                    isRainy = false
+                )
+            } else {
+                // Cloudy Night
+                GreetingScenePalette(
+                    skyGradient = listOf(Color(0xFF101820), Color(0xFF1E2A38), Color(0xFF2B3E52)),
+                    sunColor = Color(0x44E0FBFC),
+                    haloColor = Color(0x156FFFE9),
+                    cloudColor = Color(0x33243342),
+                    farMountainColor = Color(0xFF1F2D3D),
+                    midMountainColor = Color(0xFF2B3E52),
+                    nearHillsColor = Color(0xFF3A526A),
+                    riverColor = Color(0xFF4A6984),
+                    riverHighlightColor = Color(0x667096B8),
+                    bankColor = Color(0xFF0D141C),
+                    treeColor1 = Color(0xFF060B10),
+                    treeColor2 = Color(0xFF030608),
+                    isNight = true,
+                    isRainy = false
+                )
+            }
             else -> when (currentHour) {
-                in 5..11 -> com.example.R.drawable.bg_scene_morning
-                in 12..15 -> com.example.R.drawable.bg_scene_afternoon
-                in 16..19 -> com.example.R.drawable.bg_scene_evening
-                else -> com.example.R.drawable.bg_scene_night
+                in 5..11 -> {
+                    // Morning (Warm Dawn Pink/Lavender)
+                    GreetingScenePalette(
+                        skyGradient = listOf(Color(0xFF3D2652), Color(0xFF5A3A73), Color(0xFF885B9E)),
+                        sunColor = Color(0xFFFFF0B3),
+                        haloColor = Color(0xFFFFB5A7),
+                        cloudColor = Color(0x33FFFFFF),
+                        farMountainColor = Color(0xFF6B4582),
+                        midMountainColor = Color(0xFF885B9E),
+                        nearHillsColor = Color(0xFFA271B8),
+                        riverColor = Color(0xFFF4ABC4),
+                        riverHighlightColor = Color(0x88FFFFFF),
+                        bankColor = Color(0xFF381D4F),
+                        treeColor1 = Color(0xFF210F33),
+                        treeColor2 = Color(0xFF1B0A2B),
+                        isNight = false,
+                        isRainy = false
+                    )
+                }
+                in 12..15 -> {
+                    // Afternoon (Warm Golden / Terracotta)
+                    GreetingScenePalette(
+                        skyGradient = listOf(Color(0xFFD35400), Color(0xFFE67E22), Color(0xFFF39C12)),
+                        sunColor = Color(0xFFFFF9C4),
+                        haloColor = Color(0xFFFFF9C4),
+                        cloudColor = Color(0x38FFFFFF),
+                        farMountainColor = Color(0xFFB03A2E),
+                        midMountainColor = Color(0xFFCA6F1E),
+                        nearHillsColor = Color(0xFFE59866),
+                        riverColor = Color(0xFFFAD7A0),
+                        riverHighlightColor = Color(0x88FFFFFF),
+                        bankColor = Color(0xFF6E2C00),
+                        treeColor1 = Color(0xFF3E1900),
+                        treeColor2 = Color(0xFF2C1200),
+                        isNight = false,
+                        isRainy = false
+                    )
+                }
+                in 16..19 -> {
+                    // Evening (Sunset Crimson / Violet)
+                    GreetingScenePalette(
+                        skyGradient = listOf(Color(0xFF2C1236), Color(0xFF6C1E47), Color(0xFF9C276A)),
+                        sunColor = Color(0xFFFFAB40),
+                        haloColor = Color(0xFFFF7043),
+                        cloudColor = Color(0x38FF6E40),
+                        farMountainColor = Color(0xFF581845),
+                        midMountainColor = Color(0xFF7D1E58),
+                        nearHillsColor = Color(0xFF9C276A),
+                        riverColor = Color(0xFFFF8A65),
+                        riverHighlightColor = Color(0x99FFE082),
+                        bankColor = Color(0xFF230728),
+                        treeColor1 = Color(0xFF150218),
+                        treeColor2 = Color(0xFF0D010F),
+                        isNight = false,
+                        isRainy = false
+                    )
+                }
+                else -> {
+                    // Night (Deep Indigo / Glowing Moon)
+                    GreetingScenePalette(
+                        skyGradient = listOf(Color(0xFF0A1128), Color(0xFF1C2541), Color(0xFF283A63)),
+                        sunColor = Color(0xFFE0FBFC),
+                        haloColor = Color(0xFF6FFFE9),
+                        cloudColor = Color(0x223A506B),
+                        farMountainColor = Color(0xFF1E2A4A),
+                        midMountainColor = Color(0xFF283A63),
+                        nearHillsColor = Color(0xFF3A506B),
+                        riverColor = Color(0xFF5BC0BE),
+                        riverHighlightColor = Color(0x886FFFE9),
+                        bankColor = Color(0xFF0D1B2A),
+                        treeColor1 = Color(0xFF060C14),
+                        treeColor2 = Color(0xFF03070B),
+                        isNight = true,
+                        isRainy = false
+                    )
+                }
             }
         }
     }
 
-    Box(modifier = modifier) {
-        androidx.compose.foundation.Image(
-            painter = androidx.compose.ui.res.painterResource(id = imageResId),
-            contentDescription = "Greeting Background",
-            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
-            modifier = Modifier.fillMaxSize()
+    androidx.compose.foundation.Canvas(modifier = modifier.fillMaxSize()) {
+        val w = size.width
+        val h = size.height
+
+        // 1. Sky Gradient Background
+        drawRect(
+            brush = androidx.compose.ui.graphics.Brush.verticalGradient(palette.skyGradient)
         )
+
+        // 2. Stars for Night
+        if (palette.isNight && !palette.isRainy) {
+            val starPositions = listOf(
+                Pair(0.15f, 0.12f), Pair(0.28f, 0.22f), Pair(0.42f, 0.08f),
+                Pair(0.68f, 0.15f), Pair(0.82f, 0.25f), Pair(0.91f, 0.10f),
+                Pair(0.22f, 0.35f), Pair(0.75f, 0.32f), Pair(0.58f, 0.20f),
+                Pair(0.35f, 0.15f), Pair(0.08f, 0.28f), Pair(0.88f, 0.38f)
+            )
+            starPositions.forEachIndexed { i, (sx, sy) ->
+                val starRadius = if (i % 3 == 0) 2.2f else 1.4f
+                val starAlpha = if (i % 2 == 0) 0.85f else 0.55f
+                drawCircle(
+                    color = Color.White.copy(alpha = starAlpha),
+                    radius = starRadius,
+                    center = androidx.compose.ui.geometry.Offset(w * sx, h * sy)
+                )
+            }
+        }
+
+        // 3. Sun or Moon & Celestial Halos
+        if (palette.sunColor != Color.Transparent) {
+            val cx = w * 0.5f
+            val cy = h * 0.40f
+
+            if (palette.haloColor != Color.Transparent) {
+                drawCircle(
+                    color = palette.haloColor.copy(alpha = 0.18f),
+                    radius = w * 0.18f,
+                    center = androidx.compose.ui.geometry.Offset(cx, cy)
+                )
+                drawCircle(
+                    color = palette.haloColor.copy(alpha = 0.32f),
+                    radius = w * 0.12f,
+                    center = androidx.compose.ui.geometry.Offset(cx, cy)
+                )
+            }
+            drawCircle(
+                color = palette.sunColor,
+                radius = w * 0.07f,
+                center = androidx.compose.ui.geometry.Offset(cx, cy)
+            )
+        }
+
+        // 4. Stylized Floating Clouds
+        drawOval(
+            color = palette.cloudColor,
+            topLeft = androidx.compose.ui.geometry.Offset(w * 0.08f, h * 0.15f),
+            size = androidx.compose.ui.geometry.Size(w * 0.32f, h * 0.12f)
+        )
+        drawOval(
+            color = palette.cloudColor,
+            topLeft = androidx.compose.ui.geometry.Offset(w * 0.62f, h * 0.12f),
+            size = androidx.compose.ui.geometry.Size(w * 0.30f, h * 0.10f)
+        )
+
+        // 5. Far Mountains (Layer 1)
+        val farMountainPath = androidx.compose.ui.graphics.Path().apply {
+            moveTo(0f, h * 0.58f)
+            lineTo(w * 0.10f, h * 0.46f)
+            lineTo(w * 0.25f, h * 0.54f)
+            lineTo(w * 0.38f, h * 0.43f)
+            lineTo(w * 0.52f, h * 0.53f)
+            lineTo(w * 0.68f, h * 0.42f)
+            lineTo(w * 0.82f, h * 0.52f)
+            lineTo(w * 0.92f, h * 0.45f)
+            lineTo(w, h * 0.51f)
+            lineTo(w, h)
+            lineTo(0f, h)
+            close()
+        }
+        drawPath(farMountainPath, color = palette.farMountainColor)
+
+        // 6. Mid Mountains (Layer 2)
+        val midMountainPath = androidx.compose.ui.graphics.Path().apply {
+            moveTo(0f, h * 0.64f)
+            lineTo(w * 0.15f, h * 0.53f)
+            lineTo(w * 0.28f, h * 0.62f)
+            lineTo(w * 0.45f, h * 0.50f)
+            lineTo(w * 0.62f, h * 0.63f)
+            lineTo(w * 0.76f, h * 0.52f)
+            lineTo(w * 0.90f, h * 0.60f)
+            lineTo(w, h * 0.55f)
+            lineTo(w, h)
+            lineTo(0f, h)
+            close()
+        }
+        drawPath(midMountainPath, color = palette.midMountainColor)
+
+        // 7. Near Hills (Layer 3)
+        val nearHillsPath = androidx.compose.ui.graphics.Path().apply {
+            moveTo(0f, h * 0.71f)
+            quadraticTo(w * 0.20f, h * 0.60f, w * 0.40f, h * 0.70f)
+            quadraticTo(w * 0.70f, h * 0.64f, w, h * 0.69f)
+            lineTo(w, h)
+            lineTo(0f, h)
+            close()
+        }
+        drawPath(nearHillsPath, color = palette.nearHillsColor)
+
+        // 8. Winding River
+        val riverPath = androidx.compose.ui.graphics.Path().apply {
+            moveTo(w * 0.49f, h * 0.58f)
+            cubicTo(w * 0.51f, h * 0.67f, w * 0.45f, h * 0.76f, w * 0.38f, h * 1.0f)
+            lineTo(w * 0.62f, h * 1.0f)
+            cubicTo(w * 0.55f, h * 0.85f, w * 0.54f, h * 0.74f, w * 0.51f, h * 0.58f)
+            close()
+        }
+        drawPath(riverPath, color = palette.riverColor)
+
+        // River Reflections
+        val reflectionAlpha = palette.riverHighlightColor.alpha
+        val reflectionBaseColor = palette.riverHighlightColor.copy(alpha = 1f)
+        drawLine(
+            color = reflectionBaseColor.copy(alpha = reflectionAlpha * 0.8f),
+            start = androidx.compose.ui.geometry.Offset(w * 0.48f, h * 0.65f),
+            end = androidx.compose.ui.geometry.Offset(w * 0.52f, h * 0.65f),
+            strokeWidth = 2.5f
+        )
+        drawLine(
+            color = reflectionBaseColor.copy(alpha = reflectionAlpha * 0.9f),
+            start = androidx.compose.ui.geometry.Offset(w * 0.46f, h * 0.73f),
+            end = androidx.compose.ui.geometry.Offset(w * 0.54f, h * 0.73f),
+            strokeWidth = 3f
+        )
+        drawLine(
+            color = reflectionBaseColor.copy(alpha = reflectionAlpha),
+            start = androidx.compose.ui.geometry.Offset(w * 0.44f, h * 0.82f),
+            end = androidx.compose.ui.geometry.Offset(w * 0.56f, h * 0.82f),
+            strokeWidth = 4f
+        )
+        drawLine(
+            color = reflectionBaseColor.copy(alpha = reflectionAlpha),
+            start = androidx.compose.ui.geometry.Offset(w * 0.41f, h * 0.92f),
+            end = androidx.compose.ui.geometry.Offset(w * 0.59f, h * 0.92f),
+            strokeWidth = 4.5f
+        )
+
+        // 9. Foreground Banks
+        val leftBankPath = androidx.compose.ui.graphics.Path().apply {
+            moveTo(0f, h * 0.80f)
+            quadraticTo(w * 0.20f, h * 0.73f, w * 0.41f, h * 0.83f)
+            lineTo(w * 0.38f, h)
+            lineTo(0f, h)
+            close()
+        }
+        drawPath(leftBankPath, color = palette.bankColor)
+
+        val rightBankPath = androidx.compose.ui.graphics.Path().apply {
+            moveTo(w, h * 0.78f)
+            quadraticTo(w * 0.80f, h * 0.73f, w * 0.59f, h * 0.85f)
+            lineTo(w * 0.63f, h)
+            lineTo(w, h)
+            close()
+        }
+        drawPath(rightBankPath, color = palette.bankColor)
+
+        // 10. Pine Tree Silhouettes (Left Forest)
+        drawPineTree(this, cx = w * 0.08f, baseY = h * 0.95f, width = w * 0.11f, height = h * 0.32f, color = palette.treeColor1)
+        drawPineTree(this, cx = w * 0.16f, baseY = h * 0.92f, width = w * 0.13f, height = h * 0.38f, color = palette.treeColor2)
+        drawPineTree(this, cx = w * 0.25f, baseY = h * 0.96f, width = w * 0.10f, height = h * 0.28f, color = palette.treeColor1)
+        drawPineTree(this, cx = w * 0.32f, baseY = h * 0.98f, width = w * 0.07f, height = h * 0.20f, color = palette.treeColor2)
+
+        // 11. Pine Tree Silhouettes (Right Forest)
+        drawPineTree(this, cx = w * 0.86f, baseY = h * 0.92f, width = w * 0.14f, height = h * 0.39f, color = palette.treeColor2)
+        drawPineTree(this, cx = w * 0.76f, baseY = h * 0.95f, width = w * 0.11f, height = h * 0.33f, color = palette.treeColor1)
+        drawPineTree(this, cx = w * 0.67f, baseY = h * 0.97f, width = w * 0.08f, height = h * 0.22f, color = palette.treeColor2)
+        drawPineTree(this, cx = w * 0.94f, baseY = h * 0.96f, width = w * 0.10f, height = h * 0.29f, color = palette.treeColor1)
+
+        // 12. Rain Streaks for Rainy Weather
+        if (palette.isRainy) {
+            val rainDrops = listOf(
+                Pair(0.12f, 0.30f), Pair(0.28f, 0.25f), Pair(0.44f, 0.28f), Pair(0.60f, 0.22f), Pair(0.76f, 0.32f), Pair(0.90f, 0.28f),
+                Pair(0.18f, 0.45f), Pair(0.35f, 0.42f), Pair(0.52f, 0.48f), Pair(0.70f, 0.44f), Pair(0.85f, 0.46f),
+                Pair(0.24f, 0.60f), Pair(0.48f, 0.62f), Pair(0.65f, 0.60f), Pair(0.82f, 0.64f),
+                Pair(0.15f, 0.75f), Pair(0.38f, 0.78f), Pair(0.58f, 0.74f), Pair(0.78f, 0.76f)
+            )
+            rainDrops.forEach { (rx, ry) ->
+                val startX = w * rx
+                val startY = h * ry
+                drawLine(
+                    color = Color.White.copy(alpha = 0.35f),
+                    start = androidx.compose.ui.geometry.Offset(startX, startY),
+                    end = androidx.compose.ui.geometry.Offset(startX - (w * 0.025f), startY + (h * 0.09f)),
+                    strokeWidth = 2.0f
+                )
+            }
+        }
     }
 }
+
+private fun drawPineTree(
+    drawScope: androidx.compose.ui.graphics.drawscope.DrawScope,
+    cx: Float,
+    baseY: Float,
+    width: Float,
+    height: Float,
+    color: Color
+) {
+    val topY = baseY - height
+    val tier1Height = height * 0.45f
+    val tier2Height = height * 0.40f
+    val tier3Height = height * 0.35f
+
+    // Tier 1 (Top)
+    val path1 = androidx.compose.ui.graphics.Path().apply {
+        moveTo(cx, topY)
+        lineTo(cx + (width * 0.30f), topY + tier1Height)
+        lineTo(cx - (width * 0.30f), topY + tier1Height)
+        close()
+    }
+    drawScope.drawPath(path1, color = color)
+
+    // Tier 2 (Middle)
+    val tier2Top = topY + (height * 0.22f)
+    val path2 = androidx.compose.ui.graphics.Path().apply {
+        moveTo(cx, tier2Top)
+        lineTo(cx + (width * 0.42f), tier2Top + tier2Height)
+        lineTo(cx - (width * 0.42f), tier2Top + tier2Height)
+        close()
+    }
+    drawScope.drawPath(path2, color = color)
+
+    // Tier 3 (Bottom)
+    val tier3Top = topY + (height * 0.45f)
+    val path3 = androidx.compose.ui.graphics.Path().apply {
+        moveTo(cx, tier3Top)
+        lineTo(cx + (width * 0.50f), tier3Top + tier3Height)
+        lineTo(cx - (width * 0.50f), tier3Top + tier3Height)
+        close()
+    }
+    drawScope.drawPath(path3, color = color)
+}
+
+private data class GreetingScenePalette(
+    val skyGradient: List<Color>,
+    val sunColor: Color,
+    val haloColor: Color,
+    val cloudColor: Color,
+    val farMountainColor: Color,
+    val midMountainColor: Color,
+    val nearHillsColor: Color,
+    val riverColor: Color,
+    val riverHighlightColor: Color,
+    val bankColor: Color,
+    val treeColor1: Color,
+    val treeColor2: Color,
+    val isNight: Boolean,
+    val isRainy: Boolean
+)
 
 
