@@ -33,179 +33,204 @@ class IslamicAudioPlayer private constructor(private val context: Context) {
             }
         }
 
+        fun normalizeArabicText(text: String): String {
+            val regex = Regex("[\\u0610-\\u061A\\u064B-\\u065F\\u0670\\u06D6-\\u06DC\\u06DF-\\u06E8\\u06EA-\\u06ED]")
+            return text.replace(regex, "")
+                .replace("\n", " ")
+                .replace("۝", " ")
+                .replace("۔", " ")
+                .replace("أ", "ا")
+                .replace("إ", "ا")
+                .replace("آ", "ا")
+                .replace("ى", "ي")
+                .replace("  ", " ")
+                .trim()
+        }
+
         fun getCdnAudioUrl(id: String, arabicText: String = ""): String {
             val cleanId = id.trim().lowercase()
-            val cleanText = arabicText.replace("\n", " ").replace("۝", " ").trim()
+            val normText = normalizeArabicText(arabicText)
 
-            // 1. Quran Surahs (Complete Surah high quality Mishary Alafasy CDN)
-            if (cleanId.contains("fatiha") || cleanText.contains("الحمد لله رب العالمين")) {
+            // 1. FASTING (Sehri & Iftar)
+            if (cleanId.contains("sehri") || cleanId.contains("fasting_niyyah") || normText.contains("نويت ان اصوم") || normText.contains("نويت")) {
+                return "https://hisnmuslim.com/audio/ar/175.mp3"
+            }
+            if (cleanId.contains("iftar") || normText.contains("اللهم لك صمت") || normText.contains("ذهب الظما")) {
+                return "https://hisnmuslim.com/audio/ar/176.mp3"
+            }
+
+            // 2. QURAN SURAHS (Complete Surah high quality Alafasy CDN)
+            if (cleanId.contains("fatiha") || normText.contains("الحمد لله رب العالمين")) {
                 return "https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/1.mp3"
             }
-            if (cleanId.contains("ikhlas") || cleanText.contains("قل هو الله أحد")) {
+            if (cleanId.contains("ikhlas") || normText.contains("قل هو الله احد")) {
                 return "https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/112.mp3"
             }
-            if (cleanId.contains("falaq") || cleanText.contains("قل أعوذ برب الفلق")) {
+            if (cleanId.contains("falaq") || normText.contains("قل اعوذ برب الفلق")) {
                 return "https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/113.mp3"
             }
-            if (cleanId.contains("nas") && !cleanId.contains("nasta") || cleanText.contains("قل أعوذ برب الناس")) {
+            if (cleanId.contains("nas") && !cleanId.contains("nasta") || normText.contains("قل اعوذ برب الناس")) {
                 return "https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/114.mp3"
             }
-            if (cleanId.contains("kafirun") || cleanText.contains("قل يا أيها الكافرون")) {
+            if (cleanId.contains("kafirun") || normText.contains("قل يا ايها الكافرون")) {
                 return "https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/109.mp3"
             }
-            if (cleanId.contains("kawthar") || cleanText.contains("إنا أعطيناك الكوثر")) {
+            if (cleanId.contains("kawthar") || normText.contains("انا اعطيناك الكوثر")) {
                 return "https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/108.mp3"
             }
-            if (cleanId.contains("fil") || cleanText.contains("ألم تر كيف فعل ربك")) {
+            if (cleanId.contains("fil") || normText.contains("الم تر كيف فعل ربك")) {
                 return "https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/105.mp3"
             }
-            if (cleanId.contains("quraish") || cleanText.contains("لإيلاف قريش")) {
+            if (cleanId.contains("quraish") || normText.contains("لايلاف قريش")) {
                 return "https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/106.mp3"
             }
-            if (cleanId.contains("maun") || cleanText.contains("أرأيت الذي يكذب")) {
+            if (cleanId.contains("maun") || normText.contains("ارايت الذي يكذب")) {
                 return "https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/107.mp3"
             }
-            if (cleanId.contains("asr") && !cleanId.contains("masura") || cleanText.contains("والعصر")) {
+            if (cleanId.contains("asr") && !cleanId.contains("masura") || normText.contains("والعصر")) {
                 return "https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/103.mp3"
             }
-            if (cleanId.contains("qadr") || cleanText.contains("إنا أنزلناه في ليلة القدر")) {
+            if (cleanId.contains("qadr") || normText.contains("انا انزلناه في ليلة القدر")) {
                 return "https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/97.mp3"
             }
-            if (cleanId.contains("yasin") || cleanText.contains("يس")) {
+            if (cleanId.contains("nasr") || normText.contains("إذا جاء نصر الله")) {
+                return "https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/110.mp3"
+            }
+            if (cleanId.contains("lahab") || cleanId.contains("masad") || normText.contains("تبت يدا ابي لهب")) {
+                return "https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/111.mp3"
+            }
+            if (cleanId.contains("yasin") || normText.contains("يس")) {
                 return "https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/36.mp3"
             }
-            if (cleanId.contains("mulk") || cleanText.contains("تبارك الذي بيده الملك")) {
+            if (cleanId.contains("mulk") || normText.contains("تبارك الذي بيده الملك")) {
                 return "https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/67.mp3"
             }
-            if (cleanId.contains("rahman") && !cleanId.contains("bismillah") || cleanText.contains("الرحمن علم القرآن")) {
+            if (cleanId.contains("rahman") && !cleanId.contains("bismillah") || normText.contains("الرحمن علم القران")) {
                 return "https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/55.mp3"
             }
-            if (cleanId.contains("waqiah") || cleanText.contains("إذا وقعت الواقعة")) {
+            if (cleanId.contains("waqiah") || normText.contains("إذا وقعت الواقعة")) {
                 return "https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/56.mp3"
             }
 
-            // 2. Quran Ayahs & Duas
-            if (cleanId.contains("kursi") || cleanText.contains("الله لا إله إلا هو الحي القيوم")) {
+            // 3. SPECIFIC QURANIC AYAHS
+            if (cleanId.contains("kursi") || normText.contains("الله لا اله الا هو الحي القيوم")) {
                 return "https://cdn.islamic.network/quran/audio/128/ar.alafasy/262.mp3"
             }
-            if (cleanId.contains("rabbana_atina") || cleanText.contains("ربنا آتنا في الدنيا حسنة")) {
+            if (cleanId.contains("rabbana_atina") || normText.contains("ربنا اتنا في الدنيا حسنة")) {
                 return "https://cdn.islamic.network/quran/audio/128/ar.alafasy/208.mp3"
             }
-            if (cleanId.contains("yunus") || cleanText.contains("لا إله إلا أنت سبحانك إني كنت من الظالمين")) {
+            if (cleanId.contains("yunus") || normText.contains("لا اله الا انت سبحانك اني كنت من الظالمين")) {
                 return "https://cdn.islamic.network/quran/audio/128/ar.alafasy/2570.mp3"
             }
-            if (cleanId.contains("parents") || cleanText.contains("رب ارحمهما كما ربياني صغيرا")) {
+            if (cleanId.contains("parents") || normText.contains("رب ارحمهما كما ربياني صغيرا")) {
                 return "https://cdn.islamic.network/quran/audio/128/ar.alafasy/2053.mp3"
             }
-            if (cleanId.contains("amanar_rasul") || cleanText.contains("آمن الرسول بما أنزل")) {
+            if (cleanId.contains("amanar_rasul") || normText.contains("امن الرسول بما انزل")) {
                 return "https://cdn.islamic.network/quran/audio/128/ar.alafasy/292.mp3"
             }
-            if (cleanId.contains("travel") || cleanText.contains("سبحان الذي سخر لنا هذا")) {
+            if (cleanId.contains("travel") || cleanId.contains("vehicle_ride") || normText.contains("سبحان الذي سخر لنا هذا")) {
                 return "https://cdn.islamic.network/quran/audio/128/ar.alafasy/4338.mp3"
             }
-            if (cleanId.contains("hashr") || cleanText.contains("هو الله الذي لا إله إلا هو")) {
+            if (cleanId.contains("hashr") || normText.contains("هو الله الذي لا اله الا هو")) {
                 return "https://cdn.islamic.network/quran/audio/128/ar.alafasy/5148.mp3"
             }
 
-            // 3. Fasting (Sehri & Iftar) Duas
-            if (cleanId.contains("sehri") || cleanId.contains("fasting_niyyah") || cleanText.contains("نويت أن أصوم") || cleanText.contains("نَوَيْتُ")) {
-                return "https://hisnmuslim.com/audio/ar/176.mp3"
-            }
-            if (cleanId.contains("iftar") || cleanText.contains("اللهم لك صمت") || cleanText.contains("ذهب الظمأ")) {
-                return "https://hisnmuslim.com/audio/ar/176.mp3"
-            }
-
-            // 4. Namaz / Salah Steps & Adhkar (Hisnul Muslim CDN)
-            if (cleanId.contains("sana") || cleanText.contains("سبحانك اللهم وبحمدك")) {
+            // 4. NAMAZ / SALAH STEPS & ADHKAR (Hisnul Muslim)
+            if (cleanId.contains("thana") || cleanId.contains("sana") || normText.contains("سبحانك اللهم وبحمدك")) {
                 return "https://hisnmuslim.com/audio/ar/27.mp3"
             }
-            if (cleanId.contains("ruku") || cleanText.contains("سبحان ربي العظيم")) {
+            if (cleanId.contains("ruku") || normText.contains("سبحان ربي العظيم")) {
                 return "https://hisnmuslim.com/audio/ar/32.mp3"
             }
-            if (cleanId.contains("qauma") || cleanText.contains("سمع الله لمن حمده")) {
+            if (cleanId.contains("qauma") || normText.contains("سمع الله لمن حمده")) {
                 return "https://hisnmuslim.com/audio/ar/34.mp3"
             }
-            if (cleanId.contains("sujud") || cleanText.contains("سبحان ربي الأعلى")) {
+            if (cleanId.contains("sujud") || cleanId.contains("sujood") || normText.contains("سبحان ربي الاعلي")) {
                 return "https://hisnmuslim.com/audio/ar/38.mp3"
             }
-            if (cleanId.contains("jalsa") || cleanText.contains("رب اغفر لي")) {
+            if (cleanId.contains("jalsa") || cleanId.contains("between_sujood") || normText.contains("رب اغفر لي") || normText.contains("اللهم اغفر لي")) {
                 return "https://hisnmuslim.com/audio/ar/44.mp3"
             }
-            if (cleanId.contains("tashahhud") || cleanId.contains("attahiyyat") || cleanText.contains("التحيات لله")) {
+            if (cleanId.contains("tashahhud") || cleanId.contains("attahiyyat") || normText.contains("التحيات لله")) {
                 return "https://hisnmuslim.com/audio/ar/49.mp3"
             }
-            if (cleanId.contains("durood") || cleanText.contains("اللهم صل على محمد")) {
+            if (cleanId.contains("durood") || normText.contains("اللهم صل علي محمد")) {
                 return "https://hisnmuslim.com/audio/ar/54.mp3"
             }
-            if (cleanId.contains("masura") || cleanText.contains("اللهم إني ظلمت نفسي")) {
+            if (cleanId.contains("masura") || normText.contains("اللهم اني ظلمت نفسي")) {
                 return "https://hisnmuslim.com/audio/ar/55.mp3"
             }
-            if (cleanId.contains("qunut") || cleanText.contains("اللهم إنا نستعينك") || cleanText.contains("اللهم اهدني")) {
+            if (cleanId.contains("qunut") || normText.contains("اللهم انا نستعينك") || normText.contains("اللهم اهدني")) {
                 return "https://hisnmuslim.com/audio/ar/116.mp3"
             }
-            if (cleanId.contains("post_prayer") || cleanId.contains("tasbeeh") || cleanText.contains("اللهم أنت السلام")) {
+            if (cleanId.contains("post_prayer") || cleanId.contains("tasbeeh") || normText.contains("اللهم انت السلام")) {
                 return "https://hisnmuslim.com/audio/ar/66.mp3"
             }
-            if (cleanId.contains("wudu_start") || (cleanId.contains("wudu") && cleanText.contains("بسم الله"))) {
+            if (cleanId.contains("wudu_start") || cleanId.contains("before_wudu") || (cleanId.contains("wudu") && normText.contains("بسم الله"))) {
                 return "https://hisnmuslim.com/audio/ar/12.mp3"
             }
-            if (cleanId.contains("wudu_end") || (cleanId.contains("wudu") && cleanText.contains("أشهد أن لا إله إلا الله"))) {
+            if (cleanId.contains("wudu_end") || cleanId.contains("after_wudu") || (cleanId.contains("wudu") && normText.contains("اشهد ان لا اله الا الله"))) {
                 return "https://hisnmuslim.com/audio/ar/13.mp3"
             }
 
-            // 5. Daily Duas & Supplications
-            if (cleanId.contains("waking") || cleanText.contains("الحمد لله الذي أحيانا")) {
+            // 5. DAILY DUAS & SUPPLICATIONS (Hisnul Muslim)
+            if (cleanId.contains("wake_up") || cleanId.contains("waking") || normText.contains("الحمد لله الذي احيانا")) {
                 return "https://hisnmuslim.com/audio/ar/1.mp3"
             }
-            if (cleanId.contains("sleeping") || cleanText.contains("باسمك اللهم أموت")) {
+            if (cleanId.contains("before_sleep") || cleanId.contains("sleeping") || normText.contains("باسمك اللهم اموت")) {
                 return "https://hisnmuslim.com/audio/ar/99.mp3"
             }
-            if (cleanId.contains("restroom_enter") || cleanText.contains("اللهم إني أعوذ بك من الخبث")) {
-                return "https://hisnmuslim.com/audio/ar/10.mp3"
-            }
-            if (cleanId.contains("restroom_exit") || cleanText.contains("غفرانك")) {
-                return "https://hisnmuslim.com/audio/ar/11.mp3"
-            }
-            if (cleanId.contains("home_exit") || cleanText.contains("بسم الله توكلت")) {
+            if (cleanId.contains("leave_home") || cleanId.contains("home_exit") || normText.contains("بسم الله توكلت")) {
                 return "https://hisnmuslim.com/audio/ar/16.mp3"
             }
-            if (cleanId.contains("home_enter") || cleanText.contains("بسم الله ولجنا")) {
+            if (cleanId.contains("enter_home") || cleanId.contains("home_enter") || normText.contains("بسم الله ولجنا")) {
                 return "https://hisnmuslim.com/audio/ar/18.mp3"
             }
-            if (cleanId.contains("mosque_enter") || cleanText.contains("اللهم افتح لي أبواب رحمتك")) {
+            if (cleanId.contains("enter_mosque") || cleanId.contains("mosque_enter") || normText.contains("اللهم افتح لي ابواب رحمتك")) {
                 return "https://hisnmuslim.com/audio/ar/20.mp3"
             }
-            if (cleanId.contains("mosque_exit") || cleanText.contains("اللهم إني أسألك من فضلك")) {
+            if (cleanId.contains("exit_mosque") || cleanId.contains("mosque_exit") || normText.contains("اللهم اني اسالك من فضلك")) {
                 return "https://hisnmuslim.com/audio/ar/21.mp3"
             }
-            if (cleanId.contains("eating_start") || cleanText.contains("بسم الله أوله وآخره")) {
+            if (cleanId.contains("before_eat") || cleanId.contains("eating_start") || normText.contains("بسم الله وعلي بركة الله")) {
                 return "https://hisnmuslim.com/audio/ar/182.mp3"
             }
-            if (cleanId.contains("eating_end") || cleanText.contains("الحمد لله الذي أطعمنا")) {
+            if (cleanId.contains("after_eat") || cleanId.contains("eating_end") || normText.contains("الحمد لله الذي اطعمنا")) {
                 return "https://hisnmuslim.com/audio/ar/184.mp3"
             }
-            if (cleanId.contains("istighfar") || cleanText.contains("اللهم أنت ربي لا إله إلا أنت خلقتني")) {
+            if (cleanId.contains("enter_toilet") || cleanId.contains("restroom_enter") || normText.contains("اللهم اني اعوذ بك من الخبث")) {
+                return "https://hisnmuslim.com/audio/ar/10.mp3"
+            }
+            if (cleanId.contains("exit_toilet") || cleanId.contains("restroom_exit") || normText.contains("غفرانك")) {
+                return "https://hisnmuslim.com/audio/ar/11.mp3"
+            }
+            if (cleanId.contains("sayyidul_istighfar") || cleanId.contains("istighfar") || normText.contains("اللهم انت ربي")) {
                 return "https://hisnmuslim.com/audio/ar/77.mp3"
             }
-            if (cleanId.contains("protection") || cleanText.contains("بسم الله الذي لا يضر مع اسمه")) {
+            if (cleanId.contains("bismillahillazi") || cleanId.contains("protection") || normText.contains("بسم الله الذي لا يضر")) {
                 return "https://hisnmuslim.com/audio/ar/79.mp3"
             }
-            if (cleanId.contains("anxiety") || cleanId.contains("debt") || cleanText.contains("اللهم إني أعوذ بك من الهم")) {
+            if (cleanId.contains("raditu_billah") || normText.contains("رضيت بالله ربا")) {
+                return "https://hisnmuslim.com/audio/ar/78.mp3"
+            }
+            if (cleanId.contains("debt_anxiety") || cleanId.contains("anxiety") || cleanId.contains("debt") || normText.contains("اللهم اني اعوذ بك من الهم")) {
                 return "https://hisnmuslim.com/audio/ar/120.mp3"
             }
-            if (cleanId.contains("sickness") || cleanId.contains("pain") || cleanText.contains("أعوذ بعزة الله")) {
+            if (cleanId.contains("illness") || cleanId.contains("sickness") || cleanId.contains("pain") || normText.contains("اللهم رب الناس اذهب الباس")) {
                 return "https://hisnmuslim.com/audio/ar/144.mp3"
             }
-            if (cleanId.contains("janazah") || cleanText.contains("اللهم اغفر لحينا وميتنا")) {
+            if (cleanId.contains("hasbunallah") || normText.contains("حسبنا الله ونعم الوكيل")) {
+                return "https://hisnmuslim.com/audio/ar/135.mp3"
+            }
+            if (cleanId.contains("janazah") || cleanId.contains("grave") || normText.contains("اللهم اغفر لحينا وميتنا")) {
                 return "https://hisnmuslim.com/audio/ar/156.mp3"
             }
-            if (cleanId.contains("istikhara") || cleanText.contains("اللهم إني أستخيرك بعلمك")) {
+            if (cleanId.contains("istikhara") || normText.contains("اللهم اني استخيرك بعلمك")) {
                 return "https://hisnmuslim.com/audio/ar/26.mp3"
             }
 
-            // Fallback to high-quality Alafasy audio
-            val trackNum = (Math.abs(cleanId.hashCode()) % 114) + 1
-            return "https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/$trackNum.mp3"
+            // Default Fallback
+            return "https://hisnmuslim.com/audio/ar/1.mp3"
         }
     }
 

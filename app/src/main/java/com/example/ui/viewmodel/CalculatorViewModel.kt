@@ -281,6 +281,23 @@ class CalculatorViewModel(
             .putInt("islamic_district_offset", offsetMinutes)
             .putBoolean("islamic_district_auto", isAuto)
             .commit()
+
+        // Keep Weather Location in perfect sync with selected district
+        weatherLocation = nameEn
+        weatherLocationLat = lat
+        weatherLocationLng = lon
+        sharedPrefs.edit()
+            .putString("weather_location", nameEn)
+            .putFloat("weather_lat", lat.toFloat())
+            .putFloat("weather_lng", lon.toFloat())
+            .apply()
+        fetchWeather(force = true)
+
+        try {
+            com.example.widget.ToolsMateMasterWidget.updateAllWidgets(context)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     fun autoDetectIslamicLocation(context: Context, onResult: (Boolean, String?) -> Unit = { _, _ -> }) {
@@ -1800,6 +1817,36 @@ How can I help you today?"""
             editor.putFloat("weather_lat", lat.toFloat()).putFloat("weather_lng", lng.toFloat())
             if (availableWeatherCities.none { it.name.equals(trimmed, ignoreCase = true) }) {
                 availableWeatherCities.add(WeatherCity(trimmed, lat, lng))
+            }
+
+            // Sync Islamic District persistently when weather location changes
+            val closestDistrict = com.example.ui.islamic.allBdDistrictsList.minByOrNull { dist ->
+                val results = FloatArray(1)
+                android.location.Location.distanceBetween(lat, lng, dist.lat, dist.lon, results)
+                results[0]
+            }
+            if (closestDistrict != null) {
+                selectedIslamicDistrictBn = closestDistrict.nameBn
+                selectedIslamicDistrictEn = closestDistrict.nameEn
+                selectedIslamicDistrictLat = closestDistrict.lat
+                selectedIslamicDistrictLon = closestDistrict.lon
+                selectedIslamicDistrictOffsetMinutes = closestDistrict.offsetMinutes
+                isIslamicLocationAutoDetected = false
+
+                islamicPrefs.edit()
+                    .putString("islamic_district_bn", closestDistrict.nameBn)
+                    .putString("islamic_district_en", closestDistrict.nameEn)
+                    .putFloat("islamic_district_lat", closestDistrict.lat.toFloat())
+                    .putFloat("islamic_district_lon", closestDistrict.lon.toFloat())
+                    .putInt("islamic_district_offset", closestDistrict.offsetMinutes)
+                    .putBoolean("islamic_district_auto", false)
+                    .commit()
+
+                try {
+                    com.example.widget.ToolsMateMasterWidget.updateAllWidgets(context)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
         }
         editor.apply()

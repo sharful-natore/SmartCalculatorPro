@@ -32,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.style.TextAlign
 import com.example.ui.theme.CalculatorThemeColors
 import com.example.ui.viewmodel.CalculatorViewModel
@@ -131,28 +132,12 @@ fun DynamicWeatherScreen(
                     }
                 }
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text(
-                        text = if (isBn) "বর্তমান আবহাওয়া" else "Current Weather",
-                        fontSize = 13.5.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = themeColors.displayText.copy(alpha = 0.85f)
-                    )
-                    Text(
-                        text = "•",
-                        fontSize = 12.sp,
-                        color = themeColors.displayText.copy(alpha = 0.4f)
-                    )
-                    Text(
-                        text = updateTimeFormatted,
-                        fontSize = 11.5.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = themeColors.displayText.copy(alpha = 0.65f)
-                    )
-                }
+                Text(
+                    text = updateTimeFormatted,
+                    fontSize = 12.5.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = themeColors.displayText.copy(alpha = 0.8f)
+                )
             }
             IconButton(onClick = { showSearchDialog = true }) {
                 Icon(
@@ -364,71 +349,185 @@ fun CurrentWeatherCard(
     val temp = current.temperature_2m.toInt()
     val isDay = current.is_day == 1
     val code = current.weather_code
-    
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val currentHour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+
     val condition = when (code) {
-        0 -> if (isBn) "পরিষ্কার" else "Clear"
+        0 -> if (isBn) "পরিষ্কার আকাশ" else "Clear Sky"
         1, 2, 3 -> if (isBn) "আংশিক মেঘলা" else "Partly Cloudy"
-        45, 48 -> if (isBn) "কুয়াশা" else "Fog"
+        45, 48 -> if (isBn) "ঘন কুয়াশা" else "Fog"
         51, 53, 55 -> if (isBn) "গুঁড়ি গুঁড়ি বৃষ্টি" else "Drizzle"
-        61, 63, 65 -> if (isBn) "বৃষ্টি" else "Rain"
+        61, 63, 65 -> if (isBn) "বৃষ্টিপাত" else "Rain"
         71, 73, 75 -> if (isBn) "তুষারপাত" else "Snow"
         95, 96, 99 -> if (isBn) "বজ্রবৃষ্টি" else "Thunderstorm"
-        else -> if (isBn) "অজানা" else "Unknown"
+        else -> if (isBn) "সাধারণ আবহাওয়া" else "Moderate Weather"
+    }
+
+    fun toBnDigits(input: String): String {
+        return input
+            .replace("0", "০")
+            .replace("1", "১")
+            .replace("2", "২")
+            .replace("3", "৩")
+            .replace("4", "৪")
+            .replace("5", "৫")
+            .replace("6", "৬")
+            .replace("7", "৭")
+            .replace("8", "৮")
+            .replace("9", "৯")
     }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = themeColors.buttonEqualBg)
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 260.dp)
+                .clip(RoundedCornerShape(24.dp))
         ) {
-            WeatherConditionGraphic(
-                code = code,
-                isDay = isDay,
-                modifier = Modifier.size(80.dp)
+            // Dynamic Greeting Section Canvas Illustration Background
+            DynamicGreetingIllustrationBackground(
+                currentHour = currentHour,
+                weatherCode = code,
+                isDark = isDark,
+                modifier = Modifier.matchParentSize()
             )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "$temp°",
-                fontSize = 56.sp,
-                fontWeight = FontWeight.Bold,
-                color = themeColors.buttonEqualText
+
+            // Protective scrim for high contrast typography over all sky colors
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Black.copy(alpha = 0.15f),
+                                Color.Black.copy(alpha = 0.45f)
+                            )
+                        )
+                    )
             )
-            Text(
-                text = condition,
-                fontSize = 20.sp,
-                color = themeColors.buttonEqualText.copy(alpha = 0.9f)
-            )
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
+
+            // Weather Info Overlay
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                WeatherDetailItem(
-                    icon = Icons.Default.WaterDrop,
-                    value = "${current.relative_humidity_2m}%",
-                    label = if (isBn) "আর্দ্রতা" else "Humidity",
-                    themeColors = themeColors
+                // Weather condition graphic badge
+                WeatherConditionGraphic(
+                    code = code,
+                    isDay = isDay,
+                    modifier = Modifier.size(76.dp)
                 )
-                WeatherDetailItem(
-                    icon = Icons.Default.Air,
-                    value = "${current.wind_speed_10m} km/h",
-                    label = if (isBn) "বাতাস" else "Wind",
-                    themeColors = themeColors
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                val tempStr = if (isBn) toBnDigits("$temp") else "$temp"
+                Text(
+                    text = "$tempStr°",
+                    fontSize = 52.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color.White
                 )
-                WeatherDetailItem(
-                    icon = Icons.Default.Thermostat,
-                    value = "${current.apparent_temperature}°",
-                    label = if (isBn) "অনুভূত" else "Feels Like",
-                    themeColors = themeColors
+
+                Text(
+                    text = condition,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White.copy(alpha = 0.95f)
                 )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Stats Chips Bar
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color.Black.copy(alpha = 0.28f))
+                        .padding(vertical = 12.dp, horizontal = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val humidityVal = if (isBn) toBnDigits("${current.relative_humidity_2m}") else "${current.relative_humidity_2m}"
+                    val windVal = if (isBn) toBnDigits("${current.wind_speed_10m}") else "${current.wind_speed_10m}"
+                    val feelsLikeVal = if (isBn) toBnDigits("${current.apparent_temperature}") else "${current.apparent_temperature}"
+
+                    WeatherDetailItemOverlay(
+                        icon = Icons.Default.WaterDrop,
+                        value = "$humidityVal%",
+                        label = if (isBn) "আর্দ্রতা" else "Humidity"
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .width(1.dp)
+                            .height(28.dp)
+                            .background(Color.White.copy(alpha = 0.25f))
+                    )
+
+                    WeatherDetailItemOverlay(
+                        icon = Icons.Default.Air,
+                        value = "$windVal km/h",
+                        label = if (isBn) "বাতাস" else "Wind"
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .width(1.dp)
+                            .height(28.dp)
+                            .background(Color.White.copy(alpha = 0.25f))
+                    )
+
+                    WeatherDetailItemOverlay(
+                        icon = Icons.Default.Thermostat,
+                        value = "$feelsLikeVal°",
+                        label = if (isBn) "অনুভূত" else "Feels Like"
+                    )
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun WeatherDetailItemOverlay(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    value: String,
+    label: String
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = Color.White.copy(alpha = 0.9f),
+                modifier = Modifier.size(16.dp)
+            )
+            Text(
+                text = value,
+                fontSize = 13.5.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+        }
+        Text(
+            text = label,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium,
+            color = Color.White.copy(alpha = 0.75f)
+        )
     }
 }
 

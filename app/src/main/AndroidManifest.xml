@@ -98,6 +98,19 @@
             </intent-filter>
         </receiver>
 
+        <receiver
+            android:name=".widget.ToolsMateMasterWidget"
+            android:exported="true"
+            android:label="ToolsMate Master Widget">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.example.widget.ACTION_REFRESH_WIDGET" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/toolsmate_master_widget_info" />
+        </receiver>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
