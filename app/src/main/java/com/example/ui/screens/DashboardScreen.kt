@@ -3547,32 +3547,24 @@ fun DynamicGreetingIllustrationBackground(
 
             // Rain Drops & Splash effects
             if (isRaining || isThunderstorm) {
-                val rainColor = if (isDark) Color(0x4438BDF8) else Color(0x770284C7)
-                for (i in 0..8) {
-                    val x = width * (0.1f + i * 0.11f)
-                    val yStart = height * 0.25f
-                    val yEnd = height * 0.75f
+                val baseRainColor = if (isDark) Color(0x2238BDF8) else Color(0x4438BDF8)
+                // Scatter 18 delicate rain streaks deterministically
+                for (i in 0..17) {
+                    val xPct = (i * 0.055f + 0.07f) % 0.95f
+                    val yPct = (i * 0.047f + 0.15f) % 0.72f
+                    
+                    val x = width * xPct
+                    val y = height * yPct
+                    
+                    val length = 11.dp.toPx()
+                    val slant = 3.dp.toPx()
                     
                     drawLine(
-                        color = rainColor,
-                        start = Offset(x, yStart),
-                        end = Offset(x - 6.dp.toPx(), yStart + 16.dp.toPx()),
-                        strokeWidth = 1.5.dp.toPx(),
+                        color = baseRainColor.copy(alpha = 0.3f + (i % 3) * 0.15f),
+                        start = Offset(x, y),
+                        end = Offset(x - slant, y + length),
+                        strokeWidth = 1.dp.toPx(),
                         cap = StrokeCap.Round
-                    )
-                    drawLine(
-                        color = rainColor,
-                        start = Offset(x + 12.dp.toPx(), yEnd),
-                        end = Offset(x + 6.dp.toPx(), yEnd + 16.dp.toPx()),
-                        strokeWidth = 1.5.dp.toPx(),
-                        cap = StrokeCap.Round
-                    )
-                    
-                    drawCircle(
-                        color = rainColor.copy(alpha = 0.25f),
-                        radius = 4.dp.toPx(),
-                        center = Offset(x, height * 0.85f),
-                        style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.dp.toPx())
                     )
                 }
             }

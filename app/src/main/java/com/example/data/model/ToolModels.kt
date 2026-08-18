@@ -177,6 +177,11 @@ enum class ToolType(
         "সুনির্দিষ্ট বয়স (বছর, মাস, দিন) এবং পরবর্তী জন্মদিনের দিন গণনা",
         ToolCategory.UTILITY, Icons.Default.CalendarMonth
     ),
+    MARKET_LIST(
+        "Market Shopping List & PDF", "বাজার ফর্দ ও কেনাকাটা মেমো",
+        "বাজারের ফর্দ তৈরি, মালামাল কেনা, দাম ও পরিমাণের হিসাব, মেমো সেভ ও পিডিএফ এক্সপোর্ট",
+        ToolCategory.UTILITY, Icons.Default.ShoppingCart
+    ),
     DATE_DIFF(
         "Date Difference", "তারিখের ব্যবধান",
         "দুটি নির্দিষ্ট তারিখের মধ্যকার ব্যবধান বা দিন হিসাব",
@@ -206,11 +211,6 @@ enum class ToolType(
         "Gold & Silver Calculator", "স্বর্ণ ও রৌপ্য হিসাব",
         "ভরি, আনা, রতি ও পয়েন্ট অনুযায়ী স্বর্ণের দাম নির্ধারণ",
         ToolCategory.UTILITY, Icons.Default.AttachMoney
-    ),
-    MARKET_LIST(
-        "Market Shopping List & PDF", "বাজার ফর্দ ও কেনাকাটা মেমো",
-        "বাজারের ফর্দ তৈরি, মালামাল কেনা, দাম ও পরিমাণের হিসাব, মেমো সেভ ও পিডিএফ এক্সপোর্ট",
-        ToolCategory.UTILITY, Icons.Default.ShoppingCart
     ),
     PASSWORD_GENERATOR(
         "Password Generator", "পাসওয়ার্ড জেনারেটর",

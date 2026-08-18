@@ -247,9 +247,10 @@ fun QuranScreen(
                     }
                 }
             } else {
+                val isQuickShortcut = context::class.java.simpleName.contains("Quick")
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(bottom = 80.dp, top = 8.dp)
+                    contentPadding = PaddingValues(bottom = if (isQuickShortcut) 16.dp else 80.dp, top = 8.dp)
                 ) {
                     items(
                         items = surahs,
@@ -309,7 +310,7 @@ fun SurahListItemCard(
     ElevatedCard(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 14.dp, vertical = 5.dp)
+            .padding(horizontal = 8.dp, vertical = 4.dp)
             .clickable { onCardClick() },
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.elevatedCardColors(
@@ -320,7 +321,7 @@ fun SurahListItemCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Surah Number Badge
@@ -339,24 +340,25 @@ fun SurahListItemCard(
                 )
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(10.dp))
 
             // Surah Details
             Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = surah.nameBangla,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = themeColors.displayText
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "(${surah.nameEnglish})",
-                        fontSize = 12.sp,
-                        color = themeColors.displayText.copy(alpha = 0.6f)
-                    )
-                }
+                Text(
+                    text = surah.nameBangla,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = themeColors.displayText,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = "(${surah.nameEnglish})",
+                    fontSize = 11.5.sp,
+                    color = themeColors.displayText.copy(alpha = 0.6f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
 
                 Spacer(modifier = Modifier.height(2.dp))
 
