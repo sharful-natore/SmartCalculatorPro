@@ -3304,8 +3304,7 @@ fun DynamicGreetingIllustrationBackground(
                 .crossfade(true)
                 .allowHardware(false) // Fixes MediaTek HW decoding errors on Android 8.1
                 .bitmapConfig(android.graphics.Bitmap.Config.RGB_565) // Halves memory footprint
-                .memoryCachePolicy(coil.request.CachePolicy.DISABLED) // Bypass memory cache for safety
-                .diskCachePolicy(coil.request.CachePolicy.DISABLED) // Bypass disk cache for safety
+                .size(1080, 600) // Explicitly provide target size to prevent 0x0 constraint aborts in Compose matchParentSize()
                 .build(),
             contentDescription = "Greeting Background",
             contentScale = androidx.compose.ui.layout.ContentScale.Crop,
