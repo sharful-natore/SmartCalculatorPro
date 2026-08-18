@@ -3286,29 +3286,27 @@ fun DynamicGreetingIllustrationBackground(
 
     val imageResId = remember(currentHour, weatherCode) {
         when {
-            isRainyOrSnowy -> if (isDay) com.example.R.drawable.rainy_day_scene else com.example.R.drawable.rainy_night_scene
-            isCloudy -> if (isDay) com.example.R.drawable.cloudy_day_scene else com.example.R.drawable.cloudy_night_scene
+            isRainyOrSnowy -> if (isDay) com.example.R.drawable.rainy_day_scene_v4 else com.example.R.drawable.rainy_night_scene_v4
+            isCloudy -> if (isDay) com.example.R.drawable.cloudy_day_scene_v4 else com.example.R.drawable.cloudy_night_scene_v4
             else -> when (currentHour) {
-                in 5..11 -> com.example.R.drawable.morning_scene
-                in 12..15 -> com.example.R.drawable.afternoon_scene
-                in 16..19 -> com.example.R.drawable.evening_scene
-                else -> com.example.R.drawable.night_scene
+                in 5..11 -> com.example.R.drawable.morning_scene_v4
+                in 12..15 -> com.example.R.drawable.afternoon_scene_v4
+                in 16..19 -> com.example.R.drawable.evening_scene_v4
+                else -> com.example.R.drawable.night_scene_v4
             }
         }
     }
 
     Box(modifier = modifier) {
-        val painter = coil.compose.rememberAsyncImagePainter(
+        coil.compose.AsyncImage(
             model = coil.request.ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
                 .data(imageResId)
                 .crossfade(true)
-                .allowHardware(false) // Safe software decoding for older MediaTek
-                .size(coil.size.Size.ORIGINAL) // Force exact loading without depending on modifier size
-                .build()
-        )
-        
-        androidx.compose.foundation.Image(
-            painter = painter,
+                .allowHardware(false) // Fixes MediaTek HW decoding errors on Android 8.1
+                .bitmapConfig(android.graphics.Bitmap.Config.RGB_565) // Halves memory footprint
+                .memoryCachePolicy(coil.request.CachePolicy.DISABLED) // Bypass memory cache for safety
+                .diskCachePolicy(coil.request.CachePolicy.DISABLED) // Bypass disk cache for safety
+                .build(),
             contentDescription = "Greeting Background",
             contentScale = androidx.compose.ui.layout.ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
