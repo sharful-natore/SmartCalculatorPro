@@ -3298,14 +3298,8 @@ fun DynamicGreetingIllustrationBackground(
     }
 
     Box(modifier = modifier) {
-        coil.compose.AsyncImage(
-            model = coil.request.ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
-                .data(imageResId)
-                .crossfade(true)
-                .allowHardware(false) // Fixes MediaTek HW decoding errors on Android 8.1
-                .bitmapConfig(android.graphics.Bitmap.Config.RGB_565) // Halves memory footprint
-                .size(1080, 600) // Explicitly provide target size to prevent 0x0 constraint aborts in Compose matchParentSize()
-                .build(),
+        androidx.compose.foundation.Image(
+            painter = androidx.compose.ui.res.painterResource(id = imageResId),
             contentDescription = "Greeting Background",
             contentScale = androidx.compose.ui.layout.ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
