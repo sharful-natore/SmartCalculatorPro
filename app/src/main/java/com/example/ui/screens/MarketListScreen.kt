@@ -279,6 +279,7 @@ fun MarketListScreen(
 
     // Interactive Shopping Execution Dialog for a selected Plan List
     var activeExecutingPlan by remember { mutableStateOf<MarketPlanList?>(null) }
+    var editingPlan by remember { mutableStateOf<MarketPlanList?>(null) }
 
     // Viewing a specific Completed Memo
     var viewingMemo by remember { mutableStateOf<CompletedBazaarMemo?>(null) }
@@ -477,6 +478,9 @@ fun MarketListScreen(
                                         onClick = {
                                             activeExecutingPlan = plan
                                         },
+                                        onEdit = {
+                                            editingPlan = plan
+                                        },
                                         onDelete = {
                                             itemToDeletePrompt = (if (isBn) "আপনি কি \"${plan.title}\" ফর্দটি মুছে ফেলতে চান?" else "Do you want to delete \"${plan.title}\"?") to {
                                                 planLists.remove(plan)
@@ -542,16 +546,29 @@ fun MarketListScreen(
     }
 
     // DIALOG 1: "+" Button Dialog with 2 Chips (ফর্দ তৈরি vs বাজার সম্পন্ন)
-    if (showCreateOrBazaarDialog) {
+    if (showCreateOrBazaarDialog || editingPlan != null) {
         CreateOrBazaarModalDialog(
-            initialTab = initialDialogTab,
+            initialTab = if (editingPlan != null) 0 else initialDialogTab,
             isBn = isBn,
             themeColors = themeColors,
-            onDismiss = { showCreateOrBazaarDialog = false },
+            onDismiss = {
+                showCreateOrBazaarDialog = false
+                editingPlan = null
+            },
             onSavePlan = { newPlan ->
-                planLists.add(0, newPlan)
+                if (editingPlan != null) {
+                    val idx = planLists.indexOfFirst { it.id == editingPlan!!.id }
+                    if (idx != -1) {
+                        planLists[idx] = newPlan
+                    } else {
+                        planLists.add(0, newPlan)
+                    }
+                } else {
+                    planLists.add(0, newPlan)
+                }
                 persistPlans()
                 showCreateOrBazaarDialog = false
+                editingPlan = null
                 selectedMainTab = 0
                 Toast.makeText(context, if (isBn) "ফর্দ সফলভাবে সেভ হয়েছে!" else "Shopping list saved!", Toast.LENGTH_SHORT).show()
             },
@@ -566,10 +583,12 @@ fun MarketListScreen(
                     customName = "${newMemo.title} (${newMemo.items.size} items)"
                 )
                 showCreateOrBazaarDialog = false
+                editingPlan = null
                 selectedMainTab = 1
                 viewingMemo = newMemo
                 Toast.makeText(context, if (isBn) "বাজার সম্পন্ন ও মেমো সংরক্ষিত হয়েছে!" else "Bazaar completed and memo saved!", Toast.LENGTH_SHORT).show()
-            }
+            },
+            editingPlan = editingPlan
         )
     }
 
@@ -668,6 +687,7 @@ fun MarketPlanCardItem(
     isBn: Boolean,
     themeColors: CalculatorThemeColors,
     onClick: () -> Unit,
+    onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
     val dateStr = SimpleDateFormat("dd MMM, yyyy - hh:mm a", if (isBn) Locale("bn") else Locale.ENGLISH).format(Date(plan.timestamp))
@@ -723,16 +743,32 @@ fun MarketPlanCardItem(
                     }
                 }
 
-                IconButton(
-                    onClick = onDelete,
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Delete,
-                        contentDescription = "Delete Plan",
-                        tint = Color(0xFFEF4444),
-                        modifier = Modifier.size(20.dp)
-                    )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(
+                        onClick = onEdit,
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Edit Plan",
+                            tint = themeColors.buttonEqualBg,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(4.dp))
+
+                    IconButton(
+                        onClick = onDelete,
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Delete,
+                            contentDescription = "Delete Plan",
+                            tint = Color(0xFFEF4444),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
             }
 
@@ -969,15 +1005,18 @@ fun CreateOrBazaarModalDialog(
     themeColors: CalculatorThemeColors,
     onDismiss: () -> Unit,
     onSavePlan: (MarketPlanList) -> Unit,
-    onCompleteDirectBazaar: (CompletedBazaarMemo) -> Unit
+    onCompleteDirectBazaar: (CompletedBazaarMemo) -> Unit,
+    editingPlan: MarketPlanList? = null
 ) {
     val context = LocalContext.current
     // 0 -> ফর্দ তৈরি, 1 -> বাজার সম্পন্ন
-    var dialogTab by remember { mutableStateOf(initialTab) }
+    var dialogTab by remember { mutableStateOf(if (editingPlan != null) 0 else initialTab) }
     var listTitle by remember {
         mutableStateOf(
-            if (isBn) "বাজারের ফর্দ - " + SimpleDateFormat("dd MMM", Locale("bn")).format(Date())
-            else "Market List - " + SimpleDateFormat("dd MMM", Locale.US).format(Date())
+            editingPlan?.title ?: (
+                if (isBn) "বাজারের ফর্দ - " + SimpleDateFormat("dd MMM", Locale("bn")).format(Date())
+                else "Market List - " + SimpleDateFormat("dd MMM", Locale.US).format(Date())
+            )
         )
     }
 
@@ -985,9 +1024,13 @@ fun CreateOrBazaarModalDialog(
     // In "ফর্দ তৈরি" mode, items are planned list
     // In "বাজার সম্পন্ন" mode, items have checkboxes
     val items = remember {
-        mutableStateListOf(
-            MarketItem(name = "", unitPrice = 0.0, quantity = 1.0, unit = if (isBn) "কেজি" else "kg", isChecked = true)
-        )
+        val list = mutableStateListOf<MarketItem>()
+        if (editingPlan != null) {
+            list.addAll(editingPlan.items.map { it.copy() })
+        } else {
+            list.add(MarketItem(name = "", unitPrice = 0.0, quantity = 1.0, unit = if (isBn) "কেজি" else "kg", isChecked = true))
+        }
+        list
     }
 
     // Voice recognition targeting
@@ -1186,6 +1229,12 @@ fun CreateOrBazaarModalDialog(
                         }
                     },
                     colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = themeColors.displayText,
+                        unfocusedTextColor = themeColors.displayText,
+                        focusedLabelColor = themeColors.buttonEqualBg,
+                        unfocusedLabelColor = themeColors.displayText.copy(alpha = 0.6f),
+                        focusedPlaceholderColor = themeColors.displayText.copy(alpha = 0.5f),
+                        unfocusedPlaceholderColor = themeColors.displayText.copy(alpha = 0.5f),
                         focusedBorderColor = themeColors.buttonEqualBg,
                         unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f)
                     ),
@@ -1306,8 +1355,10 @@ fun CreateOrBazaarModalDialog(
                             if (dialogTab == 0) {
                                 // Plan Mode Save
                                 val newPlan = MarketPlanList(
+                                    id = editingPlan?.id ?: java.util.UUID.randomUUID().toString(),
                                     title = listTitle.ifBlank { if (isBn) "বাজারের ফর্দ" else "Shopping List" },
-                                    items = validItems
+                                    items = validItems,
+                                    timestamp = editingPlan?.timestamp ?: System.currentTimeMillis()
                                 )
                                 onSavePlan(newPlan)
                             } else {
@@ -1578,6 +1629,12 @@ fun ItemInputRow(
                         }
                     },
                     colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = themeColors.displayText,
+                        unfocusedTextColor = themeColors.displayText,
+                        focusedLabelColor = themeColors.buttonEqualBg,
+                        unfocusedLabelColor = themeColors.displayText.copy(alpha = 0.6f),
+                        focusedPlaceholderColor = themeColors.displayText.copy(alpha = 0.5f),
+                        unfocusedPlaceholderColor = themeColors.displayText.copy(alpha = 0.5f),
                         focusedBorderColor = themeColors.buttonEqualBg,
                         unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f)
                     ),
@@ -1621,6 +1678,12 @@ fun ItemInputRow(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.weight(1.1f),
                     colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = themeColors.displayText,
+                        unfocusedTextColor = themeColors.displayText,
+                        focusedLabelColor = themeColors.buttonEqualBg,
+                        unfocusedLabelColor = themeColors.displayText.copy(alpha = 0.6f),
+                        focusedPlaceholderColor = themeColors.displayText.copy(alpha = 0.5f),
+                        unfocusedPlaceholderColor = themeColors.displayText.copy(alpha = 0.5f),
                         focusedBorderColor = themeColors.buttonEqualBg,
                         unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f)
                     ),
@@ -1640,6 +1703,12 @@ fun ItemInputRow(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.weight(1f),
                     colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = themeColors.displayText,
+                        unfocusedTextColor = themeColors.displayText,
+                        focusedLabelColor = themeColors.buttonEqualBg,
+                        unfocusedLabelColor = themeColors.displayText.copy(alpha = 0.6f),
+                        focusedPlaceholderColor = themeColors.displayText.copy(alpha = 0.5f),
+                        unfocusedPlaceholderColor = themeColors.displayText.copy(alpha = 0.5f),
                         focusedBorderColor = themeColors.buttonEqualBg,
                         unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f)
                     ),
@@ -1856,6 +1925,12 @@ fun ExecuteBazaarFromPlanDialog(
                         }
                     },
                     colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = themeColors.displayText,
+                        unfocusedTextColor = themeColors.displayText,
+                        focusedLabelColor = themeColors.buttonEqualBg,
+                        unfocusedLabelColor = themeColors.displayText.copy(alpha = 0.6f),
+                        focusedPlaceholderColor = themeColors.displayText.copy(alpha = 0.5f),
+                        unfocusedPlaceholderColor = themeColors.displayText.copy(alpha = 0.5f),
                         focusedBorderColor = themeColors.buttonEqualBg,
                         unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f)
                     ),

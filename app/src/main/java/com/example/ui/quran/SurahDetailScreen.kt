@@ -95,6 +95,7 @@ fun SurahDetailScreen(
     }
 
     Scaffold(
+        containerColor = themeColors.background,
         topBar = {
             Surface(
                 color = themeColors.cardBg,

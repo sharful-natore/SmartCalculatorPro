@@ -62,6 +62,7 @@ fun QuranScreen(
     val cyanAccent = themeColors.buttonEqualBg
 
     Scaffold(
+        containerColor = themeColors.background,
         topBar = {
             Surface(
                 color = themeColors.cardBg,

@@ -359,8 +359,7 @@ fun DashboardCategoriesView(
                     modifier = Modifier
                         .matchParentSize()
                         .background(
-                            if (themeColors.isDark) Color(0xFF0F172A).copy(alpha = 0.35f)
-                            else Color.White.copy(alpha = 0.25f)
+                            Color(0xFF0F172A).copy(alpha = 0.42f)
                         )
                 )
 
@@ -391,7 +390,7 @@ fun DashboardCategoriesView(
                             Icon(
                                 imageVector = greetingIcon,
                                 contentDescription = "Greeting",
-                                tint = themeColors.buttonEqualBg,
+                                tint = Color(0xFFFDE047),
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
@@ -399,7 +398,7 @@ fun DashboardCategoriesView(
                                 text = greetingText,
                                 fontWeight = FontWeight.ExtraBold,
                                 fontSize = 15.sp,
-                                color = themeColors.displayText
+                                color = Color.White
                             )
                         }
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -407,14 +406,14 @@ fun DashboardCategoriesView(
                                 text = "${dateInfo.englishDayName}, ${dateInfo.englishDate}",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = themeColors.displayText.copy(alpha = 0.8f),
+                                color = Color.White.copy(alpha = 0.85f),
                                 lineHeight = 15.sp
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Icon(
                                 imageVector = Icons.Default.CalendarMonth,
                                 contentDescription = "Calendar",
-                                tint = themeColors.buttonEqualBg,
+                                tint = Color.White.copy(alpha = 0.7f),
                                 modifier = Modifier.size(13.dp)
                             )
                         }
@@ -439,7 +438,7 @@ fun DashboardCategoriesView(
                                 text = "$weatherLocationName • $weatherTempText",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = themeColors.buttonEqualBg,
+                                color = Color.White,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -447,7 +446,7 @@ fun DashboardCategoriesView(
                             Icon(
                                 imageVector = weatherIcon,
                                 contentDescription = "Weather",
-                                tint = themeColors.buttonEqualBg,
+                                tint = Color.White.copy(alpha = 0.95f),
                                 modifier = Modifier.size(16.dp)
                             )
                         }
@@ -455,7 +454,7 @@ fun DashboardCategoriesView(
                             text = weatherConditionText,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = themeColors.buttonEqualBg.copy(alpha = 0.9f),
+                            color = Color.White.copy(alpha = 0.85f),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
@@ -465,7 +464,7 @@ fun DashboardCategoriesView(
                 // Divider line
                 Divider(
                     modifier = Modifier.padding(vertical = 10.dp),
-                    color = themeColors.displayText.copy(alpha = 0.08f),
+                    color = Color.White.copy(alpha = 0.15f),
                     thickness = 1.dp
                 )
 
@@ -486,14 +485,14 @@ fun DashboardCategoriesView(
                         Icon(
                             imageVector = Icons.Default.WbSunny,
                             contentDescription = "Bengali Calendar",
-                            tint = Color(0xFF10B981),
+                            tint = Color(0xFF34D399),
                             modifier = Modifier.size(14.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             text = dateInfo.bengaliDate,
                             fontSize = 11.sp,
-                            color = themeColors.displayText.copy(alpha = 0.8f),
+                            color = Color.White.copy(alpha = 0.85f),
                             fontWeight = FontWeight.SemiBold
                         )
                     }
@@ -509,14 +508,14 @@ fun DashboardCategoriesView(
                         Icon(
                             imageVector = Icons.Default.Bedtime,
                             contentDescription = "Hijri Calendar",
-                            tint = Color(0xFFF59E0B),
+                            tint = Color(0xFFFBBF24),
                             modifier = Modifier.size(14.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             text = dateInfo.hijriDate,
                             fontSize = 11.sp,
-                            color = themeColors.displayText.copy(alpha = 0.8f),
+                            color = Color.White.copy(alpha = 0.85f),
                             fontWeight = FontWeight.SemiBold
                         )
                     }

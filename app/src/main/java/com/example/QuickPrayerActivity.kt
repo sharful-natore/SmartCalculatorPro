@@ -201,20 +201,31 @@ class QuickPrayerActivity : ComponentActivity() {
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .weight(1f)
-                                    .verticalScroll(rememberScrollState())
                             ) {
                                 when (selectedTab) {
-                                    0 -> PrayerTimesCard(
-                                        viewModel = viewModel,
-                                        themeColors = themeColors
-                                    )
-                                    1 -> ModernSehriIftarCard(
-                                        viewModel = viewModel,
-                                        themeColors = themeColors
-                                    )
+                                    0 -> Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .verticalScroll(rememberScrollState())
+                                    ) {
+                                        PrayerTimesCard(
+                                            viewModel = viewModel,
+                                            themeColors = themeColors
+                                        )
+                                    }
+                                    1 -> Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .verticalScroll(rememberScrollState())
+                                    ) {
+                                        ModernSehriIftarCard(
+                                            viewModel = viewModel,
+                                            themeColors = themeColors
+                                        )
+                                    }
                                     else -> com.example.ui.quran.HolyQuranModuleScreen(
                                         themeColors = themeColors,
-                                        onBackClick = {},
+                                        onBackClick = { selectedTab = 0 },
                                         quranViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
                                     )
                                 }
