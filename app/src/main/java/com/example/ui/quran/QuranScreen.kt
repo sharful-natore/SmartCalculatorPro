@@ -44,7 +44,8 @@ fun QuranScreen(
     viewModel: QuranViewModel,
     themeColors: CalculatorThemeColors,
     onBackClick: () -> Unit,
-    onSurahClick: (SurahEntity) -> Unit
+    onSurahClick: (SurahEntity) -> Unit,
+    isBn: Boolean = true
 ) {
     val context = LocalContext.current
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
@@ -247,7 +248,21 @@ fun QuranScreen(
                     }
                 }
             } else {
-                val isQuickShortcut = context::class.java.simpleName.contains("Quick")
+                val isQuickShortcut = run {
+                    var ctx = context
+                    var found = false
+                    while (ctx is android.content.ContextWrapper) {
+                        if (ctx is android.app.Activity) {
+                            val name = ctx::class.java.simpleName
+                            if (name.contains("Quick") || name.contains("Shortcut")) {
+                                found = true
+                            }
+                            break
+                        }
+                        ctx = ctx.baseContext
+                    }
+                    found || context::class.java.simpleName.contains("Quick") || context::class.java.simpleName.contains("Shortcut")
+                }
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(bottom = if (isQuickShortcut) 16.dp else 80.dp, top = 8.dp)

@@ -2176,7 +2176,11 @@ fun ToolDetailView(
             ToolType.PRAYER_TIMES -> PrayerTimesCard(viewModel, themeColors)
             ToolType.SEHRI_IFTAR -> SehriIftarCard(viewModel, themeColors)
             ToolType.ISLAMIC_DUAS -> IslamicDuasCard(viewModel, themeColors)
-            ToolType.HOLY_QURAN -> com.example.ui.quran.HolyQuranModuleScreen(themeColors = themeColors, onBackClick = { viewModel.selectedToolType = null })
+            ToolType.HOLY_QURAN -> com.example.ui.quran.HolyQuranModuleScreen(
+                themeColors = themeColors,
+                onBackClick = { viewModel.selectedToolType = null },
+                isBn = viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI
+            )
             ToolType.NAMAZ_EDUCATION -> com.example.ui.namaz.NamazEducationScreen(themeColors = themeColors, onBackClick = { viewModel.selectedToolType = null })
         }
     }
@@ -2684,8 +2688,8 @@ private fun getToolInfoItems(toolType: ToolType, isBn: Boolean): List<Pair<Strin
         }
         ToolType.MARKET_LIST -> if (isBn) {
             listOf(
-                "১. বাজার ফর্দ ও হিসাব তালিকা" to "দৈনন্দিন ও সাপ্তাহিক বাজারের তালিকা তৈরি করুন, প্রতিটি পণ্যের পরিমাণ ও এককের দাম লিখে মোট হিসাব দেখুন।",
-                "২. মেমো সেভ ও PDF এক্সপোর্ট" to "তৈরিকৃত বাজার ফর্দ অ্যাপ হিস্টোরিতে মেমো আকারে সেভ রাখতে পারবেন অথবা সুন্দর পিডিএফ ডকুমেন্টে এক্সপোর্ট করে শেয়ার করতে পারবেন।"
+                "১. বাজার লিস্ট ও হিসাব তালিকা" to "দৈনন্দিন ও সাপ্তাহিক বাজারের তালিকা তৈরি করুন, প্রতিটি পণ্যের পরিমাণ ও এককের দাম লিখে মোট হিসাব দেখুন।",
+                "২. মেমো সেভ ও PDF এক্সপোর্ট" to "তৈরিকৃত বাজার লিস্ট অ্যাপ হিস্টোরিতে মেমো আকারে সেভ রাখতে পারবেন অথবা সুন্দর পিডিএফ ডকুমেন্টে এক্সপোর্ট করে শেয়ার করতে পারবেন।"
             )
         } else {
             listOf(
@@ -3273,337 +3277,22 @@ fun DynamicGreetingIllustrationBackground(
     isDark: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val gradientColors = remember(currentHour, isDark) {
-        if (isDark) {
-            when (currentHour) {
-                in 5..6 -> listOf(Color(0xFF1E1B4B), Color(0xFF311042), Color(0xFF581C87))
-                in 7..11 -> listOf(Color(0xFF0F172A), Color(0xFF1E1B4B), Color(0xFF1E3A8A))
-                in 12..15 -> listOf(Color(0xFF0F172A), Color(0xFF0F172A), Color(0xFF1E3A8A))
-                in 16..17 -> listOf(Color(0xFF1E1B4B), Color(0xFF311042), Color(0xFF4C1D95))
-                in 18..20 -> listOf(Color(0xFF020617), Color(0xFF0F172A), Color(0xFF311042))
-                else -> listOf(Color(0xFF020617), Color(0xFF0B132B), Color(0xFF1C2541))
-            }
-        } else {
-            when (currentHour) {
-                in 5..6 -> listOf(Color(0xFFFDA4AF), Color(0xFFFED7AA), Color(0xFFBAE6FD))
-                in 7..11 -> listOf(Color(0xFFBAE6FD), Color(0xFFE0F2FE), Color(0xFFFEF08A))
-                in 12..15 -> listOf(Color(0xFF38BDF8), Color(0xFFBAE6FD), Color(0xFFF0F9FF))
-                in 16..17 -> listOf(Color(0xFFFDBA74), Color(0xFFFED7AA), Color(0xFFE0F2FE))
-                in 18..20 -> listOf(Color(0xFFFFEDD5), Color(0xFFF472B6), Color(0xFFC084FC))
-                else -> listOf(Color(0xFF0F172A), Color(0xFF1E1B4B), Color(0xFF311042))
-            }
+    val imageResId = remember(currentHour) {
+        when (currentHour) {
+            in 5..11 -> com.example.R.drawable.morning_nature_landscape_1787026195926
+            in 12..15 -> com.example.R.drawable.afternoon_nature_landscape_1787026213188
+            in 16..19 -> com.example.R.drawable.evening_nature_landscape_1787026228348
+            else -> com.example.R.drawable.night_nature_landscape_1787026240594
         }
     }
 
-    Box(
-        modifier = modifier
-            .background(Brush.verticalGradient(gradientColors))
-    ) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val width = size.width
-            val height = size.height
-
-            // 1. Draw Stars for evening/night or dark mode
-            if (currentHour >= 18 || currentHour < 5 || isDark) {
-                val stars = listOf(
-                    Pair(0.08f, 0.15f), Pair(0.2f, 0.1f), Pair(0.35f, 0.22f),
-                    Pair(0.48f, 0.08f), Pair(0.6f, 0.18f), Pair(0.72f, 0.12f),
-                    Pair(0.9f, 0.2f), Pair(0.12f, 0.35f), Pair(0.28f, 0.4f)
-                )
-                stars.forEachIndexed { index, (xPct, yPct) ->
-                    val x = width * xPct
-                    val y = height * yPct
-                    
-                    if (index % 3 == 0) {
-                        // Draw a 4-point star sparkle
-                        val sparklePath = Path().apply {
-                            moveTo(x, y - 5.dp.toPx())
-                            quadraticTo(x, y, x + 5.dp.toPx(), y)
-                            quadraticTo(x, y, x, y + 5.dp.toPx())
-                            quadraticTo(x, y, x - 5.dp.toPx(), y)
-                            quadraticTo(x, y, x, y - 5.dp.toPx())
-                            close()
-                        }
-                        drawPath(
-                            path = sparklePath,
-                            color = Color.White.copy(alpha = 0.8f)
-                        )
-                    } else {
-                        // Draw soft glowing dots
-                        drawCircle(
-                            color = Color.White.copy(alpha = 0.3f),
-                            radius = 3.dp.toPx(),
-                            center = Offset(x, y)
-                        )
-                        drawCircle(
-                            color = Color.White.copy(alpha = 0.85f),
-                            radius = 1.2.dp.toPx(),
-                            center = Offset(x, y)
-                        )
-                    }
-                }
-            }
-
-            // 2. Draw Celestial Body (Sun / Moon)
-            val celestialX = width * 0.82f
-            val celestialY = height * 0.35f
-            val isDay = currentHour in 5..17 && !isDark
-
-            if (isDay) {
-                // Glow 3 (Outer-most)
-                drawCircle(
-                    color = Color(0xFFFDE047).copy(alpha = 0.05f),
-                    radius = 55.dp.toPx(),
-                    center = Offset(celestialX, celestialY)
-                )
-                // Glow 2 (Mid)
-                drawCircle(
-                    color = Color(0xFFFDE047).copy(alpha = 0.12f),
-                    radius = 35.dp.toPx(),
-                    center = Offset(celestialX, celestialY)
-                )
-                // Glow 1 (Inner)
-                drawCircle(
-                    color = Color(0xFFFEF08A).copy(alpha = 0.25f),
-                    radius = 22.dp.toPx(),
-                    center = Offset(celestialX, celestialY)
-                )
-                // Core Sun
-                drawCircle(
-                    color = Color(0xFFF59E0B),
-                    radius = 12.dp.toPx(),
-                    center = Offset(celestialX, celestialY)
-                )
-            } else {
-                // Night Moon (Crescent)
-                // Outer Moon glow
-                drawCircle(
-                    color = Color(0xFFBAE6FD).copy(alpha = 0.06f),
-                    radius = 45.dp.toPx(),
-                    center = Offset(celestialX, celestialY)
-                )
-                drawCircle(
-                    color = Color(0xFFFEF08A).copy(alpha = 0.15f),
-                    radius = 25.dp.toPx(),
-                    center = Offset(celestialX, celestialY)
-                )
-                // Moon Base
-                drawCircle(
-                    color = Color(0xFFFEF08A),
-                    radius = 12.dp.toPx(),
-                    center = Offset(celestialX, celestialY)
-                )
-                // Cutout to make it a crescent!
-                drawCircle(
-                    color = gradientColors.first(),
-                    radius = 11.dp.toPx(),
-                    center = Offset(celestialX - 4.dp.toPx(), celestialY - 3.dp.toPx())
-                )
-            }
-
-            // 3. Draw Landscape Horizons (Rolling Hills / Mountains)
-            val backHillPath = Path().apply {
-                moveTo(0f, height)
-                lineTo(0f, height * 0.7f)
-                cubicTo(
-                    width * 0.3f, height * 0.6f,
-                    width * 0.6f, height * 0.85f,
-                    width, height * 0.65f
-                )
-                lineTo(width, height)
-                close()
-            }
-            val backHillColor = if (isDark) {
-                Color(0xFF1E293B).copy(alpha = 0.45f)
-            } else {
-                if (currentHour >= 18 || currentHour < 5) Color(0xFF311042).copy(alpha = 0.4f)
-                else Color(0xFF93C5FD).copy(alpha = 0.35f)
-            }
-            drawPath(path = backHillPath, color = backHillColor)
-
-            val frontHillPath = Path().apply {
-                moveTo(0f, height)
-                lineTo(0f, height * 0.82f)
-                cubicTo(
-                    width * 0.35f, height * 0.72f,
-                    width * 0.7f, height * 0.9f,
-                    width, height * 0.78f
-                )
-                lineTo(width, height)
-                close()
-            }
-            val frontHillColor = if (isDark) {
-                Color(0xFF0F172A).copy(alpha = 0.6f)
-            } else {
-                if (currentHour >= 18 || currentHour < 5) Color(0xFF1E1B4B).copy(alpha = 0.65f)
-                else Color(0xFF60A5FA).copy(alpha = 0.5f)
-            }
-            drawPath(path = frontHillPath, color = frontHillColor)
-
-            // 4. Weather conditions
-            val isRaining = weatherCode in listOf(51, 53, 55, 61, 63, 65, 80, 81, 82)
-            val isThunderstorm = weatherCode in listOf(95, 96, 99)
-            val isSnowing = weatherCode in listOf(71, 73, 75, 77, 85, 86)
-            val isFoggy = weatherCode in listOf(45, 48)
-            val hasClouds = weatherCode in listOf(1, 2, 3, 45, 48, 51, 53, 55, 61, 63, 65, 71, 73, 75, 80, 81, 82, 95, 96, 99)
-
-            // Foggy Mist Overlay
-            if (isFoggy) {
-                for (i in 0..2) {
-                    val yPos = height * (0.45f + i * 0.12f)
-                    drawLine(
-                        color = Color.White.copy(alpha = 0.15f),
-                        start = Offset(0f, yPos),
-                        end = Offset(width, yPos + 5.dp.toPx()),
-                        strokeWidth = 6.dp.toPx()
-                    )
-                }
-            }
-
-            // Thunderstorm Lightning
-            if (isThunderstorm) {
-                val boltPath = Path().apply {
-                    moveTo(width * 0.45f, height * 0.15f)
-                    lineTo(width * 0.4f, height * 0.45f)
-                    lineTo(width * 0.48f, height * 0.42f)
-                    lineTo(width * 0.42f, height * 0.68f)
-                    lineTo(width * 0.44f, height * 0.65f)
-                    lineTo(width * 0.41f, height * 0.85f)
-                }
-                
-                drawPath(
-                    path = boltPath,
-                    color = Color(0xFFA5F3FC).copy(alpha = 0.3f),
-                    style = androidx.compose.ui.graphics.drawscope.Stroke(
-                        width = 6.dp.toPx(),
-                        cap = StrokeCap.Round
-                    )
-                )
-                drawPath(
-                    path = boltPath,
-                    color = Color.White,
-                    style = androidx.compose.ui.graphics.drawscope.Stroke(
-                        width = 2.dp.toPx(),
-                        cap = StrokeCap.Round
-                    )
-                )
-            }
-
-            // Volumetric Clouds
-            if (hasClouds) {
-                val cloudAlpha = if (isDark || isRaining || isThunderstorm) 0.12f else 0.48f
-                val baseCloudColor = if (isDark || isRaining || isThunderstorm) Color(0xFFCBD5E1) else Color.White
-                
-                // Cloud Group 1 (Left Side)
-                val c1X = width * 0.22f
-                val c1Y = height * 0.45f
-                
-                drawCircle(
-                    color = baseCloudColor.copy(alpha = cloudAlpha * 0.4f),
-                    radius = 28.dp.toPx(),
-                    center = Offset(c1X, c1Y + 3.dp.toPx())
-                )
-                drawCircle(
-                    color = baseCloudColor.copy(alpha = cloudAlpha),
-                    radius = 22.dp.toPx(),
-                    center = Offset(c1X - 12.dp.toPx(), c1Y + 4.dp.toPx())
-                )
-                drawCircle(
-                    color = baseCloudColor.copy(alpha = cloudAlpha),
-                    radius = 22.dp.toPx(),
-                    center = Offset(c1X + 12.dp.toPx(), c1Y + 4.dp.toPx())
-                )
-                drawCircle(
-                    color = baseCloudColor.copy(alpha = cloudAlpha * 1.1f),
-                    radius = 26.dp.toPx(),
-                    center = Offset(c1X, c1Y)
-                )
-
-                // Cloud Group 2 (Right Side)
-                val c2X = width * 0.72f
-                val c2Y = height * 0.52f
-                
-                drawCircle(
-                    color = baseCloudColor.copy(alpha = cloudAlpha * 0.3f),
-                    radius = 24.dp.toPx(),
-                    center = Offset(c2X, c2Y + 2.dp.toPx())
-                )
-                drawCircle(
-                    color = baseCloudColor.copy(alpha = cloudAlpha * 0.9f),
-                    radius = 16.dp.toPx(),
-                    center = Offset(c2X - 10.dp.toPx(), c2Y + 3.dp.toPx())
-                )
-                drawCircle(
-                    color = baseCloudColor.copy(alpha = cloudAlpha * 0.9f),
-                    radius = 16.dp.toPx(),
-                    center = Offset(c2X + 10.dp.toPx(), c2Y + 3.dp.toPx())
-                )
-                drawCircle(
-                    color = baseCloudColor.copy(alpha = cloudAlpha),
-                    radius = 20.dp.toPx(),
-                    center = Offset(c2X, c2Y)
-                )
-            }
-
-            // Rain Drops & Splash effects
-            if (isRaining || isThunderstorm) {
-                val baseRainColor = if (isDark) Color(0x2238BDF8) else Color(0x4438BDF8)
-                // Scatter 18 delicate rain streaks deterministically
-                for (i in 0..17) {
-                    val xPct = (i * 0.055f + 0.07f) % 0.95f
-                    val yPct = (i * 0.047f + 0.15f) % 0.72f
-                    
-                    val x = width * xPct
-                    val y = height * yPct
-                    
-                    val length = 11.dp.toPx()
-                    val slant = 3.dp.toPx()
-                    
-                    drawLine(
-                        color = baseRainColor.copy(alpha = 0.3f + (i % 3) * 0.15f),
-                        start = Offset(x, y),
-                        end = Offset(x - slant, y + length),
-                        strokeWidth = 1.dp.toPx(),
-                        cap = StrokeCap.Round
-                    )
-                }
-            }
-
-            // Snowflakes
-            if (isSnowing) {
-                val snowPositions = listOf(
-                    Pair(0.15f, 0.25f), Pair(0.3f, 0.15f), Pair(0.45f, 0.35f),
-                    Pair(0.6f, 0.2f), Pair(0.75f, 0.4f), Pair(0.88f, 0.28f),
-                    Pair(0.22f, 0.55f), Pair(0.68f, 0.6f)
-                )
-                snowPositions.forEachIndexed { index, (xPct, yPct) ->
-                    val x = width * xPct
-                    val y = height * yPct
-                    val radius = if (index % 2 == 0) 3.dp.toPx() else 1.8.dp.toPx()
-                    
-                    drawCircle(
-                        color = Color.White.copy(alpha = 0.8f),
-                        radius = radius,
-                        center = Offset(x, y)
-                    )
-                    
-                    if (index % 3 == 0) {
-                        drawLine(
-                            color = Color.White.copy(alpha = 0.6f),
-                            start = Offset(x - 4.dp.toPx(), y),
-                            end = Offset(x + 4.dp.toPx(), y),
-                            strokeWidth = 0.8.dp.toPx()
-                        )
-                        drawLine(
-                            color = Color.White.copy(alpha = 0.6f),
-                            start = Offset(x, y - 4.dp.toPx()),
-                            end = Offset(x, y + 4.dp.toPx()),
-                            strokeWidth = 0.8.dp.toPx()
-                        )
-                    }
-                }
-            }
-        }
+    Box(modifier = modifier) {
+        androidx.compose.foundation.Image(
+            painter = androidx.compose.ui.res.painterResource(id = imageResId),
+            contentDescription = "Greeting Background",
+            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
+        )
     }
 }
 

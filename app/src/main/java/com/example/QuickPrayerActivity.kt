@@ -226,7 +226,8 @@ class QuickPrayerActivity : ComponentActivity() {
                                     else -> com.example.ui.quran.HolyQuranModuleScreen(
                                         themeColors = themeColors,
                                         onBackClick = { selectedTab = 0 },
-                                        quranViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+                                        quranViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+                                        isBn = isBn
                                     )
                                 }
                             }

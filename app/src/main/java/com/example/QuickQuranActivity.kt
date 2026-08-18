@@ -145,7 +145,8 @@ class QuickQuranActivity : ComponentActivity() {
                             ) {
                                 HolyQuranModuleScreen(
                                     themeColors = themeColors,
-                                    onBackClick = { showCloseConfirmDialog = true }
+                                    onBackClick = { showCloseConfirmDialog = true },
+                                    isBn = isBn
                                 )
                             }
                         }

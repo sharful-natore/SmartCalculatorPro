@@ -178,7 +178,7 @@ enum class ToolType(
         ToolCategory.UTILITY, Icons.Default.CalendarMonth
     ),
     MARKET_LIST(
-        "Market Shopping List & PDF", "বাজার ফর্দ ও কেনাকাটা মেমো",
+        "Market Shopping List", "বাজার লিস্ট",
         "বাজারের ফর্দ তৈরি, মালামাল কেনা, দাম ও পরিমাণের হিসাব, মেমো সেভ ও পিডিএফ এক্সপোর্ট",
         ToolCategory.UTILITY, Icons.Default.ShoppingCart
     ),
@@ -335,7 +335,7 @@ enum class ToolType(
         ToolCategory.ISLAMIC, Icons.Default.Explore
     ),
     HOLY_QURAN(
-        "Holy Quran", "আল-কোরআন (তেলাওয়াত ও অনুবাদ)",
+        "Al Quran", "আল কুরআন",
         "সূরা ও আয়াত পাঠ, বাংলা অর্থ, অডিও তেলাওয়াত ডাউনলোড এবং এআই ডিজিটাল অ্যাসিস্ট্যান্ট",
         ToolCategory.ISLAMIC, Icons.Default.AutoStories
     ),

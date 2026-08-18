@@ -41,7 +41,8 @@ fun SurahDetailScreen(
     surah: SurahEntity,
     viewModel: QuranViewModel,
     themeColors: CalculatorThemeColors,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    isBn: Boolean = true
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -197,14 +198,15 @@ fun SurahDetailScreen(
                 LazyColumn(
                     state = listState,
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp)
+                    contentPadding = PaddingValues(horizontal = 0.dp, vertical = 12.dp)
                 ) {
                     // Tajweed Guide Legend Bar
                     item {
                         TajweedLegendBar(
                             themeColors = themeColors,
                             modifier = Modifier.padding(bottom = 12.dp),
-                            initialExpanded = true
+                            initialExpanded = true,
+                            isBn = isBn
                         )
                     }
 

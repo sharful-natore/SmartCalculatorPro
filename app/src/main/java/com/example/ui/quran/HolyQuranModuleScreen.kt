@@ -10,7 +10,8 @@ import com.example.ui.theme.CalculatorThemeColors
 fun HolyQuranModuleScreen(
     themeColors: CalculatorThemeColors,
     onBackClick: () -> Unit,
-    quranViewModel: QuranViewModel = viewModel()
+    quranViewModel: QuranViewModel = viewModel(),
+    isBn: Boolean = true
 ) {
     val selectedSurah by quranViewModel.selectedSurah.collectAsStateWithLifecycle()
 
@@ -21,7 +22,8 @@ fun HolyQuranModuleScreen(
             themeColors = themeColors,
             onBackClick = {
                 quranViewModel.clearSelectedSurah()
-            }
+            },
+            isBn = isBn
         )
     } else {
         QuranScreen(
@@ -30,7 +32,8 @@ fun HolyQuranModuleScreen(
             onBackClick = onBackClick,
             onSurahClick = { surah ->
                 quranViewModel.selectSurah(surah)
-            }
+            },
+            isBn = isBn
         )
     }
 }

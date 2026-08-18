@@ -25,6 +25,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -220,7 +221,8 @@ fun buildTajweedAnnotatedString(
 fun TajweedLegendBar(
     themeColors: CalculatorThemeColors,
     modifier: Modifier = Modifier,
-    initialExpanded: Boolean = false
+    initialExpanded: Boolean = false,
+    isBn: Boolean = true
 ) {
     var expanded by remember { mutableStateOf(initialExpanded) }
     var showDetailDialog by remember { mutableStateOf(false) }
@@ -248,13 +250,13 @@ fun TajweedLegendBar(
                 Spacer(modifier = Modifier.width(8.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "তাজবীদ পড়ার কালার গাইড ও বিস্তারিত নিয়ম",
+                        text = if (isBn) "তাজবীদ পড়ার কালার গাইড ও বিস্তারিত নিয়ম" else "Tajweed Color Guide & Detailed Rules",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
                         color = themeColors.displayText
                     )
                     Text(
-                        text = "ট্যাপ করে রং ও হরফের নিয়ম সংক্ষেপ / বিস্তারিত দেখুন",
+                        text = if (isBn) "ট্যাপ করে রং ও হরফের নিয়ম সংক্ষেপ / বিস্তারিত দেখুন" else "Tap to view rules summary & details",
                         fontSize = 10.5.sp,
                         color = Color(0xFF10B981)
                     )
@@ -274,7 +276,7 @@ fun TajweedLegendBar(
             ) {
                 Column(modifier = Modifier.padding(top = 10.dp)) {
                     Text(
-                        text = "কুরআন শরীফ সঠিক উচ্চারণে পড়ার জন্য রঙিন হরফের সহজ সংকেত (ট্যাপ করে বিস্তারিত পড়ুন):",
+                        text = if (isBn) "কুরআন শরীফ সঠিক উচ্চারণে পড়ার জন্য রঙিন হরফের সহজ সংকেত (ট্যাপ করে বিস্তারিত পড়ুন):" else "Color-coded rules for correct Quranic pronunciation (Tap to read details):",
                         fontSize = 11.5.sp,
                         color = themeColors.displayText.copy(alpha = 0.8f),
                         lineHeight = 16.sp
@@ -283,17 +285,29 @@ fun TajweedLegendBar(
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        TajweedRulePill(name = "গুণ্নাহ (Ghunnah)", color = TajweedColors.Ghunnah) {
+                        TajweedRulePill(
+                            name = if (isBn) "গুণ্নাহ" else "Ghunnah",
+                            color = TajweedColors.Ghunnah,
+                            modifier = Modifier.weight(1f)
+                        ) {
                             selectedRuleForDialog = allTajweedDetailRules[0]
                             showDetailDialog = true
                         }
-                        TajweedRulePill(name = "ইখফা (Ikhfa)", color = TajweedColors.Ikhfa) {
+                        TajweedRulePill(
+                            name = if (isBn) "ইখফা" else "Ikhfa",
+                            color = TajweedColors.Ikhfa,
+                            modifier = Modifier.weight(1f)
+                        ) {
                             selectedRuleForDialog = allTajweedDetailRules[1]
                             showDetailDialog = true
                         }
-                        TajweedRulePill(name = "ঈদগাম (Idgham)", color = TajweedColors.Idgham) {
+                        TajweedRulePill(
+                            name = if (isBn) "ঈদগাম" else "Idgham",
+                            color = TajweedColors.Idgham,
+                            modifier = Modifier.weight(1f)
+                        ) {
                             selectedRuleForDialog = allTajweedDetailRules[2]
                             showDetailDialog = true
                         }
@@ -303,17 +317,29 @@ fun TajweedLegendBar(
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        TajweedRulePill(name = "কলকলাহ (Qalqalah)", color = TajweedColors.Qalqalah) {
+                        TajweedRulePill(
+                            name = if (isBn) "কলকলাহ" else "Qalqalah",
+                            color = TajweedColors.Qalqalah,
+                            modifier = Modifier.weight(1f)
+                        ) {
                             selectedRuleForDialog = allTajweedDetailRules[3]
                             showDetailDialog = true
                         }
-                        TajweedRulePill(name = "মাদ্দ / টানা (Madd)", color = TajweedColors.Madd) {
+                        TajweedRulePill(
+                            name = if (isBn) "মাদ্দ / টানা" else "Madd",
+                            color = TajweedColors.Madd,
+                            modifier = Modifier.weight(1f)
+                        ) {
                             selectedRuleForDialog = allTajweedDetailRules[4]
                             showDetailDialog = true
                         }
-                        TajweedRulePill(name = "ইকলাব (Iqlab)", color = TajweedColors.Iqlab) {
+                        TajweedRulePill(
+                            name = if (isBn) "ইকলাব" else "Iqlab",
+                            color = TajweedColors.Iqlab,
+                            modifier = Modifier.weight(1f)
+                        ) {
                             selectedRuleForDialog = allTajweedDetailRules[5]
                             showDetailDialog = true
                         }
@@ -345,7 +371,7 @@ fun TajweedLegendBar(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "📖 সকল তাজবীদ নিয়ম ও মাসআলা বিস্তারিত দেখুন",
+                                text = if (isBn) "📖 সকল তাজবীদ নিয়ম ও মাসআলা বিস্তারিত দেখুন" else "📖 View All Tajweed Rules & Details",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF10B981)
@@ -361,7 +387,8 @@ fun TajweedLegendBar(
         TajweedRulesDetailDialog(
             themeColors = themeColors,
             initialSelectedRule = selectedRuleForDialog,
-            onDismiss = { showDetailDialog = false }
+            onDismiss = { showDetailDialog = false },
+            isBn = isBn
         )
     }
 }
@@ -370,11 +397,12 @@ fun TajweedLegendBar(
 private fun TajweedRulePill(
     name: String,
     color: Color,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit = {}
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
+        modifier = modifier
             .clip(RoundedCornerShape(6.dp))
             .clickable(onClick = onClick)
             .padding(vertical = 3.dp, horizontal = 4.dp)
@@ -390,7 +418,9 @@ private fun TajweedRulePill(
             text = name,
             fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold,
-            color = color
+            color = color,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }
@@ -399,13 +429,14 @@ private fun TajweedRulePill(
 fun TajweedRulesDetailDialog(
     themeColors: CalculatorThemeColors,
     initialSelectedRule: TajweedDetailRule? = null,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    isBn: Boolean = true
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("বন্ধ করুন", fontWeight = FontWeight.Bold, color = themeColors.buttonEqualBg)
+                Text(if (isBn) "বন্ধ করুন" else "Close", fontWeight = FontWeight.Bold, color = themeColors.buttonEqualBg)
             }
         },
         title = {
@@ -419,13 +450,13 @@ fun TajweedRulesDetailDialog(
                 Spacer(modifier = Modifier.width(8.dp))
                 Column {
                     Text(
-                        text = "তাজবীদ পড়ার পূর্ণাঙ্গ নিয়ম ও মাসআলা",
+                        text = if (isBn) "তাজবীদ পড়ার পূর্ণাঙ্গ নিয়ম ও মাসআলা" else "Complete Tajweed Rules & Guide",
                         fontSize = 16.5.sp,
                         fontWeight = FontWeight.Bold,
                         color = themeColors.displayText
                     )
                     Text(
-                        text = "কুরআন মজিদ সহিহ-শুদ্ধ উচ্চারণে পড়ার গাইডলাইন",
+                        text = if (isBn) "কুরআন মজিদ সহিহ-শুদ্ধ উচ্চারণে পড়ার গাইডলাইন" else "Guidelines for correct pronunciation of the Holy Quran",
                         fontSize = 11.sp,
                         color = themeColors.displayText.copy(alpha = 0.7f)
                     )
@@ -469,8 +500,23 @@ fun TajweedRulesDetailDialog(
                                                 .background(rule.color)
                                         )
                                         Spacer(modifier = Modifier.width(8.dp))
+                                        val displayTitle = remember(rule.titleBn, isBn) {
+                                            if (isBn) {
+                                                rule.titleBn.substringBefore(" (")
+                                            } else {
+                                                when {
+                                                    rule.titleBn.contains("Ghunnah") -> "Ghunnah"
+                                                    rule.titleBn.contains("Ikhfa") -> "Ikhfa"
+                                                    rule.titleBn.contains("Idgham") -> "Idgham"
+                                                    rule.titleBn.contains("Qalqalah") -> "Qalqalah"
+                                                    rule.titleBn.contains("Madd") -> "Madd"
+                                                    rule.titleBn.contains("Iqlab") -> "Iqlab"
+                                                    else -> rule.titleBn
+                                                }
+                                            }
+                                        }
                                         Text(
-                                            text = rule.titleBn,
+                                            text = displayTitle,
                                             fontSize = 14.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = rule.color
@@ -494,7 +540,7 @@ fun TajweedRulesDetailDialog(
                                 Spacer(modifier = Modifier.height(6.dp))
 
                                 Text(
-                                    text = "📌 নিয়ম: ${rule.ruleDescriptionBn}",
+                                    text = if (isBn) "📌 নিয়ম: ${rule.ruleDescriptionBn}" else "📌 Rule: ${rule.ruleDescriptionBn}",
                                     fontSize = 12.5.sp,
                                     color = themeColors.displayText,
                                     lineHeight = 18.sp
@@ -503,7 +549,7 @@ fun TajweedRulesDetailDialog(
                                 Spacer(modifier = Modifier.height(4.dp))
 
                                 Text(
-                                    text = "🔤 সংশ্লিষ্ট হরফ/চিহ্ন: ${rule.lettersBn}",
+                                    text = if (isBn) "🔤 সংশ্লিষ্ট হরফ/চিহ্ন: ${rule.lettersBn}" else "🔤 Related Letters/Symbols: ${rule.lettersBn}",
                                     fontSize = 11.5.sp,
                                     color = themeColors.displayText.copy(alpha = 0.85f),
                                     lineHeight = 17.sp
@@ -518,7 +564,7 @@ fun TajweedRulesDetailDialog(
                                 ) {
                                     Column(modifier = Modifier.padding(8.dp)) {
                                         Text(
-                                            text = "কুরআনের উদাহরণ (আরবি):",
+                                            text = if (isBn) "কুরআনের উদাহরণ (আরবি):" else "Quran Example (Arabic):",
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = rule.color
@@ -534,7 +580,7 @@ fun TajweedRulesDetailDialog(
                                                 .padding(vertical = 2.dp)
                                         )
                                         Text(
-                                            text = "বাংলা উচ্চারণ: ${rule.exampleBn} (${rule.durationBn})",
+                                            text = if (isBn) "বাংলা উচ্চারণ: ${rule.exampleBn} (${rule.durationBn})" else "Pronunciation: ${rule.exampleBn} (${rule.durationBn})",
                                             fontSize = 11.5.sp,
                                             color = themeColors.displayText.copy(alpha = 0.9f)
                                         )
