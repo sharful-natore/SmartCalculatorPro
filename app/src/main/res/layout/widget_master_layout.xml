@@ -47,7 +47,7 @@
             android:src="@drawable/ic_shortcut_calendar" />
     </LinearLayout>
 
-    <View
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:layout_marginTop="6dp"
@@ -57,8 +57,7 @@
     <!-- 2. MIDDLE HERO SECTION: Active Waqt & Sehri/Iftar Timings -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="wrap_content"
         android:background="@drawable/widget_card_inner_bg"
         android:gravity="center_vertical"
         android:orientation="vertical"

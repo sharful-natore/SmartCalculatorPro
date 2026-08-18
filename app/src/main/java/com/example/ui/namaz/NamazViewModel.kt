@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.update
 class NamazViewModel(application: Application) : AndroidViewModel(application) {
 
     val audioPlayer: IslamicAudioPlayer = IslamicAudioPlayer.getInstance(application)
+    val maleTtsPlayer: com.example.data.islamic.IslamicMaleTtsPlayer = com.example.data.islamic.IslamicMaleTtsPlayer.getInstance(application)
 
     // Tab State: 0=Wudu & Taharat, 1=5 Daily Waqts, 2=Special Prayers, 3=Duas & Surahs, 4=Ahkam & Sahw, 5=Visual Guide
     private val _selectedTab = MutableStateFlow(0)
@@ -37,9 +38,9 @@ class NamazViewModel(application: Application) : AndroidViewModel(application) {
     private val _expandedRuleIds = MutableStateFlow<Set<String>>(setOf("jumuah", "janazah", "eid", "ahkam_arkan", "sahw_procedure"))
     val expandedRuleIds: StateFlow<Set<String>> = _expandedRuleIds.asStateFlow()
 
-    // Audio Playback State delegated to IslamicAudioPlayer
-    val playingDuaId: StateFlow<String?> = audioPlayer.activeAudioId
-    val isPlaying: StateFlow<Boolean> = audioPlayer.isPlaying
+    // Audio Playback State delegated to IslamicMaleTtsPlayer
+    val playingDuaId: StateFlow<String?> = maleTtsPlayer.activeAudioId
+    val isPlaying: StateFlow<Boolean> = maleTtsPlayer.isSpeaking
 
     // Downloaded Duas Tracking
     val downloadedDuaIds: StateFlow<Set<String>> = audioPlayer.downloadedAudioIds
@@ -79,7 +80,7 @@ class NamazViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun downloadDuaAudio(duaId: String, arabicText: String = "", explicitUrl: String? = null) {
-        audioPlayer.downloadAudio(audioId = duaId, arabicText = arabicText, explicitUrl = explicitUrl)
+        // CDN download disabled for non-Quran items
     }
 
     fun playOrPauseDuaAudio(
@@ -90,22 +91,15 @@ class NamazViewModel(application: Application) : AndroidViewModel(application) {
         title: String = "",
         category: String = "ISLAMIC"
     ) {
-        audioPlayer.playOrPause(
-            audioId = duaId,
-            arabicText = arabicText,
-            explicitUrl = audioUrl,
-            title = title,
-            subtitle = banglaPronunciation,
-            category = category
-        )
+        maleTtsPlayer.speakOrStop(id = duaId, arabicText = arabicText)
     }
 
     fun pauseAudio() {
-        audioPlayer.pause()
+        maleTtsPlayer.stop()
     }
 
     fun stopAudio() {
-        audioPlayer.stop()
+        maleTtsPlayer.stop()
     }
 
     override fun onCleared() {

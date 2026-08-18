@@ -81,16 +81,14 @@ fun ModernSehriIftarCard(
     // Hijri Month Navigation Offset (0 = Current Islamic Month, +1 = Next Islamic Month, -1 = Previous)
     var hijriMonthOffset by remember { mutableIntStateOf(0) }
 
-    // CDN Islamic Audio Player for Sehri & Iftar Duas
-    val audioPlayer = remember { com.example.data.islamic.IslamicAudioPlayer.getInstance(context) }
-    val isAudioPlaying by audioPlayer.isPlaying.collectAsState()
-    val activeAudioId by audioPlayer.activeAudioId.collectAsState()
-    val downloadProgressMap by audioPlayer.downloadProgress.collectAsState()
-    val downloadedAudioIds by audioPlayer.downloadedAudioIds.collectAsState()
+    // Male Voice Text-To-Speech Player for Sehri & Iftar Duas
+    val ttsPlayer = remember { com.example.data.islamic.IslamicMaleTtsPlayer.getInstance(context) }
+    val isTtsSpeaking by ttsPlayer.isSpeaking.collectAsState()
+    val activeTtsId by ttsPlayer.activeAudioId.collectAsState()
 
     DisposableEffect(Unit) {
         onDispose {
-            audioPlayer.stop()
+            ttsPlayer.stop()
         }
     }
 
@@ -928,19 +926,13 @@ fun ModernSehriIftarCard(
                     meaning = if (isBn) "অর্থ: হে আল্লাহ! আমি আগামীকাল পবিত্র রমজান মাসের তোমার নির্ধারিত ফরজ রোজা রাখার নিয়ত করলাম। অতএব তুমি আমার পক্ষ থেকে তা কবুল করো। নিশ্চয়ই তুমি সর্বশ্রোতা ও সর্বজ্ঞানী।" else "Meaning: O Allah! I intend to fast tomorrow for Your sake in the blessed month of Ramadan. So accept it from me, indeed You are the All-Hearing, All-Knowing.",
                     themeColors = themeColors,
                     context = context,
-                    isPlaying = isAudioPlaying && activeAudioId == "sehri_niyyat",
+                    isPlaying = isTtsSpeaking && activeTtsId == "sehri_niyyat",
                     onPlayAudio = {
-                        audioPlayer.playOrPause(
-                            audioId = "sehri_niyyat",
-                            arabicText = "نَوَيْتُ اَنْ اُصُوْمَ غَدًا مِّنْ شَهْرِ رَمَضَانَ",
-                            title = "রমজান • রোজার নিয়ত (সেহরির দোয়া)",
-                            subtitle = "নওয়াইতু আন আসুমা গাদাম...",
-                            category = "SEHRI"
+                        ttsPlayer.speakOrStop(
+                            id = "sehri_niyyat",
+                            arabicText = "نَوَيْتُ اَنْ اُصُوْمَ غَدًا مِّنْ شَهْرِ رَمَضَانَ الْمُبَارَكِ فَرْضًا لَّكَ يَا اللهُ فَتَقَبَّلْ مِنِّى اِنَّكَ اَنْتَ السَّمِيْعُ الْعَلِيْمُ"
                         )
                     },
-                    isDownloaded = downloadedAudioIds.contains("sehri_niyyat"),
-                    downloadProgress = downloadProgressMap["sehri_niyyat"],
-                    onDownloadAudio = { audioPlayer.downloadAudio("sehri_niyyat", "نَوَيْتُ اَنْ اُصُوْمَ غَدًا مِّنْ شَهْرِ رَمَضَانَ") },
                     isBn = isBn
                 )
 
@@ -953,19 +945,13 @@ fun ModernSehriIftarCard(
                     meaning = if (isBn) "অর্থ: হে আল্লাহ! আমি তোমার সন্তুষ্টির জন্যই রোজা রেখেছিলাম এবং তোমারই দেওয়া রিজিক দ্বারা ইফতার করলাম।" else "Meaning: O Allah! I fasted for Your sake and I am breaking my fast with Your provision. (Abu Dawud)",
                     themeColors = themeColors,
                     context = context,
-                    isPlaying = isAudioPlaying && activeAudioId == "iftar_dua",
+                    isPlaying = isTtsSpeaking && activeTtsId == "iftar_dua",
                     onPlayAudio = {
-                        audioPlayer.playOrPause(
-                            audioId = "iftar_dua",
-                            arabicText = "اللَّهُمَّ لَكَ صُمْتُ وَعَلَى رِزْقِكَ أَفْطَرْتُ",
-                            title = "রমজান • ইফতারের দোয়া",
-                            subtitle = "আল্লাহুম্মা লাকা সুমতু ওয়া আলা...",
-                            category = "SEHRI"
+                        ttsPlayer.speakOrStop(
+                            id = "iftar_dua",
+                            arabicText = "اللَّهُمَّ لَكَ صُمْتُ وَعَلَى رِزْقِكَ أَفْطَرْتُ"
                         )
                     },
-                    isDownloaded = downloadedAudioIds.contains("iftar_dua"),
-                    downloadProgress = downloadProgressMap["iftar_dua"],
-                    onDownloadAudio = { audioPlayer.downloadAudio("iftar_dua", "اللَّهُمَّ لَكَ صُمْتُ وَعَلَى رِزْقِكَ أَفْطَرْتُ") },
                     isBn = isBn
                 )
             }
@@ -1294,9 +1280,6 @@ private fun DuaActionCard(
     context: Context,
     isPlaying: Boolean,
     onPlayAudio: () -> Unit,
-    isDownloaded: Boolean,
-    downloadProgress: Int?,
-    onDownloadAudio: () -> Unit,
     isBn: Boolean
 ) {
     Card(
@@ -1313,7 +1296,7 @@ private fun DuaActionCard(
                 .padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // Header Row: Title & Action Buttons (Audio, Download, Copy, Share)
+            // Header Row: Title & Action Buttons (TTS Audio, Copy, Share)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -1331,50 +1314,17 @@ private fun DuaActionCard(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Play / Pause Audio Button
+                    // Male Voice TTS Button
                     IconButton(
                         onClick = onPlayAudio,
                         modifier = Modifier.size(32.dp)
                     ) {
                         Icon(
-                            imageVector = if (isPlaying) Icons.Default.PauseCircle else Icons.Default.PlayCircle,
-                            contentDescription = if (isPlaying) "Pause Audio" else "Play Audio",
+                            imageVector = if (isPlaying) Icons.Default.VolumeOff else Icons.Default.VolumeUp,
+                            contentDescription = if (isPlaying) "Stop Voice" else "Listen Voice (Male Voice TTS)",
                             tint = if (isPlaying) Color(0xFF10B981) else themeColors.titleBarBg,
                             modifier = Modifier.size(22.dp)
                         )
-                    }
-
-                    // Download Button / Status
-                    if (downloadProgress != null && downloadProgress in 1..99) {
-                        CircularProgressIndicator(
-                            progress = { downloadProgress / 100f },
-                            modifier = Modifier
-                                .padding(horizontal = 4.dp)
-                                .size(18.dp),
-                            strokeWidth = 2.dp,
-                            color = themeColors.titleBarBg
-                        )
-                    } else if (isDownloaded) {
-                        Icon(
-                            imageVector = Icons.Default.CheckCircle,
-                            contentDescription = "Downloaded Offline",
-                            tint = Color(0xFF10B981),
-                            modifier = Modifier
-                                .padding(horizontal = 4.dp)
-                                .size(18.dp)
-                        )
-                    } else {
-                        IconButton(
-                            onClick = onDownloadAudio,
-                            modifier = Modifier.size(30.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Download,
-                                contentDescription = "Download Offline Audio",
-                                tint = themeColors.displayText.copy(alpha = 0.6f),
-                                modifier = Modifier.size(17.dp)
-                            )
-                        }
                     }
 
                     // Copy
