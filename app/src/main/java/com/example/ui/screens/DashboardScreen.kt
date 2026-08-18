@@ -3277,23 +3277,38 @@ fun DynamicGreetingIllustrationBackground(
     isDark: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val imageResId = remember(currentHour) {
-        when (currentHour) {
-            in 5..11 -> com.example.R.drawable.morning_scene
-            in 12..15 -> com.example.R.drawable.afternoon_scene
-            in 16..19 -> com.example.R.drawable.evening_scene
-            else -> com.example.R.drawable.night_scene
+    val isDay = currentHour in 6..17
+    // WMO Weather interpretation codes
+    // Rain/Snow/Thunderstorm
+    val isRainyOrSnowy = weatherCode in listOf(51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 71, 73, 75, 77, 80, 81, 82, 85, 86, 95, 96, 99)
+    // Fog/Overcast
+    val isCloudy = weatherCode in listOf(3, 45, 48)
+
+    val imageResId = remember(currentHour, weatherCode) {
+        when {
+            isRainyOrSnowy -> if (isDay) com.example.R.drawable.rainy_day_scene else com.example.R.drawable.rainy_night_scene
+            isCloudy -> if (isDay) com.example.R.drawable.cloudy_day_scene else com.example.R.drawable.cloudy_night_scene
+            else -> when (currentHour) {
+                in 5..11 -> com.example.R.drawable.morning_scene
+                in 12..15 -> com.example.R.drawable.afternoon_scene
+                in 16..19 -> com.example.R.drawable.evening_scene
+                else -> com.example.R.drawable.night_scene
+            }
         }
     }
 
     Box(modifier = modifier) {
-        coil.compose.AsyncImage(
+        val painter = coil.compose.rememberAsyncImagePainter(
             model = coil.request.ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
                 .data(imageResId)
                 .crossfade(true)
-                .allowHardware(false) // Fixes MediaTek HW decoding errors on Android 8.1
-                .bitmapConfig(android.graphics.Bitmap.Config.RGB_565) // Halves memory footprint
-                .build(),
+                .allowHardware(false) // Safe software decoding for older MediaTek
+                .size(coil.size.Size.ORIGINAL) // Force exact loading without depending on modifier size
+                .build()
+        )
+        
+        androidx.compose.foundation.Image(
+            painter = painter,
             contentDescription = "Greeting Background",
             contentScale = androidx.compose.ui.layout.ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
