@@ -1620,6 +1620,8 @@ How can I help you today?"""
         private set
     var weatherIsLoading by mutableStateOf(false)
         private set
+    var isUnifiedSyncing by mutableStateOf(false)
+        private set
     var weatherFetchError by mutableStateOf<String?>(null)
         private set
     var isOfflineWeatherData by mutableStateOf(false)
@@ -1760,6 +1762,107 @@ How can I help you today?"""
                 }
             } finally {
                 weatherIsLoading = false
+            }
+        }
+    }
+
+    fun performAppUnifiedSync(context: Context, onComplete: (Boolean, String) -> Unit) {
+        if (isUnifiedSyncing) return
+        isUnifiedSyncing = true
+        weatherIsLoading = true
+        weatherFetchError = null
+        
+        viewModelScope.launch(Dispatchers.IO) {
+            var weatherSuccess = false
+            var weatherMessage = ""
+            
+            // 1. Fetch fresh weather
+            try {
+                val response = com.example.data.network.WeatherApiClient.weatherApi.getWeather(weatherLocationLat, weatherLocationLng)
+                weatherData = response
+                isOfflineWeatherData = false
+                lastWeatherFetchTime = System.currentTimeMillis()
+                
+                try {
+                    val json = weatherResponseAdapter.toJson(response)
+                    sharedPrefs.edit()
+                        .putString("cached_weather_json", json)
+                        .putLong("cached_weather_time", lastWeatherFetchTime)
+                        .putString("cached_weather_location", weatherLocation)
+                        .apply()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+                weatherSuccess = true
+            } catch (e: Exception) {
+                e.printStackTrace()
+                isOfflineWeatherData = true
+                if (weatherData == null) {
+                    loadCachedWeather()
+                }
+                val msg = e.message ?: ""
+                weatherMessage = msg
+            } finally {
+                weatherIsLoading = false
+            }
+
+            // 2. Sync Hijri Date Online (Moon sighting info)
+            var hijriSuccess = false
+            try {
+                val today = SimpleDateFormat("dd-MM-yyyy", Locale.ENGLISH).format(Date())
+                val url = URL("https://api.aladhan.com/v1/gToH/$today")
+                val connection = (url.openConnection() as HttpURLConnection).apply {
+                    connectTimeout = 5000
+                    readTimeout = 5000
+                    requestMethod = "GET"
+                }
+
+                if (connection.responseCode == 200) {
+                    val responseText = connection.inputStream.bufferedReader().use { it.readText() }
+                    val json = JSONObject(responseText)
+                    val data = json.getJSONObject("data")
+                    val hijri = data.getJSONObject("hijri")
+                    val remoteHDay = hijri.getString("day")
+                    val remoteHMonthName = hijri.getJSONObject("month").getString("en")
+                    val remoteHYear = hijri.getString("year")
+
+                    withContext(Dispatchers.Main) {
+                        com.example.util.CalendarUtils.hijriOffsetDays = hijriAdjustmentDays
+                        islamicPrefs.edit().putInt("hijri_adjustment_days", hijriAdjustmentDays).apply()
+                        hijriSyncVersion++
+                    }
+                    hijriSuccess = true
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            
+            if (!hijriSuccess) {
+                withContext(Dispatchers.Main) {
+                    com.example.util.CalendarUtils.hijriOffsetDays = hijriAdjustmentDays
+                    islamicPrefs.edit().putInt("hijri_adjustment_days", hijriAdjustmentDays).apply()
+                    hijriSyncVersion++
+                }
+            }
+
+            // 3. Update all widgets (syncs app data, widget weather, countdown, etc.)
+            withContext(Dispatchers.Main) {
+                try {
+                    com.example.widget.ToolsMateMasterWidget.updateAllWidgets(context)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+                
+                isUnifiedSyncing = false
+                
+                val isBn = selectedLanguage == AppLanguage.BENGALI
+                if (weatherSuccess) {
+                    val msg = if (isBn) "সাফল্যের সাথে আবহাওয়া, চাঁদ দেখা এবং উইজেট সিঙ্ক করা হয়েছে!" else "Weather, moon-sighting & widgets successfully synced!"
+                    onComplete(true, msg)
+                } else {
+                    val msg = if (isBn) "আংশিক সফল: চাঁদ দেখা ও উইজেট সিঙ্ক হয়েছে, তবে আবহাওয়া অফলাইন।" else "Partial success: Moon-sighting & widgets synced, weather offline."
+                    onComplete(false, msg)
+                }
             }
         }
     }

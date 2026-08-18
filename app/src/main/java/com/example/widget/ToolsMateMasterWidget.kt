@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.os.Build
+import android.os.Bundle
 import android.widget.RemoteViews
 import com.example.QuickCalculatorActivity
 import com.example.QuickCalendarActivity
@@ -20,6 +21,14 @@ import com.example.util.CalendarUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import android.widget.Toast
+import java.net.HttpURLConnection
+import java.net.URL
+import org.json.JSONObject
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import java.util.Calendar
 import kotlin.math.roundToInt
 
@@ -75,11 +84,92 @@ class ToolsMateMasterWidget : AppWidgetProvider() {
         }
     }
 
+    override fun onAppWidgetOptionsChanged(
+        context: Context,
+        appWidgetManager: AppWidgetManager,
+        appWidgetId: Int,
+        newOptions: Bundle
+    ) {
+        super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions)
+        try {
+            updateAppWidget(context, appWidgetManager, appWidgetId)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
     override fun onReceive(context: Context, intent: Intent) {
         try {
             super.onReceive(context, intent)
             if (intent.action == ACTION_REFRESH_WIDGET) {
-                updateAllWidgets(context)
+                val pendingResult = goAsync()
+                val appContext = context.applicationContext
+                Toast.makeText(appContext, "উইজেট, আবহাওয়া ও চাঁদ দেখা সিঙ্ক করা হচ্ছে...", Toast.LENGTH_SHORT).show()
+
+                CoroutineScope(Dispatchers.IO).launch {
+                    var weatherSuccess = false
+                    try {
+                        val prefs = appContext.getSharedPreferences("islamic_location_prefs", Context.MODE_PRIVATE)
+                        val lat = prefs.getFloat("islamic_district_lat", 23.8103f).toDouble()
+                        val lon = prefs.getFloat("islamic_district_lon", 90.4125f).toDouble()
+
+                        val weatherRes = WeatherApiClient.weatherApi.getWeather(lat, lon)
+                        val liveTemp = weatherRes.current.temperature_2m
+                        val liveCode = weatherRes.current.weather_code
+                        val liveFeel = weatherRes.current.apparent_temperature
+                        val liveHumidity = weatherRes.current.relative_humidity_2m
+                        val liveWind = weatherRes.current.wind_speed_10m
+                        val liveSunrise = weatherRes.daily.sunrise.getOrNull(0)?.substringAfter("T") ?: "05:32"
+                        val liveSunset = weatherRes.daily.sunset.getOrNull(0)?.substringAfter("T") ?: "18:24"
+
+                        prefs.edit()
+                            .putFloat("cached_temp", liveTemp.toFloat())
+                            .putInt("cached_weather_code", liveCode)
+                            .putFloat("cached_feel", liveFeel.toFloat())
+                            .putInt("cached_humidity", liveHumidity)
+                            .putFloat("cached_wind", liveWind.toFloat())
+                            .putString("cached_sunrise", liveSunrise)
+                            .putString("cached_sunset", liveSunset)
+                            .apply()
+                        weatherSuccess = true
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+
+                    // 2. Sync Hijri Date Online (Moon sighting info)
+                    var hijriSuccess = false
+                    try {
+                        val today = SimpleDateFormat("dd-MM-yyyy", Locale.ENGLISH).format(Date())
+                        val url = URL("https://api.aladhan.com/v1/gToH/$today")
+                        val connection = (url.openConnection() as HttpURLConnection).apply {
+                            connectTimeout = 5000
+                            readTimeout = 5000
+                            requestMethod = "GET"
+                        }
+
+                        if (connection.responseCode == 200) {
+                            val responseText = connection.inputStream.bufferedReader().use { it.readText() }
+                            val json = JSONObject(responseText)
+                            val data = json.getJSONObject("data")
+                            val hijri = data.getJSONObject("hijri")
+                            // Successfully fetched
+                            hijriSuccess = true
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+
+                    withContext(Dispatchers.Main) {
+                        updateAllWidgets(appContext)
+
+                        if (weatherSuccess) {
+                            Toast.makeText(appContext, "সাফল্যের সাথে উইজেট, আবহাওয়া ও চাঁদ দেখা সিঙ্ক হয়েছে!", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(appContext, "আংশিক সফল: উইজেট ও চাঁদ দেখা সিঙ্ক হয়েছে, তবে আবহাওয়া অফলাইন।", Toast.LENGTH_SHORT).show()
+                        }
+                        pendingResult.finish()
+                    }
+                }
             } else if (intent.action == ACTION_TOGGLE_THEME) {
                 val widgetPrefs = context.getSharedPreferences("widget_theme_prefs", Context.MODE_PRIVATE)
                 val currentDark = widgetPrefs.getBoolean("is_dark_mode", false)
@@ -99,12 +189,12 @@ class ToolsMateMasterWidget : AppWidgetProvider() {
             val widgetPrefs = context.getSharedPreferences("widget_theme_prefs", Context.MODE_PRIVATE)
             val isDarkMode = widgetPrefs.getBoolean("is_dark_mode", false)
 
-            val prefs = context.getSharedPreferences("islamic_district_prefs", Context.MODE_PRIVATE)
+            val prefs = context.getSharedPreferences("islamic_location_prefs", Context.MODE_PRIVATE)
             val districtBn = prefs.getString("islamic_district_bn", "ঢাকা") ?: "ঢাকা"
             val lat = prefs.getFloat("islamic_district_lat", 23.8103f).toDouble()
             val lon = prefs.getFloat("islamic_district_lon", 90.4125f).toDouble()
 
-            // 2. Apply Theme Styling dynamically
+            // 2. Apply Theme Styling dynamically for perfect high-contrast UX
             if (isDarkMode) {
                 views.setInt(R.id.widget_root, "setBackgroundResource", R.drawable.widget_background_dark)
                 views.setInt(R.id.widget_weather_container, "setBackgroundResource", R.drawable.widget_card_inner_bg_dark)
@@ -120,15 +210,36 @@ class ToolsMateMasterWidget : AppWidgetProvider() {
                 views.setTextColor(R.id.widget_app_brand, Color.parseColor("#FFFFFF"))
                 views.setTextColor(R.id.widget_header_dot, Color.parseColor("#38BDF8"))
                 views.setTextColor(R.id.widget_location_text, Color.parseColor("#38BDF8"))
-                views.setTextColor(R.id.widget_date_text, Color.parseColor("#CBD5E1"))
+                views.setTextColor(R.id.widget_date_text, Color.parseColor("#94A3B8"))
                 views.setTextColor(R.id.widget_weather_temp, Color.parseColor("#38BDF8"))
-                views.setTextColor(R.id.widget_weather_condition, Color.parseColor("#FFFFFF"))
-                views.setTextColor(R.id.widget_weather_details, Color.parseColor("#CBD5E1"))
-                views.setTextColor(R.id.widget_next_waqt_text, Color.parseColor("#E2E8F0"))
-                views.setTextColor(R.id.widget_btn_calc_text, Color.parseColor("#FFFFFF"))
-                views.setTextColor(R.id.widget_btn_calendar_text, Color.parseColor("#FFFFFF"))
-                views.setTextColor(R.id.widget_btn_market_text, Color.parseColor("#FFFFFF"))
-                views.setTextColor(R.id.widget_btn_islamic_text, Color.parseColor("#FFFFFF"))
+                views.setTextColor(R.id.widget_weather_condition, Color.parseColor("#F8FAFC"))
+                views.setTextColor(R.id.widget_weather_details, Color.parseColor("#94A3B8"))
+                views.setTextColor(R.id.widget_sunrise_time, Color.parseColor("#FDE047"))
+                views.setTextColor(R.id.widget_sunset_time, Color.parseColor("#F87171"))
+                views.setTextColor(R.id.widget_sunrise_label, Color.parseColor("#94A3B8"))
+                views.setTextColor(R.id.widget_sunset_label, Color.parseColor("#94A3B8"))
+
+                views.setInt(R.id.widget_sunrise_icon, "setColorFilter", Color.parseColor("#FDE047"))
+                views.setInt(R.id.widget_sunset_icon, "setColorFilter", Color.parseColor("#F87171"))
+                views.setInt(R.id.widget_icon_clock, "setColorFilter", Color.parseColor("#38BDF8"))
+                views.setInt(R.id.widget_icon_timer, "setColorFilter", Color.parseColor("#F59E0B"))
+                views.setInt(R.id.widget_icon_sehri, "setColorFilter", Color.parseColor("#34D399"))
+                views.setInt(R.id.widget_icon_iftar, "setColorFilter", Color.parseColor("#F87171"))
+                views.setInt(R.id.widget_icon_calc, "setColorFilter", Color.parseColor("#38BDF8"))
+                views.setInt(R.id.widget_icon_calendar, "setColorFilter", Color.parseColor("#38BDF8"))
+                views.setInt(R.id.widget_icon_market, "setColorFilter", Color.parseColor("#38BDF8"))
+                views.setInt(R.id.widget_icon_islamic, "setColorFilter", Color.parseColor("#38BDF8"))
+
+                views.setTextColor(R.id.widget_active_waqt_title, Color.parseColor("#38BDF8"))
+                views.setTextColor(R.id.widget_active_waqt_time, Color.parseColor("#E2E8F0"))
+                views.setTextColor(R.id.widget_countdown_text, Color.parseColor("#F59E0B"))
+                views.setTextColor(R.id.widget_next_waqt_text, Color.parseColor("#CBD5E1"))
+                views.setTextColor(R.id.widget_sehri_text, Color.parseColor("#34D399"))
+                views.setTextColor(R.id.widget_iftar_text, Color.parseColor("#F87171"))
+                views.setTextColor(R.id.widget_btn_calc_text, Color.parseColor("#F8FAFC"))
+                views.setTextColor(R.id.widget_btn_calendar_text, Color.parseColor("#F8FAFC"))
+                views.setTextColor(R.id.widget_btn_market_text, Color.parseColor("#F8FAFC"))
+                views.setTextColor(R.id.widget_btn_islamic_text, Color.parseColor("#F8FAFC"))
             } else {
                 views.setInt(R.id.widget_root, "setBackgroundResource", R.drawable.widget_background)
                 views.setInt(R.id.widget_weather_container, "setBackgroundResource", R.drawable.widget_card_inner_bg)
@@ -148,7 +259,28 @@ class ToolsMateMasterWidget : AppWidgetProvider() {
                 views.setTextColor(R.id.widget_weather_temp, Color.parseColor("#0284C7"))
                 views.setTextColor(R.id.widget_weather_condition, Color.parseColor("#0F172A"))
                 views.setTextColor(R.id.widget_weather_details, Color.parseColor("#475569"))
+                views.setTextColor(R.id.widget_sunrise_time, Color.parseColor("#D97706"))
+                views.setTextColor(R.id.widget_sunset_time, Color.parseColor("#DC2626"))
+                views.setTextColor(R.id.widget_sunrise_label, Color.parseColor("#475569"))
+                views.setTextColor(R.id.widget_sunset_label, Color.parseColor("#475569"))
+
+                views.setInt(R.id.widget_sunrise_icon, "setColorFilter", Color.parseColor("#D97706"))
+                views.setInt(R.id.widget_sunset_icon, "setColorFilter", Color.parseColor("#DC2626"))
+                views.setInt(R.id.widget_icon_clock, "setColorFilter", Color.parseColor("#0284C7"))
+                views.setInt(R.id.widget_icon_timer, "setColorFilter", Color.parseColor("#D97706"))
+                views.setInt(R.id.widget_icon_sehri, "setColorFilter", Color.parseColor("#059669"))
+                views.setInt(R.id.widget_icon_iftar, "setColorFilter", Color.parseColor("#DC2626"))
+                views.setInt(R.id.widget_icon_calc, "setColorFilter", Color.parseColor("#0284C7"))
+                views.setInt(R.id.widget_icon_calendar, "setColorFilter", Color.parseColor("#0284C7"))
+                views.setInt(R.id.widget_icon_market, "setColorFilter", Color.parseColor("#0284C7"))
+                views.setInt(R.id.widget_icon_islamic, "setColorFilter", Color.parseColor("#0284C7"))
+
+                views.setTextColor(R.id.widget_active_waqt_title, Color.parseColor("#0284C7"))
+                views.setTextColor(R.id.widget_active_waqt_time, Color.parseColor("#0369A1"))
+                views.setTextColor(R.id.widget_countdown_text, Color.parseColor("#D97706"))
                 views.setTextColor(R.id.widget_next_waqt_text, Color.parseColor("#334155"))
+                views.setTextColor(R.id.widget_sehri_text, Color.parseColor("#059669"))
+                views.setTextColor(R.id.widget_iftar_text, Color.parseColor("#DC2626"))
                 views.setTextColor(R.id.widget_btn_calc_text, Color.parseColor("#0369A1"))
                 views.setTextColor(R.id.widget_btn_calendar_text, Color.parseColor("#0369A1"))
                 views.setTextColor(R.id.widget_btn_market_text, Color.parseColor("#0369A1"))
@@ -181,16 +313,22 @@ class ToolsMateMasterWidget : AppWidgetProvider() {
             val cachedFeel = prefs.getFloat("cached_feel", 31.0f).toDouble()
             val cachedHumidity = prefs.getInt("cached_humidity", 65)
             val cachedWind = prefs.getFloat("cached_wind", 12.0f).toDouble()
+            val cachedSunrise = prefs.getString("cached_sunrise", "05:32") ?: "05:32"
+            val cachedSunset = prefs.getString("cached_sunset", "18:24") ?: "18:24"
 
             val tempBn = convertDigitsToBn(cachedTemp.roundToInt().toString())
             val feelBn = convertDigitsToBn(cachedFeel.roundToInt().toString())
             val humidityBn = convertDigitsToBn(cachedHumidity.toString())
             val windBn = convertDigitsToBn(cachedWind.roundToInt().toString())
+            val sunriseBn = convertDigitsToBn(cachedSunrise)
+            val sunsetBn = convertDigitsToBn(cachedSunset)
             val conditionBn = getWeatherConditionBn(cachedCode)
 
             views.setTextViewText(R.id.widget_weather_temp, "$tempBn°C")
             views.setTextViewText(R.id.widget_weather_condition, "$conditionBn • অনুভূত $feelBn°C")
             views.setTextViewText(R.id.widget_weather_details, "আর্দ্রতা $humidityBn% • বাতাস $windBn কিমি/ঘ")
+            views.setTextViewText(R.id.widget_sunrise_time, sunriseBn)
+            views.setTextViewText(R.id.widget_sunset_time, sunsetBn)
 
             // Async Fetch Fresh Weather Data
             CoroutineScope(Dispatchers.IO).launch {
@@ -201,6 +339,8 @@ class ToolsMateMasterWidget : AppWidgetProvider() {
                     val liveFeel = weatherRes.current.apparent_temperature
                     val liveHumidity = weatherRes.current.relative_humidity_2m
                     val liveWind = weatherRes.current.wind_speed_10m
+                    val liveSunrise = weatherRes.daily.sunrise.getOrNull(0)?.substringAfter("T") ?: "05:32"
+                    val liveSunset = weatherRes.daily.sunset.getOrNull(0)?.substringAfter("T") ?: "18:24"
 
                     prefs.edit()
                         .putFloat("cached_temp", liveTemp.toFloat())
@@ -208,18 +348,24 @@ class ToolsMateMasterWidget : AppWidgetProvider() {
                         .putFloat("cached_feel", liveFeel.toFloat())
                         .putInt("cached_humidity", liveHumidity)
                         .putFloat("cached_wind", liveWind.toFloat())
+                        .putString("cached_sunrise", liveSunrise)
+                        .putString("cached_sunset", liveSunset)
                         .apply()
 
                     val freshTempBn = convertDigitsToBn(liveTemp.roundToInt().toString())
                     val freshFeelBn = convertDigitsToBn(liveFeel.roundToInt().toString())
                     val freshHumidityBn = convertDigitsToBn(liveHumidity.toString())
                     val freshWindBn = convertDigitsToBn(liveWind.roundToInt().toString())
+                    val freshSunriseBn = convertDigitsToBn(liveSunrise)
+                    val freshSunsetBn = convertDigitsToBn(liveSunset)
                     val freshConditionBn = getWeatherConditionBn(liveCode)
 
                     val updatedViews = RemoteViews(context.packageName, R.layout.widget_master_layout)
                     updatedViews.setTextViewText(R.id.widget_weather_temp, "$freshTempBn°C")
                     updatedViews.setTextViewText(R.id.widget_weather_condition, "$freshConditionBn • অনুভূত $freshFeelBn°C")
                     updatedViews.setTextViewText(R.id.widget_weather_details, "আর্দ্রতা $freshHumidityBn% • বাতাস $freshWindBn কিমি/ঘ")
+                    updatedViews.setTextViewText(R.id.widget_sunrise_time, freshSunriseBn)
+                    updatedViews.setTextViewText(R.id.widget_sunset_time, freshSunsetBn)
                     appWidgetManager.partiallyUpdateAppWidget(appWidgetId, updatedViews)
                 } catch (e: Exception) {
                     e.printStackTrace()
