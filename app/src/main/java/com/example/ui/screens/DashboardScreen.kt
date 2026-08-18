@@ -3279,16 +3279,21 @@ fun DynamicGreetingIllustrationBackground(
 ) {
     val imageResId = remember(currentHour) {
         when (currentHour) {
-            in 5..11 -> com.example.R.drawable.morning_scene_v2
-            in 12..15 -> com.example.R.drawable.afternoon_scene_v2
-            in 16..19 -> com.example.R.drawable.evening_scene_v2
-            else -> com.example.R.drawable.night_scene_v2
+            in 5..11 -> com.example.R.drawable.morning_scene
+            in 12..15 -> com.example.R.drawable.afternoon_scene
+            in 16..19 -> com.example.R.drawable.evening_scene
+            else -> com.example.R.drawable.night_scene
         }
     }
 
     Box(modifier = modifier) {
-        androidx.compose.foundation.Image(
-            painter = androidx.compose.ui.res.painterResource(id = imageResId),
+        coil.compose.AsyncImage(
+            model = coil.request.ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
+                .data(imageResId)
+                .crossfade(true)
+                .allowHardware(false) // Fixes MediaTek HW decoding errors on Android 8.1
+                .bitmapConfig(android.graphics.Bitmap.Config.RGB_565) // Halves memory footprint
+                .build(),
             contentDescription = "Greeting Background",
             contentScale = androidx.compose.ui.layout.ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
