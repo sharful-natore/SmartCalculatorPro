@@ -232,11 +232,29 @@ fun ModernPrayerTimesCard(
     var maghribDone by remember(activeDateKey, trackerRefreshTrigger) { mutableStateOf(sharedPrefs.getBoolean("${activeDateKey}_maghrib", false)) }
     var ishaDone by remember(activeDateKey, trackerRefreshTrigger) { mutableStateOf(sharedPrefs.getBoolean("${activeDateKey}_isha", false)) }
 
+    // Listen for external updates (e.g. from Home Screen Widget) in real-time
+    DisposableEffect(sharedPrefs, activeDateKey) {
+        val listener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key?.startsWith(activeDateKey) == true) {
+                trackerRefreshTrigger++
+            }
+        }
+        sharedPrefs.registerOnSharedPreferenceChangeListener(listener)
+        onDispose {
+            sharedPrefs.unregisterOnSharedPreferenceChangeListener(listener)
+        }
+    }
+
     fun togglePrayer(key: String, currentVal: Boolean, onUpdate: (Boolean) -> Unit) {
         val newVal = !currentVal
         onUpdate(newVal)
         sharedPrefs.edit().putBoolean("${activeDateKey}_$key", newVal).apply()
         trackerRefreshTrigger++
+        try {
+            com.example.widget.ToolsMateMasterWidget.updateAllWidgets(context)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
         val msg = if (isBn) {
             if (newVal) "মাশাআল্লাহ! নামাজ আদায় রেকর্ড করা হয়েছে।" else "নামাজ রেকর্ড বাতিল করা হয়েছে।"
         } else {
@@ -2158,6 +2176,7 @@ fun PrayerTrackerHistorySheet(
     onDismiss: () -> Unit,
     onDataChanged: () -> Unit
 ) {
+    val context = LocalContext.current
     var monthOffset by remember { mutableIntStateOf(0) }
     var historyDataVersion by remember { mutableIntStateOf(0) }
 
@@ -2713,6 +2732,11 @@ fun PrayerTrackerHistorySheet(
                         sharedPrefs.edit().putBoolean("${selectedRecord.dateKey}_$waqtKey", newVal).apply()
                         historyDataVersion++
                         onDataChanged()
+                        try {
+                            com.example.widget.ToolsMateMasterWidget.updateAllWidgets(context)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
                     }
 
                     Row(

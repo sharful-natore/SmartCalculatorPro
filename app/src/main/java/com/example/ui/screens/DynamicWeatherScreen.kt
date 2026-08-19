@@ -3,6 +3,7 @@ package com.example.ui.screens
 import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
 
+import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
@@ -51,10 +52,10 @@ fun DynamicWeatherScreen(
     isBn: Boolean
 ) {
     var showSearchDialog by remember { mutableStateOf(false) }
-    var selectedDayIndex by remember { mutableStateOf(0) }
+    var expandedDayIndices by remember { mutableStateOf(setOf<Int>()) }
 
     LaunchedEffect(viewModel.weatherLocation) {
-        selectedDayIndex = 0
+        expandedDayIndices = emptySet()
     }
 
     LaunchedEffect(Unit) {
@@ -320,37 +321,10 @@ fun DynamicWeatherScreen(
                     SunMoonTrackerCard(weatherData, themeColors, isBn)
                 }
 
-                // Hourly Forecast
+                // Hourly Forecast for Today
                 item {
-                    val selectedDayLabel = remember(selectedDayIndex, weatherData, isBn) {
-                        try {
-                            val timeStr = weatherData.daily.time.getOrNull(selectedDayIndex) ?: ""
-                            val parser = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-                            val date = parser.parse(timeStr)
-                            val formatter = SimpleDateFormat("EEEE", Locale.US)
-                            val dayName = formatter.format(date ?: Date())
-                            val prettyName = if (isBn) {
-                                when (dayName) {
-                                    "Saturday" -> "শনিবার"
-                                    "Sunday" -> "রবিবার"
-                                    "Monday" -> "সোমবার"
-                                    "Tuesday" -> "মঙ্গলবার"
-                                    "Wednesday" -> "বুধবার"
-                                    "Thursday" -> "বৃহস্পতিবার"
-                                    "Friday" -> "শুক্রবার"
-                                    else -> dayName
-                                }
-                            } else {
-                                dayName
-                            }
-                            if (selectedDayIndex == 0) (if (isBn) "আজ" else "Today") else prettyName
-                        } catch (e: Exception) {
-                            if (isBn) "ঘণ্টাভিত্তিক" else "Hourly"
-                        }
-                    }
-
                     Text(
-                        text = if (isBn) "প্রতি ঘণ্টার পূর্বাভাস ($selectedDayLabel)" else "Hourly Forecast ($selectedDayLabel)",
+                        text = if (isBn) "আজকের প্রতি ঘণ্টার পূর্বাভাস" else "Today's Hourly Forecast",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = themeColors.displayText,
@@ -360,7 +334,7 @@ fun DynamicWeatherScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         items(24) { index ->
-                            val globalHourIndex = selectedDayIndex * 24 + index
+                            val globalHourIndex = index
                             val timeStr = weatherData.hourly.time.getOrNull(globalHourIndex) ?: ""
                             val temp = weatherData.hourly.temperature_2m.getOrNull(globalHourIndex) ?: 0.0
                             val code = weatherData.hourly.weather_code.getOrNull(globalHourIndex) ?: 0
@@ -370,10 +344,10 @@ fun DynamicWeatherScreen(
                     }
                 }
 
-                // 7-Day Forecast (with padding cleaned up)
+                // 7-Day Forecast Section Header
                 item {
                     Text(
-                        text = if (isBn) "৭ দিনের পূর্বাভাস (যেকোনো দিনে ক্লিক করে ঘণ্টার পূর্বাভাস দেখুন)" else "7-Day Forecast (Tap any day to see hourly forecast)",
+                        text = if (isBn) "৭ দিনের পূর্বাভাস (প্রতিটি দিনে ক্লিক করে বিস্তার দেখুন)" else "7-Day Forecast (Tap any day to expand 24-hr details)",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = themeColors.displayText,
@@ -388,17 +362,26 @@ fun DynamicWeatherScreen(
                     val maxT = weatherData.daily.temperature_2m_max[index]
                     val precip = weatherData.daily.precipitation_sum[index]
                     val rainProbMax = weatherData.daily.precipitation_probability_max.getOrNull(index) ?: 0
+                    val isExpanded = expandedDayIndices.contains(index)
                     DailyWeatherItem(
+                        dayIndex = index,
                         timeStr = timeStr,
                         code = code,
                         minT = minT,
                         maxT = maxT,
                         precip = precip,
                         rainProbMax = rainProbMax,
+                        weatherData = weatherData,
                         themeColors = themeColors,
                         isBn = isBn,
-                        isSelected = selectedDayIndex == index,
-                        onClick = { selectedDayIndex = index }
+                        isExpanded = isExpanded,
+                        onToggleExpand = {
+                            expandedDayIndices = if (expandedDayIndices.contains(index)) {
+                                expandedDayIndices - index
+                            } else {
+                                expandedDayIndices + index
+                            }
+                        }
                     )
                 }
             }
@@ -694,23 +677,25 @@ fun HourlyWeatherItem(timeStr: String, temp: Double, code: Int, rainProb: Int, t
 
 @Composable
 fun DailyWeatherItem(
+    dayIndex: Int,
     timeStr: String,
     code: Int,
     minT: Double,
     maxT: Double,
     precip: Double,
     rainProbMax: Int,
+    weatherData: com.example.data.network.WeatherResponse,
     themeColors: CalculatorThemeColors,
     isBn: Boolean,
-    isSelected: Boolean,
-    onClick: () -> Unit
+    isExpanded: Boolean,
+    onToggleExpand: () -> Unit
 ) {
     val day = try {
         val parser = SimpleDateFormat("yyyy-MM-dd", Locale.US)
         val date = parser.parse(timeStr)
-        val formatter = SimpleDateFormat("EEEE", Locale.US)
-        val dayName = formatter.format(date ?: Date())
-        if (isBn) {
+        val dayName = SimpleDateFormat("EEEE", Locale.US).format(date ?: Date())
+        val dateNum = SimpleDateFormat("d MMM", Locale.US).format(date ?: Date())
+        val translatedDayName = if (isBn) {
             when (dayName) {
                 "Saturday" -> "শনিবার"
                 "Sunday" -> "রবিবার"
@@ -724,87 +709,176 @@ fun DailyWeatherItem(
         } else {
             dayName
         }
+        if (dayIndex == 0) (if (isBn) "আজ ($translatedDayName)" else "Today ($dayName)") else "$translatedDayName, $dateNum"
     } catch (e: Exception) {
         "--"
     }
 
-    Surface(
-        onClick = onClick,
-        shape = RoundedCornerShape(12.dp),
-        color = if (isSelected) themeColors.buttonEqualBg.copy(alpha = 0.12f) else Color.Transparent,
-        border = if (isSelected) BorderStroke(1.5.dp, themeColors.buttonEqualBg) else null,
+    Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
+            .animateContentSize(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isExpanded) themeColors.buttonEqualBg.copy(alpha = 0.08f) else themeColors.displayBackground
+        ),
+        border = BorderStroke(
+            1.dp,
+            if (isExpanded) themeColors.buttonEqualBg.copy(alpha = 0.5f) else themeColors.displayText.copy(alpha = 0.08f)
+        )
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 10.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Text(
-                text = day,
-                color = themeColors.displayText,
-                fontSize = 16.sp,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                modifier = Modifier.weight(1f)
-            )
-            
+            // Main clickable day row
             Row(
-                modifier = Modifier.weight(1.2f),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onToggleExpand)
+                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                WeatherConditionGraphic(
-                    code = code,
-                    isDay = true,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Column(horizontalAlignment = Alignment.Start) {
-                    if (precip > 0) {
-                        Text(
-                            text = "${precip.toInt()}mm",
-                            color = themeColors.buttonEqualBg,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.WaterDrop,
-                            contentDescription = "Rain probability",
-                            tint = Color(0xFF38BDF8),
-                            modifier = Modifier.size(10.dp)
-                        )
-                        Spacer(modifier = Modifier.width(2.dp))
-                        Text(
-                            text = "$rainProbMax%",
-                            color = themeColors.displayText.copy(alpha = 0.7f),
-                            fontSize = 10.sp
-                        )
+                // Day Title + Subtitle
+                Column(modifier = Modifier.weight(1.3f)) {
+                    Text(
+                        text = day,
+                        color = themeColors.displayText,
+                        fontSize = 15.sp,
+                        fontWeight = if (isExpanded || dayIndex == 0) FontWeight.Bold else FontWeight.SemiBold
+                    )
+                    Text(
+                        text = if (isExpanded) (if (isBn) "ঘণ্টাভিত্তিক বন্ধ করতে ট্যাপ করুন" else "Tap to collapse") else (if (isBn) "২৪ ঘণ্টার পূর্বাভাস দেখতে ট্যাপ করুন" else "Tap for 24-hr forecast"),
+                        color = themeColors.displayText.copy(alpha = 0.6f),
+                        fontSize = 10.sp
+                    )
+                }
+
+                // Weather Condition + Rain Prob
+                Row(
+                    modifier = Modifier.weight(1.1f),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    WeatherConditionGraphic(
+                        code = code,
+                        isDay = true,
+                        modifier = Modifier.size(28.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Column(horizontalAlignment = Alignment.Start) {
+                        if (precip > 0) {
+                            Text(
+                                text = "${precip.toInt()}mm",
+                                color = themeColors.buttonEqualBg,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.WaterDrop,
+                                contentDescription = "Rain probability",
+                                tint = Color(0xFF38BDF8),
+                                modifier = Modifier.size(11.dp)
+                            )
+                            Spacer(modifier = Modifier.width(2.dp))
+                            Text(
+                                text = "$rainProbMax%",
+                                color = themeColors.displayText.copy(alpha = 0.75f),
+                                fontSize = 10.5.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
                     }
                 }
+
+                // Min/Max Temp + Expand Chevron
+                Row(
+                    modifier = Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            text = "${maxT.toInt()}°",
+                            color = themeColors.displayText,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
+                        Text(
+                            text = "${minT.toInt()}°",
+                            color = themeColors.displayText.copy(alpha = 0.5f),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Icon(
+                        imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                        contentDescription = if (isExpanded) "Collapse" else "Expand",
+                        tint = if (isExpanded) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.6f),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
-            
-            Row(
-                modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.End
+
+            // Expandable Hourly Section (24 Hours for this day)
+            AnimatedVisibility(
+                visible = isExpanded,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
             ) {
-                Text(
-                    text = "${maxT.toInt()}°",
-                    color = themeColors.displayText,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "${minT.toInt()}°",
-                    color = themeColors.displayText.copy(alpha = 0.5f),
-                    fontSize = 16.sp
-                )
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(themeColors.displayBackground.copy(alpha = 0.65f))
+                        .padding(horizontal = 10.dp, vertical = 10.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Schedule,
+                            contentDescription = null,
+                            tint = themeColors.buttonEqualBg,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = if (isBn) "২৪ ঘণ্টার বিস্তারিত পূর্বাভাস" else "24-Hour Detailed Forecast",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = themeColors.buttonEqualBg
+                        )
+                    }
+
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(horizontal = 2.dp)
+                    ) {
+                        items(24) { hIndex ->
+                            val globalHourIndex = dayIndex * 24 + hIndex
+                            val hourTimeStr = weatherData.hourly.time.getOrNull(globalHourIndex) ?: ""
+                            val hourTemp = weatherData.hourly.temperature_2m.getOrNull(globalHourIndex) ?: 0.0
+                            val hourCode = weatherData.hourly.weather_code.getOrNull(globalHourIndex) ?: 0
+                            val hourRain = weatherData.hourly.precipitation_probability.getOrNull(globalHourIndex) ?: 0
+
+                            HourlyWeatherItem(
+                                timeStr = hourTimeStr,
+                                temp = hourTemp,
+                                code = hourCode,
+                                rainProb = hourRain,
+                                themeColors = themeColors,
+                                isBn = isBn
+                            )
+                        }
+                    }
+                }
             }
         }
     }

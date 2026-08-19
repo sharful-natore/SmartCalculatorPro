@@ -9,6 +9,7 @@ import android.content.Intent
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.view.View
 import android.widget.RemoteViews
 import com.example.QuickCalculatorActivity
 import com.example.QuickCalendarActivity
@@ -37,6 +38,9 @@ class ToolsMateMasterWidget : AppWidgetProvider() {
     companion object {
         const val ACTION_REFRESH_WIDGET = "com.example.widget.ACTION_REFRESH_WIDGET"
         const val ACTION_TOGGLE_THEME = "com.example.widget.ACTION_TOGGLE_THEME"
+        const val ACTION_TOGGLE_PRAYER = "com.example.widget.ACTION_TOGGLE_PRAYER"
+        const val EXTRA_WAQT_ID = "extra_waqt_id"
+        const val EXTRA_WAQT_NAME = "extra_waqt_name"
 
         fun updateAllWidgets(context: Context) {
             val appWidgetManager = AppWidgetManager.getInstance(context)
@@ -175,6 +179,24 @@ class ToolsMateMasterWidget : AppWidgetProvider() {
                 val currentDark = widgetPrefs.getBoolean("is_dark_mode", false)
                 widgetPrefs.edit().putBoolean("is_dark_mode", !currentDark).apply()
                 updateAllWidgets(context)
+            } else if (intent.action == ACTION_TOGGLE_PRAYER) {
+                val waqtId = intent.getStringExtra(EXTRA_WAQT_ID) ?: "fajr"
+                val waqtName = intent.getStringExtra(EXTRA_WAQT_NAME) ?: "ওয়াক্তের"
+                if (waqtId in listOf("fajr", "dhuhr", "asr", "maghrib", "isha")) {
+                    val todayDateKey = SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).format(Date())
+                    val trackerPrefs = context.getSharedPreferences("prayer_tracker_prefs", Context.MODE_PRIVATE)
+                    val currentStatus = trackerPrefs.getBoolean("${todayDateKey}_${waqtId}", false)
+                    val newStatus = !currentStatus
+                    trackerPrefs.edit().putBoolean("${todayDateKey}_${waqtId}", newStatus).apply()
+
+                    val toastMsg = if (newStatus) {
+                        "$waqtName নামাজ আদায় হিসেবে মার্ক করা হয়েছে"
+                    } else {
+                        "$waqtName নামাজ আনমার্ক করা হয়েছে"
+                    }
+                    Toast.makeText(context, toastMsg, Toast.LENGTH_SHORT).show()
+                    updateAllWidgets(context)
+                }
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -223,7 +245,9 @@ class ToolsMateMasterWidget : AppWidgetProvider() {
                 views.setInt(R.id.widget_sunset_icon, "setColorFilter", Color.parseColor("#F87171"))
                 views.setInt(R.id.widget_icon_location, "setColorFilter", Color.parseColor("#38BDF8"))
                 views.setInt(R.id.widget_icon_clock, "setColorFilter", Color.parseColor("#38BDF8"))
-                views.setInt(R.id.widget_icon_timer, "setColorFilter", Color.parseColor("#F59E0B"))
+                views.setInt(R.id.widget_icon_clock_next, "setColorFilter", Color.parseColor("#94A3B8"))
+                views.setInt(R.id.widget_icon_timer_active, "setColorFilter", Color.parseColor("#FBBF24"))
+                views.setInt(R.id.widget_icon_timer_next, "setColorFilter", Color.parseColor("#FBBF24"))
                 views.setInt(R.id.widget_icon_sehri, "setColorFilter", Color.parseColor("#34D399"))
                 views.setInt(R.id.widget_icon_iftar, "setColorFilter", Color.parseColor("#F87171"))
                 views.setInt(R.id.widget_icon_calc, "setColorFilter", Color.parseColor("#FFFFFF"))
@@ -232,11 +256,12 @@ class ToolsMateMasterWidget : AppWidgetProvider() {
                 views.setInt(R.id.widget_icon_islamic, "setColorFilter", Color.parseColor("#FFFFFF"))
                 views.setInt(R.id.widget_btn_theme_toggle, "setColorFilter", Color.parseColor("#FFFFFF"))
                 views.setInt(R.id.widget_btn_refresh, "setColorFilter", Color.parseColor("#FFFFFF"))
+                views.setInt(R.id.widget_waqt_divider, "setBackgroundColor", Color.parseColor("#334155"))
 
                 views.setTextColor(R.id.widget_active_waqt_title, Color.parseColor("#38BDF8"))
                 views.setTextColor(R.id.widget_active_waqt_time, Color.parseColor("#E2E8F0"))
-                views.setTextColor(R.id.widget_countdown_text, Color.parseColor("#F59E0B"))
-                views.setTextColor(R.id.widget_next_waqt_text, Color.parseColor("#CBD5E1"))
+                views.setTextColor(R.id.widget_next_waqt_title, Color.parseColor("#94A3B8"))
+                views.setTextColor(R.id.widget_next_waqt_time, Color.parseColor("#CBD5E1"))
                 views.setTextColor(R.id.widget_sehri_text, Color.parseColor("#34D399"))
                 views.setTextColor(R.id.widget_iftar_text, Color.parseColor("#F87171"))
                 views.setTextColor(R.id.widget_btn_calc_text, Color.parseColor("#F8FAFC"))
@@ -271,7 +296,9 @@ class ToolsMateMasterWidget : AppWidgetProvider() {
                 views.setInt(R.id.widget_sunset_icon, "setColorFilter", Color.parseColor("#DC2626"))
                 views.setInt(R.id.widget_icon_location, "setColorFilter", Color.parseColor("#0284C7"))
                 views.setInt(R.id.widget_icon_clock, "setColorFilter", Color.parseColor("#0284C7"))
-                views.setInt(R.id.widget_icon_timer, "setColorFilter", Color.parseColor("#D97706"))
+                views.setInt(R.id.widget_icon_clock_next, "setColorFilter", Color.parseColor("#475569"))
+                views.setInt(R.id.widget_icon_timer_active, "setColorFilter", Color.parseColor("#D97706"))
+                views.setInt(R.id.widget_icon_timer_next, "setColorFilter", Color.parseColor("#D97706"))
                 views.setInt(R.id.widget_icon_sehri, "setColorFilter", Color.parseColor("#059669"))
                 views.setInt(R.id.widget_icon_iftar, "setColorFilter", Color.parseColor("#DC2626"))
                 views.setInt(R.id.widget_icon_calc, "setColorFilter", Color.parseColor("#0284C7"))
@@ -280,11 +307,12 @@ class ToolsMateMasterWidget : AppWidgetProvider() {
                 views.setInt(R.id.widget_icon_islamic, "setColorFilter", Color.parseColor("#0284C7"))
                 views.setInt(R.id.widget_btn_theme_toggle, "setColorFilter", Color.parseColor("#0284C7"))
                 views.setInt(R.id.widget_btn_refresh, "setColorFilter", Color.parseColor("#0284C7"))
+                views.setInt(R.id.widget_waqt_divider, "setBackgroundColor", Color.parseColor("#E2E8F0"))
 
                 views.setTextColor(R.id.widget_active_waqt_title, Color.parseColor("#0284C7"))
                 views.setTextColor(R.id.widget_active_waqt_time, Color.parseColor("#0369A1"))
-                views.setTextColor(R.id.widget_countdown_text, Color.parseColor("#D97706"))
-                views.setTextColor(R.id.widget_next_waqt_text, Color.parseColor("#334155"))
+                views.setTextColor(R.id.widget_next_waqt_title, Color.parseColor("#475569"))
+                views.setTextColor(R.id.widget_next_waqt_time, Color.parseColor("#334155"))
                 views.setTextColor(R.id.widget_sehri_text, Color.parseColor("#059669"))
                 views.setTextColor(R.id.widget_iftar_text, Color.parseColor("#DC2626"))
                 views.setTextColor(R.id.widget_btn_calc_text, Color.parseColor("#0369A1"))
@@ -393,79 +421,109 @@ class ToolsMateMasterWidget : AppWidgetProvider() {
                 var activeWaqtName = "মাগরিব"
                 var activeWaqtTime = "${timings.maghrib} - ${timings.isha}"
                 var nextWaqtName = "এশা"
-                var nextWaqtTime = timings.isha
-                var remainingMin = 0
+                var nextWaqtTime = "${timings.isha} - ${timings.fajr}"
 
                 when {
                     nowMin in fajrMin until sunriseMin -> {
                         activeWaqtName = "ফজর"
                         activeWaqtTime = "${timings.fajr} - ${timings.sunrise}"
                         nextWaqtName = "ইশরাক"
-                        nextWaqtTime = timings.sunrise
-                        remainingMin = sunriseMin - nowMin
+                        nextWaqtTime = "${timings.sunrise} - ${timings.dhuhr}"
                     }
                     nowMin in sunriseMin until dhuhrMin -> {
                         activeWaqtName = "ইশরাক"
                         activeWaqtTime = "${timings.sunrise} - ${timings.dhuhr}"
                         nextWaqtName = "জোহর"
-                        nextWaqtTime = timings.dhuhr
-                        remainingMin = dhuhrMin - nowMin
+                        nextWaqtTime = "${timings.dhuhr} - ${timings.asr}"
                     }
                     nowMin in dhuhrMin until asrMin -> {
                         activeWaqtName = "জোহর"
                         activeWaqtTime = "${timings.dhuhr} - ${timings.asr}"
                         nextWaqtName = "আসর"
-                        nextWaqtTime = timings.asr
-                        remainingMin = asrMin - nowMin
+                        nextWaqtTime = "${timings.asr} - ${timings.maghrib}"
                     }
                     nowMin in asrMin until maghribMin -> {
                         activeWaqtName = "আসর"
                         activeWaqtTime = "${timings.asr} - ${timings.maghrib}"
                         nextWaqtName = "মাগরিব"
-                        nextWaqtTime = timings.maghrib
-                        remainingMin = maghribMin - nowMin
+                        nextWaqtTime = "${timings.maghrib} - ${timings.isha}"
                     }
                     nowMin in maghribMin until ishaMin -> {
                         activeWaqtName = "মাগরিব"
                         activeWaqtTime = "${timings.maghrib} - ${timings.isha}"
                         nextWaqtName = "এশা"
-                        nextWaqtTime = timings.isha
-                        remainingMin = ishaMin - nowMin
+                        nextWaqtTime = "${timings.isha} - ${timings.fajr}"
                     }
                     nowMin >= ishaMin -> {
                         activeWaqtName = "এশা"
                         activeWaqtTime = "${timings.isha} - ${timings.fajr}"
                         nextWaqtName = "ফজর"
-                        nextWaqtTime = timings.fajr
-                        remainingMin = (24 * 60 - nowMin) + fajrMin
+                        nextWaqtTime = "${timings.fajr} - ${timings.sunrise}"
                     }
                     else -> { // Before Fajr
                         activeWaqtName = "তাহাজ্জুদ"
                         activeWaqtTime = "১২:০০ AM - ${timings.fajr}"
                         nextWaqtName = "ফজর"
-                        nextWaqtTime = timings.fajr
-                        remainingMin = fajrMin - nowMin
+                        nextWaqtTime = "${timings.fajr} - ${timings.sunrise}"
                     }
                 }
 
-                val hours = remainingMin / 60
-                val mins = remainingMin % 60
-                val countdownStr = if (hours > 0) {
-                    "শেষ হতে বাকিঃ ${convertDigitsToBn(hours.toString())} ঘণ্টা ${convertDigitsToBn(mins.toString())} মিনিট"
-                } else {
-                    "শেষ হতে বাকিঃ ${convertDigitsToBn(mins.toString())} মিনিট"
-                }
-
-                val sehriStr = "সেহরিঃ ${timings.sahri}"
-                val iftarStr = "ইফতারঃ ${timings.maghrib}"
-                val nextWaqtStr = "পরবর্তীঃ $nextWaqtName ($nextWaqtTime)"
-
-                views.setTextViewText(R.id.widget_active_waqt_title, "বর্তমান ওয়াক্তঃ $activeWaqtName")
+                views.setTextViewText(R.id.widget_active_waqt_title, "বর্তমানঃ $activeWaqtName")
                 views.setTextViewText(R.id.widget_active_waqt_time, activeWaqtTime)
-                views.setTextViewText(R.id.widget_countdown_text, countdownStr)
-                views.setTextViewText(R.id.widget_next_waqt_text, nextWaqtStr)
-                views.setTextViewText(R.id.widget_sehri_text, sehriStr)
-                views.setTextViewText(R.id.widget_iftar_text, iftarStr)
+                views.setTextViewText(R.id.widget_next_waqt_title, "পরবর্তীঃ $nextWaqtName")
+                views.setTextViewText(R.id.widget_next_waqt_time, nextWaqtTime)
+                views.setTextViewText(R.id.widget_sehri_text, "সেহরিঃ ${timings.sahri}")
+                views.setTextViewText(R.id.widget_iftar_text, "ইফতারঃ ${timings.maghrib}")
+
+                // Prayer Check/Mark Button State Binding (Only for the 5 main prayers)
+                val isMainPrayer = activeWaqtName in listOf("ফজর", "জোহর", "যোহর", "আসর", "মাগরিব", "এশা")
+                if (isMainPrayer) {
+                    views.setViewVisibility(R.id.widget_btn_waqt_check, View.VISIBLE)
+                    val activeWaqtId = when (activeWaqtName) {
+                        "ফজর" -> "fajr"
+                        "জোহর", "যোহর" -> "dhuhr"
+                        "আসর" -> "asr"
+                        "মাগরিব" -> "maghrib"
+                        "এশা" -> "isha"
+                        else -> "fajr"
+                    }
+
+                    val todayDateKey = SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).format(nowCal.time)
+                    val trackerPrefs = context.getSharedPreferences("prayer_tracker_prefs", Context.MODE_PRIVATE)
+                    val isWaqtDone = trackerPrefs.getBoolean("${todayDateKey}_${activeWaqtId}", false)
+
+                    if (isWaqtDone) {
+                        views.setImageViewResource(R.id.widget_icon_waqt_check, R.drawable.ic_widget_check_done)
+                        if (isDarkMode) {
+                            views.setInt(R.id.widget_btn_waqt_check, "setBackgroundResource", R.drawable.widget_check_btn_bg_dark_done)
+                            views.setInt(R.id.widget_icon_waqt_check, "setColorFilter", Color.parseColor("#FFFFFF"))
+                        } else {
+                            views.setInt(R.id.widget_btn_waqt_check, "setBackgroundResource", R.drawable.widget_check_btn_bg_done)
+                            views.setInt(R.id.widget_icon_waqt_check, "setColorFilter", Color.parseColor("#FFFFFF"))
+                        }
+                    } else {
+                        views.setImageViewResource(R.id.widget_icon_waqt_check, R.drawable.ic_widget_check_empty)
+                        if (isDarkMode) {
+                            views.setInt(R.id.widget_btn_waqt_check, "setBackgroundResource", R.drawable.widget_check_btn_bg_dark)
+                            views.setInt(R.id.widget_icon_waqt_check, "setColorFilter", Color.parseColor("#94A3B8"))
+                        } else {
+                            views.setInt(R.id.widget_btn_waqt_check, "setBackgroundResource", R.drawable.widget_check_btn_bg)
+                            views.setInt(R.id.widget_icon_waqt_check, "setColorFilter", Color.parseColor("#64748B"))
+                        }
+                    }
+
+                    // Check Button Intent
+                    val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE else PendingIntent.FLAG_UPDATE_CURRENT
+                    val togglePrayerIntent = Intent(context, ToolsMateMasterWidget::class.java).apply {
+                        action = ACTION_TOGGLE_PRAYER
+                        putExtra(EXTRA_WAQT_ID, activeWaqtId)
+                        putExtra(EXTRA_WAQT_NAME, activeWaqtName)
+                    }
+                    val togglePrayerPendingIntent = PendingIntent.getBroadcast(context, 108, togglePrayerIntent, flags)
+                    views.setOnClickPendingIntent(R.id.widget_btn_waqt_check, togglePrayerPendingIntent)
+                } else {
+                    views.setViewVisibility(R.id.widget_btn_waqt_check, View.GONE)
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
             }

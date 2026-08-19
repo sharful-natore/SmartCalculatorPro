@@ -3,15 +3,20 @@
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <!-- Sun Circle -->
+    <!-- Setting Sun Disc dipping into horizon -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M 9,12 m -4,0 a 4,4 0 1,0 8,0 a 4,4 0 1,0 -8,0" />
-    <!-- Rays and Arrow -->
+        android:fillColor="#DC2626"
+        android:pathData="M12,7c-2.76,0 -5,2.24 -5,5h10c0,-2.76 -2.24,-5 -5,-5z" />
+    <!-- Setting Ray Beams -->
     <path
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="2"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round"
-        android:pathData="M9,5 V3 M9,19 V21 M2,12 H4 M5.1,7.1 L6.5,8.5 M5.1,16.9 L6.5,15.5 M18,7 V17 M15,14 L18,17 L21,14" />
+        android:fillColor="#DC2626"
+        android:pathData="M11,1.5h2v3.5h-2zM4.9,4.9l1.4,1.4 2.5,-2.5 -1.4,-1.4zM19.1,4.9l-2.5,2.5 1.4,1.4 2.5,-2.5zM1,12h3.5v2H1zM19.5,12H23v2h-3.5z" />
+    <!-- Downward Indicator Arrow -->
+    <path
+        android:fillColor="#DC2626"
+        android:pathData="M12,17l-3,-3h6z" />
+    <!-- Sea / Ground Horizon Lines -->
+    <path
+        android:fillColor="#DC2626"
+        android:pathData="M1,18h22v2H1zm4,3h14v1.5H5z" />
 </vector>

@@ -2,53 +2,21 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
+    android:viewportWidth="350"
+    android:viewportHeight="350">
 
-    <!-- Brand Light Blue #0284C7 on Clean White -->
-
-    <!-- 1. SCREWDRIVER TIP (Top-Left Arrowhead) -->
-    <path
-        android:strokeColor="#0284C7"
-        android:strokeWidth="7"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round"
-        android:fillColor="#00000000"
-        android:pathData="M 23,23 L 36,29 C 39,30 40,33 38,36 L 36,38 C 33,40 30,39 29,36 Z" />
-
-    <!-- 2. SCREWDRIVER SHAFT (Center Diagonal) -->
-    <path
-        android:strokeColor="#0284C7"
-        android:strokeWidth="7"
-        android:strokeLineCap="round"
-        android:fillColor="#00000000"
-        android:pathData="M 36,36 L 56,56" />
-
-    <!-- 3. SCREWDRIVER HANDLE (Bottom-Right Hollow Loop) -->
-    <path
-        android:strokeColor="#0284C7"
-        android:strokeWidth="7"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round"
-        android:fillColor="#00000000"
-        android:pathData="M 52,60 L 68,76 C 73,81 81,81 86,76 C 91,71 91,63 86,58 L 70,42" />
-
-    <!-- 4. WRENCH HEAD (Top-Right C-Shaped Open Jaw) -->
-    <path
-        android:strokeColor="#0284C7"
-        android:strokeWidth="7"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round"
-        android:fillColor="#00000000"
-        android:pathData="M 48,32 C 51,21 65,15 75,23 C 78,25 80,29 77,33 C 73,37 66,41 68,47 C 70,53 77,51 80,48 C 83,45 86,50 84,55 C 80,65 66,69 56,59" />
-
-    <!-- 5. WRENCH HANDLE (Bottom-Left Hollow Loop) -->
-    <path
-        android:strokeColor="#0284C7"
-        android:strokeWidth="7"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round"
-        android:fillColor="#00000000"
-        android:pathData="M 42,50 L 26,66 C 21,71 21,79 26,84 C 31,89 39,89 44,84 L 60,68" />
+    <group
+        android:pivotX="175"
+        android:pivotY="175"
+        android:scaleX="0.34"
+        android:scaleY="0.34">
+        <path
+            android:strokeColor="#FFFFFFFF"
+            android:strokeWidth="24"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:fillColor="#00000000"
+            android:pathData="M144.68,90.09C160.17,29.08 203.21,4.83 239.5,14.6C251.9,17.77 268.17,24.56 253.32,39.24L226.59,68.7C187.65,111.32 231.07,162.55 274.86,108.85L295.22,83.83C318.42,54.69 342.05,76.98 328.49,122.25C322.48,143.32 307.79,156.13 290.35,172.74M108.33,174.73L45.56,236.98C-12.92,293.63 38.15,348.96 89.68,304.78L134.82,257.11M203.99,273.13L174.22,244.94C130.35,205.61 188.42,139.4 234.66,183.67L302.59,247.44C352.34,304.35 286.18,347.17 252.01,318.93L234.55,304.46M173.07,181.33L83.69,90.12C95.83,79.03 102.31,65.53 89.48,56.92L31.77,20.88C23.17,25.15 16.91,31.97 12.5,40.79L39.84,87.39C55.65,114.91 69.27,104.45 83.74,90.03" />
+    </group>
 
 </vector>
