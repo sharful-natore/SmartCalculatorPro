@@ -406,45 +406,72 @@ class ToolsMateMasterWidget : AppWidgetProvider() {
                 }
             }
 
-            // 5. Timings & Active Waqt Calculation
+            // 5. Timings & Active Waqt Calculation (All Waqts + Forbidden Times)
             try {
                 val timings = NamazTimeService.getPrayerTimesForCoordinates(lat, lon, nowCal)
 
                 val nowMin = nowCal.get(Calendar.HOUR_OF_DAY) * 60 + nowCal.get(Calendar.MINUTE)
                 val fajrMin = NamazTimeService.timeStrToMinutes(timings.fajr)
                 val sunriseMin = NamazTimeService.timeStrToMinutes(timings.sunrise)
+                val ishraqMin = sunriseMin + 15
+                val ishraqTimeStr = NamazTimeService.minutesToTimeStr(ishraqMin)
+
                 val dhuhrMin = NamazTimeService.timeStrToMinutes(timings.dhuhr)
+                val zawaalMin = dhuhrMin - 15
+                val zawaalTimeStr = NamazTimeService.minutesToTimeStr(zawaalMin)
+
                 val asrMin = NamazTimeService.timeStrToMinutes(timings.asr)
                 val maghribMin = NamazTimeService.timeStrToMinutes(timings.maghrib)
+                val sunsetForbiddenMin = maghribMin - 15
+                val sunsetForbiddenTimeStr = NamazTimeService.minutesToTimeStr(sunsetForbiddenMin)
+
                 val ishaMin = NamazTimeService.timeStrToMinutes(timings.isha)
 
                 var activeWaqtName = "মাগরিব"
                 var activeWaqtTime = "${timings.maghrib} - ${timings.isha}"
                 var nextWaqtName = "এশা"
-                var nextWaqtTime = "${timings.isha} - ${timings.fajr}"
+                var nextWaqtTime = "${timings.isha} - ১২:০০ AM"
 
                 when {
                     nowMin in fajrMin until sunriseMin -> {
                         activeWaqtName = "ফজর"
                         activeWaqtTime = "${timings.fajr} - ${timings.sunrise}"
-                        nextWaqtName = "ইশরাক"
-                        nextWaqtTime = "${timings.sunrise} - ${timings.dhuhr}"
+                        nextWaqtName = "সূর্যোদয় (নিষিদ্ধ)"
+                        nextWaqtTime = "${timings.sunrise} - $ishraqTimeStr"
                     }
-                    nowMin in sunriseMin until dhuhrMin -> {
-                        activeWaqtName = "ইশরাক"
-                        activeWaqtTime = "${timings.sunrise} - ${timings.dhuhr}"
-                        nextWaqtName = "জোহর"
+                    nowMin in sunriseMin until ishraqMin -> {
+                        activeWaqtName = "সূর্যোদয় (নিষিদ্ধ)"
+                        activeWaqtTime = "${timings.sunrise} - $ishraqTimeStr"
+                        nextWaqtName = "ইশরাক ও চাশত"
+                        nextWaqtTime = "$ishraqTimeStr - $zawaalTimeStr"
+                    }
+                    nowMin in ishraqMin until zawaalMin -> {
+                        activeWaqtName = "ইশরাক ও চাশত"
+                        activeWaqtTime = "$ishraqTimeStr - $zawaalTimeStr"
+                        nextWaqtName = "দ্বিপ্রহর (নিষিদ্ধ)"
+                        nextWaqtTime = "$zawaalTimeStr - ${timings.dhuhr}"
+                    }
+                    nowMin in zawaalMin until dhuhrMin -> {
+                        activeWaqtName = "দ্বিপ্রহর (নিষিদ্ধ)"
+                        activeWaqtTime = "$zawaalTimeStr - ${timings.dhuhr}"
+                        nextWaqtName = "যোহর"
                         nextWaqtTime = "${timings.dhuhr} - ${timings.asr}"
                     }
                     nowMin in dhuhrMin until asrMin -> {
-                        activeWaqtName = "জোহর"
+                        activeWaqtName = "যোহর"
                         activeWaqtTime = "${timings.dhuhr} - ${timings.asr}"
                         nextWaqtName = "আসর"
-                        nextWaqtTime = "${timings.asr} - ${timings.maghrib}"
+                        nextWaqtTime = "${timings.asr} - $sunsetForbiddenTimeStr"
                     }
-                    nowMin in asrMin until maghribMin -> {
+                    nowMin in asrMin until sunsetForbiddenMin -> {
                         activeWaqtName = "আসর"
-                        activeWaqtTime = "${timings.asr} - ${timings.maghrib}"
+                        activeWaqtTime = "${timings.asr} - $sunsetForbiddenTimeStr"
+                        nextWaqtName = "সূর্যাস্ত (নিষিদ্ধ)"
+                        nextWaqtTime = "$sunsetForbiddenTimeStr - ${timings.maghrib}"
+                    }
+                    nowMin in sunsetForbiddenMin until maghribMin -> {
+                        activeWaqtName = "সূর্যাস্ত (নিষিদ্ধ)"
+                        activeWaqtTime = "$sunsetForbiddenTimeStr - ${timings.maghrib}"
                         nextWaqtName = "মাগরিব"
                         nextWaqtTime = "${timings.maghrib} - ${timings.isha}"
                     }
@@ -452,17 +479,17 @@ class ToolsMateMasterWidget : AppWidgetProvider() {
                         activeWaqtName = "মাগরিব"
                         activeWaqtTime = "${timings.maghrib} - ${timings.isha}"
                         nextWaqtName = "এশা"
-                        nextWaqtTime = "${timings.isha} - ${timings.fajr}"
+                        nextWaqtTime = "${timings.isha} - ১২:০০ AM"
                     }
                     nowMin >= ishaMin -> {
                         activeWaqtName = "এশা"
-                        activeWaqtTime = "${timings.isha} - ${timings.fajr}"
-                        nextWaqtName = "ফজর"
-                        nextWaqtTime = "${timings.fajr} - ${timings.sunrise}"
+                        activeWaqtTime = "${timings.isha} - ১২:০০ AM"
+                        nextWaqtName = "তাহাজ্জুদ"
+                        nextWaqtTime = "১২:০০ AM - ${timings.sahri}"
                     }
-                    else -> { // Before Fajr
+                    else -> { // Before Fajr (12:00 AM to Fajr)
                         activeWaqtName = "তাহাজ্জুদ"
-                        activeWaqtTime = "১২:০০ AM - ${timings.fajr}"
+                        activeWaqtTime = "১২:০০ AM - ${timings.sahri}"
                         nextWaqtName = "ফজর"
                         nextWaqtTime = "${timings.fajr} - ${timings.sunrise}"
                     }
@@ -475,7 +502,18 @@ class ToolsMateMasterWidget : AppWidgetProvider() {
                 views.setTextViewText(R.id.widget_sehri_text, "সেহরিঃ ${timings.sahri}")
                 views.setTextViewText(R.id.widget_iftar_text, "ইফতারঃ ${timings.maghrib}")
 
-                // Prayer Check/Mark Button State Binding (Only for the 5 main prayers)
+                // Dynamic Color Highlight if Current Waqt is Forbidden Time
+                if (activeWaqtName.contains("নিষিদ্ধ")) {
+                    if (isDarkMode) {
+                        views.setTextColor(R.id.widget_active_waqt_title, Color.parseColor("#F87171"))
+                        views.setTextColor(R.id.widget_active_waqt_time, Color.parseColor("#FCA5A5"))
+                    } else {
+                        views.setTextColor(R.id.widget_active_waqt_title, Color.parseColor("#DC2626"))
+                        views.setTextColor(R.id.widget_active_waqt_time, Color.parseColor("#EF4444"))
+                    }
+                }
+
+                // Prayer Check/Mark Button State Binding (STRICTLY ONLY for the 5 Farz prayers)
                 val isMainPrayer = activeWaqtName in listOf("ফজর", "জোহর", "যোহর", "আসর", "মাগরিব", "এশা")
                 if (isMainPrayer) {
                     views.setViewVisibility(R.id.widget_btn_waqt_check, View.VISIBLE)

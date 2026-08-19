@@ -80,208 +80,39 @@ fun DynamicWeatherScreen(
         remember { mutableStateOf(0f) }
     }
 
-    Column(
+    val updateTimeFormatted = remember(viewModel.lastWeatherFetchTime, isBn) {
+        val fetchTime = if (viewModel.lastWeatherFetchTime > 0L) viewModel.lastWeatherFetchTime else System.currentTimeMillis()
+        val date = java.util.Date(fetchTime)
+        val timeFormat = java.text.SimpleDateFormat("hh:mm a", java.util.Locale.ENGLISH)
+        val timeStr = timeFormat.format(date)
+        if (isBn) {
+            val bnDigits = timeStr
+                .replace("0", "০")
+                .replace("1", "১")
+                .replace("2", "২")
+                .replace("3", "৩")
+                .replace("4", "৪")
+                .replace("5", "৫")
+                .replace("6", "৬")
+                .replace("7", "৭")
+                .replace("8", "৮")
+                .replace("9", "৯")
+                .replace("AM", "AM")
+                .replace("PM", "PM")
+            "হালনাগাদ হয়েছেঃ $bnDigits"
+        } else {
+            "Updated on: $timeStr"
+        }
+    }
+
+    val weatherData = viewModel.weatherData
+
+    Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        // Location Header
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = viewModel.weatherLocation.ifBlank { "Natore" },
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = themeColors.displayText
-                    )
-                    if (viewModel.isOfflineWeatherData) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(Color(0xFFD97706).copy(alpha = 0.18f))
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = if (isBn) "অফলাইন" else "Offline",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFFD97706)
-                            )
-                        }
-                    }
-                }
-                val updateTimeFormatted = remember(viewModel.lastWeatherFetchTime, isBn) {
-                    val fetchTime = if (viewModel.lastWeatherFetchTime > 0L) viewModel.lastWeatherFetchTime else System.currentTimeMillis()
-                    val date = java.util.Date(fetchTime)
-                    val timeFormat = java.text.SimpleDateFormat("hh:mm a", java.util.Locale.ENGLISH)
-                    val timeStr = timeFormat.format(date)
-                    if (isBn) {
-                        val bnDigits = timeStr
-                            .replace("0", "০")
-                            .replace("1", "১")
-                            .replace("2", "২")
-                            .replace("3", "৩")
-                            .replace("4", "৪")
-                            .replace("5", "৫")
-                            .replace("6", "৬")
-                            .replace("7", "৭")
-                            .replace("8", "৮")
-                            .replace("9", "৯")
-                            .replace("AM", "AM")
-                            .replace("PM", "PM")
-                        "হালনাগাদ হয়েছেঃ $bnDigits"
-                    } else {
-                        "Updated on: $timeStr"
-                    }
-                }
-
-                Text(
-                    text = updateTimeFormatted,
-                    fontSize = 12.5.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = themeColors.displayText.copy(alpha = 0.8f)
-                )
-            }
-            IconButton(onClick = { showSearchDialog = true }) {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "Search Location",
-                    tint = themeColors.displayText
-                )
-            }
-            IconButton(onClick = { viewModel.fetchWeather(force = true) }) {
-                Icon(
-                    imageVector = Icons.Default.Refresh,
-                    contentDescription = "Refresh",
-                    tint = themeColors.displayText,
-                    modifier = Modifier.rotate(rotationAngle)
-                )
-            }
-        }
-
-        // Saved Locations Selector Row
-        LazyRow(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            item {
-                var isDetecting by remember { mutableStateOf(false) }
-                val context = LocalContext.current
-                FilterChip(
-                    selected = false,
-                    onClick = {
-                        isDetecting = true
-                        viewModel.autoDetectIslamicLocation(context) { success, msg ->
-                            isDetecting = false
-                            if (msg != null) {
-                                Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
-                            }
-                        }
-                    },
-                    label = {
-                        Text(
-                            text = if (isDetecting) (if (isBn) "শনাক্ত হচ্ছে..." else "Detecting...") else (if (isBn) "📍 অটো ডিটেক্ট" else "📍 Auto Detect"),
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = themeColors.buttonEqualBg
-                        )
-                    },
-                    border = BorderStroke(1.dp, themeColors.buttonEqualBg),
-                    colors = FilterChipDefaults.filterChipColors(
-                        containerColor = themeColors.displayBackground
-                    ),
-                    shape = RoundedCornerShape(16.dp)
-                )
-            }
-            items(items = viewModel.availableWeatherCities) { city ->
-                val isSelected = city.name.equals(viewModel.weatherLocation, ignoreCase = true)
-                FilterChip(
-                    selected = isSelected,
-                    onClick = { viewModel.selectWeatherCity(city) },
-                    label = {
-                        Text(
-                            text = city.name,
-                            fontSize = 12.sp,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                        )
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = if (isSelected) Icons.Default.LocationOn else Icons.Default.Place,
-                            contentDescription = null,
-                            modifier = Modifier.size(14.dp)
-                        )
-                    },
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = themeColors.buttonEqualBg,
-                        selectedLabelColor = Color.White,
-                        selectedLeadingIconColor = Color.White,
-                        containerColor = themeColors.displayBackground,
-                        labelColor = themeColors.displayText,
-                        iconColor = themeColors.displayText.copy(alpha = 0.7f)
-                    ),
-                    shape = RoundedCornerShape(16.dp)
-                )
-            }
-        }
-
-        // Weather Fetch Error / Status Notice (Disabled to keep weather details clean)
-        if (false) {
-            viewModel.weatherFetchError?.let { err ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 12.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFFFEF3C7)
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier.padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Warning,
-                            contentDescription = "Weather Status Notice",
-                            tint = Color(0xFFD97706),
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = if (isBn) "আবহাওয়া স্ট্যাটাস / কারণ:" else "Weather Status Cause:",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 11.sp,
-                                color = Color(0xFF92400E)
-                            )
-                            Text(
-                                text = err,
-                                fontSize = 12.sp,
-                                color = Color(0xFF78350F)
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-        val weatherData = viewModel.weatherData
-
         if (viewModel.weatherIsLoading && weatherData == null) {
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
+                modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -306,11 +137,139 @@ fun DynamicWeatherScreen(
             val current = weatherData.current
             
             LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+                contentPadding = PaddingValues(bottom = 24.dp)
             ) {
+                // 1. Location Header & Actions (Scrolls away smoothly)
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = viewModel.weatherLocation.ifBlank { "Natore" },
+                                    fontSize = 24.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.displayText
+                                )
+                                if (viewModel.isOfflineWeatherData) {
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(6.dp))
+                                            .background(Color(0xFFD97706).copy(alpha = 0.18f))
+                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                    ) {
+                                        Text(
+                                            text = if (isBn) "অফলাইন" else "Offline",
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFFD97706)
+                                        )
+                                    }
+                                }
+                            }
+                            Text(
+                                text = updateTimeFormatted,
+                                fontSize = 12.5.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = themeColors.displayText.copy(alpha = 0.8f)
+                            )
+                        }
+                        IconButton(onClick = { showSearchDialog = true }) {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "Search Location",
+                                tint = themeColors.displayText
+                            )
+                        }
+                        IconButton(onClick = { viewModel.fetchWeather(force = true) }) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = "Refresh",
+                                tint = themeColors.displayText,
+                                modifier = Modifier.rotate(rotationAngle)
+                            )
+                        }
+                    }
+                }
+
+                // 2. Saved Locations Selector Row (Scrolls away smoothly)
+                item {
+                    LazyRow(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        item {
+                            var isDetecting by remember { mutableStateOf(false) }
+                            val context = LocalContext.current
+                            FilterChip(
+                                selected = false,
+                                onClick = {
+                                    isDetecting = true
+                                    viewModel.autoDetectIslamicLocation(context) { success, msg ->
+                                        isDetecting = false
+                                        if (msg != null) {
+                                            Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+                                        }
+                                    }
+                                },
+                                label = {
+                                    Text(
+                                        text = if (isDetecting) (if (isBn) "শনাক্ত হচ্ছে..." else "Detecting...") else (if (isBn) "📍 অটো ডিটেক্ট" else "📍 Auto Detect"),
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = themeColors.buttonEqualBg
+                                    )
+                                },
+                                border = BorderStroke(1.dp, themeColors.buttonEqualBg),
+                                colors = FilterChipDefaults.filterChipColors(
+                                    containerColor = themeColors.displayBackground
+                                ),
+                                shape = RoundedCornerShape(16.dp)
+                            )
+                        }
+                        items(items = viewModel.availableWeatherCities) { city ->
+                            val isSelected = city.name.equals(viewModel.weatherLocation, ignoreCase = true)
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = { viewModel.selectWeatherCity(city) },
+                                label = {
+                                    Text(
+                                        text = city.name,
+                                        fontSize = 12.sp,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                    )
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = if (isSelected) Icons.Default.LocationOn else Icons.Default.Place,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = themeColors.buttonEqualBg,
+                                    selectedLabelColor = Color.White,
+                                    selectedLeadingIconColor = Color.White,
+                                    containerColor = themeColors.displayBackground,
+                                    labelColor = themeColors.displayText,
+                                    iconColor = themeColors.displayText.copy(alpha = 0.7f)
+                                ),
+                                shape = RoundedCornerShape(16.dp)
+                            )
+                        }
+                    }
+                }
                 // Current Weather Card
                 item {
                     CurrentWeatherCard(current, themeColors, isBn)

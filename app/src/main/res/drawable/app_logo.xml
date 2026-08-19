@@ -7,7 +7,7 @@
 
     <!-- Light Blue Base Circle -->
     <path
-        android:fillColor="#0284C7"
+        android:fillColor="#3AB1FF"
         android:pathData="M175,15 C263.37,15 335,86.63 335,175 C335,263.37 263.37,335 175,335 C86.63,335 15,263.37 15,175 C15,86.63 86.63,15 175,15 Z" />
 
     <group

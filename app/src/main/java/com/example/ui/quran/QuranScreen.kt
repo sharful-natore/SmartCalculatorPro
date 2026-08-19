@@ -1,9 +1,7 @@
 package com.example.ui.quran
 
 import android.text.format.Formatter
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import androidx.compose.animation.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -12,6 +10,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -26,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
@@ -62,25 +62,52 @@ fun QuranScreen(
     val cyanDark = if (themeColors.isDark) themeColors.background else themeColors.buttonEqualBg.copy(alpha = 0.85f)
     val cyanAccent = themeColors.buttonEqualBg
 
+    // Auto-collapsing TopBar on scroll
+    val listState = rememberLazyListState()
+    var isTopBarVisible by remember { mutableStateOf(true) }
+    val nestedScrollConnection = remember {
+        object : androidx.compose.ui.input.nestedscroll.NestedScrollConnection {
+            override fun onPreScroll(
+                available: androidx.compose.ui.geometry.Offset,
+                source: androidx.compose.ui.input.nestedscroll.NestedScrollSource
+            ): androidx.compose.ui.geometry.Offset {
+                val delta = available.y
+                if (delta < -15f && isTopBarVisible && (listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 80)) {
+                    isTopBarVisible = false
+                } else if (delta > 15f && !isTopBarVisible) {
+                    isTopBarVisible = true
+                }
+                return androidx.compose.ui.geometry.Offset.Zero
+            }
+        }
+    }
+
+    LaunchedEffect(listState.firstVisibleItemIndex, listState.firstVisibleItemScrollOffset) {
+        if (listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset < 40) {
+            isTopBarVisible = true
+        }
+    }
+
     Scaffold(
+        modifier = Modifier.nestedScroll(nestedScrollConnection),
         containerColor = themeColors.background,
         contentWindowInsets = WindowInsets(0.dp),
         topBar = {
-            Surface(
-                color = themeColors.cardBg,
-                tonalElevation = 2.dp,
-                shadowElevation = 2.dp
+            AnimatedVisibility(
+                visible = isTopBarVisible,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp)
+                Surface(
+                    color = themeColors.cardBg,
+                    tonalElevation = 2.dp,
+                    shadowElevation = 2.dp
                 ) {
-                    // Minimal & Theme-Matching Header
+                    // Minimal & Theme-Matching Slim Header
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         IconButton(onClick = onBackClick) {
@@ -94,133 +121,15 @@ fun QuranScreen(
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = "পবিত্র আল-কুরআন",
-                                fontSize = 18.5.sp,
+                                fontSize = 17.5.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = themeColors.displayText
                             )
                             Text(
                                 text = "Holy Quran (Audio & Translation)",
-                                fontSize = 11.5.sp,
+                                fontSize = 11.sp,
                                 color = cyanAccent
                             )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Search Bar
-                    OutlinedTextField(
-                        value = searchQuery,
-                        onValueChange = { viewModel.onSearchQueryChange(it) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                        placeholder = {
-                            Text(
-                                text = "সূরা খুঁজুন (নাম বা নম্বর)...",
-                                fontSize = 13.sp,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                color = themeColors.displayText.copy(alpha = 0.5f)
-                            )
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Search,
-                                contentDescription = "Search",
-                                tint = cyanPrimary
-                            )
-                        },
-                        trailingIcon = {
-                            if (searchQuery.isNotEmpty()) {
-                                IconButton(onClick = { viewModel.onSearchQueryChange("") }) {
-                                    Icon(
-                                        imageVector = Icons.Default.Clear,
-                                        contentDescription = "Clear",
-                                        tint = themeColors.displayText
-                                    )
-                                }
-                            }
-                        },
-                        singleLine = true,
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = themeColors.displayText,
-                            unfocusedTextColor = themeColors.displayText,
-                            focusedBorderColor = cyanPrimary,
-                            unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f),
-                            focusedContainerColor = themeColors.cardBg,
-                            unfocusedContainerColor = themeColors.cardBg
-                        )
-                    )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    // Minimal & Beautiful Action Buttons (AI Assistant & Storage Manager)
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Surface(
-                            onClick = { viewModel.openAiAssistant() },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(12.dp),
-                            color = cyanPrimary.copy(alpha = 0.1f),
-                            border = BorderStroke(1.dp, cyanPrimary.copy(alpha = 0.25f))
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 10.dp, horizontal = 12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.AutoAwesome,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(16.dp),
-                                    tint = cyanPrimary
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = "এআই অ্যাসিস্ট্যান্ট",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = cyanPrimary
-                                )
-                            }
-                        }
-
-                        Surface(
-                            onClick = { viewModel.openStorageManager(context) },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(12.dp),
-                            color = cyanPrimary.copy(alpha = 0.1f),
-                            border = BorderStroke(1.dp, cyanPrimary.copy(alpha = 0.25f))
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 10.dp, horizontal = 12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.SdCard,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(16.dp),
-                                    tint = cyanPrimary
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = "অফলাইন স্টোরেজ",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = cyanPrimary
-                                )
-                            }
                         }
                     }
                 }
@@ -265,9 +174,128 @@ fun QuranScreen(
                     found || context::class.java.simpleName.contains("Quick") || context::class.java.simpleName.contains("Shortcut")
                 }
                 LazyColumn(
+                    state = listState,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(bottom = if (isQuickShortcut) 16.dp else 80.dp, top = 8.dp)
                 ) {
+                    // 1. Search Bar (Scrolls away smoothly)
+                    item {
+                        OutlinedTextField(
+                            value = searchQuery,
+                            onValueChange = { viewModel.onSearchQueryChange(it) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 4.dp),
+                            placeholder = {
+                                Text(
+                                    text = "সূরা খুঁজুন (নাম বা নম্বর)...",
+                                    fontSize = 13.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    color = themeColors.displayText.copy(alpha = 0.5f)
+                                )
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Search,
+                                    contentDescription = "Search",
+                                    tint = cyanPrimary
+                                )
+                            },
+                            trailingIcon = {
+                                if (searchQuery.isNotEmpty()) {
+                                    IconButton(onClick = { viewModel.onSearchQueryChange("") }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Clear,
+                                            contentDescription = "Clear",
+                                            tint = themeColors.displayText
+                                        )
+                                    }
+                                }
+                            },
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = themeColors.displayText,
+                                unfocusedTextColor = themeColors.displayText,
+                                focusedBorderColor = cyanPrimary,
+                                unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f),
+                                focusedContainerColor = themeColors.cardBg,
+                                unfocusedContainerColor = themeColors.cardBg
+                            )
+                        )
+                    }
+
+                    // 2. AI Assistant & Storage Action Buttons (Scrolls away smoothly)
+                    item {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 6.dp),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Surface(
+                                onClick = { viewModel.openAiAssistant() },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(12.dp),
+                                color = cyanPrimary.copy(alpha = 0.1f),
+                                border = BorderStroke(1.dp, cyanPrimary.copy(alpha = 0.25f))
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 9.dp, horizontal = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.AutoAwesome,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp),
+                                        tint = cyanPrimary
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "এআই অ্যাসিস্ট্যান্ট",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = cyanPrimary
+                                    )
+                                }
+                            }
+
+                            Surface(
+                                onClick = { viewModel.openStorageManager(context) },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(12.dp),
+                                color = cyanPrimary.copy(alpha = 0.1f),
+                                border = BorderStroke(1.dp, cyanPrimary.copy(alpha = 0.25f))
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 9.dp, horizontal = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.SdCard,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp),
+                                        tint = cyanPrimary
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "অফলাইন স্টোরেজ",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = cyanPrimary
+                                    )
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                    }
                     items(
                         items = surahs,
                         key = { it.number }
