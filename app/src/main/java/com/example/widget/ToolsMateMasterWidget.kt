@@ -203,16 +203,16 @@ class ToolsMateMasterWidget : AppWidgetProvider() {
                 views.setInt(R.id.widget_btn_calendar, "setBackgroundResource", R.drawable.widget_shortcut_bg_dark)
                 views.setInt(R.id.widget_btn_market, "setBackgroundResource", R.drawable.widget_shortcut_bg_dark)
                 views.setInt(R.id.widget_btn_islamic, "setBackgroundResource", R.drawable.widget_shortcut_bg_dark)
-                views.setInt(R.id.widget_btn_theme_toggle, "setBackgroundResource", R.drawable.widget_badge_bg_dark)
-                views.setInt(R.id.widget_btn_refresh, "setBackgroundResource", R.drawable.widget_badge_bg_dark)
+                views.setInt(R.id.widget_btn_theme_toggle, "setBackgroundResource", R.drawable.widget_shortcut_bg_dark)
+                views.setInt(R.id.widget_btn_refresh, "setBackgroundResource", R.drawable.widget_shortcut_bg_dark)
 
                 views.setImageViewResource(R.id.widget_btn_theme_toggle, R.drawable.ic_widget_sun)
-                views.setTextColor(R.id.widget_app_brand, Color.parseColor("#FFFFFF"))
+                views.setTextColor(R.id.widget_app_brand, Color.parseColor("#E2E8F0"))
                 views.setTextColor(R.id.widget_header_dot, Color.parseColor("#38BDF8"))
                 views.setTextColor(R.id.widget_location_text, Color.parseColor("#38BDF8"))
                 views.setTextColor(R.id.widget_date_text, Color.parseColor("#94A3B8"))
                 views.setTextColor(R.id.widget_weather_temp, Color.parseColor("#38BDF8"))
-                views.setTextColor(R.id.widget_weather_condition, Color.parseColor("#F8FAFC"))
+                views.setTextColor(R.id.widget_weather_condition, Color.parseColor("#CBD5E1"))
                 views.setTextColor(R.id.widget_weather_details, Color.parseColor("#94A3B8"))
                 views.setTextColor(R.id.widget_sunrise_time, Color.parseColor("#FDE047"))
                 views.setTextColor(R.id.widget_sunset_time, Color.parseColor("#F87171"))
@@ -226,10 +226,12 @@ class ToolsMateMasterWidget : AppWidgetProvider() {
                 views.setInt(R.id.widget_icon_timer, "setColorFilter", Color.parseColor("#F59E0B"))
                 views.setInt(R.id.widget_icon_sehri, "setColorFilter", Color.parseColor("#34D399"))
                 views.setInt(R.id.widget_icon_iftar, "setColorFilter", Color.parseColor("#F87171"))
-                views.setInt(R.id.widget_icon_calc, "setColorFilter", Color.parseColor("#38BDF8"))
-                views.setInt(R.id.widget_icon_calendar, "setColorFilter", Color.parseColor("#38BDF8"))
-                views.setInt(R.id.widget_icon_market, "setColorFilter", Color.parseColor("#38BDF8"))
-                views.setInt(R.id.widget_icon_islamic, "setColorFilter", Color.parseColor("#38BDF8"))
+                views.setInt(R.id.widget_icon_calc, "setColorFilter", Color.parseColor("#FFFFFF"))
+                views.setInt(R.id.widget_icon_calendar, "setColorFilter", Color.parseColor("#FFFFFF"))
+                views.setInt(R.id.widget_icon_market, "setColorFilter", Color.parseColor("#FFFFFF"))
+                views.setInt(R.id.widget_icon_islamic, "setColorFilter", Color.parseColor("#FFFFFF"))
+                views.setInt(R.id.widget_btn_theme_toggle, "setColorFilter", Color.parseColor("#FFFFFF"))
+                views.setInt(R.id.widget_btn_refresh, "setColorFilter", Color.parseColor("#FFFFFF"))
 
                 views.setTextColor(R.id.widget_active_waqt_title, Color.parseColor("#38BDF8"))
                 views.setTextColor(R.id.widget_active_waqt_time, Color.parseColor("#E2E8F0"))
@@ -249,16 +251,16 @@ class ToolsMateMasterWidget : AppWidgetProvider() {
                 views.setInt(R.id.widget_btn_calendar, "setBackgroundResource", R.drawable.widget_shortcut_bg)
                 views.setInt(R.id.widget_btn_market, "setBackgroundResource", R.drawable.widget_shortcut_bg)
                 views.setInt(R.id.widget_btn_islamic, "setBackgroundResource", R.drawable.widget_shortcut_bg)
-                views.setInt(R.id.widget_btn_theme_toggle, "setBackgroundResource", R.drawable.widget_badge_bg)
-                views.setInt(R.id.widget_btn_refresh, "setBackgroundResource", R.drawable.widget_badge_bg)
+                views.setInt(R.id.widget_btn_theme_toggle, "setBackgroundResource", R.drawable.widget_shortcut_bg)
+                views.setInt(R.id.widget_btn_refresh, "setBackgroundResource", R.drawable.widget_shortcut_bg)
 
                 views.setImageViewResource(R.id.widget_btn_theme_toggle, R.drawable.ic_widget_moon)
-                views.setTextColor(R.id.widget_app_brand, Color.parseColor("#0F172A"))
+                views.setTextColor(R.id.widget_app_brand, Color.parseColor("#334155"))
                 views.setTextColor(R.id.widget_header_dot, Color.parseColor("#0284C7"))
                 views.setTextColor(R.id.widget_location_text, Color.parseColor("#0284C7"))
                 views.setTextColor(R.id.widget_date_text, Color.parseColor("#475569"))
                 views.setTextColor(R.id.widget_weather_temp, Color.parseColor("#0284C7"))
-                views.setTextColor(R.id.widget_weather_condition, Color.parseColor("#0F172A"))
+                views.setTextColor(R.id.widget_weather_condition, Color.parseColor("#475569"))
                 views.setTextColor(R.id.widget_weather_details, Color.parseColor("#475569"))
                 views.setTextColor(R.id.widget_sunrise_time, Color.parseColor("#D97706"))
                 views.setTextColor(R.id.widget_sunset_time, Color.parseColor("#DC2626"))
@@ -276,6 +278,8 @@ class ToolsMateMasterWidget : AppWidgetProvider() {
                 views.setInt(R.id.widget_icon_calendar, "setColorFilter", Color.parseColor("#0284C7"))
                 views.setInt(R.id.widget_icon_market, "setColorFilter", Color.parseColor("#0284C7"))
                 views.setInt(R.id.widget_icon_islamic, "setColorFilter", Color.parseColor("#0284C7"))
+                views.setInt(R.id.widget_btn_theme_toggle, "setColorFilter", Color.parseColor("#0284C7"))
+                views.setInt(R.id.widget_btn_refresh, "setColorFilter", Color.parseColor("#0284C7"))
 
                 views.setTextColor(R.id.widget_active_waqt_title, Color.parseColor("#0284C7"))
                 views.setTextColor(R.id.widget_active_waqt_time, Color.parseColor("#0369A1"))
@@ -498,6 +502,7 @@ class ToolsMateMasterWidget : AppWidgetProvider() {
             }
             val calendarPendingIntent = PendingIntent.getActivity(context, 102, calendarIntent, flags)
             views.setOnClickPendingIntent(R.id.widget_btn_calendar, calendarPendingIntent)
+            views.setOnClickPendingIntent(R.id.widget_date_text, calendarPendingIntent)
 
             // Market List / Notes Action
             val marketIntent = Intent(context, QuickMarketActivity::class.java).apply {
@@ -514,6 +519,7 @@ class ToolsMateMasterWidget : AppWidgetProvider() {
             }
             val prayerPendingIntent = PendingIntent.getActivity(context, 104, prayerIntent, flags)
             views.setOnClickPendingIntent(R.id.widget_btn_islamic, prayerPendingIntent)
+            views.setOnClickPendingIntent(R.id.widget_card_container, prayerPendingIntent)
 
             // District Selection Action (Click Location in Widget)
             val districtIntent = Intent(context, com.example.MainActivity::class.java).apply {
@@ -523,6 +529,24 @@ class ToolsMateMasterWidget : AppWidgetProvider() {
             }
             val districtPendingIntent = PendingIntent.getActivity(context, 105, districtIntent, flags)
             views.setOnClickPendingIntent(R.id.widget_location_click_container, districtPendingIntent)
+
+            // Open App on empty space click
+            val mainAppIntent = Intent(context, com.example.MainActivity::class.java).apply {
+                action = Intent.ACTION_MAIN
+                addCategory(Intent.CATEGORY_LAUNCHER)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            }
+            val mainAppPendingIntent = PendingIntent.getActivity(context, 106, mainAppIntent, flags)
+            views.setOnClickPendingIntent(R.id.widget_root, mainAppPendingIntent)
+
+            // Weather Card Action (Clicking weather container opens Weather tool dialog)
+            val weatherIntent = Intent(context, com.example.MainActivity::class.java).apply {
+                action = Intent.ACTION_VIEW
+                putExtra("target_tool", "WEATHER")
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            }
+            val weatherPendingIntent = PendingIntent.getActivity(context, 107, weatherIntent, flags)
+            views.setOnClickPendingIntent(R.id.widget_weather_container, weatherPendingIntent)
 
             appWidgetManager.updateAppWidget(appWidgetId, views)
         } catch (e: Exception) {

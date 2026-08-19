@@ -886,14 +886,28 @@ fun ModernPrayerTimesCard(
                                 val timeFormatted = formatTimerClock(currentRemainingMillis)
                                 val finalDisplayTime = if (isBn) convertDigitsToBn(timeFormatted) else timeFormatted
                                 val finalLabel = if (isBn) "শেষ হতে বাকি $finalDisplayTime" else "Ends in $finalDisplayTime"
-                                Text(
-                                    text = "⏳ $finalLabel",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = Color.White,
-                                    textAlign = TextAlign.Center,
-                                    modifier = Modifier.padding(vertical = 5.dp, horizontal = 4.dp)
-                                )
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 5.dp, horizontal = 4.dp),
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.HourglassTop,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(13.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = finalLabel,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = Color.White,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
                             }
 
                             // Elapsed progress bar with remaining percentage
@@ -1015,24 +1029,52 @@ fun ModernPrayerTimesCard(
                                     val timeFormatted = formatTimerClock(nextCountdownMillis)
                                     val finalDisplayTime = if (isBn) convertDigitsToBn(timeFormatted) else timeFormatted
                                     val finalLabel = if (isBn) "শুরু হতে বাকি $finalDisplayTime" else "Starts in $finalDisplayTime"
-                                    Text(
-                                        text = "⏱️ $finalLabel",
-                                        fontSize = 10.5.sp,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = Color(0xFF0284C7),
-                                        textAlign = TextAlign.Center,
-                                        modifier = Modifier.padding(vertical = 5.dp, horizontal = 4.dp)
-                                    )
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 5.dp, horizontal = 4.dp),
+                                        horizontalArrangement = Arrangement.Center,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Timer,
+                                            contentDescription = null,
+                                            tint = Color(0xFF0284C7),
+                                            modifier = Modifier.size(13.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = finalLabel,
+                                            fontSize = 10.5.sp,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = Color(0xFF0284C7),
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
                                 } else {
                                     val durationLabel = if (isBn) "ওয়াক্ত স্থায়ী: ${currentWaqtData.nextDurationStrBn}" else "Duration: ${currentWaqtData.nextDurationStrEn}"
-                                    Text(
-                                        text = "⏱️ $durationLabel",
-                                        fontSize = 10.5.sp,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = Color(0xFF0284C7),
-                                        textAlign = TextAlign.Center,
-                                        modifier = Modifier.padding(vertical = 5.dp, horizontal = 4.dp)
-                                    )
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 5.dp, horizontal = 4.dp),
+                                        horizontalArrangement = Arrangement.Center,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Timer,
+                                            contentDescription = null,
+                                            tint = Color(0xFF0284C7),
+                                            modifier = Modifier.size(13.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = durationLabel,
+                                            fontSize = 10.5.sp,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = Color(0xFF0284C7),
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
                                 }
                             }
 

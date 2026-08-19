@@ -1,5 +1,8 @@
 package com.example.ui.screens
 
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
+
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
@@ -48,6 +51,11 @@ fun DynamicWeatherScreen(
     isBn: Boolean
 ) {
     var showSearchDialog by remember { mutableStateOf(false) }
+    var selectedDayIndex by remember { mutableStateOf(0) }
+
+    LaunchedEffect(viewModel.weatherLocation) {
+        selectedDayIndex = 0
+    }
 
     LaunchedEffect(Unit) {
         if (viewModel.weatherData == null) {
@@ -164,6 +172,35 @@ fun DynamicWeatherScreen(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            item {
+                var isDetecting by remember { mutableStateOf(false) }
+                val context = LocalContext.current
+                FilterChip(
+                    selected = false,
+                    onClick = {
+                        isDetecting = true
+                        viewModel.autoDetectIslamicLocation(context) { success, msg ->
+                            isDetecting = false
+                            if (msg != null) {
+                                Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+                            }
+                        }
+                    },
+                    label = {
+                        Text(
+                            text = if (isDetecting) (if (isBn) "শনাক্ত হচ্ছে..." else "Detecting...") else (if (isBn) "📍 অটো ডিটেক্ট" else "📍 Auto Detect"),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = themeColors.buttonEqualBg
+                        )
+                    },
+                    border = BorderStroke(1.dp, themeColors.buttonEqualBg),
+                    colors = FilterChipDefaults.filterChipColors(
+                        containerColor = themeColors.displayBackground
+                    ),
+                    shape = RoundedCornerShape(16.dp)
+                )
+            }
             items(items = viewModel.availableWeatherCities) { city ->
                 val isSelected = city.name.equals(viewModel.weatherLocation, ignoreCase = true)
                 FilterChip(
@@ -285,8 +322,35 @@ fun DynamicWeatherScreen(
 
                 // Hourly Forecast
                 item {
+                    val selectedDayLabel = remember(selectedDayIndex, weatherData, isBn) {
+                        try {
+                            val timeStr = weatherData.daily.time.getOrNull(selectedDayIndex) ?: ""
+                            val parser = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+                            val date = parser.parse(timeStr)
+                            val formatter = SimpleDateFormat("EEEE", Locale.US)
+                            val dayName = formatter.format(date ?: Date())
+                            val prettyName = if (isBn) {
+                                when (dayName) {
+                                    "Saturday" -> "শনিবার"
+                                    "Sunday" -> "রবিবার"
+                                    "Monday" -> "সোমবার"
+                                    "Tuesday" -> "মঙ্গলবার"
+                                    "Wednesday" -> "বুধবার"
+                                    "Thursday" -> "বৃহস্পতিবার"
+                                    "Friday" -> "শুক্রবার"
+                                    else -> dayName
+                                }
+                            } else {
+                                dayName
+                            }
+                            if (selectedDayIndex == 0) (if (isBn) "আজ" else "Today") else prettyName
+                        } catch (e: Exception) {
+                            if (isBn) "ঘণ্টাভিত্তিক" else "Hourly"
+                        }
+                    }
+
                     Text(
-                        text = if (isBn) "প্রতি ঘণ্টার পূর্বাভাস" else "Hourly Forecast",
+                        text = if (isBn) "প্রতি ঘণ্টার পূর্বাভাস ($selectedDayLabel)" else "Hourly Forecast ($selectedDayLabel)",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = themeColors.displayText,
@@ -296,11 +360,11 @@ fun DynamicWeatherScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         items(24) { index ->
-                            // Use next 24 hours
-                            val timeStr = weatherData.hourly.time.getOrNull(index) ?: ""
-                            val temp = weatherData.hourly.temperature_2m.getOrNull(index) ?: 0.0
-                            val code = weatherData.hourly.weather_code.getOrNull(index) ?: 0
-                            val rainProb = weatherData.hourly.precipitation_probability.getOrNull(index) ?: 0
+                            val globalHourIndex = selectedDayIndex * 24 + index
+                            val timeStr = weatherData.hourly.time.getOrNull(globalHourIndex) ?: ""
+                            val temp = weatherData.hourly.temperature_2m.getOrNull(globalHourIndex) ?: 0.0
+                            val code = weatherData.hourly.weather_code.getOrNull(globalHourIndex) ?: 0
+                            val rainProb = weatherData.hourly.precipitation_probability.getOrNull(globalHourIndex) ?: 0
                             HourlyWeatherItem(timeStr, temp, code, rainProb, themeColors, isBn)
                         }
                     }
@@ -309,7 +373,7 @@ fun DynamicWeatherScreen(
                 // 7-Day Forecast (with padding cleaned up)
                 item {
                     Text(
-                        text = if (isBn) "৭ দিনের পূর্বাভাস" else "7-Day Forecast",
+                        text = if (isBn) "৭ দিনের পূর্বাভাস (যেকোনো দিনে ক্লিক করে ঘণ্টার পূর্বাভাস দেখুন)" else "7-Day Forecast (Tap any day to see hourly forecast)",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = themeColors.displayText,
@@ -324,7 +388,18 @@ fun DynamicWeatherScreen(
                     val maxT = weatherData.daily.temperature_2m_max[index]
                     val precip = weatherData.daily.precipitation_sum[index]
                     val rainProbMax = weatherData.daily.precipitation_probability_max.getOrNull(index) ?: 0
-                    DailyWeatherItem(timeStr, code, minT, maxT, precip, rainProbMax, themeColors, isBn)
+                    DailyWeatherItem(
+                        timeStr = timeStr,
+                        code = code,
+                        minT = minT,
+                        maxT = maxT,
+                        precip = precip,
+                        rainProbMax = rainProbMax,
+                        themeColors = themeColors,
+                        isBn = isBn,
+                        isSelected = selectedDayIndex == index,
+                        onClick = { selectedDayIndex = index }
+                    )
                 }
             }
         }
@@ -626,84 +701,111 @@ fun DailyWeatherItem(
     precip: Double,
     rainProbMax: Int,
     themeColors: CalculatorThemeColors,
-    isBn: Boolean
+    isBn: Boolean,
+    isSelected: Boolean,
+    onClick: () -> Unit
 ) {
     val day = try {
         val parser = SimpleDateFormat("yyyy-MM-dd", Locale.US)
         val date = parser.parse(timeStr)
         val formatter = SimpleDateFormat("EEEE", Locale.US)
-        formatter.format(date ?: Date())
+        val dayName = formatter.format(date ?: Date())
+        if (isBn) {
+            when (dayName) {
+                "Saturday" -> "শনিবার"
+                "Sunday" -> "রবিবার"
+                "Monday" -> "সোমবার"
+                "Tuesday" -> "মঙ্গলবার"
+                "Wednesday" -> "বুধবার"
+                "Thursday" -> "বৃহস্পতিবার"
+                "Friday" -> "শুক্রবার"
+                else -> dayName
+            }
+        } else {
+            dayName
+        }
     } catch (e: Exception) {
         "--"
     }
 
-    Row(
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(12.dp),
+        color = if (isSelected) themeColors.buttonEqualBg.copy(alpha = 0.12f) else Color.Transparent,
+        border = if (isSelected) BorderStroke(1.5.dp, themeColors.buttonEqualBg) else null,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+            .padding(vertical = 4.dp)
     ) {
-        Text(
-            text = day,
-            color = themeColors.displayText,
-            fontSize = 16.sp,
-            modifier = Modifier.weight(1f)
-        )
-        
         Row(
-            modifier = Modifier.weight(1.2f),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            WeatherConditionGraphic(
-                code = code,
-                isDay = true,
-                modifier = Modifier.size(24.dp)
+            Text(
+                text = day,
+                color = themeColors.displayText,
+                fontSize = 16.sp,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                modifier = Modifier.weight(1f)
             )
-            Spacer(modifier = Modifier.width(6.dp))
-            Column(horizontalAlignment = Alignment.Start) {
-                if (precip > 0) {
-                    Text(
-                        text = "${precip.toInt()}mm",
-                        color = themeColors.buttonEqualBg,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.WaterDrop,
-                        contentDescription = "Rain probability",
-                        tint = Color(0xFF38BDF8),
-                        modifier = Modifier.size(10.dp)
-                    )
-                    Spacer(modifier = Modifier.width(2.dp))
-                    Text(
-                        text = "$rainProbMax%",
-                        color = themeColors.displayText.copy(alpha = 0.7f),
-                        fontSize = 10.sp
-                    )
+            
+            Row(
+                modifier = Modifier.weight(1.2f),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                WeatherConditionGraphic(
+                    code = code,
+                    isDay = true,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Column(horizontalAlignment = Alignment.Start) {
+                    if (precip > 0) {
+                        Text(
+                            text = "${precip.toInt()}mm",
+                            color = themeColors.buttonEqualBg,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.WaterDrop,
+                            contentDescription = "Rain probability",
+                            tint = Color(0xFF38BDF8),
+                            modifier = Modifier.size(10.dp)
+                        )
+                        Spacer(modifier = Modifier.width(2.dp))
+                        Text(
+                            text = "$rainProbMax%",
+                            color = themeColors.displayText.copy(alpha = 0.7f),
+                            fontSize = 10.sp
+                        )
+                    }
                 }
             }
-        }
-        
-        Row(
-            modifier = Modifier.weight(1f),
-            horizontalArrangement = Arrangement.End
-        ) {
-            Text(
-                text = "${maxT.toInt()}°",
-                color = themeColors.displayText,
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "${minT.toInt()}°",
-                color = themeColors.displayText.copy(alpha = 0.5f),
-                fontSize = 16.sp
-            )
+            
+            Row(
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.End
+            ) {
+                Text(
+                    text = "${maxT.toInt()}°",
+                    color = themeColors.displayText,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "${minT.toInt()}°",
+                    color = themeColors.displayText.copy(alpha = 0.5f),
+                    fontSize = 16.sp
+                )
+            }
         }
     }
 }
@@ -1664,7 +1766,7 @@ fun SunMoonTrackerCard(
                                     color = themeColors.displayText.copy(alpha = 0.5f)
                                 )
                                 Text(
-                                    text = if (isBn) "🌇 পশ্চিম" else "🌇 W",
+                                    text = if (isBn) "পশ্চিম 🌇" else "W 🌇",
                                     fontSize = 9.sp,
                                     color = themeColors.displayText.copy(alpha = 0.5f)
                                 )

@@ -3,7 +3,15 @@
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
+    <!-- Sun Circle -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M12.01,5.5l1.41,1.41 1.06,-1.06L13.07,4.44 12.01,5.5zm-5.66,2.12l1.06,1.06 1.41,-1.41 -1.06,-1.06 -1.41,1.41zm11.31,0l-1.41,-1.41 -1.06,1.06 1.41,1.41 1.06,-1.06zM2,18h20v2H2v-2zm10,-13h1.5v-3h-3v3H12zm-5,7.5c0,-2.76 2.24,-5 5,-5s5,2.24 5,5h-10z"/>
+        android:pathData="M 9,12 m -4,0 a 4,4 0 1,0 8,0 a 4,4 0 1,0 -8,0" />
+    <!-- Rays and Arrow -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M9,5 V3 M9,19 V21 M2,12 H4 M5.1,7.1 L6.5,8.5 M5.1,16.9 L6.5,15.5 M18,17 V7 M15,10 L18,7 L21,10" />
 </vector>
