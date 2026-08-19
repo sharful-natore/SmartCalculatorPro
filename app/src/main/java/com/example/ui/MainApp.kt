@@ -152,12 +152,7 @@ fun MainContent(
     LaunchedEffect(Unit) {
         try {
             val prefs = context.getSharedPreferences("app_error_prefs", android.content.Context.MODE_PRIVATE)
-            val err = prefs.getString("last_error", null)
-            if (err != null) {
-                val stack = prefs.getString("last_stacktrace", "")
-                prefs.edit().clear().apply()
-                viewModel.reportError("⚠️ অ্যাপে পূর্ববর্তী একটি ত্রুটি ধরা পড়েছে (Previous error caught):\n$err\n\nStacktrace:\n$stack")
-            }
+            prefs.edit().clear().apply()
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -1610,51 +1605,6 @@ fun MainContent(
         }
 
         val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
-
-        // --- Online AI Model Error / Offline Fallback Dialog ---
-        if (viewModel.onlineModelErrorReason != null) {
-            AlertDialog(
-                onDismissRequest = { viewModel.onlineModelErrorReason = null },
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.Info,
-                            contentDescription = null,
-                            tint = Color(0xFFF59E0B),
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = if (isBn) "এআই মডেল লোড স্ট্যাটাস" else "AI Model Load Status",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 17.sp,
-                            color = themeColors.displayText
-                        )
-                    }
-                },
-                text = {
-                    Text(
-                        text = viewModel.onlineModelErrorReason ?: "",
-                        fontSize = 13.sp,
-                        lineHeight = 19.sp,
-                        color = themeColors.displayText.copy(alpha = 0.9f)
-                    )
-                },
-                confirmButton = {
-                    TextButton(
-                        onClick = { viewModel.onlineModelErrorReason = null }
-                    ) {
-                        Text(
-                            text = if (isBn) "ঠিক আছে" else "OK",
-                            color = themeColors.buttonEqualBg,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                },
-                containerColor = themeColors.cardBg,
-                shape = RoundedCornerShape(16.dp)
-            )
-        }
 
         // --- About App Dialog ---
         if (showAboutDialog) {

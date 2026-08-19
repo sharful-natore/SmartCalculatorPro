@@ -193,6 +193,7 @@ fun ModernPrayerTimesCard(
 
     var showDistrictSheet by remember { mutableStateOf(false) }
     var showMonthlySheet by remember { mutableStateOf(false) }
+    var showPrayerHistorySheet by remember { mutableStateOf(false) }
     var showFiqhInfoDialog by remember { mutableStateOf(false) }
     var selectedForbiddenItem by remember { mutableStateOf<PrayerWaqtItem?>(null) }
 
@@ -216,24 +217,26 @@ fun ModernPrayerTimesCard(
 
     val isViewingToday = (selectedCalendarOffsetDays == 0)
 
-    // Daily Prayer Tracking State (Preserved in SharedPreferences for today's record)
-    val todayDateKey = remember {
-        SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).format(Date())
+    // Daily Prayer Tracking State for the currently displayed calendar date
+    val activeDateKey = remember(displayCalendar.get(Calendar.YEAR), displayCalendar.get(Calendar.DAY_OF_YEAR)) {
+        SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).format(displayCalendar.time)
     }
     val sharedPrefs = remember {
         context.getSharedPreferences("prayer_tracker_prefs", Context.MODE_PRIVATE)
     }
 
-    var fajrDone by remember { mutableStateOf(sharedPrefs.getBoolean("${todayDateKey}_fajr", false)) }
-    var dhuhrDone by remember { mutableStateOf(sharedPrefs.getBoolean("${todayDateKey}_dhuhr", false)) }
-    var asrDone by remember { mutableStateOf(sharedPrefs.getBoolean("${todayDateKey}_asr", false)) }
-    var maghribDone by remember { mutableStateOf(sharedPrefs.getBoolean("${todayDateKey}_maghrib", false)) }
-    var ishaDone by remember { mutableStateOf(sharedPrefs.getBoolean("${todayDateKey}_isha", false)) }
+    var trackerRefreshTrigger by remember { mutableIntStateOf(0) }
+    var fajrDone by remember(activeDateKey, trackerRefreshTrigger) { mutableStateOf(sharedPrefs.getBoolean("${activeDateKey}_fajr", false)) }
+    var dhuhrDone by remember(activeDateKey, trackerRefreshTrigger) { mutableStateOf(sharedPrefs.getBoolean("${activeDateKey}_dhuhr", false)) }
+    var asrDone by remember(activeDateKey, trackerRefreshTrigger) { mutableStateOf(sharedPrefs.getBoolean("${activeDateKey}_asr", false)) }
+    var maghribDone by remember(activeDateKey, trackerRefreshTrigger) { mutableStateOf(sharedPrefs.getBoolean("${activeDateKey}_maghrib", false)) }
+    var ishaDone by remember(activeDateKey, trackerRefreshTrigger) { mutableStateOf(sharedPrefs.getBoolean("${activeDateKey}_isha", false)) }
 
     fun togglePrayer(key: String, currentVal: Boolean, onUpdate: (Boolean) -> Unit) {
         val newVal = !currentVal
         onUpdate(newVal)
-        sharedPrefs.edit().putBoolean("${todayDateKey}_$key", newVal).apply()
+        sharedPrefs.edit().putBoolean("${activeDateKey}_$key", newVal).apply()
+        trackerRefreshTrigger++
         val msg = if (isBn) {
             if (newVal) "মাশাআল্লাহ! নামাজ আদায় রেকর্ড করা হয়েছে।" else "নামাজ রেকর্ড বাতিল করা হয়েছে।"
         } else {
@@ -1315,7 +1318,143 @@ fun ModernPrayerTimesCard(
                 }
             }
 
-            // --- 4. PRAYER SCHEDULE TIMETABLE (LIST / TABLE) ---
+            // --- 4. DAILY SALAH TRACKER (দৈনিক ৫ ওয়াক্ত সালাত ট্র্যাকার - ওয়াক্তের সময়ের উপরে ও ডেট সিলেক্টরের নিচে) ---
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
+                border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.08f))
+            ) {
+                Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = if (isViewingToday) (if (isBn) "আজকের নামাজ ট্র্যাকার" else "Today's Salah Tracker")
+                                    else (if (isBn) "নামাজ ট্র্যাকার (${IslamicCalendarHelper.toBnDigits(displayCalendar.get(Calendar.DAY_OF_MONTH))} ${IslamicCalendarHelper.getBanglaDateString(displayCalendar, true).split(" ").getOrNull(1) ?: ""})" else "Salah Tracker"),
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.displayText
+                                )
+                            }
+                            Text(
+                                text = if (isBn) "৫ ওয়াক্ত নামাজ আদায়ের রেকর্ড রাখুন" else "Track your 5 daily prayers",
+                                fontSize = 11.5.sp,
+                                color = themeColors.displayText.copy(alpha = 0.6f)
+                            )
+                        }
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            // Progress Score Badge
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = if (completedCount == 5) Color(0xFF10B981).copy(alpha = 0.2f) else themeColors.titleBarBg.copy(alpha = 0.12f)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = if (completedCount == 5) Icons.Default.CheckCircle else Icons.Default.CheckCircleOutline,
+                                        contentDescription = null,
+                                        tint = if (completedCount == 5) Color(0xFF10B981) else themeColors.titleBarBg,
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(3.dp))
+                                    Text(
+                                        text = if (isBn) "$completedCount/৫" else "$completedCount/5",
+                                        fontSize = 11.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (completedCount == 5) Color(0xFF10B981) else themeColors.titleBarBg
+                                    )
+                                }
+                            }
+
+                            // History & Analytics Button
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = Color(0xFF0284C7).copy(alpha = 0.12f),
+                                border = BorderStroke(1.dp, Color(0xFF0284C7).copy(alpha = 0.35f)),
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .clickable { showPrayerHistorySheet = true }
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.BarChart,
+                                        contentDescription = "Prayer History",
+                                        tint = Color(0xFF0284C7),
+                                        modifier = Modifier.size(15.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(3.dp))
+                                    Text(
+                                        text = if (isBn) "হিস্টোরি" else "History",
+                                        fontSize = 11.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF0284C7)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // 5 Waqt Checkbox Row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(7.dp)
+                    ) {
+                        PrayerTrackerPill(
+                            name = if (isBn) "ফজর" else "Fajr",
+                            isDone = fajrDone,
+                            modifier = Modifier.weight(1f),
+                            themeColors = themeColors,
+                            onClick = { togglePrayer("fajr", fajrDone) { fajrDone = it } }
+                        )
+                        PrayerTrackerPill(
+                            name = if (isBn) "যোহর" else "Dhuhr",
+                            isDone = dhuhrDone,
+                            modifier = Modifier.weight(1f),
+                            themeColors = themeColors,
+                            onClick = { togglePrayer("dhuhr", dhuhrDone) { dhuhrDone = it } }
+                        )
+                        PrayerTrackerPill(
+                            name = if (isBn) "আসর" else "Asr",
+                            isDone = asrDone,
+                            modifier = Modifier.weight(1f),
+                            themeColors = themeColors,
+                            onClick = { togglePrayer("asr", asrDone) { asrDone = it } }
+                        )
+                        PrayerTrackerPill(
+                            name = if (isBn) "মাগরিব" else "Maghrib",
+                            isDone = maghribDone,
+                            modifier = Modifier.weight(1f),
+                            themeColors = themeColors,
+                            onClick = { togglePrayer("maghrib", maghribDone) { maghribDone = it } }
+                        )
+                        PrayerTrackerPill(
+                            name = if (isBn) "এশা" else "Isha",
+                            isDone = ishaDone,
+                            modifier = Modifier.weight(1f),
+                            themeColors = themeColors,
+                            onClick = { togglePrayer("isha", ishaDone) { ishaDone = it } }
+                        )
+                    }
+                }
+            }
+
+            // --- 5. PRAYER SCHEDULE TIMETABLE (LIST / TABLE) ---
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(22.dp),
@@ -1459,105 +1598,6 @@ fun ModernPrayerTimesCard(
                 }
             }
 
-            // --- 4. DAILY SALAH TRACKER (দৈনিক ৫ ওয়াক্ত সালাত ট্র্যাকার) ---
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
-                border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.08f))
-            ) {
-                Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 12.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(
-                                text = if (isBn) "আজকের নামাজ ট্র্যাকার" else "Today's Salah Tracker",
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = themeColors.displayText
-                            )
-                            Text(
-                                text = if (isBn) "৫ ওয়াক্ত নামাজ আদায়ের রেকর্ড রাখুন" else "Track your 5 daily prayers",
-                                fontSize = 11.5.sp,
-                                color = themeColors.displayText.copy(alpha = 0.6f)
-                            )
-                        }
-
-                        // Progress Score Badge
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = if (completedCount == 5) Color(0xFF10B981).copy(alpha = 0.2f) else themeColors.titleBarBg.copy(alpha = 0.12f)
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
-                            ) {
-                                Icon(
-                                    imageVector = if (completedCount == 5) Icons.Default.CheckCircle else Icons.Default.Flag,
-                                    contentDescription = null,
-                                    tint = if (completedCount == 5) Color(0xFF10B981) else themeColors.titleBarBg,
-                                    modifier = Modifier.size(15.dp)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = if (isBn) "$completedCount/৫ ওয়াক্ত" else "$completedCount/5 Done",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (completedCount == 5) Color(0xFF10B981) else themeColors.titleBarBg
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    // 5 Waqt Checkbox Row
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        PrayerTrackerPill(
-                            name = if (isBn) "ফজর" else "Fajr",
-                            isDone = fajrDone,
-                            modifier = Modifier.weight(1f),
-                            themeColors = themeColors,
-                            onClick = { togglePrayer("fajr", fajrDone) { fajrDone = it } }
-                        )
-                        PrayerTrackerPill(
-                            name = if (isBn) "যোহর" else "Dhuhr",
-                            isDone = dhuhrDone,
-                            modifier = Modifier.weight(1f),
-                            themeColors = themeColors,
-                            onClick = { togglePrayer("dhuhr", dhuhrDone) { dhuhrDone = it } }
-                        )
-                        PrayerTrackerPill(
-                            name = if (isBn) "আসর" else "Asr",
-                            isDone = asrDone,
-                            modifier = Modifier.weight(1f),
-                            themeColors = themeColors,
-                            onClick = { togglePrayer("asr", asrDone) { asrDone = it } }
-                        )
-                        PrayerTrackerPill(
-                            name = if (isBn) "মাগরিব" else "Maghrib",
-                            isDone = maghribDone,
-                            modifier = Modifier.weight(1f),
-                            themeColors = themeColors,
-                            onClick = { togglePrayer("maghrib", maghribDone) { maghribDone = it } }
-                        )
-                        PrayerTrackerPill(
-                            name = if (isBn) "এশা" else "Isha",
-                            isDone = ishaDone,
-                            modifier = Modifier.weight(1f),
-                            themeColors = themeColors,
-                            onClick = { togglePrayer("isha", ishaDone) { ishaDone = it } }
-                        )
-                    }
-                }
-            }
-
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
@@ -1575,6 +1615,16 @@ fun ModernPrayerTimesCard(
             viewModel = viewModel,
             themeColors = themeColors,
             onDismiss = { showMonthlySheet = false }
+        )
+    }
+
+    if (showPrayerHistorySheet) {
+        PrayerTrackerHistorySheet(
+            themeColors = themeColors,
+            isBn = isBn,
+            sharedPrefs = sharedPrefs,
+            onDismiss = { showPrayerHistorySheet = false },
+            onDataChanged = { trackerRefreshTrigger++ }
         )
     }
 
@@ -2085,3 +2135,630 @@ private data class ActiveWaqtData(
     val nextDurationStrEn: String,
     val isForbidden: Boolean
 )
+
+private data class DayPrayerHistoryRecord(
+    val day: Int,
+    val dateKey: String,
+    val fajr: Boolean,
+    val dhuhr: Boolean,
+    val asr: Boolean,
+    val maghrib: Boolean,
+    val isha: Boolean,
+    val completedCount: Int,
+    val isToday: Boolean,
+    val isPastOrToday: Boolean
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PrayerTrackerHistorySheet(
+    themeColors: CalculatorThemeColors,
+    isBn: Boolean,
+    sharedPrefs: android.content.SharedPreferences,
+    onDismiss: () -> Unit,
+    onDataChanged: () -> Unit
+) {
+    var monthOffset by remember { mutableIntStateOf(0) }
+    var historyDataVersion by remember { mutableIntStateOf(0) }
+
+    val currentCal = remember(monthOffset) {
+        Calendar.getInstance().apply {
+            add(Calendar.MONTH, monthOffset)
+            set(Calendar.DAY_OF_MONTH, 1)
+        }
+    }
+
+    val daysInMonth = currentCal.getActualMaximum(Calendar.DAY_OF_MONTH)
+    val year = currentCal.get(Calendar.YEAR)
+    val month = currentCal.get(Calendar.MONTH)
+
+    val banglaGregorianMonths = listOf(
+        "জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল", "মে", "জুন",
+        "জুলাই", "আগস্ট", "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর"
+    )
+    val englishGregorianMonths = listOf(
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    )
+
+    val monthName = if (isBn) {
+        "${banglaGregorianMonths[month]} ${IslamicCalendarHelper.toBnDigits(year.toString())}"
+    } else {
+        "${englishGregorianMonths[month]} $year"
+    }
+
+    val todayCalendar = Calendar.getInstance()
+    val isCurrentMonth = (todayCalendar.get(Calendar.MONTH) == month && todayCalendar.get(Calendar.YEAR) == year)
+    val todayDayOfMonth = todayCalendar.get(Calendar.DAY_OF_MONTH)
+
+    // Calculate monthly records from SharedPreferences
+    val dayRecords = remember(monthOffset, historyDataVersion) {
+        (1..daysInMonth).map { day ->
+            val dateKey = String.format(Locale.ENGLISH, "%04d-%02d-%02d", year, month + 1, day)
+            val fajr = sharedPrefs.getBoolean("${dateKey}_fajr", false)
+            val dhuhr = sharedPrefs.getBoolean("${dateKey}_dhuhr", false)
+            val asr = sharedPrefs.getBoolean("${dateKey}_asr", false)
+            val maghrib = sharedPrefs.getBoolean("${dateKey}_maghrib", false)
+            val isha = sharedPrefs.getBoolean("${dateKey}_isha", false)
+            val count = listOf(fajr, dhuhr, asr, maghrib, isha).count { it }
+            val isToday = isCurrentMonth && (day == todayDayOfMonth)
+            val isPastOrToday = if (isCurrentMonth) day <= todayDayOfMonth else monthOffset < 0
+
+            DayPrayerHistoryRecord(
+                day = day,
+                dateKey = dateKey,
+                fajr = fajr,
+                dhuhr = dhuhr,
+                asr = asr,
+                maghrib = maghrib,
+                isha = isha,
+                completedCount = count,
+                isToday = isToday,
+                isPastOrToday = isPastOrToday
+            )
+        }
+    }
+
+    val countedDays = if (isCurrentMonth) todayDayOfMonth else if (monthOffset < 0) daysInMonth else 0
+    val totalPossible = (countedDays * 5).coerceAtLeast(1)
+    val totalCompleted = dayRecords.filter { it.isPastOrToday }.sumOf { it.completedCount }
+    val completionPercent = if (countedDays > 0) ((totalCompleted.toFloat() / totalPossible.toFloat()) * 100).toInt().coerceIn(0, 100) else 0
+
+    val fullDaysCount = dayRecords.filter { it.isPastOrToday }.count { it.completedCount == 5 }
+    val fajrCount = dayRecords.filter { it.isPastOrToday }.count { it.fajr }
+    val dhuhrCount = dayRecords.filter { it.isPastOrToday }.count { it.dhuhr }
+    val asrCount = dayRecords.filter { it.isPastOrToday }.count { it.asr }
+    val maghribCount = dayRecords.filter { it.isPastOrToday }.count { it.maghrib }
+    val ishaCount = dayRecords.filter { it.isPastOrToday }.count { it.isha }
+
+    // Selected day for interactive calendar review & editing
+    var selectedDay by remember(monthOffset) {
+        mutableIntStateOf(if (isCurrentMonth) todayDayOfMonth else 1)
+    }
+
+    val selectedRecord = dayRecords.find { it.day == selectedDay } ?: dayRecords.first()
+
+    val firstDayOfWeekIndex = (currentCal.get(Calendar.DAY_OF_WEEK) - 1 + 7) % 7 // 0 for Sunday
+    val weekDaysShort = if (isBn) listOf("রবি", "সোম", "মঙ্গল", "বুধ", "বৃহঃ", "শুক্র", "শনি")
+    else listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = themeColors.cardBg,
+        dragHandle = {
+            Surface(
+                modifier = Modifier.padding(vertical = 8.dp),
+                color = themeColors.displayText.copy(alpha = 0.2f),
+                shape = RoundedCornerShape(4.dp)
+            ) {
+                Box(modifier = Modifier.size(width = 38.dp, height = 4.dp))
+            }
+        },
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 6.dp)
+                .verticalScroll(rememberScrollState())
+        ) {
+            // Header: Title & Close Button
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = if (isBn) "নামাজ ট্র্যাকার হিস্টোরি ও অগ্রগতি" else "Salah Tracker & Monthly History",
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.displayText
+                    )
+                    Text(
+                        text = if (isBn) "মাসিক নামাজের সম্পূর্ণ হিসাব ও পর্যালোচনা" else "Comprehensive monthly prayer analytics",
+                        fontSize = 11.5.sp,
+                        color = themeColors.titleBarBg,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+
+                IconButton(onClick = onDismiss) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Close",
+                        tint = themeColors.displayText.copy(alpha = 0.6f)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Month Navigator Bar
+            Surface(
+                shape = RoundedCornerShape(14.dp),
+                color = themeColors.background,
+                border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.08f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = { monthOffset-- }) {
+                        Icon(
+                            imageVector = Icons.Default.ChevronLeft,
+                            contentDescription = "Previous Month",
+                            tint = themeColors.titleBarBg
+                        )
+                    }
+
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.clickable { monthOffset = 0 }
+                    ) {
+                        Text(
+                            text = monthName,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = themeColors.displayText
+                        )
+                        if (monthOffset != 0) {
+                            Text(
+                                text = if (isBn) "চলতি মাসে ফিরুন" else "Current Month",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.titleBarBg
+                            )
+                        }
+                    }
+
+                    IconButton(onClick = { monthOffset++ }) {
+                        Icon(
+                            imageVector = Icons.Default.ChevronRight,
+                            contentDescription = "Next Month",
+                            tint = themeColors.titleBarBg
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Overall Progress Summary Card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = themeColors.background),
+                border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.06f))
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Circular Meter
+                    Box(
+                        modifier = Modifier.size(72.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            progress = { completionPercent / 100f },
+                            modifier = Modifier.fillMaxSize(),
+                            color = if (completionPercent >= 80) Color(0xFF10B981) else if (completionPercent >= 50) Color(0xFF0284C7) else Color(0xFFF59E0B),
+                            strokeWidth = 6.dp,
+                            trackColor = themeColors.displayText.copy(alpha = 0.08f),
+                            strokeCap = StrokeCap.Round
+                        )
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = if (isBn) "${IslamicCalendarHelper.toBnDigits(completionPercent)}%" else "$completionPercent%",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = themeColors.displayText
+                            )
+                            Text(
+                                text = if (isBn) "আদায়" else "Done",
+                                fontSize = 9.sp,
+                                color = themeColors.displayText.copy(alpha = 0.6f)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    // Key Stats in Column
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = if (isBn) "মোট নামাজ আদায়:" else "Total Prayed:",
+                                fontSize = 12.sp,
+                                color = themeColors.displayText.copy(alpha = 0.7f)
+                            )
+                            Text(
+                                text = if (isBn) "${IslamicCalendarHelper.toBnDigits(totalCompleted)} / ${IslamicCalendarHelper.toBnDigits(totalPossible)} ওয়াক্ত"
+                                else "$totalCompleted / $totalPossible Waqts",
+                                fontSize = 12.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.displayText
+                            )
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = if (isBn) "পূর্ণ ৫ ওয়াক্ত দিন:" else "Full 5/5 Days:",
+                                fontSize = 12.sp,
+                                color = themeColors.displayText.copy(alpha = 0.7f)
+                            )
+                            Text(
+                                text = if (isBn) "${IslamicCalendarHelper.toBnDigits(fullDaysCount)} দিন 🌟"
+                                else "$fullDaysCount days 🌟",
+                                fontSize = 12.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF10B981)
+                            )
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = if (isBn) "হিসাবভুক্ত দিন:" else "Elapsed Days:",
+                                fontSize = 12.sp,
+                                color = themeColors.displayText.copy(alpha = 0.7f)
+                            )
+                            Text(
+                                text = if (isBn) "${IslamicCalendarHelper.toBnDigits(countedDays)} / ${IslamicCalendarHelper.toBnDigits(daysInMonth)} দিন"
+                                else "$countedDays / $daysInMonth Days",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = themeColors.titleBarBg
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // 5 Waqt Individual Performance Breakdown
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = themeColors.background),
+                border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.06f))
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(
+                        text = if (isBn) "ওয়াক্তভিত্তিক আদায়ের অগ্রগতি" else "Waqt-wise Performance",
+                        fontSize = 13.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.displayText
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    val waqts = listOf(
+                        Triple(if (isBn) "ফজর" else "Fajr", fajrCount, Color(0xFF0284C7)),
+                        Triple(if (isBn) "যোহর" else "Dhuhr", dhuhrCount, Color(0xFF10B981)),
+                        Triple(if (isBn) "আসর" else "Asr", asrCount, Color(0xFFF59E0B)),
+                        Triple(if (isBn) "মাগরিব" else "Maghrib", maghribCount, Color(0xFFEC4899)),
+                        Triple(if (isBn) "এশা" else "Isha", ishaCount, Color(0xFF8B5CF6))
+                    )
+
+                    waqts.forEachIndexed { idx, (wName, wCount, wColor) ->
+                        val wPercent = if (countedDays > 0) ((wCount.toFloat() / countedDays.toFloat()) * 100).toInt().coerceIn(0, 100) else 0
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = wName,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = themeColors.displayText
+                                )
+                                Text(
+                                    text = if (isBn) "${IslamicCalendarHelper.toBnDigits(wCount)}/${IslamicCalendarHelper.toBnDigits(countedDays)} দিন (${IslamicCalendarHelper.toBnDigits(wPercent)}%)"
+                                    else "$wCount/$countedDays days ($wPercent%)",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = wColor
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            LinearProgressIndicator(
+                                progress = { if (countedDays > 0) wCount.toFloat() / countedDays.toFloat() else 0f },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(6.dp)
+                                    .clip(RoundedCornerShape(3.dp)),
+                                color = wColor,
+                                trackColor = themeColors.displayText.copy(alpha = 0.08f),
+                                strokeCap = StrokeCap.Round
+                            )
+                        }
+                        if (idx < waqts.lastIndex) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Interactive Monthly Calendar Grid
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = themeColors.background),
+                border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.06f))
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (isBn) "মাসিক ক্যালেন্ডার ও দৈনিক হিসাব" else "Monthly Calendar & Daily Log",
+                            fontSize = 13.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = themeColors.displayText
+                        )
+                        Text(
+                            text = if (isBn) "তারিখে ট্যাপ করে এডিট করুন" else "Tap day to view/edit",
+                            fontSize = 11.sp,
+                            color = themeColors.titleBarBg,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Day of Week Header Row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        weekDaysShort.forEach { dayName ->
+                            Text(
+                                text = dayName,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.displayText.copy(alpha = 0.6f),
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    // 7-Column Grid
+                    val totalCells = firstDayOfWeekIndex + daysInMonth
+                    val rowsCount = (totalCells + 6) / 7
+
+                    for (row in 0 until rowsCount) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 3.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            for (col in 0..6) {
+                                val cellIndex = row * 7 + col
+                                val dayNumber = cellIndex - firstDayOfWeekIndex + 1
+
+                                if (dayNumber in 1..daysInMonth) {
+                                    val record = dayRecords.find { it.day == dayNumber }
+                                    val isSelected = (selectedDay == dayNumber)
+                                    val isToday = record?.isToday == true
+                                    val count = record?.completedCount ?: 0
+
+                                    val cellBg = when {
+                                        isSelected -> themeColors.titleBarBg
+                                        isToday -> themeColors.titleBarBg.copy(alpha = 0.15f)
+                                        count == 5 -> Color(0xFF10B981).copy(alpha = 0.15f)
+                                        count > 0 -> Color(0xFF0284C7).copy(alpha = 0.08f)
+                                        else -> Color.Transparent
+                                    }
+
+                                    val borderColor = when {
+                                        isSelected -> themeColors.titleBarBg
+                                        isToday -> themeColors.titleBarBg
+                                        count == 5 -> Color(0xFF10B981).copy(alpha = 0.4f)
+                                        else -> themeColors.displayText.copy(alpha = 0.06f)
+                                    }
+
+                                    Surface(
+                                        onClick = { selectedDay = dayNumber },
+                                        shape = RoundedCornerShape(8.dp),
+                                        color = cellBg,
+                                        border = BorderStroke(if (isSelected || isToday) 1.5.dp else 0.8.dp, borderColor),
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .padding(horizontal = 2.dp)
+                                            .height(44.dp)
+                                    ) {
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.Center,
+                                            modifier = Modifier.fillMaxSize()
+                                        ) {
+                                            Text(
+                                                text = if (isBn) IslamicCalendarHelper.toBnDigits(dayNumber) else dayNumber.toString(),
+                                                fontSize = 11.5.sp,
+                                                fontWeight = if (isSelected || isToday || count == 5) FontWeight.Bold else FontWeight.Normal,
+                                                color = if (isSelected) Color.White else if (isToday) themeColors.titleBarBg else themeColors.displayText
+                                            )
+                                            // Indicator Dot / Badge
+                                            if (count == 5) {
+                                                Text(
+                                                    text = "✓",
+                                                    fontSize = 10.sp,
+                                                    fontWeight = FontWeight.ExtraBold,
+                                                    color = if (isSelected) Color.White else Color(0xFF10B981)
+                                                )
+                                            } else if (count > 0) {
+                                                Text(
+                                                    text = if (isBn) IslamicCalendarHelper.toBnDigits(count) else count.toString(),
+                                                    fontSize = 9.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = if (isSelected) Color.White else Color(0xFF0284C7)
+                                                )
+                                            } else {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(4.dp)
+                                                        .clip(CircleShape)
+                                                        .background(if (isSelected) Color.White.copy(alpha = 0.5f) else themeColors.displayText.copy(alpha = 0.15f))
+                                                )
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    Spacer(modifier = Modifier.weight(1f).padding(horizontal = 2.dp))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Selected Day Quick-Editor & Prayer Record Controls
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = themeColors.titleBarBg.copy(alpha = 0.08f)),
+                border = BorderStroke(1.dp, themeColors.titleBarBg.copy(alpha = 0.25f))
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = if (isBn) "নির্বাচিত তারিখ: ${IslamicCalendarHelper.toBnDigits(selectedDay)} $monthName"
+                                else "Selected: $selectedDay $monthName",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.displayText
+                            )
+                            Text(
+                                text = if (isBn) "নামাজ সম্পন্ন হলে ট্যাপ করে মার্ক করুন" else "Tap waqt to mark or unmark",
+                                fontSize = 11.sp,
+                                color = themeColors.displayText.copy(alpha = 0.6f)
+                            )
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = if (selectedRecord.completedCount == 5) Color(0xFF10B981).copy(alpha = 0.2f) else themeColors.titleBarBg.copy(alpha = 0.15f)
+                        ) {
+                            Text(
+                                text = if (isBn) "${IslamicCalendarHelper.toBnDigits(selectedRecord.completedCount)}/৫ ওয়াক্ত"
+                                else "${selectedRecord.completedCount}/5 Done",
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (selectedRecord.completedCount == 5) Color(0xFF10B981) else themeColors.titleBarBg,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    fun toggleHistoryDayPrayer(waqtKey: String, currentVal: Boolean) {
+                        val newVal = !currentVal
+                        sharedPrefs.edit().putBoolean("${selectedRecord.dateKey}_$waqtKey", newVal).apply()
+                        historyDataVersion++
+                        onDataChanged()
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        PrayerTrackerPill(
+                            name = if (isBn) "ফজর" else "Fajr",
+                            isDone = selectedRecord.fajr,
+                            modifier = Modifier.weight(1f),
+                            themeColors = themeColors,
+                            onClick = { toggleHistoryDayPrayer("fajr", selectedRecord.fajr) }
+                        )
+                        PrayerTrackerPill(
+                            name = if (isBn) "যোহর" else "Dhuhr",
+                            isDone = selectedRecord.dhuhr,
+                            modifier = Modifier.weight(1f),
+                            themeColors = themeColors,
+                            onClick = { toggleHistoryDayPrayer("dhuhr", selectedRecord.dhuhr) }
+                        )
+                        PrayerTrackerPill(
+                            name = if (isBn) "আসর" else "Asr",
+                            isDone = selectedRecord.asr,
+                            modifier = Modifier.weight(1f),
+                            themeColors = themeColors,
+                            onClick = { toggleHistoryDayPrayer("asr", selectedRecord.asr) }
+                        )
+                        PrayerTrackerPill(
+                            name = if (isBn) "মাগরিব" else "Maghrib",
+                            isDone = selectedRecord.maghrib,
+                            modifier = Modifier.weight(1f),
+                            themeColors = themeColors,
+                            onClick = { toggleHistoryDayPrayer("maghrib", selectedRecord.maghrib) }
+                        )
+                        PrayerTrackerPill(
+                            name = if (isBn) "এশা" else "Isha",
+                            isDone = selectedRecord.isha,
+                            modifier = Modifier.weight(1f),
+                            themeColors = themeColors,
+                            onClick = { toggleHistoryDayPrayer("isha", selectedRecord.isha) }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+        }
+    }
+}

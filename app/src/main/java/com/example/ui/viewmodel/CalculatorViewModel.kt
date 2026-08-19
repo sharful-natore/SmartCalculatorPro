@@ -1370,11 +1370,7 @@ How can I help you today?"""
                     
                     val reasonStr = onlineFailureReason ?: if (isBn) "অজানা ত্রুটি" else "Unknown error"
                     lastOnlineError = reasonStr
-                    onlineModelErrorReason = if (isBn) {
-                        "⚠️ **অনলাইন এআই মডেল লোড করা যায়নি!**\n\n• **কারণ:** $reasonStr\n\n💡 **অফলাইন মডেল লোড করা হলো:**\nআপনার অনুরোধের উত্তর দিতে আমাদের সুপারফাস্ট বিল্ট-ইন অফলাইন এআই মডেল লোড করে ব্যবহার করা হয়েছে।"
-                    } else {
-                        "⚠️ **Failed to load Online AI Model!**\n\n• **Reason:** $reasonStr\n\n💡 **Offline Model Loaded:**\nSwitched to built-in smart offline AI model to process your request."
-                    }
+                    onlineModelErrorReason = null
                 } else {
                     lastOnlineError = null
                 }
@@ -1394,12 +1390,7 @@ How can I help you today?"""
                 val errReason = e.localizedMessage ?: e.javaClass.simpleName
                 lastOnlineError = errReason
                 val offlineResult = runOfflineModel(normalized, isBn)
-                
-                onlineModelErrorReason = if (isBn) {
-                    "⚠️ **অনলাইন এআই মডেল লোড করা যায়নি!**\n\n• **কারণ:** $errReason\n\n💡 **অফলাইন মডেল লোড করা হলো:**\nআপনার অনুরোধের উত্তর দিতে আমাদের সুপারফাস্ট বিল্ট-ইন অফলাইন এআই মডেল লোড করে ব্যবহার করা হয়েছে।"
-                } else {
-                    "⚠️ **Failed to load Online AI Model!**\n\n• **Reason:** $errReason\n\n💡 **Offline Model Loaded:**\nSwitched to built-in smart offline AI model to process your request."
-                }
+                onlineModelErrorReason = null
 
                 val aiReply = ChatMessage(
                     text = offlineResult.replyText,
