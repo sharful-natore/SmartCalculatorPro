@@ -68,7 +68,7 @@ class IslamicMaleTtsPlayer private constructor(context: Context) : TextToSpeech.
         ttsObj.setSpeechRate(0.85f)
     }
 
-    fun speakOrStop(id: String, arabicText: String) {
+    fun speakOrStop(id: String, arabicText: String, banglaText: String? = null) {
         if (!isInitialized) return
         val ttsObj = tts ?: return
 
@@ -80,13 +80,29 @@ class IslamicMaleTtsPlayer private constructor(context: Context) : TextToSpeech.
             _activeAudioId.value = id
             _isSpeaking.value = true
 
-            val cleanText = arabicText.replace("\n", " ").trim()
+            val cleanAr = arabicText.replace("\n", " ").trim()
+            val cleanBn = banglaText?.replace("\n", " ")?.trim() ?: ""
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 ttsObj.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
                     override fun onStart(utteranceId: String?) {}
                     override fun onDone(utteranceId: String?) {
-                        if (utteranceId == id) {
+                        if (utteranceId == "${id}_ar" && cleanBn.isNotEmpty()) {
+                            try {
+                                val bnLocale = Locale("bn", "BD")
+                                if (ttsObj.isLanguageAvailable(bnLocale) >= TextToSpeech.LANG_AVAILABLE) {
+                                    ttsObj.language = bnLocale
+                                } else {
+                                    ttsObj.language = Locale.getDefault()
+                                }
+                                ttsObj.setPitch(1.0f)
+                                ttsObj.setSpeechRate(0.95f)
+                                ttsObj.speak(cleanBn, TextToSpeech.QUEUE_FLUSH, null, id)
+                            } catch (e: Exception) {
+                                _isSpeaking.value = false
+                                _activeAudioId.value = null
+                            }
+                        } else if (utteranceId == id || utteranceId == "${id}_ar") {
                             _isSpeaking.value = false
                             _activeAudioId.value = null
                         }
@@ -96,12 +112,16 @@ class IslamicMaleTtsPlayer private constructor(context: Context) : TextToSpeech.
                         _activeAudioId.value = null
                     }
                 })
-                ttsObj.speak(cleanText, TextToSpeech.QUEUE_FLUSH, null, id)
+                if (cleanBn.isNotEmpty()) {
+                    ttsObj.speak(cleanAr, TextToSpeech.QUEUE_FLUSH, null, "${id}_ar")
+                } else {
+                    ttsObj.speak(cleanAr, TextToSpeech.QUEUE_FLUSH, null, id)
+                }
             } else {
                 @Suppress("DEPRECATION")
                 val params = HashMap<String, String>()
                 params[TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID] = id
-                ttsObj.speak(cleanText, TextToSpeech.QUEUE_FLUSH, params)
+                ttsObj.speak(cleanAr, TextToSpeech.QUEUE_FLUSH, params)
             }
         }
     }

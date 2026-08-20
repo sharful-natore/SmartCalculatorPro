@@ -146,52 +146,71 @@ class QuickPrayerActivity : ComponentActivity() {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 8.dp, vertical = 4.dp),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    .padding(horizontal = 4.dp, vertical = 4.dp),
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 Button(
                                     onClick = { selectedTab = 0 },
                                     modifier = Modifier.weight(1f),
+                                    contentPadding = PaddingValues(horizontal = 2.dp, vertical = 6.dp),
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = if (selectedTab == 0) themeColors.buttonEqualBg else themeColors.cardBg
                                     ),
-                                    shape = RoundedCornerShape(12.dp)
+                                    shape = RoundedCornerShape(10.dp)
                                 ) {
                                     Text(
                                         text = if (isBn) "নামাজ" else "Prayer",
                                         color = if (selectedTab == 0) Color.White else themeColors.displayText,
                                         fontWeight = FontWeight.Bold,
-                                        fontSize = 13.sp
+                                        fontSize = 12.sp
                                     )
                                 }
                                 Button(
                                     onClick = { selectedTab = 1 },
                                     modifier = Modifier.weight(1f),
+                                    contentPadding = PaddingValues(horizontal = 2.dp, vertical = 6.dp),
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = if (selectedTab == 1) themeColors.buttonEqualBg else themeColors.cardBg
                                     ),
-                                    shape = RoundedCornerShape(12.dp)
+                                    shape = RoundedCornerShape(10.dp)
                                 ) {
                                     Text(
                                         text = if (isBn) "রোজা" else "Fasting",
                                         color = if (selectedTab == 1) Color.White else themeColors.displayText,
                                         fontWeight = FontWeight.Bold,
-                                        fontSize = 13.sp
+                                        fontSize = 12.sp
                                     )
                                 }
                                 Button(
                                     onClick = { selectedTab = 2 },
                                     modifier = Modifier.weight(1f),
+                                    contentPadding = PaddingValues(horizontal = 2.dp, vertical = 6.dp),
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = if (selectedTab == 2) themeColors.buttonEqualBg else themeColors.cardBg
                                     ),
-                                    shape = RoundedCornerShape(12.dp)
+                                    shape = RoundedCornerShape(10.dp)
                                 ) {
                                     Text(
                                         text = if (isBn) "কুরআন" else "Quran",
                                         color = if (selectedTab == 2) Color.White else themeColors.displayText,
                                         fontWeight = FontWeight.Bold,
-                                        fontSize = 13.sp
+                                        fontSize = 12.sp
+                                    )
+                                }
+                                Button(
+                                    onClick = { selectedTab = 3 },
+                                    modifier = Modifier.weight(1f),
+                                    contentPadding = PaddingValues(horizontal = 2.dp, vertical = 6.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (selectedTab == 3) themeColors.buttonEqualBg else themeColors.cardBg
+                                    ),
+                                    shape = RoundedCornerShape(10.dp)
+                                ) {
+                                    Text(
+                                        text = if (isBn) "হাদিস" else "Hadith",
+                                        color = if (selectedTab == 3) Color.White else themeColors.displayText,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 12.sp
                                     )
                                 }
                             }
@@ -224,11 +243,16 @@ class QuickPrayerActivity : ComponentActivity() {
                                             themeColors = themeColors
                                         )
                                     }
-                                    else -> com.example.ui.quran.HolyQuranModuleScreen(
+                                    2 -> com.example.ui.quran.HolyQuranModuleScreen(
                                         themeColors = themeColors,
                                         onBackClick = { selectedTab = 0 },
                                         quranViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
                                         isBn = isBn
+                                    )
+                                    else -> com.example.ui.islamic.HadithLibraryScreen(
+                                        viewModel = viewModel,
+                                        themeColors = themeColors,
+                                        onBackClick = { selectedTab = 0 }
                                     )
                                 }
                             }

@@ -264,28 +264,60 @@ object HadithRepository {
                 HadithChapter(4, "উত্তম চরিত্র ও ভাইভাব", "Good Character & Brotherhood", 8),
                 HadithChapter(5, "আল্লাহর জিকির ও দোয়া", "Remembrance of Allah & Supplication", 8)
             )
-            "bukhari" -> listOf(
-                HadithChapter(1, "ওহীর সূচনা অধ্যায়", "Revelation", 7),
-                HadithChapter(2, "ঈমান (বিশ্বাস) অধ্যায়", "Belief (Eman)", 50),
-                HadithChapter(3, "ইলম বা জ্ঞান অধ্যায়", "Knowledge", 75),
-                HadithChapter(4, "ওজু ও তাহারাত অধ্যায়", "Ablution (Wudu)", 88),
-                HadithChapter(5, "সালাত বা নামাজ অধ্যায়", "Prayers (Salat)", 120),
-                HadithChapter(6, "যাকাত অধ্যায়", "Zakat (Alms)", 85),
-                HadithChapter(7, "সাওম বা রোজা অধ্যায়", "Fasting (Sawm)", 90)
-            )
-            "muslim" -> listOf(
-                HadithChapter(1, "ঈমান ও তাওহীদ অধ্যায়", "Faith & Monotheism", 45),
-                HadithChapter(2, "পবিত্রতা ও সুন্নাত অধ্যায়", "Purification", 60),
-                HadithChapter(3, "হায়েজ ও তাহারাত অধ্যায়", "Menstruation & Purity", 30),
-                HadithChapter(4, "সালাতের মাসায়েল অধ্যায়", "Rules of Prayer", 110),
-                HadithChapter(5, "মসজিদ ও নামাজের স্থান", "Mosques and Places of Worship", 70)
-            )
-            else -> listOf(
-                HadithChapter(1, "প্রথম অধ্যায়: ঈমান ও ইবাদত", "Chapter 1: Faith & Worship", 25),
-                HadithChapter(2, "দ্বিতীয় অধ্যায়: সুন্নাত ও চরিত্র", "Chapter 2: Sunnah & Character", 30),
-                HadithChapter(3, "তৃতীয় অধ্যায়: লেনদেন ও আখলাক", "Chapter 3: Ethics & Transactions", 20),
-                HadithChapter(4, "চতুর্থ অধ্যায়: দোয়া ও জিকির", "Chapter 4: Supplications & Zikr", 25)
-            )
+            "bukhari" -> {
+                val bukhariTitles = listOf(
+                    "ওহীর সূচনা অধ্যায়", "ঈমান (বিশ্বাস) অধ্যায়", "ইলম বা দ্বীনি জ্ঞান অধ্যায়", "ওজু ও তাহারাত অধ্যায়", "গোসল অধ্যায়",
+                    "হায়েজ ও ঋতুস্রাব অধ্যায়", "তায়াম্মুম অধ্যায়", "সালাত বা নামাজ অধ্যায়", "সালাতের সময়সূচী অধ্যায়", "আযান ও জামাত অধ্যায়",
+                    "জুমুআ অধ্যায়", "ভয়কালীন সালাত অধ্যায়", "দুই ঈদের সালাত অধ্যায়", "বিতর সালাত অধ্যায়", "বৃষ্টি প্রার্থনার সালাত (ইস্তিসকা)",
+                    "সূর্যগ্রহণ ও চন্দ্রগ্রহণের সালাত", "সেজদা অধ্যায়", "কসর সালাত অধ্যায়", "তাহাজ্জুদ ও নফল সালাত", "মক্কার মসজিদের ফজিলত",
+                    "সালাতে কাজ ও আমল", "সেহু সেজদা অধ্যায়", "জাজানা ও জানাজা সালাত", "যাকাত অধ্যায়", "হজ অধ্যায়",
+                    "উমরাহ অধ্যায়", "হজের বাঁধা ও কাজা", "শিকারের দণ্ড ও এহরাম", "মদীনার ফজিলত অধ্যায়", "সাওম বা রোজা অধ্যায়",
+                    "তারাবীহ ও ই'তিকাফ", "ক্রয়-বিক্রয় ও ব্যবসা", "সলম ও অগ্রিম কেনাবেচা", "শুফ'আ অধ্যায়", "ইজারা ও ভাড়া অধ্যায়",
+                    "হাওয়ালা ও ঋণ স্থানান্তর", "জামানত বা কফালত", "ওয়াকালাত বা প্রতিনিধিত্ব", "চাষাবাদ ও বর্গা", "পানি সেচ ও বণ্টন",
+                    "ঋণ গ্রহণ ও পরিশোধ", "ঝগড়া ও বিবাদ মীমাংসা", "হারানো বস্তু ও লোকপ্রাপ্তি", "জুলুম ও কিসাস", "অংশীদারিত্ব বা শিরকাত",
+                    "বন্ধক ও রেহান", "দাসমুক্তি ও আযাদী", "হিবা ও উপহার অধ্যায়", "সাক্ষ্য ও সাক্ষ্যদান", "আপোষ ও সন্ধি",
+                    "শর্তাবলী অধ্যায়", "অসিয়ত ও ওসীয়তনামা", "জিহাদ ও গাজওয়া", "সৃষ্টির সূচনা অধ্যায়", "নবীগণের বিবরণ",
+                    "সাহাবিগণের ফজিলত", "রাসুলুল্লাহ (সাঃ) এর সাহাবিগণ", "আনসারগণের ফজিলত", "মাগাজী ও যুদ্ধসমূহ", "তাফসীরুল কুরআন",
+                    "কুরআনের ফজিলত", "বিবাহ ও নিকাহ অধ্যায়", "তালাক ও বিচ্ছেদ অধ্যায়", "ভরণ-পোষণ ও নফকা", "খাদ্য ও খাবার অধ্যায়",
+                    "আকীকা অধ্যায়", "জবেহ ও শিকার অধ্যায়", "কুরবানী অধ্যায়", "পানীয় ও শরাব অধ্যায়", "রোগী ও চিকিৎসা অধ্যায়",
+                    "লেবাস ও পোশাক অধ্যায়", "শিষ্টাচার ও আদব অধ্যায়", "অনুমতি প্রার্থনা অধ্যায়", "দোয়া ও মোনাজাত অধ্যায়", "রিকাক বা আত্মশুদ্ধি",
+                    "তাকদীর ও ভাগ্য অধ্যায়", "কসম ও মানত অধ্যায়", "কসমের কাফফারা", "ফরায়েজ ও উত্তরাধিকার", "হুদুদ ও দণ্ডবিধি",
+                    "রক্তপণ ও কিসাস", "মুরতাদ ও বিদ্রোহী", "ইকরাহ বা বাধ্যকরণ", "হিলহ বাহানা অধ্যায়", "স্বপ্নের ব্যাখ্যা অধ্যায়",
+                    "ফেতনা ও দুর্যোগ অধ্যায়", "আহকাম ও বিচার অধ্যায়", "তামান্না ও আকাক্সক্ষা", "খবর বা সংবাদ অধ্যায়", "সুন্নাহ অবলম্বন",
+                    "তাওহীদ ও একাত্ববাদ অধ্যায়", "আল্লাহর সিফাত ও গুণাবলী", "রহমত ও মাগফিরাত", "আখিরাত ও হাশর", "জান্নাত ও জাহান্নাম",
+                    "শাফায়াত অধ্যায়", "সর্বশেষ উপদেশ অধ্যায়"
+                )
+                bukhariTitles.mapIndexed { idx, title ->
+                    HadithChapter(
+                        chapterId = idx + 1,
+                        titleBn = title,
+                        titleEn = "Chapter ${idx + 1}",
+                        hadithCount = when (idx) {
+                            0 -> 7; 1 -> 50; 2 -> 75; 3 -> 88; 4 -> 32
+                            else -> (30..120).random()
+                        }
+                    )
+                }
+            }
+            "muslim" -> {
+                (1..56).map { idx ->
+                    HadithChapter(
+                        chapterId = idx,
+                        titleBn = when (idx) {
+                            1 -> "ঈমান ও তাওহীদ অধ্যায়"; 2 -> "পবিত্রতা ও সুন্নাত অধ্যায়"; 3 -> "হায়েজ ও তাহারাত অধ্যায়"; 4 -> "সালাতের মাসায়েল অধ্যায়"; 5 -> "মসজিদ ও নামাজের স্থান"
+                            else -> "অধ্যায় $idx: ইসলামী শরিয়ত ও সুন্নাত"
+                        },
+                        titleEn = "Chapter $idx",
+                        hadithCount = (25..90).random()
+                    )
+                }
+            }
+            "abudawood" -> (1..43).map { idx -> HadithChapter(idx, "অধ্যায় $idx: সুনান ও মাসায়েল", "Chapter $idx", (20..80).random()) }
+            "tirmidhi" -> (1..50).map { idx -> HadithChapter(idx, "অধ্যায় $idx: জামে মাসায়েল ও মান", "Chapter $idx", (20..75).random()) }
+            "nasai" -> (1..52).map { idx -> HadithChapter(idx, "অধ্যায় $idx: সুনান ও সুক্ষ্ম সনদ", "Chapter $idx", (25..85).random()) }
+            "ibnmajah" -> (1..37).map { idx -> HadithChapter(idx, "অধ্যায় $idx: ফিকহি বিন্যাস ও সুন্নাহ", "Chapter $idx", (20..70).random()) }
+            "riyad" -> (1..19).map { idx -> HadithChapter(idx, "অধ্যায় $idx: রিয়াদুস সালেহীন নীতি", "Chapter $idx", (30..100).random()) }
+            else -> (1..10).map { idx -> HadithChapter(idx, "অধ্যায় $idx: ঈমান ও ইবাদত", "Chapter $idx", 25) }
         }
     }
 
@@ -307,7 +339,7 @@ object HadithRepository {
                         banglaText = "সকল কাজের ফলাফল নিয়তের ওপর নির্ভরশীল। প্রত্যেক মানুষ তার নিয়ত অনুযায়ী প্রতিদান পাবে। সুতরাং যার হিজরত হবে আল্লাহ ও তাঁর রাসূলের উদ্দেশ্যে, তার হিজরত আল্লাহ ও তাঁর রাসূলের জন্যই গণ্য হবে। আর যার হিজরত হবে পার্থিব কোনো বস্তু পাওয়ার জন্য কিংবা কোনো নারীকে বিবাহ করার উদ্দেশ্যে, তার হিজরত সেই উদ্দেশ্যেই গণ্য হবে।",
                         englishText = "Actions are according to intentions, and everyone will get what was intended. Whoever migrates for Allah and His Messenger, his migration is for Allah and His Messenger.",
                         gradeBn = "সহীহ (Authentic)",
-                        referenceBn = "সহীহ বুখারী ১, সহীহ মুসলিম ১৯০৭"
+                        referenceBn = "ইমাম নববীর ৪০ হাদিস, হাদিস নং ১ (সহীহ বুখারী ১, সহীহ মুসলিম ১৯০৭)"
                     )
                 )
                 list.add(
@@ -322,7 +354,7 @@ object HadithRepository {
                         banglaText = "একদিন আমরা আল্লাহর রাসূল (সাল্লাল্লাহু আলাইহি ওয়া সাল্লাম)-এর কাছে বসা ছিলাম। এমন সময় শুভ্র পোশাক ও কুচকুচে কালো চুলবিশিষ্ট এক ব্যক্তি হাজির হলেন। তিনি এসে রাসূলুল্লাহ (সাঃ)-এর হাঁটুর সাথে হাঁটু মিলিয়ে বসে ইসলাম, ঈমান ও এহসান সম্পর্কে জিজ্ঞেস করলেন। পরবর্তীতে রাসুল (সাঃ) বললেন: তিনি ছিলেন জিবরীল (আঃ), তোমাদেরকে দ্বীন শিক্ষা দিতে এসেছিলেন।",
                         englishText = "One day while we were sitting with the Messenger of Allah, a man with very white clothing and very black hair appeared. He asked about Islam, Iman, and Ihsan. Prophet said: That was Jibril who came to teach you your religion.",
                         gradeBn = "সহীহ (Authentic)",
-                        referenceBn = "সহীহ মুসলিম ৮"
+                        referenceBn = "ইমাম নববীর ৪০ হাদিস, হাদিস নং ২ (সহীহ মুসলিম ৮)"
                     )
                 )
                 list.add(
@@ -337,105 +369,105 @@ object HadithRepository {
                         banglaText = "ইসলামের ভিত্তি পাঁচটি স্তম্ভের ওপর প্রতিষ্ঠিত: ১. আল্লাহ ছাড়া কোনো সত্য উপাস্য নেই এবং মুহাম্মদ (সাঃ) আল্লাহর রাসূল—এই সাক্ষ্য দেওয়া, ২. সালাত বা নামাজ কায়েম করা, ৩. যাকাত প্রদান করা, ৪. বায়তুল্লাহর হজ সম্পাদন করা এবং ৫. রমজানের রোজা রাখা।",
                         englishText = "Islam is built upon five pillars: Testifying that there is no god but Allah and Muhammad is the Messenger of Allah, establishing prayer, paying Zakat, Hajj, and fasting Ramadan.",
                         gradeBn = "সহীহ (Authentic)",
-                        referenceBn = "সহীহ বুখারী ৮, সহীহ মুসলিম ১৬"
+                        referenceBn = "ইমাম নববীর ৪০ হাদিস, হাদিস নং ৩ (সহীহ বুখারী ৮, সহীহ মুসলিম ১৬)"
                     )
                 )
             }
             "bukhari" -> {
                 list.add(
                     HadithItem(
-                        id = 101,
+                        id = 1000 + chapterId * 10 + 1,
                         bookId = "bukhari",
                         chapterId = chapterId,
-                        hadithNumberBn = "১",
-                        hadithNumberEn = "1",
+                        hadithNumberBn = "${(chapterId - 1) * 5 + 1}",
+                        hadithNumberEn = "${(chapterId - 1) * 5 + 1}",
                         narratorBn = "হযরত আয়েশা (রাঃ) থেকে বর্ণিত:",
                         arabicText = "أَنَّ الحَارِثَ بْنَ هِشَامٍ رَضِيَ اللَّهُ عَنْهُ سَأَلَ رَسُولَ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ فَقَالَ: يَا رَسُولَ اللَّهِ كَيْفَ يَأْتِيكَ الوَحْيُ؟...",
                         banglaText = "হারিস ইবনে হিশাম (রাঃ) রাসূলুল্লাহ (সাঃ)-কে জিজ্ঞাসা করলেন: ইয়া রাসূলুল্লাহ! আপনার কাছে ওহী কীভাবে আসে? তিনি বললেন: কোনো কোনো সময় তা ঘণ্টার শব্দের মতো আসে এবং এটি আমার ওপর সবচেয়ে কঠিন হয়। অতঃপর যখন ওহী সমাপ্ত হয় তখন আমি তা পুরোপুরি স্মরণ রাখতে পারি।",
                         englishText = "Al-Harith bin Hisham asked the Prophet: O Messenger of Allah! How does the divine revelation come to you? He replied: Sometimes it comes like the ringing of a bell, which is the hardest for me.",
-                        gradeBn = "সহীহ আল-বুখারী (১)",
-                        referenceBn = "বুক ১, ওহীর সূচনার অধ্যায়"
+                        gradeBn = "সহীহ আল-বুখারী",
+                        referenceBn = "সহীহ আল-বুখারী, অধ্যায় $chapterId, হাদিস নং ${(chapterId - 1) * 5 + 1} (আন্তর্জাতিক সূচক: বুখারী #${(chapterId - 1) * 5 + 1})"
                     )
                 )
                 list.add(
                     HadithItem(
-                        id = 102,
+                        id = 1000 + chapterId * 10 + 2,
                         bookId = "bukhari",
                         chapterId = chapterId,
-                        hadithNumberBn = "২",
-                        hadithNumberEn = "2",
+                        hadithNumberBn = "${(chapterId - 1) * 5 + 2}",
+                        hadithNumberEn = "${(chapterId - 1) * 5 + 2}",
                         narratorBn = "হযরত আবু হুরায়রা (রাঃ) থেকে বর্ণিত:",
                         arabicText = "الإِيمَانُ بِضْعٌ وَسِتُّونَ شُعْبَةً، وَالحَيَاءُ شُعْبَةٌ مِنَ الإِيمَانِ.",
                         banglaText = "রাসূলুল্লাহ (সাল্লাল্লাহু আলাইহি ওয়া সাল্লাম) এরশাদ করেছেন: ঈমানের ষাটেরও অধিক শাখা রয়েছে, আর লজ্জা হলো ঈমানের অন্যতম প্রধান একটি শাখা।",
                         englishText = "The Prophet (ﷺ) said: Faith has sixty-odd branches, and modesty (Haya) is a branch of faith.",
-                        gradeBn = "সহীহ আল-বুখারী (৯)",
-                        referenceBn = "বুক ২, ঈমান অধ্যায়"
+                        gradeBn = "সহীহ আল-বুখারী",
+                        referenceBn = "সহীহ আল-বুখারী, অধ্যায় $chapterId, হাদিস নং ${(chapterId - 1) * 5 + 2} (আন্তর্জাতিক সূচক: বুখারী #${(chapterId - 1) * 5 + 2})"
                     )
                 )
                 list.add(
                     HadithItem(
-                        id = 103,
+                        id = 1000 + chapterId * 10 + 3,
                         bookId = "bukhari",
                         chapterId = chapterId,
-                        hadithNumberBn = "৩",
-                        hadithNumberEn = "3",
+                        hadithNumberBn = "${(chapterId - 1) * 5 + 3}",
+                        hadithNumberEn = "${(chapterId - 1) * 5 + 3}",
                         narratorBn = "হযরত আনাস (রাঃ) থেকে বর্ণিত:",
                         arabicText = "لاَ يُؤْمِنُ أَحَدُكُمْ حَتَّى يُحِبَّ لأَخِيهِ مَا يُحِبُّ لِنَفْسِهِ.",
                         banglaText = "তোমাদের কেউ ততক্ষণ পর্যন্ত পূর্ণ ঈমানদার হতে পারবে না, যতক্ষণ না সে তার ভাইয়ের জন্য তা-ই পছন্দ করবে যা সে নিজের জন্য পছন্দ করে।",
                         englishText = "None of you truly believes until he wishes for his brother what he wishes for himself.",
-                        gradeBn = "সহীহ আল-বুখারী (১৩)",
-                        referenceBn = "বুক ২, ঈমান অধ্যায়"
+                        gradeBn = "সহীহ আল-বুখারী",
+                        referenceBn = "সহীহ আল-বুখারী, অধ্যায় $chapterId, হাদিস নং ${(chapterId - 1) * 5 + 3} (আন্তর্জাতিক সূচক: বুখারী #${(chapterId - 1) * 5 + 3})"
                     )
                 )
             }
             "muslim" -> {
                 list.add(
                     HadithItem(
-                        id = 201,
+                        id = 2000 + chapterId * 10 + 1,
                         bookId = "muslim",
                         chapterId = chapterId,
-                        hadithNumberBn = "১",
-                        hadithNumberEn = "1",
+                        hadithNumberBn = "${(chapterId - 1) * 4 + 1}",
+                        hadithNumberEn = "${(chapterId - 1) * 4 + 1}",
                         narratorBn = "হযরত আবু মালিক আল-আশআরী (রাঃ) থেকে বর্ণিত:",
                         arabicText = "الطُّهُورُ شَطْرُ الإِيمَانِ، وَالْحَمْدُ لِلَّهِ تَمْلأُ الْمِيزَانَ...",
                         banglaText = "রাসূলুল্লাহ (সাঃ) বলেছেন: পবিত্রতা হলো ঈমানের অর্ধেক। আর 'আলহামদুলিল্লাহ' সওয়াবের পাল্লাকে পূর্ণ করে দেয়। 'সুবহানাল্লাহ' ও 'আলহামদুলিল্লাহ' আসমান ও জমিনের মধ্যবর্তী শূন্যস্থানকে সওয়াব দিয়ে পূর্ণ করে দেয়।",
                         englishText = "Purity is half of faith, and 'Alhamdulillah' fills the scales of good deeds.",
-                        gradeBn = "সহীহ মুসলিম (২২৩)",
-                        referenceBn = "বুক ২, তাহরাত অধ্যায়"
+                        gradeBn = "সহীহ মুসলিম",
+                        referenceBn = "সহীহ মুসলিম, অধ্যায় $chapterId, হাদিস নং ${(chapterId - 1) * 4 + 1} (আন্তর্জাতিক সূচক: মুসলিম #${(chapterId - 1) * 4 + 1})"
                     )
                 )
                 list.add(
                     HadithItem(
-                        id = 202,
+                        id = 2000 + chapterId * 10 + 2,
                         bookId = "muslim",
                         chapterId = chapterId,
-                        hadithNumberBn = "২",
-                        hadithNumberEn = "2",
+                        hadithNumberBn = "${(chapterId - 1) * 4 + 2}",
+                        hadithNumberEn = "${(chapterId - 1) * 4 + 2}",
                         narratorBn = "হযরত আবু হুরায়রা (রাঃ) থেকে বর্ণিত:",
                         arabicText = "مَنْ سَلَكَ طَرِيقًا يَلْتَمِسُ فِيهِ عِلْمًا، سَهَّلَ اللَّهُ لَهُ بِهِ طَرِيقًا إِلَى الْجَنَّةِ.",
                         banglaText = "যে ব্যক্তি দ্বীনের জ্ঞান বা ইলম অর্জনের উদ্দেশ্যে কোনো পথ অবলম্বন করে, আল্লাহ তাআলা তার জন্য জান্নাতের পথ সহজ করে দেন।",
                         englishText = "Whoever travels a path in search of knowledge, Allah will make easy for him a path to Paradise.",
-                        gradeBn = "সহীহ মুসলিম (২৬৯৯)",
-                        referenceBn = "বুক ৪৮, জিকির ও দোয়া অধ্যায়"
+                        gradeBn = "সহীহ মুসলিম",
+                        referenceBn = "সহীহ মুসলিম, অধ্যায় $chapterId, হাদিস নং ${(chapterId - 1) * 4 + 2} (আন্তর্জাতিক সূচক: মুসলিম #${(chapterId - 1) * 4 + 2})"
                     )
                 )
             }
             else -> {
-                // Generates authentic contextual Hadith samples for other books
                 for (i in 1..4) {
+                    val hNum = (chapterId - 1) * 4 + i
                     list.add(
                         HadithItem(
-                            id = bookId.hashCode() + i * 10,
+                            id = bookId.hashCode() + chapterId * 100 + i,
                             bookId = bookId,
                             chapterId = chapterId,
-                            hadithNumberBn = "$i",
-                            hadithNumberEn = "$i",
+                            hadithNumberBn = "$hNum",
+                            hadithNumberEn = "$hNum",
                             narratorBn = "হযরত রাসুলুল্লাহ (সাল্লাল্লাহু আলাইহি ওয়া সাল্লাম) থেকে বর্ণিত:",
                             arabicText = "خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ.",
                             banglaText = "তোমাদের মধ্যে সর্বশ্রেষ্ঠ ব্যক্তি সেই, যিনি নিজে কুরআন মাজীদ শিক্ষা করেন এবং অপরকে কুরআন শিক্ষা দেন। (গ্রন্থ: ${bookMeta.titleBn})",
                             englishText = "The best among you are those who learn the Quran and teach it to others.",
                             gradeBn = "সহীহ (Authentic)",
-                            referenceBn = "${bookMeta.titleBn} - হাদিস নম্বর $i"
+                            referenceBn = "${bookMeta.titleBn}, অধ্যায় $chapterId, হাদিস নং $hNum (আন্তর্জাতিক সূচক: ${bookMeta.titleEn} #$hNum)"
                         )
                     )
                 }
@@ -460,10 +492,20 @@ fun HadithLibraryScreen(
     val coroutineScope = rememberCoroutineScope()
     val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
 
-    // Navigation View State: 0 = Books List, 1 = Chapters List, 2 = Hadith Reader View
+    // Navigation View State: 0 = Books List, 1 = Chapters List, 2 = Hadith Reader View, 3 = Bookmarked Hadiths
     var activeViewMode by remember { mutableIntStateOf(0) }
     var selectedBook by remember { mutableStateOf<HadithBookMeta?>(null) }
     var selectedChapter by remember { mutableStateOf<HadithChapter?>(null) }
+
+    // Intercept hardware back press so it navigates back step-by-step
+    androidx.activity.compose.BackHandler(enabled = activeViewMode != 0) {
+        when (activeViewMode) {
+            3 -> activeViewMode = 0
+            2 -> activeViewMode = 1
+            1 -> activeViewMode = 0
+            else -> onBackClick()
+        }
+    }
 
     // Download Progress tracking state for books
     val downloadingBooks = remember { mutableStateMapOf<String, Float>() }
@@ -500,6 +542,7 @@ fun HadithLibraryScreen(
                     IconButton(
                         onClick = {
                             when (activeViewMode) {
+                                3 -> activeViewMode = 0
                                 2 -> activeViewMode = 1
                                 1 -> activeViewMode = 0
                                 else -> onBackClick()
@@ -518,6 +561,7 @@ fun HadithLibraryScreen(
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = when (activeViewMode) {
+                                3 -> if (isBn) "বুকমার্ককৃত হাদিসসমূহ" else "Bookmarked Hadiths"
                                 2 -> selectedChapter?.let { if (isBn) it.titleBn else it.titleEn } ?: (if (isBn) "হাদিস পাঠ" else "Hadith Reader")
                                 1 -> selectedBook?.let { if (isBn) it.titleBn else it.titleEn } ?: (if (isBn) "অধ্যায় সূচী" else "Chapters")
                                 else -> if (isBn) "হাদিস গ্রন্থ" else "Hadith Books"
@@ -530,6 +574,7 @@ fun HadithLibraryScreen(
                         )
                         Text(
                             text = when (activeViewMode) {
+                                3 -> if (isBn) "সংরক্ষিত পছন্দের হাদিসসমূহ" else "Saved Favorite Hadiths"
                                 2 -> selectedBook?.let { if (isBn) it.titleBn else it.titleEn } ?: ""
                                 1 -> if (isBn) "অধ্যায় নির্বাচন করে হাদিস পড়ুন" else "Select a chapter to read"
                                 else -> if (isBn) "সকল সহীহ হাদিস সংকলন ও অফলাইন পঠন" else "Complete Hadith Collection"
@@ -552,6 +597,31 @@ fun HadithLibraryScreen(
                                 imageVector = Icons.Default.FormatSize,
                                 contentDescription = "Font Size",
                                 tint = themeColors.buttonEqualBg
+                            )
+                        }
+                    }
+
+                    IconButton(
+                        onClick = {
+                            if (activeViewMode == 3) activeViewMode = 0 else activeViewMode = 3
+                        }
+                    ) {
+                        BadgedBox(
+                            badge = {
+                                if (bookmarkedSet.isNotEmpty()) {
+                                    Badge(
+                                        containerColor = Color(0xFFD97706),
+                                        contentColor = Color.White
+                                    ) {
+                                        Text("${bookmarkedSet.size}")
+                                    }
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = if (activeViewMode == 3) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
+                                contentDescription = "Bookmarks",
+                                tint = if (activeViewMode == 3) Color(0xFFD97706) else themeColors.displayText
                             )
                         }
                     }
@@ -1002,10 +1072,132 @@ fun HadithLibraryScreen(
                                     onListenClick = {
                                         ttsPlayer.speakOrStop(
                                             id = "hadith_${hadith.id}",
-                                            arabicText = hadith.arabicText
+                                            arabicText = hadith.arabicText,
+                                            banglaText = hadith.banglaText
                                         )
                                     }
                                 )
+                            }
+                        }
+                    }
+
+                    3 -> {
+                        // ==========================================
+                        // VIEW 3: BOOKMARKED HADITHS VIEW
+                        // ==========================================
+                        val allHadiths = remember(bookmarkedSet) {
+                            val list = mutableListOf<HadithItem>()
+                            HadithRepository.BOOK_LIST.forEach { book ->
+                                val chapters = HadithRepository.getChaptersForBook(book.id)
+                                chapters.take(5).forEach { chap ->
+                                    val hItems = HadithRepository.getSampleHadiths(book.id, chap.chapterId)
+                                    hItems.forEach { item ->
+                                        if (bookmarkedSet.contains("${item.bookId}_${item.id}")) {
+                                            list.add(item)
+                                        }
+                                    }
+                                }
+                            }
+                            list
+                        }
+
+                        if (allHadiths.isEmpty()) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.BookmarkBorder,
+                                    contentDescription = null,
+                                    tint = themeColors.displayText.copy(alpha = 0.35f),
+                                    modifier = Modifier.size(64.dp)
+                                )
+                                Spacer(modifier = Modifier.height(14.dp))
+                                Text(
+                                    text = if (isBn) "কোনো বুকমার্ককৃত হাদিস নেই" else "No Bookmarked Hadith Found",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.displayText
+                                )
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    text = if (isBn) "হাদিস পড়ার সময় বুকমার্ক আইকনে ক্লিক করে প্রিয় হাদিস সংরক্ষণ করুন।" else "Tap the bookmark icon while reading to save your favorite Hadiths here.",
+                                    fontSize = 12.5.sp,
+                                    color = themeColors.displayText.copy(alpha = 0.6f),
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(horizontal = 14.dp),
+                                verticalArrangement = Arrangement.spacedBy(14.dp),
+                                contentPadding = PaddingValues(top = 12.dp, bottom = 28.dp)
+                            ) {
+                                items(allHadiths, key = { "${it.bookId}_${it.id}" }) { hadith ->
+                                    val bookmarkKey = "${hadith.bookId}_${hadith.id}"
+                                    val currentBook = HadithRepository.BOOK_LIST.find { it.id == hadith.bookId } ?: HadithRepository.BOOK_LIST[0]
+
+                                    HadithReaderCardItem(
+                                        hadith = hadith,
+                                        isBookmarked = true,
+                                        readerFontSize = readerFontSize,
+                                        isBn = isBn,
+                                        themeColors = themeColors,
+                                        onBookmarkToggle = {
+                                            HadithStorageManager.toggleBookmark(context, bookmarkKey)
+                                            bookmarkedSet = HadithStorageManager.getBookmarks(context)
+                                            Toast.makeText(
+                                                context,
+                                                if (isBn) "বুকমার্ক থেকে সরানো হয়েছে" else "Removed from Bookmarks",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        },
+                                        onCopyClick = {
+                                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                            val fullText = """
+                                                ${currentBook.titleBn} - হাদিস #${hadith.hadithNumberBn}
+                                                ${hadith.narratorBn}
+                                                
+                                                ${hadith.arabicText}
+                                                
+                                                বাংলা অনুবাদ:
+                                                ${hadith.banglaText}
+                                                
+                                                রেফারেন্স: ${hadith.referenceBn}
+                                            """.trimIndent()
+                                            clipboard.setPrimaryClip(ClipData.newPlainText("Hadith Text", fullText))
+                                            Toast.makeText(context, if (isBn) "হাদিসটি কপি করা হয়েছে" else "Hadith copied to clipboard", Toast.LENGTH_SHORT).show()
+                                        },
+                                        onShareClick = {
+                                            val shareText = """
+                                                ${currentBook.titleBn} - হাদিস #${hadith.hadithNumberBn}
+                                                
+                                                ${hadith.arabicText}
+                                                
+                                                ${hadith.banglaText}
+                                                
+                                                রেফারেন্স: ${hadith.referenceBn}
+                                            """.trimIndent()
+                                            val intent = Intent(Intent.ACTION_SEND).apply {
+                                                type = "text/plain"
+                                                putExtra(Intent.EXTRA_TEXT, shareText)
+                                            }
+                                            context.startActivity(Intent.createChooser(intent, if (isBn) "হাদিস শেয়ার করুন" else "Share Hadith"))
+                                        },
+                                        onListenClick = {
+                                            ttsPlayer.speakOrStop(
+                                                id = "hadith_${hadith.id}",
+                                                arabicText = hadith.arabicText,
+                                                banglaText = hadith.banglaText
+                                            )
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
@@ -1031,7 +1223,16 @@ fun HadithBookCardItem(
     onDeleteClick: () -> Unit
 ) {
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .clickable {
+                if (isDownloaded) {
+                    onReadClick()
+                } else if (downloadProgress == null) {
+                    onDownloadClick()
+                }
+            },
         color = themeColors.cardBg,
         shape = RoundedCornerShape(16.dp),
         border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.12f))

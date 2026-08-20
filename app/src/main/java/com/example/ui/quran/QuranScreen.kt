@@ -1,5 +1,6 @@
 package com.example.ui.quran
 
+import android.content.Context
 import android.text.format.Formatter
 import androidx.compose.animation.*
 import androidx.compose.foundation.BorderStroke
@@ -129,6 +130,156 @@ fun QuranScreen(
                                 text = "Holy Quran (Audio & Translation)",
                                 fontSize = 11.sp,
                                 color = cyanAccent
+                            )
+                        }
+
+                        var showBookmarksSheet by remember { mutableStateOf(false) }
+
+                        IconButton(onClick = { showBookmarksSheet = true }) {
+                            Icon(
+                                imageVector = Icons.Default.Bookmark,
+                                contentDescription = "Bookmarked Ayahs",
+                                tint = Color(0xFFD97706)
+                            )
+                        }
+
+                        if (showBookmarksSheet) {
+                            val bookmarkPrefs = remember { context.getSharedPreferences("quran_bookmarks_prefs", Context.MODE_PRIVATE) }
+                            var bookmarkedSet by remember {
+                                mutableStateOf(bookmarkPrefs.getStringSet("bookmarked_ayah_keys", emptySet()) ?: emptySet())
+                            }
+
+                            AlertDialog(
+                                onDismissRequest = { showBookmarksSheet = false },
+                                title = {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            imageVector = Icons.Default.Bookmark,
+                                            contentDescription = null,
+                                            tint = Color(0xFFD97706),
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = if (isBn) "বুকমার্ককৃত আয়াতসমূহ" else "Bookmarked Ayahs",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 16.5.sp,
+                                            color = themeColors.displayText
+                                        )
+                                    }
+                                },
+                                text = {
+                                    if (bookmarkedSet.isEmpty()) {
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 20.dp),
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.BookmarkBorder,
+                                                contentDescription = null,
+                                                tint = themeColors.displayText.copy(alpha = 0.4f),
+                                                modifier = Modifier.size(48.dp)
+                                            )
+                                            Spacer(modifier = Modifier.height(10.dp))
+                                            Text(
+                                                text = if (isBn) "কোনো বুকমার্ককৃত আয়াত নেই।" else "No bookmarked ayahs found.",
+                                                fontSize = 13.5.sp,
+                                                color = themeColors.displayText.copy(alpha = 0.7f),
+                                                textAlign = TextAlign.Center
+                                            )
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                            Text(
+                                                text = if (isBn) "সুরা পাঠকালে যেকোনো আয়াতের বুকমার্ক আইকনে চাপ দিলে এখানে সংরক্ষিত হবে।" else "Tap the bookmark icon on any Ayah while reading to save it here.",
+                                                fontSize = 11.5.sp,
+                                                color = themeColors.displayText.copy(alpha = 0.5f),
+                                                textAlign = TextAlign.Center
+                                            )
+                                        }
+                                    } else {
+                                        LazyColumn(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .heightIn(max = 350.dp),
+                                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                                        ) {
+                                            val keysList = bookmarkedSet.toList()
+                                            items(keysList) { key ->
+                                                val parts = key.split("_")
+                                                val surahNum = parts.getOrNull(0)?.toIntOrNull() ?: 1
+                                                val ayahNum = parts.getOrNull(1)?.toIntOrNull() ?: 1
+                                                val surahObj = surahs.find { it.number == surahNum }
+
+                                                Surface(
+                                                    shape = RoundedCornerShape(12.dp),
+                                                    color = themeColors.cardBg,
+                                                    border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.12f)),
+                                                    modifier = Modifier.fillMaxWidth()
+                                                ) {
+                                                    Row(
+                                                        modifier = Modifier.padding(10.dp),
+                                                        verticalAlignment = Alignment.CenterVertically,
+                                                        horizontalArrangement = Arrangement.SpaceBetween
+                                                    ) {
+                                                        Column(modifier = Modifier.weight(1f)) {
+                                                            Text(
+                                                                text = "${surahObj?.nameBangla ?: "সূরা $surahNum"} • আয়াত $ayahNum",
+                                                                fontWeight = FontWeight.Bold,
+                                                                fontSize = 13.5.sp,
+                                                                color = cyanPrimary
+                                                            )
+                                                            Text(
+                                                                text = "${surahObj?.nameEnglish ?: "Surah $surahNum"} (Verse $ayahNum)",
+                                                                fontSize = 11.sp,
+                                                                color = themeColors.displayText.copy(alpha = 0.6f)
+                                                            )
+                                                        }
+
+                                                        Row {
+                                                            if (surahObj != null) {
+                                                                IconButton(
+                                                                    onClick = {
+                                                                        showBookmarksSheet = false
+                                                                        onSurahClick(surahObj)
+                                                                    }
+                                                                ) {
+                                                                    Icon(
+                                                                        imageVector = Icons.Default.MenuBook,
+                                                                        contentDescription = "Read",
+                                                                        tint = cyanPrimary,
+                                                                        modifier = Modifier.size(20.dp)
+                                                                    )
+                                                                }
+                                                            }
+
+                                                            IconButton(
+                                                                onClick = {
+                                                                    val updated = bookmarkedSet - key
+                                                                    bookmarkedSet = updated
+                                                                    bookmarkPrefs.edit().putStringSet("bookmarked_ayah_keys", updated).apply()
+                                                                }
+                                                            ) {
+                                                                Icon(
+                                                                    imageVector = Icons.Default.Delete,
+                                                                    contentDescription = "Delete",
+                                                                    tint = Color(0xFFEF4444),
+                                                                    modifier = Modifier.size(20.dp)
+                                                                )
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                confirmButton = {
+                                    TextButton(onClick = { showBookmarksSheet = false }) {
+                                        Text(if (isBn) "বন্ধ করুন" else "Close", color = cyanPrimary)
+                                    }
+                                },
+                                containerColor = themeColors.cardBg
                             )
                         }
                     }
