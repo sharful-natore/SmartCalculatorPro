@@ -528,6 +528,7 @@ fun MainContent(
                 val isIslamicTool = activeTool in listOf(
                     ToolType.HOLY_QURAN,
                     ToolType.NAMAZ_EDUCATION,
+                    ToolType.HADITH_LIBRARY,
                     ToolType.ISLAMIC_DUAS,
                     ToolType.PRAYER_TIMES,
                     ToolType.SEHRI_IFTAR,
@@ -1503,34 +1504,59 @@ fun MainContent(
             AlertDialog(
                 onDismissRequest = { showTermsDialog = false },
                 title = {
-                    Text(
-                        text = LanguageManager.getString("menu_terms", viewModel.selectedLanguage),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = themeColors.displayText
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Gavel,
+                            contentDescription = null,
+                            tint = themeColors.buttonEqualBg,
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Text(
+                            text = LanguageManager.getString("menu_terms", viewModel.selectedLanguage),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            color = themeColors.displayText
+                        )
+                    }
                 },
                 text = {
                     val termsText = if (viewModel.selectedLanguage == AppLanguage.BENGALI) {
-                        "১. এই অ্যাপ্লিকেশনটি আপনার হিসাব-নিকাশ সহজ করার জন্য তৈরি করা হয়েছে।\n\n" +
-                        "২. যদিও আমরা প্রতিটি বিষয়ের হিসাব শতভাগ সঠিক রাখার জন্য আন্তরিকভাবে চেষ্টা করেছি, তবে কোনো গাণিতিক ত্রুটি বা ফলাফলের ভুলের জন্য ডেভেলপার দায়ী থাকবে না।\n\n" +
-                        "৩. এটি সম্পূর্ণরূপে একটি অফলাইন অ্যাপ্লিকেশন এবং কোনো প্রকার ব্যবহারকারীর ব্যক্তিগত বা সংবেদনশীল ডেটা সংগ্রহ করা হয় না।\n\n" +
-                        "৪. অ্যাপ্লিকেশনটির যেকোনো ফিচার পরিবর্তন, পরিবর্ধন বা বাদ দেওয়ার অধিকার কর্তৃপক্ষের রয়েছে।"
+                        "১. ব্যবহারের অনুমতি ও উদ্দেশ্যে:\n" +
+                        "ToolsMate অ্যাপটি আপনার দৈনন্দিন জীবনের বৈজ্ঞানিক হিসাব-নিকাশ, একক রূপান্তর, ইসলামিক ইবাদত সহায়ক ফিচার (কুরআন, হাদিস, নামাজের সময়সূচি) এবং নিত্যপ্রয়োজনীয় টুলস ব্যবহারের সুবিধার্থে তৈরি। অ্যাপটি সম্পূর্ণরূপে ব্যক্তিগত ও অ-বাণিজ্যিক ব্যবহারের জন্য উন্মুক্ত।\n\n" +
+                        "২. গাণিতিক হিসাব ও তথ্যের নির্ভুলতা:\n" +
+                        "প্রতিটি হিসাব, গাণিতিক সূত্র, একক পরিবর্তন এবং বিষয়বস্তু নির্ভুল রাখার জন্য সর্বাত্মক প্রচেষ্টা করা হয়েছে। তবে কোনো অনিচ্ছাকৃত গাণিতিক বা তথ্যগত ভুলের জন্য ডেভেলপার সরাসরি বা পরোক্ষভাবে আইনি বা আর্থিক দায়ী থাকবে না। গুরুত্বপূর্ণ আর্থিক বা বৈজ্ঞানিক হিসাব ব্যবহারের পূর্বে পুনরায় যাচাই করার পরামর্শ দেওয়া হচ্ছে।\n\n" +
+                        "৩. ইসলামিক তথ্য ও ওয়াক্তের সময়সূচি:\n" +
+                        "নামাজের সময়সূচি ও সেহরি-ইফতারের সময় অ্যাপে ব্যবহৃত ভৌগোলিক অ্যালগরিদম ও বাংলাদেশ ইসলামিক ফাউন্ডেশনের স্ট্যান্ডার্ড অনুযায়ী হিসাব করা হয়। স্থানীয় দূরত্বের কারণে সামান্য ২-১ মিনিটের পার্থক্য হতে পারে, তাই নিজ এলাকার মসজিদের আজান অনুসরণ করা উত্তম।\n\n" +
+                        "৪. অফলাইন সিস্টেম ও ব্যবহারকারীর ডেটা স্বত্ব:\n" +
+                        "এটি ১০০% অফলাইন ও প্রাইভেসি-বান্ধব অ্যাপ্লিকেশন। কোনো ব্যবহারকারীর ডেটা আমাদের কোনো সার্ভারে সংরক্ষণ বা প্রেরণ করা হয় না। অ্যাপটিতে সংরক্ষিত তথ্য (যেমন- হিস্ট্রি, মার্কেট লিস্ট, বুকমার্ক) সম্পূর্ণভাবে ব্যবহারকারীর নিজের ডিভাইসে জমা থাকে।\n\n" +
+                        "৫. শর্তাবলীর পরিবর্তন ও পরিমার্জন:\n" +
+                        "অ্যাপের সার্বিক মানোন্নয়ন, নতুন ফিচার সংযোজন বা টেকনিক্যাল আপডেটের প্রয়োজনে যেকোনো সময় এই শর্তাবলী পরিবর্তন বা পরিমার্জন করার পূর্ণ অধিকার কর্তৃপক্ষের সংরক্ষিত।"
                     } else {
-                        "1. This application is developed to simplify your daily calculations and utilities.\n\n" +
-                        "2. While we strive to ensure 100% accuracy in all calculator functions, the developers are not liable for any financial or calculations errors.\n\n" +
-                        "3. This is entirely an offline application, and no user-sensitive or personal data is collected or shared.\n\n" +
-                        "4. The developers reserve the right to modify, update, or discontinue features of this application at any time."
+                        "1. Acceptance & Purpose of Use:\n" +
+                        "ToolsMate is designed to simplify your daily calculation needs, unit conversions, Islamic practice tools (Holy Quran, Hadith, Prayer Timings), and lifestyle utilities. The app is strictly intended for personal, non-commercial use.\n\n" +
+                        "2. Calculation Accuracy Disclaimer:\n" +
+                        "While every effort is made to ensure absolute accuracy across all scientific formulas, unit models, and tools, developers are not liable for any direct or indirect financial or calculation errors. Users are encouraged to double-check critical financial/mathematical figures.\n\n" +
+                        "3. Prayer Times & Islamic Guidance:\n" +
+                        "Namaz and Sehri/Iftar schedules are generated using local coordinate algorithms and recognized Islamic calculation standards. A variance of 1-2 minutes may occur due to hyper-local factors; always prioritize your local mosque calls.\n\n" +
+                        "4. Offline Security & User Data Ownership:\n" +
+                        "ToolsMate is a 100% offline-first application. All created data (history logs, shopping lists, Quran bookmarks) resides strictly on your local device storage. No user data is sent to external cloud servers.\n\n" +
+                        "5. Updates & Modifications:\n" +
+                        "The development team reserves the right to update, modify, or enhance features and terms of service at any time to ensure compliance and optimal performance."
                     }
                     androidx.compose.foundation.lazy.LazyColumn(
-                        modifier = Modifier.fillMaxWidth().heightIn(max = 300.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 320.dp)
                     ) {
                         item {
                             Text(
                                 text = termsText,
-                                fontSize = 14.sp,
-                                lineHeight = 20.sp,
-                                color = themeColors.displayText.copy(alpha = 0.8f)
+                                fontSize = 13.sp,
+                                lineHeight = 19.sp,
+                                color = themeColors.displayText.copy(alpha = 0.85f)
                             )
                         }
                     }
@@ -1547,7 +1573,7 @@ fun MainContent(
                     }
                 },
                 containerColor = themeColors.cardBg,
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(18.dp)
             )
         }
 
@@ -1556,34 +1582,59 @@ fun MainContent(
             AlertDialog(
                 onDismissRequest = { showPrivacyDialog = false },
                 title = {
-                    Text(
-                        text = LanguageManager.getString("menu_privacy", viewModel.selectedLanguage),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = themeColors.displayText
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PrivacyTip,
+                            contentDescription = null,
+                            tint = themeColors.buttonEqualBg,
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Text(
+                            text = LanguageManager.getString("menu_privacy", viewModel.selectedLanguage),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            color = themeColors.displayText
+                        )
+                    }
                 },
                 text = {
                     val privacyText = if (viewModel.selectedLanguage == AppLanguage.BENGALI) {
-                        "১. আমাদের মূল লক্ষ্য হলো আপনার তথ্যের সর্বোচ্চ নিরাপত্তা বজায় রাখা।\n\n" +
-                        "২. এই অ্যাপটি সম্পূর্ণ অফলাইন-ভিত্তিক। এর অর্থ হলো আপনার টাইপ করা কোনো এক্সপ্রেশন, গণনা বা ইতিহাস আমাদের কাছে বা অন্য কোনো সার্ভারে প্রেরণ করা হয় না।\n\n" +
-                        "৩. হিস্ট্রি ডাটা আপনার ডিভাইসের লোকাল ডাটাবেজে (Room Database) সম্পূর্ণ সুরক্ষিতভাবে জমা থাকে। আপনি চাইলে যেকোনো মুহূর্তে হিস্ট্রি মুছে দিতে পারেন।\n\n" +
-                        "৪. আমরা কোনো ব্যবহারকারীর অবস্থান বা ব্যক্তিগত ডেটা ট্র্যাকিং করি না।"
+                        "১. তথ্যের গোপনীয়তা ও সুরক্ষা (Zero Data Collection):\n" +
+                        "আমাদের প্রধান লক্ষ্য হলো আপনার তথ্যের সর্বোচ্চ নিরাপত্তা বজায় রাখা। ToolsMate অ্যাপটি আপনার কোনো নাম, ফোন নম্বর, ইমেইল, বা টাইপ করা সংবেদনশীল ডেটা সংগ্রহ বা সার্ভারে প্রেরণ করে না।\n\n" +
+                        "২. লোকাল ডাটাবেজ সংরক্ষণ (Local Room Database):\n" +
+                        "আপনার গণনার ইতিহাস (History Logs), পছন্দের থিম সেটিং, মার্কেট শপিং লিস্ট, কুরআনের আয়াতের বুকমার্ক ও তাসবীহ কাউন্ট শুধুমাত্র আপনার ফোনের নিজস্ব লোকাল এনক্রিপ্টেড স্থানে (Room DB & Preferences) জমা থাকে। আপনি চাইলে সেটিংস থেকে ১-ক্লিকে যেকোনো সময় এসব ডেটা মুছে ফেলতে পারেন।\n\n" +
+                        "৩. লোকেশন পারমিশন ও ক্বিবলা কম্পাস (GPS Usage):\n" +
+                        "আপনার নিখুঁত নামাজের সময়সূচি, সেহরি-ইফতারের সময় এবং ক্বিবলার সঠিক দিক নির্ণয়ের জন্য ডিভাইসের লোকেশন পারমিশন ব্যবহৃত হয়। এই লোকেশন তথ্য শুধুমাত্র আপনার নিজস্ব ডিভাইসেই প্রক্রিয়াজাত হয়, কখনো কোনো থার্ড-পার্টি বা দূরবর্তী সার্ভারে আপলোড হয় না।\n\n" +
+                        "৪. অডিও ও মিডিয়া পারমিশন (Local Audio Cache):\n" +
+                        "আল-কুরআনের তিলাওয়াত ও আজানের অ্যালার্ম প্লে করার জন্য লোকাল স্টোরেজ ব্যবহার করা হয়। অ্যাপটি ব্যাকগ্রাউন্ডে কোনো গোপন তথ্য প্রসেস করে না।\n\n" +
+                        "৫. থার্ড-পার্টি ট্র্যাকিং বা অ্যানালিটিক্স মুক্ত:\n" +
+                        "এই অ্যাপে কোনো প্রকার থার্ড-পার্টি ট্র্যাকার, গোপন ডাটা মাইনার বা বিজ্ঞাপন নেটওয়ার্ক যুক্ত নেই। আপনার অভিজ্ঞতা শতভাগ নিরাপদ, বিজ্ঞাপনমুক্ত ও স্বচ্ছন্দ রাখা আমাদের অগ্রাধিকার।"
                     } else {
-                        "1. Our primary goal is to ensure the absolute privacy and security of your data.\n\n" +
-                        "2. This application operates entirely offline. This means none of your typed expressions, utility parameters, or history results are sent to any external server.\n\n" +
-                        "3. All history logs are securely saved in your local Room Database on your device. You can clear them at any time.\n\n" +
-                        "4. We do not track user location, nor do we collect any personally identifiable information."
+                        "1. Absolute Zero Data Collection:\n" +
+                        "Your privacy is our utmost priority. ToolsMate does not request, collect, transmit, or sell any personal information, phone numbers, emails, or calculation records to external servers.\n\n" +
+                        "2. On-Device Local Storage (Room DB):\n" +
+                        "All calculation history, market lists, theme preferences, Quran bookmarks, and Tasbih counters are saved exclusively on your device's local storage (Room DB & Encrypted SharedPrefs). You can wipe this data at any moment in settings.\n\n" +
+                        "3. Location Access for Namaz & Qibla:\n" +
+                        "Location permission is accessed strictly locally to calculate precise Namaz prayer times, Sehri/Iftar bounds, and Qibla compass bearing. Your location coordinates are processed on-device and never uploaded anywhere.\n\n" +
+                        "4. Audio & Media System Usage:\n" +
+                        "Storage permissions are utilized solely to cache and stream local Quran audio files and prayer notification sounds offline smoothly.\n\n" +
+                        "5. No Analytics or Third-Party Trackers:\n" +
+                        "ToolsMate contains no user tracking software, invasive analytics, or background telemetry. Enjoy a clean, private, and secure application experience."
                     }
                     androidx.compose.foundation.lazy.LazyColumn(
-                        modifier = Modifier.fillMaxWidth().heightIn(max = 300.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 320.dp)
                     ) {
                         item {
                             Text(
                                 text = privacyText,
-                                fontSize = 14.sp,
-                                lineHeight = 20.sp,
-                                color = themeColors.displayText.copy(alpha = 0.8f)
+                                fontSize = 13.sp,
+                                lineHeight = 19.sp,
+                                color = themeColors.displayText.copy(alpha = 0.85f)
                             )
                         }
                     }
@@ -1600,7 +1651,7 @@ fun MainContent(
                     }
                 },
                 containerColor = themeColors.cardBg,
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(18.dp)
             )
         }
 
@@ -1627,12 +1678,23 @@ fun MainContent(
             AlertDialog(
                 onDismissRequest = { showAboutDialog = false },
                 title = {
-                    Text(
-                        text = LanguageManager.getString("menu_about", viewModel.selectedLanguage),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = themeColors.displayText
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = null,
+                            tint = themeColors.buttonEqualBg,
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Text(
+                            text = LanguageManager.getString("menu_about", viewModel.selectedLanguage),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            color = themeColors.displayText
+                        )
+                    }
                 },
                 text = {
                     Column(
@@ -1651,35 +1713,69 @@ fun MainContent(
                                 modifier = Modifier.size(72.dp)
                             )
                         }
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(10.dp))
                         Text(
                             text = realAppName,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp,
+                            fontSize = 20.sp,
                             color = themeColors.displayText,
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center
                         )
                         Text(
                             text = if (isBn) "ভার্সন $realVersionName" else "Version $realVersionName",
                             fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
                             color = themeColors.displayText.copy(alpha = 0.6f)
                         )
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(10.dp))
                         
                         val descText = if (isBn) {
-                            "এটি একটি বহুমুখী এবং আধুনিক গণনা সমাধান। এতে রয়েছে একটি বৈজ্ঞানিক ক্যালকুলেটর, বিভিন্ন ইউনিট কনভার্টার, দৈনন্দিন জীবনের সবরকম জরুরি হিসাব সম্পন্ন করার বিশেষ বিশেষ টুলস এবং একটি স্মার্ট অফলাইন এআই সহকারী।"
+                            "ToolsMate (টুলসমেট) হলো একটি সর্বাধুনিক অল-ইন-ওয়ান ইউটিলিটি, ফাইন্যান্সিয়াল, সায়েন্টিফিক ও ইসলামিক লাইফস্টাইল অ্যাপ্লিকেশন। এতে রয়েছে এডভান্সড সায়েন্টিফিক ক্যালকুলেটর, মাল্টি-ইউনিট কনভার্টার, সম্পূর্ণ আল-কুরআন ও হাদিস গ্রন্থ, নির্ভুল নামাজের সময়সূচি, ক্বিবলা কম্পাস, বাজার লিস্ট, বয়স ও বিএমআই ক্যালকুলেটর এবং স্মার্ট অফলাইন এআই সহকারী।"
                         } else {
-                            "A versatile and modern multi-tool solution. Features a comprehensive scientific calculator, robust unit converters, utility tools, and a smart offline AI assistant."
+                            "ToolsMate is an all-in-one modern utility, scientific, financial, and Islamic lifestyle suite. Features a comprehensive scientific calculator, multi-unit converters, complete Holy Quran & Hadith books, precise prayer timings, Qibla compass, market list, and offline AI tools."
                         }
                         Text(
                             text = descText,
-                            fontSize = 12.sp,
-                            lineHeight = 17.sp,
-                            color = themeColors.displayText.copy(alpha = 0.8f),
+                            fontSize = 12.5.sp,
+                            lineHeight = 18.sp,
+                            color = themeColors.displayText.copy(alpha = 0.85f),
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center
                         )
+
+                        Spacer(modifier = Modifier.height(12.dp))
                         
-                        Spacer(modifier = Modifier.height(16.dp))
+                        // Highlights Row
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            Surface(
+                                color = themeColors.buttonEqualBg.copy(alpha = 0.1f),
+                                shape = RoundedCornerShape(20.dp)
+                            ) {
+                                Text(
+                                    text = if (isBn) "⚡ ১০০% অফলাইন" else "⚡ 100% Offline",
+                                    fontSize = 10.5.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = themeColors.buttonEqualBg,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                )
+                            }
+                            Surface(
+                                color = themeColors.buttonEqualBg.copy(alpha = 0.1f),
+                                shape = RoundedCornerShape(20.dp)
+                            ) {
+                                Text(
+                                    text = if (isBn) "🔒 জিরো ডাটা ট্র্যাকিং" else "🔒 Zero Tracking",
+                                    fontSize = 10.5.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = themeColors.buttonEqualBg,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
+                        
+                        Spacer(modifier = Modifier.height(14.dp))
                         HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.12f))
                         Spacer(modifier = Modifier.height(12.dp))
                         

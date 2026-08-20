@@ -35,7 +35,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
@@ -316,6 +319,20 @@ fun MarketListScreen(
     // PDF Export helper with SAF launcher
     var pendingMemoToExport by remember { mutableStateOf<CompletedBazaarMemo?>(null) }
 
+    var isHeaderVisible by remember { mutableStateOf(true) }
+    val nestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: androidx.compose.ui.input.nestedscroll.NestedScrollSource): Offset {
+                if (available.y < -12f && isHeaderVisible) {
+                    isHeaderVisible = false
+                } else if (available.y > 12f && !isHeaderVisible) {
+                    isHeaderVisible = true
+                }
+                return Offset.Zero
+            }
+        }
+    }
+
     val createDocumentLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/pdf")
     ) { uri: Uri? ->
@@ -326,57 +343,67 @@ fun MarketListScreen(
     }
 
     Scaffold(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .nestedScroll(nestedScrollConnection),
         containerColor = themeColors.background,
         topBar = {
             Surface(
                 color = themeColors.cardBg,
-                shadowElevation = 3.dp
+                shadowElevation = if (isHeaderVisible) 3.dp else 1.5.dp
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .padding(horizontal = 16.dp, vertical = if (isHeaderVisible) 10.dp else 6.dp)
+                        .animateContentSize()
                 ) {
-                    // Header Bar
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                    AnimatedVisibility(
+                        visible = isHeaderVisible,
+                        enter = fadeIn() + expandVertically(),
+                        exit = fadeOut() + shrinkVertically()
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(42.dp)
-                                    .clip(CircleShape)
-                                    .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
-                                contentAlignment = Alignment.Center
+                        Column {
+                            // Header Bar
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.ShoppingBasket,
-                                    contentDescription = null,
-                                    tint = themeColors.buttonEqualBg,
-                                    modifier = Modifier.size(24.dp)
-                                )
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(38.dp)
+                                            .clip(CircleShape)
+                                            .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.ShoppingBasket,
+                                            contentDescription = null,
+                                            tint = themeColors.buttonEqualBg,
+                                            modifier = Modifier.size(22.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Column {
+                                        Text(
+                                            text = if (isBn) "বাজারের ফর্দ ও মেমো" else "Market List & Shopping Memo",
+                                            fontSize = 17.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = themeColors.displayText
+                                        )
+                                        Text(
+                                            text = if (isBn) "ফর্দ তৈরি, লাইভ হিসাব ও মেমো হিস্টোরি" else "Plan list, live shopping & memo history",
+                                            fontSize = 11.sp,
+                                            color = themeColors.displayText.copy(alpha = 0.6f)
+                                        )
+                                    }
+                                }
                             }
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column {
-                                Text(
-                                    text = if (isBn) "বাজারের ফর্দ ও মেমো" else "Market List & Shopping Memo",
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = themeColors.displayText
-                                )
-                                Text(
-                                    text = if (isBn) "ফর্দ তৈরি, লাইভ হিসাব ও মেমো হিস্টোরি" else "Plan list, live shopping & memo history",
-                                    fontSize = 11.sp,
-                                    color = themeColors.displayText.copy(alpha = 0.6f)
-                                )
-                            }
+                            Spacer(modifier = Modifier.height(10.dp))
                         }
                     }
-
-                    Spacer(modifier = Modifier.height(14.dp))
 
                     // Top 2 Chips: ফর্দ (Shopping Lists) & হিস্টোরি (History)
                     Row(

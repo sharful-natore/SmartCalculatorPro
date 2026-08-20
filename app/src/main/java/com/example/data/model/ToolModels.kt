@@ -363,6 +363,11 @@ enum class ToolType(
         "Namaz & Wudu Guide", "পূর্ণাঙ্গ নামাজ ও অজু শিক্ষা",
         "অজু, তাহারাত, ৫ ওয়াক্ত নামাজ, ওয়াক্তভিত্তিক রাকাতের নিয়ম, জানাজা, ঈদ ও নফল নামাজের পূর্ণাঙ্গ শিক্ষা",
         ToolCategory.ISLAMIC, Icons.Default.Mosque
+    ),
+    HADITH_LIBRARY(
+        "Hadith Books", "হাদিস গ্রন্থ",
+        "বুখারী, মুসলিম, রিয়াদুস সালেহীন সহ অন্যান্য মূল হাদিস গ্রন্থ ডাউনলোড ও অফলাইনে পড়ুন",
+        ToolCategory.ISLAMIC, Icons.Default.LibraryBooks
     );
 
     fun getTitle(language: AppLanguage): String {
@@ -426,6 +431,7 @@ enum class ToolType(
                 ISLAMIC_DUAS -> "Collection of daily authentic Quranic & Masnoon duas with meanings"
                 HOLY_QURAN -> "Holy Quran text, audio recitation, Bangla translation, and AI assistant"
                 NAMAZ_EDUCATION -> "Complete Namaz and Wudu learning guide with Rakat table, step-by-step visual postures, and duas"
+                HADITH_LIBRARY -> "Read Sahih Bukhari, Sahih Muslim, Riyad as-Salihin and major Hadith collections with zero app size impact"
             }
         }
     }

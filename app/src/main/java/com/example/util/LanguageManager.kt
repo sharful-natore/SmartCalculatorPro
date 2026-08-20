@@ -1525,11 +1525,11 @@ object LanguageManager {
                 else -> "Settings"
             }
             "menu_terms" -> when (language) {
-                AppLanguage.BENGALI -> "টার্মস কন্ডিশন"
+                AppLanguage.BENGALI -> "ব্যবহারের শর্তাবলী"
                 else -> "Terms & Conditions"
             }
             "menu_privacy" -> when (language) {
-                AppLanguage.BENGALI -> "প্রাইভেসি পলিসি"
+                AppLanguage.BENGALI -> "গোপনীয়তা নীতি"
                 else -> "Privacy Policy"
             }
             "menu_about" -> when (language) {

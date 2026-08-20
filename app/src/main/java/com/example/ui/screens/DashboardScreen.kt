@@ -2016,7 +2016,8 @@ fun ToolDetailView(
         .offset { IntOffset(0, bounceAnimatable.value.roundToInt()) }
     
     val isQuranOrNamaz = toolType == com.example.data.model.ToolType.HOLY_QURAN ||
-                         toolType == com.example.data.model.ToolType.NAMAZ_EDUCATION
+                         toolType == com.example.data.model.ToolType.NAMAZ_EDUCATION ||
+                         toolType == com.example.data.model.ToolType.HADITH_LIBRARY
 
     val finalModifier = if (toolType != com.example.data.model.ToolType.WEATHER &&
                           toolType != com.example.data.model.ToolType.MARKET_LIST &&
@@ -2183,6 +2184,7 @@ fun ToolDetailView(
                 isBn = viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI
             )
             ToolType.NAMAZ_EDUCATION -> com.example.ui.namaz.NamazEducationScreen(themeColors = themeColors, onBackClick = { viewModel.selectedToolType = null })
+            ToolType.HADITH_LIBRARY -> com.example.ui.islamic.HadithLibraryScreen(viewModel = viewModel, themeColors = themeColors, onBackClick = { viewModel.selectedToolType = null })
         }
     }
 }
@@ -2685,6 +2687,15 @@ private fun getToolInfoItems(toolType: ToolType, isBn: Boolean): List<Pair<Strin
         } else {
             listOf(
                 "1. Complete Namaz & Wudu Guide" to "Step-by-step guide for Wudu, 5 daily prayers, Rakat breakdown, Janazah, Eid, and optional prayers with Arabic audio recitations."
+            )
+        }
+        ToolType.HADITH_LIBRARY -> if (isBn) {
+            listOf(
+                "১. হাদিস গ্রন্থ" to "সহীহ বুখারী, সহীহ মুসলিম, রিয়াদুস সালেহীন সহ হাদিস গ্রন্থসমূহ ১-ক্লিকে ডাউনলোড করে অফলাইনে পড়ার সুবিধা।"
+            )
+        } else {
+            listOf(
+                "1. Hadith Books" to "Download and read Sahih Bukhari, Sahih Muslim, Riyad as-Salihin offline with zero app size impact."
             )
         }
         ToolType.MARKET_LIST -> if (isBn) {

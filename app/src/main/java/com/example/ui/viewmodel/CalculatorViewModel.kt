@@ -1572,13 +1572,23 @@ How can I help you today?"""
         private set
 
     fun loadOrderedFavorites(): List<String> {
-        val raw = sharedPrefs.getString("ordered_favorite_tools_list3", "") ?: ""
+        val raw = sharedPrefs.getString("ordered_favorite_tools_list4", "") ?: ""
         if (raw.isBlank()) {
             val set = sharedPrefs.getStringSet("favorite_tools", emptySet()) ?: emptySet()
             if (set.isEmpty()) {
-                return listOf("MULTI_CALENDAR", "HOLY_QURAN", "PRAYER_TIMES", "SEHRI_IFTAR", "AGE", "BMI", "CONV_CURRENCY")
+                return listOf("MULTI_CALENDAR", "HOLY_QURAN", "HADITH_LIBRARY", "PRAYER_TIMES", "SEHRI_IFTAR", "AGE", "BMI", "CONV_CURRENCY")
             }
-            return set.toList()
+            // Ensure HADITH_LIBRARY is present if HOLY_QURAN is in the set
+            val list = set.toList().toMutableList()
+            if (!list.contains("HADITH_LIBRARY")) {
+                val quranIdx = list.indexOf("HOLY_QURAN")
+                if (quranIdx != -1) {
+                    list.add(quranIdx + 1, "HADITH_LIBRARY")
+                } else {
+                    list.add(0, "HADITH_LIBRARY")
+                }
+            }
+            return list
         }
         return raw.split(",").filter { it.isNotBlank() }
     }
@@ -1951,7 +1961,7 @@ How can I help you today?"""
     private fun loadFavorites(key: String): Set<String> {
         val saved = sharedPrefs.getStringSet(key, null)
         if (saved == null && key == "favorite_tools") {
-            return setOf("MULTI_CALENDAR", "HOLY_QURAN", "PRAYER_TIMES", "SEHRI_IFTAR", "AGE", "BMI")
+            return setOf("MULTI_CALENDAR", "HOLY_QURAN", "HADITH_LIBRARY", "PRAYER_TIMES", "SEHRI_IFTAR", "AGE", "BMI")
         }
         return saved ?: emptySet()
     }
@@ -2042,7 +2052,7 @@ How can I help you today?"""
             } catch (e: Exception) { e.printStackTrace() }
         }
         return mapOf(
-            "ISLAMIC" to listOf("HOLY_QURAN", "QIBLA_COMPASS", "PRAYER_TIMES", "SEHRI_IFTAR", "DIGITAL_TASBIH", "ISLAMIC_DUAS", "NAMAZ_EDUCATION")
+            "ISLAMIC" to listOf("HOLY_QURAN", "HADITH_LIBRARY", "QIBLA_COMPASS", "PRAYER_TIMES", "SEHRI_IFTAR", "DIGITAL_TASBIH", "ISLAMIC_DUAS", "NAMAZ_EDUCATION")
         )
     }
 
