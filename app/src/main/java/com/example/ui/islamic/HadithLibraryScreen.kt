@@ -32,6 +32,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.example.ui.theme.CalculatorThemeColors
 import com.example.ui.viewmodel.CalculatorViewModel
 import com.example.util.AppLanguage
@@ -324,155 +325,179 @@ object HadithRepository {
     fun getSampleHadiths(bookId: String, chapterId: Int): List<HadithItem> {
         val list = mutableListOf<HadithItem>()
         val bookMeta = BOOK_LIST.find { it.id == bookId } ?: BOOK_LIST[0]
+        val chapters = getChaptersForBook(bookId)
+        val currentChapter = chapters.find { it.chapterId == chapterId } ?: HadithChapter(chapterId, "অধ্যায় $chapterId", "Chapter $chapterId", 7)
+        val targetCount = currentChapter.hadithCount
 
-        when (bookId) {
-            "nawawi40" -> {
-                list.add(
-                    HadithItem(
-                        id = 1,
-                        bookId = "nawawi40",
-                        chapterId = 1,
-                        hadithNumberBn = "১",
-                        hadithNumberEn = "1",
-                        narratorBn = "আমীরুল মু'মিনীন ওমর ইবনুল খাত্তাব (রাঃ) থেকে বর্ণিত:",
-                        arabicText = "إِنَّمَا الأَعْمَالُ بِالنِّيَّاتِ، وَإِنَّمَا لِكُلِّ امْرِئٍ مَا نَوَى، فَمَنْ كَانَتْ هِجْرَتُهُ إِلَى اللَّهِ وَرَسُولِهِ فَهِجْرَتُهُ إِلَى اللَّهِ وَرَسُولِهِ...",
-                        banglaText = "সকল কাজের ফলাফল নিয়তের ওপর নির্ভরশীল। প্রত্যেক মানুষ তার নিয়ত অনুযায়ী প্রতিদান পাবে। সুতরাং যার হিজরত হবে আল্লাহ ও তাঁর রাসূলের উদ্দেশ্যে, তার হিজরত আল্লাহ ও তাঁর রাসূলের জন্যই গণ্য হবে। আর যার হিজরত হবে পার্থিব কোনো বস্তু পাওয়ার জন্য কিংবা কোনো নারীকে বিবাহ করার উদ্দেশ্যে, তার হিজরত সেই উদ্দেশ্যেই গণ্য হবে।",
-                        englishText = "Actions are according to intentions, and everyone will get what was intended. Whoever migrates for Allah and His Messenger, his migration is for Allah and His Messenger.",
-                        gradeBn = "সহীহ (Authentic)",
-                        referenceBn = "ইমাম নববীর ৪০ হাদিস, হাদিস নং ১ (সহীহ বুখারী ১, সহীহ মুসলিম ১৯০৭)"
-                    )
+        if (bookId == "nawawi40") {
+            val nawawiItems = listOf(
+                HadithItem(
+                    id = 1, bookId = "nawawi40", chapterId = 1, hadithNumberBn = "১", hadithNumberEn = "1",
+                    narratorBn = "আমীরুল মু'মিনীন ওমর ইবনুল খাত্তাব (রাঃ) থেকে বর্ণিত:",
+                    arabicText = "إِنَّمَا الأَعْمَالُ بِالنِّيَّاتِ، وَإِنَّمَا لِكُلِّ امْرِئٍ مَا نَوَى، فَمَنْ كَانَتْ هِجْرَتُهُ إِلَى اللَّهِ وَرَسُولِهِ فَهِجْرَتُهُ إِلَى اللَّهِ وَرَسُولِهِ...",
+                    banglaText = "সকল কাজের ফলাফল নিয়তের ওপর নির্ভরশীল। প্রত্যেক মানুষ তার নিয়ত অনুযায়ী প্রতিদান পাবে। সুতরাং যার হিজরত হবে আল্লাহ ও তাঁর রাসূলের উদ্দেশ্যে, তার হিজরত আল্লাহ ও তাঁর রাসূলের জন্যই গণ্য হবে। আর যার হিজরত হবে পার্থিব কোনো বস্তু পাওয়ার জন্য কিংবা কোনো নারীকে বিবাহ করার উদ্দেশ্যে, তার হিজরত সেই উদ্দেশ্যেই গণ্য হবে।",
+                    englishText = "Actions are according to intentions, and everyone will get what was intended. Whoever migrates for Allah and His Messenger, his migration is for Allah and His Messenger.",
+                    gradeBn = "সহীহ (Authentic)", referenceBn = "ইমাম নববীর ৪০ হাদিস, হাদিস নং ১ (সহীহ বুখারী ১, সহীহ মুসলিম ১৯০৭)"
+                ),
+                HadithItem(
+                    id = 2, bookId = "nawawi40", chapterId = 1, hadithNumberBn = "২", hadithNumberEn = "2",
+                    narratorBn = "হযরত উমর ইবনুল খাত্তাব (রাঃ) থেকে বর্ণিত (হাদিসে জিবরীল):",
+                    arabicText = "بَيْنَمَا نَحْنُ عِنْدَ رَسُولِ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ ذَاتَ يَوْمٍ إِذْ طَلَعَ عَلَيْنَا رَجُلٌ شَدِيدُ بَيَاضِ الثِّيَابِ شَدِيدُ سَوَادِ الشَّعَرِ...",
+                    banglaText = "একদিন আমরা আল্লাহর রাসূল (সাল্লাল্লাহু আলাইহি ওয়া সাল্লাম)-এর কাছে বসা ছিলাম। এমন সময় শুভ্র পোশাক ও কুচকুচে কালো চুলবিশিষ্ট এক ব্যক্তি হাজির হলেন। তিনি এসে রাসূলুল্লাহ (সাঃ)-এর হাঁটুর সাথে হাঁটু মিলিয়ে বসে ইসলাম, ঈমান ও এহসান সম্পর্কে জিজ্ঞেস করলেন। পরবর্তীতে রাসুল (সাঃ) বললেন: তিনি ছিলেন জিবরীল (আঃ), তোমাদেরকে দ্বীন শিক্ষা দিতে এসেছিলেন।",
+                    englishText = "One day while we were sitting with the Messenger of Allah, a man with very white clothing and very black hair appeared. He asked about Islam, Iman, and Ihsan. Prophet said: That was Jibril who came to teach you your religion.",
+                    gradeBn = "সহীহ (Authentic)", referenceBn = "ইমাম নববীর ৪০ হাদিস, হাদিস নং ২ (সহীহ মুসলিম ৮)"
+                ),
+                HadithItem(
+                    id = 3, bookId = "nawawi40", chapterId = 1, hadithNumberBn = "৩", hadithNumberEn = "3",
+                    narratorBn = "আবদুল্লাহ ইবনে উমর (রাঃ) থেকে বর্ণিত:",
+                    arabicText = "بُنِيَ الإِسْلاَمُ عَلَى خَمْسٍ: شَهَادَةِ أَنْ لاَ إِلَهَ إِلاَّ اللَّهُ وَأَنَّ مُحَمَّدًا رَسُولُ اللَّهِ، وَإِقَامِ الصَّلاَةِ، وَإِيتَاءِ الزَّكَاةِ، وَالحَجِّ، وَصَوْمِ رَمَضَانَ.",
+                    banglaText = "ইসলামের ভিত্তি পাঁচটি স্তম্ভের ওপর প্রতিষ্ঠিত: ১. আল্লাহ ছাড়া কোনো সত্য উপাস্য নেই এবং মুহাম্মদ (সাঃ) আল্লাহর রাসূল—এই সাক্ষ্য দেওয়া, ২. সালাত বা নামাজ কায়েম করা, ৩. যাকাত প্রদান করা, ৪. বায়তুল্লাহর হজ সম্পাদন করা এবং ৫. রমজানের রোজা রাখা।",
+                    englishText = "Islam is built upon five pillars: Testifying that there is no god but Allah and Muhammad is the Messenger of Allah, establishing prayer, paying Zakat, Hajj, and fasting Ramadan.",
+                    gradeBn = "সহীহ (Authentic)", referenceBn = "ইমাম নববীর ৪০ হাদিস, হাদিস নং ৩ (সহীহ বুখারী ৮, সহীহ মুসলিম ১৬)"
+                ),
+                HadithItem(
+                    id = 4, bookId = "nawawi40", chapterId = 1, hadithNumberBn = "৪", hadithNumberEn = "4",
+                    narratorBn = "আবদুল্লাহ ইবনে মাসউদ (রাঃ) থেকে বর্ণিত:",
+                    arabicText = "إِنَّ أَحَدَكُمْ يُجْمَعُ خَلْقُهُ فِي بَطْنِ أُمِّهِ أَرْبَعِينَ يَوْماً، ثُمَّ يَكُونُ عَلَقَةً مِثْلَ ذَلِك...َ",
+                    banglaText = "রাসূলুল্লাহ (সাঃ) বলেছেন: তোমাদের প্রত্যেকের সৃষ্টির উপাদান তার মায়ের পেটে ৪০ দিন বীর্যরূপে জমা থাকে, এরপর তা রক্তপিণ্ডে পরিণত হয় এবং একইভাবে মাংসপিণ্ডে রূপ নেয়। অতঃপর ফেরেশতা পাঠিয়ে তার মধ্যে রুহ ফুঁকে দেওয়া হয়।",
+                    englishText = "The creation of each one of you is brought together in his mother's womb for forty days...",
+                    gradeBn = "সহীহ (Authentic)", referenceBn = "ইমাম নববীর ৪০ হাদিস, হাদিস নং ৪ (সহীহ বুখারী ৩২০৮, সহীহ মুসলিম ২৬৪৩)"
+                ),
+                HadithItem(
+                    id = 5, bookId = "nawawi40", chapterId = 1, hadithNumberBn = "৫", hadithNumberEn = "5",
+                    narratorBn = "উম্মুল মু'মিনীন আয়েশা (রাঃ) থেকে বর্ণিত:",
+                    arabicText = "مَنْ أَحْدَثَ فِي أَمْرِنَا هَذَا مَا لَيْسَ مِنْهُ فَهُوَ رَدٌّ.",
+                    banglaText = "যে ব্যক্তি আমাদের এই দ্বীনের মধ্যে নতুন কিছু সৃষ্টি করবে যা এর অন্তর্ভুক্ত নয়, তা প্রত্যাখ্যাত হবে (আমল গ্রহণযোগ্য হবে না)।",
+                    englishText = "He who innovates something in this matter of ours that is not of it will have it rejected.",
+                    gradeBn = "সহীহ (Authentic)", referenceBn = "ইমাম নববীর ৪০ হাদিস, হাদিস নং ৫ (সহীহ বুখারী ২৬৯৭, সহীহ মুসলিম ১৭১৮)"
                 )
-                list.add(
-                    HadithItem(
-                        id = 2,
-                        bookId = "nawawi40",
-                        chapterId = 1,
-                        hadithNumberBn = "২",
-                        hadithNumberEn = "2",
-                        narratorBn = "হযরত উমর ইবনুল খাত্তাব (রাঃ) থেকে বর্ণিত (হাদিসে জিবরীল):",
-                        arabicText = "بَيْنَمَا نَحْنُ عِنْدَ رَسُولِ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ ذَاتَ يَوْمٍ إِذْ طَلَعَ عَلَيْنَا رَجُلٌ شَدِيدُ بَيَاضِ الثِّيَابِ شَدِيدُ سَوَادِ الشَّعَرِ...",
-                        banglaText = "একদিন আমরা আল্লাহর রাসূল (সাল্লাল্লাহু আলাইহি ওয়া সাল্লাম)-এর কাছে বসা ছিলাম। এমন সময় শুভ্র পোশাক ও কুচকুচে কালো চুলবিশিষ্ট এক ব্যক্তি হাজির হলেন। তিনি এসে রাসূলুল্লাহ (সাঃ)-এর হাঁটুর সাথে হাঁটু মিলিয়ে বসে ইসলাম, ঈমান ও এহসান সম্পর্কে জিজ্ঞেস করলেন। পরবর্তীতে রাসুল (সাঃ) বললেন: তিনি ছিলেন জিবরীল (আঃ), তোমাদেরকে দ্বীন শিক্ষা দিতে এসেছিলেন।",
-                        englishText = "One day while we were sitting with the Messenger of Allah, a man with very white clothing and very black hair appeared. He asked about Islam, Iman, and Ihsan. Prophet said: That was Jibril who came to teach you your religion.",
-                        gradeBn = "সহীহ (Authentic)",
-                        referenceBn = "ইমাম নববীর ৪০ হাদিস, হাদিস নং ২ (সহীহ মুসলিম ৮)"
-                    )
-                )
-                list.add(
-                    HadithItem(
-                        id = 3,
-                        bookId = "nawawi40",
-                        chapterId = 1,
-                        hadithNumberBn = "৩",
-                        hadithNumberEn = "3",
-                        narratorBn = "আবদুল্লাহ ইবনে উমর (রাঃ) থেকে বর্ণিত:",
-                        arabicText = "بُنِيَ الإِسْلاَمُ عَلَى خَمْسٍ: شَهَادَةِ أَنْ لاَ إِلَهَ إِلاَّ اللَّهُ وَأَنَّ مُحَمَّدًا رَسُولُ اللَّهِ، وَإِقَامِ الصَّلاَةِ، وَإِيتَاءِ الزَّكَاةِ، وَالحَجِّ، وَصَوْمِ رَمَضَانَ.",
-                        banglaText = "ইসলামের ভিত্তি পাঁচটি স্তম্ভের ওপর প্রতিষ্ঠিত: ১. আল্লাহ ছাড়া কোনো সত্য উপাস্য নেই এবং মুহাম্মদ (সাঃ) আল্লাহর রাসূল—এই সাক্ষ্য দেওয়া, ২. সালাত বা নামাজ কায়েম করা, ৩. যাকাত প্রদান করা, ৪. বায়তুল্লাহর হজ সম্পাদন করা এবং ৫. রমজানের রোজা রাখা।",
-                        englishText = "Islam is built upon five pillars: Testifying that there is no god but Allah and Muhammad is the Messenger of Allah, establishing prayer, paying Zakat, Hajj, and fasting Ramadan.",
-                        gradeBn = "সহীহ (Authentic)",
-                        referenceBn = "ইমাম নববীর ৪০ হাদিস, হাদিস নং ৩ (সহীহ বুখারী ৮, সহীহ মুসলিম ১৬)"
-                    )
-                )
-            }
-            "bukhari" -> {
-                list.add(
-                    HadithItem(
-                        id = 1000 + chapterId * 10 + 1,
-                        bookId = "bukhari",
-                        chapterId = chapterId,
-                        hadithNumberBn = "${(chapterId - 1) * 5 + 1}",
-                        hadithNumberEn = "${(chapterId - 1) * 5 + 1}",
-                        narratorBn = "হযরত আয়েশা (রাঃ) থেকে বর্ণিত:",
-                        arabicText = "أَنَّ الحَارِثَ بْنَ هِشَامٍ رَضِيَ اللَّهُ عَنْهُ سَأَلَ رَسُولَ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ فَقَالَ: يَا رَسُولَ اللَّهِ كَيْفَ يَأْتِيكَ الوَحْيُ؟...",
-                        banglaText = "হারিস ইবনে হিশাম (রাঃ) রাসূলুল্লাহ (সাঃ)-কে জিজ্ঞাসা করলেন: ইয়া রাসূলুল্লাহ! আপনার কাছে ওহী কীভাবে আসে? তিনি বললেন: কোনো কোনো সময় তা ঘণ্টার শব্দের মতো আসে এবং এটি আমার ওপর সবচেয়ে কঠিন হয়। অতঃপর যখন ওহী সমাপ্ত হয় তখন আমি তা পুরোপুরি স্মরণ রাখতে পারি।",
-                        englishText = "Al-Harith bin Hisham asked the Prophet: O Messenger of Allah! How does the divine revelation come to you? He replied: Sometimes it comes like the ringing of a bell, which is the hardest for me.",
-                        gradeBn = "সহীহ আল-বুখারী",
-                        referenceBn = "সহীহ আল-বুখারী, অধ্যায় $chapterId, হাদিস নং ${(chapterId - 1) * 5 + 1} (আন্তর্জাতিক সূচক: বুখারী #${(chapterId - 1) * 5 + 1})"
-                    )
-                )
-                list.add(
-                    HadithItem(
-                        id = 1000 + chapterId * 10 + 2,
-                        bookId = "bukhari",
-                        chapterId = chapterId,
-                        hadithNumberBn = "${(chapterId - 1) * 5 + 2}",
-                        hadithNumberEn = "${(chapterId - 1) * 5 + 2}",
-                        narratorBn = "হযরত আবু হুরায়রা (রাঃ) থেকে বর্ণিত:",
-                        arabicText = "الإِيمَانُ بِضْعٌ وَسِتُّونَ شُعْبَةً، وَالحَيَاءُ شُعْبَةٌ مِنَ الإِيمَانِ.",
-                        banglaText = "রাসূলুল্লাহ (সাল্লাল্লাহু আলাইহি ওয়া সাল্লাম) এরশাদ করেছেন: ঈমানের ষাটেরও অধিক শাখা রয়েছে, আর লজ্জা হলো ঈমানের অন্যতম প্রধান একটি শাখা।",
-                        englishText = "The Prophet (ﷺ) said: Faith has sixty-odd branches, and modesty (Haya) is a branch of faith.",
-                        gradeBn = "সহীহ আল-বুখারী",
-                        referenceBn = "সহীহ আল-বুখারী, অধ্যায় $chapterId, হাদিস নং ${(chapterId - 1) * 5 + 2} (আন্তর্জাতিক সূচক: বুখারী #${(chapterId - 1) * 5 + 2})"
-                    )
-                )
-                list.add(
-                    HadithItem(
-                        id = 1000 + chapterId * 10 + 3,
-                        bookId = "bukhari",
-                        chapterId = chapterId,
-                        hadithNumberBn = "${(chapterId - 1) * 5 + 3}",
-                        hadithNumberEn = "${(chapterId - 1) * 5 + 3}",
-                        narratorBn = "হযরত আনাস (রাঃ) থেকে বর্ণিত:",
-                        arabicText = "لاَ يُؤْمِنُ أَحَدُكُمْ حَتَّى يُحِبَّ لأَخِيهِ مَا يُحِبُّ لِنَفْسِهِ.",
-                        banglaText = "তোমাদের কেউ ততক্ষণ পর্যন্ত পূর্ণ ঈমানদার হতে পারবে না, যতক্ষণ না সে তার ভাইয়ের জন্য তা-ই পছন্দ করবে যা সে নিজের জন্য পছন্দ করে।",
-                        englishText = "None of you truly believes until he wishes for his brother what he wishes for himself.",
-                        gradeBn = "সহীহ আল-বুখারী",
-                        referenceBn = "সহীহ আল-বুখারী, অধ্যায় $chapterId, হাদিস নং ${(chapterId - 1) * 5 + 3} (আন্তর্জাতিক সূচক: বুখারী #${(chapterId - 1) * 5 + 3})"
-                    )
-                )
-            }
-            "muslim" -> {
-                list.add(
-                    HadithItem(
-                        id = 2000 + chapterId * 10 + 1,
-                        bookId = "muslim",
-                        chapterId = chapterId,
-                        hadithNumberBn = "${(chapterId - 1) * 4 + 1}",
-                        hadithNumberEn = "${(chapterId - 1) * 4 + 1}",
-                        narratorBn = "হযরত আবু মালিক আল-আশআরী (রাঃ) থেকে বর্ণিত:",
-                        arabicText = "الطُّهُورُ شَطْرُ الإِيمَانِ، وَالْحَمْدُ لِلَّهِ تَمْلأُ الْمِيزَانَ...",
-                        banglaText = "রাসূলুল্লাহ (সাঃ) বলেছেন: পবিত্রতা হলো ঈমানের অর্ধেক। আর 'আলহামদুলিল্লাহ' সওয়াবের পাল্লাকে পূর্ণ করে দেয়। 'সুবহানাল্লাহ' ও 'আলহামদুলিল্লাহ' আসমান ও জমিনের মধ্যবর্তী শূন্যস্থানকে সওয়াব দিয়ে পূর্ণ করে দেয়।",
-                        englishText = "Purity is half of faith, and 'Alhamdulillah' fills the scales of good deeds.",
-                        gradeBn = "সহীহ মুসলিম",
-                        referenceBn = "সহীহ মুসলিম, অধ্যায় $chapterId, হাদিস নং ${(chapterId - 1) * 4 + 1} (আন্তর্জাতিক সূচক: মুসলিম #${(chapterId - 1) * 4 + 1})"
-                    )
-                )
-                list.add(
-                    HadithItem(
-                        id = 2000 + chapterId * 10 + 2,
-                        bookId = "muslim",
-                        chapterId = chapterId,
-                        hadithNumberBn = "${(chapterId - 1) * 4 + 2}",
-                        hadithNumberEn = "${(chapterId - 1) * 4 + 2}",
-                        narratorBn = "হযরত আবু হুরায়রা (রাঃ) থেকে বর্ণিত:",
-                        arabicText = "مَنْ سَلَكَ طَرِيقًا يَلْتَمِسُ فِيهِ عِلْمًا، سَهَّلَ اللَّهُ لَهُ بِهِ طَرِيقًا إِلَى الْجَنَّةِ.",
-                        banglaText = "যে ব্যক্তি দ্বীনের জ্ঞান বা ইলম অর্জনের উদ্দেশ্যে কোনো পথ অবলম্বন করে, আল্লাহ তাআলা তার জন্য জান্নাতের পথ সহজ করে দেন।",
-                        englishText = "Whoever travels a path in search of knowledge, Allah will make easy for him a path to Paradise.",
-                        gradeBn = "সহীহ মুসলিম",
-                        referenceBn = "সহীহ মুসলিম, অধ্যায় $chapterId, হাদিস নং ${(chapterId - 1) * 4 + 2} (আন্তর্জাতিক সূচক: মুসলিম #${(chapterId - 1) * 4 + 2})"
-                    )
-                )
-            }
-            else -> {
-                for (i in 1..4) {
-                    val hNum = (chapterId - 1) * 4 + i
-                    list.add(
-                        HadithItem(
-                            id = bookId.hashCode() + chapterId * 100 + i,
-                            bookId = bookId,
-                            chapterId = chapterId,
-                            hadithNumberBn = "$hNum",
-                            hadithNumberEn = "$hNum",
-                            narratorBn = "হযরত রাসুলুল্লাহ (সাল্লাল্লাহু আলাইহি ওয়া সাল্লাম) থেকে বর্ণিত:",
-                            arabicText = "خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ.",
-                            banglaText = "তোমাদের মধ্যে সর্বশ্রেষ্ঠ ব্যক্তি সেই, যিনি নিজে কুরআন মাজীদ শিক্ষা করেন এবং অপরকে কুরআন শিক্ষা দেন। (গ্রন্থ: ${bookMeta.titleBn})",
-                            englishText = "The best among you are those who learn the Quran and teach it to others.",
-                            gradeBn = "সহীহ (Authentic)",
-                            referenceBn = "${bookMeta.titleBn}, অধ্যায় $chapterId, হাদিস নং $hNum (আন্তর্জাতিক সূচক: ${bookMeta.titleEn} #$hNum)"
-                        )
-                    )
-                }
-            }
+            )
+            return nawawiItems.take(targetCount.coerceAtLeast(3))
         }
+
+        if (bookId == "bukhari" && chapterId == 1) {
+            val bukhariCh1 = listOf(
+                HadithItem(
+                    id = 1001, bookId = "bukhari", chapterId = 1, hadithNumberBn = "১", hadithNumberEn = "1",
+                    narratorBn = "আমীরুল মু'মিনীন ওমর ইবনুল খাত্তাব (রাঃ) থেকে বর্ণিত:",
+                    arabicText = "سَمِعْتُ رَسُولَ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ يَقُولُ: إِنَّمَا الأَعْمَالُ بِالنِّيَّاتِ، وَإِنَّمَا لِكُلِّ امْرِئٍ مَا نَوَى...",
+                    banglaText = "আমি রাসূলুল্লাহ (সাল্লাল্লাহু আলাইহি ওয়া সাল্লাম)-কে বলতে শুনেছি: সকল কাজ নিয়তের ওপর নির্ভরশীল। মানুষ তার নিয়ত অনুযায়ী প্রতিদান পাবে। অতএব যার হিজরত হবে আল্লাহ ও তাঁর রাসুলের সন্তুষ্টির জন্য, তার হিজরত আল্লাহর জন্যই গণ্য হবে।",
+                    englishText = "I heard Allah's Messenger (ﷺ) saying: The reward of deeds depends upon the intentions...",
+                    gradeBn = "সহীহ আল-বুখারী (১)", referenceBn = "সহীহ বুখারী, অধ্যায় ১ (ওহীর সূচনা), হাদিস নং ১"
+                ),
+                HadithItem(
+                    id = 1002, bookId = "bukhari", chapterId = 1, hadithNumberBn = "২", hadithNumberEn = "2",
+                    narratorBn = "হযরত আয়েশা (রাঃ) থেকে বর্ণিত:",
+                    arabicText = "أَنَّ الحَارِثَ بْنَ هِشَامٍ رَضِيَ اللَّهُ عَنْهُ سَأَلَ رَسُولَ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ فَقَالَ: يَا رَسُولَ اللَّهِ كَيْفَ يَأْتِيكَ الوَحْيُ؟...",
+                    banglaText = "হারিস ইবনে হিশাম (রাঃ) রাসুলুল্লাহ (সাঃ)-কে জিজ্ঞাসা করলেন: হে আল্লাহর রাসুল! আপনার কাছে কীভাবে ওহী আসে? রাসুল (সাঃ) বললেন: কখনও তা ঘণ্টার শব্দের মতো আসে এবং তা আমার ওপর খুব কঠিন হয়। অতঃপর তা শেষ হলে আমি তা স্মরণ রাখি।",
+                    englishText = "Al-Harith bin Hisham asked Allah's Messenger (ﷺ): How does Divine Revelation come to you? He replied: Sometimes like the ringing of a bell...",
+                    gradeBn = "সহীহ আল-বুখারী (২)", referenceBn = "সহীহ বুখারী, অধ্যায় ১ (ওহীর সূচনা), হাদিস নং ২"
+                ),
+                HadithItem(
+                    id = 1003, bookId = "bukhari", chapterId = 1, hadithNumberBn = "৩", hadithNumberEn = "3",
+                    narratorBn = "হযরত আয়েশা (রাঃ) থেকে বর্ণিত (হেরা গুহার ঘটনা):",
+                    arabicText = "أَوَّلُ مَا بُدِئَ بِهِ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ مِنَ الوَحْيِ الرُّؤْيَا الصَّالِحَةُ فِي النَّوْمِ... حَتَّى جَاءَهُ الحَقُّ وَهُوَ فِي غَارِ حِرَاءٍ، فَجَاءَهُ المَلَكُ فَقَالَ: اقْرَأْ...",
+                    banglaText = "রাসুলুল্লাহ (সাঃ)-এর ওপর ওহী সূচনার প্রথম মাধ্যম ছিল স্বপ্নে সত্য দর্শন। অতঃপর হেরা গুহায় তিনি ইবাদতে রত থাকতেন। একপর্যায়ে ফেরেশতা এসে বললেন: 'পড়ুন'। তিনি বললেন: আমি তো পড়তে জানি না। ফেরেশতা তাঁকে বুকে চেপে ধরে বললেন: 'পড়ুন আপনার রবের নামে যিনি সৃষ্টি করেছেন'।",
+                    englishText = "The commencement of Divine Inspiration to Allah's Messenger was in the form of good dreams... until the Angel came to him in cave Hira and said: Read!",
+                    gradeBn = "সহীহ আল-বুখারী (৩)", referenceBn = "সহীহ বুখারী, অধ্যায় ১ (ওহীর সূচনা), হাদিস নং ৩"
+                ),
+                HadithItem(
+                    id = 1004, bookId = "bukhari", chapterId = 1, hadithNumberBn = "৪", hadithNumberEn = "4",
+                    narratorBn = "হযরত জাবির ইবনে আবদুল্লাহ আনসারী (রাঃ) থেকে বর্ণিত:",
+                    arabicText = "وَهُوَ يُحَدِّثُ عَنْ فَتْرَةِ الوَحْيِ، فَقَالَ فِي حَدِيثِهِ: بَيْنَا أَنَا أَمْشِي إِذْ سَمِعْتُ صَوْتًا مِنَ السَّمَاءِ، فَرَفَعْتُ بَصَرِي...",
+                    banglaText = "ওহী স্থগিত থাকার সময় রাসুলুল্লাহ (সাঃ) বলছিলেন: একদিন আমি হাঁটছিলাম, হঠাৎ আকাশ থেকে একটি আওয়াজ শুনতে পেলাম। তাকিয়ে দেখি হেরা গুহায় আগমনকারী ফেরেশতা আকাশ ও জমিনের মাঝে কুরসীতে বসা। আমি ভীত হয়ে বাড়ি ফিরে বললাম: আমাকে বস্ত্রাবৃত করো! তখন সুরা মুদ্দাসসির নাজিল হলো।",
+                    englishText = "While describing the pause in revelation, Prophet said: I heard a voice from heaven and saw the angel sitting on a chair between sky and earth...",
+                    gradeBn = "সহীহ আল-বুখারী (৪)", referenceBn = "সহীহ বুখারী, অধ্যায় ১ (ওহীর সূচনা), হাদিস নং ৪"
+                ),
+                HadithItem(
+                    id = 1005, bookId = "bukhari", chapterId = 1, hadithNumberBn = "৫", hadithNumberEn = "5",
+                    narratorBn = "হযরত আবদুল্লাহ ইবনে আব্বাস (রাঃ) থেকে বর্ণিত:",
+                    arabicText = "كَانَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ أَجْوَدَ النَّاسِ، وَكَانَ أَجْوَدُ مَا يَكُونُ فِي رَمَضَانَ حِينَ يَلْقَاهُ جِبْرِيلُ...",
+                    banglaText = "রাসুলুল্লাহ (সাঃ) ছিলেন মানুষের মধ্যে সর্বশ্রেষ্ঠ দানশীল। আর রমজান মাসে যখন জিবরীল (আঃ) তাঁর সঙ্গে সাক্ষাৎ করতেন, তখন তিনি আরও বেশি দানশীল হতেন। জিবরীল (আঃ) প্রতি রাতে এসে কুরআন তাদারুস করতেন। তখন রাসুল (সাঃ) প্রবাহিত বাতাসের চেয়েও বেশি কল্যাণ বিলাইতেন।",
+                    englishText = "Allah's Messenger (ﷺ) was the most generous of all the people, and he used to reach the peak of generosity in Ramadan when Jibril met him...",
+                    gradeBn = "সহীহ আল-বুখারী (৫)", referenceBn = "সহীহ বুখারী, অধ্যায় ১ (ওহীর সূচনা), হাদিস নং ৫"
+                ),
+                HadithItem(
+                    id = 1006, bookId = "bukhari", chapterId = 1, hadithNumberBn = "৬", hadithNumberEn = "6",
+                    narratorBn = "আবদুল্লাহ ইবনে আব্বাস (রাঃ) থেকে বর্ণিত (হিরাকলিয়াসের নিকট বার্তা):",
+                    arabicText = "أَنَّ أَبَا سُفْيَانَ بْنَ حَرْبٍ أَخْبَرَهُ: أَنَّ هِرَقْلَ أَرْسَلَ إِلَيْهِ فِي رَكْبٍ مِنْ قُرَيْشٍ... ثُمَّ دَعَا بِكِتَابِ رَسُولِ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ...",
+                    banglaText = "আবু সুফিয়ান (রাঃ) বর্ণনা করেছেন যে, রোম সম্রাট হিরাকলিয়াস কুরাইশদের একটি কাফেলাকে ডেকে পাঠান। সম্রাট আবু সুফিয়ানকে রাসুল (সাঃ)-এর বংশ, সত্যবাদিতা, আমানতদারী ও শিক্ষা সম্পর্কে দীর্ঘ প্রশ্ন করেন এবং স্বীকার করেন যে ইনিই সেই সত্য নবী যার আগমন নির্ধারিত ছিল।",
+                    englishText = "Abu Sufyan bin Harb informed Ibn Abbas that Heraclius sent for him while he was accompanying a caravan from Quraish...",
+                    gradeBn = "সহীহ আল-বুখারী (৬)", referenceBn = "সহীহ বুখারী, অধ্যায় ১ (ওহীর সূচনা), হাদিস নং ৬"
+                ),
+                HadithItem(
+                    id = 1007, bookId = "bukhari", chapterId = 1, hadithNumberBn = "৭", hadithNumberEn = "7",
+                    narratorBn = "হযরত আবদুল্লাহ ইবনে আব্বাস (রাঃ) থেকে বর্ণিত:",
+                    arabicText = "فِي قَوْلِهِ تَعَالَى: لاَ تُحَرِّكْ بِهِ لِسَانَكَ لِتَعْجَلَ بِهِ... كَانَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ يُعَالِجُ مِنَ التَّنْزِيلِ شِدَّةً، وَكَانَ مِمَّا يُحَرِّكُ شَفَتَيْهِ...",
+                    banglaText = "আল্লাহ তাআলার বাণী: 'ওহী দ্রুত আয়ত্ত করার জন্য আপনার জিহ্বা নাড়াবেন না' প্রসঙ্গে ইবনে আব্বাস (রাঃ) বলেন: ওহী নাজিলের সময় রাসুল (সাঃ) তা হিফজ করার জন্য ঠোঁট দ্রুত নাড়াতেন। তখন আল্লাহ তাআলা আয়াত নাজিল করে অভয় দেন যে, তা সংরক্ষণ ও পাঠ করানোর দায়িত্ব আল্লাহর।",
+                    englishText = "Regarding the verse: 'Move not your tongue concerning the Quran to make haste therewith'...",
+                    gradeBn = "সহীহ আল-বুখারী (৭)", referenceBn = "সহীহ বুখারী, অধ্যায় ১ (ওহীর সূচনা), হাদিস নং ৭"
+                )
+            )
+            return bukhariCh1
+        }
+
+        val baseStartNum = (chapterId - 1) * 5 + 1
+        val sampleNarrators = listOf(
+            "হযরত আবু হুরায়রা (রাঃ) থেকে বর্ণিত:",
+            "হযরত আয়েশা সিদ্দিকা (রাঃ) থেকে বর্ণিত:",
+            "হযরত আবদুল্লাহ ইবনে উমর (রাঃ) থেকে বর্ণিত:",
+            "হযরত আনাস ইবনে মালিক (রাঃ) থেকে বর্ণিত:",
+            "হযরত আবু সাঈদ আল-খুদরী (রাঃ) থেকে বর্ণিত:",
+            "হযরত জাবির ইবনে আবদুল্লাহ (রাঃ) থেকে বর্ণিত:",
+            "হযরত আবদুল্লাহ ইবনে মাসউদ (রাঃ) থেকে বর্ণিত:"
+        )
+
+        val sampleArabicTexts = listOf(
+            "خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ.",
+            "مَنْ كَانَ يُؤْمِنُ بِاللَّهِ وَالْيَوْمِ الآخِرِ فَلْيَقُلْ خَيْرًا أَوْ لِيَصْمُتْ.",
+            "الدِّينُ النَّصِيحَةُ، قُلْنَا: لِمَنْ؟ قَالَ: لِلَّهِ وَلِكِتَابِهِ وَلِرَسُولِهِ وَلأَئِمَّةِ الْمُسْلِمِينَ وَعَامَّتِهِمْ.",
+            "إِنَّ اللَّهَ كَتَبَ الإِحْسَانَ عَلَى كُلِّ شَيْءٍ...",
+            "اتَّقِ اللَّهَ حَيْثُمَا كُنْتَ، وَأَتْبِعِ السَّيِّئَةَ الْحَسَنَةَ تَمْحُهَا، وَخَالِقِ النَّاسَ بِخُلُقٍ حَسَنٍ.",
+            "لاَ تَغْضَبْ، وَلَكَ الْجَنَّةُ.",
+            "احْفَظِ اللَّهَ يَحْفَظْكَ، احْفَظِ اللَّهَ تَجِدْهُ تُجَاهَكَ..."
+        )
+
+        val sampleBanglaTexts = listOf(
+            "তোমাদের মধ্যে সর্বশ্রেষ্ঠ ব্যক্তি সেই, যে নিজে কুরআন মাজীদ শিক্ষা করে এবং অপরকে তা শিক্ষা দেয়।",
+            "যে ব্যক্তি আল্লাহ ও শেষ বিচার দিনের ওপর ঈমান রাখে, সে যেন ভালো কথা বলে অথবা চুপ থাকে।",
+            "দ্বীন হলো কল্যাণকামিতা। আমরা বললাম: কার জন্য? রাসুল (সাঃ) বললেন: আল্লাহর জন্য, তাঁর কিতাবের জন্য, তাঁর রাসুলের জন্য, মুসলিম নেতৃবৃন্দ এবং সাধারণ মুসলিমদের জন্য।",
+            "আল্লাহ তাআলা প্রতিটি বিষয়ে এহসান ও দয়া প্রদর্শন করা ফরজ বা আবশ্যক করেছেন।",
+            "তুমি যেখানেই থাকো আল্লাহকে ভয় করো (তাকওয়া অবলম্বন করো), পাপাচারের পর সৎকাজ করো যা পূর্বের পাপকে মুছে দেবে, এবং মানুষের সাথে সুন্দর আচরণ করো।",
+            "রাগ কোরো না, তবে তোমার জন্য জান্নাত রয়েছে।",
+            "তুমি আল্লাহর হক হেফাজত করো, আল্লাহ তোমাকে হেফাজত করবেন। আল্লাহকে স্মরণ রেখো, আল্লাহকে তোমার সামনে পাবে।"
+        )
+
+        val sampleEnglishTexts = listOf(
+            "The best among you are those who learn the Qur'an and teach it.",
+            "He who believes in Allah and the Last Day should speak good or remain silent.",
+            "Religion is sincerity and good counsel...",
+            "Verily Allah has prescribed excellence in everything...",
+            "Fear Allah wherever you are, and follow up a bad deed with a good deed...",
+            "Do not become angry, and for you is Paradise.",
+            "Be mindful of Allah, and He will protect you..."
+        )
+
+        for (i in 1..targetCount) {
+            val hNum = baseStartNum + i - 1
+            val idx = (i - 1) % sampleNarrators.size
+            list.add(
+                HadithItem(
+                    id = bookId.hashCode() + chapterId * 1000 + i,
+                    bookId = bookId,
+                    chapterId = chapterId,
+                    hadithNumberBn = "$hNum",
+                    hadithNumberEn = "$hNum",
+                    narratorBn = sampleNarrators[idx],
+                    arabicText = sampleArabicTexts[idx],
+                    banglaText = sampleBanglaTexts[idx] + " (${bookMeta.titleBn}, অধ্যায় $chapterId, পরিচ্ছেদ $i)",
+                    englishText = sampleEnglishTexts[idx],
+                    gradeBn = "সহীহ (Authentic)",
+                    referenceBn = "${bookMeta.titleBn}, অধ্যায় $chapterId, হাদিস নং $hNum (আন্তর্জাতিক সূচক: ${bookMeta.titleEn} #$hNum)"
+                )
+            )
+        }
+
         return list
     }
 }
@@ -519,110 +544,136 @@ fun HadithLibraryScreen(
 
     // Text Size Customization in Reader
     var readerFontSize by remember { mutableFloatStateOf(15f) }
+    var showBookmarksSheet by remember { mutableStateOf(false) }
 
     val ttsPlayer = remember { com.example.data.islamic.IslamicMaleTtsPlayer.getInstance(context) }
+
+    var isHeaderVisible by remember { mutableStateOf(true) }
+    val nestedScrollConnection = remember {
+        object : androidx.compose.ui.input.nestedscroll.NestedScrollConnection {
+            override fun onPreScroll(
+                available: androidx.compose.ui.geometry.Offset,
+                source: androidx.compose.ui.input.nestedscroll.NestedScrollSource
+            ): androidx.compose.ui.geometry.Offset {
+                val delta = available.y
+                if (delta < -12f && isHeaderVisible) {
+                    isHeaderVisible = false
+                } else if (delta > 12f && !isHeaderVisible) {
+                    isHeaderVisible = true
+                }
+                return androidx.compose.ui.geometry.Offset.Zero
+            }
+        }
+    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(themeColors.background)
+            .nestedScroll(nestedScrollConnection)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // TOP HEADER BAR
-            Surface(
-                color = themeColors.cardBg,
-                shadowElevation = 3.dp
+            // TOP HEADER BAR WITH ANIMATED VISIBILITY ON SCROLL
+            AnimatedVisibility(
+                visible = isHeaderVisible,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                Surface(
+                    color = themeColors.cardBg,
+                    shadowElevation = 3.dp
                 ) {
-                    IconButton(
-                        onClick = {
-                            when (activeViewMode) {
-                                3 -> activeViewMode = 0
-                                2 -> activeViewMode = 1
-                                1 -> activeViewMode = 0
-                                else -> onBackClick()
-                            }
-                        }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = themeColors.displayText
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(6.dp))
-
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = when (activeViewMode) {
-                                3 -> if (isBn) "বুকমার্ককৃত হাদিসসমূহ" else "Bookmarked Hadiths"
-                                2 -> selectedChapter?.let { if (isBn) it.titleBn else it.titleEn } ?: (if (isBn) "হাদিস পাঠ" else "Hadith Reader")
-                                1 -> selectedBook?.let { if (isBn) it.titleBn else it.titleEn } ?: (if (isBn) "অধ্যায় সূচী" else "Chapters")
-                                else -> if (isBn) "হাদিস গ্রন্থ" else "Hadith Books"
-                            },
-                            fontSize = 17.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = themeColors.displayText,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Text(
-                            text = when (activeViewMode) {
-                                3 -> if (isBn) "সংরক্ষিত পছন্দের হাদিসসমূহ" else "Saved Favorite Hadiths"
-                                2 -> selectedBook?.let { if (isBn) it.titleBn else it.titleEn } ?: ""
-                                1 -> if (isBn) "অধ্যায় নির্বাচন করে হাদিস পড়ুন" else "Select a chapter to read"
-                                else -> if (isBn) "সকল সহীহ হাদিস সংকলন ও অফলাইন পঠন" else "Complete Hadith Collection"
-                            },
-                            fontSize = 11.sp,
-                            color = themeColors.displayText.copy(alpha = 0.65f),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-
-                    if (activeViewMode == 2) {
-                        // Font Size Toggle Action
                         IconButton(
                             onClick = {
-                                readerFontSize = if (readerFontSize >= 19f) 14f else readerFontSize + 2.5f
-                            }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.FormatSize,
-                                contentDescription = "Font Size",
-                                tint = themeColors.buttonEqualBg
-                            )
-                        }
-                    }
-
-                    IconButton(
-                        onClick = {
-                            if (activeViewMode == 3) activeViewMode = 0 else activeViewMode = 3
-                        }
-                    ) {
-                        BadgedBox(
-                            badge = {
-                                if (bookmarkedSet.isNotEmpty()) {
-                                    Badge(
-                                        containerColor = Color(0xFFD97706),
-                                        contentColor = Color.White
-                                    ) {
-                                        Text("${bookmarkedSet.size}")
-                                    }
+                                when (activeViewMode) {
+                                    3 -> activeViewMode = 0
+                                    2 -> activeViewMode = 1
+                                    1 -> activeViewMode = 0
+                                    else -> onBackClick()
                                 }
                             }
                         ) {
                             Icon(
-                                imageVector = if (activeViewMode == 3) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
-                                contentDescription = "Bookmarks",
-                                tint = if (activeViewMode == 3) Color(0xFFD97706) else themeColors.displayText
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = themeColors.displayText
                             )
+                        }
+
+                        Spacer(modifier = Modifier.width(6.dp))
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = when (activeViewMode) {
+                                    3 -> if (isBn) "বুকমার্ককৃত হাদিসসমূহ" else "Bookmarked Hadiths"
+                                    2 -> selectedChapter?.let { if (isBn) it.titleBn else it.titleEn } ?: (if (isBn) "হাদিস পাঠ" else "Hadith Reader")
+                                    1 -> selectedBook?.let { if (isBn) it.titleBn else it.titleEn } ?: (if (isBn) "অধ্যায় সূচী" else "Chapters")
+                                    else -> if (isBn) "হাদিস গ্রন্থ" else "Hadith Books"
+                                },
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.displayText,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(
+                                text = when (activeViewMode) {
+                                    3 -> if (isBn) "সংরক্ষিত পছন্দের হাদিসসমূহ" else "Saved Favorite Hadiths"
+                                    2 -> selectedBook?.let { if (isBn) it.titleBn else it.titleEn } ?: ""
+                                    1 -> if (isBn) "অধ্যায় নির্বাচন করে হাদিস পড়ুন" else "Select a chapter to read"
+                                    else -> if (isBn) "সকল সহীহ হাদিস সংকলন ও অফলাইন পঠন" else "Complete Hadith Collection"
+                                },
+                                fontSize = 11.sp,
+                                color = themeColors.displayText.copy(alpha = 0.65f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+
+                        if (activeViewMode == 2) {
+                            // Font Size Toggle Action
+                            IconButton(
+                                onClick = {
+                                    readerFontSize = if (readerFontSize >= 19f) 14f else readerFontSize + 2.5f
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.FormatSize,
+                                    contentDescription = "Font Size",
+                                    tint = themeColors.buttonEqualBg
+                                )
+                            }
+                        }
+
+                        IconButton(
+                            onClick = {
+                                showBookmarksSheet = true
+                            }
+                        ) {
+                            BadgedBox(
+                                badge = {
+                                    if (bookmarkedSet.isNotEmpty()) {
+                                        Badge(
+                                            containerColor = Color(0xFFD97706),
+                                            contentColor = Color.White
+                                        ) {
+                                            Text("${bookmarkedSet.size}")
+                                        }
+                                    }
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = if (bookmarkedSet.isNotEmpty()) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
+                                    contentDescription = "Bookmarks",
+                                    tint = if (bookmarkedSet.isNotEmpty()) Color(0xFFD97706) else themeColors.displayText
+                                )
+                            }
                         }
                     }
                 }
@@ -1089,7 +1140,7 @@ fun HadithLibraryScreen(
                             val list = mutableListOf<HadithItem>()
                             HadithRepository.BOOK_LIST.forEach { book ->
                                 val chapters = HadithRepository.getChaptersForBook(book.id)
-                                chapters.take(5).forEach { chap ->
+                                chapters.forEach { chap ->
                                     val hItems = HadithRepository.getSampleHadiths(book.id, chap.chapterId)
                                     hItems.forEach { item ->
                                         if (bookmarkedSet.contains("${item.bookId}_${item.id}")) {
@@ -1134,9 +1185,9 @@ fun HadithLibraryScreen(
                             LazyColumn(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .padding(horizontal = 14.dp),
-                                verticalArrangement = Arrangement.spacedBy(14.dp),
-                                contentPadding = PaddingValues(top = 12.dp, bottom = 28.dp)
+                                    .padding(horizontal = 6.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                                contentPadding = PaddingValues(top = 10.dp, bottom = 28.dp)
                             ) {
                                 items(allHadiths, key = { "${it.bookId}_${it.id}" }) { hadith ->
                                     val bookmarkKey = "${hadith.bookId}_${hadith.id}"
@@ -1203,6 +1254,168 @@ fun HadithLibraryScreen(
                     }
                 }
             }
+        }
+
+        // ==========================================
+        // BOOKMARKS LIST DIALOG (MATCHING QURAN BOOKMARK SYSTEM)
+        // ==========================================
+        if (showBookmarksSheet) {
+            val allBookmarkedHadiths = remember(bookmarkedSet) {
+                val list = mutableListOf<Pair<HadithItem, HadithBookMeta>>()
+                HadithRepository.BOOK_LIST.forEach { book ->
+                    val chapters = HadithRepository.getChaptersForBook(book.id)
+                    chapters.forEach { chap ->
+                        val hItems = HadithRepository.getSampleHadiths(book.id, chap.chapterId)
+                        hItems.forEach { item ->
+                            if (bookmarkedSet.contains("${item.bookId}_${item.id}")) {
+                                list.add(Pair(item, book))
+                            }
+                        }
+                    }
+                }
+                list
+            }
+
+            AlertDialog(
+                onDismissRequest = { showBookmarksSheet = false },
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Bookmark,
+                            contentDescription = null,
+                            tint = Color(0xFFD97706),
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = if (isBn) "বুকমার্ককৃত হাদিসসমূহ" else "Bookmarked Hadiths",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.5.sp,
+                            color = themeColors.displayText
+                        )
+                    }
+                },
+                text = {
+                    if (allBookmarkedHadiths.isEmpty()) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 20.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.BookmarkBorder,
+                                contentDescription = null,
+                                tint = themeColors.displayText.copy(alpha = 0.4f),
+                                modifier = Modifier.size(48.dp)
+                            )
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Text(
+                                text = if (isBn) "কোনো বুকমার্ককৃত হাদিস নেই।" else "No bookmarked hadiths found.",
+                                fontSize = 13.5.sp,
+                                color = themeColors.displayText.copy(alpha = 0.7f),
+                                textAlign = TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = if (isBn) "হাদিস পাঠকালে বুকমার্ক আইকনে চাপ দিলে এখানে সংরক্ষণ হবে।" else "Tap the bookmark icon while reading any Hadith to save it here.",
+                                fontSize = 11.5.sp,
+                                color = themeColors.displayText.copy(alpha = 0.5f),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 360.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            items(allBookmarkedHadiths, key = { "${it.first.bookId}_${it.first.id}" }) { (hadith, book) ->
+                                val chap = HadithRepository.getChaptersForBook(book.id).find { it.chapterId == hadith.chapterId }
+                                Surface(
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = themeColors.displayBackground,
+                                    border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.12f)),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Column(modifier = Modifier.padding(12.dp)) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Text(
+                                                text = "${book.titleBn} • ${chap?.titleBn ?: "অধ্যায় ${hadith.chapterId}"}",
+                                                fontSize = 13.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = themeColors.buttonEqualBg,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                                modifier = Modifier.weight(1f)
+                                            )
+                                            IconButton(
+                                                onClick = {
+                                                    val key = "${hadith.bookId}_${hadith.id}"
+                                                    HadithStorageManager.toggleBookmark(context, key)
+                                                    bookmarkedSet = HadithStorageManager.getBookmarks(context)
+                                                },
+                                                modifier = Modifier.size(28.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Delete,
+                                                    contentDescription = "Remove Bookmark",
+                                                    tint = Color(0xFFEF4444),
+                                                    modifier = Modifier.size(18.dp)
+                                                )
+                                            }
+                                        }
+                                        Text(
+                                            text = "হাদিস নং ${hadith.hadithNumberBn}: ${hadith.narratorBn}",
+                                            fontSize = 11.5.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = themeColors.displayText.copy(alpha = 0.85f),
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(
+                                            text = hadith.banglaText,
+                                            fontSize = 12.sp,
+                                            color = themeColors.displayText.copy(alpha = 0.75f),
+                                            maxLines = 2,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Button(
+                                            onClick = {
+                                                selectedBook = book
+                                                selectedChapter = chap ?: HadithChapter(hadith.chapterId, "অধ্যায় ${hadith.chapterId}", "Chapter ${hadith.chapterId}", 10)
+                                                activeViewMode = 2
+                                                showBookmarksSheet = false
+                                            },
+                                            colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
+                                            shape = RoundedCornerShape(8.dp),
+                                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                                            modifier = Modifier.align(Alignment.End)
+                                        ) {
+                                            Icon(imageVector = Icons.Default.MenuBook, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color.White)
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(text = if (isBn) "পড়ুন / ওপেন" else "Read / Open", fontSize = 11.sp, color = Color.White)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showBookmarksSheet = false }) {
+                        Text(if (isBn) "বন্ধ করুন" else "Close", color = themeColors.buttonEqualBg, fontWeight = FontWeight.Bold)
+                    }
+                },
+                containerColor = themeColors.cardBg
+            )
         }
     }
 }

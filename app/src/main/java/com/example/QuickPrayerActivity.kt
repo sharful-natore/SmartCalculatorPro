@@ -92,14 +92,12 @@ class QuickPrayerActivity : ComponentActivity() {
                         shadowElevation = 16.dp
                     ) {
                         Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(12.dp)
+                            modifier = Modifier.fillMaxSize()
                         ) {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(bottom = 8.dp),
+                                    .padding(start = 12.dp, end = 12.dp, top = 12.dp, bottom = 6.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -140,13 +138,13 @@ class QuickPrayerActivity : ComponentActivity() {
 
                             HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.1f))
 
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(4.dp))
 
                             var selectedTab by remember { mutableStateOf(0) }
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 4.dp, vertical = 4.dp),
+                                    .padding(horizontal = 10.dp, vertical = 4.dp),
                                 horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 Button(
@@ -215,7 +213,7 @@ class QuickPrayerActivity : ComponentActivity() {
                                 }
                             }
 
-                            Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.height(2.dp))
 
                             Box(
                                 modifier = Modifier
@@ -226,6 +224,7 @@ class QuickPrayerActivity : ComponentActivity() {
                                     0 -> Box(
                                         modifier = Modifier
                                             .fillMaxSize()
+                                            .padding(horizontal = 10.dp, vertical = 4.dp)
                                             .verticalScroll(rememberScrollState())
                                     ) {
                                         PrayerTimesCard(
@@ -236,6 +235,7 @@ class QuickPrayerActivity : ComponentActivity() {
                                     1 -> Box(
                                         modifier = Modifier
                                             .fillMaxSize()
+                                            .padding(horizontal = 10.dp, vertical = 4.dp)
                                             .verticalScroll(rememberScrollState())
                                     ) {
                                         ModernSehriIftarCard(

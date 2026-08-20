@@ -213,7 +213,7 @@ fun QuranScreen(
 
                                                 Surface(
                                                     shape = RoundedCornerShape(12.dp),
-                                                    color = themeColors.cardBg,
+                                                    color = themeColors.displayBackground,
                                                     border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.12f)),
                                                     modifier = Modifier.fillMaxWidth()
                                                 ) {
@@ -276,7 +276,7 @@ fun QuranScreen(
                                 },
                                 confirmButton = {
                                     TextButton(onClick = { showBookmarksSheet = false }) {
-                                        Text(if (isBn) "বন্ধ করুন" else "Close", color = cyanPrimary)
+                                        Text(if (isBn) "বন্ধ করুন" else "Close", color = cyanPrimary, fontWeight = FontWeight.Bold)
                                     }
                                 },
                                 containerColor = themeColors.cardBg
