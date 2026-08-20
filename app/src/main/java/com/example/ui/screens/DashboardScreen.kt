@@ -250,7 +250,9 @@ fun DashboardCategoriesView(
             .fillMaxSize()
             .background(themeColors.background)
             .nestedScroll(nestedScrollConnection)
-            .offset { IntOffset(0, bounceAnimatable.value.roundToInt()) }
+            .graphicsLayer {
+                translationY = bounceAnimatable.value
+            }
             .verticalScroll(scrollState)
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {

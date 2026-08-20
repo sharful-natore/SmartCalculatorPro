@@ -850,73 +850,105 @@ fun MainContent(
         ) {
             val widthPx = with(LocalDensity.current) { constraints.maxWidth.toFloat() }
             val currentTab = viewModel.activeTab
+            val isSubDetailOpen = (currentTab == 0 && viewModel.selectedToolType != null) ||
+                                  (currentTab == 1 && viewModel.selectedConverterType != null)
 
-            val targetTab = when {
-                dragAnimatable.value < 0 && currentTab < 3 -> currentTab + 1
-                dragAnimatable.value > 0 && currentTab > 0 -> currentTab - 1
-                else -> null
+            val targetTab by remember(currentTab) {
+                derivedStateOf {
+                    val offset = dragAnimatable.value
+                    when {
+                        offset < -2f && currentTab < 3 -> currentTab + 1
+                        offset > 2f && currentTab > 0 -> currentTab - 1
+                        else -> null
+                    }
+                }
             }
 
-            val swipeContainerModifier = Modifier
-                .fillMaxSize()
-                .pointerInput(currentTab) {
-                    var dragAmountSum = 0f
-                    detectHorizontalDragGestures(
-                        onDragStart = {
-                            isDragging = true
-                            dragAmountSum = 0f
-                            coroutineScope.launch {
-                                dragAnimatable.snapTo(0f)
-                            }
-                        },
-                        onDragEnd = {
-                            val threshold = widthPx * 0.18f
-                            if (dragAmountSum < -threshold && currentTab < 3) {
+            val swipeContainerModifier = if (isSubDetailOpen) {
+                Modifier.fillMaxSize()
+            } else {
+                Modifier
+                    .fillMaxSize()
+                    .pointerInput(currentTab) {
+                        var dragAmountSum = 0f
+                        detectHorizontalDragGestures(
+                            onDragStart = {
+                                isDragging = true
+                                dragAmountSum = 0f
+                            },
+                            onDragEnd = {
+                                val threshold = widthPx * 0.15f
+                                if (dragAmountSum < -threshold && currentTab < 3) {
+                                    coroutineScope.launch {
+                                        dragAnimatable.animateTo(
+                                            -widthPx,
+                                            animationSpec = spring(
+                                                stiffness = Spring.StiffnessLow,
+                                                dampingRatio = Spring.DampingRatioNoBouncy
+                                            )
+                                        )
+                                        viewModel.selectActiveTab(currentTab + 1)
+                                        dragAnimatable.snapTo(0f)
+                                        isDragging = false
+                                    }
+                                } else if (dragAmountSum > threshold && currentTab > 0) {
+                                    coroutineScope.launch {
+                                        dragAnimatable.animateTo(
+                                            widthPx,
+                                            animationSpec = spring(
+                                                stiffness = Spring.StiffnessLow,
+                                                dampingRatio = Spring.DampingRatioNoBouncy
+                                            )
+                                        )
+                                        viewModel.selectActiveTab(currentTab - 1)
+                                        dragAnimatable.snapTo(0f)
+                                        isDragging = false
+                                    }
+                                } else {
+                                    coroutineScope.launch {
+                                        dragAnimatable.animateTo(
+                                            0f,
+                                            animationSpec = spring(
+                                                stiffness = Spring.StiffnessMediumLow,
+                                                dampingRatio = Spring.DampingRatioNoBouncy
+                                            )
+                                        )
+                                        isDragging = false
+                                    }
+                                }
+                            },
+                            onDragCancel = {
                                 coroutineScope.launch {
-                                    dragAnimatable.animateTo(-widthPx, animationSpec = tween(220, easing = FastOutSlowInEasing))
-                                    viewModel.selectActiveTab(currentTab + 1)
-                                    dragAnimatable.snapTo(0f)
+                                    dragAnimatable.animateTo(
+                                        0f,
+                                        animationSpec = spring(
+                                            stiffness = Spring.StiffnessMediumLow,
+                                            dampingRatio = Spring.DampingRatioNoBouncy
+                                        )
+                                    )
                                     isDragging = false
                                 }
-                            } else if (dragAmountSum > threshold && currentTab > 0) {
-                                coroutineScope.launch {
-                                    dragAnimatable.animateTo(widthPx, animationSpec = tween(220, easing = FastOutSlowInEasing))
-                                    viewModel.selectActiveTab(currentTab - 1)
-                                    dragAnimatable.snapTo(0f)
-                                    isDragging = false
-                                }
-                            } else {
-                                coroutineScope.launch {
-                                    dragAnimatable.animateTo(0f, animationSpec = tween(220, easing = FastOutSlowInEasing))
-                                    isDragging = false
-                                }
-                            }
-                        },
-                        onDragCancel = {
-                            coroutineScope.launch {
-                                dragAnimatable.animateTo(0f, animationSpec = tween(220, easing = FastOutSlowInEasing))
-                                isDragging = false
-                            }
-                        },
-                        onHorizontalDrag = { change, dragAmount ->
-                            val canDragLeft = currentTab < 3
-                            val canDragRight = currentTab > 0
+                            },
+                            onHorizontalDrag = { change, dragAmount ->
+                                val canDragLeft = currentTab < 3
+                                val canDragRight = currentTab > 0
 
-                            val effectiveDrag = if ((dragAmount > 0 && !canDragRight && dragAmountSum >= 0) ||
-                                                    (dragAmount < 0 && !canDragLeft && dragAmountSum <= 0)) {
-                                dragAmount * 0.25f
-                            } else {
-                                dragAmount
-                            }
+                                val effectiveDrag = if ((dragAmount > 0 && !canDragRight && dragAmountSum >= 0) ||
+                                                        (dragAmount < 0 && !canDragLeft && dragAmountSum <= 0)) {
+                                    dragAmount * 0.2f
+                                } else {
+                                    dragAmount
+                                }
 
-                            change.consume()
-                            dragAmountSum += effectiveDrag
-                            coroutineScope.launch {
-                                dragAnimatable.snapTo(dragAmountSum)
+                                change.consume()
+                                dragAmountSum += effectiveDrag
+                                coroutineScope.launch {
+                                    dragAnimatable.snapTo(dragAmountSum)
+                                }
                             }
-                        }
-                    )
-                }
+                        )
+                    }
+            }
 
             Box(modifier = swipeContainerModifier) {
                 if (isDragging || dragAnimatable.value != 0f) {
@@ -938,21 +970,21 @@ fun MainContent(
                     }
 
                     // Render adjacent target screen sliding side-by-side
-                    if (targetTab != null) {
-                        val adjacentOffset = if (targetTab > currentTab) {
-                            widthPx + dragAnimatable.value
-                        } else {
-                            -widthPx + dragAnimatable.value
-                        }
-
+                    val currentTarget = targetTab
+                    if (currentTarget != null) {
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .graphicsLayer {
+                                    val adjacentOffset = if (currentTarget > currentTab) {
+                                        widthPx + dragAnimatable.value
+                                    } else {
+                                        -widthPx + dragAnimatable.value
+                                    }
                                     translationX = adjacentOffset
                                 }
                         ) {
-                            when (targetTab) {
+                            when (currentTarget) {
                                 0 -> DashboardScreen(viewModel, themeColors)
                                 1 -> SmartConverterScreen(viewModel, themeColors)
                                 2 -> CalculatorScreen(viewModel, themeColors)
@@ -967,11 +999,11 @@ fun MainContent(
                         targetState = currentTab,
                         transitionSpec = {
                             if (targetState > initialState) {
-                                (slideInHorizontally(animationSpec = tween(280, easing = FastOutSlowInEasing)) { width -> width } + fadeIn(animationSpec = tween(280))) togetherWith
-                                        (slideOutHorizontally(animationSpec = tween(280, easing = FastOutSlowInEasing)) { width -> -width } + fadeOut(animationSpec = tween(280)))
+                                (slideInHorizontally(animationSpec = spring(stiffness = Spring.StiffnessLow, dampingRatio = Spring.DampingRatioNoBouncy)) { width -> width } + fadeIn(animationSpec = tween(220))) togetherWith
+                                        (slideOutHorizontally(animationSpec = spring(stiffness = Spring.StiffnessLow, dampingRatio = Spring.DampingRatioNoBouncy)) { width -> -width } + fadeOut(animationSpec = tween(220)))
                             } else {
-                                (slideInHorizontally(animationSpec = tween(280, easing = FastOutSlowInEasing)) { width -> -width } + fadeIn(animationSpec = tween(280))) togetherWith
-                                        (slideOutHorizontally(animationSpec = tween(280, easing = FastOutSlowInEasing)) { width -> width } + fadeOut(animationSpec = tween(280)))
+                                (slideInHorizontally(animationSpec = spring(stiffness = Spring.StiffnessLow, dampingRatio = Spring.DampingRatioNoBouncy)) { width -> -width } + fadeIn(animationSpec = tween(220))) togetherWith
+                                        (slideOutHorizontally(animationSpec = spring(stiffness = Spring.StiffnessLow, dampingRatio = Spring.DampingRatioNoBouncy)) { width -> width } + fadeOut(animationSpec = tween(220)))
                             }
                         },
                         label = "MainScreenTabTransition",

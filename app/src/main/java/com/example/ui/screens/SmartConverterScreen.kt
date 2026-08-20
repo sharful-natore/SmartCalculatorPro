@@ -45,6 +45,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -209,7 +210,9 @@ fun SmartConverterCategoriesView(
             .fillMaxSize()
             .background(themeColors.background)
             .nestedScroll(nestedScrollConnection)
-            .offset { IntOffset(0, bounceAnimatable.value.roundToInt()) }
+            .graphicsLayer {
+                translationY = bounceAnimatable.value
+            }
             .verticalScroll(scrollState)
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
