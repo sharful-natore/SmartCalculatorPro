@@ -27,6 +27,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -89,6 +91,53 @@ data class LevelSavedRecord(
     val timeFormatted: String,
     val isLevel: Boolean
 )
+
+@Composable
+private fun LevelToolChipItem(
+    label: String,
+    isSelected: Boolean,
+    icon: ImageVector,
+    themeColors: CalculatorThemeColors,
+    onClick: () -> Unit
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(if (isSelected) themeColors.buttonEqualBg else themeColors.cardBg)
+            .border(
+                width = 1.dp,
+                color = if (isSelected) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.15f),
+                shape = RoundedCornerShape(12.dp)
+            )
+            .clickable(
+                interactionSource = interactionSource,
+                indication = ripple(bounded = true),
+                onClick = onClick
+            )
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = if (isSelected) Color.White else themeColors.displayText.copy(alpha = 0.75f),
+                modifier = Modifier.size(16.dp)
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = label,
+                fontSize = 12.sp,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                color = if (isSelected) Color.White else themeColors.displayText
+            )
+        }
+    }
+}
 
 @Composable
 fun CameraLevelTool(
@@ -300,10 +349,11 @@ fun CameraLevelTool(
     val currentRoll = if (isFrozen) frozenRoll else (rawRoll - zeroRollOffset)
     val currentPitch = if (isFrozen) frozenPitch else (rawPitch - zeroPitchOffset)
 
-    // Check leveling thresholds
+    // Check leveling thresholds (Horizontal 0°/180° and Vertical 90°/Plumb)
     val absRoll = abs(currentRoll)
+    val absPitch = abs(currentPitch)
     val isHorizontalLevel = (absRoll <= 0.6f) || (abs(absRoll - 180f) <= 0.6f)
-    val isVerticalLevel = abs(absRoll - 90f) <= 0.6f
+    val isVerticalLevel = (abs(absRoll - 90f) <= 0.6f) || (abs(absPitch - 90f) <= 0.6f)
     val isSurfaceFlat = (abs(currentRoll) <= 0.6f) && (abs(currentPitch) <= 0.6f)
     val isAnyLevelAchieved = isHorizontalLevel || isVerticalLevel || isSurfaceFlat
 
@@ -361,62 +411,28 @@ fun CameraLevelTool(
             .padding(bottom = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Mode Selector Tabs
-        Card(
+        // Mode Selector Tabs (Rendered directly)
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 6.dp)
-                .themeCardShadow(themeColors),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = themeColors.cardBg)
+                .horizontalScroll(rememberScrollState())
+                .padding(vertical = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState())
-                    .padding(8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                LevelToolMode.values().forEach { mode ->
-                    val isSelected = selectedMode == mode
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = { selectedMode = mode },
-                        label = {
-                            Text(
-                                if (isBn) mode.titleBn else mode.titleEn,
-                                fontSize = 12.sp,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                            )
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = when (mode) {
-                                    LevelToolMode.AR_CAMERA -> Icons.Default.CameraAlt
-                                    LevelToolMode.SURFACE_BUBBLE -> Icons.Default.Adjust
-                                    LevelToolMode.PLUMB_BOB -> Icons.Default.Straighten
-                                    LevelToolMode.ANGLE_GUIDE -> Icons.Default.MenuBook
-                                },
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        },
-                        colors = FilterChipDefaults.filterChipColors(
-                            containerColor = themeColors.cardBg,
-                            labelColor = themeColors.displayText,
-                            iconColor = themeColors.displayText,
-                            selectedContainerColor = themeColors.buttonEqualBg,
-                            selectedLabelColor = Color.White,
-                            selectedLeadingIconColor = Color.White
-                        ),
-                        border = FilterChipDefaults.filterChipBorder(
-                            enabled = true,
-                            selected = isSelected,
-                            borderColor = themeColors.displayText.copy(alpha = 0.2f),
-                            selectedBorderColor = themeColors.buttonEqualBg
-                        )
-                    )
-                }
+            LevelToolMode.values().forEach { mode ->
+                val isSelected = selectedMode == mode
+                LevelToolChipItem(
+                    label = if (isBn) mode.titleBn else mode.titleEn,
+                    isSelected = isSelected,
+                    icon = when (mode) {
+                        LevelToolMode.AR_CAMERA -> Icons.Default.CameraAlt
+                        LevelToolMode.SURFACE_BUBBLE -> Icons.Default.Adjust
+                        LevelToolMode.PLUMB_BOB -> Icons.Default.Straighten
+                        LevelToolMode.ANGLE_GUIDE -> Icons.Default.MenuBook
+                    },
+                    themeColors = themeColors,
+                    onClick = { selectedMode = mode }
+                )
             }
         }
 
@@ -737,18 +753,10 @@ private fun CameraArLevelSection(
 
     var cameraBindError by remember { mutableStateOf(false) }
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .themeCardShadow(themeColors),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = themeColors.cardBg)
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
             // Top Action Toolbar
             Row(
                 modifier = Modifier
@@ -1287,91 +1295,39 @@ private fun CameraArLevelSection(
                 }
 
                 // Camera Background Toggle
-                FilterChip(
-                    selected = isCameraEnabled && hasCameraPermission,
-                    onClick = onToggleCameraEnabled,
-                    label = { Text(if (isBn) "ক্যামেরা ভিউ" else "Camera View", fontSize = 12.sp, fontWeight = FontWeight.SemiBold) },
-                    leadingIcon = { Icon(Icons.Default.Videocam, null, modifier = Modifier.size(16.dp)) },
-                    colors = FilterChipDefaults.filterChipColors(
-                        containerColor = themeColors.cardBg,
-                        labelColor = themeColors.displayText,
-                        iconColor = themeColors.displayText,
-                        selectedContainerColor = themeColors.buttonEqualBg,
-                        selectedLabelColor = Color.White,
-                        selectedLeadingIconColor = Color.White
-                    ),
-                    border = FilterChipDefaults.filterChipBorder(
-                        enabled = true,
-                        selected = isCameraEnabled && hasCameraPermission,
-                        borderColor = themeColors.displayText.copy(alpha = 0.25f),
-                        selectedBorderColor = themeColors.buttonEqualBg
-                    )
+                LevelToolChipItem(
+                    label = if (isBn) "ক্যামেরা ভিউ" else "Camera View",
+                    isSelected = isCameraEnabled && hasCameraPermission,
+                    icon = Icons.Default.Videocam,
+                    themeColors = themeColors,
+                    onClick = onToggleCameraEnabled
                 )
 
                 // Laser Grid Toggle
-                FilterChip(
-                    selected = showLaserGrid,
-                    onClick = onToggleGrid,
-                    label = { Text(if (isBn) "গ্রিড" else "Grid", fontSize = 12.sp, fontWeight = FontWeight.SemiBold) },
-                    leadingIcon = { Icon(Icons.Default.GridOn, null, modifier = Modifier.size(16.dp)) },
-                    colors = FilterChipDefaults.filterChipColors(
-                        containerColor = themeColors.cardBg,
-                        labelColor = themeColors.displayText,
-                        iconColor = themeColors.displayText,
-                        selectedContainerColor = themeColors.buttonEqualBg,
-                        selectedLabelColor = Color.White,
-                        selectedLeadingIconColor = Color.White
-                    ),
-                    border = FilterChipDefaults.filterChipBorder(
-                        enabled = true,
-                        selected = showLaserGrid,
-                        borderColor = themeColors.displayText.copy(alpha = 0.25f),
-                        selectedBorderColor = themeColors.buttonEqualBg
-                    )
+                LevelToolChipItem(
+                    label = if (isBn) "গ্রিড" else "Grid",
+                    isSelected = showLaserGrid,
+                    icon = Icons.Default.GridOn,
+                    themeColors = themeColors,
+                    onClick = onToggleGrid
                 )
 
                 // Protractor Toggle
-                FilterChip(
-                    selected = showProtractor,
-                    onClick = onToggleProtractor,
-                    label = { Text(if (isBn) "চাঁদা/আর্ক" else "Protractor", fontSize = 12.sp, fontWeight = FontWeight.SemiBold) },
-                    leadingIcon = { Icon(Icons.Default.PieChart, null, modifier = Modifier.size(16.dp)) },
-                    colors = FilterChipDefaults.filterChipColors(
-                        containerColor = themeColors.cardBg,
-                        labelColor = themeColors.displayText,
-                        iconColor = themeColors.displayText,
-                        selectedContainerColor = themeColors.buttonEqualBg,
-                        selectedLabelColor = Color.White,
-                        selectedLeadingIconColor = Color.White
-                    ),
-                    border = FilterChipDefaults.filterChipBorder(
-                        enabled = true,
-                        selected = showProtractor,
-                        borderColor = themeColors.displayText.copy(alpha = 0.25f),
-                        selectedBorderColor = themeColors.buttonEqualBg
-                    )
+                LevelToolChipItem(
+                    label = if (isBn) "চাঁদা/আর্ক" else "Protractor",
+                    isSelected = showProtractor,
+                    icon = Icons.Default.PieChart,
+                    themeColors = themeColors,
+                    onClick = onToggleProtractor
                 )
 
                 // Plumb line Toggle
-                FilterChip(
-                    selected = showPlumbLine,
-                    onClick = onTogglePlumbLine,
-                    label = { Text(if (isBn) "উলম্ব প্লাম্ব" else "Plumb", fontSize = 12.sp, fontWeight = FontWeight.SemiBold) },
-                    leadingIcon = { Icon(Icons.Default.Straighten, null, modifier = Modifier.size(16.dp)) },
-                    colors = FilterChipDefaults.filterChipColors(
-                        containerColor = themeColors.cardBg,
-                        labelColor = themeColors.displayText,
-                        iconColor = themeColors.displayText,
-                        selectedContainerColor = themeColors.buttonEqualBg,
-                        selectedLabelColor = Color.White,
-                        selectedLeadingIconColor = Color.White
-                    ),
-                    border = FilterChipDefaults.filterChipBorder(
-                        enabled = true,
-                        selected = showPlumbLine,
-                        borderColor = themeColors.displayText.copy(alpha = 0.25f),
-                        selectedBorderColor = themeColors.buttonEqualBg
-                    )
+                LevelToolChipItem(
+                    label = if (isBn) "উলম্ব প্লাম্ব" else "Plumb",
+                    isSelected = showPlumbLine,
+                    icon = Icons.Default.Straighten,
+                    themeColors = themeColors,
+                    onClick = onTogglePlumbLine
                 )
 
                 // Flashlight / Torch
@@ -1475,7 +1431,6 @@ private fun CameraArLevelSection(
             }
         }
     }
-}
 
 // -------------------------------------------------------------
 // 2D Surface Bubble Level Section
@@ -1495,18 +1450,10 @@ private fun SurfaceBubbleLevelSection(
 ) {
     val accentColor = themeColors.buttonOperatorBg
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .themeCardShadow(themeColors),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = themeColors.cardBg)
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
             Text(
                 if (isBn) "সারফেস বাবল লেভেল (সমতল টেবিল/ফ্লোর)" else "2D Surface Bullseye Spirit Level",
                 fontWeight = FontWeight.Bold,
@@ -1680,7 +1627,6 @@ private fun SurfaceBubbleLevelSection(
                 }
             }
         }
-    }
 }
 
 @Composable
@@ -1752,18 +1698,10 @@ private fun PlumbBobVerticalSection(
     isBn: Boolean,
     themeColors: CalculatorThemeColors
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .themeCardShadow(themeColors),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = themeColors.cardBg)
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
             Text(
                 if (isBn) "উলম্ব প্লাম্ব লাইন (দেয়াল ও কলাম লেভেলার)" else "Vertical Plumb Line & Wall Leveler",
                 fontWeight = FontWeight.Bold,
@@ -1855,7 +1793,6 @@ private fun PlumbBobVerticalSection(
                 }
             }
         }
-    }
 }
 
 // -------------------------------------------------------------
@@ -1883,17 +1820,9 @@ private fun StandardAnglesGuideSection(
         )
     }
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .themeCardShadow(themeColors),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = themeColors.cardBg)
+    Column(
+        modifier = Modifier.fillMaxWidth()
     ) {
-        Column(
-            modifier = Modifier.padding(20.dp)
-        ) {
             Text(
                 if (isBn) "প্রয়োজনীয় স্ট্যান্ডার্ড কোণ ও লেভেল রেফারেন্স" else "Standard Angle & Slope Quick Reference",
                 fontWeight = FontWeight.Bold,
@@ -1944,11 +1873,10 @@ private fun StandardAnglesGuideSection(
                 }
             }
         }
-    }
 }
 
 // -------------------------------------------------------------
-// Saved Records Card Composable
+// Saved Records Section Composable
 // -------------------------------------------------------------
 @Composable
 private fun SavedRecordsCard(
@@ -1958,15 +1886,7 @@ private fun SavedRecordsCard(
     isBn: Boolean,
     themeColors: CalculatorThemeColors
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .themeCardShadow(themeColors),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = themeColors.cardBg)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+    Column(modifier = Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -2031,4 +1951,3 @@ private fun SavedRecordsCard(
             }
         }
     }
-}

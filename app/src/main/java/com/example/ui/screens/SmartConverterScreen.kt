@@ -349,6 +349,7 @@ fun SmartConverterCategoriesView(
                 }
             } else {
                 val isOverviewMode = currentFilter == null && searchQuery.isEmpty()
+                val expandedCategories = remember { mutableStateMapOf<ConverterCategory, Boolean>() }
 
                 Column(modifier = Modifier.fillMaxWidth()) {
                     // Category Active Banner when filtered
@@ -451,7 +452,8 @@ fun SmartConverterCategoriesView(
                         val categoryConverters = orderedCatConverters.filter { currentFilteredConverters.contains(it) }
 
                         if (categoryConverters.isNotEmpty()) {
-                            val displayedConverters = if (isOverviewMode) categoryConverters.take(4) else categoryConverters
+                            val isCategoryExpanded = expandedCategories[category] == true
+                            val displayedConverters = if (isOverviewMode && !isCategoryExpanded) categoryConverters.take(4) else categoryConverters
                             val hasMore = isOverviewMode && categoryConverters.size > 4
 
                             // Category Header
@@ -507,22 +509,22 @@ fun SmartConverterCategoriesView(
                                         modifier = Modifier
                                             .clip(RoundedCornerShape(8.dp))
                                             .background(themeColors.buttonEqualBg.copy(alpha = 0.08f))
-                                            .clickable { viewModel.selectedCategoryFilter = category }
+                                            .clickable { expandedCategories[category] = !isCategoryExpanded }
                                             .padding(horizontal = 8.dp, vertical = 4.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(
-                                            text = if (isBn) "সব দেখুন" else "See all",
+                                            text = if (isCategoryExpanded) (if (isBn) "সংক্ষিপ্ত করুন" else "Collapse") else (if (isBn) "সব দেখুন" else "See all"),
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = themeColors.buttonEqualBg
                                         )
                                         Spacer(modifier = Modifier.width(2.dp))
                                         Icon(
-                                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                            imageVector = if (isCategoryExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                                             contentDescription = null,
                                             tint = themeColors.buttonEqualBg,
-                                            modifier = Modifier.size(12.dp)
+                                            modifier = Modifier.size(14.dp)
                                         )
                                     }
                                 }
@@ -568,14 +570,14 @@ fun SmartConverterCategoriesView(
                                 }
                             }
 
-                            // Clean "See All" Button at the bottom of the section in Overview mode
+                            // Clean "See All" / "Collapse" Button at the bottom of the section in Overview mode
                             if (hasMore) {
                                 Surface(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(top = 4.dp, bottom = 14.dp)
                                         .clip(RoundedCornerShape(12.dp))
-                                        .clickable { viewModel.selectedCategoryFilter = category },
+                                        .clickable { expandedCategories[category] = !isCategoryExpanded },
                                     shape = RoundedCornerShape(12.dp),
                                     color = themeColors.cardBg,
                                     border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.25f))
@@ -588,17 +590,21 @@ fun SmartConverterCategoriesView(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(
-                                            text = if (isBn) 
-                                                "${category.getTitle(viewModel.selectedLanguage)}-এর সব (${categoryConverters.size}টি) কনভার্টার দেখুন" 
-                                            else 
-                                                "See all ${categoryConverters.size} ${category.getTitle(viewModel.selectedLanguage)} Converters",
+                                            text = if (isCategoryExpanded) {
+                                                if (isBn) "সংক্ষিপ্ত করুন" else "Collapse"
+                                            } else {
+                                                if (isBn) 
+                                                    "${category.getTitle(viewModel.selectedLanguage)}-এর সব (${categoryConverters.size}টি) কনভার্টার দেখুন" 
+                                                else 
+                                                    "See all ${categoryConverters.size} ${category.getTitle(viewModel.selectedLanguage)} Converters"
+                                            },
                                             fontSize = 12.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = themeColors.buttonEqualBg
                                         )
                                         Spacer(modifier = Modifier.width(6.dp))
                                         Icon(
-                                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                            imageVector = if (isCategoryExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                                             contentDescription = null,
                                             tint = themeColors.buttonEqualBg,
                                             modifier = Modifier.size(14.dp)

@@ -2126,7 +2126,8 @@ How can I help you today?"""
             } catch (e: Exception) { e.printStackTrace() }
         }
         return mapOf(
-            "ISLAMIC" to listOf("HOLY_QURAN", "HADITH_LIBRARY", "QIBLA_COMPASS", "PRAYER_TIMES", "SEHRI_IFTAR", "DIGITAL_TASBIH", "ISLAMIC_DUAS", "NAMAZ_EDUCATION")
+            "ISLAMIC" to listOf("HOLY_QURAN", "HADITH_LIBRARY", "QIBLA_COMPASS", "PRAYER_TIMES", "SEHRI_IFTAR", "DIGITAL_TASBIH", "ISLAMIC_DUAS", "NAMAZ_EDUCATION"),
+            "UTILITY" to listOf("AGE", "MARKET_LIST", "CAMERA_LEVEL", "METAL_DETECTOR", "MULTI_CALENDAR", "SIMPLE_COMPASS", "WEATHER", "STOPWATCH_TIMER", "NOTES_CHECKLIST", "WORLD_CLOCK")
         )
     }
 

@@ -2061,6 +2061,8 @@ fun ToolDetailView(
                          toolType == com.example.data.model.ToolType.NAMAZ_EDUCATION ||
                          toolType == com.example.data.model.ToolType.HADITH_LIBRARY
 
+    val isFullWidthTool = toolType == com.example.data.model.ToolType.MARKET_LIST || isQuranOrNamaz
+
     val finalModifier = if (toolType != com.example.data.model.ToolType.WEATHER &&
                           toolType != com.example.data.model.ToolType.MARKET_LIST &&
                           toolType != com.example.data.model.ToolType.NOTES_CHECKLIST &&
@@ -2071,7 +2073,7 @@ fun ToolDetailView(
         baseModifier
     }
 
-    val contentPaddingModifier = if (isQuranOrNamaz) {
+    val contentPaddingModifier = if (isFullWidthTool) {
         Modifier.padding(0.dp)
     } else {
         Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
@@ -2086,7 +2088,12 @@ fun ToolDetailView(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 16.dp)
+                    .padding(
+                        start = if (isFullWidthTool) 16.dp else 0.dp,
+                        end = if (isFullWidthTool) 16.dp else 0.dp,
+                        bottom = 16.dp,
+                        top = if (isFullWidthTool) 12.dp else 0.dp
+                    )
             ) {
                 val backInteractionSource = remember { MutableInteractionSource() }
                 FilledIconButton(

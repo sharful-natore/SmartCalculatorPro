@@ -355,7 +355,7 @@ fun MarketListScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = if (isHeaderVisible) 10.dp else 6.dp)
+                        .padding(horizontal = 0.dp, vertical = if (isHeaderVisible) 8.dp else 4.dp)
                         .animateContentSize()
                 ) {
                     AnimatedVisibility(
@@ -363,14 +363,17 @@ fun MarketListScreen(
                         enter = fadeIn() + expandVertically(),
                         exit = fadeOut() + shrinkVertically()
                     ) {
-                        Column {
+                        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp)) {
                             // Header Bar
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
                                     Box(
                                         modifier = Modifier
                                             .size(38.dp)
@@ -386,17 +389,19 @@ fun MarketListScreen(
                                         )
                                     }
                                     Spacer(modifier = Modifier.width(10.dp))
-                                    Column {
+                                    Column(modifier = Modifier.weight(1f)) {
                                         Text(
                                             text = if (isBn) "বাজারের ফর্দ ও মেমো" else "Market List & Shopping Memo",
                                             fontSize = 17.sp,
                                             fontWeight = FontWeight.Bold,
-                                            color = themeColors.displayText
+                                            color = themeColors.displayText,
+                                            modifier = Modifier.fillMaxWidth()
                                         )
                                         Text(
                                             text = if (isBn) "ফর্দ তৈরি, লাইভ হিসাব ও মেমো হিস্টোরি" else "Plan list, live shopping & memo history",
                                             fontSize = 11.sp,
-                                            color = themeColors.displayText.copy(alpha = 0.6f)
+                                            color = themeColors.displayText.copy(alpha = 0.6f),
+                                            modifier = Modifier.fillMaxWidth()
                                         )
                                     }
                                 }
@@ -407,7 +412,9 @@ fun MarketListScreen(
 
                     // Top 2 Chips: ফর্দ (Shopping Lists) & হিস্টোরি (History)
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp),
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         // Chip 1: ফর্দ
@@ -520,8 +527,8 @@ fun MarketListScreen(
                             LazyColumn(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .padding(horizontal = 14.dp, vertical = 10.dp),
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                                    .padding(horizontal = 4.dp, vertical = 8.dp),
+                                verticalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
                                 items(planLists, key = { it.id }) { plan ->
                                     MarketPlanCardItem(
@@ -561,8 +568,8 @@ fun MarketListScreen(
                             LazyColumn(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .padding(horizontal = 14.dp, vertical = 10.dp),
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                                    .padding(horizontal = 4.dp, vertical = 8.dp),
+                                verticalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
                                 items(completedMemos, key = { it.id }) { memo ->
                                     CompletedMemoCardItem(

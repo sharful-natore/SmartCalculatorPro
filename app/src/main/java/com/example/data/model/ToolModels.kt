@@ -182,6 +182,51 @@ enum class ToolType(
         "বাজারের ফর্দ তৈরি, মালামাল কেনা, দাম ও পরিমাণের হিসাব, মেমো সেভ ও পিডিএফ এক্সপোর্ট",
         ToolCategory.UTILITY, Icons.Default.ShoppingCart
     ),
+    CAMERA_LEVEL(
+        "AR Camera Level & Angle Meter", "ক্যামেরা লেভেলার ও কোণ মিটার",
+        "ক্যামেরা ও সেন্সরের সাহায্যে যেকোনো বস্তু উলম্ব বা আনুভূমিক সোজা আছে কিনা তা নিখুঁতভাবে দেখুন ও কোণ পরিমাপ করুন",
+        ToolCategory.UTILITY, Icons.Default.SquareFoot
+    ),
+    METAL_DETECTOR(
+        "Metal Detector", "মেটাল ডিটেক্টর",
+        "ম্যাগনেটোমিটার সেন্সরের সাহায্যে ধাতু, তার ও চৌম্বক ক্ষেত্র সনাক্তকরণ",
+        ToolCategory.UTILITY, Icons.Default.Sensors
+    ),
+    MULTI_CALENDAR(
+        "Smart Calendar", "স্মার্ট ক্যালেন্ডার",
+        "ইংরেজি, বাংলা ও আরবি (হিজরী) ট্রিপল ক্যালেন্ডার",
+        ToolCategory.UTILITY, Icons.Default.CalendarMonth
+    ),
+    SIMPLE_COMPASS(
+        "Digital Compass", "ডিজিটাল কম্পাস",
+        "অ্যানালগ-ডিজিটাল দিক নির্ণায়ক ও লেভেলিং মিটার",
+        ToolCategory.UTILITY, Icons.Default.Explore
+    ),
+    WEATHER(
+        "Weather Forecast", "আবহাওয়া বার্তা",
+        "বর্তমান আবহাওয়া, ৭ দিনের পূর্বাভাস এবং বিস্তারিত তথ্য",
+        ToolCategory.UTILITY, Icons.Default.Cloud
+    ),
+    STOPWATCH_TIMER(
+        "Stopwatch & Timer", "স্টপওয়াচ ও টাইমার",
+        "কাউন্টডাউন টাইমার ও ল্যাপ সহ নির্ভুল স্টপওয়াচ",
+        ToolCategory.UTILITY, Icons.Default.Timer
+    ),
+    NOTES_CHECKLIST(
+        "Quick Notes & Memo", "কুইক নোটস ও মেমো",
+        "জরুরি হিসাব, নোট ও মেমো সংরক্ষণ করার টুল",
+        ToolCategory.UTILITY, Icons.Default.EditNote
+    ),
+    WORLD_CLOCK(
+        "World Clock", "ওয়ার্ল্ড ক্লক",
+        "বিশ্বের বিভিন্ন দেশের বর্তমান সময় ও টাইমজোন",
+        ToolCategory.UTILITY, Icons.Default.Schedule
+    ),
+    PHOTO_LAB(
+        "Photo Resizer Tool", "ফটো রিসাইজার টুল",
+        "ফটো ক্রপ, কাস্টম মাপ (px/cm/mm/inch), ফাইল সাইজ (KB/MB) ও ফরম্যাট পরিবর্তন",
+        ToolCategory.UTILITY, Icons.Default.Image
+    ),
     DATE_DIFF(
         "Date Difference", "তারিখের ব্যবধান",
         "দুটি নির্দিষ্ট তারিখের মধ্যকার ব্যবধান বা দিন হিসাব",
@@ -191,16 +236,6 @@ enum class ToolType(
         "Percentage & Ratio", "শতকরা ও অনুপাত",
         "যেকোনো সাধারণ শতকরা এবং অনুপাতের হিসেব",
         ToolCategory.UTILITY, Icons.Default.Percent
-    ),
-    TIP(
-        "Tip Calculator", "টিপ ও বিল ভাগ",
-        "রেস্তোরাঁয় বিল ভাগ ও টিপ দেওয়ার হিসেব",
-        ToolCategory.UTILITY, Icons.Default.Restaurant
-    ),
-    TEXT_COUNTER(
-        "Word & Text Counter", "শব্দ ও অক্ষর গণনা",
-        "যেকোনো টেক্সট বা প্যারাগ্রাফের শব্দ, অক্ষর ও লাইন গণনা",
-        ToolCategory.UTILITY, Icons.Default.FormatQuote
     ),
     CLOTH_MEASUREMENT(
         "Cloth Measurement (Gaj-Gira)", "কাপড়ের গজ-গিরা পরিমাপ",
@@ -212,13 +247,44 @@ enum class ToolType(
         "ভরি, আনা, রতি ও পয়েন্ট অনুযায়ী স্বর্ণের দাম নির্ধারণ",
         ToolCategory.UTILITY, Icons.Default.AttachMoney
     ),
+    TIP(
+        "Tip Calculator", "টিপ ও বিল ভাগ",
+        "রেস্তোরাঁয় বিল ভাগ ও টিপ দেওয়ার হিসেব",
+        ToolCategory.UTILITY, Icons.Default.Restaurant
+    ),
+    TEXT_COUNTER(
+        "Word & Text Counter", "শব্দ ও অক্ষর গণনা",
+        "যেকোনো টেক্সট বা প্যারাগ্রাফের শব্দ, অক্ষর ও লাইন গণনা",
+        ToolCategory.UTILITY, Icons.Default.FormatQuote
+    ),
+    UNIT_PRICE_COMPARER(
+        "Unit Price Comparer", "একক দাম তুলনা",
+        "দুইটি পণ্যের সাইজ ও দাম তুলনা করে সেরা ডিল নির্বাচন",
+        ToolCategory.UTILITY, Icons.Default.Compare
+    ),
+    ASPECT_RATIO(
+        "Aspect Ratio", "অ্যাসপেক্ট রেশিও",
+        "ছবি, ডিসপ্লে ও ভিডিওর দৈর্ঘ্য-প্রস্থ অনুপাত নির্ণয়",
+        ToolCategory.UTILITY, Icons.Default.AspectRatio
+    ),
+    RANDOM_NUMBER_PICKER(
+        "Lottery & Toss / Dice", "লটারি/টস",
+        "লটারি ও র‍্যান্ডম নাম্বার, বাস্তবসম্মত ৩ডি কয়েন টস ও অ্যানিমেটেড ডাইস রোল",
+        ToolCategory.UTILITY, Icons.Default.Casino
+    ),
+    // 4. Developer Tools
     PASSWORD_GENERATOR(
         "Password Generator", "পাসওয়ার্ড জেনারেটর",
         "কাস্টমাইজড এবং সুরক্ষিত স্ট্রং পাসওয়ার্ড তৈরি করুন",
         ToolCategory.DEVELOPER, Icons.Default.Password
     ),
+    COLOR_CONVERTER(
+        "Color Converter", "কালার কোড কনভার্টার",
+        "HEX, RGB এবং HSL কালার কোডের মধ্যে রূপান্তর",
+        ToolCategory.DEVELOPER, Icons.Default.Palette
+    ),
 
-    // 4. Electricity & Power
+    // 5. Electricity & Power
     ELECTRICITY_BILL(
         "Electricity Bill Calculator", "বিদ্যুৎ বিল ক্যালকুলেটর",
         "ইউনিট (kWh), বিদ্যুৎ সংযোগের ধরণ ও ট্যারিফ রেট দিয়ে মাসিক বিলের হিসাব",
@@ -240,7 +306,7 @@ enum class ToolType(
         ToolCategory.ENGINEERING, Icons.Default.SettingsInputComponent
     ),
 
-    // 5. Smart & Vehicle Tools
+    // 6. Smart & Vehicle Tools
     FUEL_COST(
         "Fuel Cost Calculator", "জ্বালানি খরচ ক্যালকুলেটর",
         "দূরত্ব এবং মাইলেজ দিয়ে প্রয়োজনীয় তেলের খরচ নির্ধারণ",
@@ -252,7 +318,7 @@ enum class ToolType(
         ToolCategory.VEHICLE, Icons.Default.Speed
     ),
 
-    // 6. Education & Results
+    // 7. Education & Results
     GPA(
         "GPA Calculator", "জিপিএ ক্যালকুলেটর",
         "বিষয়ভিত্তিক গ্রেড ও পয়েন্ট দিয়ে সেমিস্টার জিপিএ হিসাব",
@@ -269,74 +335,6 @@ enum class ToolType(
         ToolCategory.EDUCATION, Icons.Default.Receipt
     ),
 
-    // 7. Developer Tools
-    COLOR_CONVERTER(
-        "Color Converter", "কালার কোড কনভার্টার",
-        "HEX, RGB এবং HSL কালার কোডের মধ্যে রূপান্তর",
-        ToolCategory.DEVELOPER, Icons.Default.Palette
-    ),
-
-    // 8. Everyday Smart Tools
-    WEATHER(
-        "Weather Forecast", "আবহাওয়া বার্তা",
-        "বর্তমান আবহাওয়া, ৭ দিনের পূর্বাভাস এবং বিস্তারিত তথ্য",
-        ToolCategory.UTILITY, Icons.Default.Cloud
-    ),
-    STOPWATCH_TIMER(
-        "Stopwatch & Timer", "স্টপওয়াচ ও টাইমার",
-        "কাউন্টডাউন টাইমার ও ল্যাপ সহ নির্ভুল স্টপওয়াচ",
-        ToolCategory.UTILITY, Icons.Default.Timer
-    ),
-    NOTES_CHECKLIST(
-        "Quick Notes & Memo", "কুইক নোটস ও মেমো",
-        "জরুরি হিসাব, নোট ও মেমো সংরক্ষণ করার টুল",
-        ToolCategory.UTILITY, Icons.Default.EditNote
-    ),
-    WORLD_CLOCK(
-        "World Clock", "ওয়ার্ল্ড ক্লক",
-        "বিশ্বের বিভিন্ন দেশের বর্তমান সময় ও টাইমজোন",
-        ToolCategory.UTILITY, Icons.Default.Schedule
-    ),
-    UNIT_PRICE_COMPARER(
-        "Unit Price Comparer", "একক দাম তুলনা",
-        "দুইটি পণ্যের সাইজ ও দাম তুলনা করে সেরা ডিল নির্বাচন",
-        ToolCategory.UTILITY, Icons.Default.Compare
-    ),
-    SIMPLE_COMPASS(
-        "Digital Compass", "ডিজিটাল কম্পাস",
-        "অ্যানালগ-ডিজিটাল দিক নির্ণায়ক ও লেভেলিং মিটার",
-        ToolCategory.UTILITY, Icons.Default.Explore
-    ),
-    CAMERA_LEVEL(
-        "AR Camera Level & Angle Meter", "ক্যামেরা লেভেলার ও কোণ মিটার",
-        "ক্যামেরা ও সেন্সরের সাহায্যে যেকোনো বস্তু উলম্ব বা আনুভূমিক সোজা আছে কিনা তা নিখুঁতভাবে দেখুন ও কোণ পরিমাপ করুন",
-        ToolCategory.UTILITY, Icons.Default.SquareFoot
-    ),
-    ASPECT_RATIO(
-        "Aspect Ratio", "অ্যাসপেক্ট রেশিও",
-        "ছবি, ডিসপ্লে ও ভিডিওর দৈর্ঘ্য-প্রস্থ অনুপাত নির্ণয়",
-        ToolCategory.UTILITY, Icons.Default.AspectRatio
-    ),
-    RANDOM_NUMBER_PICKER(
-        "Lottery & Toss / Dice", "লটারি/টস",
-        "লটারি ও র‍্যান্ডম নাম্বার, বাস্তবসম্মত ৩ডি কয়েন টস ও অ্যানিমেটেড ডাইস রোল",
-        ToolCategory.UTILITY, Icons.Default.Casino
-    ),
-    MULTI_CALENDAR(
-        "Smart Calendar", "স্মার্ট ক্যালেন্ডার",
-        "ইংরেজি, বাংলা ও আরবি (হিজরী) ট্রিপল ক্যালেন্ডার",
-        ToolCategory.UTILITY, Icons.Default.CalendarMonth
-    ),
-    PHOTO_LAB(
-        "Photo Resizer Tool", "ফটো রিসাইজার টুল",
-        "ফটো ক্রপ, কাস্টম মাপ (px/cm/mm/inch), ফাইল সাইজ (KB/MB) ও ফরম্যাট পরিবর্তন",
-        ToolCategory.UTILITY, Icons.Default.Image
-    ),
-    METAL_DETECTOR(
-        "Metal Detector", "মেটাল ডিটেক্টর",
-        "ম্যাগনেটোমিটার সেন্সরের সাহায্যে ধাতু, তার ও চৌম্বক ক্ষেত্র সনাক্তকরণ",
-        ToolCategory.UTILITY, Icons.Default.Sensors
-    ),
     PHONE_DIAGNOSTICS(
         "Phone Diagnostics", "ফোন ডায়াগনসিস",
         "ফোনের সকল সেন্সর, টাচস্ক্রিন, স্পিকার, ভাইব্রেশন ও ডিসপ্লে ডায়াগনস্টিক টেস্ট",

@@ -90,15 +90,13 @@ class QuickMarketActivity : ComponentActivity() {
                         shadowElevation = 16.dp
                     ) {
                         Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(12.dp)
+                            modifier = Modifier.fillMaxSize()
                         ) {
                             // Header with Title and Windows 11 style controls
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(bottom = 8.dp),
+                                    .padding(horizontal = 12.dp, vertical = 8.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
