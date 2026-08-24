@@ -307,14 +307,19 @@ enum class ToolType(
         "অ্যানালগ-ডিজিটাল দিক নির্ণায়ক ও লেভেলিং মিটার",
         ToolCategory.UTILITY, Icons.Default.Explore
     ),
+    CAMERA_LEVEL(
+        "AR Camera Level & Angle Meter", "ক্যামেরা লেভেলার ও কোণ মিটার",
+        "ক্যামেরা ও সেন্সরের সাহায্যে যেকোনো বস্তু উলম্ব বা আনুভূমিক সোজা আছে কিনা তা নিখুঁতভাবে দেখুন ও কোণ পরিমাপ করুন",
+        ToolCategory.UTILITY, Icons.Default.SquareFoot
+    ),
     ASPECT_RATIO(
         "Aspect Ratio", "অ্যাসপেক্ট রেশিও",
         "ছবি, ডিসপ্লে ও ভিডিওর দৈর্ঘ্য-প্রস্থ অনুপাত নির্ণয়",
         ToolCategory.UTILITY, Icons.Default.AspectRatio
     ),
     RANDOM_NUMBER_PICKER(
-        "Random Picker & Dice", "র্যান্ডম নাম্বার ও ডাইস",
-        "লটারি নাম্বার, র‍্যান্ডম চয়েস, কয়েন ফ্লিপ ও ডাইস রোল",
+        "Lottery & Toss / Dice", "লটারি/টস",
+        "লটারি ও র‍্যান্ডম নাম্বার, বাস্তবসম্মত ৩ডি কয়েন টস ও অ্যানিমেটেড ডাইস রোল",
         ToolCategory.UTILITY, Icons.Default.Casino
     ),
     MULTI_CALENDAR(
@@ -434,8 +439,9 @@ enum class ToolType(
                 WORLD_CLOCK -> "Live clock and timezone converter across world cities"
                 UNIT_PRICE_COMPARER -> "Compare unit prices to find the best value deal"
                 SIMPLE_COMPASS -> "Digital orientation compass and spirit level"
+                CAMERA_LEVEL -> "Check horizontal and vertical leveling, plumb lines, and measure surface tilt angles via camera AR"
                 ASPECT_RATIO -> "Calculate screen, video, and image aspect ratios"
-                RANDOM_NUMBER_PICKER -> "Random number generator, dice roller, and coin flipper"
+                RANDOM_NUMBER_PICKER -> "Lottery number generator, 3D animated coin toss, and realistic dice roller"
                 MULTI_CALENDAR -> "Gregorian, Bengali, and Hijri multi-calendar"
                 WEATHER -> "Check current weather and 7-day forecast"
                 PHOTO_LAB -> "Resize, crop, convert between formats, and remove backgrounds from photos"

@@ -36,6 +36,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.automirrored.filled.Backspace
+import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Info
 import com.example.util.AppLanguage
@@ -951,6 +952,96 @@ fun CalculatorScreen(
                     shape = RoundedCornerShape(24.dp)
                 )
             }
+
+            // AC Undo Confirmation Dialog
+            if (viewModel.showUndoConfirmDialog) {
+                AlertDialog(
+                    onDismissRequest = { viewModel.dismissUndoDialog() },
+                    containerColor = themeColors.cardBg,
+                    icon = {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Undo,
+                            contentDescription = null,
+                            tint = themeColors.buttonEqualBg,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    },
+                    title = {
+                        Text(
+                            text = if (isBn) "হিসাব পূর্বাবস্থায় আনবেন?" else "Undo & Restore Calculation?",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            color = themeColors.displayText,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    },
+                    text = {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Text(
+                                text = if (isBn)
+                                    "বর্তমান হিসেব প্রতিস্থাপন করে পূর্বের অল ক্লিয়ার (AC) করা রাশিমালা ফিরিয়ে আনতে চান?"
+                                else
+                                    "Do you want to replace the current expression and restore the previous cleared calculation?",
+                                fontSize = 14.sp,
+                                color = themeColors.displayText.copy(alpha = 0.85f)
+                            )
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = themeColors.background.copy(alpha = 0.7f),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Text(
+                                        text = if (isBn) "বর্তমান: ${viewModel.expression}" else "Current: ${viewModel.expression}",
+                                        fontSize = 13.sp,
+                                        fontFamily = FontFamily.Monospace,
+                                        color = themeColors.displayExpressionText
+                                    )
+                                    viewModel.lastClearedExpressionValue?.let { lastExp ->
+                                        Text(
+                                            text = if (isBn) "পুনরুদ্ধার হবে: ${lastExp.text}" else "Will Restore: ${lastExp.text}",
+                                            fontSize = 13.sp,
+                                            fontFamily = FontFamily.Monospace,
+                                            fontWeight = FontWeight.Bold,
+                                            color = themeColors.buttonEqualBg
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = { viewModel.confirmUndo() },
+                            colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg)
+                        ) {
+                            Text(
+                                text = if (isBn) "হ্যাঁ, আনডু করুন" else "Yes, Restore",
+                                color = themeColors.buttonEqualText,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    },
+                    dismissButton = {
+                        OutlinedButton(
+                            onClick = { viewModel.dismissUndoDialog() }
+                        ) {
+                            Text(
+                                text = if (isBn) "বাতিল" else "Cancel",
+                                color = themeColors.displayText
+                            )
+                        }
+                    },
+                    shape = RoundedCornerShape(20.dp)
+                )
+            }
         }
 
         val isExpanded = viewModel.isScientificExpanded || expansionFraction > 0.5f
@@ -1131,7 +1222,37 @@ fun CalculatorScreen(
                         .then(dragModifier),
                     horizontalArrangement = Arrangement.spacedBy(rowSpacing)
                 ) {
-                    CalculatorButton("AC", themeColors.buttonFunctionBg, themeColors.buttonFunctionText, { viewModel.onBtnClick("AC") }, Modifier.weight(1f), fontSize = basicFontSize, padding = buttonPadding)
+                    CalculatorButton(
+                        text = "AC",
+                        bgColor = themeColors.buttonFunctionBg,
+                        textColor = themeColors.buttonFunctionText,
+                        onClick = { viewModel.onBtnClick("AC") },
+                        onLongClick = { viewModel.onAcLongClick() },
+                        modifier = Modifier.weight(1f),
+                        fontSize = basicFontSize,
+                        padding = buttonPadding,
+                        icon = {
+                            Box(modifier = Modifier.fillMaxSize()) {
+                                Text(
+                                    text = "AC",
+                                    color = themeColors.buttonFunctionText,
+                                    fontSize = basicFontSize.sp,
+                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.align(Alignment.Center)
+                                )
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.Undo,
+                                    contentDescription = "Undo AC",
+                                    tint = themeColors.buttonFunctionText.copy(alpha = 0.7f),
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .padding(top = if (isExpanded) 4.dp else 6.dp, end = if (isExpanded) 5.dp else 7.dp)
+                                        .size(if (isExpanded) 11.dp else 13.dp)
+                                )
+                            }
+                        }
+                    )
                     CalculatorButton("()", themeColors.buttonFunctionBg, themeColors.buttonFunctionText, { viewModel.onBtnClick("()") }, Modifier.weight(1f), fontSize = basicFontSize, padding = buttonPadding)
                     CalculatorButton("%", themeColors.buttonFunctionBg, themeColors.buttonFunctionText, { viewModel.onBtnClick("%") }, Modifier.weight(1f), fontSize = basicFontSize, padding = buttonPadding)
                     CalculatorButton("÷", themeColors.buttonOperatorBg, themeColors.buttonOperatorText, { viewModel.onBtnClick("÷") }, Modifier.weight(1f), fontSize = basicFontSize, padding = buttonPadding)

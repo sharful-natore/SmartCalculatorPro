@@ -148,6 +148,13 @@ class CalculatorViewModel(
     var result by mutableStateOf("")
         private set
 
+    // AC Undo States
+    var lastClearedExpressionValue by mutableStateOf<TextFieldValue?>(null)
+        private set
+    var lastClearedResult by mutableStateOf<String?>(null)
+        private set
+    var showUndoConfirmDialog by mutableStateOf(false)
+
     var isDegreeMode by mutableStateOf(true)
 
     var isScientificExpanded by mutableStateOf(false)
@@ -204,6 +211,16 @@ class CalculatorViewModel(
             if (!savedExpr.isNullOrBlank() && savedExpr != "0") {
                 expressionValue = TextFieldValue(savedExpr, selection = TextRange(savedSel.coerceIn(0, savedExpr.length)))
                 result = savedRes
+            }
+            val savedClearedExpr = sharedPrefs.getString("last_cleared_calc_expr", null)
+            val savedClearedRes = sharedPrefs.getString("last_cleared_calc_res", "") ?: ""
+            val savedClearedSel = sharedPrefs.getInt("last_cleared_calc_sel", 0)
+            if (!savedClearedExpr.isNullOrBlank() && savedClearedExpr != "0") {
+                lastClearedExpressionValue = TextFieldValue(
+                    savedClearedExpr,
+                    selection = TextRange(savedClearedSel.coerceIn(0, savedClearedExpr.length))
+                )
+                lastClearedResult = savedClearedRes
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -2747,6 +2764,19 @@ How can I help you today?"""
 
         when (char) {
             "AC" -> {
+                if (expressionValue.text != "0" && expressionValue.text.isNotBlank()) {
+                    lastClearedExpressionValue = expressionValue
+                    lastClearedResult = result
+                    try {
+                        sharedPrefs.edit()
+                            .putString("last_cleared_calc_expr", expressionValue.text)
+                            .putString("last_cleared_calc_res", result)
+                            .putInt("last_cleared_calc_sel", expressionValue.selection.start)
+                            .apply()
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
                 expressionValue = TextFieldValue("0", selection = TextRange(1))
                 result = ""
             }
@@ -2880,6 +2910,55 @@ How can I help you today?"""
                 tryEvaluatePreview()
             }
         }
+        persistActiveExpression()
+    }
+
+    fun onAcLongClick() {
+        val targetUndo = lastClearedExpressionValue ?: return
+        val currentText = expressionValue.text.trim()
+        
+        // If current digit/expression is "0" or blank, undo immediately!
+        if (currentText == "0" || currentText.isEmpty()) {
+            executeUndo()
+        } else {
+            // If current expression has digits, ask for confirmation before replacing
+            showUndoConfirmDialog = true
+        }
+    }
+
+    fun confirmUndo() {
+        executeUndo()
+        showUndoConfirmDialog = false
+    }
+
+    fun dismissUndoDialog() {
+        showUndoConfirmDialog = false
+    }
+
+    private fun executeUndo() {
+        val targetUndo = lastClearedExpressionValue ?: return
+        val prevCurrentExpr = expressionValue
+        val prevCurrentRes = result
+        
+        expressionValue = targetUndo
+        result = lastClearedResult ?: ""
+        
+        // If replacing an existing non-zero expression, store it so user can toggle/undo
+        if (prevCurrentExpr.text != "0" && prevCurrentExpr.text.isNotBlank()) {
+            lastClearedExpressionValue = prevCurrentExpr
+            lastClearedResult = prevCurrentRes
+            try {
+                sharedPrefs.edit()
+                    .putString("last_cleared_calc_expr", prevCurrentExpr.text)
+                    .putString("last_cleared_calc_res", prevCurrentRes)
+                    .putInt("last_cleared_calc_sel", prevCurrentExpr.selection.start)
+                    .apply()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+        
+        tryEvaluatePreview()
         persistActiveExpression()
     }
 

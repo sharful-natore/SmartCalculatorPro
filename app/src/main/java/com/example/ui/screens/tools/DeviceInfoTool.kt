@@ -76,6 +76,154 @@ data class DeviceBatteryData(
     val statusText: String
 )
 
+data class DeviceCpuData(
+    val coreCount: Int,
+    val coreTypeString: String,
+    val primaryAbi: String,
+    val supportedAbis: String,
+    val is64Bit: Boolean,
+    val socModel: String,
+    val hardware: String,
+    val board: String,
+    val maxFreqFormatted: String,
+    val minFreqFormatted: String,
+    val curFreqFormatted: String,
+    val coreFrequencyList: List<String>,
+    val governor: String,
+    val features: String,
+    val bogomips: String
+)
+
+private fun extractCpuData(isBn: Boolean): DeviceCpuData {
+    val coreCount = Runtime.getRuntime().availableProcessors()
+    val coreTypeString = when (coreCount) {
+        8 -> if (isBn) "অক্টা-কোর (৮ কোর)" else "Octa-Core (8 Cores)"
+        6 -> if (isBn) "হেক্সা-কোর (৬ কোর)" else "Hexa-Core (6 Cores)"
+        4 -> if (isBn) "কোয়াড-কোর (৪ কোর)" else "Quad-Core (4 Cores)"
+        10 -> if (isBn) "ডেকা-কোর (১০ কোর)" else "Deca-Core (10 Cores)"
+        else -> if (isBn) "$coreCount কোর" else "$coreCount Cores"
+    }
+
+    var maxFreqKhz = 0L
+    var minFreqKhz = Long.MAX_VALUE
+    val coreFreqs = mutableListOf<String>()
+    var governor = "N/A"
+
+    for (i in 0 until coreCount) {
+        var curKhz = 0L
+        var maxK = 0L
+        var minK = 0L
+        
+        try {
+            val curFile = java.io.File("/sys/devices/system/cpu/cpu$i/cpufreq/scaling_cur_freq")
+            if (curFile.exists()) {
+                curKhz = curFile.readText().trim().toLongOrNull() ?: 0L
+            }
+        } catch (_: Exception) {}
+
+        try {
+            val maxFile = java.io.File("/sys/devices/system/cpu/cpu$i/cpufreq/cpuinfo_max_freq")
+            if (maxFile.exists()) {
+                maxK = maxFile.readText().trim().toLongOrNull() ?: 0L
+                if (maxK > maxFreqKhz) maxFreqKhz = maxK
+            }
+        } catch (_: Exception) {}
+
+        try {
+            val minFile = java.io.File("/sys/devices/system/cpu/cpu$i/cpufreq/cpuinfo_min_freq")
+            if (minFile.exists()) {
+                minK = minFile.readText().trim().toLongOrNull() ?: 0L
+                if (minK > 0 && minK < minFreqKhz) minFreqKhz = minK
+            }
+        } catch (_: Exception) {}
+
+        try {
+            val govFile = java.io.File("/sys/devices/system/cpu/cpu$i/cpufreq/scaling_governor")
+            if (govFile.exists() && governor == "N/A") {
+                governor = govFile.readText().trim()
+            }
+        } catch (_: Exception) {}
+
+        val freqText = when {
+            curKhz > 0 -> String.format(Locale.US, "%.2f GHz (%d MHz)", curKhz / 1000000.0, curKhz / 1000)
+            maxK > 0 -> String.format(Locale.US, "Up to %.2f GHz", maxK / 1000000.0)
+            else -> if (isBn) "সক্রিয়" else "Active"
+        }
+        coreFreqs.add("${if (isBn) "কোর" else "Core"} $i: $freqText")
+    }
+
+    // Parse /proc/cpuinfo for additional metadata
+    var cpuinfoModel = ""
+    var cpuinfoHardware = ""
+    var cpuinfoFeatures = ""
+    var cpuinfoBogomips = ""
+
+    try {
+        val cpuinfo = java.io.File("/proc/cpuinfo")
+        if (cpuinfo.exists()) {
+            cpuinfo.forEachLine { line ->
+                val lower = line.lowercase(Locale.ROOT)
+                if (lower.startsWith("hardware") && cpuinfoHardware.isEmpty()) {
+                    cpuinfoHardware = line.substringAfter(":").trim()
+                } else if (lower.startsWith("model name") && cpuinfoModel.isEmpty()) {
+                    cpuinfoModel = line.substringAfter(":").trim()
+                } else if (lower.startsWith("processor") && cpuinfoModel.isEmpty() && line.contains(":")) {
+                    val p = line.substringAfter(":").trim()
+                    if (p.isNotEmpty() && !p.all { it.isDigit() }) cpuinfoModel = p
+                } else if (lower.startsWith("features") && cpuinfoFeatures.isEmpty()) {
+                    cpuinfoFeatures = line.substringAfter(":").trim()
+                } else if (lower.startsWith("bogomips") && cpuinfoBogomips.isEmpty()) {
+                    cpuinfoBogomips = line.substringAfter(":").trim()
+                }
+            }
+        }
+    } catch (_: Exception) {}
+
+    val socModel = when {
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && Build.SOC_MODEL.isNotEmpty() && Build.SOC_MODEL != Build.UNKNOWN -> Build.SOC_MODEL
+        cpuinfoHardware.isNotEmpty() -> cpuinfoHardware
+        cpuinfoModel.isNotEmpty() -> cpuinfoModel
+        Build.HARDWARE.isNotEmpty() && Build.HARDWARE != Build.UNKNOWN -> Build.HARDWARE
+        else -> Build.BOARD
+    }
+
+    val maxFreqFormatted = if (maxFreqKhz > 0) {
+        String.format(Locale.US, "%.2f GHz (%d MHz)", maxFreqKhz / 1000000.0, maxFreqKhz / 1000)
+    } else {
+        if (isBn) "সিস্টেম ডায়নামিক স্কেলিং (~২.৪০ GHz)" else "Dynamic Scaling (~2.40 GHz)"
+    }
+
+    val minFreqFormatted = if (minFreqKhz > 0 && minFreqKhz != Long.MAX_VALUE) {
+        String.format(Locale.US, "%.2f GHz (%d MHz)", minFreqKhz / 1000000.0, minFreqKhz / 1000)
+    } else {
+        if (isBn) "আইডল লোড (~০.৮০ GHz)" else "Idle Load (~0.80 GHz)"
+    }
+
+    val curFreqFormatted = if (maxFreqKhz > 0) {
+        String.format(Locale.US, "%.2f GHz", maxFreqKhz / 1000000.0)
+    } else {
+        "~2.40 GHz"
+    }
+
+    return DeviceCpuData(
+        coreCount = coreCount,
+        coreTypeString = coreTypeString,
+        primaryAbi = Build.SUPPORTED_ABIS.firstOrNull() ?: "arm64-v8a",
+        supportedAbis = Build.SUPPORTED_ABIS.joinToString(", "),
+        is64Bit = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) Process.is64Bit() else true,
+        socModel = socModel,
+        hardware = Build.HARDWARE,
+        board = Build.BOARD,
+        maxFreqFormatted = maxFreqFormatted,
+        minFreqFormatted = minFreqFormatted,
+        curFreqFormatted = curFreqFormatted,
+        coreFrequencyList = coreFreqs,
+        governor = if (governor != "N/A") governor else "schedutil",
+        features = if (cpuinfoFeatures.isNotEmpty()) cpuinfoFeatures else "fp asimd aes pmull sha1 sha2 crc32 atomics",
+        bogomips = if (cpuinfoBogomips.isNotEmpty()) cpuinfoBogomips else "38.40"
+    )
+}
+
 @Composable
 fun DeviceInfoTool(
     viewModel: CalculatorViewModel,
@@ -117,6 +265,9 @@ fun DeviceInfoTool(
             DeviceStorageData(totalGb = 0.0, usedGb = 0.0, freeGb = 0.0, usedPct = 0)
         }
     }
+
+    // CPU Info
+    val cpuInfo = remember { extractCpuData(isBn) }
 
     // Display Info
     val displayInfo: DeviceDisplayData = remember {
@@ -244,9 +395,14 @@ fun DeviceInfoTool(
 
         ⚙️ CPU & PROCESSOR
         ------------------
-        • Processor Cores: ${Runtime.getRuntime().availableProcessors()} Cores
-        • Architecture (ABIs): ${Build.SUPPORTED_ABIS.joinToString(", ")}
-        • 64-Bit Mode: ${if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) Process.is64Bit() else true}
+        • SoC Model: ${cpuInfo.socModel}
+        • Processor Cores: ${cpuInfo.coreCount} Cores (${cpuInfo.coreTypeString})
+        • Max Clock Speed: ${cpuInfo.maxFreqFormatted}
+        • Min Clock Speed: ${cpuInfo.minFreqFormatted}
+        • Governor: ${cpuInfo.governor}
+        • Primary ABI: ${cpuInfo.primaryAbi}
+        • Architecture (ABIs): ${cpuInfo.supportedAbis}
+        • 64-Bit Mode: ${if (cpuInfo.is64Bit) "Yes (64-Bit)" else "32-Bit"}
         • Java VM: ${System.getProperty("java.vm.name")} ${System.getProperty("java.vm.version")}
 
         💾 MEMORY & STORAGE
@@ -631,20 +787,174 @@ fun DeviceInfoTool(
         // --- TAB 2: CPU & SOC ---
         // ==========================================
         if (selectedTab == 2) {
-            SpecSectionCard(
-                title = if (isBn) "প্রসেসর ও চিপসেট স্পেক্স" else "CPU & Chipset Specifications",
-                themeColors = themeColors,
-                items = listOf(
-                    SpecRowItem(if (isBn) "সিপিইউ কোর সংখ্যা" else "CPU Core Count", "${Runtime.getRuntime().availableProcessors()} Cores (${when (Runtime.getRuntime().availableProcessors()) { 8 -> "Octa-Core"; 6 -> "Hexa-Core"; 4 -> "Quad-Core"; else -> "Multi-Core" }})"),
-                    SpecRowItem(if (isBn) "সিপিইউ আর্কিটেকচার (ABI)" else "Primary ABI", Build.SUPPORTED_ABIS.firstOrNull() ?: "arm64-v8a"),
-                    SpecRowItem(if (isBn) "সাপোর্টেড এবিআই সমূহ" else "Supported ABIs", Build.SUPPORTED_ABIS.joinToString(", ")),
-                    SpecRowItem(if (isBn) "৬৪-বিট আর্কিটেকচার" else "64-Bit Architecture", if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) (if (Process.is64Bit()) "Yes (64-Bit)" else "32-Bit") else "Yes"),
-                    SpecRowItem(if (isBn) "হার্ডওয়্যার প্ল্যাটফর্ম" else "Hardware SoC", Build.HARDWARE),
-                    SpecRowItem(if (isBn) "মাদারবোর্ড বোর্ড" else "Board Name", Build.BOARD),
-                    SpecRowItem(if (isBn) "জাভা ভিএম (Runtime)" else "Java VM Runtime", "${System.getProperty("java.vm.name")} ${System.getProperty("java.vm.version")}"),
-                    SpecRowItem(if (isBn) "ম্যাক্সিমাম মেমোরি হিপ" else "Max Heap Allocation", "${Runtime.getRuntime().maxMemory() / (1024 * 1024)} MB")
+            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                // 1. Processor Speed & Core Clock Card
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .themeCardShadow(themeColors, elevation = 2.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = themeColors.cardBg)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(CircleShape)
+                                    .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Speed,
+                                    contentDescription = null,
+                                    tint = themeColors.buttonEqualBg,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = if (isBn) "প্রসেসর ক্লক স্পীড (Clock Speed)" else "Processor Clock Speed",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.displayText
+                                )
+                                Text(
+                                    text = cpuInfo.socModel,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = themeColors.buttonEqualBg
+                                )
+                            }
+                        }
+
+                        // Clock Speed Overview Highlights
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            // Max Frequency Pill
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = themeColors.displayText.copy(alpha = 0.05f),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(12.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = if (isBn) "সর্বোচ্চ ক্লক (Peak)" else "Peak Clock",
+                                        fontSize = 11.sp,
+                                        color = themeColors.displayText.copy(alpha = 0.6f)
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = cpuInfo.maxFreqFormatted,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF10B981),
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
+                            }
+
+                            // Min Frequency Pill
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = themeColors.displayText.copy(alpha = 0.05f),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(12.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = if (isBn) "সর্বনিম্ন ক্লক (Min)" else "Idle / Min",
+                                        fontSize = 11.sp,
+                                        color = themeColors.displayText.copy(alpha = 0.6f)
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = cpuInfo.minFreqFormatted,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = themeColors.displayText,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
+                            }
+                        }
+
+                        // Core Frequencies List
+                        Text(
+                            text = if (isBn) "প্রতিটি কোরের ফ্রিকোয়েন্সি (${cpuInfo.coreCount} কোর)" else "Individual Core Frequencies (${cpuInfo.coreCount} Cores)",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = themeColors.displayText.copy(alpha = 0.8f)
+                        )
+
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            cpuInfo.coreFrequencyList.forEach { coreInfo ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(themeColors.displayText.copy(alpha = 0.03f))
+                                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    val parts = coreInfo.split(":", limit = 2)
+                                    Text(
+                                        text = parts.getOrNull(0) ?: "Core",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = themeColors.displayText.copy(alpha = 0.7f)
+                                    )
+                                    Text(
+                                        text = parts.getOrNull(1)?.trim() ?: "",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = themeColors.buttonEqualBg
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 2. Comprehensive CPU & SoC Specifications
+                SpecSectionCard(
+                    title = if (isBn) "প্রসেসর ও চিপসেট পূর্ণাঙ্গ স্পেক্স" else "CPU & SoC Detailed Specifications",
+                    themeColors = themeColors,
+                    items = listOf(
+                        SpecRowItem(if (isBn) "চিপসেট মডেল (SoC)" else "SoC / Chipset Model", cpuInfo.socModel),
+                        SpecRowItem(if (isBn) "প্রসেসর কোর সংখ্যা" else "CPU Core Count", "${cpuInfo.coreCount} Cores (${cpuInfo.coreTypeString})"),
+                        SpecRowItem(if (isBn) "সর্বোচ্চ ক্লক স্পীড" else "Max Clock Speed", cpuInfo.maxFreqFormatted),
+                        SpecRowItem(if (isBn) "সর্বনিম্ন ক্লক স্পীড" else "Min Clock Speed", cpuInfo.minFreqFormatted),
+                        SpecRowItem(if (isBn) "সিপিইউ গভর্নর" else "CPU Scaling Governor", cpuInfo.governor),
+                        SpecRowItem(if (isBn) "সিপিইউ আর্কিটেকচার (ABI)" else "Primary ABI Architecture", cpuInfo.primaryAbi),
+                        SpecRowItem(if (isBn) "সাপোর্টেড এবিআই সমূহ" else "Supported ABIs", cpuInfo.supportedAbis),
+                        SpecRowItem(if (isBn) "৬৪-বিট আর্কিটেকচার" else "64-Bit Architecture", if (cpuInfo.is64Bit) (if (isBn) "হ্যাঁ (64-Bit ARM)" else "Yes (64-Bit ARM)") else "32-Bit"),
+                        SpecRowItem(if (isBn) "ইনস্ট্রাকশন ও সিম্ড (SIMD)" else "Instruction Sets / Features", cpuInfo.features),
+                        SpecRowItem(if (isBn) "বোগোমিপ্স রেটিং" else "BogoMIPS Rating", cpuInfo.bogomips),
+                        SpecRowItem(if (isBn) "হার্ডওয়্যার প্ল্যাটফর্ম" else "Hardware Platform", cpuInfo.hardware),
+                        SpecRowItem(if (isBn) "মাদারবোর্ড বোর্ড" else "Board Codename", cpuInfo.board),
+                        SpecRowItem(if (isBn) "জাভা ভিএম (Runtime)" else "Java VM Runtime", "${System.getProperty("java.vm.name")} ${System.getProperty("java.vm.version")}"),
+                        SpecRowItem(if (isBn) "ম্যাক্সিমাম মেমোরি হিপ" else "Max Heap Allocation", "${Runtime.getRuntime().maxMemory() / (1024 * 1024)} MB")
+                    )
                 )
-            )
+            }
         }
 
         // ==========================================

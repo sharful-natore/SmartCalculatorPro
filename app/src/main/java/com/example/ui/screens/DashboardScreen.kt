@@ -2170,6 +2170,7 @@ fun ToolDetailView(
             ToolType.WORLD_CLOCK -> WorldClockCard(viewModel, themeColors)
             ToolType.UNIT_PRICE_COMPARER -> UnitPriceComparerCard(viewModel, themeColors)
             ToolType.SIMPLE_COMPASS -> SimpleCompassCard(viewModel, themeColors)
+            ToolType.CAMERA_LEVEL -> com.example.ui.screens.tools.CameraLevelTool(viewModel, themeColors)
             ToolType.ASPECT_RATIO -> AspectRatioCard(viewModel, themeColors)
             ToolType.RANDOM_NUMBER_PICKER -> RandomPickerCard(viewModel, themeColors)
             ToolType.MULTI_CALENDAR -> MultiCalendarCard(viewModel, themeColors)
@@ -2596,6 +2597,19 @@ private fun getToolInfoItems(toolType: ToolType, isBn: Boolean): List<Pair<Strin
             listOf(
                 "1. Digital Orientation Compass" to "Uses hardware magnetometer sensors to display cardinal directions (N, S, E, W), precise azimuth angles, and magnetic headings.",
                 "2. Integrated Spirit Bubble Level" to "Accurately inspect horizontal surfaces and tilt angles for home carpentry, camera leveling, and construction."
+            )
+        }
+        ToolType.CAMERA_LEVEL -> if (isBn) {
+            listOf(
+                "১. AR ক্যামেরা লেভেলার কী ও কীভাবে কাজ করে?" to "এই টুলটি আপনার ফোনের ক্যামেরা প্রিভিউয়ের ওপর সরাসরি রিয়েল-টাইম অনুভূমিক ও উলম্ব লেভেল লাইন, এঙ্গেল প্রোট্রাক্টর এবং ক্রসহেয়ার প্রদর্শন করে। ফলে কোনো ছবি, ফ্রেম, দেয়াল, সেলফ, খাট বা আসবাবপত্র সোজা আছে কিনা তা ক্যামেরা দিয়েই সহজে পরীক্ষা ও ঠিক করা যায়।",
+                "২. অনুভূমিক ও উলম্ব প্লাম্ব মোড" to "• অনুভূমিক লেভেল (Horizontal 0°): টেবিল, তাক বা ছবির ফ্রেম আনুভূমিকভাবে ঠিক সোজা হলে লাইনটি উজ্জ্বল সবুজ হয়ে ওঠে।\n• উলম্ব প্লাম্ব (Vertical 90°): দেয়াল, পিলার, দরজা বা খাড়া খুঁটি উলম্ব সোজা আছে কিনা তা নিখুঁতভাবে নিশ্চিত করে।",
+                "৩. ফ্রিজ ফ্রেম ও জিরো ক্যালিব্রেশন" to "• ফ্রিজ ফ্রেম: পরিমাপের সময় ফ্রেম স্থির বা লক করে কোণ দেখে নেওয়া যায়।\n• জিরো ক্যালিব্রেট: যেকোনো নির্দিষ্ট রেফারেন্স তলকে ০° সেট করে রিলেটিভ কোণ মাপা যায়।"
+            )
+        } else {
+            listOf(
+                "1. What is AR Camera Level & Angle Meter?" to "This tool overlays real-time augmented horizontal horizon lines, vertical plumb lines, angle protractor dials, and crosshairs over your live camera feed to verify leveling of frames, shelves, walls, and furniture.",
+                "2. Horizontal & Vertical Plumb Detection" to "• Horizontal Level (0°): The live horizon turns neon green with haptic buzz when perfectly level (±0.5°).\n• Vertical Plumb (90°): Verifies wall posts, columns, and vertical doors with plumb bob weight tracking.",
+                "3. Freeze Frame & Relative Zero Calibration" to "• Freeze: Lock the live angle measurement to inspect readings comfortably.\n• Zero Calibrate: Set any custom inclination as relative 0° to measure relative slopes."
             )
         }
         ToolType.ASPECT_RATIO -> if (isBn) {

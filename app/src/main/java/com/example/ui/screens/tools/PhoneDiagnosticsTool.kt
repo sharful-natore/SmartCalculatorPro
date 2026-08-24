@@ -23,6 +23,8 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
@@ -239,46 +241,43 @@ fun PhoneDiagnosticsTool(
             }
         }
 
-        // --- Tabs Navigation ---
+        // --- Category Tabs Navigation (Horizontal Scroll) ---
         val diagnosticTabs = listOf(
             Pair(if (isBn) "ম্যানুয়াল সেন্সর টেস্ট" else "Sensor Tests", Icons.Default.Sensors),
-            Pair(if (isBn) "হার্ডওয়্যার টেস্ট" else "Hardware Tests", Icons.Default.Build),
+            Pair(if (isBn) "হার্ডওয়্যার ও ডিসপ্লে" else "Hardware & Display", Icons.Default.Build),
             Pair(if (isBn) "অডিও ও মাইক টেস্ট" else "Audio & Mic", Icons.Default.Mic)
         )
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(14.dp))
-                .background(themeColors.cardBg)
-                .padding(4.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             diagnosticTabs.forEachIndexed { index, pair ->
                 val isSelected = selectedTab == index
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(if (isSelected) themeColors.buttonEqualBg else Color.Transparent)
-                        .clickable { selectedTab = index }
-                        .padding(vertical = 10.dp),
-                    contentAlignment = Alignment.Center
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = if (isSelected) themeColors.buttonEqualBg else themeColors.cardBg,
+                    shadowElevation = if (isSelected) 2.dp else 0.dp,
+                    modifier = Modifier.clickable { selectedTab = index }
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Icon(
                             imageVector = pair.second,
                             contentDescription = null,
                             tint = if (isSelected) Color.White else themeColors.displayText.copy(alpha = 0.7f),
-                            modifier = Modifier.size(14.dp)
+                            modifier = Modifier.size(16.dp)
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             text = pair.first,
-                            fontSize = 11.sp,
+                            fontSize = 12.sp,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                            color = if (isSelected) Color.White else themeColors.displayText,
-                            maxLines = 1
+                            color = if (isSelected) Color.White else themeColors.displayText
                         )
                     }
                 }

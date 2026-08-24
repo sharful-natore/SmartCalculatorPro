@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.nativeCanvas
@@ -31,6 +32,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.theme.CalculatorThemeColors
+import com.example.ui.theme.themeCardShadow
 import com.example.ui.viewmodel.CalculatorViewModel
 import com.example.util.AppLanguage
 import kotlinx.coroutines.delay
@@ -1811,131 +1813,1100 @@ fun AspectRatioCard(viewModel: CalculatorViewModel, themeColors: CalculatorTheme
     }
 }
 
+// --- Lottery, Toss & Dice Tool ("লটারি/টস") ---
 @Composable
 fun RandomPickerCard(viewModel: CalculatorViewModel, themeColors: CalculatorThemeColors) {
     val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val clipboardManager = LocalClipboardManager.current
 
-    var minInput by remember { mutableStateOf("1") }
-    var maxInput by remember { mutableStateOf("100") }
-    var pickedNumber by remember { mutableStateOf<Int?>(null) }
-    var coinResult by remember { mutableStateOf<String?>(null) }
-    var diceResult by remember { mutableStateOf<Int?>(null) }
+    var selectedMode by remember { mutableIntStateOf(0) } // 0: Coin Toss, 1: Dice Roll, 2: Lottery & Numbers
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        shape = RoundedCornerShape(20.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = if (isBn) "র্যান্ডম নাম্বার ও ডাইস (Random Picker)" else "Random Picker & Dice Roller",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = themeColors.displayText
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Number Generator
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                OutlinedTextField(
-                    value = minInput,
-                    onValueChange = { minInput = it },
-                    label = { Text("Min") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.weight(1f),
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = themeColors.displayText,
-                        unfocusedTextColor = themeColors.displayText,
-                        focusedLabelColor = themeColors.buttonEqualBg,
-                        unfocusedLabelColor = themeColors.displayText.copy(alpha = 0.5f),
-                        focusedBorderColor = themeColors.buttonEqualBg,
-                        unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.15f),
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent
-                    )
-                )
-                OutlinedTextField(
-                    value = maxInput,
-                    onValueChange = { maxInput = it },
-                    label = { Text("Max") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.weight(1f),
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = themeColors.displayText,
-                        unfocusedTextColor = themeColors.displayText,
-                        focusedLabelColor = themeColors.buttonEqualBg,
-                        unfocusedLabelColor = themeColors.displayText.copy(alpha = 0.5f),
-                        focusedBorderColor = themeColors.buttonEqualBg,
-                        unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.15f),
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent
-                    )
-                )
-                Button(
-                    onClick = {
-                        val min = minInput.toIntOrNull() ?: 1
-                        val max = maxInput.toIntOrNull() ?: 100
-                        if (min <= max) {
-                            pickedNumber = (min..max).random()
-                        }
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg)
-                ) {
-                    Text(if (isBn) "জেনারেট" else "Pick")
-                }
-            }
-
-            if (pickedNumber != null) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "${if (isBn) "ফলাফল: " else "Result: "} $pickedNumber",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    color = themeColors.buttonEqualBg
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.1f))
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Coin & Dice
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            // Header
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                OutlinedButton(
-                    onClick = {
-                        coinResult = if ((0..1).random() == 0) (if (isBn) "হেড (Heads)" else "Heads") else (if (isBn) "টেল (Tails)" else "Tails")
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(CircleShape)
+                            .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Casino,
+                            contentDescription = null,
+                            tint = themeColors.buttonEqualBg,
+                            modifier = Modifier.size(22.dp)
+                        )
                     }
-                ) {
-                    Text(if (isBn) "🪙 কয়েন টস" else "🪙 Flip Coin")
-                }
-
-                OutlinedButton(
-                    onClick = {
-                        diceResult = (1..6).random()
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column {
+                        Text(
+                            text = if (isBn) "লটারি / টস ও ডাইস" else "Lottery, Toss & Dice",
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = themeColors.displayText
+                        )
+                        Text(
+                            text = if (isBn) "রিয়েলিস্টিক থ্রি-ডি অ্যানিমেশন" else "Realistic 3D Physics & Animations",
+                            fontSize = 11.sp,
+                            color = themeColors.displayText.copy(alpha = 0.6f)
+                        )
                     }
-                ) {
-                    Text(if (isBn) "🎲 ছক্কা গড়ানো" else "🎲 Roll Dice")
                 }
             }
 
-            if (coinResult != null || diceResult != null) {
-                Spacer(modifier = Modifier.height(8.dp))
+            // Mode Selector Chips
+            val modes = listOf(
+                Pair(if (isBn) "🪙 কয়েন টস" else "🪙 Coin Toss", 0),
+                Pair(if (isBn) "🎲 ডাইস রোল" else "🎲 Dice Roll", 1),
+                Pair(if (isBn) "🎟️ লাকি লটারি" else "🎟️ Lucky Lottery", 2)
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                modes.forEach { (title, idx) ->
+                    val isSelected = selectedMode == idx
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = if (isSelected) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.06f),
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { selectedMode = idx }
+                    ) {
+                        Text(
+                            text = title,
+                            fontSize = 12.sp,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            color = if (isSelected) Color.White else themeColors.displayText,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            modifier = Modifier.padding(vertical = 10.dp, horizontal = 4.dp)
+                        )
+                    }
+                }
+            }
+
+            HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.08f))
+
+            // ==========================================
+            // MODE 0: REALISTIC COIN TOSS (🪙 কয়েন টস)
+            // ==========================================
+            if (selectedMode == 0) {
+                CoinTossSection(isBn = isBn, themeColors = themeColors)
+            }
+
+            // ==========================================
+            // MODE 1: REALISTIC DICE ROLL (🎲 ডাইস রোল)
+            // ==========================================
+            if (selectedMode == 1) {
+                DiceRollSection(isBn = isBn, themeColors = themeColors)
+            }
+
+            // ==========================================
+            // MODE 2: LUCKY LOTTERY & NUMBER DRAW (🎟️ লাকি লটারি)
+            // ==========================================
+            if (selectedMode == 2) {
+                LotteryNumberSection(
+                    isBn = isBn,
+                    themeColors = themeColors,
+                    context = context,
+                    clipboardManager = clipboardManager
+                )
+            }
+        }
+    }
+}
+
+// ----------------------------------------------------
+// COIN TOSS SECTION
+// ----------------------------------------------------
+@Composable
+private fun CoinTossSection(isBn: Boolean, themeColors: CalculatorThemeColors) {
+    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+
+    val coinRotation = remember { androidx.compose.animation.core.Animatable(0f) }
+    val coinOffsetY = remember { androidx.compose.animation.core.Animatable(0f) }
+    var isFlipping by remember { mutableStateOf(false) }
+    var coinResult by remember { mutableStateOf<String?>(null) } // "HEADS" or "TAILS"
+
+    // Statistics
+    var totalTosses by remember { mutableIntStateOf(0) }
+    var headsCount by remember { mutableIntStateOf(0) }
+    var tailsCount by remember { mutableIntStateOf(0) }
+    var coinCount by remember { mutableIntStateOf(1) } // 1 or 2 coins
+    var multiCoinResults by remember { mutableStateOf<List<String>>(emptyList()) }
+
+    fun doFlip() {
+        if (isFlipping) return
+        isFlipping = true
+
+        coroutineScope.launch {
+            try {
+                val vibrator = context.getSystemService(android.content.Context.VIBRATOR_SERVICE) as? android.os.Vibrator
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    vibrator?.vibrate(android.os.VibrationEffect.createOneShot(30, android.os.VibrationEffect.DEFAULT_AMPLITUDE))
+                } else {
+                    @Suppress("DEPRECATION")
+                    vibrator?.vibrate(30)
+                }
+            } catch (_: Exception) {}
+
+            // Decide result
+            val outcome = if ((0..1).random() == 0) "HEADS" else "TAILS"
+            val multi = if (coinCount > 1) {
+                List(coinCount) { if ((0..1).random() == 0) "HEADS" else "TAILS" }
+            } else {
+                listOf(outcome)
+            }
+
+            // Target rotation (multiple full spins + landing face)
+            val currentRot = coinRotation.value
+            val spins = (6..8).random() * 360f
+            val finalTargetAngle = if (outcome == "HEADS") {
+                currentRot + spins
+            } else {
+                currentRot + spins + 180f
+            }
+
+            // Launch vertical jump and rotation concurrently
+            launch {
+                coinOffsetY.animateTo(
+                    targetValue = -90f,
+                    animationSpec = androidx.compose.animation.core.tween(
+                        durationMillis = 450,
+                        easing = androidx.compose.animation.core.FastOutSlowInEasing
+                    )
+                )
+                coinOffsetY.animateTo(
+                    targetValue = 0f,
+                    animationSpec = androidx.compose.animation.core.spring(
+                        dampingRatio = androidx.compose.animation.core.Spring.DampingRatioMediumBouncy,
+                        stiffness = androidx.compose.animation.core.Spring.StiffnessLow
+                    )
+                )
+            }
+
+            coinRotation.animateTo(
+                targetValue = finalTargetAngle,
+                animationSpec = androidx.compose.animation.core.tween(
+                    durationMillis = 1000,
+                    easing = androidx.compose.animation.core.FastOutSlowInEasing
+                )
+            )
+
+            coinResult = outcome
+            multiCoinResults = multi
+            totalTosses += 1
+            if (outcome == "HEADS") headsCount += 1 else tailsCount += 1
+            isFlipping = false
+
+            try {
+                val vibrator = context.getSystemService(android.content.Context.VIBRATOR_SERVICE) as? android.os.Vibrator
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    vibrator?.vibrate(android.os.VibrationEffect.createOneShot(45, android.os.VibrationEffect.DEFAULT_AMPLITUDE))
+                }
+            } catch (_: Exception) {}
+        }
+    }
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        // Coin quantity selector
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = if (isBn) "কয়েন সংখ্যা:" else "Coin Count:",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = themeColors.displayText.copy(alpha = 0.7f)
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                listOf(1, 2).forEach { count ->
+                    val isSelected = coinCount == count
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (isSelected) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.08f),
+                        modifier = Modifier.clickable { if (!isFlipping) coinCount = count }
+                    ) {
+                        Text(
+                            text = if (count == 1) (if (isBn) "১ টি কয়েন" else "1 Coin") else (if (isBn) "২ টি কয়েন" else "2 Coins"),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isSelected) Color.White else themeColors.displayText,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                        )
+                    }
+                }
+            }
+        }
+
+        // Realistic 3D Coin Animation Stage
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(160.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(themeColors.displayText.copy(alpha = 0.03f))
+                .clickable { doFlip() },
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                // Parabolic Drop Shadow
+                val shadowScale = (1f - (Math.abs(coinOffsetY.value) / 180f)).coerceIn(0.4f, 1f)
+                val shadowAlpha = (0.35f - (Math.abs(coinOffsetY.value) / 300f)).coerceIn(0.1f, 0.35f)
+
+                // 3D Spinning Coin
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(20.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.offset(y = coinOffsetY.value.dp)
+                ) {
+                    if (coinCount == 1) {
+                        RealisticCoinGraphic(
+                            rotationDeg = coinRotation.value,
+                            themeColors = themeColors,
+                            sizeDp = 100
+                        )
+                    } else {
+                        RealisticCoinGraphic(
+                            rotationDeg = coinRotation.value,
+                            themeColors = themeColors,
+                            sizeDp = 80
+                        )
+                        RealisticCoinGraphic(
+                            rotationDeg = coinRotation.value + 90f,
+                            themeColors = themeColors,
+                            sizeDp = 80
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Realistic Shadow oval
+                Box(
+                    modifier = Modifier
+                        .width((80 * shadowScale).dp)
+                        .height((12 * shadowScale).dp)
+                        .clip(CircleShape)
+                        .background(Color.Black.copy(alpha = shadowAlpha))
+                )
+            }
+        }
+
+        // Large Result Banner
+        if (coinResult != null && !isFlipping) {
+            Surface(
+                shape = RoundedCornerShape(14.dp),
+                color = if (coinResult == "HEADS") Color(0xFFF59E0B).copy(alpha = 0.15f) else Color(0xFF3B82F6).copy(alpha = 0.15f),
+                border = androidx.compose.foundation.BorderStroke(
+                    width = 1.5.dp,
+                    color = if (coinResult == "HEADS") Color(0xFFF59E0B) else Color(0xFF3B82F6)
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(14.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    val mainResultText = if (coinCount == 1) {
+                        if (coinResult == "HEADS") {
+                            if (isBn) "🎉 ফলাফল: হেড (Heads)!" else "🎉 Result: HEADS!"
+                        } else {
+                            if (isBn) "🎉 ফলাফল: টেল (Tails)!" else "🎉 Result: TAILS!"
+                        }
+                    } else {
+                        val c1 = if (multiCoinResults.getOrNull(0) == "HEADS") (if (isBn) "হেড" else "Heads") else (if (isBn) "টেল" else "Tails")
+                        val c2 = if (multiCoinResults.getOrNull(1) == "HEADS") (if (isBn) "হেড" else "Heads") else (if (isBn) "টেল" else "Tails")
+                        if (isBn) "🎉 ফলাফল: $c1 + $c2" else "🎉 Result: $c1 + $c2"
+                    }
+
+                    Text(
+                        text = mainResultText,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Black,
+                        color = if (coinResult == "HEADS") Color(0xFFD97706) else Color(0xFF2563EB),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+
+                    Text(
+                        text = if (isBn) "আবার টস করতে নিচের বাটনে বা কয়েনে চাপুন" else "Tap below or on the coin to flip again",
+                        fontSize = 11.sp,
+                        color = themeColors.displayText.copy(alpha = 0.6f)
+                    )
+                }
+            }
+        } else if (isFlipping) {
+            Text(
+                text = if (isBn) "🪙 কয়েন বাতাসে ঘুরছে..." else "🪙 Coin is flipping in the air...",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                color = themeColors.buttonEqualBg
+            )
+        }
+
+        // Toss Action Button
+        Button(
+            onClick = { doFlip() },
+            enabled = !isFlipping,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = themeColors.buttonEqualBg,
+                disabledContainerColor = themeColors.buttonEqualBg.copy(alpha = 0.5f)
+            ),
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.FlipCameraAndroid,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = if (isBn) (if (isFlipping) "টস হচ্ছে..." else "কয়েন টস করুন (Flip Coin)") else (if (isFlipping) "Flipping..." else "Flip Coin"),
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+        }
+
+        // Tally Stats Board
+        if (totalTosses > 0) {
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = themeColors.displayText.copy(alpha = 0.04f),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    horizontalArrangement = Arrangement.SpaceAround
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = if (isBn) "মোট টস" else "Total Tosses",
+                            fontSize = 10.sp,
+                            color = themeColors.displayText.copy(alpha = 0.6f)
+                        )
+                        Text(
+                            text = "$totalTosses",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = themeColors.displayText
+                        )
+                    }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = if (isBn) "হেড (Heads)" else "Heads",
+                            fontSize = 10.sp,
+                            color = Color(0xFFD97706)
+                        )
+                        Text(
+                            text = "$headsCount (${if (totalTosses > 0) (headsCount * 100 / totalTosses) else 0}%)",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFD97706)
+                        )
+                    }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = if (isBn) "টেল (Tails)" else "Tails",
+                            fontSize = 10.sp,
+                            color = Color(0xFF2563EB)
+                        )
+                        Text(
+                            text = "$tailsCount (${if (totalTosses > 0) (tailsCount * 100 / totalTosses) else 0}%)",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF2563EB)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ----------------------------------------------------
+// REALISTIC 3D COIN GRAPHIC
+// ----------------------------------------------------
+@Composable
+private fun RealisticCoinGraphic(
+    rotationDeg: Float,
+    themeColors: CalculatorThemeColors,
+    sizeDp: Int = 100
+) {
+    val normalizedAngle = ((rotationDeg % 360) + 360) % 360
+    val isFront = normalizedAngle < 90 || normalizedAngle > 270
+
+    Box(
+        modifier = Modifier
+            .size(sizeDp.dp)
+            .graphicsLayer {
+                rotationY = rotationDeg
+                cameraDistance = 12f * density
+            }
+            .clip(CircleShape)
+            .background(
+                if (isFront)
+                    androidx.compose.ui.graphics.Brush.radialGradient(
+                        colors = listOf(Color(0xFFFFDF00), Color(0xFFF59E0B), Color(0xFFB45309))
+                    )
+                else
+                    androidx.compose.ui.graphics.Brush.radialGradient(
+                        colors = listOf(Color(0xFFF1F5F9), Color(0xFF94A3B8), Color(0xFF475569))
+                    )
+            )
+            .border(
+                width = 3.dp,
+                color = if (isFront) Color(0xFFD97706) else Color(0xFF64748B),
+                shape = CircleShape
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            if (isFront) {
+                // HEADS (Golden BD 1 Taka / Emblem)
+                Text(
+                    text = "★ ১ ★",
+                    fontSize = (sizeDp * 0.14f).sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF78350F)
+                )
+                Text(
+                    text = "HEADS",
+                    fontSize = (sizeDp * 0.16f).sp,
+                    fontWeight = FontWeight.Black,
+                    color = Color(0xFF78350F)
+                )
+                Text(
+                    text = "হেড",
+                    fontSize = (sizeDp * 0.13f).sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF92400E)
+                )
+            } else {
+                // TAILS (Silver Motif)
+                Text(
+                    text = "🌾 শাপলা 🌾",
+                    fontSize = (sizeDp * 0.12f).sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1E293B)
+                )
+                Text(
+                    text = "TAILS",
+                    fontSize = (sizeDp * 0.16f).sp,
+                    fontWeight = FontWeight.Black,
+                    color = Color(0xFF0F172A)
+                )
+                Text(
+                    text = "টেল",
+                    fontSize = (sizeDp * 0.13f).sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF334155)
+                )
+            }
+        }
+    }
+}
+
+// ----------------------------------------------------
+// DICE ROLL SECTION
+// ----------------------------------------------------
+@Composable
+private fun DiceRollSection(isBn: Boolean, themeColors: CalculatorThemeColors) {
+    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+
+    val rotX = remember { androidx.compose.animation.core.Animatable(0f) }
+    val rotY = remember { androidx.compose.animation.core.Animatable(0f) }
+    val rotZ = remember { androidx.compose.animation.core.Animatable(0f) }
+    val diceScale = remember { androidx.compose.animation.core.Animatable(1f) }
+
+    var isRolling by remember { mutableStateOf(false) }
+    var diceCount by remember { mutableIntStateOf(1) } // 1, 2, or 3 dice
+    var diceResults by remember { mutableStateOf(listOf(6)) }
+    var rollHistory by remember { mutableStateOf(listOf<List<Int>>()) }
+
+    fun doRoll() {
+        if (isRolling) return
+        isRolling = true
+
+        coroutineScope.launch {
+            try {
+                val vibrator = context.getSystemService(android.content.Context.VIBRATOR_SERVICE) as? android.os.Vibrator
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    vibrator?.vibrate(android.os.VibrationEffect.createOneShot(30, android.os.VibrationEffect.DEFAULT_AMPLITUDE))
+                }
+            } catch (_: Exception) {}
+
+            // Rapid intermediate rolls
+            val iterations = 8
+            for (i in 0 until iterations) {
+                diceResults = List(diceCount) { (1..6).random() }
+                delay(60)
+            }
+
+            // Final target values
+            val finalValues = List(diceCount) { (1..6).random() }
+            diceResults = finalValues
+
+            // 3D physics tumbling animation
+            launch {
+                diceScale.animateTo(1.25f, androidx.compose.animation.core.tween(200))
+                diceScale.animateTo(1f, androidx.compose.animation.core.spring(dampingRatio = androidx.compose.animation.core.Spring.DampingRatioMediumBouncy))
+            }
+
+            launch {
+                rotX.animateTo(rotX.value + 720f, androidx.compose.animation.core.tween(700, easing = androidx.compose.animation.core.FastOutSlowInEasing))
+            }
+            launch {
+                rotY.animateTo(rotY.value + 720f, androidx.compose.animation.core.tween(700, easing = androidx.compose.animation.core.FastOutSlowInEasing))
+            }
+            rotZ.animateTo(rotZ.value + 360f, androidx.compose.animation.core.tween(700, easing = androidx.compose.animation.core.FastOutSlowInEasing))
+
+            rollHistory = (listOf(finalValues) + rollHistory).take(5)
+            isRolling = false
+
+            try {
+                val vibrator = context.getSystemService(android.content.Context.VIBRATOR_SERVICE) as? android.os.Vibrator
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    vibrator?.vibrate(android.os.VibrationEffect.createOneShot(40, android.os.VibrationEffect.DEFAULT_AMPLITUDE))
+                }
+            } catch (_: Exception) {}
+        }
+    }
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        // Dice Quantity Chips (1, 2, 3)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = if (isBn) "ডাইস সংখ্যা:" else "Dice Count:",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = themeColors.displayText.copy(alpha = 0.7f)
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                listOf(1, 2, 3).forEach { count ->
+                    val isSelected = diceCount == count
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (isSelected) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.08f),
+                        modifier = Modifier.clickable {
+                            if (!isRolling) {
+                                diceCount = count
+                                diceResults = List(count) { (1..6).random() }
+                            }
+                        }
+                    ) {
+                        Text(
+                            text = if (isBn) "$count টি ডাইস" else "$count Dice",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isSelected) Color.White else themeColors.displayText,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                        )
+                    }
+                }
+            }
+        }
+
+        // Realistic 3D Dice Stage
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(160.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(themeColors.displayText.copy(alpha = 0.03f))
+                .clickable { doRoll() },
+            contentAlignment = Alignment.Center
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(18.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.graphicsLayer {
+                    scaleX = diceScale.value
+                    scaleY = diceScale.value
+                    rotationX = if (isRolling) rotX.value else 0f
+                    rotationY = if (isRolling) rotY.value else 0f
+                    rotationZ = if (isRolling) rotZ.value else 0f
+                    cameraDistance = 12f * density
+                }
+            ) {
+                diceResults.forEach { value ->
+                    RealisticDieGraphic(value = value, themeColors = themeColors)
+                }
+            }
+        }
+
+        // Result Banner
+        val totalSum = diceResults.sum()
+        val resultMessage = if (diceCount == 1) {
+            if (isBn) "🎲 ফলাফল: ${diceResults.first()}" else "🎲 Result: ${diceResults.first()}"
+        } else {
+            val breakdown = diceResults.joinToString(" + ")
+            if (isBn) "🎲 মোট যোগফল: $totalSum ($breakdown)" else "🎲 Total Sum: $totalSum ($breakdown)"
+        }
+
+        Surface(
+            shape = RoundedCornerShape(14.dp),
+            color = themeColors.buttonEqualBg.copy(alpha = 0.12f),
+            border = androidx.compose.foundation.BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.3f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier.padding(14.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = resultMessage,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Black,
+                    color = themeColors.buttonEqualBg,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+                Text(
+                    text = if (isBn) "আবার রোল করতে ডাইস বা নিচের বাটনে চাপুন" else "Tap on dice or button below to roll again",
+                    fontSize = 11.sp,
+                    color = themeColors.displayText.copy(alpha = 0.6f)
+                )
+            }
+        }
+
+        // Roll Action Button
+        Button(
+            onClick = { doRoll() },
+            enabled = !isRolling,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = themeColors.buttonEqualBg,
+                disabledContainerColor = themeColors.buttonEqualBg.copy(alpha = 0.5f)
+            ),
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Casino,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = if (isBn) (if (isRolling) "ডাইস ঘুরছে..." else "ডাইস রোল করুন (Roll Dice)") else (if (isRolling) "Rolling..." else "Roll Dice"),
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+        }
+
+        // Recent Roll History
+        if (rollHistory.isNotEmpty()) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = if (isBn) "পূর্ববর্তী রোল সমূহ:" else "Recent Rolls:",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = themeColors.displayText.copy(alpha = 0.6f)
+                )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    if (coinResult != null) {
-                        Text(text = "Coin: $coinResult", fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                    rollHistory.forEach { roll ->
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = themeColors.displayText.copy(alpha = 0.06f)
+                        ) {
+                            Text(
+                                text = roll.joinToString(", "),
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.displayText,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
                     }
-                    if (diceResult != null) {
-                        Text(text = "Dice: $diceResult 🎲", fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                }
+            }
+        }
+    }
+}
+
+// ----------------------------------------------------
+// REALISTIC DIE GRAPHIC (AUTHENTIC 1-6 PIPS)
+// ----------------------------------------------------
+@Composable
+private fun RealisticDieGraphic(value: Int, themeColors: CalculatorThemeColors) {
+    Card(
+        modifier = Modifier
+            .size(76.dp)
+            .themeCardShadow(themeColors, elevation = 4.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFFDFDFD)),
+        border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFCBD5E1))
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize().padding(10.dp)) {
+            val w = size.width
+            val h = size.height
+            val dotRadius = w * 0.10f
+
+            val dotColor = if (value == 1) Color(0xFFDC2626) else Color(0xFF1E293B)
+
+            val left = w * 0.22f
+            val center = w * 0.5f
+            val right = w * 0.78f
+
+            val top = h * 0.22f
+            val middle = h * 0.5f
+            val bottom = h * 0.78f
+
+            when (value) {
+                1 -> {
+                    drawCircle(color = dotColor, radius = dotRadius * 1.35f, center = Offset(center, middle))
+                }
+                2 -> {
+                    drawCircle(color = dotColor, radius = dotRadius, center = Offset(left, top))
+                    drawCircle(color = dotColor, radius = dotRadius, center = Offset(right, bottom))
+                }
+                3 -> {
+                    drawCircle(color = dotColor, radius = dotRadius, center = Offset(left, top))
+                    drawCircle(color = dotColor, radius = dotRadius, center = Offset(center, middle))
+                    drawCircle(color = dotColor, radius = dotRadius, center = Offset(right, bottom))
+                }
+                4 -> {
+                    drawCircle(color = dotColor, radius = dotRadius, center = Offset(left, top))
+                    drawCircle(color = dotColor, radius = dotRadius, center = Offset(right, top))
+                    drawCircle(color = dotColor, radius = dotRadius, center = Offset(left, bottom))
+                    drawCircle(color = dotColor, radius = dotRadius, center = Offset(right, bottom))
+                }
+                5 -> {
+                    drawCircle(color = dotColor, radius = dotRadius, center = Offset(left, top))
+                    drawCircle(color = dotColor, radius = dotRadius, center = Offset(right, top))
+                    drawCircle(color = dotColor, radius = dotRadius, center = Offset(center, middle))
+                    drawCircle(color = dotColor, radius = dotRadius, center = Offset(left, bottom))
+                    drawCircle(color = dotColor, radius = dotRadius, center = Offset(right, bottom))
+                }
+                6 -> {
+                    drawCircle(color = dotColor, radius = dotRadius, center = Offset(left, top))
+                    drawCircle(color = dotColor, radius = dotRadius, center = Offset(left, middle))
+                    drawCircle(color = dotColor, radius = dotRadius, center = Offset(left, bottom))
+                    drawCircle(color = dotColor, radius = dotRadius, center = Offset(right, top))
+                    drawCircle(color = dotColor, radius = dotRadius, center = Offset(right, middle))
+                    drawCircle(color = dotColor, radius = dotRadius, center = Offset(right, bottom))
+                }
+            }
+        }
+    }
+}
+
+// ----------------------------------------------------
+// LUCKY LOTTERY & NUMBER SECTION
+// ----------------------------------------------------
+@Composable
+private fun LotteryNumberSection(
+    isBn: Boolean,
+    themeColors: CalculatorThemeColors,
+    context: android.content.Context,
+    clipboardManager: androidx.compose.ui.platform.ClipboardManager
+) {
+    val coroutineScope = rememberCoroutineScope()
+
+    var minInput by remember { mutableStateOf("1") }
+    var maxInput by remember { mutableStateOf("100") }
+    var countInput by remember { mutableStateOf("1") }
+    var allowDuplicates by remember { mutableStateOf(false) }
+
+    var isDrawing by remember { mutableStateOf(false) }
+    var drawnNumbers by remember { mutableStateOf<List<Int>>(emptyList()) }
+
+    fun doDraw() {
+        val min = minInput.toIntOrNull() ?: 1
+        val max = maxInput.toIntOrNull() ?: 100
+        val count = (countInput.toIntOrNull() ?: 1).coerceIn(1, 20)
+
+        if (min > max) {
+            Toast.makeText(context, if (isBn) "সর্বনিম্ন সংখ্যা সর্বোচ্চ চেয়ে ছোট হতে হবে!" else "Min must be <= Max!", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (!allowDuplicates && (max - min + 1) < count) {
+            Toast.makeText(context, if (isBn) "রেঞ্জ এর চেয়ে ড্র সংখ্যা বেশি হতে পারেনা!" else "Range too small for unique draw!", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        isDrawing = true
+        coroutineScope.launch {
+            // Animate rolling effect
+            for (i in 0..6) {
+                drawnNumbers = List(count) { (min..max).random() }
+                delay(70)
+            }
+
+            val finalResults = if (allowDuplicates) {
+                List(count) { (min..max).random() }
+            } else {
+                (min..max).shuffled().take(count)
+            }
+            drawnNumbers = finalResults
+            isDrawing = false
+
+            try {
+                val vibrator = context.getSystemService(android.content.Context.VIBRATOR_SERVICE) as? android.os.Vibrator
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    vibrator?.vibrate(android.os.VibrationEffect.createOneShot(40, android.os.VibrationEffect.DEFAULT_AMPLITUDE))
+                }
+            } catch (_: Exception) {}
+        }
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        // Quick Presets
+        Text(
+            text = if (isBn) "জনপ্রিয় লটারি প্রিসেট:" else "Popular Lottery Presets:",
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = themeColors.displayText.copy(alpha = 0.7f)
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            val presets = listOf(
+                Pair(if (isBn) "১-১০০ লাকি ড্র" else "1-100 Lucky", Pair("1", "100")),
+                Pair(if (isBn) "১-১০০০ র্যাফেল" else "1-1000 Raffle", Pair("1", "1000")),
+                Pair(if (isBn) "১-৯০ হাউজি" else "1-90 Housie", Pair("1", "90")),
+                Pair(if (isBn) "১-৫০ ড্র" else "1-50 Draw", Pair("1", "50")),
+                Pair(if (isBn) "১-৬ পাশা" else "1-6 Range", Pair("1", "6"))
+            )
+
+            presets.forEach { (label, range) ->
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = themeColors.displayText.copy(alpha = 0.06f),
+                    modifier = Modifier.clickable {
+                        minInput = range.first
+                        maxInput = range.second
+                    }
+                ) {
+                    Text(
+                        text = label,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.buttonEqualBg,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                    )
+                }
+            }
+        }
+
+        // Min, Max, Count Inputs
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            OutlinedTextField(
+                value = minInput,
+                onValueChange = { minInput = it },
+                label = { Text(if (isBn) "শুরু (Min)" else "Min", fontSize = 11.sp) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.weight(1f),
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = themeColors.displayText,
+                    unfocusedTextColor = themeColors.displayText,
+                    focusedLabelColor = themeColors.buttonEqualBg,
+                    unfocusedLabelColor = themeColors.displayText.copy(alpha = 0.5f),
+                    focusedBorderColor = themeColors.buttonEqualBg,
+                    unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.15f)
+                )
+            )
+            OutlinedTextField(
+                value = maxInput,
+                onValueChange = { maxInput = it },
+                label = { Text(if (isBn) "শেষ (Max)" else "Max", fontSize = 11.sp) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.weight(1f),
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = themeColors.displayText,
+                    unfocusedTextColor = themeColors.displayText,
+                    focusedLabelColor = themeColors.buttonEqualBg,
+                    unfocusedLabelColor = themeColors.displayText.copy(alpha = 0.5f),
+                    focusedBorderColor = themeColors.buttonEqualBg,
+                    unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.15f)
+                )
+            )
+            OutlinedTextField(
+                value = countInput,
+                onValueChange = { countInput = it },
+                label = { Text(if (isBn) "সংখ্যা (Qty)" else "Qty", fontSize = 11.sp) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.weight(1f),
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = themeColors.displayText,
+                    unfocusedTextColor = themeColors.displayText,
+                    focusedLabelColor = themeColors.buttonEqualBg,
+                    unfocusedLabelColor = themeColors.displayText.copy(alpha = 0.5f),
+                    focusedBorderColor = themeColors.buttonEqualBg,
+                    unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.15f)
+                )
+            )
+        }
+
+        // Draw Button
+        Button(
+            onClick = { doDraw() },
+            enabled = !isDrawing,
+            colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.ConfirmationNumber,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = if (isBn) (if (isDrawing) "লটারি ড্র হচ্ছে..." else "লটারি ড্র করুন (Draw Numbers)") else (if (isDrawing) "Drawing..." else "Draw Lucky Numbers"),
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+        }
+
+        // Drawn Numbers Display (Glossy colorful lottery balls)
+        if (drawnNumbers.isNotEmpty()) {
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = themeColors.displayText.copy(alpha = 0.04f),
+                border = androidx.compose.foundation.BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.08f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (isBn) "🎉 বিজয়ী লাকি নম্বরসমূহ:" else "🎉 Winning Lucky Numbers:",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = themeColors.displayText
+                        )
+                        IconButton(
+                            onClick = {
+                                clipboardManager.setText(AnnotatedString(drawnNumbers.joinToString(", ")))
+                                Toast.makeText(context, if (isBn) "নম্বরগুলো কপি করা হয়েছে!" else "Numbers copied!", Toast.LENGTH_SHORT).show()
+                            },
+                            modifier = Modifier.size(30.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ContentCopy,
+                                contentDescription = "Copy",
+                                tint = themeColors.buttonEqualBg,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+
+                    // Lottery Ball Flow
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        val ballColors = listOf(
+                            Pair(Color(0xFFEF4444), Color(0xFF991B1B)),
+                            Pair(Color(0xFF3B82F6), Color(0xFF1D4ED8)),
+                            Pair(Color(0xFF10B981), Color(0xFF047857)),
+                            Pair(Color(0xFFF59E0B), Color(0xFFB45309)),
+                            Pair(Color(0xFF8B5CF6), Color(0xFF5B21B6)),
+                            Pair(Color(0xFFEC4899), Color(0xFFBE185D))
+                        )
+
+                        drawnNumbers.forEachIndexed { index, num ->
+                            val colorPair = ballColors[index % ballColors.size]
+                            Box(
+                                modifier = Modifier
+                                    .size(54.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        androidx.compose.ui.graphics.Brush.radialGradient(
+                                            listOf(colorPair.first, colorPair.second)
+                                        )
+                                    )
+                                    .border(2.dp, Color.White.copy(alpha = 0.6f), CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "$num",
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = Color.White
+                                )
+                            }
+                        }
                     }
                 }
             }
