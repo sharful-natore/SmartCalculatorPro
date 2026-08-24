@@ -1595,14 +1595,16 @@ fun DashboardCategoriesView(
                         listOfNotNull(currentFilter)
                     }
 
+                    val expandedCategories = remember { mutableStateMapOf<ToolCategory, Boolean>() }
                     val topToolsMap = viewModel.categoryTopToolsMap
                     categoriesToShow.forEach { category ->
                         val orderedCatTools = viewModel.getAllOrderedToolsForCategory(category)
                         val categoryTools = orderedCatTools.filter { currentFilteredTools.contains(it) }
 
                         if (categoryTools.isNotEmpty()) {
-                            // In Overview mode, display top 4 tools per category
-                            val displayedTools = if (isOverviewMode) categoryTools.take(4) else categoryTools
+                            // In Overview mode, display top 4 tools per category unless expanded in-place
+                            val isCategoryExpanded = expandedCategories[category] == true
+                            val displayedTools = if (isOverviewMode && !isCategoryExpanded) categoryTools.take(4) else categoryTools
                             val hasMore = isOverviewMode && categoryTools.size > 4
 
                             // Category Header
@@ -1719,41 +1721,79 @@ fun DashboardCategoriesView(
                                 }
                             }
 
-                            // Clean "See All" Button at the bottom of the section in Overview mode
+                            // Clean Expand/Collapse Button at the bottom of the section in Overview mode
                             if (hasMore) {
-                                Surface(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(top = 4.dp, bottom = 14.dp)
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .clickable { viewModel.selectedToolCategoryFilter = category },
-                                    shape = RoundedCornerShape(12.dp),
-                                    color = themeColors.cardBg,
-                                    border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.25f))
-                                ) {
-                                    Row(
+                                if (!isCategoryExpanded) {
+                                    Surface(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(vertical = 9.dp, horizontal = 12.dp),
-                                        horizontalArrangement = Arrangement.Center,
-                                        verticalAlignment = Alignment.CenterVertically
+                                            .padding(top = 4.dp, bottom = 14.dp)
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .clickable { expandedCategories[category] = true },
+                                        shape = RoundedCornerShape(12.dp),
+                                        color = themeColors.cardBg,
+                                        border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.25f))
                                     ) {
-                                        Text(
-                                            text = if (isBn) 
-                                                "${category.getTitle(viewModel.selectedLanguage)}-এর সব (${categoryTools.size}টি) টুলস দেখুন" 
-                                            else 
-                                                "See all ${categoryTools.size} ${category.getTitle(viewModel.selectedLanguage)} Tools",
-                                            fontSize = 12.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = themeColors.buttonEqualBg
-                                        )
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Icon(
-                                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                                            contentDescription = null,
-                                            tint = themeColors.buttonEqualBg,
-                                            modifier = Modifier.size(14.dp)
-                                        )
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 10.dp, horizontal = 14.dp),
+                                            horizontalArrangement = Arrangement.Center,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = if (isBn) 
+                                                    "${category.getTitle(viewModel.selectedLanguage)}-এর সব (${categoryTools.size}টি) টুলস দেখুন" 
+                                                else 
+                                                    "See all ${categoryTools.size} ${category.getTitle(viewModel.selectedLanguage)} Tools",
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = themeColors.buttonEqualBg
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Icon(
+                                                imageVector = Icons.Default.KeyboardArrowDown,
+                                                contentDescription = null,
+                                                tint = themeColors.buttonEqualBg,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
+                                    }
+                                } else {
+                                    Surface(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(top = 4.dp, bottom = 14.dp)
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .clickable { expandedCategories[category] = false },
+                                        shape = RoundedCornerShape(12.dp),
+                                        color = themeColors.cardBg.copy(alpha = 0.6f),
+                                        border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.12f))
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 9.dp, horizontal = 14.dp),
+                                            horizontalArrangement = Arrangement.Center,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.KeyboardArrowUp,
+                                                contentDescription = null,
+                                                tint = themeColors.displayText.copy(alpha = 0.7f),
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(
+                                                text = if (isBn) 
+                                                    "সংকুচিত করুন (কম দেখুন)" 
+                                                else 
+                                                    "Collapse (Show Less)",
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = themeColors.displayText.copy(alpha = 0.75f)
+                                            )
+                                        }
                                     }
                                 }
                             } else {

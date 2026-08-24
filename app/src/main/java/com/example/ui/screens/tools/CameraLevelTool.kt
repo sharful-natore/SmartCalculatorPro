@@ -21,7 +21,6 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.*
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -62,6 +61,7 @@ import com.example.ui.theme.CalculatorThemeColors
 import com.example.ui.theme.themeCardShadow
 import com.example.ui.viewmodel.CalculatorViewModel
 import com.example.util.AppLanguage
+import com.example.util.CrashReporter
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -99,16 +99,24 @@ fun CameraLevelTool(
     val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
     val accentColor = themeColors.buttonOperatorBg
 
+    LaunchedEffect(Unit) {
+        CrashReporter.currentActiveScreen = "Camera Level Tool"
+    }
+
     var selectedMode by remember { mutableStateOf(LevelToolMode.AR_CAMERA) }
     var selectedUnit by remember { mutableStateOf(AngleUnit.DEGREES) }
 
     // Camera permission
     var hasCameraPermission by remember {
         mutableStateOf(
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.CAMERA
-            ) == PackageManager.PERMISSION_GRANTED
+            try {
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.CAMERA
+                ) == PackageManager.PERMISSION_GRANTED
+            } catch (_: Throwable) {
+                false
+            }
         )
     }
 
@@ -123,6 +131,7 @@ fun CameraLevelTool(
     var isTorchOn by remember { mutableStateOf(false) }
     var cameraInstance by remember { mutableStateOf<Camera?>(null) }
     var isFrozen by remember { mutableStateOf(false) }
+    var isCameraEnabled by remember { mutableStateOf(true) }
 
     // Overlays toggles
     var showLaserGrid by remember { mutableStateOf(true) }
@@ -152,23 +161,39 @@ fun CameraLevelTool(
 
     // Feedback helpers
     val vibrator = remember {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val vm = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager
-            vm?.defaultVibrator
-        } else {
-            @Suppress("DEPRECATION")
-            context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val vm = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager
+                vm?.defaultVibrator
+            } else {
+                @Suppress("DEPRECATION")
+                context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+            }
+        } catch (_: Throwable) {
+            null
         }
     }
 
     var lastBeepTime by remember { mutableLongStateOf(0L) }
 
-    // Register Sensors (Rotation vector with fallback to accelerometer)
+    // Register Sensors safely
     DisposableEffect(Unit) {
-        val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
-        val rotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
-            ?: sensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION)
-            ?: sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+        val sensorManager = try {
+            context.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
+        } catch (_: Throwable) {
+            null
+        }
+
+        val rotationSensor = sensorManager?.let { sm ->
+            try {
+                sm.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
+                    ?: sm.getDefaultSensor(Sensor.TYPE_GRAVITY)
+                    ?: sm.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+                    ?: sm.getDefaultSensor(Sensor.TYPE_ORIENTATION)
+            } catch (_: Throwable) {
+                null
+            }
+        }
 
         var smoothRoll = 0f
         var smoothPitch = 0f
@@ -176,49 +201,98 @@ fun CameraLevelTool(
 
         val sensorListener = object : SensorEventListener {
             override fun onSensorChanged(event: SensorEvent?) {
-                if (event == null || isFrozen) return
+                if (event == null || isFrozen || event.values == null || event.values.isEmpty()) return
 
-                if (event.sensor.type == Sensor.TYPE_ROTATION_VECTOR) {
-                    val rotationMatrix = FloatArray(9)
-                    SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
-                    val orientationValues = FloatArray(3)
-                    SensorManager.getOrientation(rotationMatrix, orientationValues)
+                try {
+                    when (event.sensor.type) {
+                        Sensor.TYPE_ROTATION_VECTOR -> {
+                            val vals = event.values
+                            val rotationMatrix = FloatArray(9)
+                            if (vals.size >= 4) {
+                                SensorManager.getRotationMatrixFromVector(rotationMatrix, vals)
+                            } else if (vals.size == 3) {
+                                val q0 = (1f - vals[0] * vals[0] - vals[1] * vals[1] - vals[2] * vals[2]).coerceAtLeast(0f)
+                                val vec4 = floatArrayOf(vals[0], vals[1], vals[2], sqrt(q0))
+                                SensorManager.getRotationMatrixFromVector(rotationMatrix, vec4)
+                            } else {
+                                return
+                            }
 
-                    val degAzimuth = Math.toDegrees(orientationValues[0].toDouble()).toFloat()
-                    val degPitch = Math.toDegrees(orientationValues[1].toDouble()).toFloat()
-                    val degRoll = Math.toDegrees(orientationValues[2].toDouble()).toFloat()
+                            val orientationValues = FloatArray(3)
+                            SensorManager.getOrientation(rotationMatrix, orientationValues)
 
-                    smoothRoll += alpha * (degRoll - smoothRoll)
-                    smoothPitch += alpha * (degPitch - smoothPitch)
+                            val degAzimuth = Math.toDegrees(orientationValues[0].toDouble()).toFloat()
+                            val degPitch = Math.toDegrees(orientationValues[1].toDouble()).toFloat()
+                            val degRoll = Math.toDegrees(orientationValues[2].toDouble()).toFloat()
 
-                    rawRoll = smoothRoll
-                    rawPitch = smoothPitch
-                    rawAzimuth = degAzimuth
-                } else if (event.sensor.type == Sensor.TYPE_ACCELEROMETER) {
-                    val ax = event.values[0]
-                    val ay = event.values[1]
-                    val az = event.values[2]
+                            if (!degRoll.isNaN() && !degPitch.isNaN()) {
+                                smoothRoll += alpha * (degRoll - smoothRoll)
+                                smoothPitch += alpha * (degPitch - smoothPitch)
 
-                    val pitch = Math.toDegrees(atan2(ay.toDouble(), sqrt((ax * ax + az * az).toDouble()))).toFloat()
-                    val roll = Math.toDegrees(atan2(-ax.toDouble(), az.toDouble())).toFloat()
+                                rawRoll = if (smoothRoll.isNaN()) 0f else smoothRoll
+                                rawPitch = if (smoothPitch.isNaN()) 0f else smoothPitch
+                                rawAzimuth = if (degAzimuth.isNaN()) 0f else degAzimuth
+                            }
+                        }
+                        Sensor.TYPE_GRAVITY, Sensor.TYPE_ACCELEROMETER -> {
+                            if (event.values.size >= 3) {
+                                val ax = event.values[0]
+                                val ay = event.values[1]
+                                val az = event.values[2]
 
-                    smoothRoll += alpha * (roll - smoothRoll)
-                    smoothPitch += alpha * (pitch - smoothPitch)
+                                val denom = sqrt((ax * ax + az * az).toDouble())
+                                val pitch = if (denom > 0.0001) {
+                                    Math.toDegrees(atan2(ay.toDouble(), denom)).toFloat()
+                                } else 0f
 
-                    rawRoll = smoothRoll
-                    rawPitch = smoothPitch
+                                val roll = if (abs(az) > 0.0001 || abs(ax) > 0.0001) {
+                                    Math.toDegrees(atan2(-ax.toDouble(), az.toDouble())).toFloat()
+                                } else 0f
+
+                                if (!roll.isNaN() && !pitch.isNaN()) {
+                                    smoothRoll += alpha * (roll - smoothRoll)
+                                    smoothPitch += alpha * (pitch - smoothPitch)
+
+                                    rawRoll = if (smoothRoll.isNaN()) 0f else smoothRoll
+                                    rawPitch = if (smoothPitch.isNaN()) 0f else smoothPitch
+                                }
+                            }
+                        }
+                        Sensor.TYPE_ORIENTATION -> {
+                            if (event.values.size >= 3) {
+                                val degAzimuth = event.values[0]
+                                val degPitch = event.values[1]
+                                val degRoll = event.values[2]
+                                if (!degRoll.isNaN() && !degPitch.isNaN()) {
+                                    smoothRoll += alpha * (degRoll - smoothRoll)
+                                    smoothPitch += alpha * (degPitch - smoothPitch)
+                                    rawRoll = if (smoothRoll.isNaN()) 0f else smoothRoll
+                                    rawPitch = if (smoothPitch.isNaN()) 0f else smoothPitch
+                                    rawAzimuth = if (degAzimuth.isNaN()) 0f else degAzimuth
+                                }
+                            }
+                        }
+                    }
+                } catch (e: Throwable) {
+                    CrashReporter.logHandledException(context, "SensorEvent", e)
                 }
             }
 
             override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
         }
 
-        rotationSensor?.let {
-            sensorManager.registerListener(sensorListener, it, SensorManager.SENSOR_DELAY_UI)
+        try {
+            rotationSensor?.let {
+                sensorManager?.registerListener(sensorListener, it, SensorManager.SENSOR_DELAY_UI)
+            }
+        } catch (e: Throwable) {
+            CrashReporter.logHandledException(context, "SensorRegister", e)
         }
 
         onDispose {
-            sensorManager.unregisterListener(sensorListener)
+            try {
+                sensorManager?.unregisterListener(sensorListener)
+            } catch (_: Throwable) {}
         }
     }
 
@@ -233,7 +307,7 @@ fun CameraLevelTool(
     val isSurfaceFlat = (abs(currentRoll) <= 0.6f) && (abs(currentPitch) <= 0.6f)
     val isAnyLevelAchieved = isHorizontalLevel || isVerticalLevel || isSurfaceFlat
 
-    // Haptic pulse when achieving perfect level
+    // Haptic pulse & tone
     LaunchedEffect(isAnyLevelAchieved) {
         if (isAnyLevelAchieved && hapticFeedbackEnabled) {
             try {
@@ -243,36 +317,41 @@ fun CameraLevelTool(
                     @Suppress("DEPRECATION")
                     vibrator?.vibrate(45)
                 }
-            } catch (_: Exception) {}
+            } catch (_: Throwable) {}
         }
         if (isAnyLevelAchieved && soundToneEnabled) {
             val now = System.currentTimeMillis()
-            if (now - lastBeepTime > 600) {
+            if (now - lastBeepTime > 700) {
                 lastBeepTime = now
                 try {
                     val tone = ToneGenerator(AudioManager.STREAM_MUSIC, 60)
-                    tone.startTone(ToneGenerator.TONE_PROP_BEEP, 70)
-                } catch (_: Exception) {}
+                    tone.startTone(ToneGenerator.TONE_PROP_BEEP, 60)
+                    tone.release()
+                } catch (_: Throwable) {}
             }
         }
     }
 
     // Format Angle according to unit
     fun formatAngle(angleDeg: Float): String {
-        return when (selectedUnit) {
-            AngleUnit.DEGREES -> String.format(Locale.US, "%.1f°", angleDeg)
-            AngleUnit.PERCENT -> {
-                val slope = tan(Math.toRadians(abs(angleDeg).toDouble())) * 100.0
-                String.format(Locale.US, "%.1f%%", slope)
+        return try {
+            when (selectedUnit) {
+                AngleUnit.DEGREES -> String.format(Locale.US, "%.1f°", angleDeg)
+                AngleUnit.PERCENT -> {
+                    val slope = tan(Math.toRadians(abs(angleDeg).toDouble())) * 100.0
+                    String.format(Locale.US, "%.1f%%", slope)
+                }
+                AngleUnit.INCH_PER_FOOT -> {
+                    val pitch = tan(Math.toRadians(abs(angleDeg).toDouble())) * 12.0
+                    String.format(Locale.US, "%.2f in/ft", pitch)
+                }
+                AngleUnit.RADIANS -> {
+                    val rad = Math.toRadians(angleDeg.toDouble())
+                    String.format(Locale.US, "%.3f rad", rad)
+                }
             }
-            AngleUnit.INCH_PER_FOOT -> {
-                val pitch = tan(Math.toRadians(abs(angleDeg).toDouble())) * 12.0
-                String.format(Locale.US, "%.2f in/ft", pitch)
-            }
-            AngleUnit.RADIANS -> {
-                val rad = Math.toRadians(angleDeg.toDouble())
-                String.format(Locale.US, "%.3f rad", rad)
-            }
+        } catch (_: Throwable) {
+            String.format(Locale.US, "%.1f°", angleDeg)
         }
     }
 
@@ -300,7 +379,7 @@ fun CameraLevelTool(
                     .padding(8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                LevelToolMode.entries.forEach { mode ->
+                LevelToolMode.values().forEach { mode ->
                     val isSelected = selectedMode == mode
                     FilterChip(
                         selected = isSelected,
@@ -337,7 +416,15 @@ fun CameraLevelTool(
             LevelToolMode.AR_CAMERA -> {
                 CameraArLevelSection(
                     hasCameraPermission = hasCameraPermission,
-                    onRequestPermission = { launcher.launch(Manifest.permission.CAMERA) },
+                    isCameraEnabled = isCameraEnabled,
+                    onToggleCameraEnabled = { isCameraEnabled = !isCameraEnabled },
+                    onRequestPermission = {
+                        try {
+                            launcher.launch(Manifest.permission.CAMERA)
+                        } catch (e: Throwable) {
+                            CrashReporter.logHandledException(context, "CameraPermRequest", e)
+                        }
+                    },
                     currentRoll = currentRoll,
                     currentPitch = currentPitch,
                     isFrozen = isFrozen,
@@ -362,7 +449,11 @@ fun CameraLevelTool(
                     isTorchOn = isTorchOn,
                     onToggleTorch = {
                         isTorchOn = !isTorchOn
-                        cameraInstance?.cameraControl?.enableTorch(isTorchOn)
+                        try {
+                            if (cameraInstance?.cameraInfo?.hasFlashUnit() == true) {
+                                cameraInstance?.cameraControl?.enableTorch(isTorchOn)
+                            }
+                        } catch (_: Throwable) {}
                     },
                     isFrontCamera = isFrontCamera,
                     onToggleCamera = { isFrontCamera = !isFrontCamera },
@@ -516,6 +607,8 @@ fun CameraLevelTool(
 @Composable
 private fun CameraArLevelSection(
     hasCameraPermission: Boolean,
+    isCameraEnabled: Boolean,
+    onToggleCameraEnabled: () -> Unit,
     onRequestPermission: () -> Unit,
     currentRoll: Float,
     currentPitch: Float,
@@ -551,9 +644,12 @@ private fun CameraArLevelSection(
     isBn: Boolean,
     themeColors: CalculatorThemeColors
 ) {
+    val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val accentColor = themeColors.buttonOperatorBg
     val cardBorderColor = if (themeColors.isDark) Color(0xFF334155) else Color(0xFFE2E8F0)
+
+    var cameraBindError by remember { mutableStateOf(false) }
 
     Card(
         modifier = Modifier
@@ -610,8 +706,9 @@ private fun CameraArLevelSection(
                     shape = RoundedCornerShape(8.dp),
                     color = themeColors.background,
                     modifier = Modifier.clickable {
-                        val nextIdx = (selectedUnit.ordinal + 1) % AngleUnit.entries.size
-                        onUnitChange(AngleUnit.entries[nextIdx])
+                        val units = AngleUnit.values()
+                        val nextIdx = (selectedUnit.ordinal + 1) % units.size
+                        onUnitChange(units[nextIdx])
                     }
                 ) {
                     Text(
@@ -697,40 +794,65 @@ private fun CameraArLevelSection(
                         shape = RoundedCornerShape(20.dp)
                     )
             ) {
-                if (hasCameraPermission) {
-                    // Live Camera View
-                    AndroidView(
-                        factory = { ctx ->
-                            val previewView = PreviewView(ctx).apply {
-                                scaleType = PreviewView.ScaleType.FILL_CENTER
-                            }
-                            val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
-                            cameraProviderFuture.addListener({
+                if (hasCameraPermission && isCameraEnabled && !cameraBindError) {
+                    // Live Camera View wrapped safely
+                    key(isFrontCamera) {
+                        AndroidView(
+                            factory = { ctx ->
+                                val previewView = PreviewView(ctx).apply {
+                                    scaleType = PreviewView.ScaleType.FILL_CENTER
+                                }
                                 try {
-                                    val cameraProvider = cameraProviderFuture.get()
-                                    val preview = Preview.Builder().build().also {
-                                        it.setSurfaceProvider(previewView.surfaceProvider)
-                                    }
-                                    val cameraSelector = if (isFrontCamera) {
-                                        CameraSelector.DEFAULT_FRONT_CAMERA
-                                    } else {
-                                        CameraSelector.DEFAULT_BACK_CAMERA
-                                    }
-                                    cameraProvider.unbindAll()
-                                    val camera = cameraProvider.bindToLifecycle(
-                                        lifecycleOwner,
-                                        cameraSelector,
-                                        preview
-                                    )
-                                    onCameraReady(camera)
-                                } catch (_: Exception) {}
-                            }, ContextCompat.getMainExecutor(ctx))
-                            previewView
-                        },
-                        modifier = Modifier.fillMaxSize()
-                    )
-                } else {
-                    // Fallback Graphic Level Canvas when permission not granted yet
+                                    val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
+                                    cameraProviderFuture.addListener({
+                                        try {
+                                            val cameraProvider = cameraProviderFuture.get()
+                                            val preview = Preview.Builder().build().also {
+                                                it.setSurfaceProvider(previewView.surfaceProvider)
+                                            }
+                                            val preferredSelector = if (isFrontCamera) {
+                                                CameraSelector.DEFAULT_FRONT_CAMERA
+                                            } else {
+                                                CameraSelector.DEFAULT_BACK_CAMERA
+                                            }
+
+                                            val cameraSelector = if (cameraProvider.hasCamera(preferredSelector)) {
+                                                preferredSelector
+                                            } else if (cameraProvider.hasCamera(CameraSelector.DEFAULT_BACK_CAMERA)) {
+                                                CameraSelector.DEFAULT_BACK_CAMERA
+                                            } else if (cameraProvider.hasCamera(CameraSelector.DEFAULT_FRONT_CAMERA)) {
+                                                CameraSelector.DEFAULT_FRONT_CAMERA
+                                            } else {
+                                                null
+                                            }
+
+                                            if (cameraSelector != null) {
+                                                cameraProvider.unbindAll()
+                                                val camera = cameraProvider.bindToLifecycle(
+                                                    lifecycleOwner,
+                                                    cameraSelector,
+                                                    preview
+                                                )
+                                                onCameraReady(camera)
+                                            } else {
+                                                cameraBindError = true
+                                            }
+                                        } catch (e: Throwable) {
+                                            cameraBindError = true
+                                            CrashReporter.logHandledException(ctx, "CameraXListener", e)
+                                        }
+                                    }, ContextCompat.getMainExecutor(ctx))
+                                } catch (e: Throwable) {
+                                    cameraBindError = true
+                                    CrashReporter.logHandledException(ctx, "CameraXProvider", e)
+                                }
+                                previewView
+                            },
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                } else if (!hasCameraPermission) {
+                    // Camera permission prompt
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -754,22 +876,55 @@ private fun CameraArLevelSection(
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            if (isBn) "বাস্তব জিনিসের উপর ক্যামেরা ধরে সোজা আছে কিনা তা মাপতে ক্যামেরার অনুমতি দিন" else "Grant camera permission to see live AR plumb and level lines superimposed on objects",
+                            if (isBn) "বাস্তব জিনিসের উপর ক্যামেরা ধরে সোজা আছে কিনা তা দেখতে ক্যামেরার অনুমতি দিন" else "Grant camera permission to see live AR plumb & level lines superimposed on objects",
                             color = Color.White.copy(alpha = 0.7f),
                             fontSize = 12.sp,
                             textAlign = TextAlign.Center
                         )
                         Spacer(modifier = Modifier.height(16.dp))
-                        Button(
-                            onClick = onRequestPermission,
-                            colors = ButtonDefaults.buttonColors(containerColor = accentColor)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(
+                                onClick = onRequestPermission,
+                                colors = ButtonDefaults.buttonColors(containerColor = accentColor)
+                            ) {
+                                Text(if (isBn) "ক্যামেরা চালু করুন" else "Allow Camera")
+                            }
+                            OutlinedButton(
+                                onClick = onToggleCameraEnabled,
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
+                            ) {
+                                Text(if (isBn) "ভার্চুয়াল মোড" else "Virtual Mode")
+                            }
+                        }
+                    }
+                } else {
+                    // Virtual HUD mode background
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF0F172A))
+                                )
+                            ),
+                        contentAlignment = Alignment.TopCenter
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = Color.Black.copy(alpha = 0.4f),
+                            modifier = Modifier.padding(top = 10.dp)
                         ) {
-                            Text(if (isBn) "ক্যামেরা চালু করুন" else "Allow Camera Access")
+                            Text(
+                                text = if (isBn) "🌐 ভার্চুয়াল 3D সেন্সর গ্রিড মোড" else "🌐 Virtual 3D Sensor Grid Mode",
+                                color = Color.White.copy(alpha = 0.7f),
+                                fontSize = 11.sp,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
                         }
                     }
                 }
 
-                // Custom AR Overlay HUD Drawn Over Camera
+                // Custom AR Overlay HUD Drawn Over Camera or Virtual Screen
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     val w = size.width
                     val h = size.height
@@ -1029,6 +1184,14 @@ private fun CameraArLevelSection(
                     )
                 }
 
+                // Camera Background Toggle
+                FilterChip(
+                    selected = isCameraEnabled && hasCameraPermission,
+                    onClick = onToggleCameraEnabled,
+                    label = { Text(if (isBn) "ক্যামেরা প্রিভিউ" else "Camera View", fontSize = 12.sp) },
+                    leadingIcon = { Icon(Icons.Default.Videocam, null, modifier = Modifier.size(16.dp)) }
+                )
+
                 // Laser Grid Toggle
                 FilterChip(
                     selected = showLaserGrid,
@@ -1054,7 +1217,7 @@ private fun CameraArLevelSection(
                 )
 
                 // Flashlight / Torch
-                if (hasCameraPermission) {
+                if (hasCameraPermission && isCameraEnabled) {
                     FilledIconButton(
                         onClick = onToggleTorch,
                         colors = IconButtonDefaults.filledIconButtonColors(

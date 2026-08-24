@@ -149,10 +149,16 @@ fun MainContent(
         focusManager.clearFocus()
     }
 
+    var pendingCrashReport by remember { mutableStateOf<com.example.util.CrashReport?>(null) }
+    var showCrashReportDialog by remember { mutableStateOf(false) }
+
     LaunchedEffect(Unit) {
         try {
-            val prefs = context.getSharedPreferences("app_error_prefs", android.content.Context.MODE_PRIVATE)
-            prefs.edit().clear().apply()
+            val report = com.example.util.CrashReporter.getPendingCrashReport(context)
+            if (report != null) {
+                pendingCrashReport = report
+                showCrashReportDialog = true
+            }
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -2337,6 +2343,19 @@ fun MainContent(
                 onDismiss = { viewModel.showAiChat = false }
             )
         }
+    }
+
+    // --- Pending Crash Report & Developer Feedback Dialog ---
+    if (showCrashReportDialog && pendingCrashReport != null) {
+        com.example.ui.components.CrashReportDialog(
+            report = pendingCrashReport!!,
+            isBn = viewModel.selectedLanguage == AppLanguage.BENGALI,
+            themeColors = themeColors,
+            onDismiss = {
+                showCrashReportDialog = false
+                com.example.util.CrashReporter.clearPendingCrashReport(context)
+            }
+        )
     }
 
     if (viewModel.showErrorDialog) {

@@ -1944,8 +1944,10 @@ private fun CoinTossSection(isBn: Boolean, themeColors: CalculatorThemeColors) {
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    val coinRotation = remember { androidx.compose.animation.core.Animatable(0f) }
-    val coinOffsetY = remember { androidx.compose.animation.core.Animatable(0f) }
+    val coin1Rotation = remember { androidx.compose.animation.core.Animatable(0f) }
+    val coin2Rotation = remember { androidx.compose.animation.core.Animatable(0f) }
+    val coin1OffsetY = remember { androidx.compose.animation.core.Animatable(0f) }
+    val coin2OffsetY = remember { androidx.compose.animation.core.Animatable(0f) }
     var isFlipping by remember { mutableStateOf(false) }
     var coinResult by remember { mutableStateOf<String?>(null) } // "HEADS" or "TAILS"
 
@@ -1971,33 +1973,38 @@ private fun CoinTossSection(isBn: Boolean, themeColors: CalculatorThemeColors) {
                 }
             } catch (_: Exception) {}
 
-            // Decide result
-            val outcome = if ((0..1).random() == 0) "HEADS" else "TAILS"
+            // Decide result for coin 1
+            val outcome1 = if ((0..1).random() == 0) "HEADS" else "TAILS"
+            val outcome2 = if ((0..1).random() == 0) "HEADS" else "TAILS"
+
             val multi = if (coinCount > 1) {
-                List(coinCount) { if ((0..1).random() == 0) "HEADS" else "TAILS" }
+                listOf(outcome1, outcome2)
             } else {
-                listOf(outcome)
+                listOf(outcome1)
             }
 
-            // Target rotation (multiple full spins + landing face)
-            val currentRot = coinRotation.value
-            val spins = (6..8).random() * 360f
-            val finalTargetAngle = if (outcome == "HEADS") {
-                currentRot + spins
-            } else {
-                currentRot + spins + 180f
-            }
+            // Target rotation (multiple full spins + landing face: 0° for HEADS, 180° for TAILS)
+            val currentRot1 = coin1Rotation.value
+            val spins1 = (6..8).random() * 360f
+            // Ensure target lands cleanly on 0° modulo (Heads) or 180° modulo (Tails)
+            val baseTarget1 = (Math.round(currentRot1 / 360f) * 360f) + spins1
+            val finalTargetAngle1 = if (outcome1 == "HEADS") baseTarget1 else baseTarget1 + 180f
 
-            // Launch vertical jump and rotation concurrently
+            val currentRot2 = coin2Rotation.value
+            val spins2 = (6..9).random() * 360f
+            val baseTarget2 = (Math.round(currentRot2 / 360f) * 360f) + spins2
+            val finalTargetAngle2 = if (outcome2 == "HEADS") baseTarget2 else baseTarget2 + 180f
+
+            // Launch vertical jump and rotation for Coin 1
             launch {
-                coinOffsetY.animateTo(
+                coin1OffsetY.animateTo(
                     targetValue = -90f,
                     animationSpec = androidx.compose.animation.core.tween(
                         durationMillis = 450,
                         easing = androidx.compose.animation.core.FastOutSlowInEasing
                     )
                 )
-                coinOffsetY.animateTo(
+                coin1OffsetY.animateTo(
                     targetValue = 0f,
                     animationSpec = androidx.compose.animation.core.spring(
                         dampingRatio = androidx.compose.animation.core.Spring.DampingRatioMediumBouncy,
@@ -2006,18 +2013,63 @@ private fun CoinTossSection(isBn: Boolean, themeColors: CalculatorThemeColors) {
                 )
             }
 
-            coinRotation.animateTo(
-                targetValue = finalTargetAngle,
-                animationSpec = androidx.compose.animation.core.tween(
-                    durationMillis = 1000,
-                    easing = androidx.compose.animation.core.FastOutSlowInEasing
-                )
-            )
+            // Launch vertical jump for Coin 2 with slight variance
+            if (coinCount > 1) {
+                launch {
+                    coin2OffsetY.animateTo(
+                        targetValue = -95f,
+                        animationSpec = androidx.compose.animation.core.tween(
+                            durationMillis = 480,
+                            easing = androidx.compose.animation.core.FastOutSlowInEasing
+                        )
+                    )
+                    coin2OffsetY.animateTo(
+                        targetValue = 0f,
+                        animationSpec = androidx.compose.animation.core.spring(
+                            dampingRatio = androidx.compose.animation.core.Spring.DampingRatioMediumBouncy,
+                            stiffness = androidx.compose.animation.core.Spring.StiffnessLow
+                        )
+                    )
+                }
+            }
 
-            coinResult = outcome
+            // Animate Coin 1 Rotation
+            val job1 = launch {
+                coin1Rotation.animateTo(
+                    targetValue = finalTargetAngle1,
+                    animationSpec = androidx.compose.animation.core.tween(
+                        durationMillis = 1000,
+                        easing = androidx.compose.animation.core.FastOutSlowInEasing
+                    )
+                )
+            }
+
+            // Animate Coin 2 Rotation
+            val job2 = if (coinCount > 1) {
+                launch {
+                    coin2Rotation.animateTo(
+                        targetValue = finalTargetAngle2,
+                        animationSpec = androidx.compose.animation.core.tween(
+                            durationMillis = 1100,
+                            easing = androidx.compose.animation.core.FastOutSlowInEasing
+                        )
+                    )
+                }
+            } else null
+
+            job1.join()
+            job2?.join()
+
+            coinResult = outcome1
             multiCoinResults = multi
             totalTosses += 1
-            if (outcome == "HEADS") headsCount += 1 else tailsCount += 1
+            if (coinCount == 1) {
+                if (outcome1 == "HEADS") headsCount += 1 else tailsCount += 1
+            } else {
+                multi.forEach { res ->
+                    if (res == "HEADS") headsCount += 1 else tailsCount += 1
+                }
+            }
             isFlipping = false
 
             try {
@@ -2070,7 +2122,7 @@ private fun CoinTossSection(isBn: Boolean, themeColors: CalculatorThemeColors) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(160.dp)
+                .height(170.dp)
                 .clip(RoundedCornerShape(16.dp))
                 .background(themeColors.displayText.copy(alpha = 0.03f))
                 .clickable { doFlip() },
@@ -2080,43 +2132,69 @@ private fun CoinTossSection(isBn: Boolean, themeColors: CalculatorThemeColors) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
+                val activeOffset = if (coinCount == 1) coin1OffsetY.value else (coin1OffsetY.value + coin2OffsetY.value) / 2f
                 // Parabolic Drop Shadow
-                val shadowScale = (1f - (Math.abs(coinOffsetY.value) / 180f)).coerceIn(0.4f, 1f)
-                val shadowAlpha = (0.35f - (Math.abs(coinOffsetY.value) / 300f)).coerceIn(0.1f, 0.35f)
+                val shadowScale = (1f - (Math.abs(activeOffset) / 180f)).coerceIn(0.4f, 1f)
+                val shadowAlpha = (0.35f - (Math.abs(activeOffset) / 300f)).coerceIn(0.1f, 0.35f)
 
-                // 3D Spinning Coin
+                // 3D Spinning Coins
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(20.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.offset(y = coinOffsetY.value.dp)
+                    horizontalArrangement = Arrangement.spacedBy(24.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     if (coinCount == 1) {
-                        RealisticCoinGraphic(
-                            rotationDeg = coinRotation.value,
-                            themeColors = themeColors,
-                            sizeDp = 100
-                        )
+                        Box(modifier = Modifier.offset(y = coin1OffsetY.value.dp)) {
+                            RealisticCoinGraphic(
+                                rotationDeg = coin1Rotation.value,
+                                themeColors = themeColors,
+                                sizeDp = 96
+                            )
+                        }
                     } else {
-                        RealisticCoinGraphic(
-                            rotationDeg = coinRotation.value,
-                            themeColors = themeColors,
-                            sizeDp = 80
-                        )
-                        RealisticCoinGraphic(
-                            rotationDeg = coinRotation.value + 90f,
-                            themeColors = themeColors,
-                            sizeDp = 80
-                        )
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.offset(y = coin1OffsetY.value.dp)
+                        ) {
+                            RealisticCoinGraphic(
+                                rotationDeg = coin1Rotation.value,
+                                themeColors = themeColors,
+                                sizeDp = 78
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = if (isBn) "১ম কয়েন" else "Coin 1",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.displayText.copy(alpha = 0.6f)
+                            )
+                        }
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.offset(y = coin2OffsetY.value.dp)
+                        ) {
+                            RealisticCoinGraphic(
+                                rotationDeg = coin2Rotation.value,
+                                themeColors = themeColors,
+                                sizeDp = 78
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = if (isBn) "২য় কয়েন" else "Coin 2",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.displayText.copy(alpha = 0.6f)
+                            )
+                        }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 // Realistic Shadow oval
                 Box(
                     modifier = Modifier
-                        .width((80 * shadowScale).dp)
-                        .height((12 * shadowScale).dp)
+                        .width((if (coinCount == 1) 80f else 150f * shadowScale).dp)
+                        .height((12f * shadowScale).dp)
                         .clip(CircleShape)
                         .background(Color.Black.copy(alpha = shadowAlpha))
                 )
