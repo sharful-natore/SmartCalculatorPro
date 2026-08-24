@@ -155,6 +155,62 @@ class CalculatorViewModel(
         private set
     var showUndoConfirmDialog by mutableStateOf(false)
 
+    // Check & Correct (Step Undo / Redo) States
+    private val calcUndoStack = mutableListOf<TextFieldValue>()
+    private val calcRedoStack = mutableListOf<TextFieldValue>()
+    
+    var canUndoCalc by mutableStateOf(false)
+        private set
+    var canRedoCalc by mutableStateOf(false)
+        private set
+
+    fun updateUndoRedoFlags() {
+        canUndoCalc = calcUndoStack.isNotEmpty() || (expressionValue.text.isNotEmpty() && expressionValue.text != "0")
+        canRedoCalc = calcRedoStack.isNotEmpty()
+    }
+
+    fun recordUndoSnapshot(oldValue: TextFieldValue = expressionValue) {
+        if (calcUndoStack.isEmpty() || calcUndoStack.last().text != oldValue.text) {
+            calcUndoStack.add(oldValue)
+            if (calcUndoStack.size > 80) {
+                calcUndoStack.removeAt(0)
+            }
+        }
+        calcRedoStack.clear()
+        updateUndoRedoFlags()
+    }
+
+    fun undoStep() {
+        if (calcUndoStack.isNotEmpty()) {
+            calcRedoStack.add(expressionValue)
+            val prev = calcUndoStack.removeAt(calcUndoStack.size - 1)
+            expressionValue = prev
+            tryEvaluatePreview()
+            persistActiveExpression()
+        } else if (expressionValue.text.isNotEmpty() && expressionValue.text != "0") {
+            // Check & Correct step: remove one digit / char from the right
+            calcRedoStack.add(expressionValue)
+            val currentText = expressionValue.text
+            val newText = if (currentText.length <= 1) "0" else currentText.dropLast(1)
+            val newPos = if (newText == "0") 1 else newText.length
+            expressionValue = TextFieldValue(newText, selection = TextRange(newPos))
+            tryEvaluatePreview()
+            persistActiveExpression()
+        }
+        updateUndoRedoFlags()
+    }
+
+    fun redoStep() {
+        if (calcRedoStack.isNotEmpty()) {
+            calcUndoStack.add(expressionValue)
+            val next = calcRedoStack.removeAt(calcRedoStack.size - 1)
+            expressionValue = next
+            tryEvaluatePreview()
+            persistActiveExpression()
+        }
+        updateUndoRedoFlags()
+    }
+
     var isDegreeMode by mutableStateOf(true)
 
     var isScientificExpanded by mutableStateOf(false)
@@ -225,6 +281,7 @@ class CalculatorViewModel(
         } catch (e: Exception) {
             e.printStackTrace()
         }
+        updateUndoRedoFlags()
     }
 
     fun syncHijriDateOnline(context: Context, onResult: (Boolean, String) -> Unit = { _, _ -> }) {
@@ -2721,12 +2778,17 @@ How can I help you today?"""
     }
 
     fun onExpressionValueChange(newValue: TextFieldValue) {
+        if (expressionValue.text != newValue.text) {
+            recordUndoSnapshot(expressionValue)
+        }
         expressionValue = newValue
         tryEvaluatePreview()
         persistActiveExpression()
+        updateUndoRedoFlags()
     }
 
     fun onPaste(pastedText: String) {
+        recordUndoSnapshot(expressionValue)
         val currentText = expressionValue.text
         val selection = expressionValue.selection
         val newText = if (currentText == "0") {
@@ -2740,9 +2802,13 @@ How can I help you today?"""
         )
         tryEvaluatePreview()
         persistActiveExpression()
+        updateUndoRedoFlags()
     }
 
     fun onBtnClick(char: String) {
+        if (char != "=") {
+            recordUndoSnapshot(expressionValue)
+        }
         if (isEvaluated) {
             if (char != "AC" && char != "C" && char != "=" && char != "DEG" && char != "RAD" && char != "±") {
                 if (isOperator(char)) {
@@ -2911,6 +2977,7 @@ How can I help you today?"""
             }
         }
         persistActiveExpression()
+        updateUndoRedoFlags()
     }
 
     fun onAcLongClick() {

@@ -2676,13 +2676,15 @@ private fun getToolInfoItems(toolType: ToolType, isBn: Boolean): List<Pair<Strin
         }
         ToolType.PHOTO_LAB -> if (isBn) {
             listOf(
-                "১. ফটো রিসাইজ ও ক্রপ" to "সোশ্যাল মিডিয়া, পাসপোর্ট সাইজ বা অফিশিয়াল পোর্টালের নির্দিষ্ট কেবি/পিক্সেল সাইজে ছবির আকার পরিবর্তন ও কাটুন।",
-                "২. ফরম্যাট রূপান্তর ও বিজি রিমুভার" to "PNG, JPEG, WEBP ফরম্যাটে রূপান্তর এবং ছবির অপ্রয়োজনীয় ব্যাকগ্রাউন্ড সহজে অপসারণ করুন।"
+                "১. ফটো ক্রপ ও প্রিসেট" to "ফ্রি ক্রপ, ১:১ স্কয়ার, ৩:৪ পাসপোর্ট সাইজ, চাকরির আবেদন (৩০০x৩০০, ৩০০x৮০) ইত্যাদি অনুপাতে ছবি কাটুন।",
+                "২. কাস্টম সাইজ (px / cm / mm / inch)" to "পিক্সেল বা সেন্টিমিটার/মিলিমিটার/ইঞ্চিতে প্রস্থ ও উচ্চতা এবং অ্যাসপেক্ট রেশিও লক করে নির্ভুল মাপ দিন।",
+                "৩. নির্দিষ্ট ফাইল সাইজ (KB) ও ফরম্যাট রূপান্তর" to "লক্ষ্যমাত্রা অনুযায়ী কেবি (যেমন < ১০০ KB, ৫০ KB) সাইজ কম্প্রেস এবং JPG, PNG, WEBP ফরম্যাটে এক্সপোর্ট করুন।"
             )
         } else {
             listOf(
-                "1. Photo Resizer & Cropper" to "Resize images to custom width/height pixel dimensions or target file sizes (KB) suitable for official portal uploads.",
-                "2. Format Conversion & BG Remover" to "Convert images seamlessly across PNG, JPG, and WEBP formats and isolate subjects with smart background removal."
+                "1. Photo Crop & Presets" to "Crop photos freely or with standard aspect ratios like 1:1, 3:4 portrait, 300x300 job photo, and signature.",
+                "2. Custom Dimensions (px / cm / mm / in)" to "Set exact width and height in pixels, centimeters, millimeters, or inches with aspect ratio lock.",
+                "3. Target File Size (KB) & Format" to "Compress directly to a target file size (e.g. 50 KB, 100 KB) and convert to JPG, PNG, or WEBP."
             )
         }
         ToolType.QIBLA_COMPASS -> if (isBn) {

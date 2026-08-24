@@ -357,9 +357,7 @@ fun CameraLevelTool(
 
     Column(
         modifier = Modifier
-            .fillMaxSize()
-            .background(themeColors.background)
-            .verticalScroll(rememberScrollState())
+            .fillMaxWidth()
             .padding(bottom = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -367,7 +365,7 @@ fun CameraLevelTool(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .padding(vertical = 6.dp)
                 .themeCardShadow(themeColors),
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = themeColors.cardBg)
@@ -388,7 +386,7 @@ fun CameraLevelTool(
                             Text(
                                 if (isBn) mode.titleBn else mode.titleEn,
                                 fontSize = 12.sp,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                             )
                         },
                         leadingIcon = {
@@ -404,8 +402,18 @@ fun CameraLevelTool(
                             )
                         },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = accentColor.copy(alpha = 0.2f),
-                            selectedLabelColor = accentColor
+                            containerColor = themeColors.cardBg,
+                            labelColor = themeColors.displayText,
+                            iconColor = themeColors.displayText,
+                            selectedContainerColor = themeColors.buttonEqualBg,
+                            selectedLabelColor = Color.White,
+                            selectedLeadingIconColor = Color.White
+                        ),
+                        border = FilterChipDefaults.filterChipBorder(
+                            enabled = true,
+                            selected = isSelected,
+                            borderColor = themeColors.displayText.copy(alpha = 0.2f),
+                            selectedBorderColor = themeColors.buttonEqualBg
                         )
                     )
                 }
@@ -547,28 +555,97 @@ fun CameraLevelTool(
     if (showSaveDialog) {
         AlertDialog(
             onDismissRequest = { showSaveDialog = false },
+            shape = RoundedCornerShape(24.dp),
+            containerColor = themeColors.cardBg,
+            titleContentColor = themeColors.displayText,
+            textContentColor = themeColors.displayText,
             title = {
-                Text(
-                    if (isBn) "পরিমাপ রেকর্ড সংরক্ষণ" else "Save Angle Measurement",
-                    fontWeight = FontWeight.Bold
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.BookmarkAdd,
+                            contentDescription = null,
+                            tint = themeColors.buttonEqualBg,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = if (isBn) "পরিমাপ রেকর্ড সংরক্ষণ" else "Save Angle Measurement",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 17.sp,
+                        color = themeColors.displayText
+                    )
+                }
             },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        "${if (isBn) "রোল / কাত কোণ:" else "Roll Angle:"} ${formatAngle(currentRoll)}",
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
-                        "${if (isBn) "পিচ / ঢাল কোণ:" else "Pitch Angle:"} ${formatAngle(currentPitch)}",
-                        fontWeight = FontWeight.SemiBold
-                    )
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = themeColors.background,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            horizontalArrangement = Arrangement.SpaceAround
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    text = if (isBn) "রোল / কাত" else "Roll Angle",
+                                    fontSize = 11.sp,
+                                    color = themeColors.displayText.copy(alpha = 0.6f)
+                                )
+                                Text(
+                                    text = formatAngle(currentRoll),
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.buttonEqualBg
+                                )
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .width(1.dp)
+                                    .height(30.dp)
+                                    .background(themeColors.displayText.copy(alpha = 0.15f))
+                            )
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    text = if (isBn) "পিচ / ঢাল" else "Pitch Angle",
+                                    fontSize = 11.sp,
+                                    color = themeColors.displayText.copy(alpha = 0.6f)
+                                )
+                                Text(
+                                    text = formatAngle(currentPitch),
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.buttonEqualBg
+                                )
+                            }
+                        }
+                    }
                     OutlinedTextField(
                         value = recordNoteText,
                         onValueChange = { recordNoteText = it },
                         label = { Text(if (isBn) "নোট / রেফারেন্স (যেমন: ড্রয়িং ফ্রেম, সেলফ)" else "Note (e.g. Living Room Shelf)") },
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = themeColors.buttonEqualBg,
+                            unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.3f),
+                            focusedLabelColor = themeColors.buttonEqualBg,
+                            unfocusedLabelColor = themeColors.displayText.copy(alpha = 0.6f),
+                            focusedTextColor = themeColors.displayText,
+                            unfocusedTextColor = themeColors.displayText
+                        )
                     )
                 }
             },
@@ -587,13 +664,22 @@ fun CameraLevelTool(
                         recordNoteText = ""
                         showSaveDialog = false
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = accentColor)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = themeColors.buttonEqualBg,
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text(if (isBn) "সংরক্ষণ করুন" else "Save")
+                    Text(if (isBn) "সংরক্ষণ করুন" else "Save", fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showSaveDialog = false }) {
+                OutlinedButton(
+                    onClick = { showSaveDialog = false },
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.2f)),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = themeColors.displayText)
+                ) {
                     Text(if (isBn) "বাতিল" else "Cancel")
                 }
             }
@@ -885,15 +971,23 @@ private fun CameraArLevelSection(
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Button(
                                 onClick = onRequestPermission,
-                                colors = ButtonDefaults.buttonColors(containerColor = accentColor)
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = accentColor,
+                                    contentColor = Color.White
+                                ),
+                                shape = RoundedCornerShape(12.dp)
                             ) {
-                                Text(if (isBn) "ক্যামেরা চালু করুন" else "Allow Camera")
+                                Icon(Icons.Default.Videocam, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.White)
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(if (isBn) "ক্যামেরা চালু করুন" else "Allow Camera", fontWeight = FontWeight.Bold)
                             }
                             OutlinedButton(
                                 onClick = onToggleCameraEnabled,
-                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                                border = BorderStroke(1.5.dp, Color.White.copy(alpha = 0.8f)),
+                                shape = RoundedCornerShape(12.dp)
                             ) {
-                                Text(if (isBn) "ভার্চুয়াল মোড" else "Virtual Mode")
+                                Text(if (isBn) "ভার্চুয়াল মোড" else "Virtual Mode", fontWeight = FontWeight.SemiBold)
                             }
                         }
                     }
@@ -1141,45 +1235,53 @@ private fun CameraArLevelSection(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 // Freeze Button
-                FilledTonalButton(
+                Button(
                     onClick = onToggleFreeze,
-                    colors = ButtonDefaults.filledTonalButtonColors(
-                        containerColor = if (isFrozen) Color(0xFF0284C7) else themeColors.background,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (isFrozen) themeColors.buttonEqualBg else themeColors.cardBg,
                         contentColor = if (isFrozen) Color.White else themeColors.displayText
                     ),
+                    border = BorderStroke(1.dp, if (isFrozen) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.25f)),
                     shape = RoundedCornerShape(12.dp),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
                 ) {
                     Icon(
                         imageVector = if (isFrozen) Icons.Default.Lock else Icons.Default.LockOpen,
                         contentDescription = null,
+                        tint = if (isFrozen) Color.White else themeColors.displayText,
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         if (isFrozen) (if (isBn) "আনফ্রিজ" else "Unfreeze") else (if (isBn) "ফ্রিজ ফ্রেম" else "Freeze"),
+                        fontWeight = FontWeight.Bold,
+                        color = if (isFrozen) Color.White else themeColors.displayText,
                         fontSize = 12.sp
                     )
                 }
 
                 // Zero Calibrate Button
-                FilledTonalButton(
+                Button(
                     onClick = onZeroCalibrate,
-                    colors = ButtonDefaults.filledTonalButtonColors(
-                        containerColor = if (zeroRollOffset != 0f) Color(0xFFF59E0B) else themeColors.background,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (zeroRollOffset != 0f) Color(0xFFD97706) else themeColors.cardBg,
                         contentColor = if (zeroRollOffset != 0f) Color.White else themeColors.displayText
                     ),
+                    border = BorderStroke(1.dp, if (zeroRollOffset != 0f) Color(0xFFD97706) else themeColors.displayText.copy(alpha = 0.25f)),
                     shape = RoundedCornerShape(12.dp),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Tune,
                         contentDescription = null,
+                        tint = if (zeroRollOffset != 0f) Color.White else themeColors.displayText,
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         if (zeroRollOffset != 0f) (if (isBn) "রিসেট জিরো" else "Reset Zero") else (if (isBn) "জিরো সেট" else "Set Zero"),
+                        fontWeight = FontWeight.Bold,
+                        color = if (zeroRollOffset != 0f) Color.White else themeColors.displayText,
                         fontSize = 12.sp
                     )
                 }
@@ -1188,32 +1290,88 @@ private fun CameraArLevelSection(
                 FilterChip(
                     selected = isCameraEnabled && hasCameraPermission,
                     onClick = onToggleCameraEnabled,
-                    label = { Text(if (isBn) "ক্যামেরা প্রিভিউ" else "Camera View", fontSize = 12.sp) },
-                    leadingIcon = { Icon(Icons.Default.Videocam, null, modifier = Modifier.size(16.dp)) }
+                    label = { Text(if (isBn) "ক্যামেরা ভিউ" else "Camera View", fontSize = 12.sp, fontWeight = FontWeight.SemiBold) },
+                    leadingIcon = { Icon(Icons.Default.Videocam, null, modifier = Modifier.size(16.dp)) },
+                    colors = FilterChipDefaults.filterChipColors(
+                        containerColor = themeColors.cardBg,
+                        labelColor = themeColors.displayText,
+                        iconColor = themeColors.displayText,
+                        selectedContainerColor = themeColors.buttonEqualBg,
+                        selectedLabelColor = Color.White,
+                        selectedLeadingIconColor = Color.White
+                    ),
+                    border = FilterChipDefaults.filterChipBorder(
+                        enabled = true,
+                        selected = isCameraEnabled && hasCameraPermission,
+                        borderColor = themeColors.displayText.copy(alpha = 0.25f),
+                        selectedBorderColor = themeColors.buttonEqualBg
+                    )
                 )
 
                 // Laser Grid Toggle
                 FilterChip(
                     selected = showLaserGrid,
                     onClick = onToggleGrid,
-                    label = { Text(if (isBn) "গ্রিড" else "Grid", fontSize = 12.sp) },
-                    leadingIcon = { Icon(Icons.Default.GridOn, null, modifier = Modifier.size(16.dp)) }
+                    label = { Text(if (isBn) "গ্রিড" else "Grid", fontSize = 12.sp, fontWeight = FontWeight.SemiBold) },
+                    leadingIcon = { Icon(Icons.Default.GridOn, null, modifier = Modifier.size(16.dp)) },
+                    colors = FilterChipDefaults.filterChipColors(
+                        containerColor = themeColors.cardBg,
+                        labelColor = themeColors.displayText,
+                        iconColor = themeColors.displayText,
+                        selectedContainerColor = themeColors.buttonEqualBg,
+                        selectedLabelColor = Color.White,
+                        selectedLeadingIconColor = Color.White
+                    ),
+                    border = FilterChipDefaults.filterChipBorder(
+                        enabled = true,
+                        selected = showLaserGrid,
+                        borderColor = themeColors.displayText.copy(alpha = 0.25f),
+                        selectedBorderColor = themeColors.buttonEqualBg
+                    )
                 )
 
                 // Protractor Toggle
                 FilterChip(
                     selected = showProtractor,
                     onClick = onToggleProtractor,
-                    label = { Text(if (isBn) "চাঁদা/আর্ক" else "Protractor", fontSize = 12.sp) },
-                    leadingIcon = { Icon(Icons.Default.PieChart, null, modifier = Modifier.size(16.dp)) }
+                    label = { Text(if (isBn) "চাঁদা/আর্ক" else "Protractor", fontSize = 12.sp, fontWeight = FontWeight.SemiBold) },
+                    leadingIcon = { Icon(Icons.Default.PieChart, null, modifier = Modifier.size(16.dp)) },
+                    colors = FilterChipDefaults.filterChipColors(
+                        containerColor = themeColors.cardBg,
+                        labelColor = themeColors.displayText,
+                        iconColor = themeColors.displayText,
+                        selectedContainerColor = themeColors.buttonEqualBg,
+                        selectedLabelColor = Color.White,
+                        selectedLeadingIconColor = Color.White
+                    ),
+                    border = FilterChipDefaults.filterChipBorder(
+                        enabled = true,
+                        selected = showProtractor,
+                        borderColor = themeColors.displayText.copy(alpha = 0.25f),
+                        selectedBorderColor = themeColors.buttonEqualBg
+                    )
                 )
 
                 // Plumb line Toggle
                 FilterChip(
                     selected = showPlumbLine,
                     onClick = onTogglePlumbLine,
-                    label = { Text(if (isBn) "উলম্ব প্লাম্ব" else "Plumb", fontSize = 12.sp) },
-                    leadingIcon = { Icon(Icons.Default.Straighten, null, modifier = Modifier.size(16.dp)) }
+                    label = { Text(if (isBn) "উলম্ব প্লাম্ব" else "Plumb", fontSize = 12.sp, fontWeight = FontWeight.SemiBold) },
+                    leadingIcon = { Icon(Icons.Default.Straighten, null, modifier = Modifier.size(16.dp)) },
+                    colors = FilterChipDefaults.filterChipColors(
+                        containerColor = themeColors.cardBg,
+                        labelColor = themeColors.displayText,
+                        iconColor = themeColors.displayText,
+                        selectedContainerColor = themeColors.buttonEqualBg,
+                        selectedLabelColor = Color.White,
+                        selectedLeadingIconColor = Color.White
+                    ),
+                    border = FilterChipDefaults.filterChipBorder(
+                        enabled = true,
+                        selected = showPlumbLine,
+                        borderColor = themeColors.displayText.copy(alpha = 0.25f),
+                        selectedBorderColor = themeColors.buttonEqualBg
+                    )
                 )
 
                 // Flashlight / Torch
@@ -1221,14 +1379,17 @@ private fun CameraArLevelSection(
                     FilledIconButton(
                         onClick = onToggleTorch,
                         colors = IconButtonDefaults.filledIconButtonColors(
-                            containerColor = if (isTorchOn) Color(0xFFF59E0B) else themeColors.background,
+                            containerColor = if (isTorchOn) Color(0xFFD97706) else themeColors.cardBg,
                             contentColor = if (isTorchOn) Color.White else themeColors.displayText
                         ),
-                        modifier = Modifier.size(36.dp)
+                        modifier = Modifier
+                            .size(36.dp)
+                            .border(1.dp, if (isTorchOn) Color(0xFFD97706) else themeColors.displayText.copy(alpha = 0.25f), CircleShape)
                     ) {
                         Icon(
                             imageVector = if (isTorchOn) Icons.Default.FlashOn else Icons.Default.FlashOff,
                             contentDescription = "Torch",
+                            tint = if (isTorchOn) Color.White else themeColors.displayText,
                             modifier = Modifier.size(18.dp)
                         )
                     }
@@ -1237,14 +1398,17 @@ private fun CameraArLevelSection(
                     FilledIconButton(
                         onClick = onToggleCamera,
                         colors = IconButtonDefaults.filledIconButtonColors(
-                            containerColor = themeColors.background,
+                            containerColor = themeColors.cardBg,
                             contentColor = themeColors.displayText
                         ),
-                        modifier = Modifier.size(36.dp)
+                        modifier = Modifier
+                            .size(36.dp)
+                            .border(1.dp, themeColors.displayText.copy(alpha = 0.25f), CircleShape)
                     ) {
                         Icon(
                             imageVector = Icons.Default.FlipCameraAndroid,
                             contentDescription = "Flip Camera",
+                            tint = themeColors.displayText,
                             modifier = Modifier.size(18.dp)
                         )
                     }
@@ -1254,14 +1418,17 @@ private fun CameraArLevelSection(
                 FilledIconButton(
                     onClick = onToggleHaptic,
                     colors = IconButtonDefaults.filledIconButtonColors(
-                        containerColor = if (hapticFeedbackEnabled) accentColor.copy(alpha = 0.2f) else themeColors.background,
-                        contentColor = if (hapticFeedbackEnabled) accentColor else themeColors.displayText.copy(alpha = 0.4f)
+                        containerColor = if (hapticFeedbackEnabled) themeColors.buttonEqualBg else themeColors.cardBg,
+                        contentColor = if (hapticFeedbackEnabled) Color.White else themeColors.displayText
                     ),
-                    modifier = Modifier.size(36.dp)
+                    modifier = Modifier
+                        .size(36.dp)
+                        .border(1.dp, if (hapticFeedbackEnabled) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.25f), CircleShape)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Vibration,
                         contentDescription = "Haptic",
+                        tint = if (hapticFeedbackEnabled) Color.White else themeColors.displayText,
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -1270,14 +1437,17 @@ private fun CameraArLevelSection(
                 FilledIconButton(
                     onClick = onToggleSound,
                     colors = IconButtonDefaults.filledIconButtonColors(
-                        containerColor = if (soundToneEnabled) accentColor.copy(alpha = 0.2f) else themeColors.background,
-                        contentColor = if (soundToneEnabled) accentColor else themeColors.displayText.copy(alpha = 0.4f)
+                        containerColor = if (soundToneEnabled) themeColors.buttonEqualBg else themeColors.cardBg,
+                        contentColor = if (soundToneEnabled) Color.White else themeColors.displayText
                     ),
-                    modifier = Modifier.size(36.dp)
+                    modifier = Modifier
+                        .size(36.dp)
+                        .border(1.dp, if (soundToneEnabled) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.25f), CircleShape)
                 ) {
                     Icon(
                         imageVector = if (soundToneEnabled) Icons.Default.VolumeUp else Icons.Default.VolumeOff,
                         contentDescription = "Sound",
+                        tint = if (soundToneEnabled) Color.White else themeColors.displayText,
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -1289,14 +1459,18 @@ private fun CameraArLevelSection(
             Button(
                 onClick = onSaveRecord,
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = accentColor),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = themeColors.buttonEqualBg,
+                    contentColor = Color.White
+                ),
                 shape = RoundedCornerShape(14.dp)
             ) {
-                Icon(Icons.Default.BookmarkAdd, contentDescription = null, modifier = Modifier.size(18.dp))
+                Icon(Icons.Default.BookmarkAdd, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = if (isBn) "বর্তমান কোণ পরিমাপ সেভ করুন" else "Save Angle Measurement",
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
                 )
             }
         }
@@ -1461,28 +1635,48 @@ private fun SurfaceBubbleLevelSection(
                 OutlinedButton(
                     onClick = onZeroCalibrate,
                     modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.25f)),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = themeColors.cardBg,
+                        contentColor = themeColors.displayText
+                    )
                 ) {
-                    Icon(Icons.Default.Tune, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Icon(
+                        imageVector = Icons.Default.Tune,
+                        contentDescription = null,
+                        tint = themeColors.displayText,
+                        modifier = Modifier.size(16.dp)
+                    )
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text(if (zeroRollOffset != 0f) (if (isBn) "রিসেট" else "Reset") else (if (isBn) "ক্যালিব্রেট" else "Calibrate"))
+                    Text(
+                        text = if (zeroRollOffset != 0f) (if (isBn) "রিসেট জিরো" else "Reset") else (if (isBn) "ক্যালিব্রেট" else "Calibrate"),
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.displayText
+                    )
                 }
 
                 Button(
                     onClick = onToggleFreeze,
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isFrozen) Color(0xFF0284C7) else accentColor
+                        containerColor = if (isFrozen) themeColors.buttonEqualBg else themeColors.buttonEqualBg,
+                        contentColor = Color.White
                     ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Icon(
                         imageVector = if (isFrozen) Icons.Default.Lock else Icons.Default.LockOpen,
                         contentDescription = null,
+                        tint = Color.White,
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text(if (isFrozen) (if (isBn) "লকড" else "Locked") else (if (isBn) "হোল্ড" else "Hold"))
+                    Text(
+                        text = if (isFrozen) (if (isBn) "আনফ্রিজ" else "Locked") else (if (isBn) "হোল্ড স্ক্রিন" else "Hold"),
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
                 }
             }
         }

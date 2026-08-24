@@ -37,6 +37,7 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.automirrored.filled.Backspace
 import androidx.compose.material.icons.automirrored.filled.Undo
+import androidx.compose.material.icons.automirrored.filled.Redo
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Info
 import com.example.util.AppLanguage
@@ -307,7 +308,7 @@ fun CalculatorScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(2.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(
@@ -322,7 +323,7 @@ fun CalculatorScreen(
                         Icon(
                             imageVector = Icons.Default.ContentCopy,
                             contentDescription = "Copy Expression",
-                            tint = themeColors.displayText.copy(alpha = 0.5f),
+                            tint = themeColors.displayText.copy(alpha = 0.55f),
                             modifier = Modifier.size(17.dp)
                         )
                     }
@@ -338,7 +339,35 @@ fun CalculatorScreen(
                         Icon(
                             imageVector = Icons.Default.ContentPaste,
                             contentDescription = "Paste Expression",
-                            tint = themeColors.displayText.copy(alpha = 0.5f),
+                            tint = themeColors.displayText.copy(alpha = 0.55f),
+                            modifier = Modifier.size(17.dp)
+                        )
+                    }
+
+                    // Check & Correct Step Undo (1 Digit / Step Back)
+                    IconButton(
+                        onClick = { viewModel.undoStep() },
+                        enabled = viewModel.canUndoCalc,
+                        modifier = Modifier.size(34.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Undo,
+                            contentDescription = "Step Undo (Check Left)",
+                            tint = if (viewModel.canUndoCalc) themeColors.displayText.copy(alpha = 0.75f) else themeColors.displayText.copy(alpha = 0.2f),
+                            modifier = Modifier.size(17.dp)
+                        )
+                    }
+
+                    // Check & Correct Step Redo (1 Digit / Step Forward)
+                    IconButton(
+                        onClick = { viewModel.redoStep() },
+                        enabled = viewModel.canRedoCalc,
+                        modifier = Modifier.size(34.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Redo,
+                            contentDescription = "Step Redo (Correct Right)",
+                            tint = if (viewModel.canRedoCalc) themeColors.displayText.copy(alpha = 0.75f) else themeColors.displayText.copy(alpha = 0.2f),
                             modifier = Modifier.size(17.dp)
                         )
                     }

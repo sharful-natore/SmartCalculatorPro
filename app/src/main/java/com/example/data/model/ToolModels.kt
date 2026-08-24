@@ -328,8 +328,8 @@ enum class ToolType(
         ToolCategory.UTILITY, Icons.Default.CalendarMonth
     ),
     PHOTO_LAB(
-        "Smart Photo Lab & BG Remover", "ফটো এডিটর ও বিজি রিমুভার",
-        "ফটো রিসাইজ, ক্রপ, ফরম্যাট কনভার্ট ও ব্যাকগ্রাউন্ড রিমুভ করুন",
+        "Photo Resizer Tool", "ফটো রিসাইজার টুল",
+        "ফটো ক্রপ, কাস্টম মাপ (px/cm/mm/inch), ফাইল সাইজ (KB/MB) ও ফরম্যাট পরিবর্তন",
         ToolCategory.UTILITY, Icons.Default.Image
     ),
     METAL_DETECTOR(
@@ -444,7 +444,7 @@ enum class ToolType(
                 RANDOM_NUMBER_PICKER -> "Lottery number generator, 3D animated coin toss, and realistic dice roller"
                 MULTI_CALENDAR -> "Gregorian, Bengali, and Hijri multi-calendar"
                 WEATHER -> "Check current weather and 7-day forecast"
-                PHOTO_LAB -> "Resize, crop, convert between formats, and remove backgrounds from photos"
+                PHOTO_LAB -> "Resize photos with custom dimensions (px/cm/mm/inch), target file size (KB), crop, and convert formats"
                 METAL_DETECTOR -> "Detect metal, electromagnetic fields, and hidden wires using magnetometer sensor"
                 PHONE_DIAGNOSTICS -> "Test all device sensors, touch screen, speakers, vibration, and display health"
                 DEVICE_INFO -> "View comprehensive hardware, CPU, RAM, battery, display, and OS specifications"

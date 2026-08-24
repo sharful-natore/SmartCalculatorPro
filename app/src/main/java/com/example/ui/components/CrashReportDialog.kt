@@ -300,18 +300,23 @@ fun CrashReportDialog(
                             onDismiss()
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = themeColors.buttonEqualBg,
+                            contentColor = themeColors.buttonEqualText
+                        ),
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.Send,
                             contentDescription = null,
+                            tint = themeColors.buttonEqualText,
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = if (isBn) "ডেভেলপারকে রিপোর্ট পাঠান" else "Send Report to Developer",
                             fontWeight = FontWeight.Bold,
+                            color = themeColors.buttonEqualText,
                             fontSize = 14.sp
                         )
                     }
@@ -326,25 +331,45 @@ fun CrashReportDialog(
                                 CrashReporter.copyToClipboard(context, report.toFormattedReport())
                             },
                             modifier = Modifier.weight(1f),
+                            border = BorderStroke(1.dp, themeColors.buttonOperatorBg.copy(alpha = 0.5f)),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = themeColors.buttonOperatorBg.copy(alpha = 0.08f),
+                                contentColor = themeColors.buttonOperatorBg
+                            ),
                             shape = RoundedCornerShape(12.dp)
                         ) {
-                            Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Icon(
+                                imageVector = Icons.Default.ContentCopy,
+                                contentDescription = null,
+                                tint = themeColors.buttonOperatorBg,
+                                modifier = Modifier.size(16.dp)
+                            )
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text(if (isBn) "লগ কপি" else "Copy Log", fontSize = 12.sp)
+                            Text(
+                                text = if (isBn) "লগ কপি" else "Copy Log",
+                                color = themeColors.buttonOperatorBg,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 12.sp
+                            )
                         }
 
-                        TextButton(
+                        FilledTonalButton(
                             onClick = {
                                 CrashReporter.clearPendingCrashReport(context)
                                 onDismiss()
                             },
                             modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.filledTonalButtonColors(
+                                containerColor = themeColors.buttonFunctionBg.copy(alpha = 0.35f),
+                                contentColor = themeColors.displayText.copy(alpha = 0.8f)
+                            ),
                             shape = RoundedCornerShape(12.dp)
                         ) {
                             Text(
-                                if (isBn) "মুছে ফেলুন" else "Dismiss",
+                                text = if (isBn) "মুছে ফেলুন" else "Dismiss",
                                 fontSize = 12.sp,
-                                color = themeColors.displayText.copy(alpha = 0.6f)
+                                fontWeight = FontWeight.Medium,
+                                color = themeColors.displayText.copy(alpha = 0.8f)
                             )
                         }
                     }

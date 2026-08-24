@@ -2993,7 +2993,7 @@ private fun LotteryNumberSection(
 }
 
 
-// --- Smart Photo Lab & BG Remover Tool ---
+// --- Photo Resizer & Format Converter Tool ---
 @Composable
 fun PhotoLabCard(viewModel: CalculatorViewModel, themeColors: CalculatorThemeColors) {
     val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
@@ -3001,39 +3001,27 @@ fun PhotoLabCard(viewModel: CalculatorViewModel, themeColors: CalculatorThemeCol
     val coroutineScope = rememberCoroutineScope()
 
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
-    var selectedWorkspaceTab by remember { mutableStateOf(0) } // 0: Adjustments, 1: Resize & Crop, 2: Convert, 3: AI BG Remover
+    var selectedWorkspaceTab by remember { mutableStateOf(0) } // 0: Presets & Crop, 1: Dimensions (W/H), 2: Target File Size (KB), 3: Format
 
-    // Image editing state parameters
+    // Photo settings
+    var cropPreset by remember { mutableStateOf("Original") } // "Original", "1:1", "3:4", "300x300", "300x80", "4:3", "16:9"
     var rotationDegrees by remember { mutableStateOf(0f) }
     var isFlippedHorizontal by remember { mutableStateOf(false) }
-    var brightness by remember { mutableStateOf(0f) } // -100f to 100f
-    var contrast by remember { mutableStateOf(1f) } // 0.5f to 2.0f
-    var isGrayscale by remember { mutableStateOf(false) }
-    var isSepia by remember { mutableStateOf(false) }
 
-    // Resize state
-    var resizeWidthPercent by remember { mutableStateOf(100f) }
-    var resizeHeightPercent by remember { mutableStateOf(100f) }
-    var selectedResizePreset by remember { mutableStateOf("Full HD") }
+    var unit by remember { mutableStateOf("px") } // "px", "cm", "mm", "in"
+    var inputWidth by remember { mutableStateOf("300") }
+    var inputHeight by remember { mutableStateOf("300") }
+    var lockAspectRatio by remember { mutableStateOf(true) }
 
-    // Convert state
-    var targetFormat by remember { mutableStateOf("PNG") }
-    var isConvertingInProgress by remember { mutableStateOf(false) }
-    var convertProgress by remember { mutableStateOf(0f) }
-    var convertCompleteMessage by remember { mutableStateOf<String?>(null) }
+    var targetFormat by remember { mutableStateOf("JPG") } // "JPG", "PNG", "WEBP"
+    var targetKbMode by remember { mutableStateOf("Original") } // "Original", "< 50 KB", "< 100 KB", "< 200 KB", "Custom KB"
+    var customTargetKb by remember { mutableStateOf("100") }
+    var manualQuality by remember { mutableStateOf(90f) }
 
-    // BG Remover state
-    var isBgRemoved by remember { mutableStateOf(false) }
-    var isBgRemovalActive by remember { mutableStateOf(false) }
-    var bgRemovalProgress by remember { mutableStateOf(0f) }
-    var selectedBgTemplateIndex by remember { mutableStateOf(0) }
-
-    // Cropper state
-    var cropAspectRatioPreset by remember { mutableStateOf("1:1") }
-    var isCroppedResultSimulated by remember { mutableStateOf(false) }
     var saveSuccessMessage by remember { mutableStateOf<String?>(null) }
+    var isSaving by remember { mutableStateOf(false) }
 
-    // Load original bitmap from URI
+    // Load original bitmap
     val originalBitmap = remember(selectedImageUri) {
         selectedImageUri?.let { uri ->
             try {
@@ -3052,102 +3040,57 @@ fun PhotoLabCard(viewModel: CalculatorViewModel, themeColors: CalculatorThemeCol
         }
     }
 
-    // Processed Bitmap with transformations applied
-    val processedBitmap = remember(originalBitmap, rotationDegrees, isFlippedHorizontal, brightness, contrast, isGrayscale, isSepia, resizeWidthPercent, resizeHeightPercent, isBgRemoved, selectedBgTemplateIndex) {
+    // Set initial width & height when image changes
+    LaunchedEffect(originalBitmap) {
         originalBitmap?.let { bmp ->
-            try {
-                var workingBmp = bmp
-
-                // 1. Rotation & Flip Matrix
-                val matrix = android.graphics.Matrix().apply {
-                    if (rotationDegrees != 0f) postRotate(rotationDegrees)
-                    if (isFlippedHorizontal) postScale(-1f, 1f, workingBmp.width / 2f, workingBmp.height / 2f)
-                }
-                if (rotationDegrees != 0f || isFlippedHorizontal) {
-                    workingBmp = android.graphics.Bitmap.createBitmap(workingBmp, 0, 0, workingBmp.width, workingBmp.height, matrix, true)
-                }
-
-                // 2. Resize
-                if (resizeWidthPercent != 100f || resizeHeightPercent != 100f) {
-                    val newW = (workingBmp.width * (resizeWidthPercent / 100f)).toInt().coerceAtLeast(50)
-                    val newH = (workingBmp.height * (resizeHeightPercent / 100f)).toInt().coerceAtLeast(50)
-                    workingBmp = android.graphics.Bitmap.createScaledBitmap(workingBmp, newW, newH, true)
-                }
-
-                // 3. Color Adjustments (Brightness, Contrast, Grayscale, Sepia)
-                if (brightness != 0f || contrast != 1f || isGrayscale || isSepia) {
-                    val mutableBmp = workingBmp.copy(android.graphics.Bitmap.Config.ARGB_8888, true)
-                    val canvas = android.graphics.Canvas(mutableBmp)
-                    val paint = android.graphics.Paint()
-
-                    val colorMatrix = android.graphics.ColorMatrix()
-                    
-                    // Contrast & Brightness
-                    val scale = contrast
-                    val translate = brightness
-                    val cMatrix = android.graphics.ColorMatrix(floatArrayOf(
-                        scale, 0f, 0f, 0f, translate,
-                        0f, scale, 0f, 0f, translate,
-                        0f, 0f, scale, 0f, translate,
-                        0f, 0f, 0f, 1f, 0f
-                    ))
-                    colorMatrix.postConcat(cMatrix)
-
-                    if (isGrayscale) {
-                        val gMatrix = android.graphics.ColorMatrix().apply { setSaturation(0f) }
-                        colorMatrix.postConcat(gMatrix)
-                    } else if (isSepia) {
-                        val sMatrix = android.graphics.ColorMatrix(floatArrayOf(
-                            0.393f, 0.769f, 0.189f, 0f, 0f,
-                            0.349f, 0.686f, 0.168f, 0f, 0f,
-                            0.272f, 0.534f, 0.131f, 0f, 0f,
-                            0f, 0f, 0f, 1f, 0f
-                        ))
-                        colorMatrix.postConcat(sMatrix)
-                    }
-
-                    paint.colorFilter = android.graphics.ColorMatrixColorFilter(colorMatrix)
-                    canvas.drawBitmap(mutableBmp, 0f, 0f, paint)
-                    workingBmp = mutableBmp
-                }
-
-                // 4. AI Background Removal Simulation / Alpha Processing
-                if (isBgRemoved) {
-                    val mutableBmp = workingBmp.copy(android.graphics.Bitmap.Config.ARGB_8888, true)
-                    val w = mutableBmp.width
-                    val h = mutableBmp.height
-                    // Simple intelligent edge/center chroma keying / alpha mask simulation
-                    val pixels = IntArray(w * h)
-                    mutableBmp.getPixels(pixels, 0, w, 0, 0, w, h)
-                    
-                    // Sample corner colors to determine background
-                    val cornerColor = pixels[0]
-                    val rC = android.graphics.Color.red(cornerColor)
-                    val gC = android.graphics.Color.green(cornerColor)
-                    val bC = android.graphics.Color.blue(cornerColor)
-
-                    for (i in pixels.indices) {
-                        val p = pixels[i]
-                        val r = android.graphics.Color.red(p)
-                        val g = android.graphics.Color.green(p)
-                        val b = android.graphics.Color.blue(p)
-                        
-                        // Distance from corner background color
-                        val dist = Math.abs(r - rC) + Math.abs(g - gC) + Math.abs(b - bC)
-                        if (dist < 55) {
-                            // Make background transparent or apply template backdrop
-                            pixels[i] = android.graphics.Color.TRANSPARENT
-                        }
-                    }
-                    mutableBmp.setPixels(pixels, 0, w, 0, 0, w, h)
-                    workingBmp = mutableBmp
-                }
-
-                workingBmp
-            } catch (e: Exception) {
-                bmp
-            }
+            inputWidth = bmp.width.toString()
+            inputHeight = bmp.height.toString()
         }
+    }
+
+    // Calculate original file size in bytes
+    val originalSizeBytes = remember(selectedImageUri) {
+        selectedImageUri?.let { uri ->
+            try {
+                context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
+                    pfd.statSize
+                } ?: 0L
+            } catch (e: Exception) {
+                0L
+            }
+        } ?: 0L
+    }
+
+    // Calculate processed image in real time
+    val processedResult = remember(
+        originalBitmap,
+        cropPreset,
+        rotationDegrees,
+        isFlippedHorizontal,
+        unit,
+        inputWidth,
+        inputHeight,
+        lockAspectRatio,
+        targetFormat,
+        targetKbMode,
+        customTargetKb,
+        manualQuality
+    ) {
+        processImageResult(
+            context = context,
+            originalBmp = originalBitmap,
+            cropPreset = cropPreset,
+            rotation = rotationDegrees,
+            isFlipped = isFlippedHorizontal,
+            unit = unit,
+            widthStr = inputWidth,
+            heightStr = inputHeight,
+            lockAspectRatio = lockAspectRatio,
+            targetFormat = targetFormat,
+            targetKbMode = targetKbMode,
+            customKbStr = customTargetKb,
+            manualQuality = manualQuality.toInt()
+        )
     }
 
     // Photo picker launcher
@@ -3156,15 +3099,15 @@ fun PhotoLabCard(viewModel: CalculatorViewModel, themeColors: CalculatorThemeCol
     ) { uri: Uri? ->
         if (uri != null) {
             selectedImageUri = uri
-            isBgRemoved = false
-            isBgRemovalActive = false
+            cropPreset = "Original"
             rotationDegrees = 0f
             isFlippedHorizontal = false
-            brightness = 0f
-            contrast = 1f
-            isGrayscale = false
-            isSepia = false
-            convertCompleteMessage = null
+            unit = "px"
+            targetFormat = "JPG"
+            targetKbMode = "Original"
+            customTargetKb = "100"
+            manualQuality = 90f
+            saveSuccessMessage = null
         }
     }
 
@@ -3175,24 +3118,31 @@ fun PhotoLabCard(viewModel: CalculatorViewModel, themeColors: CalculatorThemeCol
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Header
+            // Tool Title Header
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = Icons.Default.Image,
+                    imageVector = Icons.Default.AspectRatio,
                     contentDescription = null,
                     tint = themeColors.buttonEqualBg,
                     modifier = Modifier.size(24.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = if (isBn) "স্মার্ট ফটো ল্যাব ও বিজি রিমুভার" else "Smart Photo Lab & BG Remover",
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = themeColors.displayText
-                )
+                Column {
+                    Text(
+                        text = if (isBn) "ফটো রিসাইজার টুল" else "Photo Resizer Tool",
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.displayText
+                    )
+                    Text(
+                        text = if (isBn) "ক্রপ, কাস্টম মাপ (px/cm/mm/in), ফাইল সাইজ (KB) ও ফরম্যাট পরিবর্তন" else "Crop, custom dimensions, file size (KB) & format conversion",
+                        fontSize = 11.sp,
+                        color = themeColors.displayText.copy(alpha = 0.6f)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(14.dp))
@@ -3202,7 +3152,7 @@ fun PhotoLabCard(viewModel: CalculatorViewModel, themeColors: CalculatorThemeCol
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(140.dp)
+                        .height(150.dp)
                         .clip(RoundedCornerShape(12.dp))
                         .background(themeColors.displayText.copy(alpha = 0.04f))
                         .border(
@@ -3222,116 +3172,186 @@ fun PhotoLabCard(viewModel: CalculatorViewModel, themeColors: CalculatorThemeCol
                             imageVector = Icons.Default.AddPhotoAlternate,
                             contentDescription = null,
                             tint = themeColors.buttonEqualBg,
-                            modifier = Modifier.size(38.dp)
+                            modifier = Modifier.size(40.dp)
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = if (isBn) "ফটো ফাইল সিলেক্ট করুন" else "Import Photo from Gallery",
+                            text = if (isBn) "ফটো সিলেক্ট করুন" else "Select Photo from Gallery",
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp,
                             color = themeColors.displayText
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = if (isBn) "প্রফেশনাল এডিটিং, ক্রপ, রিসাইজ ও এআই বিজি রিমুভ" else "Professional editing, crop, resize & AI BG removal",
+                            text = if (isBn) "চাকরি/পাসপোর্ট আবেদনের জন্য নিখুঁত ফটো ও সাইজ তৈরি করুন" else "Perfect photo resizing for official applications & portals",
                             fontSize = 11.sp,
                             color = themeColors.displayText.copy(alpha = 0.6f)
                         )
                     }
                 }
             } else {
-                // PHOTO PROCESSING WORKSPACE
+                // PHOTO WORKSPACE
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    // Photo Preview Canvas
+                    // Preview Canvas & Info Bar
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(180.dp)
+                            .height(190.dp)
                             .clip(RoundedCornerShape(12.dp))
                             .background(Color.Black.copy(alpha = 0.08f)),
                         contentAlignment = Alignment.Center
                     ) {
-                        if (isBgRemovalActive) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                CircularProgressIndicator(color = themeColors.buttonEqualBg, modifier = Modifier.size(32.dp))
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    text = if (isBn) "এআই দিয়ে নিখুঁত ব্যাকগ্রাউন্ড রিমুভ করা হচ্ছে..." else "Extracting subject with AI precision...",
-                                    fontSize = 12.sp,
-                                    color = themeColors.displayText,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = "${(bgRemovalProgress * 100).toInt()}%",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = themeColors.buttonEqualBg
-                                )
-                            }
-                        } else if (isBgRemoved && selectedBgTemplateIndex > 0) {
-                            val backgroundGrads = listOf(
-                                listOf(Color.Transparent, Color.Transparent),
-                                listOf(Color.White, Color.White),
-                                listOf(Color(0xFF3B82F6), Color(0xFF1D4ED8)),
-                                listOf(Color(0xFF10B981), Color(0xFF047857)),
-                                listOf(Color(0xFFF59E0B), Color(0xFFD97706)),
-                                listOf(Color(0xFFEC4899), Color(0xFFBE185D)),
-                                listOf(Color(0xFF8B5CF6), Color(0xFF6D28D9))
-                            )
-                            val selectedGrad = backgroundGrads[selectedBgTemplateIndex.coerceIn(0, backgroundGrads.size - 1)]
-
-                            Box(
+                        if (processedResult?.bitmap != null) {
+                            androidx.compose.foundation.Image(
+                                bitmap = processedResult.bitmap.asImageBitmap(),
+                                contentDescription = "Preview",
                                 modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(brush = androidx.compose.ui.graphics.Brush.linearGradient(colors = selectedGrad)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                if (processedBitmap != null) {
-                                    androidx.compose.foundation.Image(
-                                        bitmap = processedBitmap!!.asImageBitmap(),
-                                        contentDescription = "Processed Subject",
-                                        modifier = Modifier.fillMaxHeight().padding(8.dp)
-                                    )
-                                }
-                            }
+                                    .fillMaxHeight()
+                                    .padding(8.dp)
+                            )
                         } else {
-                            if (processedBitmap != null) {
-                                androidx.compose.foundation.Image(
-                                    bitmap = processedBitmap!!.asImageBitmap(),
-                                    contentDescription = "Preview",
-                                    modifier = Modifier.fillMaxHeight().padding(8.dp)
-                                )
-                            }
+                            CircularProgressIndicator(color = themeColors.buttonEqualBg)
                         }
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Change Photo Button
+                    // Original vs Processed Info Bar
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(themeColors.displayText.copy(alpha = 0.05f))
+                            .padding(horizontal = 10.dp, vertical = 8.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = if (isBn) "সক্রিয় ছবি প্রস্তুত" else "Image ready for editing",
-                            fontSize = 11.sp,
-                            color = Color(0xFF10B981),
-                            fontWeight = FontWeight.Bold
-                        )
+                        Column {
+                            val origMb = String.format(Locale.US, "%.2f MB", originalSizeBytes / (1024f * 1024f))
+                            val origW = originalBitmap?.width ?: 0
+                            val origH = originalBitmap?.height ?: 0
+                            Text(
+                                text = if (isBn) "মূল ছবি: $origW×$origH px ($origMb)" else "Original: $origW×$origH px ($origMb)",
+                                fontSize = 10.sp,
+                                color = themeColors.displayText.copy(alpha = 0.6f)
+                            )
+                            if (processedResult != null) {
+                                val procKb = String.format(Locale.US, "%.1f KB", processedResult.sizeBytes / 1024f)
+                                Text(
+                                    text = if (isBn) "আউটপুট: ${processedResult.widthPx}×${processedResult.heightPx} px • $procKb • ${processedResult.format}"
+                                    else "Output: ${processedResult.widthPx}×${processedResult.heightPx} px • $procKb • ${processedResult.format}",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.buttonEqualBg
+                                )
+                            }
+                        }
+
                         TextButton(
                             onClick = {
                                 photoPickerLauncher.launch(
                                     PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                                 )
-                            }
+                            },
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
                         ) {
-                            Text(if (isBn) "🔄 অন্য ছবি দিন" else "🔄 Change Image", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = themeColors.buttonEqualBg)
+                            Text(
+                                if (isBn) "🔄 অন্য ফটো" else "🔄 Change",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.buttonEqualBg
+                            )
                         }
                     }
 
-                    // Workspace Tabs
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Quick Official Presets Row
+                    Text(
+                        text = if (isBn) "অফিশিয়াল প্রিসেট নির্বাচন:" else "Official Quick Presets:",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.displayText
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        val officialPresets = listOf(
+                            "BD Job Photo (300×300)",
+                            "BD Job Signature (300×80)",
+                            "Passport (40×50 mm)",
+                            "Stamp (20×25 mm)",
+                            "Square Avatar (1000×1000)"
+                        )
+                        officialPresets.forEach { p ->
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(themeColors.buttonEqualBg.copy(alpha = 0.12f))
+                                    .border(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
+                                    .clickable {
+                                        when (p) {
+                                            "BD Job Photo (300×300)" -> {
+                                                cropPreset = "300x300"
+                                                unit = "px"
+                                                inputWidth = "300"
+                                                inputHeight = "300"
+                                                targetKbMode = "< 100 KB"
+                                                targetFormat = "JPG"
+                                            }
+                                            "BD Job Signature (300×80)" -> {
+                                                cropPreset = "300x80"
+                                                unit = "px"
+                                                inputWidth = "300"
+                                                inputHeight = "80"
+                                                targetKbMode = "< 50 KB"
+                                                targetFormat = "JPG"
+                                            }
+                                            "Passport (40×50 mm)" -> {
+                                                cropPreset = "3:4"
+                                                unit = "mm"
+                                                inputWidth = "40"
+                                                inputHeight = "50"
+                                                targetKbMode = "< 150 KB"
+                                                targetFormat = "JPG"
+                                            }
+                                            "Stamp (20×25 mm)" -> {
+                                                cropPreset = "3:4"
+                                                unit = "mm"
+                                                inputWidth = "20"
+                                                inputHeight = "25"
+                                                targetKbMode = "< 50 KB"
+                                                targetFormat = "JPG"
+                                            }
+                                            "Square Avatar (1000×1000)" -> {
+                                                cropPreset = "1:1"
+                                                unit = "px"
+                                                inputWidth = "1000"
+                                                inputHeight = "1000"
+                                                targetKbMode = "Original"
+                                                targetFormat = "PNG"
+                                            }
+                                        }
+                                    }
+                                    .padding(horizontal = 8.dp, vertical = 5.dp)
+                            ) {
+                                Text(
+                                    text = p,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.buttonEqualBg
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // WORKSPACE TABS
                     ScrollableTabRow(
                         selectedTabIndex = selectedWorkspaceTab,
                         containerColor = Color.Transparent,
@@ -3342,32 +3362,57 @@ fun PhotoLabCard(viewModel: CalculatorViewModel, themeColors: CalculatorThemeCol
                         Tab(
                             selected = selectedWorkspaceTab == 0,
                             onClick = { selectedWorkspaceTab = 0 },
-                            text = { Text(if (isBn) "এডিটিং ও ফিল্টার" else "Adjust", fontSize = 11.sp, fontWeight = FontWeight.SemiBold) }
+                            text = { Text(if (isBn) "১. ক্রপ ও ওরিয়েন্টেশন" else "1. Crop & Rotate", fontSize = 11.sp, fontWeight = FontWeight.Bold) }
                         )
                         Tab(
                             selected = selectedWorkspaceTab == 1,
                             onClick = { selectedWorkspaceTab = 1 },
-                            text = { Text(if (isBn) "রিসাইজ ও ক্রপ" else "Resize/Crop", fontSize = 11.sp, fontWeight = FontWeight.SemiBold) }
+                            text = { Text(if (isBn) "২. কাস্টম সাইজ (W×H)" else "2. Dimensions", fontSize = 11.sp, fontWeight = FontWeight.Bold) }
                         )
                         Tab(
                             selected = selectedWorkspaceTab == 2,
                             onClick = { selectedWorkspaceTab = 2 },
-                            text = { Text(if (isBn) "ফরম্যাট কনভার্ট" else "Convert", fontSize = 11.sp, fontWeight = FontWeight.SemiBold) }
+                            text = { Text(if (isBn) "৩. ফাইল সাইজ (KB)" else "3. Target Size (KB)", fontSize = 11.sp, fontWeight = FontWeight.Bold) }
                         )
                         Tab(
                             selected = selectedWorkspaceTab == 3,
                             onClick = { selectedWorkspaceTab = 3 },
-                            text = { Text(if (isBn) "এআই বিজি রিমুভার" else "AI BG Remover", fontSize = 11.sp, fontWeight = FontWeight.SemiBold) }
+                            text = { Text(if (isBn) "৪. ফরম্যাট পরিবর্তন" else "4. Format", fontSize = 11.sp, fontWeight = FontWeight.Bold) }
                         )
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // WORKSPACE PANELS
+                    // TAB CONTENT
                     when (selectedWorkspaceTab) {
                         0 -> {
-                            // ADJUSTMENTS & FILTERS PANEL
+                            // CROP & ROTATE
                             Column(modifier = Modifier.fillMaxWidth()) {
+                                Text(text = if (isBn) "ক্রপ অনুপাত (Aspect Ratio):" else "Crop Aspect Ratio:", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .horizontalScroll(rememberScrollState()),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    val cropRatios = listOf("Original", "1:1", "3:4", "300x300", "300x80", "4:3", "16:9")
+                                    cropRatios.forEach { ratio ->
+                                        val isSel = cropPreset == ratio
+                                        FilterChip(
+                                            selected = isSel,
+                                            onClick = { cropPreset = ratio },
+                                            label = { Text(ratio, fontSize = 10.sp) },
+                                            colors = FilterChipDefaults.filterChipColors(
+                                                selectedContainerColor = themeColors.buttonEqualBg,
+                                                selectedLabelColor = Color.White
+                                            )
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(10.dp))
+
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -3379,7 +3424,7 @@ fun PhotoLabCard(viewModel: CalculatorViewModel, themeColors: CalculatorThemeCol
                                     ) {
                                         Icon(imageVector = Icons.Default.RotateRight, contentDescription = null, modifier = Modifier.size(16.dp))
                                         Spacer(modifier = Modifier.width(4.dp))
-                                        Text(if (isBn) "ঘুরান" else "Rotate", fontSize = 11.sp)
+                                        Text(if (isBn) "ঘুরান (${rotationDegrees.toInt()}°)" else "Rotate (${rotationDegrees.toInt()}°)", fontSize = 11.sp)
                                     }
 
                                     OutlinedButton(
@@ -3389,215 +3434,255 @@ fun PhotoLabCard(viewModel: CalculatorViewModel, themeColors: CalculatorThemeCol
                                     ) {
                                         Icon(imageVector = Icons.Default.Flip, contentDescription = null, modifier = Modifier.size(16.dp))
                                         Spacer(modifier = Modifier.width(4.dp))
-                                        Text(if (isBn) "ফ্লিপ" else "Flip", fontSize = 11.sp)
+                                        Text(if (isBn) "ফ্লিপ করুন" else "Flip Horizontal", fontSize = 11.sp)
                                     }
-                                }
-
-                                Spacer(modifier = Modifier.height(10.dp))
-
-                                // Brightness Slider
-                                Text(text = "${if (isBn) "ব্রাইটনেস" else "Brightness"}: ${brightness.toInt()}", fontSize = 11.sp, color = themeColors.displayText)
-                                Slider(
-                                    value = brightness,
-                                    onValueChange = { brightness = it },
-                                    valueRange = -50f..50f,
-                                    colors = SliderDefaults.colors(thumbColor = themeColors.buttonEqualBg, activeTrackColor = themeColors.buttonEqualBg)
-                                )
-
-                                // Contrast Slider
-                                Text(text = "${if (isBn) "কনট্রাস্ট" else "Contrast"}: String.format(Locale.US, \"%.1f\", contrast)x", fontSize = 11.sp, color = themeColors.displayText)
-                                Slider(
-                                    value = contrast,
-                                    onValueChange = { contrast = it },
-                                    valueRange = 0.5f..2.0f,
-                                    colors = SliderDefaults.colors(thumbColor = themeColors.buttonEqualBg, activeTrackColor = themeColors.buttonEqualBg)
-                                )
-
-                                Spacer(modifier = Modifier.height(4.dp))
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    FilterChip(
-                                        selected = isGrayscale,
-                                        onClick = {
-                                            isGrayscale = !isGrayscale
-                                            if (isGrayscale) isSepia = false
-                                        },
-                                        label = { Text(if (isBn) "সাদা-কালো (Grayscale)" else "Grayscale", fontSize = 10.sp) }
-                                    )
-                                    FilterChip(
-                                        selected = isSepia,
-                                        onClick = {
-                                            isSepia = !isSepia
-                                            if (isSepia) isGrayscale = false
-                                        },
-                                        label = { Text(if (isBn) "ভিন্টেজ (Sepia)" else "Sepia", fontSize = 10.sp) }
-                                    )
                                 }
                             }
                         }
 
                         1 -> {
-                            // RESIZE & CROP PANEL
+                            // HEIGHT & WIDTH DIMENSIONS
                             Column(modifier = Modifier.fillMaxWidth()) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    val resizePresets = listOf("Full HD", "Square (1:1)", "Passport", "Compact")
-                                    resizePresets.forEach { preset ->
-                                        val isSel = selectedResizePreset == preset
-                                        Box(
-                                            modifier = Modifier
-                                                .clip(RoundedCornerShape(6.dp))
-                                                .background(if (isSel) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.05f))
-                                                .clickable {
-                                                    selectedResizePreset = preset
-                                                    when (preset) {
-                                                        "Full HD" -> { resizeWidthPercent = 100f; resizeHeightPercent = 100f }
-                                                        "Square (1:1)" -> { resizeWidthPercent = 60f; resizeHeightPercent = 60f }
-                                                        "Passport" -> { resizeWidthPercent = 35f; resizeHeightPercent = 45f }
-                                                        "Compact" -> { resizeWidthPercent = 50f; resizeHeightPercent = 50f }
+                                    Text(text = if (isBn) "একক নির্বাচন (Unit):" else "Select Unit:", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        val units = listOf("px", "cm", "mm", "in")
+                                        units.forEach { u ->
+                                            val isSel = unit == u
+                                            Box(
+                                                modifier = Modifier
+                                                    .clip(RoundedCornerShape(6.dp))
+                                                    .background(if (isSel) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.08f))
+                                                    .clickable {
+                                                        if (unit != u) {
+                                                            unit = u
+                                                            // Auto convert width & height roughly for user convenience
+                                                            val currentW = inputWidth.toFloatOrNull() ?: 300f
+                                                            val currentH = inputHeight.toFloatOrNull() ?: 300f
+                                                            when (u) {
+                                                                "cm" -> {
+                                                                    inputWidth = String.format(Locale.US, "%.1f", currentW / 118.11f)
+                                                                    inputHeight = String.format(Locale.US, "%.1f", currentH / 118.11f)
+                                                                }
+                                                                "mm" -> {
+                                                                    inputWidth = String.format(Locale.US, "%.0f", currentW / 11.811f)
+                                                                    inputHeight = String.format(Locale.US, "%.0f", currentH / 11.811f)
+                                                                }
+                                                                "in" -> {
+                                                                    inputWidth = String.format(Locale.US, "%.1f", currentW / 300f)
+                                                                    inputHeight = String.format(Locale.US, "%.1f", currentH / 300f)
+                                                                }
+                                                                else -> { // px
+                                                                    inputWidth = "300"
+                                                                    inputHeight = "300"
+                                                                }
+                                                            }
+                                                        }
                                                     }
-                                                }
-                                                .padding(horizontal = 8.dp, vertical = 6.dp)
-                                        ) {
-                                            Text(text = preset, fontSize = 10.sp, color = if (isSel) Color.White else themeColors.displayText, fontWeight = FontWeight.Bold)
+                                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                                            ) {
+                                                Text(u, fontSize = 11.sp, color = if (isSel) Color.White else themeColors.displayText, fontWeight = FontWeight.Bold)
+                                            }
                                         }
                                     }
                                 }
 
-                                Spacer(modifier = Modifier.height(12.dp))
+                                Spacer(modifier = Modifier.height(10.dp))
 
-                                Text(text = "${if (isBn) "প্রস্থ" else "Width"}: ${resizeWidthPercent.toInt()}%", fontSize = 11.sp, color = themeColors.displayText)
-                                Slider(
-                                    value = resizeWidthPercent,
-                                    onValueChange = { resizeWidthPercent = it; selectedResizePreset = "Custom" },
-                                    valueRange = 20f..100f,
-                                    colors = SliderDefaults.colors(thumbColor = themeColors.buttonEqualBg, activeTrackColor = themeColors.buttonEqualBg)
-                                )
-
-                                Text(text = "${if (isBn) "উচ্চতা" else "Height"}: ${resizeHeightPercent.toInt()}%", fontSize = 11.sp, color = themeColors.displayText)
-                                Slider(
-                                    value = resizeHeightPercent,
-                                    onValueChange = { resizeHeightPercent = it; selectedResizePreset = "Custom" },
-                                    valueRange = 20f..100f,
-                                    colors = SliderDefaults.colors(thumbColor = themeColors.buttonEqualBg, activeTrackColor = themeColors.buttonEqualBg)
-                                )
-                            }
-                        }
-
-                        2 -> {
-                            // CONVERT PANEL
-                            Column(modifier = Modifier.fillMaxWidth()) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text(text = if (isBn) "ফরম্যাট:" else "Format:", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
-                                    val formats = listOf("PNG", "JPEG", "WEBP")
-                                    formats.forEach { fmt ->
-                                        val isSel = targetFormat == fmt
-                                        Box(
-                                            modifier = Modifier
-                                                .clip(RoundedCornerShape(6.dp))
-                                                .background(if (isSel) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.05f))
-                                                .clickable { targetFormat = fmt }
-                                                .padding(horizontal = 10.dp, vertical = 6.dp)
-                                        ) {
-                                            Text(text = fmt, fontSize = 11.sp, color = if (isSel) Color.White else themeColors.displayText, fontWeight = FontWeight.Bold)
-                                        }
-                                    }
-                                }
-
-                                Spacer(modifier = Modifier.height(14.dp))
-
-                                if (isConvertingInProgress) {
-                                    LinearProgressIndicator(progress = convertProgress, color = themeColors.buttonEqualBg, modifier = Modifier.fillMaxWidth().height(4.dp))
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text(text = "${(convertProgress * 100).toInt()}% converting...", fontSize = 10.sp, color = themeColors.displayText.copy(alpha = 0.6f))
-                                } else {
-                                    Button(
-                                        onClick = {
-                                            isConvertingInProgress = true
-                                            coroutineScope.launch {
-                                                for (i in 1..5) {
-                                                    convertProgress = i / 5f
-                                                    delay(150)
+                                    OutlinedTextField(
+                                        value = inputWidth,
+                                        onValueChange = { newW ->
+                                            inputWidth = newW
+                                            if (lockAspectRatio) {
+                                                val wVal = newW.toFloatOrNull()
+                                                val origW = originalBitmap?.width?.toFloat() ?: 1f
+                                                val origH = originalBitmap?.height?.toFloat() ?: 1f
+                                                if (wVal != null && origW > 0) {
+                                                    val calculatedH = wVal * (origH / origW)
+                                                    inputHeight = if (unit == "px" || unit == "mm") calculatedH.toInt().toString()
+                                                    else String.format(Locale.US, "%.1f", calculatedH)
                                                 }
-                                                isConvertingInProgress = false
-                                                convertCompleteMessage = if (isBn) "সফলভাবে $targetFormat ফরম্যাটে কনভার্ট হয়েছে!" else "Successfully converted to $targetFormat!"
                                             }
                                         },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
-                                        shape = RoundedCornerShape(8.dp)
-                                    ) {
-                                        Text(if (isBn) "এখনই কনভার্ট করুন" else "Convert Format Now", color = Color.White, fontSize = 12.sp)
+                                        label = { Text(if (isBn) "প্রস্থ ($unit)" else "Width ($unit)") },
+                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                        modifier = Modifier.weight(1f),
+                                        singleLine = true
+                                    )
+
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = null,
+                                        tint = themeColors.displayText.copy(alpha = 0.5f),
+                                        modifier = Modifier.size(16.dp)
+                                    )
+
+                                    OutlinedTextField(
+                                        value = inputHeight,
+                                        onValueChange = { newH ->
+                                            inputHeight = newH
+                                            if (lockAspectRatio) {
+                                                val hVal = newH.toFloatOrNull()
+                                                val origW = originalBitmap?.width?.toFloat() ?: 1f
+                                                val origH = originalBitmap?.height?.toFloat() ?: 1f
+                                                if (hVal != null && origH > 0) {
+                                                    val calculatedW = hVal * (origW / origH)
+                                                    inputWidth = if (unit == "px" || unit == "mm") calculatedW.toInt().toString()
+                                                    else String.format(Locale.US, "%.1f", calculatedW)
+                                                }
+                                            }
+                                        },
+                                        label = { Text(if (isBn) "উচ্চতা ($unit)" else "Height ($unit)") },
+                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                        modifier = Modifier.weight(1f),
+                                        singleLine = true
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.height(6.dp))
+
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.clickable { lockAspectRatio = !lockAspectRatio }
+                                ) {
+                                    Checkbox(
+                                        checked = lockAspectRatio,
+                                        onCheckedChange = { lockAspectRatio = it },
+                                        colors = CheckboxDefaults.colors(checkedColor = themeColors.buttonEqualBg)
+                                    )
+                                    Text(
+                                        text = if (isBn) "অ্যাসপেক্ট রেশিও লক রাখুন (Lock Aspect Ratio)" else "Lock Aspect Ratio",
+                                        fontSize = 11.sp,
+                                        color = themeColors.displayText
+                                    )
+                                }
+                            }
+                        }
+
+                        2 -> {
+                            // TARGET FILE SIZE (KB)
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                Text(
+                                    text = if (isBn) "লক্ষ্যমাত্রা ফাইল সাইজ নির্বাচন (Target File Size):" else "Select Target File Size:",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.displayText
+                                )
+                                Spacer(modifier = Modifier.height(6.dp))
+
+                                val kbModes = listOf("Original", "< 50 KB", "< 100 KB", "< 200 KB", "Custom KB")
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .horizontalScroll(rememberScrollState()),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    kbModes.forEach { mode ->
+                                        val isSel = targetKbMode == mode
+                                        FilterChip(
+                                            selected = isSel,
+                                            onClick = { targetKbMode = mode },
+                                            label = { Text(mode, fontSize = 10.sp) },
+                                            colors = FilterChipDefaults.filterChipColors(
+                                                selectedContainerColor = themeColors.buttonEqualBg,
+                                                selectedLabelColor = Color.White
+                                            )
+                                        )
                                     }
                                 }
 
-                                if (convertCompleteMessage != null) {
-                                    Spacer(modifier = Modifier.height(6.dp))
-                                    Text(text = convertCompleteMessage ?: "", color = Color(0xFF10B981), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                if (targetKbMode == "Custom KB") {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    OutlinedTextField(
+                                        value = customTargetKb,
+                                        onValueChange = { customTargetKb = it },
+                                        label = { Text(if (isBn) "কাস্টম ফাইল সাইজ (KB)" else "Custom Target Size (KB)") },
+                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                        modifier = Modifier.fillMaxWidth(),
+                                        singleLine = true
+                                    )
+                                }
+
+                                if (targetKbMode == "Original") {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = "${if (isBn) "ম্যানুয়াল কোয়ালিটি" else "Quality"}: ${manualQuality.toInt()}%",
+                                        fontSize = 11.sp,
+                                        color = themeColors.displayText
+                                    )
+                                    Slider(
+                                        value = manualQuality,
+                                        onValueChange = { manualQuality = it },
+                                        valueRange = 10f..100f,
+                                        colors = SliderDefaults.colors(
+                                            thumbColor = themeColors.buttonEqualBg,
+                                            activeTrackColor = themeColors.buttonEqualBg
+                                        )
+                                    )
                                 }
                             }
                         }
 
                         3 -> {
-                            // AI BG REMOVER PANEL
+                            // FORMAT CONVERSION
                             Column(modifier = Modifier.fillMaxWidth()) {
-                                if (!isBgRemoved) {
-                                    Button(
-                                        onClick = {
-                                            isBgRemovalActive = true
-                                            coroutineScope.launch {
-                                                for (i in 1..10) {
-                                                    bgRemovalProgress = i / 10f
-                                                    delay(100)
-                                                }
-                                                isBgRemovalActive = false
-                                                isBgRemoved = true
-                                                selectedBgTemplateIndex = 1 // default white/solid
-                                            }
-                                        },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
-                                        shape = RoundedCornerShape(8.dp)
-                                    ) {
-                                        Icon(imageVector = Icons.Default.AutoFixHigh, contentDescription = null, modifier = Modifier.size(16.dp))
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Text(if (isBn) "এআই দিয়ে ব্যাকগ্রাউন্ড রিমুভ করুন" else "Remove Background with AI", color = Color.White, fontSize = 12.sp)
-                                    }
-                                } else {
-                                    Column(modifier = Modifier.fillMaxWidth()) {
-                                        Text(text = if (isBn) "ব্যাকগ্রাউন্ড ব্যাকড্রপ চয়ন করুন:" else "Choose Backdrop:", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
-                                        Spacer(modifier = Modifier.height(6.dp))
-                                        Row(
-                                            modifier = Modifier.horizontalScroll(rememberScrollState()),
-                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                        ) {
-                                            val backdrops = listOf("Transparent", "White", "Blue", "Emerald", "Amber", "Pink", "Purple")
-                                            backdrops.forEachIndexed { idx, name ->
-                                                val isSel = selectedBgTemplateIndex == idx
-                                                Box(
-                                                    modifier = Modifier
-                                                        .clip(RoundedCornerShape(6.dp))
-                                                        .background(if (isSel) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.05f))
-                                                        .clickable { selectedBgTemplateIndex = idx }
-                                                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                                                ) {
-                                                    Text(text = name, fontSize = 10.sp, color = if (isSel) Color.White else themeColors.displayText, fontWeight = FontWeight.Bold)
-                                                }
-                                            }
-                                        }
+                                Text(
+                                    text = if (isBn) "আউটপুট ফটো ফরম্যাট:" else "Output Photo Format:",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.displayText
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
 
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        TextButton(onClick = { isBgRemoved = false; selectedBgTemplateIndex = 0 }) {
-                                            Text(if (isBn) "রিভার্ট / মূল ব্যাকগ্রাউন্ডে ফিরুন" else "Revert Original Background", fontSize = 11.sp, color = themeColors.buttonEqualBg)
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    val formats = listOf("JPG", "PNG", "WEBP")
+                                    formats.forEach { fmt ->
+                                        val isSel = targetFormat == fmt
+                                        Card(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .clickable { targetFormat = fmt },
+                                            colors = CardDefaults.cardColors(
+                                                containerColor = if (isSel) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.05f)
+                                            ),
+                                            shape = RoundedCornerShape(10.dp)
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(vertical = 12.dp),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                                    Text(
+                                                        text = fmt,
+                                                        fontSize = 14.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = if (isSel) Color.White else themeColors.displayText
+                                                    )
+                                                    Text(
+                                                        text = when (fmt) {
+                                                            "JPG" -> "Best for Portal"
+                                                            "PNG" -> "Lossless HD"
+                                                            else -> "Web Compact"
+                                                        },
+                                                        fontSize = 9.sp,
+                                                        color = if (isSel) Color.White.copy(alpha = 0.8f) else themeColors.displayText.copy(alpha = 0.5f)
+                                                    )
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -3607,18 +3692,48 @@ fun PhotoLabCard(viewModel: CalculatorViewModel, themeColors: CalculatorThemeCol
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Final Export Button
+                    // Final Export / Save Button
                     Button(
                         onClick = {
-                            saveSuccessMessage = if (isBn) "প্রসেসড ছবি সফলভাবে গ্যালারিতে সেভ ও এক্সপোর্ট হয়েছে!" else "Processed photo exported and saved successfully!"
+                            if (processedResult != null && !isSaving) {
+                                isSaving = true
+                                coroutineScope.launch {
+                                    val savedFilename = saveProcessedPhotoToGallery(context, processedResult)
+                                    isSaving = false
+                                    if (savedFilename != null) {
+                                        saveSuccessMessage = if (isBn)
+                                            "গ্যালারিতে সেভ হয়েছে! ($savedFilename)"
+                                        else
+                                            "Saved to Gallery! ($savedFilename)"
+                                        Toast.makeText(context, saveSuccessMessage, Toast.LENGTH_LONG).show()
+                                    } else {
+                                        Toast.makeText(context, if (isBn) "সেভ করতে সমস্যা হয়েছে" else "Failed to save photo", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            }
                         },
+                        enabled = processedResult != null && !isSaving,
                         modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
-                        shape = RoundedCornerShape(8.dp)
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = themeColors.buttonEqualBg,
+                            contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(10.dp)
                     ) {
-                        Icon(imageVector = Icons.Default.Save, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(if (isBn) "ফাইনাল ছবি গ্যালারিতে রপ্তানি করুন" else "Export Processed Photo", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                        if (isSaving) {
+                            CircularProgressIndicator(color = Color.White, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(if (isBn) "সেভ করা হচ্ছে..." else "Saving...", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                        } else {
+                            Icon(imageVector = Icons.Default.Save, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                if (isBn) "ফাইনাল ফটো গ্যালারিতে সেভ করুন" else "Save Processed Photo to Gallery",
+                                color = Color.White,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
 
                     if (saveSuccessMessage != null) {
@@ -3631,7 +3746,7 @@ fun PhotoLabCard(viewModel: CalculatorViewModel, themeColors: CalculatorThemeCol
                             modifier = Modifier.align(Alignment.CenterHorizontally)
                         )
                         LaunchedEffect(saveSuccessMessage) {
-                            delay(3000)
+                            delay(4000)
                             saveSuccessMessage = null
                         }
                     }
@@ -3640,3 +3755,215 @@ fun PhotoLabCard(viewModel: CalculatorViewModel, themeColors: CalculatorThemeCol
         }
     }
 }
+
+// Process Image Utility Function for Photo Resizer
+private fun processImageResult(
+    context: android.content.Context,
+    originalBmp: android.graphics.Bitmap?,
+    cropPreset: String,
+    rotation: Float,
+    isFlipped: Boolean,
+    unit: String,
+    widthStr: String,
+    heightStr: String,
+    lockAspectRatio: Boolean,
+    targetFormat: String,
+    targetKbMode: String,
+    customKbStr: String,
+    manualQuality: Int
+): ProcessedPhotoResult? {
+    if (originalBmp == null) return null
+
+    try {
+        var workingBmp: android.graphics.Bitmap = originalBmp
+
+        // 1. Rotation & Flip
+        val matrix = android.graphics.Matrix().apply {
+            if (rotation != 0f) postRotate(rotation)
+            if (isFlipped) postScale(-1f, 1f, workingBmp.width / 2f, workingBmp.height / 2f)
+        }
+        if (rotation != 0f || isFlipped) {
+            workingBmp = android.graphics.Bitmap.createBitmap(workingBmp, 0, 0, workingBmp.width, workingBmp.height, matrix, true)
+        }
+
+        // 2. Crop Preset
+        workingBmp = when (cropPreset) {
+            "1:1", "300x300" -> cropToAspectRatio(workingBmp, 1f, 1f)
+            "3:4" -> cropToAspectRatio(workingBmp, 3f, 4f)
+            "300x80" -> cropToAspectRatio(workingBmp, 300f, 80f)
+            "4:3" -> cropToAspectRatio(workingBmp, 4f, 3f)
+            "16:9" -> cropToAspectRatio(workingBmp, 16f, 9f)
+            else -> workingBmp
+        }
+
+        // 3. Dimension Conversion to Pixels
+        val dpi = 300f
+        val userW = widthStr.toFloatOrNull() ?: workingBmp.width.toFloat()
+        val userH = heightStr.toFloatOrNull() ?: workingBmp.height.toFloat()
+
+        val targetPxW = when (unit) {
+            "cm" -> (userW * dpi / 2.54f).toInt()
+            "mm" -> (userW * dpi / 25.4f).toInt()
+            "in" -> (userW * dpi).toInt()
+            else -> userW.toInt()
+        }.coerceIn(10, 8000)
+
+        val targetPxH = when (unit) {
+            "cm" -> (userH * dpi / 2.54f).toInt()
+            "mm" -> (userH * dpi / 25.4f).toInt()
+            "in" -> (userH * dpi).toInt()
+            else -> userH.toInt()
+        }.coerceIn(10, 8000)
+
+        if (workingBmp.width != targetPxW || workingBmp.height != targetPxH) {
+            workingBmp = android.graphics.Bitmap.createScaledBitmap(workingBmp, targetPxW, targetPxH, true)
+        }
+
+        // 4. Target KB / Compression Logic
+        val targetKb = when (targetKbMode) {
+            "< 50 KB" -> 50
+            "< 100 KB" -> 100
+            "< 200 KB" -> 200
+            "Custom KB" -> customKbStr.toIntOrNull() ?: 100
+            else -> 0
+        }
+
+        val compressFormat = when (targetFormat) {
+            "PNG" -> android.graphics.Bitmap.CompressFormat.PNG
+            "WEBP" -> if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                android.graphics.Bitmap.CompressFormat.WEBP_LOSSY
+            } else {
+                @Suppress("DEPRECATION")
+                android.graphics.Bitmap.CompressFormat.WEBP
+            }
+            else -> android.graphics.Bitmap.CompressFormat.JPEG
+        }
+
+        var finalBytes: ByteArray
+        var finalBmp = workingBmp
+        var q = manualQuality.coerceIn(5, 100)
+
+        if (targetKb > 0 && compressFormat != android.graphics.Bitmap.CompressFormat.PNG) {
+            val maxBytes = targetKb * 1024
+            var scaleFactor = 1.0f
+
+            do {
+                if (scaleFactor < 1.0f) {
+                    val scaledW = (workingBmp.width * scaleFactor).toInt().coerceAtLeast(30)
+                    val scaledH = (workingBmp.height * scaleFactor).toInt().coerceAtLeast(30)
+                    finalBmp = android.graphics.Bitmap.createScaledBitmap(workingBmp, scaledW, scaledH, true)
+                }
+
+                q = 95
+                val baos = java.io.ByteArrayOutputStream()
+                finalBmp.compress(compressFormat, q, baos)
+                finalBytes = baos.toByteArray()
+
+                while (finalBytes.size > maxBytes && q > 10) {
+                    q -= 8
+                    val os = java.io.ByteArrayOutputStream()
+                    finalBmp.compress(compressFormat, q, os)
+                    finalBytes = os.toByteArray()
+                }
+
+                if (finalBytes.size > maxBytes && (finalBmp.width > 100 || finalBmp.height > 100)) {
+                    scaleFactor *= 0.85f
+                } else {
+                    break
+                }
+            } while (finalBytes.size > maxBytes && scaleFactor > 0.2f)
+        } else {
+            val baos = java.io.ByteArrayOutputStream()
+            finalBmp.compress(compressFormat, q, baos)
+            finalBytes = baos.toByteArray()
+        }
+
+        return ProcessedPhotoResult(
+            bitmap = finalBmp,
+            byteArray = finalBytes,
+            widthPx = finalBmp.width,
+            heightPx = finalBmp.height,
+            sizeBytes = finalBytes.size,
+            format = targetFormat
+        )
+    } catch (e: Exception) {
+        e.printStackTrace()
+        return null
+    }
+}
+
+private fun cropToAspectRatio(src: android.graphics.Bitmap, targetW: Float, targetH: Float): android.graphics.Bitmap {
+    val srcW = src.width.toFloat()
+    val srcH = src.height.toFloat()
+    val targetRatio = targetW / targetH
+    val srcRatio = srcW / srcH
+
+    var cropW = srcW
+    var cropH = srcH
+
+    if (srcRatio > targetRatio) {
+        cropW = srcH * targetRatio
+    } else {
+        cropH = srcW / targetRatio
+    }
+
+    val left = ((srcW - cropW) / 2f).coerceAtLeast(0f).toInt()
+    val top = ((srcH - cropH) / 2f).coerceAtLeast(0f).toInt()
+    val width = cropW.toInt().coerceAtMost(src.width - left)
+    val height = cropH.toInt().coerceAtMost(src.height - top)
+
+    return android.graphics.Bitmap.createBitmap(src, left, top, width, height)
+}
+
+private fun saveProcessedPhotoToGallery(context: android.content.Context, result: ProcessedPhotoResult): String? {
+    try {
+        val ext = when (result.format) {
+            "PNG" -> "png"
+            "WEBP" -> "webp"
+            else -> "jpg"
+        }
+        val mimeType = when (result.format) {
+            "PNG" -> "image/png"
+            "WEBP" -> "image/webp"
+            else -> "image/jpeg"
+        }
+        val filename = "PhotoResizer_${System.currentTimeMillis()}.$ext"
+
+        val contentValues = android.content.ContentValues().apply {
+            put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, filename)
+            put(android.provider.MediaStore.MediaColumns.MIME_TYPE, mimeType)
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/PhotoResizer")
+                put(android.provider.MediaStore.MediaColumns.IS_PENDING, 1)
+            }
+        }
+
+        val resolver = context.contentResolver
+        val uri = resolver.insert(android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+        if (uri != null) {
+            resolver.openOutputStream(uri)?.use { os ->
+                os.write(result.byteArray)
+                os.flush()
+            }
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                contentValues.clear()
+                contentValues.put(android.provider.MediaStore.MediaColumns.IS_PENDING, 0)
+                resolver.update(uri, contentValues, null, null)
+            }
+            return filename
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+    return null
+}
+
+data class ProcessedPhotoResult(
+    val bitmap: android.graphics.Bitmap,
+    val byteArray: ByteArray,
+    val widthPx: Int,
+    val heightPx: Int,
+    val sizeBytes: Int,
+    val format: String
+)
+
