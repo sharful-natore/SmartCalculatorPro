@@ -2174,6 +2174,9 @@ fun ToolDetailView(
             ToolType.RANDOM_NUMBER_PICKER -> RandomPickerCard(viewModel, themeColors)
             ToolType.MULTI_CALENDAR -> MultiCalendarCard(viewModel, themeColors)
             ToolType.PHOTO_LAB -> PhotoLabCard(viewModel, themeColors)
+            ToolType.METAL_DETECTOR -> com.example.ui.screens.tools.MetalDetectorTool(viewModel, themeColors)
+            ToolType.PHONE_DIAGNOSTICS -> com.example.ui.screens.tools.PhoneDiagnosticsTool(viewModel, themeColors)
+            ToolType.DEVICE_INFO -> com.example.ui.screens.tools.DeviceInfoTool(viewModel, themeColors)
             ToolType.WEATHER -> DynamicWeatherScreen(viewModel, themeColors, isBn = viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI)
             ToolType.QIBLA_COMPASS -> QiblaCompassCard(viewModel, themeColors)
             ToolType.DIGITAL_TASBIH -> DigitalTasbihCard(viewModel, themeColors)
@@ -2709,6 +2712,39 @@ private fun getToolInfoItems(toolType: ToolType, isBn: Boolean): List<Pair<Strin
             listOf(
                 "1. Market List & Cost Calculation" to "Create shopping item lists with quantities, unit prices, and grand total cost calculation.",
                 "2. Save Memo & PDF Export" to "Save market shopping lists as memos in history or export clean formatted PDF documents for sharing."
+            )
+        }
+        ToolType.METAL_DETECTOR -> if (isBn) {
+            listOf(
+                "১. মেটাল ডিটেক্টর কীভাবে কাজ করে?" to "আপনার ফোনের বিল্ট-ইন ম্যাগনেটিক ফিল্ড সেন্সর (ম্যাগনেটোমিটার) ব্যবহার করে চারপাশের চৌম্বক তীব্রতা (MicroTesla) পরিমাপ করা হয়। লোহা বা ধাতুর কাছাকাছি আনলে এই মান উল্লেখযোগ্যভাবে বৃদ্ধি পায়।",
+                "২. বেসলাইন জিরো ও ক্যালিব্রেশন" to "স্বাভাবিক পৃথিবীর চৌম্বক ক্ষেত্র প্রায় ৩০-৬০ μT। 'Set Zero Baseline' চাপলে স্বাভাবিক মান বাদ দিয়ে কেবল নতুন ধাতব বস্তুর পরিবর্তন ধরা পড়বে। ফোন বাতাসে ৮ আকারে ঘুরিয়ে সেন্সর ক্যালিব্রেট করা যায়।"
+            )
+        } else {
+            listOf(
+                "1. How Metal Detection Works" to "Uses the device's built-in 3-axis magnetometer sensor to measure magnetic flux density in microTesla (μT). Ferromagnetic metals (iron, steel) cause significant spikes.",
+                "2. Baseline Zero & Calibration" to "Natural background geomagnetic field is ~30-60 μT. Tap 'Set Zero Baseline' to tare ambient levels. Wave device in a figure-8 to recalibrate the sensor."
+            )
+        }
+        ToolType.PHONE_DIAGNOSTICS -> if (isBn) {
+            listOf(
+                "১. ফোন ও সেন্সর ডায়াগনসিস" to "অ্যাক্সিলোমিটার, জাইরোস্কোপ, লাইট, প্রক্সিমিটি সহ সকল বিল্ট-ইন সেন্সরের লাইভ রিডিং এবং স্বাস্থ্য পরীক্ষা করুন।",
+                "২. হার্ডওয়্যার ইন্টারেক্টিভ টেস্ট" to "টাচস্ক্রিন গ্রিড ম্যাট্রিক্স, ডেড পিক্সেল ডিসপ্লে কালার, স্পিকার ফ্রিকোয়েন্সি, ভাইব্রেশন মোটর এবং ফ্ল্যাশলাইটের কার্যক্ষমতা পরীক্ষা করা যায়।"
+            )
+        } else {
+            listOf(
+                "1. Sensor Suite Diagnostics" to "Inspect real-time telemetry from all on-board sensors including Accelerometer, Gyroscope, Magnetometer, Light, Proximity, and Barometer.",
+                "2. Hardware Interactive Tests" to "Test touchscreen responsiveness, dead pixels, stereo speaker frequencies, vibration motor haptics, and camera flashlight."
+            )
+        }
+        ToolType.DEVICE_INFO -> if (isBn) {
+            listOf(
+                "১. ডিভাইস ও হার্ডওয়্যার স্পেসিফিকেশন" to "ফোনের মডেল, সিপিইউ কোর সংখ্যা, আর্কিটেকচার, র‍্যাম ও অভ্যন্তরীণ স্টোরেজ ব্যবহারের নিখুঁত পরিসংখ্যান দেখুন।",
+                "২. ব্যাটারি, ডিসপ্লে ও সেন্সর তালিকা" to "ব্যাটারির স্বাস্থ্য, তাপমাত্রা, ভোল্টেজ, স্ক্রিনের রেজোলিউশন, রিফ্রেশ রেট (Hz) এবং সকল হার্ডওয়্যার সেন্সরের বিস্তারিত তালিকা দেখুন।"
+            )
+        } else {
+            listOf(
+                "1. Hardware & System Specs" to "Inspect device model, processor cores, ABI architecture, real-time RAM usage, and internal storage metrics.",
+                "2. Battery, Display & Sensor Directory" to "View battery health, temperature, voltage, screen resolution, refresh rate, and full directory of registered hardware sensors."
             )
         }
     }

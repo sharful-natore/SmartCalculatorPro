@@ -327,6 +327,21 @@ enum class ToolType(
         "ফটো রিসাইজ, ক্রপ, ফরম্যাট কনভার্ট ও ব্যাকগ্রাউন্ড রিমুভ করুন",
         ToolCategory.UTILITY, Icons.Default.Image
     ),
+    METAL_DETECTOR(
+        "Metal Detector", "মেটাল ডিটেক্টর",
+        "ম্যাগনেটোমিটার সেন্সরের সাহায্যে ধাতু, তার ও চৌম্বক ক্ষেত্র সনাক্তকরণ",
+        ToolCategory.UTILITY, Icons.Default.Sensors
+    ),
+    PHONE_DIAGNOSTICS(
+        "Phone Diagnostics", "ফোন ডায়াগনসিস",
+        "ফোনের সকল সেন্সর, টাচস্ক্রিন, স্পিকার, ভাইব্রেশন ও ডিসপ্লে ডায়াগনস্টিক টেস্ট",
+        ToolCategory.DEVELOPER, Icons.Default.FactCheck
+    ),
+    DEVICE_INFO(
+        "Device Info", "ডিভাইস ইনফো",
+        "প্রসেসর, র‍্যাম, স্টোরেজ, ব্যাটারি, ডিসপ্লে, ওএস এবং সিস্টেমের বিস্তারিত স্পেক্স",
+        ToolCategory.DEVELOPER, Icons.Default.PhoneAndroid
+    ),
 
     // 9. Islamic Tools
     QIBLA_COMPASS(
@@ -424,6 +439,9 @@ enum class ToolType(
                 MULTI_CALENDAR -> "Gregorian, Bengali, and Hijri multi-calendar"
                 WEATHER -> "Check current weather and 7-day forecast"
                 PHOTO_LAB -> "Resize, crop, convert between formats, and remove backgrounds from photos"
+                METAL_DETECTOR -> "Detect metal, electromagnetic fields, and hidden wires using magnetometer sensor"
+                PHONE_DIAGNOSTICS -> "Test all device sensors, touch screen, speakers, vibration, and display health"
+                DEVICE_INFO -> "View comprehensive hardware, CPU, RAM, battery, display, and OS specifications"
                 QIBLA_COMPASS -> "Accurate Qibla direction finder pointing towards the Holy Kaaba in Makkah"
                 DIGITAL_TASBIH -> "Digital zikir and tasbih tally counter with goal targets and presets"
                 PRAYER_TIMES -> "Daily 5 time Islamic prayer timetable with countdowns and alerts"
