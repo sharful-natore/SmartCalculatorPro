@@ -38,6 +38,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -50,6 +52,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -74,6 +77,7 @@ import com.example.ui.theme.CalculatorThemeColors
 import com.example.ui.viewmodel.CalculatorViewModel
 import com.example.util.AppLanguage
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
@@ -131,16 +135,14 @@ fun PdfReaderTool(
     var isControlsVisible by remember { mutableStateOf(true) }
 
     // Google Drive Pinch-to-zoom & Double-tap states
-    var scale by remember { mutableFloatStateOf(1.0f) }
-    var offset by remember { mutableStateOf(Offset.Zero) }
     var rotationDegrees by remember { mutableIntStateOf(0) }
     var isNightMode by remember { mutableStateOf(false) }
 
     // Page Navigation states
     var pageCount by remember { mutableIntStateOf(0) }
-    var currentPageIndex by remember { mutableIntStateOf(0) }
-    var renderedBitmap by remember { mutableStateOf<Bitmap?>(null) }
-    var isLoadingPage by remember { mutableStateOf(false) }
+    var currentPageScale by remember { mutableFloatStateOf(1.0f) }
+    val coroutineScope = rememberCoroutineScope()
+    val pagerState = rememberPagerState(initialPage = 0, pageCount = { max(1, pageCount) })
 
     // Modals & Dialogs
     var showJumpDialog by remember { mutableStateOf(false) }
@@ -149,6 +151,7 @@ fun PdfReaderTool(
     // Files List View States
     var pdfFileList by remember { mutableStateOf<List<PdfFileItem>>(emptyList()) }
     var isScanningFiles by remember { mutableStateOf(true) }
+    var scanTrigger by remember { mutableIntStateOf(0) }
     var searchQuery by remember { mutableStateOf("") }
     var selectedSort by remember { mutableStateOf(PdfSortOption.DATE_DESC) }
     var showSortMenu by remember { mutableStateOf(false) }
@@ -182,10 +185,9 @@ fun PdfReaderTool(
             isControlsVisible = true
         } else if (pdfUri != null) {
             pdfUri = null
-            scale = 1.0f
-            offset = Offset.Zero
+            pageCount = 0
+            currentPageScale = 1.0f
             rotationDegrees = 0
-            renderedBitmap = null
         } else {
             onBackClick()
         }
@@ -207,7 +209,7 @@ fun PdfReaderTool(
     ) { isGranted ->
         hasStoragePermission = isGranted
         if (isGranted) {
-            isScanningFiles = true
+            scanTrigger++
         }
     }
 
@@ -217,9 +219,7 @@ fun PdfReaderTool(
     ) { uri: Uri? ->
         if (uri != null) {
             pdfUri = uri
-            currentPageIndex = 0
-            scale = 1.0f
-            offset = Offset.Zero
+            currentPageScale = 1.0f
             rotationDegrees = 0
             extractPdfMetadata(context, uri) { name, size, date, path ->
                 fileName = name
@@ -230,8 +230,8 @@ fun PdfReaderTool(
         }
     }
 
-    // Scan for Device PDFs asynchronously
-    LaunchedEffect(hasStoragePermission, isScanningFiles) {
+    // Scan for Device PDFs asynchronously (fixed infinite scanning loop)
+    LaunchedEffect(hasStoragePermission, scanTrigger) {
         if (hasStoragePermission) {
             isScanningFiles = true
             withContext(Dispatchers.IO) {
@@ -246,81 +246,28 @@ fun PdfReaderTool(
         }
     }
 
-    // High Quality Page Rendering Effect
-    val density = LocalDensity.current.density
-    val screenWidth = LocalConfiguration.current.screenWidthDp
-    LaunchedEffect(pdfUri, currentPageIndex, isNightMode, rotationDegrees) {
+    // Load PDF Page Count when a document is selected
+    LaunchedEffect(pdfUri) {
         val currentUri = pdfUri ?: return@LaunchedEffect
-        isLoadingPage = true
         withContext(Dispatchers.IO) {
             try {
                 val pfd = openPdfParcelFileDescriptor(context, currentUri)
                 if (pfd != null) {
                     val renderer = PdfRenderer(pfd)
-                    pageCount = renderer.pageCount
-                    val safePageIndex = currentPageIndex.coerceIn(0, max(0, pageCount - 1))
-                    if (safePageIndex in 0 until pageCount) {
-                        val page = renderer.openPage(safePageIndex)
-
-                        // Render at crisp high DPI for Google Drive razor-sharp clarity
-                        val renderFactor = (density * 1.5f).coerceIn(2.0f, 3.5f)
-                        val targetWidth = (page.width * renderFactor).toInt().coerceIn(400, 3000)
-                        val targetHeight = (page.height * renderFactor).toInt().coerceIn(400, 4200)
-
-                        val rawBmp = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.ARGB_8888)
-                        val canvas = Canvas(rawBmp)
-                        canvas.drawColor(AndroidColor.WHITE)
-                        page.render(rawBmp, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-                        page.close()
-
-                        // Apply Rotation if any
-                        val rotatedBmp = if (rotationDegrees % 360 != 0) {
-                            val matrix = Matrix().apply { postRotate(rotationDegrees.toFloat()) }
-                            val rot = Bitmap.createBitmap(rawBmp, 0, 0, rawBmp.width, rawBmp.height, matrix, true)
-                            if (rot != rawBmp) rawBmp.recycle()
-                            rot
-                        } else {
-                            rawBmp
-                        }
-
-                        // Apply Night Mode Color Inversion if enabled
-                        val finalBmp = if (isNightMode) {
-                            val invBmp = Bitmap.createBitmap(rotatedBmp.width, rotatedBmp.height, Bitmap.Config.ARGB_8888)
-                            val invCanvas = Canvas(invBmp)
-                            val paint = Paint()
-                            val colorMatrix = ColorMatrix(
-                                floatArrayOf(
-                                    -1.0f, 0.0f, 0.0f, 0.0f, 255.0f,
-                                    0.0f, -1.0f, 0.0f, 0.0f, 255.0f,
-                                    0.0f, 0.0f, -1.0f, 0.0f, 255.0f,
-                                    0.0f, 0.0f, 0.0f, 1.0f, 0.0f
-                                )
-                            )
-                            paint.colorFilter = ColorMatrixColorFilter(colorMatrix)
-                            invCanvas.drawBitmap(rotatedBmp, 0f, 0f, paint)
-                            if (invBmp != rotatedBmp) rotatedBmp.recycle()
-                            invBmp
-                        } else {
-                            rotatedBmp
-                        }
-
-                        withContext(Dispatchers.Main) {
-                            renderedBitmap = finalBmp
-                            isLoadingPage = false
-                        }
-                    }
+                    val count = renderer.pageCount
                     renderer.close()
                     pfd.close()
+                    withContext(Dispatchers.Main) {
+                        pageCount = count
+                    }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-                withContext(Dispatchers.Main) {
-                    isLoadingPage = false
-                    Toast.makeText(context, if (isBn) "PDF লোড করতে সমস্যা হয়েছে" else "Failed to load PDF", Toast.LENGTH_SHORT).show()
-                }
             }
         }
     }
+
+    val density = LocalDensity.current.density
 
     // Filter and Sort PDF List
     val filteredAndSortedPdfs by remember(pdfFileList, searchQuery, selectedSort) {
@@ -401,7 +348,7 @@ fun PdfReaderTool(
                             // Refresh Scan button
                             IconButton(
                                 onClick = {
-                                    isScanningFiles = true
+                                    scanTrigger++
                                 },
                                 modifier = Modifier.size(38.dp)
                             ) {
@@ -686,9 +633,7 @@ fun PdfReaderTool(
                                             fileSizeBytes = item.sizeBytes
                                             fileLastModifiedMs = item.dateModifiedMs
                                             filePath = item.path
-                                            currentPageIndex = 0
-                                            scale = 1.0f
-                                            offset = Offset.Zero
+                                            currentPageScale = 1.0f
                                             rotationDegrees = 0
                                         }
                                 ) {
@@ -757,106 +702,22 @@ fun PdfReaderTool(
                 }
             }
         } else {
-            // ================= 2. GOOGLE DRIVE STYLE PDF VIEWER =================
-            // Reset gesture states on page changes
-            LaunchedEffect(currentPageIndex) {
-                scale = 1.0f
-                offset = Offset.Zero
-            }
-
-            BoxWithConstraints(
+            // ================= 2. GOOGLE DRIVE STYLE MULTI-PAGE VIEWER =================
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(if (isNightMode) Color(0xFF0B0F19) else Color(0xFF1E293B))
             ) {
-                val viewportWidth = constraints.maxWidth.toFloat()
-                val viewportHeight = constraints.maxHeight.toFloat()
-
-                // Main Page Canvas with Pinch-To-Zoom, Double-Tap Zoom & Clamped Pan Bounds
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .pointerInput(viewportWidth, viewportHeight) {
-                            detectTapGestures(
-                                onDoubleTap = { tapOffset ->
-                                    if (scale > 1.1f) {
-                                        scale = 1.0f
-                                        offset = Offset.Zero
-                                    } else {
-                                        scale = 2.5f
-                                        // Center the zoom on double tap point
-                                        val targetOffsetX = (viewportWidth / 2f - tapOffset.x) * 1.5f
-                                        val targetOffsetY = (viewportHeight / 2f - tapOffset.y) * 1.5f
-                                        offset = clampOffset(
-                                            Offset(targetOffsetX, targetOffsetY),
-                                            scale = 2.5f,
-                                            viewportWidth = viewportWidth,
-                                            viewportHeight = viewportHeight
-                                        )
-                                    }
-                                },
-                                onTap = {
-                                    // Single tap toggles immersive controls
-                                    isControlsVisible = !isControlsVisible
-                                }
-                            )
-                        }
-                        .pointerInput(viewportWidth, viewportHeight) {
-                            detectTransformGestures { centroid, pan, zoom, _ ->
-                                val newScale = (scale * zoom).coerceIn(1.0f, 5.0f)
-                                scale = newScale
-                                if (newScale > 1.0f) {
-                                    val newOffset = Offset(offset.x + pan.x, offset.y + pan.y)
-                                    offset = clampOffset(
-                                        newOffset,
-                                        scale = newScale,
-                                        viewportWidth = viewportWidth,
-                                        viewportHeight = viewportHeight
-                                    )
-                                } else {
-                                    offset = Offset.Zero
-                                }
-                            }
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (isLoadingPage) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            CircularProgressIndicator(color = themeColors.buttonEqualBg)
-                            Spacer(modifier = Modifier.height(10.dp))
-                            Text(
-                                text = if (isBn) "পৃষ্ঠা লোড হচ্ছে..." else "Loading Page...",
-                                fontSize = 12.sp,
-                                color = Color.White.copy(alpha = 0.8f)
-                            )
-                        }
-                    } else if (renderedBitmap != null) {
-                        Image(
-                            bitmap = renderedBitmap!!.asImageBitmap(),
-                            contentDescription = "PDF Page ${currentPageIndex + 1}",
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .graphicsLayer(
-                                    scaleX = scale,
-                                    scaleY = scale,
-                                    translationX = offset.x,
-                                    translationY = offset.y
-                                ),
-                            contentScale = ContentScale.Fit
-                        )
-                    }
-                }
-
-                // TOP ACTION TOOLBAR (Google Drive Style) - Animated Visibility
+                // TOP ACTION TOOLBAR (Google Drive Style)
                 AnimatedVisibility(
                     visible = isControlsVisible && !isFullscreen,
                     enter = slideInVertically { -it } + fadeIn(),
-                    exit = slideOutVertically { -it } + fadeOut(),
-                    modifier = Modifier.align(Alignment.TopCenter)
+                    exit = slideOutVertically { -it } + fadeOut()
                 ) {
                     Surface(
-                        color = themeColors.cardBg.copy(alpha = 0.95f),
-                        shadowElevation = 4.dp
+                        color = themeColors.cardBg,
+                        shadowElevation = 4.dp,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
                             modifier = Modifier
@@ -867,7 +728,8 @@ fun PdfReaderTool(
                             IconButton(
                                 onClick = {
                                     pdfUri = null
-                                    renderedBitmap = null
+                                    pageCount = 0
+                                    currentPageScale = 1.0f
                                 }
                             ) {
                                 Icon(
@@ -877,7 +739,11 @@ fun PdfReaderTool(
                                 )
                             }
 
-                            Column(modifier = Modifier.weight(1f)) {
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(horizontal = 4.dp)
+                            ) {
                                 Text(
                                     text = fileName.ifBlank { "PDF Document" },
                                     fontSize = 13.5.sp,
@@ -887,27 +753,31 @@ fun PdfReaderTool(
                                     overflow = TextOverflow.Ellipsis
                                 )
                                 Text(
-                                    text = "${currentPageIndex + 1} / $pageCount • ${formatFileSize(fileSizeBytes)}",
+                                    text = if (pageCount > 0) {
+                                        if (isBn) "পৃষ্ঠা ${pagerState.currentPage + 1} / $pageCount • ${formatFileSize(fileSizeBytes)}"
+                                        else "Page ${pagerState.currentPage + 1} of $pageCount • ${formatFileSize(fileSizeBytes)}"
+                                    } else {
+                                        formatFileSize(fileSizeBytes)
+                                    },
                                     fontSize = 11.sp,
                                     color = themeColors.buttonEqualBg,
-                                    fontWeight = FontWeight.Medium
+                                    fontWeight = FontWeight.Medium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                             }
 
-                            // Fit to Screen / Reset Zoom
-                            if (scale > 1.05f) {
-                                IconButton(
-                                    onClick = {
-                                        scale = 1.0f
-                                        offset = Offset.Zero
-                                    }
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.ZoomOutMap,
-                                        contentDescription = "Fit to Screen",
-                                        tint = themeColors.buttonEqualBg
-                                    )
+                            // Share PDF
+                            IconButton(
+                                onClick = {
+                                    sharePdfFromUri(context, pdfUri!!, fileName)
                                 }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Share,
+                                    contentDescription = "Share",
+                                    tint = themeColors.buttonEqualBg
+                                )
                             }
 
                             // Night Mode (Invert Colors) Toggle
@@ -945,19 +815,6 @@ fun PdfReaderTool(
                                 )
                             }
 
-                            // Share PDF
-                            IconButton(
-                                onClick = {
-                                    sharePdfFromUri(context, pdfUri!!, fileName)
-                                }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Share,
-                                    contentDescription = "Share",
-                                    tint = themeColors.buttonEqualBg
-                                )
-                            }
-
                             // Fullscreen Toggle
                             IconButton(
                                 onClick = { isFullscreen = true }
@@ -972,90 +829,149 @@ fun PdfReaderTool(
                     }
                 }
 
-                // BOTTOM GOOGLE DRIVE FLOATING PAGE PILL & SCRUBBER
-                AnimatedVisibility(
-                    visible = isControlsVisible && pageCount > 0,
-                    enter = slideInVertically { it } + fadeIn(),
-                    exit = slideOutVertically { it } + fadeOut(),
+                // MAIN VIEWPORT FOR PDF PAGES
+                Box(
                     modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = if (isFullscreen) 24.dp else 16.dp)
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .clipToBounds()
                 ) {
-                    Surface(
-                        shape = RoundedCornerShape(28.dp),
-                        color = Color.Black.copy(alpha = 0.85f),
-                        shadowElevation = 8.dp,
-                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.15f))
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    if (pageCount > 0) {
+                        HorizontalPager(
+                            state = pagerState,
+                            modifier = Modifier.fillMaxSize(),
+                            userScrollEnabled = (currentPageScale <= 1.05f)
+                        ) { pageIdx ->
+                            PdfPageViewerItem(
+                                context = context,
+                                pdfUri = pdfUri!!,
+                                pageIndex = pageIdx,
+                                isNightMode = isNightMode,
+                                rotationDegrees = rotationDegrees,
+                                density = density,
+                                isCurrentPage = (pagerState.currentPage == pageIdx),
+                                onScaleChanged = { s ->
+                                    if (pagerState.currentPage == pageIdx) {
+                                        currentPageScale = s
+                                    }
+                                },
+                                onSingleTap = {
+                                    isControlsVisible = !isControlsVisible
+                                },
+                                themeColors = themeColors,
+                                isBn = isBn
+                            )
+                        }
+                    } else {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
                         ) {
-                            // Previous Page Button
-                            IconButton(
-                                onClick = {
-                                    if (currentPageIndex > 0) currentPageIndex--
-                                },
-                                enabled = currentPageIndex > 0,
-                                modifier = Modifier.size(36.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.ChevronLeft,
-                                    contentDescription = "Previous Page",
-                                    tint = if (currentPageIndex > 0) Color.White else Color.White.copy(alpha = 0.3f),
-                                    modifier = Modifier.size(22.dp)
-                                )
-                            }
-
-                            // Page Counter Pill (Tap opens "Jump to Page" Dialog)
-                            Surface(
-                                shape = RoundedCornerShape(16.dp),
-                                color = Color.White.copy(alpha = 0.18f),
-                                modifier = Modifier
-                                    .padding(horizontal = 4.dp)
-                                    .clickable { showJumpDialog = true }
-                            ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                CircularProgressIndicator(color = themeColors.buttonEqualBg)
+                                Spacer(modifier = Modifier.height(10.dp))
                                 Text(
-                                    text = if (isBn)
-                                        "পৃষ্ঠা ${currentPageIndex + 1} / $pageCount"
-                                    else
-                                        "Page ${currentPageIndex + 1} of $pageCount",
+                                    text = if (isBn) "PDF লোড হচ্ছে..." else "Loading PDF...",
                                     fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White,
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                    color = Color.White.copy(alpha = 0.8f)
                                 )
                             }
+                        }
+                    }
 
-                            // Next Page Button
-                            IconButton(
-                                onClick = {
-                                    if (currentPageIndex < pageCount - 1) currentPageIndex++
-                                },
-                                enabled = currentPageIndex < pageCount - 1,
-                                modifier = Modifier.size(36.dp)
+                    // BOTTOM GOOGLE DRIVE FLOATING PAGE PILL & SCRUBBER
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = isControlsVisible && pageCount > 0,
+                        enter = slideInVertically { it } + fadeIn(),
+                        exit = slideOutVertically { it } + fadeOut(),
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = if (isFullscreen) 24.dp else 16.dp)
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(28.dp),
+                            color = Color.Black.copy(alpha = 0.85f),
+                            shadowElevation = 8.dp,
+                            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.15f))
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.ChevronRight,
-                                    contentDescription = "Next Page",
-                                    tint = if (currentPageIndex < pageCount - 1) Color.White else Color.White.copy(alpha = 0.3f),
-                                    modifier = Modifier.size(22.dp)
-                                )
-                            }
-
-                            // Exit Fullscreen Icon if in Fullscreen
-                            if (isFullscreen) {
-                                Spacer(modifier = Modifier.width(4.dp))
+                                // Previous Page Button
                                 IconButton(
-                                    onClick = { isFullscreen = false },
+                                    onClick = {
+                                        if (pagerState.currentPage > 0) {
+                                            coroutineScope.launch {
+                                                pagerState.animateScrollToPage(pagerState.currentPage - 1)
+                                            }
+                                        }
+                                    },
+                                    enabled = pagerState.currentPage > 0,
                                     modifier = Modifier.size(36.dp)
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Default.FullscreenExit,
-                                        contentDescription = "Exit Fullscreen",
-                                        tint = Color.White,
-                                        modifier = Modifier.size(20.dp)
+                                        imageVector = Icons.Default.ChevronLeft,
+                                        contentDescription = "Previous Page",
+                                        tint = if (pagerState.currentPage > 0) Color.White else Color.White.copy(alpha = 0.3f),
+                                        modifier = Modifier.size(22.dp)
                                     )
+                                }
+
+                                // Page Counter Pill (Tap opens "Jump to Page" Dialog)
+                                Surface(
+                                    shape = RoundedCornerShape(16.dp),
+                                    color = Color.White.copy(alpha = 0.18f),
+                                    modifier = Modifier
+                                        .padding(horizontal = 4.dp)
+                                        .clickable { showJumpDialog = true }
+                                ) {
+                                    Text(
+                                        text = if (isBn)
+                                            "পৃষ্ঠা ${pagerState.currentPage + 1} / $pageCount"
+                                        else
+                                            "Page ${pagerState.currentPage + 1} of $pageCount",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White,
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                    )
+                                }
+
+                                // Next Page Button
+                                IconButton(
+                                    onClick = {
+                                        if (pagerState.currentPage < pageCount - 1) {
+                                            coroutineScope.launch {
+                                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                                            }
+                                        }
+                                    },
+                                    enabled = pagerState.currentPage < pageCount - 1,
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.ChevronRight,
+                                        contentDescription = "Next Page",
+                                        tint = if (pagerState.currentPage < pageCount - 1) Color.White else Color.White.copy(alpha = 0.3f),
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
+
+                                // Exit Fullscreen Icon if in Fullscreen
+                                if (isFullscreen) {
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    IconButton(
+                                        onClick = { isFullscreen = false },
+                                        modifier = Modifier.size(36.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.FullscreenExit,
+                                            contentDescription = "Exit Fullscreen",
+                                            tint = Color.White,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -1068,8 +984,8 @@ fun PdfReaderTool(
     // ================= MODAL DIALOGS =================
     // 1. Jump To Page Dialog (Google Drive Style)
     if (showJumpDialog && pageCount > 0) {
-        var targetPageText by remember { mutableStateOf("${currentPageIndex + 1}") }
-        var sliderValue by remember { mutableFloatStateOf((currentPageIndex + 1).toFloat()) }
+        var targetPageText by remember { mutableStateOf("${pagerState.currentPage + 1}") }
+        var sliderValue by remember { mutableFloatStateOf((pagerState.currentPage + 1).toFloat()) }
 
         AlertDialog(
             onDismissRequest = { showJumpDialog = false },
@@ -1137,10 +1053,13 @@ fun PdfReaderTool(
                 Button(
                     onClick = {
                         val num = targetPageText.toIntOrNull()
-                        if (num != null && num in 1..pageCount) {
-                            currentPageIndex = num - 1
+                        val targetPage = if (num != null && num in 1..pageCount) {
+                            num - 1
                         } else {
-                            currentPageIndex = sliderValue.toInt() - 1
+                            sliderValue.toInt() - 1
+                        }
+                        coroutineScope.launch {
+                            pagerState.scrollToPage(targetPage.coerceIn(0, max(0, pageCount - 1)))
                         }
                         showJumpDialog = false
                     },
@@ -1243,6 +1162,205 @@ private fun clampOffset(
         x = offset.x.coerceIn(-maxPanX, maxPanX),
         y = offset.y.coerceIn(-maxPanY, maxPanY)
     )
+}
+
+@Composable
+private fun PdfPageViewerItem(
+    context: Context,
+    pdfUri: Uri,
+    pageIndex: Int,
+    isNightMode: Boolean,
+    rotationDegrees: Int,
+    density: Float,
+    isCurrentPage: Boolean,
+    onScaleChanged: (Float) -> Unit,
+    onSingleTap: () -> Unit,
+    themeColors: CalculatorThemeColors,
+    isBn: Boolean
+) {
+    var scale by remember { mutableFloatStateOf(1.0f) }
+    var offset by remember { mutableStateOf(Offset.Zero) }
+    var pageBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
+
+    // Reset scale & offset when navigating away
+    LaunchedEffect(isCurrentPage) {
+        if (!isCurrentPage && scale != 1.0f) {
+            scale = 1.0f
+            offset = Offset.Zero
+            onScaleChanged(1.0f)
+        }
+    }
+
+    // Render single page bitmap asynchronously
+    LaunchedEffect(pdfUri, pageIndex, isNightMode, rotationDegrees) {
+        isLoading = true
+        withContext(Dispatchers.IO) {
+            val bmp = renderPdfPageBitmap(
+                context = context,
+                uri = pdfUri,
+                pageIndex = pageIndex,
+                isNightMode = isNightMode,
+                rotationDegrees = rotationDegrees,
+                density = density
+            )
+            withContext(Dispatchers.Main) {
+                pageBitmap = bmp
+                isLoading = false
+            }
+        }
+    }
+
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxSize()
+            .clipToBounds()
+    ) {
+        val viewportWidth = constraints.maxWidth.toFloat()
+        val viewportHeight = constraints.maxHeight.toFloat()
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .pointerInput(viewportWidth, viewportHeight) {
+                    detectTapGestures(
+                        onDoubleTap = { tapOffset ->
+                            if (scale > 1.1f) {
+                                scale = 1.0f
+                                offset = Offset.Zero
+                                onScaleChanged(1.0f)
+                            } else {
+                                scale = 2.5f
+                                onScaleChanged(2.5f)
+                                val targetOffsetX = (viewportWidth / 2f - tapOffset.x) * 1.5f
+                                val targetOffsetY = (viewportHeight / 2f - tapOffset.y) * 1.5f
+                                offset = clampOffset(
+                                    Offset(targetOffsetX, targetOffsetY),
+                                    scale = 2.5f,
+                                    viewportWidth = viewportWidth,
+                                    viewportHeight = viewportHeight
+                                )
+                            }
+                        },
+                        onTap = {
+                            onSingleTap()
+                        }
+                    )
+                }
+                .pointerInput(viewportWidth, viewportHeight) {
+                    detectTransformGestures { _, pan, zoom, _ ->
+                        val newScale = (scale * zoom).coerceIn(1.0f, 5.0f)
+                        scale = newScale
+                        onScaleChanged(newScale)
+                        if (newScale > 1.0f) {
+                            val newOffset = Offset(offset.x + pan.x, offset.y + pan.y)
+                            offset = clampOffset(
+                                newOffset,
+                                scale = newScale,
+                                viewportWidth = viewportWidth,
+                                viewportHeight = viewportHeight
+                            )
+                        } else {
+                            offset = Offset.Zero
+                        }
+                    }
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            if (isLoading) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    CircularProgressIndicator(
+                        color = themeColors.buttonEqualBg,
+                        modifier = Modifier.size(36.dp)
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = if (isBn) "পৃষ্ঠা ${pageIndex + 1} লোড হচ্ছে..." else "Loading Page ${pageIndex + 1}...",
+                        fontSize = 12.sp,
+                        color = Color.White.copy(alpha = 0.8f)
+                    )
+                }
+            } else if (pageBitmap != null) {
+                Image(
+                    bitmap = pageBitmap!!.asImageBitmap(),
+                    contentDescription = "PDF Page ${pageIndex + 1}",
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer(
+                            scaleX = scale,
+                            scaleY = scale,
+                            translationX = offset.x,
+                            translationY = offset.y
+                        ),
+                    contentScale = ContentScale.Fit
+                )
+            }
+        }
+    }
+}
+
+private fun renderPdfPageBitmap(
+    context: Context,
+    uri: Uri,
+    pageIndex: Int,
+    isNightMode: Boolean,
+    rotationDegrees: Int,
+    density: Float
+): Bitmap? {
+    return try {
+        val pfd = openPdfParcelFileDescriptor(context, uri) ?: return null
+        val renderer = PdfRenderer(pfd)
+        val safeIdx = pageIndex.coerceIn(0, max(0, renderer.pageCount - 1))
+        if (safeIdx !in 0 until renderer.pageCount) {
+            renderer.close()
+            pfd.close()
+            return null
+        }
+        val page = renderer.openPage(safeIdx)
+        val renderFactor = (density * 1.5f).coerceIn(2.0f, 3.5f)
+        val targetWidth = (page.width * renderFactor).toInt().coerceIn(400, 3000)
+        val targetHeight = (page.height * renderFactor).toInt().coerceIn(400, 4200)
+
+        val rawBmp = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(rawBmp)
+        canvas.drawColor(AndroidColor.WHITE)
+        page.render(rawBmp, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+        page.close()
+        renderer.close()
+        pfd.close()
+
+        val rotatedBmp = if (rotationDegrees % 360 != 0) {
+            val matrix = Matrix().apply { postRotate(rotationDegrees.toFloat()) }
+            val rot = Bitmap.createBitmap(rawBmp, 0, 0, rawBmp.width, rawBmp.height, matrix, true)
+            if (rot != rawBmp) rawBmp.recycle()
+            rot
+        } else {
+            rawBmp
+        }
+
+        if (isNightMode) {
+            val invBmp = Bitmap.createBitmap(rotatedBmp.width, rotatedBmp.height, Bitmap.Config.ARGB_8888)
+            val invCanvas = Canvas(invBmp)
+            val paint = Paint()
+            val colorMatrix = ColorMatrix(
+                floatArrayOf(
+                    -1.0f, 0.0f, 0.0f, 0.0f, 255.0f,
+                    0.0f, -1.0f, 0.0f, 0.0f, 255.0f,
+                    0.0f, 0.0f, -1.0f, 0.0f, 255.0f,
+                    0.0f, 0.0f, 0.0f, 1.0f, 0.0f
+                )
+            )
+            paint.colorFilter = ColorMatrixColorFilter(colorMatrix)
+            invCanvas.drawBitmap(rotatedBmp, 0f, 0f, paint)
+            if (invBmp != rotatedBmp) rotatedBmp.recycle()
+            invBmp
+        } else {
+            rotatedBmp
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
 }
 
 @Composable
