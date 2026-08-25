@@ -502,7 +502,7 @@ fun SmartConverterCategoriesView(
                                     }
                                 }
 
-                                if (isOverviewMode) {
+                                if (isOverviewMode && categoryConverters.size > 2) {
                                     Row(
                                         modifier = Modifier
                                             .clip(RoundedCornerShape(8.dp))
@@ -807,7 +807,7 @@ fun ConverterCardItem(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
                     text = converterType.getTitle(viewModel.selectedLanguage),
@@ -817,17 +817,17 @@ fun ConverterCardItem(
                     maxLines = 2,
                     lineHeight = 17.sp
                 )
+
+                Spacer(modifier = Modifier.height(3.dp))
+
+                Text(
+                    text = converterType.units.take(3).map { converterType.getLocalizedUnitName(it, viewModel.selectedLanguage) }.joinToString(", ") + if (converterType.units.size > 3) "..." else "",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = themeColors.displayText.copy(alpha = 0.7f),
+                    maxLines = 1
+                )
             }
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            Text(
-                text = converterType.units.take(3).map { converterType.getLocalizedUnitName(it, viewModel.selectedLanguage) }.joinToString(", ") + if (converterType.units.size > 3) "..." else "",
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Medium,
-                color = themeColors.displayText.copy(alpha = 0.7f),
-                maxLines = 1
-            )
         }
     }
 }

@@ -1652,7 +1652,7 @@ fun DashboardCategoriesView(
                                     }
                                 }
 
-                                if (isOverviewMode) {
+                                if (isOverviewMode && categoryTools.size > 2) {
                                     Row(
                                         modifier = Modifier
                                             .clip(RoundedCornerShape(8.dp))
@@ -1958,7 +1958,7 @@ fun ToolGridCardItem(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
                     text = toolType.getTitle(viewModel.selectedLanguage),
@@ -1968,17 +1968,17 @@ fun ToolGridCardItem(
                     maxLines = 2,
                     lineHeight = 17.sp
                 )
+
+                Spacer(modifier = Modifier.height(3.dp))
+
+                Text(
+                    text = toolType.getDescription(viewModel.selectedLanguage),
+                    fontSize = 11.sp,
+                    color = themeColors.displayText.copy(alpha = 0.6f),
+                    maxLines = 2,
+                    lineHeight = 14.sp
+                )
             }
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Text(
-                text = toolType.getDescription(viewModel.selectedLanguage),
-                fontSize = 11.sp,
-                color = themeColors.displayText.copy(alpha = 0.6f),
-                maxLines = 2,
-                lineHeight = 14.sp
-            )
         }
     }
 }

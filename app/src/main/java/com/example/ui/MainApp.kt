@@ -76,6 +76,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.shadow
+import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.ui.text.input.ImeAction
@@ -1834,24 +1838,67 @@ fun MainContent(
                                 modifier = Modifier.padding(14.dp),
                                 verticalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
-                                Text(
-                                    text = if (isBn) "👨‍💻 ডেভেলপার পরিচিতি" else "👨‍💻 Developer Info",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 14.sp,
-                                    color = themeColors.buttonEqualBg
-                                )
-                                Text(
-                                    text = if (isBn) "ডেভেলপার: Md. Shariful Islam" else "Developer: Md. Shariful Islam",
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = themeColors.displayText
-                                )
-                                
-                                Text(
-                                    text = if (isBn) "যোগাযোগ করতে নিচের যেকোনো একটিতে ট্যাপ করুন:" else "Tap below to redirect and connect instantly:",
-                                    fontSize = 11.sp,
-                                    color = themeColors.displayText.copy(alpha = 0.6f)
-                                )
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(
+                                        modifier = Modifier.weight(1f),
+                                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Text(
+                                            text = if (isBn) "ডেভেলপার পরিচিতি" else "Developer Info",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 14.sp,
+                                            color = themeColors.buttonEqualBg
+                                        )
+                                        Text(
+                                            text = if (isBn) "ডেভেলপার: Md. Shariful Islam" else "Developer: Md. Shariful Islam",
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = themeColors.displayText
+                                        )
+                                        Text(
+                                            text = if (isBn) "যোগাযোগ করতে নিচের যেকোনো একটিতে ট্যাপ করুন:" else "Tap below to redirect and connect instantly:",
+                                            fontSize = 10.5.sp,
+                                            color = themeColors.displayText.copy(alpha = 0.6f)
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.width(10.dp))
+
+                                    // Circular Developer Photo with nice border and design
+                                    Box(
+                                        modifier = Modifier
+                                            .size(56.dp)
+                                            .clip(CircleShape)
+                                            .background(themeColors.buttonEqualBg.copy(alpha = 0.12f))
+                                            .border(1.5.dp, themeColors.buttonEqualBg, CircleShape),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        val painter = rememberAsyncImagePainter(
+                                            model = ImageRequest.Builder(LocalContext.current)
+                                                .data("https://www.dropbox.com/scl/fi/io67lcl16o1wddcq4yx4m/Dev_photo.jpg?rlkey=erlthhlxwjhbgtd2w3tv9jbvv&st=djqdym2s&dl=1")
+                                                .crossfade(true)
+                                                .build()
+                                        )
+                                        if (painter.state is coil.compose.AsyncImagePainter.State.Success) {
+                                            Image(
+                                                painter = painter,
+                                                contentDescription = "Developer Photo",
+                                                contentScale = ContentScale.Crop,
+                                                modifier = Modifier.fillMaxSize()
+                                            )
+                                        } else {
+                                            Icon(
+                                                imageVector = Icons.Default.Person,
+                                                contentDescription = "Avatar Placeholder",
+                                                tint = themeColors.buttonEqualBg.copy(alpha = 0.8f),
+                                                modifier = Modifier.size(32.dp)
+                                            )
+                                        }
+                                    }
+                                }
 
                                 HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.08f))
 

@@ -1088,7 +1088,7 @@ fun PdfReaderTool(
                                     }
                                 )
                             }
-                            .pointerInput(docScale, containerWidth, containerHeight) {
+                            .pointerInput(containerWidth, containerHeight) {
                                 awaitEachGesture {
                                     awaitFirstDown(requireUnconsumed = false)
                                     var isMultiTouch = false
@@ -1107,11 +1107,20 @@ fun PdfReaderTool(
                                             if (newScale > 1.0f) {
                                                 val maxPanX = (containerWidth * (newScale - 1.0f)) / 2f
                                                 val maxPanY = (containerHeight * (newScale - 1.0f)) / 2f
+                                                
+                                                val targetOffsetY = docOffset.y + pan.y
+                                                val clampedOffsetY = targetOffsetY.coerceIn(-maxPanY, maxPanY)
+                                                val overscroll = targetOffsetY - clampedOffsetY
+                                                
                                                 val newOffset = docOffset + pan
                                                 docOffset = Offset(
                                                     newOffset.x.coerceIn(-maxPanX, maxPanX),
-                                                    newOffset.y.coerceIn(-maxPanY, maxPanY)
+                                                    clampedOffsetY
                                                 )
+                                                
+                                                if (overscroll != 0f) {
+                                                    verticalLazyListState.dispatchRawDelta(-overscroll / docScale)
+                                                }
                                             } else {
                                                 docOffset = Offset.Zero
                                             }
@@ -1121,11 +1130,20 @@ fun PdfReaderTool(
                                             if (pan != Offset.Zero) {
                                                 val maxPanX = (containerWidth * (docScale - 1.0f)) / 2f
                                                 val maxPanY = (containerHeight * (docScale - 1.0f)) / 2f
-                                                val newOffset = docOffset + pan
+                                                
+                                                val targetOffsetY = docOffset.y + pan.y
+                                                val clampedOffsetY = targetOffsetY.coerceIn(-maxPanY, maxPanY)
+                                                val overscroll = targetOffsetY - clampedOffsetY
+                                                
+                                                val newOffsetX = (docOffset.x + pan.x).coerceIn(-maxPanX, maxPanX)
                                                 docOffset = Offset(
-                                                    newOffset.x.coerceIn(-maxPanX, maxPanX),
-                                                    newOffset.y.coerceIn(-maxPanY, maxPanY)
+                                                    newOffsetX,
+                                                    clampedOffsetY
                                                 )
+                                                
+                                                if (overscroll != 0f) {
+                                                    verticalLazyListState.dispatchRawDelta(-overscroll / docScale)
+                                                }
                                                 event.changes.forEach { it.consume() }
                                             }
                                         }
