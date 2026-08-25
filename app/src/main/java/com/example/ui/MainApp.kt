@@ -1030,8 +1030,11 @@ fun MainContent(
                 }
             }
 
-            // Floating Pill AI Button with 2dp Animated Rotating Gemini Border on Right Side (Hides on Calculator tab or when inside Holy Quran tool with smooth enter/exit animation)
-            val isAiFabVisible = !viewModel.showAiChat && viewModel.activeTab != 2 && viewModel.selectedToolType != ToolType.HOLY_QURAN
+            // Floating Pill AI Button with 2dp Animated Rotating Gemini Border on Right Side (Hides on Calculator tab or when inside Holy Quran / PDF tools with smooth enter/exit animation)
+            val isAiFabVisible = !viewModel.showAiChat && viewModel.activeTab != 2 &&
+                    viewModel.selectedToolType != ToolType.HOLY_QURAN &&
+                    viewModel.selectedToolType != ToolType.PDF_READER &&
+                    viewModel.selectedToolType != ToolType.PDF_MAKER
 
             Box(
                 modifier = Modifier

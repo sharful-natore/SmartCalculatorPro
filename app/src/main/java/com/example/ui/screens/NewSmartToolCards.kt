@@ -43,10 +43,17 @@ import java.util.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.text.BasicTextField
@@ -3021,6 +3028,9 @@ fun PhotoLabCard(viewModel: CalculatorViewModel, themeColors: CalculatorThemeCol
     var saveSuccessMessage by remember { mutableStateOf<String?>(null) }
     var isSaving by remember { mutableStateOf(false) }
 
+    var customCroppedBitmap by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
+    var showInteractiveCropDialog by remember { mutableStateOf(false) }
+
     // Load original bitmap
     val originalBitmap = remember(selectedImageUri) {
         selectedImageUri?.let { uri ->
@@ -3064,6 +3074,7 @@ fun PhotoLabCard(viewModel: CalculatorViewModel, themeColors: CalculatorThemeCol
     // Calculate processed image in real time
     val processedResult = remember(
         originalBitmap,
+        customCroppedBitmap,
         cropPreset,
         rotationDegrees,
         isFlippedHorizontal,
@@ -3078,7 +3089,7 @@ fun PhotoLabCard(viewModel: CalculatorViewModel, themeColors: CalculatorThemeCol
     ) {
         processImageResult(
             context = context,
-            originalBmp = originalBitmap,
+            originalBmp = customCroppedBitmap ?: originalBitmap,
             cropPreset = cropPreset,
             rotation = rotationDegrees,
             isFlipped = isFlippedHorizontal,
@@ -3099,6 +3110,7 @@ fun PhotoLabCard(viewModel: CalculatorViewModel, themeColors: CalculatorThemeCol
     ) { uri: Uri? ->
         if (uri != null) {
             selectedImageUri = uri
+            customCroppedBitmap = null
             cropPreset = "Original"
             rotationDegrees = 0f
             isFlippedHorizontal = false
@@ -3412,6 +3424,24 @@ fun PhotoLabCard(viewModel: CalculatorViewModel, themeColors: CalculatorThemeCol
                                 }
 
                                 Spacer(modifier = Modifier.height(10.dp))
+
+                                Button(
+                                    onClick = { showInteractiveCropDialog = true },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Icon(imageVector = Icons.Default.Crop, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = if (isBn) "✂️ প্রফেশনাল জুমেবল ক্রপ টুল" else "✂️ Professional Zoomable Crop Tool",
+                                        fontSize = 11.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.height(8.dp))
 
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
@@ -3753,6 +3783,19 @@ fun PhotoLabCard(viewModel: CalculatorViewModel, themeColors: CalculatorThemeCol
                 }
             }
         }
+
+        if (showInteractiveCropDialog && (customCroppedBitmap != null || originalBitmap != null)) {
+            InteractiveCropDialog(
+                originalBitmap = customCroppedBitmap ?: originalBitmap!!,
+                isBn = isBn,
+                themeColors = themeColors,
+                onDismiss = { showInteractiveCropDialog = false },
+                onCropApplied = { croppedBmp ->
+                    customCroppedBitmap = croppedBmp
+                    showInteractiveCropDialog = false
+                }
+            )
+        }
     }
 }
 
@@ -3966,4 +4009,244 @@ data class ProcessedPhotoResult(
     val sizeBytes: Int,
     val format: String
 )
+
+@Composable
+private fun InteractiveCropDialog(
+    originalBitmap: android.graphics.Bitmap,
+    isBn: Boolean,
+    themeColors: CalculatorThemeColors,
+    onDismiss: () -> Unit,
+    onCropApplied: (android.graphics.Bitmap) -> Unit
+) {
+    var scale by remember { mutableFloatStateOf(1.0f) }
+    var offset by remember { mutableStateOf(Offset.Zero) }
+    var selectedRatio by remember { mutableStateOf("Free") }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = Color.Black
+        ) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                // Top Header
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFF1E293B))
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Crop,
+                        contentDescription = null,
+                        tint = themeColors.buttonEqualBg,
+                        modifier = Modifier.size(22.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = if (isBn) "প্রফেশনাল ক্রপ টুল (জুম ও প্যান)" else "Professional Zoom & Pan Cropper",
+                        fontSize = 14.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        modifier = Modifier.weight(1f)
+                    )
+                    IconButton(onClick = onDismiss) {
+                        Icon(imageVector = Icons.Default.Close, contentDescription = "Close", tint = Color.White)
+                    }
+                }
+
+                // Aspect Ratio Selector
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFF0F172A))
+                        .horizontalScroll(rememberScrollState())
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    val ratios = listOf("Free", "1:1", "3:4", "4:3", "16:9", "300x300", "300x80")
+                    ratios.forEach { r ->
+                        val isSel = selectedRatio == r
+                        FilterChip(
+                            selected = isSel,
+                            onClick = {
+                                selectedRatio = r
+                                scale = 1.0f
+                                offset = Offset.Zero
+                            },
+                            label = { Text(r, fontSize = 11.sp) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = themeColors.buttonEqualBg,
+                                selectedLabelColor = Color.White,
+                                containerColor = Color.White.copy(alpha = 0.12f),
+                                labelColor = Color.White
+                            )
+                        )
+                    }
+                }
+
+                // Interactive Crop Canvas Area
+                BoxWithConstraints(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .clipToBounds()
+                        .background(Color(0xFF090D16))
+                ) {
+                    val containerWidth = constraints.maxWidth.toFloat()
+                    val containerHeight = constraints.maxHeight.toFloat()
+
+                    val aspect = when (selectedRatio) {
+                        "1:1", "300x300" -> 1.0f
+                        "3:4" -> 3f / 4f
+                        "4:3" -> 4f / 3f
+                        "16:9" -> 16f / 9f
+                        "300x80" -> 300f / 80f
+                        else -> (originalBitmap.width.toFloat() / originalBitmap.height.toFloat()).coerceIn(0.2f, 5.0f)
+                    }
+
+                    val cropFrameWidth: Float
+                    val cropFrameHeight: Float
+                    if (containerWidth / containerHeight > aspect) {
+                        cropFrameHeight = containerHeight * 0.72f
+                        cropFrameWidth = cropFrameHeight * aspect
+                    } else {
+                        cropFrameWidth = containerWidth * 0.82f
+                        cropFrameHeight = cropFrameWidth / aspect
+                    }
+
+                    val cropLeft = (containerWidth - cropFrameWidth) / 2f
+                    val cropTop = (containerHeight - cropFrameHeight) / 2f
+
+                    // Pinch-to-zoom & Pan Touch Box
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .pointerInput(Unit) {
+                                detectTransformGestures { _, pan, zoom, _ ->
+                                    scale = (scale * zoom).coerceIn(0.7f, 5.0f)
+                                    val newOffset = offset + pan
+                                    val maxOffsetX = (cropFrameWidth * (scale - 1f) / 2f) + 300f
+                                    val maxOffsetY = (cropFrameHeight * (scale - 1f) / 2f) + 300f
+                                    offset = Offset(
+                                        newOffset.x.coerceIn(-maxOffsetX, maxOffsetX),
+                                        newOffset.y.coerceIn(-maxOffsetY, maxOffsetY)
+                                    )
+                                }
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        androidx.compose.foundation.Image(
+                            bitmap = originalBitmap.asImageBitmap(),
+                            contentDescription = "Crop target",
+                            modifier = Modifier.graphicsLayer(
+                                scaleX = scale,
+                                scaleY = scale,
+                                translationX = offset.x,
+                                translationY = offset.y
+                            )
+                        )
+                    }
+
+                    // Rule of Thirds Grid Overlay over Crop Window
+                    Canvas(modifier = Modifier.fillMaxSize()) {
+                        drawRect(color = Color.Black.copy(alpha = 0.55f))
+                        drawRect(
+                            color = Color.Transparent,
+                            topLeft = Offset(cropLeft, cropTop),
+                            size = Size(cropFrameWidth, cropFrameHeight),
+                            blendMode = BlendMode.Clear
+                        )
+                        drawRect(
+                            color = Color.White,
+                            topLeft = Offset(cropLeft, cropTop),
+                            size = Size(cropFrameWidth, cropFrameHeight),
+                            style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.dp.toPx())
+                        )
+                        val colW = cropFrameWidth / 3f
+                        drawLine(Color.White.copy(alpha = 0.4f), Offset(cropLeft + colW, cropTop), Offset(cropLeft + colW, cropTop + cropFrameHeight), strokeWidth = 1.dp.toPx())
+                        drawLine(Color.White.copy(alpha = 0.4f), Offset(cropLeft + colW * 2, cropTop), Offset(cropLeft + colW * 2, cropTop + cropFrameHeight), strokeWidth = 1.dp.toPx())
+                        val rowH = cropFrameHeight / 3f
+                        drawLine(Color.White.copy(alpha = 0.4f), Offset(cropLeft, cropTop + rowH), Offset(cropLeft + cropFrameWidth, cropTop + rowH), strokeWidth = 1.dp.toPx())
+                        drawLine(Color.White.copy(alpha = 0.4f), Offset(cropLeft, cropTop + rowH * 2), Offset(cropLeft + cropFrameWidth, cropTop + rowH * 2), strokeWidth = 1.dp.toPx())
+                    }
+
+                    // Bottom Action Toolbar inside Dialog
+                    Surface(
+                        color = Color(0xFF1E293B),
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            TextButton(
+                                onClick = {
+                                    scale = 1.0f
+                                    offset = Offset.Zero
+                                }
+                            ) {
+                                Icon(imageVector = Icons.Default.Refresh, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(if (isBn) "রিসেট" else "Reset", color = Color.White, fontSize = 12.sp)
+                            }
+
+                            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                OutlinedButton(
+                                    onClick = onDismiss,
+                                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.4f))
+                                ) {
+                                    Text(if (isBn) "বাতিল" else "Cancel", color = Color.White, fontSize = 12.sp)
+                                }
+
+                                Button(
+                                    onClick = {
+                                        try {
+                                            val bmpW = originalBitmap.width
+                                            val bmpH = originalBitmap.height
+                                            val cropRatio = cropFrameWidth / cropFrameHeight
+                                            val targetW: Int
+                                            val targetH: Int
+                                            if (bmpW.toFloat() / bmpH.toFloat() > cropRatio) {
+                                                targetH = (bmpH / scale).toInt().coerceIn(10, bmpH)
+                                                targetW = (targetH * cropRatio).toInt().coerceIn(10, bmpW)
+                                            } else {
+                                                targetW = (bmpW / scale).toInt().coerceIn(10, bmpW)
+                                                targetH = (targetW / cropRatio).toInt().coerceIn(10, bmpH)
+                                            }
+
+                                            val centerX = bmpW / 2f - (offset.x / (cropFrameWidth * scale)) * bmpW
+                                            val centerY = bmpH / 2f - (offset.y / (cropFrameHeight * scale)) * bmpH
+
+                                            val startX = (centerX - targetW / 2f).toInt().coerceIn(0, maxOf(0, bmpW - targetW))
+                                            val startY = (centerY - targetH / 2f).toInt().coerceIn(0, maxOf(0, bmpH - targetH))
+
+                                            val croppedBmp = android.graphics.Bitmap.createBitmap(originalBitmap, startX, startY, targetW, targetH)
+                                            onCropApplied(croppedBmp)
+                                        } catch (e: Exception) {
+                                            onCropApplied(originalBitmap)
+                                        }
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg, contentColor = Color.White)
+                                ) {
+                                    Icon(imageVector = Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(if (isBn) "ক্রপ সম্পন্ন করুন" else "Apply Crop", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 

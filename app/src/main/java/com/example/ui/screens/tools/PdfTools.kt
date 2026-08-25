@@ -138,11 +138,53 @@ fun PdfReaderTool(
     var rotationDegrees by remember { mutableIntStateOf(0) }
     var isNightMode by remember { mutableStateOf(false) }
 
-    // Page Navigation states
+    // Page Navigation states (Vertical Continuous Scroll)
     var pageCount by remember { mutableIntStateOf(0) }
     var currentPageScale by remember { mutableFloatStateOf(1.0f) }
     val coroutineScope = rememberCoroutineScope()
-    val pagerState = rememberPagerState(initialPage = 0, pageCount = { max(1, pageCount) })
+    val verticalLazyListState = rememberLazyListState()
+    val visibleCurrentPage by remember { derivedStateOf { verticalLazyListState.firstVisibleItemIndex } }
+
+    // Text Search State inside PDF Viewer
+    var isSearchActive by remember { mutableStateOf(false) }
+    var pdfSearchQuery by remember { mutableStateOf("") }
+    var pdfTextPages by remember { mutableStateOf<List<String>>(emptyList()) }
+    var currentMatchIndex by remember { mutableIntStateOf(0) }
+
+    val searchMatches = remember(pdfSearchQuery, pdfTextPages) {
+        if (pdfSearchQuery.trim().isEmpty()) emptyList()
+        else {
+            val query = pdfSearchQuery.trim().lowercase()
+            val matchesList = mutableListOf<Int>()
+            pdfTextPages.forEachIndexed { idx, pageText ->
+                if (pageText.lowercase().contains(query)) {
+                    matchesList.add(idx)
+                }
+            }
+            matchesList
+        }
+    }
+
+    // System Window Bar Insets for True Immersive Fullscreen
+    val window = (context as? android.app.Activity)?.window
+    LaunchedEffect(isFullscreen) {
+        window?.let { win ->
+            val controller = androidx.core.view.WindowCompat.getInsetsController(win, win.decorView)
+            if (isFullscreen) {
+                controller.hide(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+                controller.systemBarsBehavior = androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            } else {
+                controller.show(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+            }
+        }
+    }
+    DisposableEffect(Unit) {
+        onDispose {
+            window?.let { win ->
+                androidx.core.view.WindowCompat.getInsetsController(win, win.decorView).show(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+            }
+        }
+    }
 
     // Modals & Dialogs
     var showJumpDialog by remember { mutableStateOf(false) }
@@ -702,7 +744,7 @@ fun PdfReaderTool(
                 }
             }
         } else {
-            // ================= 2. GOOGLE DRIVE STYLE MULTI-PAGE VIEWER =================
+            // ================= 2. GOOGLE DRIVE STYLE VERTICAL MULTI-PAGE VIEWER =================
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -719,117 +761,263 @@ fun PdfReaderTool(
                         shadowElevation = 4.dp,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 8.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            IconButton(
-                                onClick = {
-                                    pdfUri = null
-                                    pageCount = 0
-                                    currentPageScale = 1.0f
-                                }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                    contentDescription = "Back to list",
-                                    tint = themeColors.displayText
-                                )
-                            }
-
-                            Column(
+                        Column {
+                            Row(
                                 modifier = Modifier
-                                    .weight(1f)
-                                    .padding(horizontal = 4.dp)
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(
-                                    text = fileName.ifBlank { "PDF Document" },
-                                    fontSize = 13.5.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = themeColors.displayText,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                                Text(
-                                    text = if (pageCount > 0) {
-                                        if (isBn) "পৃষ্ঠা ${pagerState.currentPage + 1} / $pageCount • ${formatFileSize(fileSizeBytes)}"
-                                        else "Page ${pagerState.currentPage + 1} of $pageCount • ${formatFileSize(fileSizeBytes)}"
-                                    } else {
-                                        formatFileSize(fileSizeBytes)
-                                    },
-                                    fontSize = 11.sp,
-                                    color = themeColors.buttonEqualBg,
-                                    fontWeight = FontWeight.Medium,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
-
-                            // Share PDF
-                            IconButton(
-                                onClick = {
-                                    sharePdfFromUri(context, pdfUri!!, fileName)
+                                IconButton(
+                                    onClick = {
+                                        pdfUri = null
+                                        pageCount = 0
+                                        currentPageScale = 1.0f
+                                        isSearchActive = false
+                                        pdfSearchQuery = ""
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                        contentDescription = "Back to list",
+                                        tint = themeColors.displayText
+                                    )
                                 }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Share,
-                                    contentDescription = "Share",
-                                    tint = themeColors.buttonEqualBg
-                                )
-                            }
 
-                            // Night Mode (Invert Colors) Toggle
-                            IconButton(
-                                onClick = { isNightMode = !isNightMode }
-                            ) {
-                                Icon(
-                                    imageVector = if (isNightMode) Icons.Default.LightMode else Icons.Default.DarkMode,
-                                    contentDescription = "Night Mode",
-                                    tint = if (isNightMode) Color(0xFFFBBF24) else themeColors.displayText
-                                )
-                            }
-
-                            // Rotate 90 Degrees Clockwise
-                            IconButton(
-                                onClick = {
-                                    rotationDegrees = (rotationDegrees + 90) % 360
+                                Column(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .padding(horizontal = 4.dp)
+                                ) {
+                                    Text(
+                                        text = fileName.ifBlank { "PDF Document" },
+                                        fontSize = 13.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = themeColors.displayText,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Text(
+                                        text = if (pageCount > 0) {
+                                            if (isBn) "পৃষ্ঠা ${visibleCurrentPage + 1} / $pageCount • ${formatFileSize(fileSizeBytes)}"
+                                            else "Page ${visibleCurrentPage + 1} of $pageCount • ${formatFileSize(fileSizeBytes)}"
+                                        } else {
+                                            formatFileSize(fileSizeBytes)
+                                        },
+                                        fontSize = 11.sp,
+                                        color = themeColors.buttonEqualBg,
+                                        fontWeight = FontWeight.Medium,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
                                 }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.RotateRight,
-                                    contentDescription = "Rotate",
-                                    tint = themeColors.displayText
-                                )
+
+                                // Search Text Toggle Button
+                                IconButton(
+                                    onClick = {
+                                        isSearchActive = !isSearchActive
+                                        if (!isSearchActive) pdfSearchQuery = ""
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Search,
+                                        contentDescription = "Search PDF",
+                                        tint = if (isSearchActive) themeColors.buttonEqualBg else themeColors.displayText
+                                    )
+                                }
+
+                                // Share PDF
+                                IconButton(
+                                    onClick = {
+                                        sharePdfFromUri(context, pdfUri!!, fileName)
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Share,
+                                        contentDescription = "Share",
+                                        tint = themeColors.buttonEqualBg
+                                    )
+                                }
+
+                                // Night Mode Toggle
+                                IconButton(
+                                    onClick = { isNightMode = !isNightMode }
+                                ) {
+                                    Icon(
+                                        imageVector = if (isNightMode) Icons.Default.LightMode else Icons.Default.DarkMode,
+                                        contentDescription = "Night Mode",
+                                        tint = if (isNightMode) Color(0xFFFBBF24) else themeColors.displayText
+                                    )
+                                }
+
+                                // Rotate
+                                IconButton(
+                                    onClick = {
+                                        rotationDegrees = (rotationDegrees + 90) % 360
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.RotateRight,
+                                        contentDescription = "Rotate",
+                                        tint = themeColors.displayText
+                                    )
+                                }
+
+                                // Details Dialog
+                                IconButton(
+                                    onClick = { showDetailsDialog = true }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Info,
+                                        contentDescription = "Details",
+                                        tint = themeColors.displayText
+                                    )
+                                }
+
+                                // Fullscreen Toggle
+                                IconButton(
+                                    onClick = { isFullscreen = true }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Fullscreen,
+                                        contentDescription = "Fullscreen",
+                                        tint = themeColors.displayText
+                                    )
+                                }
                             }
 
-                            // Document Info / Details Dialog
-                            IconButton(
-                                onClick = { showDetailsDialog = true }
+                            // SEARCH TOOLBAR (Drive PDF Text Search)
+                            AnimatedVisibility(
+                                visible = isSearchActive,
+                                enter = expandVertically() + fadeIn(),
+                                exit = shrinkVertically() + fadeOut()
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Info,
-                                    contentDescription = "Details",
-                                    tint = themeColors.displayText
-                                )
-                            }
+                                Surface(
+                                    color = themeColors.cardBg.copy(alpha = 0.95f),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.3f))
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 10.dp, vertical = 4.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Search,
+                                            contentDescription = null,
+                                            tint = themeColors.buttonEqualBg,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        OutlinedTextField(
+                                            value = pdfSearchQuery,
+                                            onValueChange = {
+                                                pdfSearchQuery = it
+                                                currentMatchIndex = 0
+                                            },
+                                            placeholder = {
+                                                Text(
+                                                    text = if (isBn) "PDF নথিতে টেক্সট খুঁজুন..." else "Find text in PDF...",
+                                                    fontSize = 12.5.sp,
+                                                    color = themeColors.displayText.copy(alpha = 0.5f)
+                                                )
+                                            },
+                                            singleLine = true,
+                                            modifier = Modifier.weight(1f),
+                                            colors = OutlinedTextFieldDefaults.colors(
+                                                focusedBorderColor = Color.Transparent,
+                                                unfocusedBorderColor = Color.Transparent,
+                                                focusedTextColor = themeColors.displayText,
+                                                unfocusedTextColor = themeColors.displayText
+                                            )
+                                        )
 
-                            // Fullscreen Toggle
-                            IconButton(
-                                onClick = { isFullscreen = true }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Fullscreen,
-                                    contentDescription = "Fullscreen",
-                                    tint = themeColors.displayText
-                                )
+                                        if (pdfSearchQuery.isNotEmpty()) {
+                                            IconButton(
+                                                onClick = { pdfSearchQuery = "" },
+                                                modifier = Modifier.size(28.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Clear,
+                                                    contentDescription = "Clear",
+                                                    tint = themeColors.displayText.copy(alpha = 0.6f),
+                                                    modifier = Modifier.size(16.dp)
+                                                )
+                                            }
+                                        }
+
+                                        if (searchMatches.isNotEmpty()) {
+                                            Text(
+                                                text = "${currentMatchIndex + 1}/${searchMatches.size}",
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = themeColors.buttonEqualBg,
+                                                modifier = Modifier.padding(horizontal = 4.dp)
+                                            )
+
+                                            // Previous Match
+                                            IconButton(
+                                                onClick = {
+                                                    if (searchMatches.isNotEmpty()) {
+                                                        val prevIdx = (currentMatchIndex - 1 + searchMatches.size) % searchMatches.size
+                                                        currentMatchIndex = prevIdx
+                                                        val targetPage = searchMatches[prevIdx]
+                                                        coroutineScope.launch {
+                                                            verticalLazyListState.animateScrollToItem(targetPage)
+                                                        }
+                                                    }
+                                                },
+                                                modifier = Modifier.size(28.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.KeyboardArrowUp,
+                                                    contentDescription = "Previous Match",
+                                                    tint = themeColors.displayText,
+                                                    modifier = Modifier.size(18.dp)
+                                                )
+                                            }
+
+                                            // Next Match
+                                            IconButton(
+                                                onClick = {
+                                                    if (searchMatches.isNotEmpty()) {
+                                                        val nextIdx = (currentMatchIndex + 1) % searchMatches.size
+                                                        currentMatchIndex = nextIdx
+                                                        val targetPage = searchMatches[nextIdx]
+                                                        coroutineScope.launch {
+                                                            verticalLazyListState.animateScrollToItem(targetPage)
+                                                        }
+                                                    }
+                                                },
+                                                modifier = Modifier.size(28.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.KeyboardArrowDown,
+                                                    contentDescription = "Next Match",
+                                                    tint = themeColors.displayText,
+                                                    modifier = Modifier.size(18.dp)
+                                                )
+                                            }
+                                        } else if (pdfSearchQuery.isNotBlank()) {
+                                            Text(
+                                                text = if (isBn) "পাওয়া যায়নি" else "0 results",
+                                                fontSize = 11.sp,
+                                                color = Color.Red.copy(alpha = 0.8f),
+                                                modifier = Modifier.padding(horizontal = 4.dp)
+                                            )
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
                 }
 
-                // MAIN VIEWPORT FOR PDF PAGES
+                // MAIN VIEWPORT FOR PDF PAGES (Google Drive Vertical Scroll)
                 Box(
                     modifier = Modifier
                         .weight(1f)
@@ -837,30 +1025,36 @@ fun PdfReaderTool(
                         .clipToBounds()
                 ) {
                     if (pageCount > 0) {
-                        HorizontalPager(
-                            state = pagerState,
+                        LazyColumn(
+                            state = verticalLazyListState,
                             modifier = Modifier.fillMaxSize(),
-                            userScrollEnabled = (currentPageScale <= 1.05f)
-                        ) { pageIdx ->
-                            PdfPageViewerItem(
-                                context = context,
-                                pdfUri = pdfUri!!,
-                                pageIndex = pageIdx,
-                                isNightMode = isNightMode,
-                                rotationDegrees = rotationDegrees,
-                                density = density,
-                                isCurrentPage = (pagerState.currentPage == pageIdx),
-                                onScaleChanged = { s ->
-                                    if (pagerState.currentPage == pageIdx) {
-                                        currentPageScale = s
-                                    }
-                                },
-                                onSingleTap = {
-                                    isControlsVisible = !isControlsVisible
-                                },
-                                themeColors = themeColors,
-                                isBn = isBn
-                            )
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                            contentPadding = PaddingValues(vertical = 10.dp, horizontal = 6.dp)
+                        ) {
+                            items(pageCount) { pageIdx ->
+                                Surface(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(4.dp),
+                                    shadowElevation = 4.dp,
+                                    color = if (isNightMode) Color(0xFF1E293B) else Color.White
+                                ) {
+                                    PdfPageViewerItem(
+                                        context = context,
+                                        pdfUri = pdfUri!!,
+                                        pageIndex = pageIdx,
+                                        isNightMode = isNightMode,
+                                        rotationDegrees = rotationDegrees,
+                                        density = density,
+                                        isCurrentPage = (visibleCurrentPage == pageIdx),
+                                        onScaleChanged = { s -> currentPageScale = s },
+                                        onSingleTap = {
+                                            isControlsVisible = !isControlsVisible
+                                        },
+                                        themeColors = themeColors,
+                                        isBn = isBn
+                                    )
+                                }
+                            }
                         }
                     } else {
                         Box(
@@ -901,19 +1095,19 @@ fun PdfReaderTool(
                                 // Previous Page Button
                                 IconButton(
                                     onClick = {
-                                        if (pagerState.currentPage > 0) {
+                                        if (visibleCurrentPage > 0) {
                                             coroutineScope.launch {
-                                                pagerState.animateScrollToPage(pagerState.currentPage - 1)
+                                                verticalLazyListState.animateScrollToItem(visibleCurrentPage - 1)
                                             }
                                         }
                                     },
-                                    enabled = pagerState.currentPage > 0,
+                                    enabled = visibleCurrentPage > 0,
                                     modifier = Modifier.size(36.dp)
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.ChevronLeft,
                                         contentDescription = "Previous Page",
-                                        tint = if (pagerState.currentPage > 0) Color.White else Color.White.copy(alpha = 0.3f),
+                                        tint = if (visibleCurrentPage > 0) Color.White else Color.White.copy(alpha = 0.3f),
                                         modifier = Modifier.size(22.dp)
                                     )
                                 }
@@ -928,9 +1122,9 @@ fun PdfReaderTool(
                                 ) {
                                     Text(
                                         text = if (isBn)
-                                            "পৃষ্ঠা ${pagerState.currentPage + 1} / $pageCount"
+                                            "পৃষ্ঠা ${visibleCurrentPage + 1} / $pageCount"
                                         else
-                                            "Page ${pagerState.currentPage + 1} of $pageCount",
+                                            "Page ${visibleCurrentPage + 1} of $pageCount",
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color.White,
@@ -941,19 +1135,19 @@ fun PdfReaderTool(
                                 // Next Page Button
                                 IconButton(
                                     onClick = {
-                                        if (pagerState.currentPage < pageCount - 1) {
+                                        if (visibleCurrentPage < pageCount - 1) {
                                             coroutineScope.launch {
-                                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                                                verticalLazyListState.animateScrollToItem(visibleCurrentPage + 1)
                                             }
                                         }
                                     },
-                                    enabled = pagerState.currentPage < pageCount - 1,
+                                    enabled = visibleCurrentPage < pageCount - 1,
                                     modifier = Modifier.size(36.dp)
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.ChevronRight,
                                         contentDescription = "Next Page",
-                                        tint = if (pagerState.currentPage < pageCount - 1) Color.White else Color.White.copy(alpha = 0.3f),
+                                        tint = if (visibleCurrentPage < pageCount - 1) Color.White else Color.White.copy(alpha = 0.3f),
                                         modifier = Modifier.size(22.dp)
                                     )
                                 }
@@ -984,8 +1178,8 @@ fun PdfReaderTool(
     // ================= MODAL DIALOGS =================
     // 1. Jump To Page Dialog (Google Drive Style)
     if (showJumpDialog && pageCount > 0) {
-        var targetPageText by remember { mutableStateOf("${pagerState.currentPage + 1}") }
-        var sliderValue by remember { mutableFloatStateOf((pagerState.currentPage + 1).toFloat()) }
+        var targetPageText by remember { mutableStateOf("${visibleCurrentPage + 1}") }
+        var sliderValue by remember { mutableFloatStateOf((visibleCurrentPage + 1).toFloat()) }
 
         AlertDialog(
             onDismissRequest = { showJumpDialog = false },
@@ -1059,7 +1253,7 @@ fun PdfReaderTool(
                             sliderValue.toInt() - 1
                         }
                         coroutineScope.launch {
-                            pagerState.scrollToPage(targetPage.coerceIn(0, max(0, pageCount - 1)))
+                            verticalLazyListState.animateScrollToItem(targetPage.coerceIn(0, max(0, pageCount - 1)))
                         }
                         showJumpDialog = false
                     },
@@ -1211,9 +1405,16 @@ private fun PdfPageViewerItem(
         }
     }
 
+    val pageAspectRatio = if (pageBitmap != null && pageBitmap!!.height > 0) {
+        pageBitmap!!.width.toFloat() / pageBitmap!!.height.toFloat()
+    } else {
+        0.707f // Default A4 Aspect Ratio
+    }
+
     BoxWithConstraints(
         modifier = Modifier
-            .fillMaxSize()
+            .fillMaxWidth()
+            .aspectRatio(pageAspectRatio)
             .clipToBounds()
     ) {
         val viewportWidth = constraints.maxWidth.toFloat()
@@ -2841,4 +3042,44 @@ private fun deletePdfFromHistory(context: Context, item: PdfFileItem) {
     } catch (e: Exception) {
         e.printStackTrace()
     }
+}
+
+private suspend fun extractPdfTextByPage(context: Context, pdfUri: Uri, pageCount: Int): List<String> = withContext(Dispatchers.IO) {
+    val results = ArrayList<String>(pageCount)
+    try {
+        val inputStream = context.contentResolver.openInputStream(pdfUri)
+        val bytes = inputStream?.readBytes()
+        inputStream?.close()
+        if (bytes != null) {
+            val contentStr = String(bytes, Charsets.ISO_8859_1)
+            val pageBlocks = contentStr.split("/Page\n", "/Page\r", "/Page ", "/Page/")
+            if (pageBlocks.size > 1) {
+                for (i in 1 until pageBlocks.size) {
+                    val pageContent = pageBlocks[i]
+                    val sb = StringBuilder()
+                    val regex = Regex("\\((.*?)\\)\\s*(?:Tj|TJ)")
+                    regex.findAll(pageContent).forEach { match ->
+                        sb.append(match.groupValues[1]).append(" ")
+                    }
+                    results.add(sb.toString())
+                }
+            } else {
+                val sb = StringBuilder()
+                val regex = Regex("\\((.*?)\\)\\s*(?:Tj|TJ)")
+                regex.findAll(contentStr).forEach { match ->
+                    sb.append(match.groupValues[1]).append(" ")
+                }
+                val extracted = sb.toString()
+                for (p in 0 until pageCount) {
+                    results.add(extracted)
+                }
+            }
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+    while (results.size < pageCount) {
+        results.add("")
+    }
+    results
 }

@@ -1753,45 +1753,9 @@ fun DashboardCategoriesView(
                                 }
                             }
 
-                            // Clean Expand/Collapse Button at the bottom of the section in Overview mode
+                            // Clean Collapse Button at the bottom of section when expanded in Overview mode
                             if (isOverviewMode) {
-                                if (!isCategoryExpanded) {
-                                    Surface(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(top = 4.dp, bottom = 14.dp)
-                                            .clip(RoundedCornerShape(12.dp))
-                                            .clickable { expandedCategories[category] = true },
-                                        shape = RoundedCornerShape(12.dp),
-                                        color = themeColors.cardBg,
-                                        border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.25f))
-                                    ) {
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(vertical = 10.dp, horizontal = 14.dp),
-                                            horizontalArrangement = Arrangement.Center,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Text(
-                                                text = if (isBn) 
-                                                    "${category.getTitle(viewModel.selectedLanguage)}-এর সব (${categoryTools.size}টি) টুলস গ্রিডে দেখুন" 
-                                                else 
-                                                    "See all ${categoryTools.size} ${category.getTitle(viewModel.selectedLanguage)} Tools in Grid",
-                                                fontSize = 12.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = themeColors.buttonEqualBg
-                                            )
-                                            Spacer(modifier = Modifier.width(6.dp))
-                                            Icon(
-                                                imageVector = Icons.Default.KeyboardArrowDown,
-                                                contentDescription = null,
-                                                tint = themeColors.buttonEqualBg,
-                                                modifier = Modifier.size(18.dp)
-                                            )
-                                        }
-                                    }
-                                } else {
+                                if (isCategoryExpanded) {
                                     Surface(
                                         modifier = Modifier
                                             .fillMaxWidth()
@@ -1827,6 +1791,8 @@ fun DashboardCategoriesView(
                                             )
                                         }
                                     }
+                                } else {
+                                    Spacer(modifier = Modifier.height(10.dp))
                                 }
                             } else {
                                 Spacer(modifier = Modifier.height(10.dp))
