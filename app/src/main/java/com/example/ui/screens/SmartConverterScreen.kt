@@ -349,7 +349,7 @@ fun SmartConverterCategoriesView(
                 }
             } else {
                 val isOverviewMode = currentFilter == null && searchQuery.isEmpty()
-                val expandedCategories = remember { mutableStateMapOf<ConverterCategory, Boolean>() }
+                val expandedCategories = viewModel.expandedConverterCategories
 
                 Column(modifier = Modifier.fillMaxWidth()) {
                     // Category Active Banner when filtered
@@ -452,7 +452,7 @@ fun SmartConverterCategoriesView(
                         val categoryConverters = orderedCatConverters.filter { currentFilteredConverters.contains(it) }
 
                         if (categoryConverters.isNotEmpty()) {
-                            val isCategoryExpanded = expandedCategories[category] == true
+                            val isCategoryExpanded = expandedCategories.getOrDefault(category, false)
                             val displayedConverters = if (isOverviewMode && !isCategoryExpanded) categoryConverters.take(4) else categoryConverters
                             val hasMore = isOverviewMode && categoryConverters.size > 4
 

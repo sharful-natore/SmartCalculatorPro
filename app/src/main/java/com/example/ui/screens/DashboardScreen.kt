@@ -1595,7 +1595,7 @@ fun DashboardCategoriesView(
                         listOfNotNull(currentFilter)
                     }
 
-                    val expandedCategories = remember { mutableStateMapOf<ToolCategory, Boolean>() }
+                    val expandedCategories = viewModel.expandedToolCategories
                     val topToolsMap = viewModel.categoryTopToolsMap
                     categoriesToShow.forEach { category ->
                         val orderedCatTools = viewModel.getAllOrderedToolsForCategory(category)
@@ -1603,7 +1603,7 @@ fun DashboardCategoriesView(
 
                         if (categoryTools.isNotEmpty()) {
                             // In Overview mode, display top 4 tools per category unless expanded in-place
-                            val isCategoryExpanded = expandedCategories[category] == true
+                            val isCategoryExpanded = expandedCategories.getOrDefault(category, false)
                             val displayedTools = if (isOverviewMode && !isCategoryExpanded) categoryTools.take(4) else categoryTools
                             val hasMore = isOverviewMode && categoryTools.size > 4
 

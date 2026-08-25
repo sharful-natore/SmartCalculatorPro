@@ -287,6 +287,19 @@ fun MainContent(
             viewModel.showAiChat -> {
                 viewModel.showAiChat = false
             }
+            // If inside a specific tool detail screen
+            viewModel.selectedToolType != null -> {
+                viewModel.closeToolDetail()
+            }
+            // If on Dashboard tab and tool search query is not empty
+            viewModel.activeTab == 0 && viewModel.toolSearchQuery.isNotEmpty() -> {
+                viewModel.toolSearchQuery = ""
+                focusManager.clearFocus()
+            }
+            // If on Dashboard tab and category filter is selected
+            viewModel.activeTab == 0 && viewModel.selectedToolCategoryFilter != null -> {
+                viewModel.selectedToolCategoryFilter = null
+            }
             // If inside a specific converter detail screen
             viewModel.activeTab == 1 && viewModel.selectedConverterType != null -> {
                 viewModel.closeConverterDetail()
@@ -300,26 +313,17 @@ fun MainContent(
             viewModel.activeTab == 1 && viewModel.selectedCategoryFilter != null -> {
                 viewModel.selectedCategoryFilter = null
             }
-            // If inside a specific tool detail screen
-            viewModel.activeTab == 0 && viewModel.selectedToolType != null -> {
-                viewModel.closeToolDetail()
-            }
-            // If on Dashboard tab and tool search query is not empty
-            viewModel.activeTab == 0 && viewModel.toolSearchQuery.isNotEmpty() -> {
-                viewModel.toolSearchQuery = ""
-                focusManager.clearFocus()
-            }
-            // If on Dashboard tab and category filter is selected
-            viewModel.activeTab == 0 && viewModel.selectedToolCategoryFilter != null -> {
-                viewModel.selectedToolCategoryFilter = null
-            }
-            // If on non-home tab (Calculator, Converter, History, Themes)
-            viewModel.activeTab != 0 -> {
-                viewModel.activeTab = 0
+            // If previous tab history exists in stack
+            viewModel.tabHistoryStack.isNotEmpty() -> {
+                val previousTab = viewModel.tabHistoryStack.removeAt(viewModel.tabHistoryStack.size - 1)
+                viewModel.activeTab = previousTab
             }
             // If on home tab (Dashboard) with no active search/filter/detail
-            else -> {
+            viewModel.activeTab == 0 -> {
                 viewModel.showExitDialog = true
+            }
+            else -> {
+                viewModel.activeTab = 0
             }
         }
     }

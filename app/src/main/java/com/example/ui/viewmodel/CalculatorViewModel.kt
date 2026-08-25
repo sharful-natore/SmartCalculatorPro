@@ -3,6 +3,7 @@ package com.example.ui.viewmodel
 import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
@@ -224,6 +225,9 @@ class CalculatorViewModel(
 
     // Current Active Tab: 0 = Dashboard, 1 = Smart Converter, 2 = Calculator, 3 = History, 4 = Visual Themes
     var activeTab by mutableStateOf(0)
+    val tabHistoryStack = mutableStateListOf<Int>()
+    val expandedToolCategories = mutableStateMapOf<com.example.data.model.ToolCategory, Boolean>()
+    val expandedConverterCategories = mutableStateMapOf<com.example.data.model.ConverterCategory, Boolean>()
     var isEvaluated by mutableStateOf(false)
 
     var calculatorNavigationReasonEn by mutableStateOf("Initial Launch / Dashboard")
@@ -237,7 +241,12 @@ class CalculatorViewModel(
     }
 
     fun changeActiveTab(tab: Int, reasonEn: String = "Tab Changed", reasonBn: String = "ট্যাব পরিবর্তন করা হয়েছে") {
-        activeTab = tab
+        if (activeTab != tab) {
+            if (tabHistoryStack.lastOrNull() != activeTab) {
+                tabHistoryStack.add(activeTab)
+            }
+            activeTab = tab
+        }
         setCalculatorNavigationReason(reasonEn, reasonBn)
     }
 
@@ -2584,12 +2593,21 @@ How can I help you today?"""
     var toolSearchQuery by mutableStateOf("")
 
     fun openTool(type: com.example.data.model.ToolType) {
+        if (activeTab != 0) {
+            if (tabHistoryStack.lastOrNull() != activeTab) {
+                tabHistoryStack.add(activeTab)
+            }
+        }
         selectedToolType = type
         activeTab = 0
     }
 
     fun closeToolDetail() {
         selectedToolType = null
+        if (tabHistoryStack.isNotEmpty() && activeTab == 0) {
+            val previousTab = tabHistoryStack.removeAt(tabHistoryStack.size - 1)
+            activeTab = previousTab
+        }
     }
 
     // Exit confirmation dialog state
