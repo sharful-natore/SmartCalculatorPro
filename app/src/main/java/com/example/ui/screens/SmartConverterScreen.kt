@@ -453,8 +453,6 @@ fun SmartConverterCategoriesView(
 
                         if (categoryConverters.isNotEmpty()) {
                             val isCategoryExpanded = expandedCategories.getOrDefault(category, false)
-                            val displayedConverters = if (isOverviewMode && !isCategoryExpanded) categoryConverters.take(4) else categoryConverters
-                            val hasMore = isOverviewMode && categoryConverters.size > 4
 
                             // Category Header
                             Row(
@@ -504,7 +502,7 @@ fun SmartConverterCategoriesView(
                                     }
                                 }
 
-                                if (hasMore) {
+                                if (isOverviewMode) {
                                     Row(
                                         modifier = Modifier
                                             .clip(RoundedCornerShape(8.dp))
@@ -514,14 +512,18 @@ fun SmartConverterCategoriesView(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(
-                                            text = if (isCategoryExpanded) (if (isBn) "সংক্ষিপ্ত করুন" else "Collapse") else (if (isBn) "সব দেখুন" else "See all"),
+                                            text = if (isCategoryExpanded) {
+                                                if (isBn) "সংকুচিত করুন" else "Collapse"
+                                            } else {
+                                                if (isBn) "সব দেখুন" else "See all"
+                                            },
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = themeColors.buttonEqualBg
                                         )
                                         Spacer(modifier = Modifier.width(2.dp))
                                         Icon(
-                                            imageVector = if (isCategoryExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                            imageVector = if (isCategoryExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                                             contentDescription = null,
                                             tint = themeColors.buttonEqualBg,
                                             modifier = Modifier.size(14.dp)
@@ -530,40 +532,71 @@ fun SmartConverterCategoriesView(
                                 }
                             }
 
-                            // Cards Grid (2 columns) with Smooth Animated Position Reordering
+                            // Dynamic Layout: Horizontal Scrolling Row when collapsed in Overview Mode, Vertical Grid when expanded or filtered
                             AnimatedContent(
-                                targetState = displayedConverters,
+                                targetState = if (isOverviewMode) isCategoryExpanded else true,
                                 transitionSpec = {
-                                    fadeIn(animationSpec = tween(250)) + scaleIn(initialScale = 0.96f, animationSpec = tween(250)) togetherWith
-                                            fadeOut(animationSpec = tween(180))
+                                    (fadeIn(animationSpec = tween(220)) + scaleIn(initialScale = 0.96f, animationSpec = tween(220))) togetherWith
+                                            fadeOut(animationSpec = tween(160))
                                 },
-                                label = "ConvertersGridReorder_${category.name}"
-                            ) { currentDisplayedConverters ->
-                                Column(
-                                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                                    modifier = Modifier.padding(bottom = 6.dp)
-                                ) {
-                                    currentDisplayedConverters.chunked(2).forEach { rowItems ->
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
-                                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                                        ) {
-                                            rowItems.forEach { type ->
-                                                key(type.name) {
-                                                    Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
-                                                        ConverterCardItem(
-                                                            converterType = type,
-                                                            viewModel = viewModel,
-                                                            themeColors = themeColors,
-                                                            modifier = Modifier.fillMaxHeight(),
-                                                            showPinIcon = !isOverviewMode,
-                                                            onClick = { viewModel.openConverter(type) }
-                                                        )
+                                label = "ConvertersDisplayMode_${category.name}"
+                            ) { isExpandedState ->
+                                if (isExpandedState) {
+                                    // 2-column Vertical Grid
+                                    Column(
+                                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                                        modifier = Modifier.padding(bottom = 6.dp)
+                                    ) {
+                                        categoryConverters.chunked(2).forEach { rowItems ->
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
+                                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                            ) {
+                                                rowItems.forEach { type ->
+                                                    key(type.name) {
+                                                        Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                                                            ConverterCardItem(
+                                                                converterType = type,
+                                                                viewModel = viewModel,
+                                                                themeColors = themeColors,
+                                                                modifier = Modifier.fillMaxHeight(),
+                                                                showPinIcon = !isOverviewMode,
+                                                                onClick = { viewModel.openConverter(type) }
+                                                            )
+                                                        }
                                                     }
                                                 }
+                                                if (rowItems.size == 1) {
+                                                    Spacer(modifier = Modifier.weight(1f))
+                                                }
                                             }
-                                            if (rowItems.size == 1) {
-                                                Spacer(modifier = Modifier.weight(1f))
+                                        }
+                                    }
+                                } else {
+                                    // Default Horizontal Scrolling Row
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .horizontalScroll(rememberScrollState())
+                                            .padding(bottom = 6.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        categoryConverters.forEach { type ->
+                                            key(type.name) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .width(152.dp)
+                                                        .height(175.dp)
+                                                ) {
+                                                    ConverterCardItem(
+                                                        converterType = type,
+                                                        viewModel = viewModel,
+                                                        themeColors = themeColors,
+                                                        modifier = Modifier.fillMaxSize(),
+                                                        showPinIcon = false,
+                                                        onClick = { viewModel.openConverter(type) }
+                                                    )
+                                                }
                                             }
                                         }
                                     }
@@ -571,44 +604,78 @@ fun SmartConverterCategoriesView(
                             }
 
                             // Clean "See All" / "Collapse" Button at the bottom of the section in Overview mode
-                            if (hasMore) {
-                                Surface(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(top = 4.dp, bottom = 14.dp)
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .clickable { expandedCategories[category] = !isCategoryExpanded },
-                                    shape = RoundedCornerShape(12.dp),
-                                    color = themeColors.cardBg,
-                                    border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.25f))
-                                ) {
-                                    Row(
+                            if (isOverviewMode) {
+                                if (!isCategoryExpanded) {
+                                    Surface(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(vertical = 9.dp, horizontal = 12.dp),
-                                        horizontalArrangement = Arrangement.Center,
-                                        verticalAlignment = Alignment.CenterVertically
+                                            .padding(top = 4.dp, bottom = 14.dp)
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .clickable { expandedCategories[category] = true },
+                                        shape = RoundedCornerShape(12.dp),
+                                        color = themeColors.cardBg,
+                                        border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.25f))
                                     ) {
-                                        Text(
-                                            text = if (isCategoryExpanded) {
-                                                if (isBn) "সংক্ষিপ্ত করুন" else "Collapse"
-                                            } else {
-                                                if (isBn) 
-                                                    "${category.getTitle(viewModel.selectedLanguage)}-এর সব (${categoryConverters.size}টি) কনভার্টার দেখুন" 
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 10.dp, horizontal = 14.dp),
+                                            horizontalArrangement = Arrangement.Center,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = if (isBn) 
+                                                    "${category.getTitle(viewModel.selectedLanguage)}-এর সব (${categoryConverters.size}টি) কনভার্টার গ্রিডে দেখুন" 
                                                 else 
-                                                    "See all ${categoryConverters.size} ${category.getTitle(viewModel.selectedLanguage)} Converters"
-                                            },
-                                            fontSize = 12.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = themeColors.buttonEqualBg
-                                        )
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Icon(
-                                            imageVector = if (isCategoryExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                                            contentDescription = null,
-                                            tint = themeColors.buttonEqualBg,
-                                            modifier = Modifier.size(14.dp)
-                                        )
+                                                    "See all ${categoryConverters.size} ${category.getTitle(viewModel.selectedLanguage)} Converters in Grid",
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = themeColors.buttonEqualBg
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Icon(
+                                                imageVector = Icons.Default.KeyboardArrowDown,
+                                                contentDescription = null,
+                                                tint = themeColors.buttonEqualBg,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
+                                    }
+                                } else {
+                                    Surface(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(top = 4.dp, bottom = 14.dp)
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .clickable { expandedCategories[category] = false },
+                                        shape = RoundedCornerShape(12.dp),
+                                        color = themeColors.cardBg.copy(alpha = 0.6f),
+                                        border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.12f))
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 9.dp, horizontal = 14.dp),
+                                            horizontalArrangement = Arrangement.Center,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.KeyboardArrowUp,
+                                                contentDescription = null,
+                                                tint = themeColors.displayText.copy(alpha = 0.7f),
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(
+                                                text = if (isBn) 
+                                                    "সংকুচিত করুন (কম দেখুন)" 
+                                                else 
+                                                    "Collapse (Show Less)",
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = themeColors.displayText.copy(alpha = 0.75f)
+                                            )
+                                        }
                                     }
                                 }
                             } else {

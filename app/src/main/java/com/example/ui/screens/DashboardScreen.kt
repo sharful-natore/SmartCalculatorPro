@@ -1602,10 +1602,7 @@ fun DashboardCategoriesView(
                         val categoryTools = orderedCatTools.filter { currentFilteredTools.contains(it) }
 
                         if (categoryTools.isNotEmpty()) {
-                            // In Overview mode, display top 4 tools per category unless expanded in-place
                             val isCategoryExpanded = expandedCategories.getOrDefault(category, false)
-                            val displayedTools = if (isOverviewMode && !isCategoryExpanded) categoryTools.take(4) else categoryTools
-                            val hasMore = isOverviewMode && categoryTools.size > 4
 
                             // Category Header
                             Row(
@@ -1655,66 +1652,101 @@ fun DashboardCategoriesView(
                                     }
                                 }
 
-                                if (hasMore) {
+                                if (isOverviewMode) {
                                     Row(
                                         modifier = Modifier
                                             .clip(RoundedCornerShape(8.dp))
                                             .background(themeColors.buttonEqualBg.copy(alpha = 0.08f))
-                                            .clickable { viewModel.selectedToolCategoryFilter = category }
+                                            .clickable { expandedCategories[category] = !isCategoryExpanded }
                                             .padding(horizontal = 8.dp, vertical = 4.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(
-                                            text = if (isBn) "সব দেখুন" else "See all",
+                                            text = if (isCategoryExpanded) {
+                                                if (isBn) "সংকুচিত করুন" else "Collapse"
+                                            } else {
+                                                if (isBn) "সব দেখুন" else "See all"
+                                            },
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = themeColors.buttonEqualBg
                                         )
                                         Spacer(modifier = Modifier.width(2.dp))
                                         Icon(
-                                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                            imageVector = if (isCategoryExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                                             contentDescription = null,
                                             tint = themeColors.buttonEqualBg,
-                                            modifier = Modifier.size(12.dp)
+                                            modifier = Modifier.size(14.dp)
                                         )
                                     }
                                 }
                             }
 
-                            // 2-column Grid of Cards with Smooth Animated Position Reordering
+                            // Dynamic Layout: Horizontal Scrolling Row when collapsed in Overview Mode, Vertical Grid when expanded or filtered
                             AnimatedContent(
-                                targetState = displayedTools,
+                                targetState = if (isOverviewMode) isCategoryExpanded else true,
                                 transitionSpec = {
-                                    fadeIn(animationSpec = tween(250)) + scaleIn(initialScale = 0.96f, animationSpec = tween(250)) togetherWith
-                                            fadeOut(animationSpec = tween(180))
+                                    (fadeIn(animationSpec = tween(220)) + scaleIn(initialScale = 0.96f, animationSpec = tween(220))) togetherWith
+                                            fadeOut(animationSpec = tween(160))
                                 },
-                                label = "ToolsGridReorder_${category.name}"
-                            ) { currentDisplayedTools ->
-                                Column(
-                                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                                    modifier = Modifier.padding(bottom = 6.dp)
-                                ) {
-                                    currentDisplayedTools.chunked(2).forEach { rowItems ->
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
-                                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                                        ) {
-                                            rowItems.forEach { tool ->
-                                                key(tool.name) {
-                                                    Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
-                                                        ToolGridCardItem(
-                                                            toolType = tool,
-                                                            viewModel = viewModel,
-                                                            themeColors = themeColors,
-                                                            modifier = Modifier.fillMaxHeight(),
-                                                            showPinIcon = !isOverviewMode,
-                                                            onClick = { viewModel.openTool(tool) }
-                                                        )
+                                label = "ToolsDisplayMode_${category.name}"
+                            ) { isExpandedState ->
+                                if (isExpandedState) {
+                                    // 2-column Vertical Grid
+                                    Column(
+                                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                                        modifier = Modifier.padding(bottom = 6.dp)
+                                    ) {
+                                        categoryTools.chunked(2).forEach { rowItems ->
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
+                                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                            ) {
+                                                rowItems.forEach { tool ->
+                                                    key(tool.name) {
+                                                        Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                                                            ToolGridCardItem(
+                                                                toolType = tool,
+                                                                viewModel = viewModel,
+                                                                themeColors = themeColors,
+                                                                modifier = Modifier.fillMaxHeight(),
+                                                                showPinIcon = !isOverviewMode,
+                                                                onClick = { viewModel.openTool(tool) }
+                                                            )
+                                                        }
                                                     }
                                                 }
+                                                if (rowItems.size == 1) {
+                                                    Spacer(modifier = Modifier.weight(1f))
+                                                }
                                             }
-                                            if (rowItems.size == 1) {
-                                                Spacer(modifier = Modifier.weight(1f))
+                                        }
+                                    }
+                                } else {
+                                    // Default Horizontal Scrolling Row
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .horizontalScroll(rememberScrollState())
+                                            .padding(bottom = 6.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        categoryTools.forEach { tool ->
+                                            key(tool.name) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .width(152.dp)
+                                                        .height(175.dp)
+                                                ) {
+                                                    ToolGridCardItem(
+                                                        toolType = tool,
+                                                        viewModel = viewModel,
+                                                        themeColors = themeColors,
+                                                        modifier = Modifier.fillMaxSize(),
+                                                        showPinIcon = false,
+                                                        onClick = { viewModel.openTool(tool) }
+                                                    )
+                                                }
                                             }
                                         }
                                     }
@@ -1722,7 +1754,7 @@ fun DashboardCategoriesView(
                             }
 
                             // Clean Expand/Collapse Button at the bottom of the section in Overview mode
-                            if (hasMore) {
+                            if (isOverviewMode) {
                                 if (!isCategoryExpanded) {
                                     Surface(
                                         modifier = Modifier
@@ -1743,9 +1775,9 @@ fun DashboardCategoriesView(
                                         ) {
                                             Text(
                                                 text = if (isBn) 
-                                                    "${category.getTitle(viewModel.selectedLanguage)}-এর সব (${categoryTools.size}টি) টুলস দেখুন" 
+                                                    "${category.getTitle(viewModel.selectedLanguage)}-এর সব (${categoryTools.size}টি) টুলস গ্রিডে দেখুন" 
                                                 else 
-                                                    "See all ${categoryTools.size} ${category.getTitle(viewModel.selectedLanguage)} Tools",
+                                                    "See all ${categoryTools.size} ${category.getTitle(viewModel.selectedLanguage)} Tools in Grid",
                                                 fontSize = 12.sp,
                                                 fontWeight = FontWeight.Bold,
                                                 color = themeColors.buttonEqualBg
@@ -2059,7 +2091,9 @@ fun ToolDetailView(
     
     val isQuranOrNamaz = toolType == com.example.data.model.ToolType.HOLY_QURAN ||
                          toolType == com.example.data.model.ToolType.NAMAZ_EDUCATION ||
-                         toolType == com.example.data.model.ToolType.HADITH_LIBRARY
+                         toolType == com.example.data.model.ToolType.HADITH_LIBRARY ||
+                         toolType == com.example.data.model.ToolType.PDF_READER ||
+                         toolType == com.example.data.model.ToolType.PDF_MAKER
 
     val isFullWidthTool = toolType == com.example.data.model.ToolType.MARKET_LIST || isQuranOrNamaz
 
@@ -2220,8 +2254,8 @@ fun ToolDetailView(
             ToolType.UNIT_PRICE_COMPARER -> UnitPriceComparerCard(viewModel, themeColors)
             ToolType.SIMPLE_COMPASS -> SimpleCompassCard(viewModel, themeColors)
             ToolType.CAMERA_LEVEL -> com.example.ui.screens.tools.CameraLevelTool(viewModel, themeColors)
-            ToolType.PDF_READER -> com.example.ui.screens.tools.PdfReaderTool(viewModel, themeColors)
-            ToolType.PDF_MAKER -> com.example.ui.screens.tools.PdfMakerTool(viewModel, themeColors)
+            ToolType.PDF_READER -> com.example.ui.screens.tools.PdfReaderTool(viewModel, themeColors, onBackClick = { viewModel.closeToolDetail() })
+            ToolType.PDF_MAKER -> com.example.ui.screens.tools.PdfMakerTool(viewModel, themeColors, onBackClick = { viewModel.closeToolDetail() })
             ToolType.ASPECT_RATIO -> AspectRatioCard(viewModel, themeColors)
             ToolType.RANDOM_NUMBER_PICKER -> RandomPickerCard(viewModel, themeColors)
             ToolType.MULTI_CALENDAR -> MultiCalendarCard(viewModel, themeColors)
