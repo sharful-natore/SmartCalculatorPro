@@ -1627,7 +1627,7 @@ fun DashboardCategoriesView(
                                         modifier = Modifier
                                             .size(28.dp)
                                             .clip(CircleShape)
-                                            .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
+                                            .background(Color.White),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Icon(
