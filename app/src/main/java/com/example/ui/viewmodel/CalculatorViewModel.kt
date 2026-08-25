@@ -2604,10 +2604,6 @@ How can I help you today?"""
 
     fun closeToolDetail() {
         selectedToolType = null
-        if (tabHistoryStack.isNotEmpty() && activeTab == 0) {
-            val previousTab = tabHistoryStack.removeAt(tabHistoryStack.size - 1)
-            activeTab = previousTab
-        }
     }
 
     // Exit confirmation dialog state

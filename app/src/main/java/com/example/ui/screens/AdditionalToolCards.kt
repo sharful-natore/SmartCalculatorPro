@@ -1297,7 +1297,10 @@ fun ElectricityBillCalculatorCard(
                             viewModel.updateElectricityRates(customRate, customDemand, customMeter, customVat)
                             isCustomizing = false
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = themeColors.buttonEqualBg,
+                            contentColor = Color.White
+                        ),
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(10.dp)
                     ) {
