@@ -32,6 +32,11 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculatePan
+import androidx.compose.foundation.gestures.calculateZoom
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -138,6 +143,10 @@ fun PdfReaderTool(
     var rotationDegrees by remember { mutableIntStateOf(0) }
     var isNightMode by remember { mutableStateOf(false) }
 
+    // Google Drive Document-level zoom & pan states
+    var docScale by remember { mutableFloatStateOf(1.0f) }
+    var docOffset by remember { mutableStateOf(Offset.Zero) }
+
     // Page Navigation states (Vertical Continuous Scroll)
     var pageCount by remember { mutableIntStateOf(0) }
     var currentPageScale by remember { mutableFloatStateOf(1.0f) }
@@ -225,10 +234,15 @@ fun PdfReaderTool(
         } else if (isFullscreen) {
             isFullscreen = false
             isControlsVisible = true
+        } else if (docScale > 1.1f) {
+            docScale = 1.0f
+            docOffset = Offset.Zero
         } else if (pdfUri != null) {
             pdfUri = null
             pageCount = 0
             currentPageScale = 1.0f
+            docScale = 1.0f
+            docOffset = Offset.Zero
             rotationDegrees = 0
         } else {
             onBackClick()
@@ -255,6 +269,25 @@ fun PdfReaderTool(
         }
     }
 
+    // Load incoming pending PDF from MainActivity intent
+    LaunchedEffect(viewModel.pendingPdfUri) {
+        val uri = viewModel.pendingPdfUri
+        if (uri != null) {
+            pdfUri = uri
+            viewModel.pendingPdfUri = null
+            currentPageScale = 1.0f
+            docScale = 1.0f
+            docOffset = Offset.Zero
+            rotationDegrees = 0
+            extractPdfMetadata(context, uri) { name, size, date, path ->
+                fileName = name
+                fileSizeBytes = size
+                fileLastModifiedMs = date
+                filePath = path
+            }
+        }
+    }
+
     // File Picker Launcher for manual browsing
     val filePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -262,6 +295,8 @@ fun PdfReaderTool(
         if (uri != null) {
             pdfUri = uri
             currentPageScale = 1.0f
+            docScale = 1.0f
+            docOffset = Offset.Zero
             rotationDegrees = 0
             extractPdfMetadata(context, uri) { name, size, date, path ->
                 fileName = name
@@ -1017,58 +1052,208 @@ fun PdfReaderTool(
                     }
                 }
 
-                // MAIN VIEWPORT FOR PDF PAGES (Google Drive Vertical Scroll)
-                Box(
+                // MAIN VIEWPORT FOR PDF PAGES (Google Drive Vertical Scroll & Document-Level Zoom)
+                BoxWithConstraints(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
                         .clipToBounds()
                 ) {
-                    if (pageCount > 0) {
-                        LazyColumn(
-                            state = verticalLazyListState,
-                            modifier = Modifier.fillMaxSize(),
-                            verticalArrangement = Arrangement.spacedBy(10.dp),
-                            contentPadding = PaddingValues(vertical = 10.dp, horizontal = 6.dp)
-                        ) {
-                            items(pageCount) { pageIdx ->
-                                Surface(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(4.dp),
-                                    shadowElevation = 4.dp,
-                                    color = if (isNightMode) Color(0xFF1E293B) else Color.White
+                    val containerWidth = constraints.maxWidth.toFloat()
+                    val containerHeight = constraints.maxHeight.toFloat()
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .pointerInput(containerWidth, containerHeight) {
+                                detectTapGestures(
+                                    onDoubleTap = { tapOffset ->
+                                        if (docScale > 1.1f) {
+                                            docScale = 1.0f
+                                            docOffset = Offset.Zero
+                                        } else {
+                                            docScale = 2.5f
+                                            val targetOffsetX = (containerWidth / 2f - tapOffset.x) * 1.5f
+                                            val targetOffsetY = (containerHeight / 2f - tapOffset.y) * 1.5f
+                                            val maxPanX = (containerWidth * (2.5f - 1.0f)) / 2f
+                                            val maxPanY = (containerHeight * (2.5f - 1.0f)) / 2f
+                                            docOffset = Offset(
+                                                targetOffsetX.coerceIn(-maxPanX, maxPanX),
+                                                targetOffsetY.coerceIn(-maxPanY, maxPanY)
+                                            )
+                                        }
+                                    },
+                                    onTap = {
+                                        isControlsVisible = !isControlsVisible
+                                    }
+                                )
+                            }
+                            .pointerInput(docScale, containerWidth, containerHeight) {
+                                awaitEachGesture {
+                                    awaitFirstDown(requireUnconsumed = false)
+                                    var isMultiTouch = false
+                                    do {
+                                        val event = awaitPointerEvent()
+                                        val pressedCount = event.changes.count { it.pressed }
+
+                                        if (pressedCount >= 2) {
+                                            isMultiTouch = true
+                                            val zoom = event.calculateZoom()
+                                            val pan = event.calculatePan()
+
+                                            val newScale = (docScale * zoom).coerceIn(1.0f, 5.0f)
+                                            docScale = newScale
+
+                                            if (newScale > 1.0f) {
+                                                val maxPanX = (containerWidth * (newScale - 1.0f)) / 2f
+                                                val maxPanY = (containerHeight * (newScale - 1.0f)) / 2f
+                                                val newOffset = docOffset + pan
+                                                docOffset = Offset(
+                                                    newOffset.x.coerceIn(-maxPanX, maxPanX),
+                                                    newOffset.y.coerceIn(-maxPanY, maxPanY)
+                                                )
+                                            } else {
+                                                docOffset = Offset.Zero
+                                            }
+                                            event.changes.forEach { it.consume() }
+                                        } else if (docScale > 1.0f && pressedCount == 1 && !isMultiTouch) {
+                                            val pan = event.calculatePan()
+                                            if (pan != Offset.Zero) {
+                                                val maxPanX = (containerWidth * (docScale - 1.0f)) / 2f
+                                                val maxPanY = (containerHeight * (docScale - 1.0f)) / 2f
+                                                val newOffset = docOffset + pan
+                                                docOffset = Offset(
+                                                    newOffset.x.coerceIn(-maxPanX, maxPanX),
+                                                    newOffset.y.coerceIn(-maxPanY, maxPanY)
+                                                )
+                                                event.changes.forEach { it.consume() }
+                                            }
+                                        }
+                                    } while (event.changes.any { it.pressed })
+                                }
+                            }
+                    ) {
+                        if (pageCount > 0) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .graphicsLayer(
+                                        scaleX = docScale,
+                                        scaleY = docScale,
+                                        translationX = docOffset.x,
+                                        translationY = docOffset.y,
+                                        transformOrigin = TransformOrigin(0.5f, 0.5f)
+                                    )
+                            ) {
+                                LazyColumn(
+                                    state = verticalLazyListState,
+                                    modifier = Modifier.fillMaxSize(),
+                                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                                    contentPadding = PaddingValues(vertical = 10.dp, horizontal = 6.dp)
                                 ) {
-                                    PdfPageViewerItem(
-                                        context = context,
-                                        pdfUri = pdfUri!!,
-                                        pageIndex = pageIdx,
-                                        isNightMode = isNightMode,
-                                        rotationDegrees = rotationDegrees,
-                                        density = density,
-                                        isCurrentPage = (visibleCurrentPage == pageIdx),
-                                        onScaleChanged = { s -> currentPageScale = s },
-                                        onSingleTap = {
-                                            isControlsVisible = !isControlsVisible
-                                        },
-                                        themeColors = themeColors,
-                                        isBn = isBn
+                                    items(pageCount) { pageIdx ->
+                                        Surface(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            shape = RoundedCornerShape(4.dp),
+                                            shadowElevation = 4.dp,
+                                            color = if (isNightMode) Color(0xFF1E293B) else Color.White
+                                        ) {
+                                            PdfPageViewerItem(
+                                                context = context,
+                                                pdfUri = pdfUri!!,
+                                                pageIndex = pageIdx,
+                                                isNightMode = isNightMode,
+                                                rotationDegrees = rotationDegrees,
+                                                density = density,
+                                                themeColors = themeColors,
+                                                isBn = isBn
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    CircularProgressIndicator(color = themeColors.buttonEqualBg)
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    Text(
+                                        text = if (isBn) "PDF লোড হচ্ছে..." else "Loading PDF...",
+                                        fontSize = 12.sp,
+                                        color = Color.White.copy(alpha = 0.8f)
                                     )
                                 }
                             }
                         }
-                    } else {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
+                    }
+
+                    // FLOATING ZOOM CONTROLS PILL (Google Drive Style Zoom controls)
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = isControlsVisible && pageCount > 0,
+                        enter = fadeIn(),
+                        exit = fadeOut(),
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(bottom = if (isFullscreen) 70.dp else 65.dp, end = 12.dp)
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(20.dp),
+                            color = Color.Black.copy(alpha = 0.82f),
+                            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.2f)),
+                            shadowElevation = 6.dp
                         ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                CircularProgressIndicator(color = themeColors.buttonEqualBg)
-                                Spacer(modifier = Modifier.height(10.dp))
-                                Text(
-                                    text = if (isBn) "PDF লোড হচ্ছে..." else "Loading PDF...",
-                                    fontSize = 12.sp,
-                                    color = Color.White.copy(alpha = 0.8f)
-                                )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                            ) {
+                                IconButton(
+                                    onClick = {
+                                        val newS = (docScale - 0.25f).coerceAtLeast(1.0f)
+                                        docScale = newS
+                                        if (newS == 1.0f) docOffset = Offset.Zero
+                                    },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Remove,
+                                        contentDescription = "Zoom Out",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+
+                                TextButton(
+                                    onClick = {
+                                        docScale = 1.0f
+                                        docOffset = Offset.Zero
+                                    },
+                                    contentPadding = PaddingValues(horizontal = 4.dp)
+                                ) {
+                                    Text(
+                                        text = "${(docScale * 100).toInt()}%",
+                                        fontSize = 11.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (docScale > 1.0f) themeColors.buttonEqualBg else Color.White
+                                    )
+                                }
+
+                                IconButton(
+                                    onClick = {
+                                        val newS = (docScale + 0.25f).coerceAtMost(5.0f)
+                                        docScale = newS
+                                    },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Add,
+                                        contentDescription = "Zoom In",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
                             }
                         }
                     }
@@ -1366,25 +1551,11 @@ private fun PdfPageViewerItem(
     isNightMode: Boolean,
     rotationDegrees: Int,
     density: Float,
-    isCurrentPage: Boolean,
-    onScaleChanged: (Float) -> Unit,
-    onSingleTap: () -> Unit,
     themeColors: CalculatorThemeColors,
     isBn: Boolean
 ) {
-    var scale by remember { mutableFloatStateOf(1.0f) }
-    var offset by remember { mutableStateOf(Offset.Zero) }
     var pageBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var isLoading by remember { mutableStateOf(true) }
-
-    // Reset scale & offset when navigating away
-    LaunchedEffect(isCurrentPage) {
-        if (!isCurrentPage && scale != 1.0f) {
-            scale = 1.0f
-            offset = Offset.Zero
-            onScaleChanged(1.0f)
-        }
-    }
 
     // Render single page bitmap asynchronously
     LaunchedEffect(pdfUri, pageIndex, isNightMode, rotationDegrees) {
@@ -1411,91 +1582,33 @@ private fun PdfPageViewerItem(
         0.707f // Default A4 Aspect Ratio
     }
 
-    BoxWithConstraints(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(pageAspectRatio)
-            .clipToBounds()
+            .clipToBounds(),
+        contentAlignment = Alignment.Center
     ) {
-        val viewportWidth = constraints.maxWidth.toFloat()
-        val viewportHeight = constraints.maxHeight.toFloat()
-
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .pointerInput(viewportWidth, viewportHeight) {
-                    detectTapGestures(
-                        onDoubleTap = { tapOffset ->
-                            if (scale > 1.1f) {
-                                scale = 1.0f
-                                offset = Offset.Zero
-                                onScaleChanged(1.0f)
-                            } else {
-                                scale = 2.5f
-                                onScaleChanged(2.5f)
-                                val targetOffsetX = (viewportWidth / 2f - tapOffset.x) * 1.5f
-                                val targetOffsetY = (viewportHeight / 2f - tapOffset.y) * 1.5f
-                                offset = clampOffset(
-                                    Offset(targetOffsetX, targetOffsetY),
-                                    scale = 2.5f,
-                                    viewportWidth = viewportWidth,
-                                    viewportHeight = viewportHeight
-                                )
-                            }
-                        },
-                        onTap = {
-                            onSingleTap()
-                        }
-                    )
-                }
-                .pointerInput(viewportWidth, viewportHeight) {
-                    detectTransformGestures { _, pan, zoom, _ ->
-                        val newScale = (scale * zoom).coerceIn(1.0f, 5.0f)
-                        scale = newScale
-                        onScaleChanged(newScale)
-                        if (newScale > 1.0f) {
-                            val newOffset = Offset(offset.x + pan.x, offset.y + pan.y)
-                            offset = clampOffset(
-                                newOffset,
-                                scale = newScale,
-                                viewportWidth = viewportWidth,
-                                viewportHeight = viewportHeight
-                            )
-                        } else {
-                            offset = Offset.Zero
-                        }
-                    }
-                },
-            contentAlignment = Alignment.Center
-        ) {
-            if (isLoading) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    CircularProgressIndicator(
-                        color = themeColors.buttonEqualBg,
-                        modifier = Modifier.size(36.dp)
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Text(
-                        text = if (isBn) "পৃষ্ঠা ${pageIndex + 1} লোড হচ্ছে..." else "Loading Page ${pageIndex + 1}...",
-                        fontSize = 12.sp,
-                        color = Color.White.copy(alpha = 0.8f)
-                    )
-                }
-            } else if (pageBitmap != null) {
-                Image(
-                    bitmap = pageBitmap!!.asImageBitmap(),
-                    contentDescription = "PDF Page ${pageIndex + 1}",
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .graphicsLayer(
-                            scaleX = scale,
-                            scaleY = scale,
-                            translationX = offset.x,
-                            translationY = offset.y
-                        ),
-                    contentScale = ContentScale.Fit
+        if (isLoading) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                CircularProgressIndicator(
+                    color = themeColors.buttonEqualBg,
+                    modifier = Modifier.size(36.dp)
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = if (isBn) "পৃষ্ঠা ${pageIndex + 1} লোড হচ্ছে..." else "Loading Page ${pageIndex + 1}...",
+                    fontSize = 12.sp,
+                    color = Color.White.copy(alpha = 0.8f)
                 )
             }
+        } else if (pageBitmap != null) {
+            Image(
+                bitmap = pageBitmap!!.asImageBitmap(),
+                contentDescription = "PDF Page ${pageIndex + 1}",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Fit
+            )
         }
     }
 }

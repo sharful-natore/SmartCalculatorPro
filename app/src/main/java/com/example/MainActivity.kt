@@ -70,6 +70,23 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleShortcutIntent(intent: Intent?) {
+        val action = intent?.action
+        val incomingData: android.net.Uri? = intent?.data ?: intent?.getParcelableExtra(Intent.EXTRA_STREAM)
+        val incomingType = intent?.type ?: (incomingData?.let { contentResolver.getType(it) })
+        val isPdf = (incomingType?.contains("pdf", ignoreCase = true) == true) ||
+                (incomingData?.toString()?.lowercase()?.endsWith(".pdf") == true) ||
+                (incomingData?.path?.lowercase()?.endsWith(".pdf") == true)
+
+        if ((action == Intent.ACTION_VIEW || action == Intent.ACTION_SEND) && incomingData != null && isPdf) {
+            viewModel.activeTab = 0
+            viewModel.pendingPdfUri = incomingData
+            viewModel.openTool(com.example.data.model.ToolType.PDF_READER)
+            intent.action = null
+            intent.data = null
+            setIntent(Intent())
+            return
+        }
+
         val navigateTo = intent?.getStringExtra("NAVIGATE_TO")
         val notificationSurahNumber = intent?.getIntExtra("SURAH_NUMBER", -1) ?: -1
         if (navigateTo == "HOLY_QURAN") {
