@@ -522,21 +522,25 @@ fun HadithLibraryScreen(
     var selectedBook by remember { mutableStateOf<HadithBookMeta?>(null) }
     var selectedChapter by remember { mutableStateOf<HadithChapter?>(null) }
 
-    // Intercept hardware back press so it navigates back step-by-step
-    androidx.activity.compose.BackHandler(enabled = activeViewMode != 0) {
-        when (activeViewMode) {
-            3 -> activeViewMode = 0
-            2 -> activeViewMode = 1
-            1 -> activeViewMode = 0
-            else -> onBackClick()
+    // Search query for Books, Chapters or Hadiths
+    var searchQuery by remember { mutableStateOf("") }
+
+    // Intercept hardware back press so it navigates back step-by-step or clears search query first
+    androidx.activity.compose.BackHandler(enabled = activeViewMode != 0 || searchQuery.isNotEmpty()) {
+        if (searchQuery.isNotEmpty()) {
+            searchQuery = ""
+        } else {
+            when (activeViewMode) {
+                3 -> activeViewMode = 0
+                2 -> activeViewMode = 1
+                1 -> activeViewMode = 0
+                else -> onBackClick()
+            }
         }
     }
 
     // Download Progress tracking state for books
     val downloadingBooks = remember { mutableStateMapOf<String, Float>() }
-
-    // Search query for Books, Chapters or Hadiths
-    var searchQuery by remember { mutableStateOf("") }
     var selectedGradeFilter by remember { mutableStateOf("All") }
 
     // Bookmarked Hadiths

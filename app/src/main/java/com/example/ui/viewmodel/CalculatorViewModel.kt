@@ -141,6 +141,8 @@ class CalculatorViewModel(
 
 
     // --- State Variables ---
+    var isPdfReaderFullscreen by mutableStateOf(false)
+
     var expressionValue by mutableStateOf(TextFieldValue("0", selection = TextRange(1)))
         private set
 

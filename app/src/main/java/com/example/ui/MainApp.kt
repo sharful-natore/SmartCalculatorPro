@@ -80,6 +80,10 @@ import androidx.compose.foundation.Image
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.ui.text.input.ImeAction
@@ -104,7 +108,6 @@ import com.example.util.UpdateManager
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import java.io.File
 
 @Composable
 fun MainApp(viewModel: CalculatorViewModel) {
@@ -210,7 +213,7 @@ fun MainContent(
     var updateDownloadProgress by remember { mutableStateOf(0) }
     var updateErrorMessage by remember { mutableStateOf<String?>(null) }
     var isUpdateFailed by remember { mutableStateOf(false) }
-    var downloadedApkFile by remember { mutableStateOf<File?>(null) }
+    var downloadedApkFile by remember { mutableStateOf<java.io.File?>(null) }
 
     val performUpdateCheck: (Boolean) -> Unit = remember(context, viewModel.selectedLanguage) {
         { isManual ->
@@ -383,160 +386,163 @@ fun MainContent(
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             topBar = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(themeColors.buttonEqualBg)
-                    .statusBarsPadding()
-                    .padding(horizontal = 12.dp, vertical = 6.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        AnimatedContent(
-                            targetState = Pair(viewModel.activeTab, viewModel.selectedToolType),
-                            transitionSpec = {
-                                if (targetState.first > initialState.first) {
-                                    (slideInVertically { height -> height } + fadeIn(animationSpec = tween(220))) togetherWith
-                                            (slideOutVertically { height -> -height } + fadeOut(animationSpec = tween(180)))
-                                } else {
-                                    (slideInVertically { height -> -height } + fadeIn(animationSpec = tween(220))) togetherWith
-                                            (slideOutVertically { height -> height } + fadeOut(animationSpec = tween(180)))
-                                }
-                            },
-                            label = "TabTitleAnimation"
-                        ) { (activeTab, selectedTool) ->
-                            Text(
-                                text = when {
-                                    activeTab == 0 && selectedTool == null -> LanguageManager.getString("app_title_dashboard", viewModel.selectedLanguage)
-                                    activeTab == 1 -> LanguageManager.getString("title_converter", viewModel.selectedLanguage)
-                                    activeTab == 2 -> LanguageManager.getString("title_calculator", viewModel.selectedLanguage)
-                                    activeTab == 3 -> LanguageManager.getString("title_history", viewModel.selectedLanguage)
-                                    else -> LanguageManager.getString("app_title_main", viewModel.selectedLanguage)
-                                },
-                                color = Color.White,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(
-                            onClick = { 
-                                viewModel.showGlobalSearch = true 
-                            },
-                            modifier = Modifier.size(40.dp)
+                if (!viewModel.isPdfReaderFullscreen) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(themeColors.buttonEqualBg)
+                            .statusBarsPadding()
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Search,
-                                contentDescription = "Global Search",
-                                tint = Color.White,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-
-                        if (viewModel.showFavoritesDialog) {
-                            FavoritesDialog(
-                                viewModel = viewModel,
-                                themeColors = themeColors,
-                                onDismiss = { viewModel.showFavoritesDialog = false }
-                            )
-                        }
-
-                        IconButton(onClick = { showVisualThemesDialog = true }) {
-                            Icon(
-                                imageVector = Icons.Default.Palette,
-                                contentDescription = "Themes",
-                                tint = Color.White
-                            )
-                        }
-
-                        // Three-dot Menu (More Options)
-                        var isMoreMenuExpanded by remember { mutableStateOf(false) }
-                        Box {
-                            IconButton(onClick = { isMoreMenuExpanded = true }) {
-                                Icon(
-                                    imageVector = Icons.Default.MoreVert,
-                                    contentDescription = "More Options",
-                                    tint = Color.White
-                                )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                AnimatedContent(
+                                    targetState = Pair(viewModel.activeTab, viewModel.selectedToolType),
+                                    transitionSpec = {
+                                        if (targetState.first > initialState.first) {
+                                            (slideInVertically { height -> height } + fadeIn(animationSpec = tween(220))) togetherWith
+                                                    (slideOutVertically { height -> -height } + fadeOut(animationSpec = tween(180)))
+                                        } else {
+                                            (slideInVertically { height -> -height } + fadeIn(animationSpec = tween(220))) togetherWith
+                                                    (slideOutVertically { height -> height } + fadeOut(animationSpec = tween(180)))
+                                        }
+                                    },
+                                    label = "TabTitleAnimation"
+                                ) { (activeTab, selectedTool) ->
+                                    Text(
+                                        text = when {
+                                            activeTab == 0 && selectedTool == null -> LanguageManager.getString("app_title_dashboard", viewModel.selectedLanguage)
+                                            activeTab == 1 -> LanguageManager.getString("title_converter", viewModel.selectedLanguage)
+                                            activeTab == 2 -> LanguageManager.getString("title_calculator", viewModel.selectedLanguage)
+                                            activeTab == 3 -> LanguageManager.getString("title_history", viewModel.selectedLanguage)
+                                            else -> LanguageManager.getString("app_title_main", viewModel.selectedLanguage)
+                                        },
+                                        color = Color.White,
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
                             }
-                            DropdownMenu(
-                                expanded = isMoreMenuExpanded,
-                                onDismissRequest = { isMoreMenuExpanded = false },
-                                modifier = Modifier.background(themeColors.cardBg)
-                            ) {
-                                DropdownMenuItem(
-                                    text = { Text(LanguageManager.getString("menu_settings", viewModel.selectedLanguage), color = themeColors.displayText) },
-                                    leadingIcon = { Icon(Icons.Default.Settings, contentDescription = null, tint = themeColors.buttonEqualBg) },
-                                    onClick = {
-                                        isMoreMenuExpanded = false
-                                        showSettingsDialog = true
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                IconButton(
+                                    onClick = { 
+                                        viewModel.showGlobalSearch = true 
+                                    },
+                                    modifier = Modifier.size(40.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Search,
+                                        contentDescription = "Global Search",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+
+                                if (viewModel.showFavoritesDialog) {
+                                    FavoritesDialog(
+                                        viewModel = viewModel,
+                                        themeColors = themeColors,
+                                        onDismiss = { viewModel.showFavoritesDialog = false }
+                                    )
+                                }
+
+                                IconButton(onClick = { showVisualThemesDialog = true }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Palette,
+                                        contentDescription = "Themes",
+                                        tint = Color.White
+                                    )
+                                }
+
+                                // Three-dot Menu (More Options)
+                                var isMoreMenuExpanded by remember { mutableStateOf(false) }
+                                Box {
+                                    IconButton(onClick = { isMoreMenuExpanded = true }) {
+                                        Icon(
+                                            imageVector = Icons.Default.MoreVert,
+                                            contentDescription = "More Options",
+                                            tint = Color.White
+                                        )
                                     }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text(if (viewModel.selectedLanguage == AppLanguage.BENGALI) "সম্পূর্ণ ডেটা ব্যাকআপ ও রিস্টোর" else "Complete Data Backup & Restore", color = themeColors.displayText) },
-                                    leadingIcon = { Icon(Icons.Default.CloudSync, contentDescription = null, tint = themeColors.buttonEqualBg) },
-                                    onClick = {
-                                        isMoreMenuExpanded = false
-                                        showGlobalBackupDialog = true
+                                    DropdownMenu(
+                                        expanded = isMoreMenuExpanded,
+                                        onDismissRequest = { isMoreMenuExpanded = false },
+                                        modifier = Modifier.background(themeColors.cardBg)
+                                    ) {
+                                        DropdownMenuItem(
+                                            text = { Text(LanguageManager.getString("menu_settings", viewModel.selectedLanguage), color = themeColors.displayText) },
+                                            leadingIcon = { Icon(Icons.Default.Settings, contentDescription = null, tint = themeColors.buttonEqualBg) },
+                                            onClick = {
+                                                isMoreMenuExpanded = false
+                                                showSettingsDialog = true
+                                            }
+                                        )
+                                        DropdownMenuItem(
+                                            text = { Text(if (viewModel.selectedLanguage == AppLanguage.BENGALI) "সম্পূর্ণ ডেটা ব্যাকআপ ও রিস্টোর" else "Complete Data Backup & Restore", color = themeColors.displayText) },
+                                            leadingIcon = { Icon(Icons.Default.CloudSync, contentDescription = null, tint = themeColors.buttonEqualBg) },
+                                            onClick = {
+                                                isMoreMenuExpanded = false
+                                                showGlobalBackupDialog = true
+                                            }
+                                        )
+                                        DropdownMenuItem(
+                                            text = { Text(LanguageManager.getString("menu_terms", viewModel.selectedLanguage), color = themeColors.displayText) },
+                                            leadingIcon = { Icon(Icons.Default.Description, contentDescription = null, tint = themeColors.buttonEqualBg) },
+                                            onClick = {
+                                                isMoreMenuExpanded = false
+                                                showTermsDialog = true
+                                            }
+                                        )
+                                        DropdownMenuItem(
+                                            text = { Text(LanguageManager.getString("menu_privacy", viewModel.selectedLanguage), color = themeColors.displayText) },
+                                            leadingIcon = { Icon(Icons.Default.PrivacyTip, contentDescription = null, tint = themeColors.buttonEqualBg) },
+                                            onClick = {
+                                                isMoreMenuExpanded = false
+                                                showPrivacyDialog = true
+                                            }
+                                        )
+                                        DropdownMenuItem(
+                                            text = { Text(LanguageManager.getString("menu_update", viewModel.selectedLanguage), color = themeColors.displayText) },
+                                            leadingIcon = { Icon(Icons.Default.SystemUpdate, contentDescription = null, tint = themeColors.buttonEqualBg) },
+                                            onClick = {
+                                                isMoreMenuExpanded = false
+                                                performUpdateCheck(true)
+                                            }
+                                        )
+                                        DropdownMenuItem(
+                                            text = { Text(if (viewModel.selectedLanguage == AppLanguage.BENGALI) "রিপোর্ট ও ফিডব্যাক" else "Report & Feedback", color = themeColors.displayText) },
+                                            leadingIcon = { Icon(Icons.Default.Feedback, contentDescription = null, tint = themeColors.buttonEqualBg) },
+                                            onClick = {
+                                                isMoreMenuExpanded = false
+                                                showFeedbackDialog = true
+                                            }
+                                        )
+                                        DropdownMenuItem(
+                                            text = { Text(LanguageManager.getString("menu_about", viewModel.selectedLanguage), color = themeColors.displayText) },
+                                            leadingIcon = { Icon(Icons.Default.Info, contentDescription = null, tint = themeColors.buttonEqualBg) },
+                                            onClick = {
+                                                isMoreMenuExpanded = false
+                                                showAboutDialog = true
+                                            }
+                                        )
                                     }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text(LanguageManager.getString("menu_terms", viewModel.selectedLanguage), color = themeColors.displayText) },
-                                    leadingIcon = { Icon(Icons.Default.Description, contentDescription = null, tint = themeColors.buttonEqualBg) },
-                                    onClick = {
-                                        isMoreMenuExpanded = false
-                                        showTermsDialog = true
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text(LanguageManager.getString("menu_privacy", viewModel.selectedLanguage), color = themeColors.displayText) },
-                                    leadingIcon = { Icon(Icons.Default.PrivacyTip, contentDescription = null, tint = themeColors.buttonEqualBg) },
-                                    onClick = {
-                                        isMoreMenuExpanded = false
-                                        showPrivacyDialog = true
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text(LanguageManager.getString("menu_update", viewModel.selectedLanguage), color = themeColors.displayText) },
-                                    leadingIcon = { Icon(Icons.Default.SystemUpdate, contentDescription = null, tint = themeColors.buttonEqualBg) },
-                                    onClick = {
-                                        isMoreMenuExpanded = false
-                                        performUpdateCheck(true)
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text(if (viewModel.selectedLanguage == AppLanguage.BENGALI) "রিপোর্ট ও ফিডব্যাক" else "Report & Feedback", color = themeColors.displayText) },
-                                    leadingIcon = { Icon(Icons.Default.Feedback, contentDescription = null, tint = themeColors.buttonEqualBg) },
-                                    onClick = {
-                                        isMoreMenuExpanded = false
-                                        showFeedbackDialog = true
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text(LanguageManager.getString("menu_about", viewModel.selectedLanguage), color = themeColors.displayText) },
-                                    leadingIcon = { Icon(Icons.Default.Info, contentDescription = null, tint = themeColors.buttonEqualBg) },
-                                    onClick = {
-                                        isMoreMenuExpanded = false
-                                        showAboutDialog = true
-                                    }
-                                )
+                                }
                             }
                         }
                     }
                 }
-            }
-        },
+            },
         bottomBar = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.Transparent)
-            ) {
+            if (!viewModel.isPdfReaderFullscreen) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color.Transparent)
+                ) {
                 val bannerContext = LocalContext.current
                 val activeTool = viewModel.selectedToolType
                 val isIslamicTool = activeTool in listOf(
@@ -846,6 +852,7 @@ fun MainContent(
                         onDismiss = { showFabGradientEditor = false }
                     )
                 }
+            }
             }
         }
         },
@@ -1829,6 +1836,37 @@ fun MainContent(
                         Spacer(modifier = Modifier.height(12.dp))
                         
                         // Modern Interactive Developer Info Card
+                        val context = LocalContext.current
+                        val localPhotoFile = remember { java.io.File(context.filesDir, "developer_photo.jpg") }
+                        var photoDownloaded by remember { mutableStateOf(localPhotoFile.exists()) }
+
+                        LaunchedEffect(Unit) {
+                            if (!photoDownloaded) {
+                                withContext(Dispatchers.IO) {
+                                    try {
+                                        val client = OkHttpClient.Builder().build()
+                                        val request = Request.Builder()
+                                            .url("https://www.dropbox.com/scl/fi/io67lcl16o1wddcq4yx4m/Dev_photo.jpg?rlkey=erlthhlxwjhbgtd2w3tv9jbvv&st=djqdym2s&dl=1")
+                                            .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
+                                            .build()
+                                        val response = client.newCall(request).execute()
+                                        if (response.isSuccessful) {
+                                            val bytes = response.body?.bytes()
+                                            if (bytes != null) {
+                                                localPhotoFile.writeBytes(bytes)
+                                                withContext(Dispatchers.Main) {
+                                                    photoDownloaded = true
+                                                }
+                                            }
+                                        }
+                                        response.close()
+                                    } catch (e: Exception) {
+                                        e.printStackTrace()
+                                    }
+                                }
+                            }
+                        }
+
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             colors = CardDefaults.cardColors(containerColor = themeColors.buttonEqualBg.copy(alpha = 0.08f)),
@@ -1847,13 +1885,13 @@ fun MainContent(
                                         verticalArrangement = Arrangement.spacedBy(4.dp)
                                     ) {
                                         Text(
-                                            text = if (isBn) "ডেভেলপার পরিচিতি" else "Developer Info",
+                                            text = if (isBn) "ডেভেলপার" else "Developer",
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 14.sp,
                                             color = themeColors.buttonEqualBg
                                         )
                                         Text(
-                                            text = if (isBn) "ডেভেলপার: Md. Shariful Islam" else "Developer: Md. Shariful Islam",
+                                            text = "Md. Shariful Islam",
                                             fontSize = 13.sp,
                                             fontWeight = FontWeight.SemiBold,
                                             color = themeColors.displayText
@@ -1878,11 +1916,28 @@ fun MainContent(
                                     ) {
                                         val painter = rememberAsyncImagePainter(
                                             model = ImageRequest.Builder(LocalContext.current)
-                                                .data("https://www.dropbox.com/scl/fi/io67lcl16o1wddcq4yx4m/Dev_photo.jpg?rlkey=erlthhlxwjhbgtd2w3tv9jbvv&st=djqdym2s&dl=1")
+                                                .data(if (photoDownloaded) localPhotoFile else "https://www.dropbox.com/scl/fi/io67lcl16o1wddcq4yx4m/Dev_photo.jpg?rlkey=erlthhlxwjhbgtd2w3tv9jbvv&st=djqdym2s&dl=1")
                                                 .crossfade(true)
+                                                .listener(
+                                                    onSuccess = { _, result ->
+                                                        if (!photoDownloaded) {
+                                                            val bitmap = (result.drawable as? android.graphics.drawable.BitmapDrawable)?.bitmap
+                                                            if (bitmap != null) {
+                                                                try {
+                                                                    java.io.FileOutputStream(localPhotoFile).use { out ->
+                                                                        bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 95, out)
+                                                                    }
+                                                                    photoDownloaded = true
+                                                                } catch (e: Exception) {
+                                                                    e.printStackTrace()
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                )
                                                 .build()
                                         )
-                                        if (painter.state is coil.compose.AsyncImagePainter.State.Success) {
+                                        if (painter.state is coil.compose.AsyncImagePainter.State.Success || photoDownloaded) {
                                             Image(
                                                 painter = painter,
                                                 contentDescription = "Developer Photo",

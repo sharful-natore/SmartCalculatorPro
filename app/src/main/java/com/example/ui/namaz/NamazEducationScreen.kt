@@ -97,6 +97,10 @@ fun NamazEducationScreen(
     val femaleAccentColor = Color(0xFFEC4899)
     val activeAccent = if (isFemaleMode) femaleAccentColor else primaryCyan
 
+    androidx.activity.compose.BackHandler(enabled = searchQuery.isNotEmpty()) {
+        viewModel.setSearchQuery("")
+    }
+
     val tabs = listOf(
         Triple(0, "অজু ও তাহারাত", Icons.Default.WaterDrop),
         Triple(1, "৫ ওয়াক্ত নামাজ", Icons.Default.Mosque),

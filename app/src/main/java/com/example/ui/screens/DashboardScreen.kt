@@ -68,6 +68,8 @@ import com.example.util.AppLanguage
 import com.example.data.model.ToolCategory
 import com.example.data.model.ToolType
 import com.example.data.model.ConverterType
+import com.example.data.model.isTitleLong
+import com.example.data.model.isSubtitleLong
 import com.example.ui.theme.CalculatorThemeColors
 import com.example.ui.theme.themeCardShadow
 import com.example.ui.viewmodel.CalculatorViewModel
@@ -106,6 +108,10 @@ fun DashboardScreen(
     val dashboardFilterScrollState = androidx.compose.runtime.saveable.rememberSaveable(saver = androidx.compose.foundation.ScrollState.Saver) {
         androidx.compose.foundation.ScrollState(0)
     }
+    val categoryScrollStates = remember { mutableMapOf<String, androidx.compose.foundation.ScrollState>() }
+    val featuredScrollState = androidx.compose.runtime.saveable.rememberSaveable(saver = androidx.compose.foundation.ScrollState.Saver) {
+        androidx.compose.foundation.ScrollState(0)
+    }
 
     AnimatedContent(
         targetState = selectedType,
@@ -126,7 +132,9 @@ fun DashboardScreen(
                 viewModel = viewModel,
                 themeColors = themeColors,
                 scrollState = dashboardScrollState,
-                filterScrollState = dashboardFilterScrollState
+                filterScrollState = dashboardFilterScrollState,
+                categoryScrollStates = categoryScrollStates,
+                featuredScrollState = featuredScrollState
             )
         } else {
             // View 2: Detailed Tool View
@@ -141,7 +149,9 @@ fun DashboardCategoriesView(
     viewModel: CalculatorViewModel,
     themeColors: CalculatorThemeColors,
     scrollState: androidx.compose.foundation.ScrollState = androidx.compose.runtime.saveable.rememberSaveable(saver = androidx.compose.foundation.ScrollState.Saver) { androidx.compose.foundation.ScrollState(0) },
-    filterScrollState: androidx.compose.foundation.ScrollState = androidx.compose.runtime.saveable.rememberSaveable(saver = androidx.compose.foundation.ScrollState.Saver) { androidx.compose.foundation.ScrollState(0) }
+    filterScrollState: androidx.compose.foundation.ScrollState = androidx.compose.runtime.saveable.rememberSaveable(saver = androidx.compose.foundation.ScrollState.Saver) { androidx.compose.foundation.ScrollState(0) },
+    categoryScrollStates: MutableMap<String, androidx.compose.foundation.ScrollState> = mutableMapOf(),
+    featuredScrollState: androidx.compose.foundation.ScrollState = androidx.compose.foundation.ScrollState(0)
 ) {
     val coroutineScope = rememberCoroutineScope()
     val bounceAnimatable = remember { Animatable(0f) }
@@ -1059,7 +1069,7 @@ fun DashboardCategoriesView(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
+                .horizontalScroll(featuredScrollState)
                 .padding(vertical = 4.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
@@ -1698,6 +1708,11 @@ fun DashboardCategoriesView(
                                         modifier = Modifier.padding(bottom = 6.dp)
                                     ) {
                                         categoryTools.chunked(2).forEach { rowItems ->
+                                            val isBn = viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI
+                                             val isAnyTitleLongInRow = rowItems.any { isTitleLong(it.getTitle(viewModel.selectedLanguage), isBn) }
+                                             val isAnySubtitleLongInRow = rowItems.any { isSubtitleLong(it.getDescription(viewModel.selectedLanguage), isBn) }
+                                             val rowTitleLines = if (isAnyTitleLongInRow) 2 else 1
+                                             val rowSubtitleLines = if (isAnySubtitleLongInRow) 2 else 1
                                             Row(
                                                 modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
                                                 horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -1711,6 +1726,8 @@ fun DashboardCategoriesView(
                                                                 themeColors = themeColors,
                                                                 modifier = Modifier.fillMaxHeight(),
                                                                 showPinIcon = !isOverviewMode,
+                                                                titleLines = rowTitleLines,
+                                                                subtitleLines = rowSubtitleLines,
                                                                 onClick = { viewModel.openTool(tool) }
                                                             )
                                                         }
@@ -1724,10 +1741,26 @@ fun DashboardCategoriesView(
                                     }
                                 } else {
                                     // Default Horizontal Scrolling Row
+                                    val isBn = viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI
+                                    val isAnyTitleLong = categoryTools.any { isTitleLong(it.getTitle(viewModel.selectedLanguage), isBn) }
+                                    val isAnySubtitleLong = categoryTools.any { isSubtitleLong(it.getDescription(viewModel.selectedLanguage), isBn) }
+                                    val titleLines = if (isAnyTitleLong) 2 else 1
+                                    val subtitleLines = if (isAnySubtitleLong) 2 else 1
+                                    val cardHeight = when {
+                                        titleLines == 2 && subtitleLines == 2 -> 135.dp
+                                        titleLines == 2 || subtitleLines == 2 -> 122.dp
+                                        else -> 110.dp
+                                    }
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .horizontalScroll(rememberScrollState())
+                                            .horizontalScroll(
+                                                remember(category.name) {
+                                                    categoryScrollStates.getOrPut(category.name) {
+                                                        androidx.compose.foundation.ScrollState(0)
+                                                     }
+                                                }
+                                            )
                                             .padding(bottom = 6.dp),
                                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                                     ) {
@@ -1736,7 +1769,7 @@ fun DashboardCategoriesView(
                                                 Box(
                                                     modifier = Modifier
                                                         .width(152.dp)
-                                                        .height(175.dp)
+                                                        .height(cardHeight)
                                                 ) {
                                                     ToolGridCardItem(
                                                         toolType = tool,
@@ -1744,6 +1777,8 @@ fun DashboardCategoriesView(
                                                         themeColors = themeColors,
                                                         modifier = Modifier.fillMaxSize(),
                                                         showPinIcon = false,
+                                                        titleLines = titleLines,
+                                                        subtitleLines = subtitleLines,
                                                         onClick = { viewModel.openTool(tool) }
                                                     )
                                                 }
@@ -1876,6 +1911,8 @@ fun ToolGridCardItem(
     themeColors: CalculatorThemeColors,
     modifier: Modifier = Modifier,
     showPinIcon: Boolean = true,
+    titleLines: Int = 2,
+    subtitleLines: Int = 2,
     onClick: () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -1904,79 +1941,83 @@ fun ToolGridCardItem(
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp)
     ) {
         Column(
-            modifier = Modifier.fillMaxHeight().padding(12.dp),
+            modifier = Modifier.fillMaxSize().padding(12.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Column {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clip(CircleShape)
+                        .background(themeColors.buttonEqualBg),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = toolType.icon,
+                        contentDescription = toolType.getTitle(viewModel.selectedLanguage),
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth()
+                    horizontalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(42.dp)
-                            .clip(CircleShape)
-                            .background(themeColors.buttonEqualBg),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = toolType.icon,
-                            contentDescription = toolType.getTitle(viewModel.selectedLanguage),
-                            tint = Color.White,
-                            modifier = Modifier.size(22.dp)
-                        )
-                    }
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(2.dp)
-                    ) {
-                        if (showPinIcon) {
-                            IconButton(
-                                onClick = { viewModel.requestToggleFavoriteTool(toolType) },
-                                modifier = Modifier.size(28.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.PushPin,
-                                    contentDescription = "Pin Position",
-                                    tint = if (isPinned) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.35f),
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                        }
+                    if (showPinIcon) {
                         IconButton(
-                            onClick = { viewModel.toggleFavoriteTool(toolType.name) },
+                            onClick = { viewModel.requestToggleFavoriteTool(toolType) },
                             modifier = Modifier.size(28.dp)
                         ) {
                             Icon(
-                                imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                                contentDescription = "Favorite",
-                                tint = if (isFavorite) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.3f),
-                                modifier = Modifier.size(20.dp)
+                                imageVector = Icons.Default.PushPin,
+                                contentDescription = "Pin Position",
+                                tint = if (isPinned) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.35f),
+                                modifier = Modifier.size(16.dp)
                             )
                         }
                     }
+                    IconButton(
+                        onClick = { viewModel.toggleFavoriteTool(toolType.name) },
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                            contentDescription = "Favorite",
+                            tint = if (isFavorite) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.3f),
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                 }
+            }
 
-                Spacer(modifier = Modifier.height(8.dp))
-
+            Column(
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Text(
                     text = toolType.getTitle(viewModel.selectedLanguage),
-                    fontSize = 14.sp,
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                     color = themeColors.displayText,
-                    maxLines = 2,
-                    lineHeight = 17.sp
+                    maxLines = titleLines,
+                    minLines = titleLines,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    lineHeight = 16.sp
                 )
 
                 Spacer(modifier = Modifier.height(3.dp))
 
                 Text(
                     text = toolType.getDescription(viewModel.selectedLanguage),
-                    fontSize = 11.sp,
-                    color = themeColors.displayText.copy(alpha = 0.6f),
-                    maxLines = 2,
-                    lineHeight = 14.sp
+                    fontSize = 10.sp,
+                    color = themeColors.displayText.copy(alpha = 0.55f),
+                    maxLines = subtitleLines,
+                    minLines = subtitleLines,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    lineHeight = 12.5.sp
                 )
             }
         }
@@ -2229,6 +2270,7 @@ fun ToolDetailView(
             ToolType.METAL_DETECTOR -> com.example.ui.screens.tools.MetalDetectorTool(viewModel, themeColors)
             ToolType.PHONE_DIAGNOSTICS -> com.example.ui.screens.tools.PhoneDiagnosticsTool(viewModel, themeColors)
             ToolType.DEVICE_INFO -> com.example.ui.screens.tools.DeviceInfoTool(viewModel, themeColors)
+            ToolType.BATTERY_MONITOR -> com.example.ui.screens.tools.BatteryMonitorTool(viewModel, themeColors)
             ToolType.WEATHER -> DynamicWeatherScreen(viewModel, themeColors, isBn = viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI)
             ToolType.QIBLA_COMPASS -> QiblaCompassCard(viewModel, themeColors)
             ToolType.DIGITAL_TASBIH -> DigitalTasbihCard(viewModel, themeColors)
@@ -2812,6 +2854,17 @@ private fun getToolInfoItems(toolType: ToolType, isBn: Boolean): List<Pair<Strin
             listOf(
                 "1. Hardware & System Specs" to "Inspect device model, processor cores, ABI architecture, real-time RAM usage, and internal storage metrics.",
                 "2. Battery, Display & Sensor Directory" to "View battery health, temperature, voltage, screen resolution, refresh rate, and full directory of registered hardware sensors."
+            )
+        }
+        ToolType.BATTERY_MONITOR -> if (isBn) {
+            listOf(
+                "১. রিয়েল-টাইম কারেন্ট কীভাবে মাপা হয়?" to "আপনার ডিভাইসের চার্জিং বা ডিসচার্জিং গতির নিখুঁত পরিসংখ্যান প্রতি সেকেন্ডে মিলিঅ্যাম্পিয়ার (mA) ইউনিটে মাপা হয়।",
+                "২. পাওয়ার ও ভোল্টেজ ট্র্যাকিং" to "ভোল্টেজ (V) ও কারেন্ট (mA) গুণ করে চার্জের গতি পরিমাপ করা হয় ওয়াটস (Watts) ইউনিটে। লাইভ গ্রাফে চার্জিংয়ের ওঠানামা প্রদর্শিত হয়।"
+            )
+        } else {
+            listOf(
+                "1. Real-time Current Monitoring" to "Inspect precise active charging or discharging current flow measured in milliAmperes (mA) dynamically.",
+                "2. Power Speed & Live Waveform" to "Calculate wattage (Watts) based on actual voltage and real-time current to monitor and chart battery behavior live."
             )
         }
         ToolType.PDF_READER -> if (isBn) {

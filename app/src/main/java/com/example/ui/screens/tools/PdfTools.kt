@@ -30,6 +30,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -118,7 +119,7 @@ enum class PdfSortOption(val titleBn: String, val titleEn: String) {
 }
 
 // ================= 1. PDF READER TOOL (GOOGLE DRIVE STYLE) =================
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun PdfReaderTool(
     viewModel: CalculatorViewModel,
@@ -138,6 +139,16 @@ fun PdfReaderTool(
     // Fullscreen and Immersive UI visibility states
     var isFullscreen by remember { mutableStateOf(false) }
     var isControlsVisible by remember { mutableStateOf(true) }
+
+    LaunchedEffect(isFullscreen) {
+        viewModel.isPdfReaderFullscreen = isFullscreen
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.isPdfReaderFullscreen = false
+        }
+    }
 
     // Google Drive Pinch-to-zoom & Double-tap states
     var rotationDegrees by remember { mutableIntStateOf(0) }
@@ -198,6 +209,7 @@ fun PdfReaderTool(
     // Modals & Dialogs
     var showJumpDialog by remember { mutableStateOf(false) }
     var showDetailsDialog by remember { mutableStateOf(false) }
+    var showTextSelectDialogPage by remember { mutableStateOf<Int?>(null) }
 
     // Files List View States
     var pdfFileList by remember { mutableStateOf<List<PdfFileItem>>(emptyList()) }
@@ -231,6 +243,9 @@ fun PdfReaderTool(
             showJumpDialog = false
         } else if (showDetailsDialog) {
             showDetailsDialog = false
+        } else if (isSearchActive) {
+            isSearchActive = false
+            pdfSearchQuery = ""
         } else if (isFullscreen) {
             isFullscreen = false
             isControlsVisible = true
@@ -244,6 +259,8 @@ fun PdfReaderTool(
             docScale = 1.0f
             docOffset = Offset.Zero
             rotationDegrees = 0
+        } else if (searchQuery.isNotEmpty()) {
+            searchQuery = ""
         } else {
             onBackClick()
         }
@@ -325,7 +342,14 @@ fun PdfReaderTool(
 
     // Load PDF Page Count when a document is selected
     LaunchedEffect(pdfUri) {
-        val currentUri = pdfUri ?: return@LaunchedEffect
+        val currentUri = pdfUri
+        if (currentUri == null) {
+            pdfTextPages = emptyList()
+            pdfSearchQuery = ""
+            currentMatchIndex = 0
+            isSearchActive = false
+            return@LaunchedEffect
+        }
         withContext(Dispatchers.IO) {
             try {
                 val pfd = openPdfParcelFileDescriptor(context, currentUri)
@@ -334,8 +358,16 @@ fun PdfReaderTool(
                     val count = renderer.pageCount
                     renderer.close()
                     pfd.close()
+                    
+                    // Extract text content from each page of the PDF to enable searching
+                    val textList = extractPdfTextByPage(context, currentUri, count)
+                    
                     withContext(Dispatchers.Main) {
                         pageCount = count
+                        pdfTextPages = textList
+                        pdfSearchQuery = ""
+                        currentMatchIndex = 0
+                        isSearchActive = false
                     }
                 }
             } catch (e: Exception) {
@@ -1084,7 +1116,12 @@ fun PdfReaderTool(
                                         }
                                     },
                                     onTap = {
-                                        isControlsVisible = !isControlsVisible
+                                        if (isFullscreen) {
+                                            isFullscreen = false
+                                            isControlsVisible = true
+                                        } else {
+                                            isControlsVisible = !isControlsVisible
+                                        }
                                     }
                                 )
                             }
@@ -1171,7 +1208,21 @@ fun PdfReaderTool(
                                 ) {
                                     items(pageCount) { pageIdx ->
                                         Surface(
-                                            modifier = Modifier.fillMaxWidth(),
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .combinedClickable(
+                                                    onClick = {
+                                                        if (isFullscreen) {
+                                                            isFullscreen = false
+                                                            isControlsVisible = true
+                                                        } else {
+                                                            isControlsVisible = !isControlsVisible
+                                                        }
+                                                    },
+                                                    onLongClick = {
+                                                        showTextSelectDialogPage = pageIdx
+                                                    }
+                                                ),
                                             shape = RoundedCornerShape(4.dp),
                                             shadowElevation = 4.dp,
                                             color = if (isNightMode) Color(0xFF1E293B) else Color.White
@@ -1208,77 +1259,11 @@ fun PdfReaderTool(
                         }
                     }
 
-                    // FLOATING ZOOM CONTROLS PILL (Google Drive Style Zoom controls)
-                    androidx.compose.animation.AnimatedVisibility(
-                        visible = isControlsVisible && pageCount > 0,
-                        enter = fadeIn(),
-                        exit = fadeOut(),
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(bottom = if (isFullscreen) 70.dp else 65.dp, end = 12.dp)
-                    ) {
-                        Surface(
-                            shape = RoundedCornerShape(20.dp),
-                            color = Color.Black.copy(alpha = 0.82f),
-                            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.2f)),
-                            shadowElevation = 6.dp
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
-                            ) {
-                                IconButton(
-                                    onClick = {
-                                        val newS = (docScale - 0.25f).coerceAtLeast(1.0f)
-                                        docScale = newS
-                                        if (newS == 1.0f) docOffset = Offset.Zero
-                                    },
-                                    modifier = Modifier.size(32.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Remove,
-                                        contentDescription = "Zoom Out",
-                                        tint = Color.White,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
 
-                                TextButton(
-                                    onClick = {
-                                        docScale = 1.0f
-                                        docOffset = Offset.Zero
-                                    },
-                                    contentPadding = PaddingValues(horizontal = 4.dp)
-                                ) {
-                                    Text(
-                                        text = "${(docScale * 100).toInt()}%",
-                                        fontSize = 11.5.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = if (docScale > 1.0f) themeColors.buttonEqualBg else Color.White
-                                    )
-                                }
-
-                                IconButton(
-                                    onClick = {
-                                        val newS = (docScale + 0.25f).coerceAtMost(5.0f)
-                                        docScale = newS
-                                    },
-                                    modifier = Modifier.size(32.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Add,
-                                        contentDescription = "Zoom In",
-                                        tint = Color.White,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
 
                     // BOTTOM GOOGLE DRIVE FLOATING PAGE PILL & SCRUBBER
                     androidx.compose.animation.AnimatedVisibility(
-                        visible = isControlsVisible && pageCount > 0,
+                        visible = isControlsVisible && pageCount > 0 && !isFullscreen,
                         enter = slideInVertically { it } + fadeIn(),
                         exit = slideOutVertically { it } + fadeOut(),
                         modifier = Modifier
@@ -1539,6 +1524,124 @@ fun PdfReaderTool(
                     colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg, contentColor = Color.White)
                 ) {
                     Text(if (isBn) "ঠিক আছে" else "OK")
+                }
+            }
+        )
+    }
+
+    // 3. Select & Copy Page Text Dialog
+    if (showTextSelectDialogPage != null) {
+        val pageIdx = showTextSelectDialogPage!!
+        val pageText = pdfTextPages.getOrNull(pageIdx) ?: ""
+        AlertDialog(
+            onDismissRequest = { showTextSelectDialogPage = null },
+            containerColor = themeColors.cardBg,
+            title = {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = if (isBn) "পৃষ্ঠা ${pageIdx + 1} - টেক্সট কপি" else "Page ${pageIdx + 1} Text Selection",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.displayText
+                    )
+                    IconButton(
+                        onClick = { showTextSelectDialogPage = null },
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Close",
+                            tint = themeColors.displayText.copy(alpha = 0.6f)
+                        )
+                    }
+                }
+            },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 350.dp)
+                ) {
+                    Text(
+                        text = if (isBn) "নিচের টেক্সট সিলেক্ট করুন অথবা কপি করুন:" else "Press and hold to select text, or click Copy All:",
+                        fontSize = 12.sp,
+                        color = themeColors.displayText.copy(alpha = 0.7f),
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+
+                    Surface(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .border(androidx.compose.foundation.BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.15f)), RoundedCornerShape(8.dp)),
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (isNightMode) Color(0xFF0F172A) else Color(0xFFF1F5F9)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(10.dp)
+                                .verticalScroll(rememberScrollState())
+                        ) {
+                            if (pageText.isNotBlank()) {
+                                androidx.compose.foundation.text.selection.SelectionContainer {
+                                    Text(
+                                        text = pageText,
+                                        fontSize = 13.sp,
+                                        lineHeight = 18.sp,
+                                        color = themeColors.displayText
+                                    )
+                                }
+                            } else {
+                                Text(
+                                    text = if (isBn) "এই পৃষ্ঠা থেকে কোনো টেক্সট উদ্ধার করা যায়নি।" else "No selectable text found on this page.",
+                                    fontSize = 12.sp,
+                                    color = themeColors.displayText.copy(alpha = 0.5f),
+                                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                                    modifier = Modifier.align(Alignment.Center)
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    if (pageText.isNotBlank()) {
+                        Button(
+                            onClick = {
+                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                                val clip = android.content.ClipData.newPlainText("PDF Page ${pageIdx + 1}", pageText)
+                                clipboard.setPrimaryClip(clip)
+                                android.widget.Toast.makeText(
+                                    context,
+                                    if (isBn) "সম্পূর্ণ টেক্সট ক্লিপবোর্ডে কপি করা হয়েছে" else "Copied all page text to clipboard",
+                                    android.widget.Toast.LENGTH_SHORT
+                                ).show()
+                                showTextSelectDialogPage = null
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg, contentColor = Color.White),
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(if (isBn) "সব কপি করুন" else "Copy All")
+                        }
+                    }
+                    TextButton(
+                        onClick = { showTextSelectDialogPage = null },
+                        modifier = Modifier.weight(if (pageText.isNotBlank()) 0.5f else 1f)
+                    ) {
+                        Text(if (isBn) "বন্ধ করুন" else "Cancel", color = themeColors.displayText)
+                    }
                 }
             }
         )
@@ -3175,6 +3278,253 @@ private fun deletePdfFromHistory(context: Context, item: PdfFileItem) {
     }
 }
 
+private class PdfObject(val id: Int, val dict: String, val streamBytes: ByteArray?)
+
+private fun parsePdfObjects(bytes: ByteArray): Map<Int, PdfObject> {
+    val objects = HashMap<Int, PdfObject>()
+    var pos = 0
+    val size = bytes.size
+    
+    while (pos < size - 10) {
+        if (bytes[pos] == 'o'.toByte() && bytes[pos+1] == 'b'.toByte() && bytes[pos+2] == 'j'.toByte() && (pos == 0 || isPdfWhitespace(bytes[pos-1]))) {
+            var backtrack = pos - 1
+            while (backtrack >= 0 && isPdfWhitespace(bytes[backtrack])) backtrack--
+            var endOfGen = backtrack
+            while (backtrack >= 0 && isPdfDigit(bytes[backtrack])) backtrack--
+            var startOfGen = backtrack + 1
+            while (backtrack >= 0 && isPdfWhitespace(bytes[backtrack])) backtrack--
+            var endOfId = backtrack
+            while (backtrack >= 0 && isPdfDigit(bytes[backtrack])) backtrack--
+            var startOfId = backtrack + 1
+            
+            if (startOfId <= endOfId && startOfGen <= endOfGen) {
+                val idStr = String(bytes, startOfId, endOfId - startOfId + 1, Charsets.US_ASCII)
+                val id = idStr.toIntOrNull()
+                if (id != null) {
+                    var endObjPos = pos + 3
+                    var foundEnd = false
+                    while (endObjPos < size - 6) {
+                        if (bytes[endObjPos] == 'e'.toByte() &&
+                            bytes[endObjPos+1] == 'n'.toByte() &&
+                            bytes[endObjPos+2] == 'd'.toByte() &&
+                            bytes[endObjPos+3] == 'o'.toByte() &&
+                            bytes[endObjPos+4] == 'b'.toByte() &&
+                            bytes[endObjPos+5] == 'j'.toByte()) {
+                            foundEnd = true
+                            break
+                        }
+                        endObjPos++
+                    }
+                    if (foundEnd) {
+                        val startContent = pos + 3
+                        val endContent = endObjPos
+                        
+                        var dictStart = -1
+                        var dictEnd = -1
+                        var search = startContent
+                        while (search < endContent - 1) {
+                            if (bytes[search] == '<'.toByte() && bytes[search+1] == '<'.toByte()) {
+                                dictStart = search
+                                break
+                            }
+                            search++
+                        }
+                        if (dictStart != -1) {
+                            var searchEnd = endContent - 2
+                            while (searchEnd > dictStart) {
+                                if (bytes[searchEnd] == '>'.toByte() && bytes[searchEnd+1] == '>'.toByte()) {
+                                    dictEnd = searchEnd + 2
+                                    break
+                                }
+                                searchEnd--
+                            }
+                        }
+                        
+                        val dict = if (dictStart != -1 && dictEnd != -1) {
+                            String(bytes, dictStart, dictEnd - dictStart, Charsets.UTF_8)
+                        } else ""
+                        
+                        var streamStart = -1
+                        var streamEnd = -1
+                        var sSearch = startContent
+                        while (sSearch < endContent - 6) {
+                            if (bytes[sSearch] == 's'.toByte() &&
+                                bytes[sSearch+1] == 't'.toByte() &&
+                                bytes[sSearch+2] == 'r'.toByte() &&
+                                bytes[sSearch+3] == 'e'.toByte() &&
+                                bytes[sSearch+4] == 'a'.toByte() &&
+                                bytes[sSearch+5] == 'm'.toByte()) {
+                                var sPos = sSearch + 6
+                                if (bytes[sPos] == '\r'.toByte()) sPos++
+                                if (bytes[sPos] == '\n'.toByte()) sPos++
+                                streamStart = sPos
+                                break
+                            }
+                            sSearch++
+                        }
+                        if (streamStart != -1) {
+                            var esSearch = endContent - 9
+                            while (esSearch > streamStart) {
+                                if (bytes[esSearch] == 'e'.toByte() &&
+                                    bytes[esSearch+1] == 'n'.toByte() &&
+                                    bytes[esSearch+2] == 'd'.toByte() &&
+                                    bytes[esSearch+3] == 's'.toByte() &&
+                                    bytes[esSearch+4] == 't'.toByte() &&
+                                    bytes[esSearch+5] == 'r'.toByte() &&
+                                    bytes[esSearch+6] == 'e'.toByte() &&
+                                    bytes[esSearch+7] == 'a'.toByte() &&
+                                    bytes[esSearch+8] == 'm'.toByte()) {
+                                    var ePos = esSearch
+                                    if (bytes[ePos - 1] == '\n'.toByte()) ePos--
+                                    if (bytes[ePos - 1] == '\r'.toByte()) ePos--
+                                    streamEnd = ePos
+                                    break
+                                }
+                                esSearch--
+                            }
+                        }
+                        
+                        val streamBytes = if (streamStart != -1 && streamEnd != -1 && streamEnd >= streamStart) {
+                            val dest = ByteArray(streamEnd - streamStart)
+                            System.arraycopy(bytes, streamStart, dest, 0, dest.size)
+                            dest
+                        } else null
+                        
+                        objects[id] = PdfObject(id, dict, streamBytes)
+                        pos = endObjPos + 6
+                        continue
+                    }
+                }
+            }
+        }
+        pos++
+    }
+    return objects
+}
+
+private fun isPdfWhitespace(b: Byte): Boolean {
+    return b == ' '.toByte() || b == '\r'.toByte() || b == '\n'.toByte() || b == '\t'.toByte()
+}
+
+private fun isPdfDigit(b: Byte): Boolean {
+    return b >= '0'.toByte() && b <= '9'.toByte()
+}
+
+private fun extractContentsIds(dict: String): List<Int> {
+    val ids = ArrayList<Int>()
+    val contentsIndex = dict.indexOf("/Contents")
+    if (contentsIndex != -1) {
+        val sub = dict.substring(contentsIndex + 9)
+        val bracketOpen = sub.indexOf('[')
+        val bracketClose = sub.indexOf(']')
+        if (bracketOpen != -1 && bracketClose != -1 && bracketOpen < 15) {
+            val listText = sub.substring(bracketOpen + 1, bracketClose)
+            val regex = Regex("(\\d+)\\s+\\d+\\s+R")
+            regex.findAll(listText).forEach { match ->
+                match.groupValues[1].toIntOrNull()?.let { ids.add(it) }
+            }
+        } else {
+            val regex = Regex("\\s*(\\d+)\\s+\\d+\\s+R")
+            val match = regex.find(sub)
+            if (match != null) {
+                match.groupValues[1].toIntOrNull()?.let { ids.add(it) }
+            }
+        }
+    }
+    return ids
+}
+
+private fun decompressFlateDecode(compressedBytes: ByteArray): ByteArray? {
+    val inflater = java.util.zip.Inflater()
+    inflater.setInput(compressedBytes)
+    val outputStream = java.io.ByteArrayOutputStream(compressedBytes.size * 2)
+    val buffer = ByteArray(1024)
+    try {
+        while (!inflater.finished()) {
+            val count = inflater.inflate(buffer)
+            if (count == 0) break
+            outputStream.write(buffer, 0, count)
+        }
+        inflater.end()
+        return outputStream.toByteArray()
+    } catch (e: Exception) {
+        inflater.end()
+        try {
+            val inflaterNoHeader = java.util.zip.Inflater(true)
+            inflaterNoHeader.setInput(compressedBytes)
+            val outputStream2 = java.io.ByteArrayOutputStream(compressedBytes.size * 2)
+            while (!inflaterNoHeader.finished()) {
+                val count = inflaterNoHeader.inflate(buffer)
+                if (count == 0) break
+                outputStream2.write(buffer, 0, count)
+            }
+            inflaterNoHeader.end()
+            return outputStream2.toByteArray()
+        } catch (e2: Exception) {
+            e2.printStackTrace()
+        }
+    }
+    return null
+}
+
+private fun extractTextFromContentStream(decompressedText: String): String {
+    val sb = StringBuilder()
+    var i = 0
+    val len = decompressedText.length
+    while (i < len) {
+        if (decompressedText[i] == '(') {
+            i++
+            val pagePiece = StringBuilder()
+            while (i < len) {
+                val c = decompressedText[i]
+                if (c == ')') {
+                    if (i > 0 && decompressedText[i-1] == '\\') {
+                        pagePiece.append(')')
+                        i++
+                        continue
+                    }
+                    break
+                } else if (c == '\\') {
+                    i++
+                    if (i < len) {
+                        val nextC = decompressedText[i]
+                        if (nextC.isDigit()) {
+                            var octalVal = nextC.toString()
+                            if (i + 1 < len && decompressedText[i+1].isDigit()) {
+                                octalVal += decompressedText[i+1]
+                                i++
+                                if (i + 1 < len && decompressedText[i+1].isDigit()) {
+                                    octalVal += decompressedText[i+1]
+                                    i++
+                                }
+                            }
+                            val charVal = octalVal.toIntOrNull(8)?.toChar()
+                            if (charVal != null) {
+                                pagePiece.append(charVal)
+                            }
+                        } else {
+                            when (nextC) {
+                                'n' -> pagePiece.append('\n')
+                                'r' -> pagePiece.append('\r')
+                                't' -> pagePiece.append('\t')
+                                'b' -> pagePiece.append('\b')
+                                'f' -> pagePiece.append('\u000C')
+                                else -> pagePiece.append(nextC)
+                            }
+                        }
+                    }
+                } else {
+                    pagePiece.append(c)
+                }
+                i++
+            }
+            sb.append(pagePiece.toString()).append(" ")
+        }
+        i++
+    }
+    return sb.toString().replace("\\s+".toRegex(), " ").trim()
+}
+
 private suspend fun extractPdfTextByPage(context: Context, pdfUri: Uri, pageCount: Int): List<String> = withContext(Dispatchers.IO) {
     val results = ArrayList<String>(pageCount)
     try {
@@ -3182,27 +3532,33 @@ private suspend fun extractPdfTextByPage(context: Context, pdfUri: Uri, pageCoun
         val bytes = inputStream?.readBytes()
         inputStream?.close()
         if (bytes != null) {
-            val contentStr = String(bytes, Charsets.ISO_8859_1)
-            val pageBlocks = contentStr.split("/Page\n", "/Page\r", "/Page ", "/Page/")
-            if (pageBlocks.size > 1) {
-                for (i in 1 until pageBlocks.size) {
-                    val pageContent = pageBlocks[i]
-                    val sb = StringBuilder()
-                    val regex = Regex("\\((.*?)\\)\\s*(?:Tj|TJ)")
-                    regex.findAll(pageContent).forEach { match ->
-                        sb.append(match.groupValues[1]).append(" ")
-                    }
-                    results.add(sb.toString())
-                }
-            } else {
-                val sb = StringBuilder()
-                val regex = Regex("\\((.*?)\\)\\s*(?:Tj|TJ)")
-                regex.findAll(contentStr).forEach { match ->
-                    sb.append(match.groupValues[1]).append(" ")
-                }
-                val extracted = sb.toString()
+            val objects = parsePdfObjects(bytes)
+            val pageObjects = objects.values.filter { it.dict.contains("/Page") && !it.dict.contains("/Pages") }
+            
+            if (pageObjects.isNotEmpty()) {
+                val sortedPages = pageObjects.sortedBy { it.id }
                 for (p in 0 until pageCount) {
-                    results.add(extracted)
+                    val pageObj = sortedPages.getOrNull(p)
+                    if (pageObj != null) {
+                        val contentIds = extractContentsIds(pageObj.dict)
+                        val sbPageText = StringBuilder()
+                        for (cid in contentIds) {
+                            val streamObj = objects[cid]
+                            if (streamObj != null && streamObj.streamBytes != null) {
+                                val decompressed = decompressFlateDecode(streamObj.streamBytes)
+                                if (decompressed != null) {
+                                    val textStr = String(decompressed, Charsets.UTF_8)
+                                    val pageTxt = extractTextFromContentStream(textStr)
+                                    sbPageText.append(pageTxt).append(" ")
+                                } else {
+                                    val textStr = String(streamObj.streamBytes, Charsets.ISO_8859_1)
+                                    val pageTxt = extractTextFromContentStream(textStr)
+                                    sbPageText.append(pageTxt).append(" ")
+                                }
+                            }
+                        }
+                        results.add(sbPageText.toString().trim())
+                    }
                 }
             }
         }

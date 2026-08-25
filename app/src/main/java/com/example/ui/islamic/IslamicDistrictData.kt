@@ -212,6 +212,10 @@ fun DistrictSelectionSheet(
     var selectedDivision by remember { mutableStateOf(BdDivision.ALL) }
     val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
 
+    androidx.activity.compose.BackHandler(enabled = searchQuery.isNotEmpty()) {
+        searchQuery = ""
+    }
+
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->

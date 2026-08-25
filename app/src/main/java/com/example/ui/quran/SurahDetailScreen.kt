@@ -140,13 +140,15 @@ fun SurahDetailScreen(
     }
 
     // Auto-Scroll to currently playing Ayah
-    LaunchedEffect(currentSurahNum, currentAyahIndex) {
+    LaunchedEffect(currentSurahNum, currentAyahIndex, ayahs) {
         if (currentSurahNum == surah.number && currentAyahIndex in ayahs.indices) {
             // Index 0: Tajweed Guide, 1: Surah Banner, 2: Bismillah, so ayah index corresponds to item index + 3
             val offset = if (surah.number != 9) 3 else 2
             val scrollIndex = (currentAyahIndex + offset).coerceIn(0, ayahs.size + offset)
-            scope.launch {
+            try {
                 listState.animateScrollToItem(scrollIndex)
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
     }

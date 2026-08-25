@@ -355,6 +355,11 @@ enum class ToolType(
         "প্রসেসর, র‍্যাম, স্টোরেজ, ব্যাটারি, ডিসপ্লে, ওএস এবং সিস্টেমের বিস্তারিত স্পেক্স",
         ToolCategory.DEVELOPER, Icons.Default.PhoneAndroid
     ),
+    BATTERY_MONITOR(
+        "Battery Monitor", "ব্যাটারি মনিটর",
+        "রিয়েল-টাইম চার্জিং কারেন্ট, ভোল্টেজ, চার্জের গতি, ব্যাটারি স্বাস্থ্য ও তাপমাত্রার গ্রাফিকাল পর্যবেক্ষণ",
+        ToolCategory.DEVELOPER, Icons.Default.BatteryChargingFull
+    ),
 
     // 9. Islamic Tools
     QIBLA_COMPASS(
@@ -456,6 +461,7 @@ enum class ToolType(
                 METAL_DETECTOR -> "Detect metal, electromagnetic fields, and hidden wires using magnetometer sensor"
                 PHONE_DIAGNOSTICS -> "Test all device sensors, touch screen, speakers, vibration, and display health"
                 DEVICE_INFO -> "View comprehensive hardware, CPU, RAM, battery, display, and OS specifications"
+                BATTERY_MONITOR -> "Monitor real-time battery current, voltage, temperature, health, and charging stats dynamically with active waveform charts"
                 QIBLA_COMPASS -> "Accurate Qibla direction finder pointing towards the Holy Kaaba in Makkah"
                 DIGITAL_TASBIH -> "Digital zikir and tasbih tally counter with goal targets and presets"
                 PRAYER_TIMES -> "Daily 5 time Islamic prayer timetable with countdowns and alerts"
@@ -528,3 +534,12 @@ data class ProfessionalNote(
         }
     }
 }
+
+fun isTitleLong(text: String, isBn: Boolean): Boolean {
+    return if (isBn) text.length > 13 else text.length > 16
+}
+
+fun isSubtitleLong(text: String, isBn: Boolean): Boolean {
+    return if (isBn) text.length > 25 else text.length > 31
+}
+

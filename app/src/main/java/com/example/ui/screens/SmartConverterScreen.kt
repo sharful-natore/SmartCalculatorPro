@@ -56,6 +56,8 @@ import androidx.compose.ui.unit.sp
 import com.example.util.AppLanguage
 import com.example.data.model.ConverterCategory
 import com.example.data.model.ConverterType
+import com.example.data.model.isTitleLong
+import com.example.data.model.isSubtitleLong
 import com.example.ui.theme.CalculatorThemeColors
 import com.example.ui.theme.themeCardShadow
 import com.example.ui.viewmodel.CalculatorViewModel
@@ -75,6 +77,7 @@ fun SmartConverterScreen(
     val converterFilterScrollState = androidx.compose.runtime.saveable.rememberSaveable(saver = androidx.compose.foundation.ScrollState.Saver) {
         androidx.compose.foundation.ScrollState(0)
     }
+    val categoryScrollStates = remember { mutableMapOf<String, androidx.compose.foundation.ScrollState>() }
 
     AnimatedContent(
         targetState = selectedType,
@@ -95,7 +98,8 @@ fun SmartConverterScreen(
                 viewModel = viewModel,
                 themeColors = themeColors,
                 scrollState = converterScrollState,
-                filterScrollState = converterFilterScrollState
+                filterScrollState = converterFilterScrollState,
+                categoryScrollStates = categoryScrollStates
             )
         } else {
             // Screen 2: Detailed Converter View
@@ -109,7 +113,8 @@ fun SmartConverterCategoriesView(
     viewModel: CalculatorViewModel,
     themeColors: CalculatorThemeColors,
     scrollState: androidx.compose.foundation.ScrollState = androidx.compose.runtime.saveable.rememberSaveable(saver = androidx.compose.foundation.ScrollState.Saver) { androidx.compose.foundation.ScrollState(0) },
-    filterScrollState: androidx.compose.foundation.ScrollState = androidx.compose.runtime.saveable.rememberSaveable(saver = androidx.compose.foundation.ScrollState.Saver) { androidx.compose.foundation.ScrollState(0) }
+    filterScrollState: androidx.compose.foundation.ScrollState = androidx.compose.runtime.saveable.rememberSaveable(saver = androidx.compose.foundation.ScrollState.Saver) { androidx.compose.foundation.ScrollState(0) },
+    categoryScrollStates: MutableMap<String, androidx.compose.foundation.ScrollState> = mutableMapOf()
 ) {
     val coroutineScope = rememberCoroutineScope()
     val bounceAnimatable = remember { Animatable(0f) }
@@ -548,6 +553,14 @@ fun SmartConverterCategoriesView(
                                         modifier = Modifier.padding(bottom = 6.dp)
                                     ) {
                                         categoryConverters.chunked(2).forEach { rowItems ->
+                                            val isBn = viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI
+                                            val subtitleTextOf = { type: ConverterType ->
+                                                type.units.map { type.getLocalizedUnitName(it, viewModel.selectedLanguage) }.joinToString(", ")
+                                            }
+                                            val isAnyTitleLongInRow = rowItems.any { isTitleLong(it.getTitle(viewModel.selectedLanguage), isBn) }
+                                            val isAnySubtitleLongInRow = rowItems.any { isSubtitleLong(subtitleTextOf(it), isBn) }
+                                            val rowTitleLines = if (isAnyTitleLongInRow) 2 else 1
+                                            val rowSubtitleLines = if (isAnySubtitleLongInRow) 2 else 1
                                             Row(
                                                 modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
                                                 horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -561,6 +574,8 @@ fun SmartConverterCategoriesView(
                                                                 themeColors = themeColors,
                                                                 modifier = Modifier.fillMaxHeight(),
                                                                 showPinIcon = !isOverviewMode,
+                                                                titleLines = rowTitleLines,
+                                                                subtitleLines = rowSubtitleLines,
                                                                 onClick = { viewModel.openConverter(type) }
                                                             )
                                                         }
@@ -574,10 +589,29 @@ fun SmartConverterCategoriesView(
                                     }
                                 } else {
                                     // Default Horizontal Scrolling Row
+                                    val isBn = viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI
+                                    val subtitleTextOf = { type: ConverterType ->
+                                        type.units.map { type.getLocalizedUnitName(it, viewModel.selectedLanguage) }.joinToString(", ")
+                                    }
+                                    val isAnyTitleLong = categoryConverters.any { isTitleLong(it.getTitle(viewModel.selectedLanguage), isBn) }
+                                    val isAnySubtitleLong = categoryConverters.any { isSubtitleLong(subtitleTextOf(it), isBn) }
+                                    val titleLines = if (isAnyTitleLong) 2 else 1
+                                    val subtitleLines = if (isAnySubtitleLong) 2 else 1
+                                    val cardHeight = when {
+                                        titleLines == 2 && subtitleLines == 2 -> 135.dp
+                                        titleLines == 2 || subtitleLines == 2 -> 122.dp
+                                        else -> 110.dp
+                                    }
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .horizontalScroll(rememberScrollState())
+                                            .horizontalScroll(
+                                                remember(category.name) {
+                                                    categoryScrollStates.getOrPut(category.name) {
+                                                        androidx.compose.foundation.ScrollState(0)
+                                                    }
+                                                }
+                                            )
                                             .padding(bottom = 6.dp),
                                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                                     ) {
@@ -586,7 +620,7 @@ fun SmartConverterCategoriesView(
                                                 Box(
                                                     modifier = Modifier
                                                         .width(152.dp)
-                                                        .height(175.dp)
+                                                        .height(cardHeight)
                                                 ) {
                                                     ConverterCardItem(
                                                         converterType = type,
@@ -594,6 +628,8 @@ fun SmartConverterCategoriesView(
                                                         themeColors = themeColors,
                                                         modifier = Modifier.fillMaxSize(),
                                                         showPinIcon = false,
+                                                        titleLines = titleLines,
+                                                        subtitleLines = subtitleLines,
                                                         onClick = { viewModel.openConverter(type) }
                                                     )
                                                 }
@@ -725,6 +761,8 @@ fun ConverterCardItem(
     themeColors: CalculatorThemeColors,
     modifier: Modifier = Modifier,
     showPinIcon: Boolean = true,
+    titleLines: Int = 2,
+    subtitleLines: Int = 2,
     onClick: () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -753,79 +791,83 @@ fun ConverterCardItem(
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp)
     ) {
         Column(
-            modifier = Modifier.fillMaxHeight().padding(12.dp),
+            modifier = Modifier.fillMaxSize().padding(12.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Column {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clip(CircleShape)
+                        .background(themeColors.buttonEqualBg),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = converterType.icon,
+                        contentDescription = converterType.getTitle(viewModel.selectedLanguage),
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth()
+                    horizontalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(42.dp)
-                            .clip(CircleShape)
-                            .background(themeColors.buttonEqualBg),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = converterType.icon,
-                            contentDescription = converterType.getTitle(viewModel.selectedLanguage),
-                            tint = Color.White,
-                            modifier = Modifier.size(22.dp)
-                        )
-                    }
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(2.dp)
-                    ) {
-                        if (showPinIcon) {
-                            IconButton(
-                                onClick = { viewModel.requestToggleFavoriteConverter(converterType) },
-                                modifier = Modifier.size(28.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.PushPin,
-                                    contentDescription = "Pin Position",
-                                    tint = if (isPinned) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.35f),
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                        }
+                    if (showPinIcon) {
                         IconButton(
-                            onClick = { viewModel.toggleFavoriteConverter(converterType.name) },
+                            onClick = { viewModel.requestToggleFavoriteConverter(converterType) },
                             modifier = Modifier.size(28.dp)
                         ) {
                             Icon(
-                                imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                                contentDescription = "Favorite",
-                                tint = if (isFavorite) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.3f),
-                                modifier = Modifier.size(20.dp)
+                                imageVector = Icons.Default.PushPin,
+                                contentDescription = "Pin Position",
+                                tint = if (isPinned) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.35f),
+                                modifier = Modifier.size(16.dp)
                             )
                         }
                     }
+                    IconButton(
+                        onClick = { viewModel.toggleFavoriteConverter(converterType.name) },
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                            contentDescription = "Favorite",
+                            tint = if (isFavorite) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.3f),
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                 }
+            }
 
-                Spacer(modifier = Modifier.height(8.dp))
-
+            Column(
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Text(
                     text = converterType.getTitle(viewModel.selectedLanguage),
-                    fontSize = 14.sp,
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                     color = themeColors.displayText,
-                    maxLines = 2,
-                    lineHeight = 17.sp
+                    maxLines = titleLines,
+                    minLines = titleLines,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    lineHeight = 16.sp
                 )
 
                 Spacer(modifier = Modifier.height(3.dp))
 
                 Text(
-                    text = converterType.units.take(3).map { converterType.getLocalizedUnitName(it, viewModel.selectedLanguage) }.joinToString(", ") + if (converterType.units.size > 3) "..." else "",
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = themeColors.displayText.copy(alpha = 0.7f),
-                    maxLines = 1
+                    text = converterType.units.map { converterType.getLocalizedUnitName(it, viewModel.selectedLanguage) }.joinToString(", "),
+                    fontSize = 10.sp,
+                    color = themeColors.displayText.copy(alpha = 0.55f),
+                    maxLines = subtitleLines,
+                    minLines = subtitleLines,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    lineHeight = 12.5.sp
                 )
             }
         }
