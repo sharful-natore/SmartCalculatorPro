@@ -2067,6 +2067,8 @@ fun ToolDetailView(
                           toolType != com.example.data.model.ToolType.MARKET_LIST &&
                           toolType != com.example.data.model.ToolType.NOTES_CHECKLIST &&
                           toolType != com.example.data.model.ToolType.WORLD_CLOCK &&
+                          toolType != com.example.data.model.ToolType.PDF_READER &&
+                          toolType != com.example.data.model.ToolType.PDF_MAKER &&
                           !isQuranOrNamaz) {
         baseModifier.verticalScroll(scrollState)
     } else {
@@ -2218,6 +2220,8 @@ fun ToolDetailView(
             ToolType.UNIT_PRICE_COMPARER -> UnitPriceComparerCard(viewModel, themeColors)
             ToolType.SIMPLE_COMPASS -> SimpleCompassCard(viewModel, themeColors)
             ToolType.CAMERA_LEVEL -> com.example.ui.screens.tools.CameraLevelTool(viewModel, themeColors)
+            ToolType.PDF_READER -> com.example.ui.screens.tools.PdfReaderTool(viewModel, themeColors)
+            ToolType.PDF_MAKER -> com.example.ui.screens.tools.PdfMakerTool(viewModel, themeColors)
             ToolType.ASPECT_RATIO -> AspectRatioCard(viewModel, themeColors)
             ToolType.RANDOM_NUMBER_PICKER -> RandomPickerCard(viewModel, themeColors)
             ToolType.MULTI_CALENDAR -> MultiCalendarCard(viewModel, themeColors)
@@ -2808,6 +2812,24 @@ private fun getToolInfoItems(toolType: ToolType, isBn: Boolean): List<Pair<Strin
             listOf(
                 "1. Hardware & System Specs" to "Inspect device model, processor cores, ABI architecture, real-time RAM usage, and internal storage metrics.",
                 "2. Battery, Display & Sensor Directory" to "View battery health, temperature, voltage, screen resolution, refresh rate, and full directory of registered hardware sensors."
+            )
+        }
+        ToolType.PDF_READER -> if (isBn) {
+            listOf(
+                "১. পিডিএফ ফাইল রিডার" to "ডিভাইসের যেকোনো পিডিএফ নথি ওপেন করে সরাসরি পৃষ্ঠা বাই পৃষ্ঠা দেখা, জুম করা এবং নাইট মোডে পড়ার সুবিধা।"
+            )
+        } else {
+            listOf(
+                "1. PDF File Reader" to "Open and view any PDF document on your device, scroll page by page, adjust zoom, and toggle night reading mode."
+            )
+        }
+        ToolType.PDF_MAKER -> if (isBn) {
+            listOf(
+                "১. কাস্টম পিডিএফ মেকার" to "নোটস, শিরোনাম, টেক্সট বা ছবি যুক্ত করে এ৪ (A4) সাইজের প্রফেশনাল পিডিএফ নথি তৈরি, সেভ ও শেয়ার করার সুবিধা।"
+            )
+        } else {
+            listOf(
+                "1. Custom PDF Creator" to "Create professional A4 PDF documents from notes, text, titles, and photos to save or share effortlessly."
             )
         }
     }

@@ -74,7 +74,7 @@ fun PrayerStepCard(
         themeColors.cardBg
     }
     val cardBorder = if (isPlaying) {
-        BorderStroke(2.dp, activeAccent)
+        BorderStroke(1.dp, activeAccent.copy(alpha = 0.5f))
     } else {
         BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.1f))
     }

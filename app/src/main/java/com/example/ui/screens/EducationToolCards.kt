@@ -1,5 +1,6 @@
 package com.example.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -42,13 +43,39 @@ fun GpaCalculatorCard(
 ) {
     val lang = viewModel.selectedLanguage
     var scale by remember { mutableStateOf("5.0") } // "5.0" or "4.0"
+    var inputType by remember { mutableStateOf("grade") } // "grade" or "point"
+
+    val grades5 = listOf("A+", "A", "A-", "B", "C", "D", "F")
+    val gradeToPoints5 = mapOf(
+        "A+" to 5.0,
+        "A" to 4.0,
+        "A-" to 3.5,
+        "B" to 3.0,
+        "C" to 2.0,
+        "D" to 1.0,
+        "F" to 0.0
+    )
+
+    val grades4 = listOf("A+", "A", "A-", "B+", "B", "B-", "C+", "C", "D", "F")
+    val gradeToPoints4 = mapOf(
+        "A+" to 4.0,
+        "A" to 3.75,
+        "A-" to 3.50,
+        "B+" to 3.25,
+        "B" to 3.00,
+        "B-" to 2.75,
+        "C+" to 2.50,
+        "C" to 2.25,
+        "D" to 2.00,
+        "F" to 0.00
+    )
     
     var subjects by remember {
         mutableStateOf(
             listOf(
-                GpaSubject(1, "Subject 1", "5.0", "1.0"),
-                GpaSubject(2, "Subject 2", "4.0", "1.0"),
-                GpaSubject(3, "Subject 3", "3.5", "1.0")
+                GpaSubject(1, "Subject 1", "A+", "1.0"),
+                GpaSubject(2, "Subject 2", "A", "1.0"),
+                GpaSubject(3, "Subject 3", "A-", "1.0")
             )
         )
     }
@@ -57,7 +84,12 @@ fun GpaCalculatorCard(
     var totalPoints = 0.0
     var totalCredits = 0.0
     subjects.forEach { sub ->
-        val gp = sub.gradePoint.toDoubleOrNull() ?: 0.0
+        val gp = if (inputType == "grade") {
+            val map = if (scale == "5.0") gradeToPoints5 else gradeToPoints4
+            map[sub.gradePoint] ?: (sub.gradePoint.toDoubleOrNull() ?: 0.0)
+        } else {
+            sub.gradePoint.toDoubleOrNull() ?: 0.0
+        }
         val cr = sub.credits.toDoubleOrNull() ?: 1.0
         totalPoints += (gp * cr)
         totalCredits += cr
@@ -97,15 +129,59 @@ fun GpaCalculatorCard(
                         .background(if (isSelected) themeColors.buttonEqualBg else Color.Transparent)
                         .clickable { 
                             scale = sc 
-                            // Update grade points based on scale reset
-                            val defaultGp = if (sc == "5.0") "5.0" else "4.0"
-                            subjects = subjects.map { it.copy(gradePoint = defaultGp) }
+                            // Reset subjects default values when switching scale
+                            if (inputType == "grade") {
+                                subjects = subjects.map { it.copy(gradePoint = "A+") }
+                            } else {
+                                val defaultGp = if (sc == "5.0") "5.0" else "4.0"
+                                subjects = subjects.map { it.copy(gradePoint = defaultGp) }
+                            }
                         }
                         .padding(vertical = 6.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = if (sc == "5.0") "৫.০ স্কেল (স্কুল/কলেজ)" else "৪.০ স্কেল (বিশ্ববিদ্যালয়)",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isSelected) Color.White else themeColors.displayText.copy(alpha = 0.7f)
+                    )
+                }
+            }
+        }
+
+        // Input Type Toggle
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(themeColors.background, RoundedCornerShape(8.dp))
+                .padding(2.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            listOf("grade" to "গ্রেড ইনপুট (Grade)", "point" to "পয়েন্ট ইনপুট (Point)").forEach { (type, label) ->
+                val isSelected = inputType == type
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(if (isSelected) themeColors.buttonEqualBg else Color.Transparent)
+                        .clickable { 
+                            inputType = type 
+                            // Reset subjects default values when switching input types
+                            if (type == "grade") {
+                                subjects = subjects.map { it.copy(gradePoint = "A+") }
+                            } else {
+                                val defaultGp = if (scale == "5.0") "5.0" else "4.0"
+                                subjects = subjects.map { it.copy(gradePoint = defaultGp) }
+                            }
+                        }
+                        .padding(vertical = 6.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = label,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = if (isSelected) Color.White else themeColors.displayText.copy(alpha = 0.7f)
@@ -137,16 +213,66 @@ fun GpaCalculatorCard(
                     keyboardType = KeyboardType.Text
                 )
 
-                // Grade Point
-                CustomOutlinedTextField(
-                    value = sub.gradePoint,
-                    onValueChange = { newValue ->
-                        subjects = subjects.map { if (it.id == sub.id) it.copy(gradePoint = newValue) else it }
-                    },
-                    label = "পয়েন্ট (GP)",
-                    themeColors = themeColors,
-                    modifier = Modifier.weight(0.8f)
-                )
+                // Grade Input vs Point Input
+                if (inputType == "grade") {
+                    var dropdownExpanded by remember { mutableStateOf(false) }
+                    val currentGrades = if (scale == "5.0") grades5 else grades4
+                    val displayGrade = if (sub.gradePoint in currentGrades) sub.gradePoint else "A+"
+                    
+                    Box(modifier = Modifier.weight(0.9f)) {
+                        OutlinedButton(
+                            onClick = { dropdownExpanded = true },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(54.dp),
+                            shape = RoundedCornerShape(10.dp),
+                            border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.3f)),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = themeColors.displayText
+                            ),
+                            contentPadding = PaddingValues(horizontal = 4.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(horizontalAlignment = Alignment.Start) {
+                                    Text("গ্রেড", fontSize = 9.sp, color = themeColors.displayText.copy(alpha = 0.6f))
+                                    Text(displayGrade, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                                }
+                                Icon(Icons.Default.ArrowDropDown, contentDescription = null, modifier = Modifier.size(16.dp), tint = themeColors.displayText.copy(alpha = 0.6f))
+                            }
+                        }
+                        
+                        DropdownMenu(
+                            expanded = dropdownExpanded,
+                            onDismissRequest = { dropdownExpanded = false }
+                        ) {
+                            currentGrades.forEach { g ->
+                                val pt = if (scale == "5.0") gradeToPoints5[g] else gradeToPoints4[g]
+                                DropdownMenuItem(
+                                    text = { Text("$g ($pt)") },
+                                    onClick = {
+                                        subjects = subjects.map { if (it.id == sub.id) it.copy(gradePoint = g) else it }
+                                        dropdownExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    // Grade Point Field
+                    CustomOutlinedTextField(
+                        value = sub.gradePoint,
+                        onValueChange = { newValue ->
+                            subjects = subjects.map { if (it.id == sub.id) it.copy(gradePoint = newValue) else it }
+                        },
+                        label = "পয়েন্ট (GP)",
+                        themeColors = themeColors,
+                        modifier = Modifier.weight(0.9f)
+                    )
+                }
 
                 // Credits
                 CustomOutlinedTextField(
@@ -187,7 +313,7 @@ fun GpaCalculatorCard(
         Button(
             onClick = {
                 val nextId = (subjects.maxOfOrNull { it.id } ?: 0) + 1
-                val defaultGp = if (scale == "5.0") "5.0" else "4.0"
+                val defaultGp = if (inputType == "grade") "A+" else (if (scale == "5.0") "5.0" else "4.0")
                 subjects = subjects + GpaSubject(nextId, "Subject $nextId", defaultGp, "1.0")
             },
             colors = ButtonDefaults.buttonColors(containerColor = themeColors.background),

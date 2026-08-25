@@ -272,6 +272,16 @@ enum class ToolType(
         "লটারি ও র‍্যান্ডম নাম্বার, বাস্তবসম্মত ৩ডি কয়েন টস ও অ্যানিমেটেড ডাইস রোল",
         ToolCategory.UTILITY, Icons.Default.Casino
     ),
+    PDF_READER(
+        "PDF Reader & Viewer", "পিডিএফ রিডার",
+        "ডিভাইসের যেকোনো পিডিএফ ফাইল ফাইল ওপেন করে পড়া, জুম করা ও ফ্রেম বাই ফ্রেম দেখার সুবিধা",
+        ToolCategory.UTILITY, Icons.Default.PictureAsPdf
+    ),
+    PDF_MAKER(
+        "PDF Maker & Document Creator", "পিডিএফ মেকার",
+        "টেক্সট নথি, নোট বা ছবি দিয়ে কাস্টম এ৪/লেটার সাইজের পিডিএফ ফাইল তৈরি ও শেয়ারিং",
+        ToolCategory.UTILITY, Icons.Default.PictureAsPdf
+    ),
     // 4. Developer Tools
     PASSWORD_GENERATOR(
         "Password Generator", "পাসওয়ার্ড জেনারেটর",
@@ -454,6 +464,8 @@ enum class ToolType(
                 HOLY_QURAN -> "Holy Quran text, audio recitation, Bangla translation, and AI assistant"
                 NAMAZ_EDUCATION -> "Complete Namaz and Wudu learning guide with Rakat table, step-by-step visual postures, and duas"
                 HADITH_LIBRARY -> "Read Sahih Bukhari, Sahih Muslim, Riyad as-Salihin and major Hadith collections with zero app size impact"
+                PDF_READER -> "View, zoom and read PDF documents on your device using native renderer"
+                PDF_MAKER -> "Create custom A4 PDF documents from notes, text, and photos with zero app size impact"
             }
         }
     }

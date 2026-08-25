@@ -950,17 +950,17 @@ fun AyahCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(if (isCurrentPlaying) 6.dp else 1.dp, RoundedCornerShape(16.dp)),
+            .shadow(if (isCurrentPlaying) 3.dp else 1.dp, RoundedCornerShape(16.dp)),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isCurrentPlaying) {
-                emeraldColor.copy(alpha = if (themeColors.isDark) 0.15f else 0.08f)
+                emeraldColor.copy(alpha = if (themeColors.isDark) 0.12f else 0.06f)
             } else {
                 themeColors.cardBg
             }
         ),
         border = if (isCurrentPlaying) {
-            BorderStroke(2.dp, emeraldColor)
+            BorderStroke(1.dp, emeraldColor.copy(alpha = 0.5f))
         } else {
             BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.08f))
         }
@@ -978,7 +978,7 @@ fun AyahCard(
                 // Ornamental Ayah Number Badge
                 Surface(
                     shape = RoundedCornerShape(10.dp),
-                    color = if (isCurrentPlaying) emeraldColor else emeraldColor.copy(alpha = 0.14f),
+                    color = emeraldColor.copy(alpha = 0.14f),
                     border = BorderStroke(1.dp, emeraldColor.copy(alpha = 0.4f))
                 ) {
                     Row(
@@ -989,7 +989,7 @@ fun AyahCard(
                             text = "${surah.number}:${ayah.numberInSurah}",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (isCurrentPlaying) Color.White else emeraldColor
+                            color = emeraldColor
                         )
                     }
                 }

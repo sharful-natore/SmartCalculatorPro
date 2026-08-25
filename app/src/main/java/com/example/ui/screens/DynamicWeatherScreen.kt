@@ -2,6 +2,8 @@ package com.example.ui.screens
 
 import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -51,6 +53,31 @@ fun DynamicWeatherScreen(
     themeColors: CalculatorThemeColors,
     isBn: Boolean
 ) {
+    val context = LocalContext.current
+    var isDetecting by remember { mutableStateOf(false) }
+
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val fineGranted = permissions[android.Manifest.permission.ACCESS_FINE_LOCATION] ?: false
+        val coarseGranted = permissions[android.Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
+        if (fineGranted || coarseGranted) {
+            isDetecting = true
+            viewModel.autoDetectIslamicLocation(context) { success, msg ->
+                isDetecting = false
+                if (msg != null) {
+                    Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+                }
+            }
+        } else {
+            Toast.makeText(
+                context,
+                if (isBn) "লোকেশন পারমিশন ছাড়া স্বয়ংক্রিয় স্থান নির্ধারণ করা সম্ভব নয়।" else "Auto location detection is not possible without location permission.",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+
     var showSearchDialog by remember { mutableStateOf(false) }
     var expandedDayIndices by remember { mutableStateOf(setOf<Int>()) }
 
@@ -210,17 +237,33 @@ fun DynamicWeatherScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         item {
-                            var isDetecting by remember { mutableStateOf(false) }
-                            val context = LocalContext.current
                             FilterChip(
                                 selected = false,
                                 onClick = {
-                                    isDetecting = true
-                                    viewModel.autoDetectIslamicLocation(context) { success, msg ->
-                                        isDetecting = false
-                                        if (msg != null) {
-                                            Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+                                    val hasFine = androidx.core.content.ContextCompat.checkSelfPermission(
+                                        context,
+                                        android.Manifest.permission.ACCESS_FINE_LOCATION
+                                    ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                                    val hasCoarse = androidx.core.content.ContextCompat.checkSelfPermission(
+                                        context,
+                                        android.Manifest.permission.ACCESS_COARSE_LOCATION
+                                    ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+
+                                    if (hasFine || hasCoarse) {
+                                        isDetecting = true
+                                        viewModel.autoDetectIslamicLocation(context) { success, msg ->
+                                            isDetecting = false
+                                            if (msg != null) {
+                                                Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+                                            }
                                         }
+                                    } else {
+                                        locationPermissionLauncher.launch(
+                                            arrayOf(
+                                                android.Manifest.permission.ACCESS_FINE_LOCATION,
+                                                android.Manifest.permission.ACCESS_COARSE_LOCATION
+                                            )
+                                        )
                                     }
                                 },
                                 label = {
