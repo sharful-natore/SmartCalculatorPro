@@ -587,22 +587,6 @@ fun BatteryMonitorTool(
                                         join = androidx.compose.ui.graphics.StrokeJoin.Round
                                     )
                                 )
-
-                                // 4. Draw Point Markers
-                                for (i in 0 until pointsCount) {
-                                    val point = getPoint(i)
-                                    drawCircle(
-                                        color = Color.White,
-                                        radius = 1.5.dp.toPx(),
-                                        center = point
-                                    )
-                                    drawCircle(
-                                        color = waveColor,
-                                        radius = 3.dp.toPx(),
-                                        center = point,
-                                        style = Stroke(width = 1.dp.toPx())
-                                    )
-                                }
                             }
                         }
                     }

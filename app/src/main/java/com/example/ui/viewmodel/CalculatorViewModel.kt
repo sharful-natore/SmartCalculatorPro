@@ -448,14 +448,26 @@ class CalculatorViewModel(
         }
     }
 
-    fun getSortedTools(tools: List<com.example.data.model.ToolType>): List<com.example.data.model.ToolType> {
-        val usages = allToolUsage.value.associate { it.toolId to it.usageCount }
-        return tools.sortedByDescending { usages["TOOL_${it.name}"] ?: 0 }
+    fun getSortedTools(
+        tools: List<com.example.data.model.ToolType>,
+        usageList: List<ToolUsage>
+    ): List<com.example.data.model.ToolType> {
+        val usages = usageList.associate { it.toolId to it.usageCount }
+        return tools.sortedWith(
+            compareByDescending<com.example.data.model.ToolType> { usages["TOOL_${it.name}"] ?: 0 }
+                .thenBy { it.titleEn }
+        )
     }
 
-    fun getSortedConverters(converters: List<com.example.data.model.ConverterType>): List<com.example.data.model.ConverterType> {
-        val usages = allToolUsage.value.associate { it.toolId to it.usageCount }
-        return converters.sortedByDescending { usages["CONV_${it.name}"] ?: 0 }
+    fun getSortedConverters(
+        converters: List<com.example.data.model.ConverterType>,
+        usageList: List<ToolUsage>
+    ): List<com.example.data.model.ConverterType> {
+        val usages = usageList.associate { it.toolId to it.usageCount }
+        return converters.sortedWith(
+            compareByDescending<com.example.data.model.ConverterType> { usages["CONV_${it.name}"] ?: 0 }
+                .thenBy { it.titleEn }
+        )
     }
 
     // History deletion confirmation state
@@ -2170,25 +2182,34 @@ How can I help you today?"""
         )
     }
 
-    fun getCategoryTopTools(category: com.example.data.model.ToolCategory): List<com.example.data.model.ToolType> {
-        return getAllOrderedToolsForCategory(category).take(4)
+    fun getCategoryTopTools(
+        category: com.example.data.model.ToolCategory,
+        usageList: List<ToolUsage>
+    ): List<com.example.data.model.ToolType> {
+        return getAllOrderedToolsForCategory(category, usageList).take(4)
     }
 
-    fun getAllOrderedToolsForCategory(category: com.example.data.model.ToolCategory): List<com.example.data.model.ToolType> {
-        val allInCat = com.example.data.model.ToolType.values().filter { it.category == category }
-        val savedOrder = categoryTopToolsMap[category.name]
-        if (savedOrder.isNullOrEmpty()) return allInCat
+    // Keep original for legacy compatibility
+    fun getCategoryTopTools(category: com.example.data.model.ToolCategory): List<com.example.data.model.ToolType> {
+        return getCategoryTopTools(category, allToolUsage.value)
+    }
 
-        val result = mutableListOf<com.example.data.model.ToolType>()
-        savedOrder.forEach { name ->
-            allInCat.find { it.name == name }?.let { tool ->
-                if (!result.contains(tool)) result.add(tool)
-            }
-        }
-        allInCat.forEach { tool ->
-            if (!result.contains(tool)) result.add(tool)
-        }
-        return result
+    fun getAllOrderedToolsForCategory(
+        category: com.example.data.model.ToolCategory,
+        usageList: List<ToolUsage>
+    ): List<com.example.data.model.ToolType> {
+        val allInCat = com.example.data.model.ToolType.values().filter { it.category == category }
+        val usages = usageList.associate { it.toolId to it.usageCount }
+
+        return allInCat.sortedWith(
+            compareByDescending<com.example.data.model.ToolType> { usages["TOOL_${it.name}"] ?: 0 }
+                .thenBy { it.titleEn }
+        )
+    }
+
+    // Keep original for legacy compatibility if needed, but internally uses allToolUsage.value
+    fun getAllOrderedToolsForCategory(category: com.example.data.model.ToolCategory): List<com.example.data.model.ToolType> {
+        return getAllOrderedToolsForCategory(category, allToolUsage.value)
     }
 
     fun pinToolToCategoryTop4(toolType: com.example.data.model.ToolType, positionIndex: Int) {
@@ -2234,25 +2255,34 @@ How can I help you today?"""
         return emptyMap()
     }
 
-    fun getCategoryTopConverters(category: com.example.data.model.ConverterCategory): List<com.example.data.model.ConverterType> {
-        return getAllOrderedConvertersForCategory(category).take(4)
+    fun getCategoryTopConverters(
+        category: com.example.data.model.ConverterCategory,
+        usageList: List<ToolUsage>
+    ): List<com.example.data.model.ConverterType> {
+        return getAllOrderedConvertersForCategory(category, usageList).take(4)
     }
 
-    fun getAllOrderedConvertersForCategory(category: com.example.data.model.ConverterCategory): List<com.example.data.model.ConverterType> {
-        val allInCat = com.example.data.model.ConverterType.values().filter { it.category == category }
-        val savedOrder = categoryTopConvertersMap[category.name]
-        if (savedOrder.isNullOrEmpty()) return allInCat
+    // Keep original for legacy compatibility
+    fun getCategoryTopConverters(category: com.example.data.model.ConverterCategory): List<com.example.data.model.ConverterType> {
+        return getCategoryTopConverters(category, allToolUsage.value)
+    }
 
-        val result = mutableListOf<com.example.data.model.ConverterType>()
-        savedOrder.forEach { name ->
-            allInCat.find { it.name == name }?.let { conv ->
-                if (!result.contains(conv)) result.add(conv)
-            }
-        }
-        allInCat.forEach { conv ->
-            if (!result.contains(conv)) result.add(conv)
-        }
-        return result
+    fun getAllOrderedConvertersForCategory(
+        category: com.example.data.model.ConverterCategory,
+        usageList: List<ToolUsage>
+    ): List<com.example.data.model.ConverterType> {
+        val allInCat = com.example.data.model.ConverterType.values().filter { it.category == category }
+        val usages = usageList.associate { it.toolId to it.usageCount }
+
+        return allInCat.sortedWith(
+            compareByDescending<com.example.data.model.ConverterType> { usages["CONV_${it.name}"] ?: 0 }
+                .thenBy { it.titleEn }
+        )
+    }
+
+    // Keep original for legacy compatibility if needed
+    fun getAllOrderedConvertersForCategory(category: com.example.data.model.ConverterCategory): List<com.example.data.model.ConverterType> {
+        return getAllOrderedConvertersForCategory(category, allToolUsage.value)
     }
 
     fun pinConverterToCategoryTop4(converterType: com.example.data.model.ConverterType, positionIndex: Int) {

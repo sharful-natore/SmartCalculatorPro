@@ -59,6 +59,9 @@ class QuickCalendarActivity : ComponentActivity() {
         val viewModelFactory = CalculatorViewModelFactory(repository, usageRepository, this)
         viewModel = ViewModelProvider(this, viewModelFactory)[CalculatorViewModel::class.java]
 
+        // Record usage for Smart Calendar
+        viewModel.recordToolUsage("TOOL_MULTI_CALENDAR")
+
         setContent {
             MyApplicationTheme {
                 val themeColors = viewModel.getCurrentThemeColors()

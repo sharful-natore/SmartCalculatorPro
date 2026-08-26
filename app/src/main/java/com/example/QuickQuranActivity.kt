@@ -54,6 +54,9 @@ class QuickQuranActivity : ComponentActivity() {
         val viewModelFactory = CalculatorViewModelFactory(repository, usageRepository, this)
         viewModel = ViewModelProvider(this, viewModelFactory)[CalculatorViewModel::class.java]
 
+        // Record usage for Holy Quran
+        viewModel.recordToolUsage("TOOL_HOLY_QURAN")
+
         setContent {
             MyApplicationTheme {
                 val themeColors = viewModel.getCurrentThemeColors()

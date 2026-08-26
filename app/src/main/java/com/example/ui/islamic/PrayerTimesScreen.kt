@@ -652,9 +652,9 @@ fun ModernPrayerTimesCard(
                 .fillMaxWidth()
                 .widthIn(max = 600.dp)
                 .padding(horizontal = 2.dp, vertical = 4.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.Top
         ) {
-            // --- TOP HEADER BAR: District Title & Actions (Auto-Location, District Selector, Monthly, Refresh Sync) ---
+            // --- TOP HEADER BAR ---
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -711,7 +711,7 @@ fun ModernPrayerTimesCard(
                         }
                     }
 
-                    // Auto Location Detect Button (Right of District Selector)
+                    // Auto Location Detect Button
                     Surface(
                         shape = CircleShape,
                         color = themeColors.titleBarBg.copy(alpha = 0.12f),
@@ -774,7 +774,7 @@ fun ModernPrayerTimesCard(
                         }
                     }
 
-                    // Global Hijri Date Moon Sync / Refresh Button
+                    // Global Hijri Date Moon Sync
                     Surface(
                         shape = CircleShape,
                         color = themeColors.titleBarBg.copy(alpha = 0.12f),
@@ -808,7 +808,9 @@ fun ModernPrayerTimesCard(
                 }
             }
 
-            // --- 1. DUAL HERO STATUS CARDS (এখন & পরবর্তী - ENHANCED VISIBILITY & DISTINCT TIMINGS) ---
+            Spacer(modifier = Modifier.height(12.dp).weight(1f, fill = false))
+
+            // --- 1. DUAL HERO STATUS CARDS (এখন & পরবর্তী) ---
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1122,6 +1124,8 @@ fun ModernPrayerTimesCard(
                 }
             }
 
+            Spacer(modifier = Modifier.height(12.dp).weight(1f, fill = false))
+
             // --- 2. SUNRISE & SUNSET CARD (সূর্যোদয়, সূর্যাস্ত ও দিনের দৈর্ঘ্য) ---
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -1256,6 +1260,8 @@ fun ModernPrayerTimesCard(
                 }
             }
 
+            Spacer(modifier = Modifier.height(12.dp).weight(1f, fill = false))
+
             // --- 3. DATE NAVIGATION BAR (TRIPLE CALENDAR SELECTOR) ---
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -1335,6 +1341,8 @@ fun ModernPrayerTimesCard(
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(12.dp).weight(1f, fill = false))
 
             // --- 4. DAILY SALAH TRACKER (দৈনিক ৫ ওয়াক্ত সালাত ট্র্যাকার - ওয়াক্তের সময়ের উপরে ও ডেট সিলেক্টরের নিচে) ---
             Card(
@@ -1471,6 +1479,8 @@ fun ModernPrayerTimesCard(
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(12.dp).weight(1f, fill = false))
 
             // --- 5. PRAYER SCHEDULE TIMETABLE (LIST / TABLE) ---
             Card(

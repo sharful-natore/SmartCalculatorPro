@@ -256,7 +256,8 @@ fun DashboardCategoriesView(
                     tool.titleBn.lowercase().contains(searchQuery) ||
                     tool.descriptionBn.lowercase().contains(searchQuery)
             matchesCategory && matchesSearch
-        }
+        },
+        toolUsage
     )
 
     Column(
@@ -1611,7 +1612,7 @@ fun DashboardCategoriesView(
                     val expandedCategories = viewModel.expandedToolCategories
                     val topToolsMap = viewModel.categoryTopToolsMap
                     categoriesToShow.forEach { category ->
-                        val orderedCatTools = viewModel.getAllOrderedToolsForCategory(category)
+                        val orderedCatTools = viewModel.getAllOrderedToolsForCategory(category, toolUsage)
                         val categoryTools = orderedCatTools.filter { currentFilteredTools.contains(it) }
 
                         if (categoryTools.isNotEmpty()) {
@@ -3164,26 +3165,33 @@ fun DashboardSearchResultsView(
     themeColors: CalculatorThemeColors,
     isBn: Boolean
 ) {
+    val toolUsage by viewModel.allToolUsage.collectAsStateWithLifecycle()
     val cleanQuery = searchQuery.trim().lowercase()
 
-    val matchedTools = remember(cleanQuery, isBn) {
-        ToolType.values().filter { tool ->
-            tool.titleEn.lowercase().contains(cleanQuery) ||
-            tool.titleBn.lowercase().contains(cleanQuery) ||
-            tool.descriptionBn.lowercase().contains(cleanQuery) ||
-            tool.category.titleEn.lowercase().contains(cleanQuery) ||
-            tool.category.titleBn.lowercase().contains(cleanQuery)
-        }
+    val matchedTools = remember(cleanQuery, isBn, toolUsage) {
+        viewModel.getSortedTools(
+            ToolType.values().filter { tool ->
+                tool.titleEn.lowercase().contains(cleanQuery) ||
+                tool.titleBn.lowercase().contains(cleanQuery) ||
+                tool.descriptionBn.lowercase().contains(cleanQuery) ||
+                tool.category.titleEn.lowercase().contains(cleanQuery) ||
+                tool.category.titleBn.lowercase().contains(cleanQuery)
+            },
+            toolUsage
+        )
     }
 
-    val matchedConverters = remember(cleanQuery, isBn) {
-        ConverterType.values().filter { conv ->
-            conv.titleEn.lowercase().contains(cleanQuery) ||
-            conv.titleBn.lowercase().contains(cleanQuery) ||
-            conv.category.titleEn.lowercase().contains(cleanQuery) ||
-            conv.category.titleBn.lowercase().contains(cleanQuery) ||
-            conv.units.any { it.lowercase().contains(cleanQuery) }
-        }
+    val matchedConverters = remember(cleanQuery, isBn, toolUsage) {
+        viewModel.getSortedConverters(
+            ConverterType.values().filter { conv ->
+                conv.titleEn.lowercase().contains(cleanQuery) ||
+                conv.titleBn.lowercase().contains(cleanQuery) ||
+                conv.category.titleEn.lowercase().contains(cleanQuery) ||
+                conv.category.titleBn.lowercase().contains(cleanQuery) ||
+                conv.units.any { it.lowercase().contains(cleanQuery) }
+            },
+            toolUsage
+        )
     }
 
     val totalMatches = matchedTools.size + matchedConverters.size

@@ -54,6 +54,9 @@ class QuickMarketActivity : ComponentActivity() {
         val viewModelFactory = CalculatorViewModelFactory(repository, usageRepository, this)
         viewModel = ViewModelProvider(this, viewModelFactory)[CalculatorViewModel::class.java]
 
+        // Record usage for Market List
+        viewModel.recordToolUsage("TOOL_MARKET_LIST")
+
         setContent {
             MyApplicationTheme {
                 val themeColors = viewModel.getCurrentThemeColors()

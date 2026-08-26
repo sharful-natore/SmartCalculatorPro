@@ -223,7 +223,7 @@ fun ModernSehriIftarCard(
                 .fillMaxWidth()
                 .widthIn(max = 600.dp)
                 .padding(horizontal = 4.dp, vertical = 6.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            verticalArrangement = Arrangement.Top
         ) {
             // --- TOP BAR: Location Selection Prompt & District / GPS Selector ---
             Row(
@@ -346,6 +346,8 @@ fun ModernSehriIftarCard(
                 }
             }
 
+            Spacer(modifier = Modifier.height(14.dp).weight(1f, fill = false))
+
             // =========================================================================
             // --- 1. HERO CARD (থিমের সাথে মিল রেখে মিনিমাল ডিজাইন) ---
             // =========================================================================
@@ -361,7 +363,7 @@ fun ModernSehriIftarCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(14.dp),
-                    verticalArrangement = Arrangement.spacedBy(9.dp)
+                    verticalArrangement = Arrangement.Top
                 ) {
                     // Top row of Hero: Arabic/Hijri Date of Today + Real-Time Sync/Refresh Button
                     Row(
@@ -433,6 +435,8 @@ fun ModernSehriIftarCard(
                             }
                         }
                     }
+
+                    Spacer(modifier = Modifier.height(9.dp).weight(1f, fill = false))
 
                     // Middle: Sehri End Time & Iftar Time Side by Side
                     Row(
@@ -525,6 +529,8 @@ fun ModernSehriIftarCard(
                             }
                         }
                     }
+
+                    Spacer(modifier = Modifier.height(9.dp).weight(1f, fill = false))
 
                     // Prohibited Day Warning Banner (If today is a forbidden day)
                     if (todayForbiddenReason != null) {
@@ -633,6 +639,8 @@ fun ModernSehriIftarCard(
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(14.dp).weight(1f, fill = false))
 
             // =========================================================================
             // --- 2. SECOND CARD (আজকের সূর্যোদয়, সূর্যাস্তের টাইম ও রোজার মোট সময়) ---
@@ -776,6 +784,8 @@ fun ModernSehriIftarCard(
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(14.dp).weight(1f, fill = false))
 
             // =============================================================================================
             // --- 3. FULL HIJRI MONTH SCHEDULE (আরবি মাস ভিত্তিক সম্পূর্ণ ৩০ দিনের কম্প্যাক্ট সময়সূচি) ---

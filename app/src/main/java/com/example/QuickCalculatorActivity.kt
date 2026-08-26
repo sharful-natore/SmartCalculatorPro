@@ -61,6 +61,9 @@ class QuickCalculatorActivity : ComponentActivity() {
         val viewModelFactory = CalculatorViewModelFactory(repository, usageRepository, this)
         viewModel = ViewModelProvider(this, viewModelFactory)[CalculatorViewModel::class.java]
 
+        // Record usage for Main Calculator
+        viewModel.recordToolUsage("MAIN_CALC")
+
         setContent {
             MyApplicationTheme {
                 val themeColors = viewModel.getCurrentThemeColors()

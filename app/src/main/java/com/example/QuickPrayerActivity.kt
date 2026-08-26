@@ -57,6 +57,9 @@ class QuickPrayerActivity : ComponentActivity() {
         val viewModelFactory = CalculatorViewModelFactory(repository, usageRepository, this)
         viewModel = ViewModelProvider(this, viewModelFactory)[CalculatorViewModel::class.java]
 
+        // Record usage for Prayer Times
+        viewModel.recordToolUsage("TOOL_PRAYER_TIMES")
+
         setContent {
             MyApplicationTheme {
                 val themeColors = viewModel.getCurrentThemeColors()

@@ -211,7 +211,8 @@ fun SmartConverterCategoriesView(
                     converter.titleBn.lowercase().contains(searchQuery) ||
                     converter.units.any { it.lowercase().contains(searchQuery) }
             matchesCategory && matchesSearch
-        }
+        },
+        toolUsage
     )
 
     Column(
@@ -457,7 +458,7 @@ fun SmartConverterCategoriesView(
 
                     val topConvertersMap = viewModel.categoryTopConvertersMap
                     categoriesToShow.forEach { category ->
-                        val orderedCatConverters = viewModel.getAllOrderedConvertersForCategory(category)
+                        val orderedCatConverters = viewModel.getAllOrderedConvertersForCategory(category, toolUsage)
                         val categoryConverters = orderedCatConverters.filter { currentFilteredConverters.contains(it) }
 
                         if (categoryConverters.isNotEmpty()) {
