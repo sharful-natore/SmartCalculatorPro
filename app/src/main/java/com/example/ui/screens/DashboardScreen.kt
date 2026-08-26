@@ -2099,7 +2099,8 @@ fun ToolDetailView(
                          toolType == com.example.data.model.ToolType.NAMAZ_EDUCATION ||
                          toolType == com.example.data.model.ToolType.HADITH_LIBRARY ||
                          toolType == com.example.data.model.ToolType.PDF_READER ||
-                         toolType == com.example.data.model.ToolType.PDF_MAKER
+                         toolType == com.example.data.model.ToolType.PDF_MAKER ||
+                          toolType == com.example.data.model.ToolType.QR_BARCODE
 
     val isFullWidthTool = toolType == com.example.data.model.ToolType.MARKET_LIST || isQuranOrNamaz
 
@@ -2109,6 +2110,7 @@ fun ToolDetailView(
                           toolType != com.example.data.model.ToolType.WORLD_CLOCK &&
                           toolType != com.example.data.model.ToolType.PDF_READER &&
                           toolType != com.example.data.model.ToolType.PDF_MAKER &&
+                          toolType != com.example.data.model.ToolType.QR_BARCODE &&
                           !isQuranOrNamaz) {
         baseModifier.verticalScroll(scrollState)
     } else {
@@ -2262,6 +2264,7 @@ fun ToolDetailView(
             ToolType.CAMERA_LEVEL -> com.example.ui.screens.tools.CameraLevelTool(viewModel, themeColors)
             ToolType.PDF_READER -> com.example.ui.screens.tools.PdfReaderTool(viewModel, themeColors, onBackClick = { viewModel.closeToolDetail() })
             ToolType.PDF_MAKER -> com.example.ui.screens.tools.PdfMakerTool(viewModel, themeColors, onBackClick = { viewModel.closeToolDetail() })
+            ToolType.QR_BARCODE -> com.example.ui.screens.tools.QrBarcodeTool(viewModel, themeColors, onBackClick = { viewModel.closeToolDetail() })
             ToolType.ASPECT_RATIO -> AspectRatioCard(viewModel, themeColors)
             ToolType.RANDOM_NUMBER_PICKER -> RandomPickerCard(viewModel, themeColors)
             ToolType.MULTI_CALENDAR -> MultiCalendarCard(viewModel, themeColors)
@@ -2882,6 +2885,17 @@ private fun getToolInfoItems(toolType: ToolType, isBn: Boolean): List<Pair<Strin
         } else {
             listOf(
                 "1. Custom PDF Creator" to "Create professional A4 PDF documents from notes, text, titles, and photos to save or share effortlessly."
+            )
+        }
+        ToolType.QR_BARCODE -> if (isBn) {
+            listOf(
+                "১. কিউআর স্ক্যানার" to "যেকোনো কিউআর বা বারকোড দ্রুত স্ক্যান করুন এবং ফ্ল্যাশলাইট বা গ্যালারি থেকে ছবি নিয়ে স্ক্যান করার সুবিধা।",
+                "২. কিউআর ক্রিয়েটর" to "টেক্সট, ওয়েবসাইট লিঙ্ক, ফোন নাম্বার বা ওয়াইফাই ইনফো দিয়ে নিজের কাস্টম কিউআর কোড তৈরি করুন।"
+            )
+        } else {
+            listOf(
+                "1. QR Scanner" to "Quickly scan any QR or Barcode, with flashlight support and ability to scan from gallery images.",
+                "2. QR Creator" to "Create custom QR codes using text, website links, phone numbers, or WiFi information."
             )
         }
     }

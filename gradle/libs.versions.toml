@@ -44,6 +44,7 @@ googleid = "1.1.1"
 mlkitBarcodeScanning = "17.3.0"
 media3 = "1.5.1"
 workRuntimeKtx = "2.10.0"
+zxingCore = "3.5.3"
 adhan = "1.2.1"
 
 
@@ -106,6 +107,7 @@ mlkit-barcode-scanning = { group = "com.google.mlkit", name = "barcode-scanning"
 androidx-media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "media3" }
 androidx-media3-ui = { group = "androidx.media3", name = "media3-ui", version.ref = "media3" }
 androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workRuntimeKtx" }
+zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxingCore" }
 adhan = { group = "com.batoulapps.adhan", name = "adhan", version.ref = "adhan" }
 
 

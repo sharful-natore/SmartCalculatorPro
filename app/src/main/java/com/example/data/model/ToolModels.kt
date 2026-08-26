@@ -272,6 +272,11 @@ enum class ToolType(
         "লটারি ও র‍্যান্ডম নাম্বার, বাস্তবসম্মত ৩ডি কয়েন টস ও অ্যানিমেটেড ডাইস রোল",
         ToolCategory.UTILITY, Icons.Default.Casino
     ),
+    QR_BARCODE(
+        "QR & Barcode Scanner/Creator", "কিউআর ও বারকোড টুল",
+        "যেকোনো বারকোড ও কিউআর কোড ফাস্ট স্ক্যান করা এবং নতুন কিউআর তৈরি করার টুল",
+        ToolCategory.UTILITY, Icons.Default.QrCodeScanner
+    ),
     PDF_READER(
         "PDF Reader & Viewer", "পিডিএফ রিডার",
         "ডিভাইসের যেকোনো পিডিএফ ফাইল ফাইল ওপেন করে পড়া, জুম করা ও ফ্রেম বাই ফ্রেম দেখার সুবিধা",
@@ -470,6 +475,7 @@ enum class ToolType(
                 HOLY_QURAN -> "Holy Quran text, audio recitation, Bangla translation, and AI assistant"
                 NAMAZ_EDUCATION -> "Complete Namaz and Wudu learning guide with Rakat table, step-by-step visual postures, and duas"
                 HADITH_LIBRARY -> "Read Sahih Bukhari, Sahih Muslim, Riyad as-Salihin and major Hadith collections with zero app size impact"
+                QR_BARCODE -> "Ultra-fast QR and Barcode scanner and creator with zero app size impact"
                 PDF_READER -> "View, zoom and read PDF documents on your device using native renderer"
                 PDF_MAKER -> "Create custom A4 PDF documents from notes, text, and photos with zero app size impact"
             }
