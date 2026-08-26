@@ -10,4 +10,12 @@ class ToolUsageRepository(private val toolUsageDao: ToolUsageDao) {
     suspend fun recordUsage(toolId: String) {
         toolUsageDao.recordUsage(toolId)
     }
+
+    suspend fun getAllUsageList(): List<ToolUsage> = toolUsageDao.getAllUsageList()
+
+    suspend fun restoreUsageList(list: List<ToolUsage>) {
+        list.forEach { usage ->
+            toolUsageDao.insertOrUpdateUsage(usage)
+        }
+    }
 }

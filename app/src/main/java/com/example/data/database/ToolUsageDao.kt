@@ -12,6 +12,9 @@ interface ToolUsageDao {
     @Query("SELECT * FROM tool_usage")
     fun getAllUsage(): Flow<List<ToolUsage>>
 
+    @Query("SELECT * FROM tool_usage")
+    suspend fun getAllUsageList(): List<ToolUsage>
+
     @Query("SELECT usageCount FROM tool_usage WHERE toolId = :toolId")
     suspend fun getUsageCount(toolId: String): Int?
 

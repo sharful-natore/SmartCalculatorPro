@@ -947,14 +947,43 @@ fun DashboardCategoriesView(
                 toolItems + converterItems
             }
 
-            // Top 10 Most Used Tools/Converters for Featured
-            val topFeaturedList = remember(allAvailableDashboardItems, usageMap, isBn) {
-                allAvailableDashboardItems.sortedWith(
-                    compareByDescending<FeaturedDashboardItem> { item ->
-                        val id = if (item.isTool && item.toolType != null) item.toolType.name else item.converterType?.name ?: item.key
-                        (usageMap[id] ?: usageMap[item.key] ?: usageMap["CONV_$id"] ?: 0) as Int
-                    }.thenBy { if (isBn) it.titleBn else it.titleEn }
-                ).take(10)
+            // Top Most Used Tools/Converters for Featured (>= 3 uses)
+            val topFeaturedList = remember(allAvailableDashboardItems, usageMap, isBn, viewModel.featuredCustomOrder, viewModel.featuredRemovedKeys) {
+                val qualifyingItems = allAvailableDashboardItems.filter { item ->
+                    val count = if (item.isTool && item.toolType != null) {
+                        (usageMap["TOOL_${item.toolType.name}"] ?: usageMap[item.toolType.name] ?: 0) as Int
+                    } else if (item.converterType != null) {
+                        (usageMap["CONV_${item.converterType.name}"] ?: usageMap[item.converterType.name] ?: 0) as Int
+                    } else 0
+
+                    count >= 3 && !viewModel.featuredRemovedKeys.contains(item.key)
+                }
+
+                val customOrder = viewModel.featuredCustomOrder
+                if (customOrder.isNotEmpty()) {
+                    qualifyingItems.sortedWith(
+                        compareBy<FeaturedDashboardItem> { item ->
+                            val idx = customOrder.indexOf(item.key)
+                            if (idx != -1) idx else Int.MAX_VALUE
+                        }.thenByDescending { item ->
+                            if (item.isTool && item.toolType != null) {
+                                (usageMap["TOOL_${item.toolType.name}"] ?: usageMap[item.toolType.name] ?: 0) as Int
+                            } else if (item.converterType != null) {
+                                (usageMap["CONV_${item.converterType.name}"] ?: usageMap[item.converterType.name] ?: 0) as Int
+                            } else 0
+                        }
+                    ).take(10)
+                } else {
+                    qualifyingItems.sortedWith(
+                        compareByDescending<FeaturedDashboardItem> { item ->
+                            if (item.isTool && item.toolType != null) {
+                                (usageMap["TOOL_${item.toolType.name}"] ?: usageMap[item.toolType.name] ?: 0) as Int
+                            } else if (item.converterType != null) {
+                                (usageMap["CONV_${item.converterType.name}"] ?: usageMap[item.converterType.name] ?: 0) as Int
+                            } else 0
+                        }.thenBy { if (isBn) it.titleBn else it.titleEn }
+                    ).take(10)
+                }
             }
 
             // User's Favorite Tools/Converters (up to 10, newest first)
@@ -1039,8 +1068,9 @@ fun DashboardCategoriesView(
                                 modifier = Modifier.size(15.dp)
                             )
                             Spacer(modifier = Modifier.width(5.dp))
+                            val featuredCount = topFeaturedList.size
                             Text(
-                                text = if (isBn) "জনপ্রিয় (১০)" else "Featured (10)",
+                                text = if (isBn) "জনপ্রিয় ($featuredCount)" else "Featured ($featuredCount)",
                                 fontSize = 12.5.sp,
                                 fontWeight = if (isFeaturedActive) FontWeight.ExtraBold else FontWeight.SemiBold,
                                 color = if (isFeaturedActive) Color.White else themeColors.displayText
@@ -1103,7 +1133,54 @@ fun DashboardCategoriesView(
                 }
             }
 
-            if (activeDashboardTab == "FAVORITES" && topFavoritesList.isEmpty()) {
+            if (activeDashboardTab == "FEATURED" && topFeaturedList.isEmpty()) {
+                // Empty Featured State
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                        .themeCardShadow(themeColors, elevation = 1.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(containerColor = themeColors.cardBg)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFFFF6D00).copy(alpha = 0.15f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Whatshot,
+                                contentDescription = null,
+                                tint = Color(0xFFFF6D00),
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = if (isBn) "কোনো জনপ্রিয় টুল নেই" else "No Featured Tools Yet",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.displayText
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = if (isBn) "কমপক্ষে ৩ বার ব্যবহার করা টুলস ও কনভার্টার এখানে স্বয়ংক্রিয়ভাবে দেখাবে।" else "Tools & converters used at least 3 times will automatically appear here.",
+                                fontSize = 11.sp,
+                                color = themeColors.displayText.copy(alpha = 0.6f)
+                            )
+                        }
+                    }
+                }
+            } else if (activeDashboardTab == "FAVORITES" && topFavoritesList.isEmpty()) {
                 // Empty Favorites State
                 Card(
                     modifier = Modifier
@@ -1421,7 +1498,7 @@ fun DashboardCategoriesView(
         // Long Press / Reorder Option Dialog
         if (selectedItemForOptions != null) {
             val item = selectedItemForOptions!!
-            val index = combinedList.indexOf(item)
+            val index = currentDisplayList.indexOf(item)
             AlertDialog(
                 onDismissRequest = { selectedItemForOptions = null },
                 title = {
@@ -1446,13 +1523,22 @@ fun DashboardCategoriesView(
                         if (index > 0) {
                             Button(
                                 onClick = {
-                                    val newList = viewModel.orderedFavoriteTools.toMutableList()
-                                    val currentKey = item.key
-                                    val actualIdx = newList.indexOfFirst { it == currentKey || (item.converterType != null && it == item.converterType.name) }
-                                    if (actualIdx > 0) {
-                                        val elem = newList.removeAt(actualIdx)
-                                        newList.add(actualIdx - 1, elem)
-                                        viewModel.saveOrderedFavorites(newList)
+                                    if (activeDashboardTab == "FEATURED") {
+                                        val currentKeys = currentDisplayList.map { it.key }.toMutableList()
+                                        if (index < currentKeys.size) {
+                                            val elem = currentKeys.removeAt(index)
+                                            currentKeys.add(index - 1, elem)
+                                            viewModel.saveFeaturedCustomOrder(currentKeys)
+                                        }
+                                    } else {
+                                        val newList = viewModel.orderedFavoriteTools.toMutableList()
+                                        val currentKey = item.key
+                                        val actualIdx = newList.indexOfFirst { it == currentKey || (item.converterType != null && it == item.converterType.name) }
+                                        if (actualIdx > 0) {
+                                            val elem = newList.removeAt(actualIdx)
+                                            newList.add(actualIdx - 1, elem)
+                                            viewModel.saveOrderedFavorites(newList)
+                                        }
                                     }
                                     selectedItemForOptions = null
                                 },
@@ -1472,17 +1558,26 @@ fun DashboardCategoriesView(
                             }
                         }
 
-                        // Move Right button (if index < combinedList.size - 1)
-                        if (index < combinedList.size - 1 && index >= 0) {
+                        // Move Right button (if index < currentDisplayList.size - 1)
+                        if (index >= 0 && index < currentDisplayList.size - 1) {
                             Button(
                                 onClick = {
-                                    val newList = viewModel.orderedFavoriteTools.toMutableList()
-                                    val currentKey = item.key
-                                    val actualIdx = newList.indexOfFirst { it == currentKey || (item.converterType != null && it == item.converterType.name) }
-                                    if (actualIdx != -1 && actualIdx < newList.size - 1) {
-                                        val elem = newList.removeAt(actualIdx)
-                                        newList.add(actualIdx + 1, elem)
-                                        viewModel.saveOrderedFavorites(newList)
+                                    if (activeDashboardTab == "FEATURED") {
+                                        val currentKeys = currentDisplayList.map { it.key }.toMutableList()
+                                        if (index < currentKeys.size - 1) {
+                                            val elem = currentKeys.removeAt(index)
+                                            currentKeys.add(index + 1, elem)
+                                            viewModel.saveFeaturedCustomOrder(currentKeys)
+                                        }
+                                    } else {
+                                        val newList = viewModel.orderedFavoriteTools.toMutableList()
+                                        val currentKey = item.key
+                                        val actualIdx = newList.indexOfFirst { it == currentKey || (item.converterType != null && it == item.converterType.name) }
+                                        if (actualIdx != -1 && actualIdx < newList.size - 1) {
+                                            val elem = newList.removeAt(actualIdx)
+                                            newList.add(actualIdx + 1, elem)
+                                            viewModel.saveOrderedFavorites(newList)
+                                        }
                                     }
                                     selectedItemForOptions = null
                                 },
@@ -1505,10 +1600,14 @@ fun DashboardCategoriesView(
                         // Remove from Favorite/Featured
                         Button(
                             onClick = {
-                                if (item.isTool && item.toolType != null) {
-                                    viewModel.toggleFavoriteTool(item.toolType.name)
-                                } else if (item.converterType != null) {
-                                    viewModel.toggleFavoriteConverter(item.converterType.name)
+                                if (activeDashboardTab == "FEATURED") {
+                                    viewModel.removeFeaturedItem(item.key)
+                                } else {
+                                    if (item.isTool && item.toolType != null) {
+                                        viewModel.toggleFavoriteTool(item.toolType.name)
+                                    } else if (item.converterType != null) {
+                                        viewModel.toggleFavoriteConverter(item.converterType.name)
+                                    }
                                 }
                                 selectedItemForOptions = null
                             },

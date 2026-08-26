@@ -1708,36 +1708,56 @@ How can I help you today?"""
     var orderedFavoriteTools by mutableStateOf(loadOrderedFavorites())
         private set
 
+    var featuredCustomOrder by mutableStateOf(loadFeaturedCustomOrder())
+        private set
+    var featuredRemovedKeys by mutableStateOf(loadFeaturedRemovedKeys())
+        private set
+
+    fun loadFeaturedCustomOrder(): List<String> {
+        val raw = sharedPrefs.getString("featured_custom_order_v5", "") ?: ""
+        if (raw.isBlank()) return emptyList()
+        return raw.split(",").filter { it.isNotBlank() }
+    }
+
+    fun saveFeaturedCustomOrder(list: List<String>) {
+        featuredCustomOrder = list
+        sharedPrefs.edit().putString("featured_custom_order_v5", list.joinToString(",")).apply()
+    }
+
+    fun loadFeaturedRemovedKeys(): Set<String> {
+        val saved = sharedPrefs.getStringSet("featured_removed_keys_v5", null)
+        return saved ?: emptySet()
+    }
+
+    fun removeFeaturedItem(key: String) {
+        val set = featuredRemovedKeys.toMutableSet()
+        set.add(key)
+        featuredRemovedKeys = set
+        sharedPrefs.edit().putStringSet("featured_removed_keys_v5", set).apply()
+
+        val custom = featuredCustomOrder.toMutableList()
+        custom.remove(key)
+        saveFeaturedCustomOrder(custom)
+    }
+
     fun loadOrderedFavorites(): List<String> {
-        val raw = sharedPrefs.getString("ordered_favorite_tools_list4", "") ?: ""
+        val raw = sharedPrefs.getString("ordered_favorite_tools_list_v5", "") ?: ""
         if (raw.isBlank()) {
             val set = sharedPrefs.getStringSet("favorite_tools", emptySet()) ?: emptySet()
-            if (set.isEmpty()) {
-                return listOf("MULTI_CALENDAR", "HOLY_QURAN", "HADITH_LIBRARY", "PRAYER_TIMES", "SEHRI_IFTAR", "AGE", "BMI", "CONV_CURRENCY")
-            }
-            // Ensure HADITH_LIBRARY is present if HOLY_QURAN is in the set
-            val list = set.toList().toMutableList()
-            if (!list.contains("HADITH_LIBRARY")) {
-                val quranIdx = list.indexOf("HOLY_QURAN")
-                if (quranIdx != -1) {
-                    list.add(quranIdx + 1, "HADITH_LIBRARY")
-                } else {
-                    list.add(0, "HADITH_LIBRARY")
-                }
-            }
-            return list
+            return set.toList()
         }
         return raw.split(",").filter { it.isNotBlank() }
     }
 
     fun saveOrderedFavorites(list: List<String>) {
-        orderedFavoriteTools = list
-        val raw = list.joinToString(",")
+        val trimmed = list.distinct().take(10)
+        orderedFavoriteTools = trimmed
+        val raw = trimmed.joinToString(",")
         sharedPrefs.edit()
-            .putString("ordered_favorite_tools_list2", raw)
-            .putStringSet("favorite_tools", list.toSet())
+            .putString("ordered_favorite_tools_list_v5", raw)
+            .putStringSet("favorite_tools", trimmed.toSet())
             .apply()
-        favoriteTools = list.toSet()
+        favoriteTools = trimmed.toSet()
     }
 
     var weatherLocation by mutableStateOf(
@@ -2097,9 +2117,6 @@ How can I help you today?"""
 
     private fun loadFavorites(key: String): Set<String> {
         val saved = sharedPrefs.getStringSet(key, null)
-        if (saved == null && key == "favorite_tools") {
-            return setOf("MULTI_CALENDAR", "HOLY_QURAN", "HADITH_LIBRARY", "PRAYER_TIMES", "SEHRI_IFTAR", "AGE", "BMI")
-        }
         return saved ?: emptySet()
     }
 
@@ -3290,7 +3307,14 @@ How can I help you today?"""
                 val favConv = favoriteConverters.toList()
                 val customRates = sharedPrefs.getString("custom_utility_rates_v1", null)
                 val customThemes = sharedPrefs.getString("user_custom_themes_v1", null)
-                val toolUsage = sharedPrefs.getString("tool_usage_counts_v1", null)
+                
+                val usageList = usageRepository.getAllUsageList()
+                val moshi = com.squareup.moshi.Moshi.Builder()
+                    .add(com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory())
+                    .build()
+                val toolUsageType = com.squareup.moshi.Types.newParameterizedType(List::class.java, com.example.data.model.ToolUsage::class.java)
+                val toolUsageAdapter = moshi.adapter<List<com.example.data.model.ToolUsage>>(toolUsageType)
+                val toolUsageJson = toolUsageAdapter.toJson(usageList)
 
                 val dateFormat = SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault())
                 val backup = GlobalAppBackup(
@@ -3308,12 +3332,9 @@ How can I help you today?"""
                     barcodeHistory = barcode,
                     customRatesJson = customRates,
                     customThemesJson = customThemes,
-                    toolUsageJson = toolUsage
+                    toolUsageJson = toolUsageJson
                 )
 
-                val moshi = com.squareup.moshi.Moshi.Builder()
-                    .add(com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory())
-                    .build()
                 val adapter = moshi.adapter(GlobalAppBackup::class.java)
                 val jsonString = adapter.toJson(backup)
 
@@ -3483,7 +3504,16 @@ How can I help you today?"""
                     sharedPrefs.edit().putString("user_custom_themes_v1", backup.customThemesJson).apply()
                 }
                 if (!backup.toolUsageJson.isNullOrBlank()) {
-                    sharedPrefs.edit().putString("tool_usage_counts_v1", backup.toolUsageJson).apply()
+                    try {
+                        val toolUsageType = com.squareup.moshi.Types.newParameterizedType(List::class.java, com.example.data.model.ToolUsage::class.java)
+                        val toolUsageAdapter = moshi.adapter<List<com.example.data.model.ToolUsage>>(toolUsageType)
+                        val restoredUsage = toolUsageAdapter.fromJson(backup.toolUsageJson)
+                        if (restoredUsage != null) {
+                            usageRepository.restoreUsageList(restoredUsage)
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
                 }
 
                 val isBn = selectedLanguage == AppLanguage.BENGALI
