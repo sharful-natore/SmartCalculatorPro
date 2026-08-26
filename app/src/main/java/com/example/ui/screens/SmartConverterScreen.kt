@@ -645,6 +645,7 @@ fun SmartConverterCategoriesView(
                                                         categoryRank = categoryRankMap[type.name] ?: 0,
                                                         titleLines = titleLines,
                                                         subtitleLines = subtitleLines,
+                                                        showFavoriteIcon = false,
                                                         onClick = { viewModel.openConverter(type) }
                                                     )
                                                 }
@@ -778,6 +779,7 @@ fun ConverterCardItem(
     categoryRank: Int = 0,
     titleLines: Int = 2,
     subtitleLines: Int = 2,
+    showFavoriteIcon: Boolean = true,
     onClick: () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -829,16 +831,18 @@ fun ConverterCardItem(
                             modifier = Modifier.size(20.dp)
                         )
                     }
-                    IconButton(
-                        onClick = { viewModel.toggleFavoriteConverter(converterType.name) },
-                        modifier = Modifier.size(28.dp)
-                    ) {
-                        Icon(
-                            imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            contentDescription = "Favorite",
-                            tint = if (isFavorite) Color(0xFFE53935) else themeColors.displayText.copy(alpha = 0.35f),
-                            modifier = Modifier.size(18.dp)
-                        )
+                    if (showFavoriteIcon) {
+                        IconButton(
+                            onClick = { viewModel.toggleFavoriteConverter(converterType.name) },
+                            modifier = Modifier.size(28.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                contentDescription = "Favorite",
+                                tint = if (isFavorite) Color(0xFFE53935) else themeColors.displayText.copy(alpha = 0.35f),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
                     }
                 }
 
@@ -875,7 +879,7 @@ fun ConverterCardItem(
                     rank = categoryRank,
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .padding(top = 11.dp, end = 38.dp)
+                        .padding(top = 11.dp, end = if (showFavoriteIcon) 38.dp else 10.dp)
                 )
             }
         }

@@ -2347,7 +2347,7 @@ How can I help you today?"""
         if (currentList.contains(toolName)) {
             pendingUnfavoriteTool = toolName
         } else {
-            currentList.add(toolName)
+            currentList.add(0, toolName)
             saveOrderedFavorites(currentList)
         }
     }
@@ -2371,7 +2371,7 @@ How can I help you today?"""
             sharedPrefs.edit().putStringSet("favorite_converters", updated).apply()
             favoriteConverters = updated
             if (!currentList.contains(convKey)) {
-                currentList.add(convKey)
+                currentList.add(0, convKey)
                 saveOrderedFavorites(currentList)
             }
         }

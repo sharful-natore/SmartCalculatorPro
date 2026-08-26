@@ -915,26 +915,176 @@ fun DashboardCategoriesView(
                 isBn = isBn
             )
         } else {
-            // Featured & Favorite Tools Title
+            // Unified Featured & Favorites Section Header with Chips
+            var activeDashboardTab by remember { mutableStateOf("FEATURED") }
+
+            val toolUsageList by viewModel.allToolUsage.collectAsState()
+            val usageMap = remember(toolUsageList) {
+                toolUsageList.associate { it.toolId to it.usageCount }
+            }
+
+            val allAvailableDashboardItems = remember {
+                val toolItems = ToolType.values().map { tType ->
+                    FeaturedDashboardItem(
+                        key = tType.name,
+                        titleEn = tType.titleEn,
+                        titleBn = tType.titleBn,
+                        icon = tType.icon,
+                        isTool = true,
+                        toolType = tType
+                    )
+                }
+                val converterItems = ConverterType.values().map { cType ->
+                    FeaturedDashboardItem(
+                        key = "CONV_${cType.name}",
+                        titleEn = cType.titleEn,
+                        titleBn = cType.titleBn,
+                        icon = cType.icon,
+                        isTool = false,
+                        converterType = cType
+                    )
+                }
+                toolItems + converterItems
+            }
+
+            // Top 10 Most Used Tools/Converters for Featured
+            val topFeaturedList = remember(allAvailableDashboardItems, usageMap, isBn) {
+                allAvailableDashboardItems.sortedWith(
+                    compareByDescending<FeaturedDashboardItem> { item ->
+                        val id = if (item.isTool && item.toolType != null) item.toolType.name else item.converterType?.name ?: item.key
+                        (usageMap[id] ?: usageMap[item.key] ?: usageMap["CONV_$id"] ?: 0) as Int
+                    }.thenBy { if (isBn) it.titleBn else it.titleEn }
+                ).take(10)
+            }
+
+            // User's Favorite Tools/Converters (up to 10, newest first)
+            val rawFavoriteItems = remember(viewModel.orderedFavoriteTools, viewModel.favoriteConverters) {
+                viewModel.orderedFavoriteTools.mapNotNull { name ->
+                    if (name.startsWith("CONV_")) {
+                        val cName = name.removePrefix("CONV_")
+                        try {
+                            val cType = ConverterType.valueOf(cName)
+                            FeaturedDashboardItem(
+                                key = name,
+                                titleEn = cType.titleEn,
+                                titleBn = cType.titleBn,
+                                icon = cType.icon,
+                                isTool = false,
+                                converterType = cType
+                            )
+                        } catch (e: Exception) { null }
+                    } else {
+                        try {
+                            val tType = ToolType.valueOf(name)
+                            FeaturedDashboardItem(
+                                key = name,
+                                titleEn = tType.titleEn,
+                                titleBn = tType.titleBn,
+                                icon = tType.icon,
+                                isTool = true,
+                                toolType = tType
+                            )
+                        } catch (e: Exception) {
+                            try {
+                                val cType = ConverterType.valueOf(name)
+                                FeaturedDashboardItem(
+                                    key = "CONV_$name",
+                                    titleEn = cType.titleEn,
+                                    titleBn = cType.titleBn,
+                                    icon = cType.icon,
+                                    isTool = false,
+                                    converterType = cType
+                                )
+                            } catch (e2: Exception) { null }
+                        }
+                    }
+                }.distinctBy { it.key }
+            }
+
+            val topFavoritesList = remember(rawFavoriteItems) {
+                rawFavoriteItems.take(10)
+            }
+
+            val currentDisplayList = if (activeDashboardTab == "FEATURED") topFeaturedList else topFavoritesList
+            val combinedList = currentDisplayList
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 8.dp, bottom = 8.dp),
+                    .padding(top = 4.dp, bottom = 10.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = if (isBn) "ফিচার্ড ও ফেভারিট টুলস" else "Featured & Favorite Tools",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = themeColors.displayText
-                )
+                // Interactive Chips acting as Section Header & Switcher
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val isFeaturedActive = activeDashboardTab == "FEATURED"
+                    Surface(
+                        onClick = { activeDashboardTab = "FEATURED" },
+                        shape = RoundedCornerShape(20.dp),
+                        color = if (isFeaturedActive) themeColors.buttonEqualBg else themeColors.cardBg,
+                        border = if (!isFeaturedActive) BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.15f)) else null,
+                        shadowElevation = if (isFeaturedActive) 2.dp else 0.dp
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Whatshot,
+                                contentDescription = null,
+                                tint = if (isFeaturedActive) Color.White else Color(0xFFFF6D00),
+                                modifier = Modifier.size(15.dp)
+                            )
+                            Spacer(modifier = Modifier.width(5.dp))
+                            Text(
+                                text = if (isBn) "জনপ্রিয় (১০)" else "Featured (10)",
+                                fontSize = 12.5.sp,
+                                fontWeight = if (isFeaturedActive) FontWeight.ExtraBold else FontWeight.SemiBold,
+                                color = if (isFeaturedActive) Color.White else themeColors.displayText
+                            )
+                        }
+                    }
+
+                    val isFavoritesActive = activeDashboardTab == "FAVORITES"
+                    val favCount = topFavoritesList.size
+                    Surface(
+                        onClick = { activeDashboardTab = "FAVORITES" },
+                        shape = RoundedCornerShape(20.dp),
+                        color = if (isFavoritesActive) themeColors.buttonEqualBg else themeColors.cardBg,
+                        border = if (!isFavoritesActive) BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.15f)) else null,
+                        shadowElevation = if (isFavoritesActive) 2.dp else 0.dp
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Star,
+                                contentDescription = null,
+                                tint = if (isFavoritesActive) Color.White else Color(0xFFFFB300),
+                                modifier = Modifier.size(15.dp)
+                            )
+                            Spacer(modifier = Modifier.width(5.dp))
+                            Text(
+                                text = if (isBn) "প্রিয় ($favCount)" else "Favorites ($favCount)",
+                                fontSize = 12.5.sp,
+                                fontWeight = if (isFavoritesActive) FontWeight.ExtraBold else FontWeight.SemiBold,
+                                color = if (isFavoritesActive) Color.White else themeColors.displayText
+                            )
+                        }
+                    }
+                }
+
+                // View All Button
                 Row(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
+                        .clip(RoundedCornerShape(12.dp))
                         .background(themeColors.buttonEqualBg.copy(alpha = 0.12f))
                         .clickable { showAllFeaturedDialog = true }
-                        .padding(horizontal = 10.dp, vertical = 5.dp),
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
@@ -945,7 +1095,7 @@ fun DashboardCategoriesView(
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = if (isBn) "সব দেখুন" else "View All",
+                        text = if (isBn) "সব" else "All",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = themeColors.buttonEqualBg
@@ -953,164 +1103,164 @@ fun DashboardCategoriesView(
                 }
             }
 
-        // Horizontal Scroll Layout for the Combined Featured & Favorite Tools and Converters
-        val toolUsageList by viewModel.allToolUsage.collectAsState()
-        val usageMap = remember(toolUsageList) {
-            toolUsageList.associate { it.toolId to it.usageCount }
-        }
-        val rawCombinedList = remember(viewModel.orderedFavoriteTools) {
-            viewModel.orderedFavoriteTools.mapNotNull { name ->
-                if (name.startsWith("CONV_")) {
-                    val cName = name.removePrefix("CONV_")
-                    try {
-                        val cType = ConverterType.valueOf(cName)
-                        FeaturedDashboardItem(
-                            key = name,
-                            titleEn = cType.titleEn,
-                            titleBn = cType.titleBn,
-                            icon = cType.icon,
-                            isTool = false,
-                            converterType = cType
-                        )
-                    } catch (e: Exception) { null }
-                } else {
-                    try {
-                        val tType = ToolType.valueOf(name)
-                        FeaturedDashboardItem(
-                            key = name,
-                            titleEn = tType.titleEn,
-                            titleBn = tType.titleBn,
-                            icon = tType.icon,
-                            isTool = true,
-                            toolType = tType
-                        )
-                    } catch (e: Exception) {
-                        try {
-                            val cType = ConverterType.valueOf(name)
-                            FeaturedDashboardItem(
-                                key = "CONV_$name",
-                                titleEn = cType.titleEn,
-                                titleBn = cType.titleBn,
-                                icon = cType.icon,
-                                isTool = false,
-                                converterType = cType
-                            )
-                        } catch (e2: Exception) { null }
-                    }
-                }
-            }.distinctBy { it.key }
-        }
-        val combinedList = remember(rawCombinedList, usageMap) {
-            rawCombinedList.sortedWith(
-                compareByDescending<FeaturedDashboardItem> { item ->
-                    val id = if (item.isTool && item.toolType != null) item.toolType.name else item.converterType?.name ?: item.key
-                    (usageMap[id] ?: usageMap[item.key] ?: 0) as Int
-                }.thenBy { if (isBn) it.titleBn else it.titleEn }
-            )
-        }
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalBounceOverscroll()
-                .horizontalScroll(featuredScrollState)
-                .padding(vertical = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            combinedList.forEach { item ->
-                val isFavorited = if (item.isTool && item.toolType != null) {
-                    viewModel.favoriteTools.contains(item.toolType.name)
-                } else if (item.converterType != null) {
-                    viewModel.favoriteConverters.contains(item.converterType.name)
-                } else false
-                val interactionSource = remember { MutableInteractionSource() }
-                Box(
-                    modifier = Modifier.width(130.dp)
+            if (activeDashboardTab == "FAVORITES" && topFavoritesList.isEmpty()) {
+                // Empty Favorites State
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                        .themeCardShadow(themeColors, elevation = 1.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(containerColor = themeColors.cardBg)
                 ) {
-                    Card(
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .themeCardShadow(themeColors, elevation = 1.dp)
-                            .combinedClickable(
-                                interactionSource = interactionSource,
-                                indication = androidx.compose.foundation.LocalIndication.current,
-                                onClick = {
-                                    if (item.isTool && item.toolType != null) {
-                                        viewModel.openTool(item.toolType)
-                                    } else if (item.converterType != null) {
-                                        viewModel.openConverter(item.converterType)
-                                    }
-                                },
-                                onLongClick = { selectedItemForOptions = item }
-                            ),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
+                            .padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column(
+                        Box(
                             modifier = Modifier
-                                .padding(12.dp)
-                                .fillMaxWidth(),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFFFBBF24).copy(alpha = 0.15f)),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(48.dp)
-                                    .clip(CircleShape)
-                                    .background(themeColors.buttonEqualBg),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = item.icon,
-                                    contentDescription = item.titleEn,
-                                    tint = androidx.compose.ui.graphics.Color.White,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = if (isBn) item.titleBn else item.titleEn,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = themeColors.displayText,
-                                textAlign = TextAlign.Center,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                            Icon(
+                                imageVector = Icons.Default.StarOutline,
+                                contentDescription = null,
+                                tint = Color(0xFFFBBF24),
+                                modifier = Modifier.size(20.dp)
                             )
-                            Spacer(modifier = Modifier.height(4.dp))
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
                             Text(
-                                text = item.getSubtitle(viewModel.selectedLanguage),
-                                fontSize = 10.sp,
-                                color = themeColors.displayText.copy(alpha = 0.5f),
-                                textAlign = TextAlign.Center,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                                text = if (isBn) "কোনো প্রিয় টুল যুক্ত করা নেই" else "No Favorite Tools Added",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.displayText
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = if (isBn) "টুলের ওপরের ⭐ আইকনে চাপ দিয়ে পছন্দের তালিকায় যুক্ত করুন" else "Tap the ⭐ icon on any tool to save it here",
+                                fontSize = 11.sp,
+                                color = themeColors.displayText.copy(alpha = 0.6f)
                             )
                         }
                     }
-
-                    // Favorite Icon in the Top-Right Corner of favorited tools/converters
-                    if (isFavorited) {
+                }
+            } else {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalBounceOverscroll()
+                        .horizontalScroll(featuredScrollState)
+                        .padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    currentDisplayList.forEachIndexed { index, item ->
+                        val isFavorited = if (item.isTool && item.toolType != null) {
+                            viewModel.favoriteTools.contains(item.toolType.name)
+                        } else if (item.converterType != null) {
+                            viewModel.favoriteConverters.contains(item.converterType.name)
+                        } else false
+                        val interactionSource = remember { MutableInteractionSource() }
                         Box(
-                            modifier = Modifier
-                                .align(Alignment.TopEnd)
-                                .padding(top = 4.dp, end = 4.dp)
+                            modifier = Modifier.width(130.dp)
                         ) {
-                            IconButton(
-                                onClick = { selectedItemForOptions = item },
-                                modifier = Modifier.size(28.dp)
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .themeCardShadow(themeColors, elevation = 1.dp)
+                                    .combinedClickable(
+                                        interactionSource = interactionSource,
+                                        indication = androidx.compose.foundation.LocalIndication.current,
+                                        onClick = {
+                                            if (item.isTool && item.toolType != null) {
+                                                viewModel.openTool(item.toolType)
+                                            } else if (item.converterType != null) {
+                                                viewModel.openConverter(item.converterType)
+                                            }
+                                        },
+                                        onLongClick = { selectedItemForOptions = item }
+                                    ),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Favorite,
-                                    contentDescription = "Options",
-                                    tint = themeColors.buttonEqualBg,
-                                    modifier = Modifier.size(18.dp)
+                                Column(
+                                    modifier = Modifier
+                                        .padding(12.dp)
+                                        .fillMaxWidth(),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(48.dp)
+                                            .clip(CircleShape)
+                                            .background(themeColors.buttonEqualBg),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = item.icon,
+                                            contentDescription = item.titleEn,
+                                            tint = Color.White,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = if (isBn) item.titleBn else item.titleEn,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = themeColors.displayText,
+                                        textAlign = TextAlign.Center,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = item.getSubtitle(viewModel.selectedLanguage),
+                                        fontSize = 10.sp,
+                                        color = themeColors.displayText.copy(alpha = 0.5f),
+                                        textAlign = TextAlign.Center,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
+
+                            // If Featured tab, show Medal Badge for position 1..3 (index 0..2)
+                            if (activeDashboardTab == "FEATURED" && index in 0..2) {
+                                CategoryRankBadge(
+                                    rank = index + 1,
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .padding(top = 4.dp, end = 4.dp)
                                 )
+                            } else if (isFavorited) {
+                                Box(
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .padding(top = 4.dp, end = 4.dp)
+                                ) {
+                                    IconButton(
+                                        onClick = { selectedItemForOptions = item },
+                                        modifier = Modifier.size(28.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Favorite,
+                                            contentDescription = "Options",
+                                            tint = themeColors.buttonEqualBg,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
-        }
 
         Spacer(modifier = Modifier.height(12.dp))
 
@@ -1145,7 +1295,7 @@ fun DashboardCategoriesView(
                             modifier = Modifier.padding(bottom = 12.dp)
                         )
                         
-                        val chunked = combinedList.chunked(2)
+                        val chunked = currentDisplayList.chunked(2)
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -1729,6 +1879,7 @@ fun DashboardCategoriesView(
                                                         categoryRank = categoryToolRankMap[tool.name] ?: 0,
                                                         titleLines = titleLines,
                                                         subtitleLines = subtitleLines,
+                                                        showFavoriteIcon = false,
                                                         onClick = { viewModel.openTool(tool) }
                                                     )
                                                 }
@@ -1863,6 +2014,7 @@ fun ToolGridCardItem(
     categoryRank: Int = 0,
     titleLines: Int = 2,
     subtitleLines: Int = 2,
+    showFavoriteIcon: Boolean = true,
     onClick: () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -1915,16 +2067,18 @@ fun ToolGridCardItem(
                             modifier = Modifier.size(20.dp)
                         )
                     }
-                    IconButton(
-                        onClick = { viewModel.toggleFavoriteTool(toolType.name) },
-                        modifier = Modifier.size(28.dp)
-                    ) {
-                        Icon(
-                            imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            contentDescription = "Favorite",
-                            tint = if (isFavorite) Color(0xFFE53935) else themeColors.displayText.copy(alpha = 0.35f),
-                            modifier = Modifier.size(18.dp)
-                        )
+                    if (showFavoriteIcon) {
+                        IconButton(
+                            onClick = { viewModel.toggleFavoriteTool(toolType.name) },
+                            modifier = Modifier.size(28.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                contentDescription = "Favorite",
+                                tint = if (isFavorite) Color(0xFFE53935) else themeColors.displayText.copy(alpha = 0.35f),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
                     }
                 }
 
@@ -1961,7 +2115,7 @@ fun ToolGridCardItem(
                     rank = categoryRank,
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .padding(top = 11.dp, end = 38.dp)
+                        .padding(top = 11.dp, end = if (showFavoriteIcon) 38.dp else 10.dp)
                 )
             }
         }
