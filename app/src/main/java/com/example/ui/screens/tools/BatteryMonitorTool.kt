@@ -219,7 +219,7 @@ fun BatteryMonitorTool(
                     .fillMaxWidth()
                     .themeCardShadow(themeColors),
                 colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
-                shape = RoundedCornerShape(24.dp)
+                shape = RoundedCornerShape(32.dp)
             ) {
                 Column(
                     modifier = Modifier
@@ -233,33 +233,78 @@ fun BatteryMonitorTool(
                         modifier = Modifier.size(160.dp)
                     ) {
                         // Pulsing Wave/Circular animation representing active charging
-                        val pulseScale by rememberInfiniteTransition(label = "").animateFloat(
-                            initialValue = 0.95f,
-                            targetValue = 1.05f,
+                        val pulseScale by rememberInfiniteTransition(label = "pulse").animateFloat(
+                            initialValue = 1f,
+                            targetValue = 1.15f,
                             animationSpec = infiniteRepeatable(
-                                animation = tween(1500, easing = LinearEasing),
+                                animation = tween(1200, easing = FastOutSlowInEasing),
                                 repeatMode = RepeatMode.Reverse
                             ),
-                            label = ""
+                            label = "pulse"
                         )
 
-                        val circularColor = if (isCurrentlyCharging) Color(0xFF2196F3) else if (batteryLevel <= 20) Color(0xFFF44336) else themeColors.buttonEqualBg
+                        val waveOffset by rememberInfiniteTransition(label = "wave").animateFloat(
+                            initialValue = 0f,
+                            targetValue = 360f,
+                            animationSpec = infiniteRepeatable(
+                                animation = tween(3000, easing = LinearEasing),
+                                repeatMode = RepeatMode.Restart
+                            ),
+                            label = "wave"
+                        )
 
-                        // Inner circular track
+                        val circularColor = if (isCurrentlyCharging) Color(0xFF00E5FF) else if (batteryLevel <= 20) Color(0xFFF44336) else themeColors.buttonEqualBg
+
+                        // Decorative background glows
+                        if (isCurrentlyCharging) {
+                            Box(
+                                modifier = Modifier
+                                    .size(145.dp * pulseScale)
+                                    .clip(CircleShape)
+                                    .background(circularColor.copy(alpha = 0.1f))
+                            )
+                        }
+
+                        // Inner circular track with "Liquid" wave effect
                         Box(
                             modifier = Modifier
                                 .size(140.dp)
                                 .clip(CircleShape)
-                                .background(circularColor.copy(alpha = 0.08f * (if (isCurrentlyCharging) pulseScale else 1f)))
+                                .background(circularColor.copy(alpha = 0.05f))
                                 .border(
-                                    width = 6.dp,
-                                    brush = Brush.radialGradient(
-                                        colors = listOf(circularColor.copy(alpha = 0.1f), circularColor)
-                                    ),
+                                    width = 1.dp,
+                                    color = circularColor.copy(alpha = 0.2f),
                                     shape = CircleShape
                                 ),
                             contentAlignment = Alignment.Center
                         ) {
+                            if (isCurrentlyCharging) {
+                                Canvas(modifier = Modifier.fillMaxSize()) {
+                                    val wavePath = Path()
+                                    val centerY = size.height * (1f - (batteryLevel / 100f))
+                                    val waveWidth = size.width
+                                    val waveHeight = 8.dp.toPx()
+                                    
+                                    wavePath.moveTo(0f, size.height)
+                                    wavePath.lineTo(0f, centerY)
+                                    
+                                    for (x in 0..size.width.toInt() step 5) {
+                                        val y = centerY + kotlin.math.sin(Math.toRadians(x.toDouble() + waveOffset)) * waveHeight
+                                        wavePath.lineTo(x.toFloat(), y.toFloat())
+                                    }
+                                    
+                                    wavePath.lineTo(size.width, size.height)
+                                    wavePath.close()
+                                    
+                                    drawPath(
+                                        path = wavePath,
+                                        brush = Brush.verticalGradient(
+                                            colors = listOf(circularColor.copy(alpha = 0.4f), circularColor.copy(alpha = 0.1f))
+                                        )
+                                    )
+                                }
+                            }
+
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
@@ -269,33 +314,44 @@ fun BatteryMonitorTool(
                                 ) {
                                     Text(
                                         text = "$batteryLevel",
-                                        fontSize = 42.sp,
+                                        fontSize = 48.sp,
                                         fontWeight = FontWeight.Black,
-                                        color = themeColors.displayText
+                                        color = themeColors.displayText,
+                                        letterSpacing = (-2).sp
                                     )
                                     Text(
                                         text = "%",
-                                        fontSize = 18.sp,
+                                        fontSize = 20.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = themeColors.displayText.copy(alpha = 0.6f),
-                                        modifier = Modifier.padding(bottom = 6.dp, start = 2.dp)
+                                        color = circularColor,
+                                        modifier = Modifier.padding(bottom = 8.dp, start = 2.dp)
                                     )
                                 }
-                                Text(
-                                    text = statusText,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = circularColor
-                                )
+                                if (isCurrentlyCharging) {
+                                    Icon(
+                                        imageVector = Icons.Default.Bolt,
+                                        contentDescription = null,
+                                        tint = circularColor,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                } else {
+                                    Text(
+                                        text = statusText,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = circularColor.copy(alpha = 0.8f)
+                                    )
+                                }
                             }
                         }
 
-                        // Circular Progress indicator
+                        // Circular Progress indicator (Outer Ring)
                         CircularProgressIndicator(
                             progress = { batteryLevel / 100f },
-                            modifier = Modifier.size(150.dp),
+                            modifier = Modifier.size(154.dp),
                             color = circularColor,
-                            strokeWidth = 5.dp,
+                            strokeWidth = 6.dp,
+                            strokeCap = androidx.compose.ui.graphics.StrokeCap.Round,
                             trackColor = themeColors.displayText.copy(alpha = 0.05f)
                         )
                     }
@@ -383,7 +439,7 @@ fun BatteryMonitorTool(
                     .fillMaxWidth()
                     .themeCardShadow(themeColors),
                 colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
-                shape = RoundedCornerShape(24.dp)
+                shape = RoundedCornerShape(32.dp)
             ) {
                 Column(
                     modifier = Modifier
@@ -423,9 +479,10 @@ fun BatteryMonitorTool(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(110.dp)
+                            .height(140.dp)
+                            .padding(top = 8.dp)
                     ) {
-                        val waveColor = if (isCurrentlyCharging) Color(0xFF2196F3) else Color(0xFF4CAF50)
+                        val waveColor = if (isCurrentlyCharging) Color(0xFF00E5FF) else Color(0xFF4CAF50)
                         
                         Canvas(
                             modifier = Modifier.fillMaxSize()
@@ -433,54 +490,80 @@ fun BatteryMonitorTool(
                             val width = size.width
                             val height = size.height
                             
-                            // Draw Grid Lines
-                            val gridLines = 4
+                            // Draw Grid Lines (Subtle)
+                            val gridLines = 5
                             for (i in 0..gridLines) {
                                 val y = (height / gridLines) * i
                                 drawLine(
-                                    color = themeColors.displayText.copy(alpha = 0.04f),
+                                    color = themeColors.displayText.copy(alpha = 0.03f),
                                     start = androidx.compose.ui.geometry.Offset(0f, y),
                                     end = androidx.compose.ui.geometry.Offset(width, y),
-                                    strokeWidth = 1.dp.toPx()
+                                    strokeWidth = 0.5.dp.toPx()
                                 )
                             }
 
-                            // Draw baseline zero
-                            drawLine(
-                                color = themeColors.displayText.copy(alpha = 0.15f),
-                                start = androidx.compose.ui.geometry.Offset(0f, height / 2),
-                                end = androidx.compose.ui.geometry.Offset(width, height / 2),
-                                strokeWidth = 1.dp.toPx()
-                            )
-
-                            // Plot telemetry points
-                            if (telemetryHistory.isNotEmpty()) {
+                            // Plot telemetry points with Smooth Curves and Gradient Fill
+                            if (telemetryHistory.size > 1) {
                                 val pointsCount = telemetryHistory.size
                                 val stepX = width / (pointsCount - 1)
                                 
-                                // Determine min and max mA in history to scale graph beautifully, but prevent division by zero
                                 var maxVal = telemetryHistory.maxOf { abs(it) }
-                                if (maxVal < 100f) maxVal = 500f // fallback standard scale
+                                if (maxVal < 100f) maxVal = 800f 
 
-                                val path = Path()
-                                for (i in 0 until pointsCount) {
-                                    val x = i * stepX
-                                    val rawVal = telemetryHistory[i]
-                                    // Map to height: positive mA (charging) goes up, negative mA goes down from baseline
-                                    val relativeY = (rawVal / maxVal) * (height / 2.2f)
+                                val fillPath = Path()
+                                val strokePath = Path()
+                                
+                                val getPoint = { index: Int ->
+                                    val x = index * stepX
+                                    val rawVal = telemetryHistory[index]
+                                    val relativeY = (rawVal / maxVal) * (height / 2.3f)
                                     val y = (height / 2f) - relativeY
-
-                                    if (i == 0) {
-                                        path.moveTo(x, y)
-                                    } else {
-                                        path.lineTo(x, y)
-                                    }
+                                    androidx.compose.ui.geometry.Offset(x, y)
                                 }
 
+                                fillPath.moveTo(0f, height)
+                                val firstPoint = getPoint(0)
+                                fillPath.lineTo(firstPoint.x, firstPoint.y)
+                                strokePath.moveTo(firstPoint.x, firstPoint.y)
+
+                                for (i in 0 until pointsCount - 1) {
+                                    val p0 = getPoint(i)
+                                    val p1 = getPoint(i + 1)
+                                    
+                                    val controlX = (p0.x + p1.x) / 2f
+                                    
+                                    fillPath.cubicTo(controlX, p0.y, controlX, p1.y, p1.x, p1.y)
+                                    strokePath.cubicTo(controlX, p0.y, controlX, p1.y, p1.x, p1.y)
+                                }
+
+                                fillPath.lineTo(width, height)
+                                fillPath.close()
+
+                                // 1. Draw Gradient Area
                                 drawPath(
-                                    path = path,
+                                    path = fillPath,
+                                    brush = Brush.verticalGradient(
+                                        colors = listOf(waveColor.copy(alpha = 0.25f), Color.Transparent)
+                                    )
+                                )
+
+                                // 2. Draw Smooth Baseline Zero
+                                drawLine(
+                                    color = themeColors.displayText.copy(alpha = 0.1f),
+                                    start = androidx.compose.ui.geometry.Offset(0f, height / 2),
+                                    end = androidx.compose.ui.geometry.Offset(width, height / 2),
+                                    strokeWidth = 1.dp.toPx()
+                                )
+
+                                // 3. Draw The Main Wave Line
+                                drawPath(
+                                    path = strokePath,
                                     color = waveColor,
-                                    style = Stroke(width = 3.dp.toPx())
+                                    style = Stroke(
+                                        width = 2.5.dp.toPx(),
+                                        cap = androidx.compose.ui.graphics.StrokeCap.Round,
+                                        join = androidx.compose.ui.graphics.StrokeJoin.Round
+                                    )
                                 )
                             }
                         }
@@ -504,7 +587,7 @@ fun BatteryMonitorTool(
                     .fillMaxWidth()
                     .themeCardShadow(themeColors),
                 colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
-                shape = RoundedCornerShape(24.dp)
+                shape = RoundedCornerShape(32.dp)
             ) {
                 Column(
                     modifier = Modifier

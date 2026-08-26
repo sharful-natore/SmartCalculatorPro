@@ -52,6 +52,8 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.platform.LocalDensity
@@ -4402,16 +4404,13 @@ private fun InteractiveCropDialog(
 
                     // PicsArt Style Crop Grid & Corner Drag Handles Overlay
                     Canvas(modifier = Modifier.fillMaxSize()) {
-                        // 1. Semi-transparent dark background for cropped outer area
-                        drawRect(color = Color.Black.copy(alpha = 0.65f))
-                        
-                        // 2. Clear out the crop window
-                        drawRect(
-                            color = Color.Transparent,
-                            topLeft = cropRect.topLeft,
-                            size = cropRect.size,
-                            blendMode = BlendMode.Clear
-                        )
+                        // 1. Semi-transparent dark background for cropped outer area using EvenOdd path
+                        val path = Path().apply {
+                            addRect(Rect(0f, 0f, size.width, size.height))
+                            addRect(cropRect)
+                            fillType = PathFillType.EvenOdd
+                        }
+                        drawPath(path, Color.Black.copy(alpha = 0.75f))
                         
                         // 3. Crisp white boundary stroke
                         drawRect(
