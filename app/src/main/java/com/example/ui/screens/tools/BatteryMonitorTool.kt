@@ -168,46 +168,33 @@ fun BatteryMonitorTool(
     val isCurrentlyCharging = batteryStatus == BatteryManager.BATTERY_STATUS_CHARGING ||
             batteryStatus == BatteryManager.BATTERY_STATUS_FULL
 
+    val chargeSpeedText = if (isCurrentlyCharging) {
+        when {
+            batteryCurrentMa < 700 -> if (isBn) "ধীর গতির চার্জিং (Slow)" else "Slow Charging"
+            batteryCurrentMa < 1500 -> if (isBn) "স্বাভাবিক চার্জিং (Normal)" else "Normal Charging"
+            batteryCurrentMa < 2500 -> if (isBn) "দ্রুত চার্জিং (Fast)" else "Fast Charging"
+            else -> if (isBn) "টার্বো চার্জিং (Turbo)" else "Turbo Charging"
+        }
+    } else {
+        if (isBn) "ডিসচার্জিং" else "Discharging"
+    }
+    
+    val chargeSpeedColor = if (isCurrentlyCharging) {
+        when {
+            batteryCurrentMa < 700 -> Color(0xFFFF9800)
+            batteryCurrentMa < 1500 -> Color(0xFF4CAF50)
+            batteryCurrentMa < 2500 -> Color(0xFF03A9F4)
+            else -> Color(0xFF9C27B0)
+        }
+    } else themeColors.displayText
+
     Column(
         modifier = Modifier
-            .fillMaxSize()
-            .background(themeColors.background)
+            .fillMaxWidth()
+            .padding(bottom = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Toolbar with Zero Padding/Headers
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .padding(horizontal = 4.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(
-                onClick = { viewModel.selectedToolType = null }
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = if (isBn) "পিছনে যান" else "Go Back",
-                    tint = themeColors.displayText
-                )
-            }
-            Text(
-                text = if (isBn) "ব্যাটারি মনিটর" else "Battery Monitor",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = themeColors.displayText,
-                modifier = Modifier.padding(start = 12.dp)
-            )
-        }
-
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Main Dial Circular Indicator
+        // Main Dial Circular Indicator
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -522,6 +509,15 @@ fun BatteryMonitorTool(
                         value = String.format(Locale.US, "%.2f Watts", powerWatts),
                         themeColors = themeColors
                     )
+                    
+                    // Row 1.5: Charging Speed Category
+                    MetricRow(
+                        icon = Icons.Default.Speed,
+                        title = if (isBn) "চার্জিং গতি" else "Charging Speed",
+                        value = chargeSpeedText,
+                        valueColor = chargeSpeedColor,
+                        themeColors = themeColors
+                    )
 
                     // Row 2: Battery Health
                     MetricRow(
@@ -550,7 +546,6 @@ fun BatteryMonitorTool(
                 }
             }
         }
-    }
 }
 
 @Composable

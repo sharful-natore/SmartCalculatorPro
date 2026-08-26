@@ -268,8 +268,7 @@ fun DashboardCategoriesView(
     ) {
         val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
 
-        // Time-based Greeting & Multi-Date Header Banner (Hidden during search)
-        if (searchQuery.isBlank()) {
+        // Time-based Greeting & Multi-Date Header Banner
             val dateInfo = remember { com.example.util.CalendarUtils.getMultiDateInfo(java.util.Calendar.getInstance(), isBn) }
 
             val currentHour = remember { java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY) }
@@ -536,7 +535,7 @@ fun DashboardCategoriesView(
             } // Closes Column
         } // Closes Box
     } // Closes Card
-} // Closes if (searchQuery.isBlank())
+
 
         // Change Weather Location Dialog
         if (showWeatherDialog) {
@@ -1627,13 +1626,13 @@ fun DashboardCategoriesView(
                                         modifier = Modifier
                                             .size(28.dp)
                                             .clip(CircleShape)
-                                            .background(Color.White),
+                                            .background(themeColors.buttonEqualBg),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Icon(
                                             imageVector = category.icon,
                                             contentDescription = category.titleEn,
-                                            tint = themeColors.buttonEqualBg,
+                                            tint = Color.White,
                                             modifier = Modifier.size(16.dp)
                                         )
                                     }
@@ -1649,7 +1648,7 @@ fun DashboardCategoriesView(
                                         modifier = Modifier
                                             .defaultMinSize(minWidth = 22.dp, minHeight = 22.dp)
                                             .clip(CircleShape)
-                                            .background(themeColors.buttonEqualBg)
+                                            .background(themeColors.buttonEqualBg.copy(alpha = 0.15f))
                                             .padding(horizontal = 6.dp, vertical = 2.dp),
                                         contentAlignment = Alignment.Center
                                     ) {
@@ -1657,7 +1656,7 @@ fun DashboardCategoriesView(
                                             text = if (isBn) "${categoryTools.size}টি" else "${categoryTools.size}",
                                             fontSize = 10.5.sp,
                                             fontWeight = FontWeight.Bold,
-                                            color = Color.White
+                                            color = themeColors.buttonEqualBg
                                         )
                                     }
                                 }

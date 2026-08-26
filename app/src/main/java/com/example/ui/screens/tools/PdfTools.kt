@@ -529,10 +529,11 @@ fun PdfReaderTool(
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedTextColor = themeColors.displayText,
                                 unfocusedTextColor = themeColors.displayText,
+                                cursorColor = themeColors.buttonEqualBg,
+                                focusedContainerColor = themeColors.buttonEqualBg.copy(alpha = 0.04f),
+                                unfocusedContainerColor = themeColors.buttonEqualBg.copy(alpha = 0.04f),
                                 focusedBorderColor = themeColors.buttonEqualBg,
-                                unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.25f),
-                                focusedContainerColor = themeColors.cardBg,
-                                unfocusedContainerColor = themeColors.cardBg
+                                unfocusedBorderColor = themeColors.buttonEqualBg.copy(alpha = 0.3f)
                             ),
                             modifier = Modifier
                                 .weight(1f)
@@ -1098,34 +1099,6 @@ fun PdfReaderTool(
                         modifier = Modifier
                             .fillMaxSize()
                             .pointerInput(containerWidth, containerHeight) {
-                                detectTapGestures(
-                                    onDoubleTap = { tapOffset ->
-                                        if (docScale > 1.1f) {
-                                            docScale = 1.0f
-                                            docOffset = Offset.Zero
-                                        } else {
-                                            docScale = 2.5f
-                                            val targetOffsetX = (containerWidth / 2f - tapOffset.x) * 1.5f
-                                            val targetOffsetY = (containerHeight / 2f - tapOffset.y) * 1.5f
-                                            val maxPanX = (containerWidth * (2.5f - 1.0f)) / 2f
-                                            val maxPanY = (containerHeight * (2.5f - 1.0f)) / 2f
-                                            docOffset = Offset(
-                                                targetOffsetX.coerceIn(-maxPanX, maxPanX),
-                                                targetOffsetY.coerceIn(-maxPanY, maxPanY)
-                                            )
-                                        }
-                                    },
-                                    onTap = {
-                                        if (isFullscreen) {
-                                            isFullscreen = false
-                                            isControlsVisible = true
-                                        } else {
-                                            isControlsVisible = !isControlsVisible
-                                        }
-                                    }
-                                )
-                            }
-                            .pointerInput(containerWidth, containerHeight) {
                                 awaitEachGesture {
                                     awaitFirstDown(requireUnconsumed = false)
                                     var isMultiTouch = false
@@ -1181,11 +1154,42 @@ fun PdfReaderTool(
                                                 if (overscroll != 0f) {
                                                     verticalLazyListState.dispatchRawDelta(-overscroll / docScale)
                                                 }
-                                                event.changes.forEach { it.consume() }
+                                                // Only consume if we significantly panned (avoid breaking tap)
+                                                if (pan.getDistance() > 1f) {
+                                                    event.changes.forEach { it.consume() }
+                                                }
                                             }
                                         }
                                     } while (event.changes.any { it.pressed })
                                 }
+                            }
+                            .pointerInput(containerWidth, containerHeight) {
+                                detectTapGestures(
+                                    onDoubleTap = { tapOffset ->
+                                        if (docScale > 1.1f) {
+                                            docScale = 1.0f
+                                            docOffset = Offset.Zero
+                                        } else {
+                                            docScale = 2.5f
+                                            val targetOffsetX = (containerWidth / 2f - tapOffset.x) * 1.5f
+                                            val targetOffsetY = (containerHeight / 2f - tapOffset.y) * 1.5f
+                                            val maxPanX = (containerWidth * (2.5f - 1.0f)) / 2f
+                                            val maxPanY = (containerHeight * (2.5f - 1.0f)) / 2f
+                                            docOffset = Offset(
+                                                targetOffsetX.coerceIn(-maxPanX, maxPanX),
+                                                targetOffsetY.coerceIn(-maxPanY, maxPanY)
+                                            )
+                                        }
+                                    },
+                                    onTap = {
+                                        if (isFullscreen) {
+                                            isFullscreen = false
+                                            isControlsVisible = true
+                                        } else {
+                                            isControlsVisible = !isControlsVisible
+                                        }
+                                    }
+                                )
                             }
                     ) {
                         if (pageCount > 0) {
@@ -2005,9 +2009,13 @@ fun PdfMakerTool(
                             placeholder = { Text(if (isBn) "যেমন: বার্ষিক পরীক্ষার প্রস্তুতি নোট" else "e.g. Annual Study Notes") },
                             modifier = Modifier.fillMaxWidth(),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = themeColors.buttonEqualBg,
                                 focusedTextColor = themeColors.displayText,
-                                unfocusedTextColor = themeColors.displayText
+                                unfocusedTextColor = themeColors.displayText,
+                                cursorColor = themeColors.buttonEqualBg,
+                                focusedContainerColor = themeColors.buttonEqualBg.copy(alpha = 0.04f),
+                                unfocusedContainerColor = themeColors.buttonEqualBg.copy(alpha = 0.04f),
+                                focusedBorderColor = themeColors.buttonEqualBg,
+                                unfocusedBorderColor = themeColors.buttonEqualBg.copy(alpha = 0.3f)
                             ),
                             shape = RoundedCornerShape(12.dp),
                             singleLine = true
@@ -2019,9 +2027,13 @@ fun PdfMakerTool(
                             label = { Text(if (isBn) "উপ-শিরোনাম বা বিষয় (ঐচ্ছিক)" else "Subtitle / Subject (Optional)") },
                             modifier = Modifier.fillMaxWidth(),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = themeColors.buttonEqualBg,
                                 focusedTextColor = themeColors.displayText,
-                                unfocusedTextColor = themeColors.displayText
+                                unfocusedTextColor = themeColors.displayText,
+                                cursorColor = themeColors.buttonEqualBg,
+                                focusedContainerColor = themeColors.buttonEqualBg.copy(alpha = 0.04f),
+                                unfocusedContainerColor = themeColors.buttonEqualBg.copy(alpha = 0.04f),
+                                focusedBorderColor = themeColors.buttonEqualBg,
+                                unfocusedBorderColor = themeColors.buttonEqualBg.copy(alpha = 0.3f)
                             ),
                             shape = RoundedCornerShape(12.dp),
                             singleLine = true
@@ -2033,9 +2045,13 @@ fun PdfMakerTool(
                             label = { Text(if (isBn) "লেখক বা প্রতিষ্ঠানের নাম (ঐচ্ছিক)" else "Author / Institution Name (Optional)") },
                             modifier = Modifier.fillMaxWidth(),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = themeColors.buttonEqualBg,
                                 focusedTextColor = themeColors.displayText,
-                                unfocusedTextColor = themeColors.displayText
+                                unfocusedTextColor = themeColors.displayText,
+                                cursorColor = themeColors.buttonEqualBg,
+                                focusedContainerColor = themeColors.buttonEqualBg.copy(alpha = 0.04f),
+                                unfocusedContainerColor = themeColors.buttonEqualBg.copy(alpha = 0.04f),
+                                focusedBorderColor = themeColors.buttonEqualBg,
+                                unfocusedBorderColor = themeColors.buttonEqualBg.copy(alpha = 0.3f)
                             ),
                             shape = RoundedCornerShape(12.dp),
                             singleLine = true
@@ -2050,9 +2066,13 @@ fun PdfMakerTool(
                                 .fillMaxWidth()
                                 .heightIn(min = 140.dp),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = themeColors.buttonEqualBg,
                                 focusedTextColor = themeColors.displayText,
-                                unfocusedTextColor = themeColors.displayText
+                                unfocusedTextColor = themeColors.displayText,
+                                cursorColor = themeColors.buttonEqualBg,
+                                focusedContainerColor = themeColors.buttonEqualBg.copy(alpha = 0.04f),
+                                unfocusedContainerColor = themeColors.buttonEqualBg.copy(alpha = 0.04f),
+                                focusedBorderColor = themeColors.buttonEqualBg,
+                                unfocusedBorderColor = themeColors.buttonEqualBg.copy(alpha = 0.3f)
                             ),
                             shape = RoundedCornerShape(12.dp)
                         )
@@ -2139,6 +2159,7 @@ fun PdfMakerTool(
                                     includePageNumbers = includePageNumbers
                                 )
                                 createdPdfFile = file
+                                    if(file != null) previewFile = file
                                 isGenerating = false
                                 if (file != null) {
                                     Toast.makeText(context, if (isBn) "PDF সফলভাবে তৈরি হয়েছে!" else "PDF created successfully!", Toast.LENGTH_SHORT).show()
@@ -2281,17 +2302,67 @@ fun PdfMakerTool(
                                         }
 
                                         Spacer(modifier = Modifier.width(10.dp))
+                                        
+                                        coil.compose.AsyncImage(
+                                            model = imgItem.uri,
+                                            contentDescription = null,
+                                            modifier = Modifier
+                                                .size(48.dp)
+                                                .clip(RoundedCornerShape(8.dp)),
+                                            contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                                        )
+
+                                        Spacer(modifier = Modifier.width(10.dp))
 
                                         OutlinedTextField(
                                             value = imgItem.title,
                                             onValueChange = { newTitle ->
                                                 selectedImages[idx] = imgItem.copy(title = newTitle)
                                             },
-                                            placeholder = { Text(if (isBn) "ছবির শিরোনাম (ঐচ্ছিক)" else "Image Title (Optional)", fontSize = 12.sp) },
+                                            placeholder = { Text(if (isBn) "শিরোনাম" else "Title", fontSize = 12.sp) },
                                             modifier = Modifier.weight(1f),
                                             shape = RoundedCornerShape(8.dp),
-                                            singleLine = true
+                                            singleLine = true,
+                                            colors = OutlinedTextFieldDefaults.colors(
+                                                focusedTextColor = themeColors.displayText,
+                                                unfocusedTextColor = themeColors.displayText,
+                                                cursorColor = themeColors.buttonEqualBg,
+                                                focusedContainerColor = themeColors.buttonEqualBg.copy(alpha = 0.04f),
+                                                unfocusedContainerColor = themeColors.buttonEqualBg.copy(alpha = 0.04f),
+                                                focusedBorderColor = themeColors.buttonEqualBg,
+                                                unfocusedBorderColor = themeColors.buttonEqualBg.copy(alpha = 0.3f)
+                                            )
                                         )
+
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.Center
+                                        ) {
+                                            if (idx > 0) {
+                                                IconButton(
+                                                    onClick = { 
+                                                        val temp = selectedImages[idx]
+                                                        selectedImages[idx] = selectedImages[idx - 1]
+                                                        selectedImages[idx - 1] = temp
+                                                    },
+                                                    modifier = Modifier.size(28.dp)
+                                                ) {
+                                                    Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Move Up", tint = themeColors.buttonEqualBg)
+                                                }
+                                            }
+                                            if (idx < selectedImages.size - 1) {
+                                                IconButton(
+                                                    onClick = { 
+                                                        val temp = selectedImages[idx]
+                                                        selectedImages[idx] = selectedImages[idx + 1]
+                                                        selectedImages[idx + 1] = temp
+                                                    },
+                                                    modifier = Modifier.size(28.dp)
+                                                ) {
+                                                    Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Move Down", tint = themeColors.buttonEqualBg)
+                                                }
+                                            }
+                                        }
 
                                         IconButton(
                                             onClick = { selectedImages.removeAt(idx) }
@@ -2312,6 +2383,7 @@ fun PdfMakerTool(
                                         pageSizeStr = "A4 Portrait"
                                     )
                                     createdImagePdfFile = file
+                                    if(file != null) previewFile = file
                                     isImageGenerating = false
                                     if (file != null) {
                                         Toast.makeText(context, if (isBn) "ছবি থেকে PDF তৈরি সম্পন্ন!" else "Image PDF created successfully!", Toast.LENGTH_SHORT).show()
@@ -2326,7 +2398,7 @@ fun PdfMakerTool(
                                 } else {
                                     Icon(Icons.Default.PictureAsPdf, contentDescription = null)
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    Text(if (isBn) "ছবি দিয়ে PDF তৈরি করুন" else "Convert Images to PDF", fontWeight = FontWeight.Bold)
+                                    Text(if (isBn) "প্রিভিউ তৈরি করুন (Preview)" else "Generate Preview", fontWeight = FontWeight.Bold)
                                 }
                             }
                         }

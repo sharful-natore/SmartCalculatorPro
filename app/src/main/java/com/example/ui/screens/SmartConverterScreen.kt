@@ -472,13 +472,13 @@ fun SmartConverterCategoriesView(
                                         modifier = Modifier
                                             .size(28.dp)
                                             .clip(CircleShape)
-                                            .background(Color.White),
+                                            .background(themeColors.buttonEqualBg),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Icon(
                                             imageVector = category.icon,
                                             contentDescription = category.titleEn,
-                                            tint = themeColors.buttonEqualBg,
+                                            tint = Color.White,
                                             modifier = Modifier.size(16.dp)
                                         )
                                     }
@@ -494,7 +494,7 @@ fun SmartConverterCategoriesView(
                                         modifier = Modifier
                                             .defaultMinSize(minWidth = 22.dp, minHeight = 22.dp)
                                             .clip(CircleShape)
-                                            .background(themeColors.buttonEqualBg)
+                                            .background(themeColors.buttonEqualBg.copy(alpha = 0.15f))
                                             .padding(horizontal = 6.dp, vertical = 2.dp),
                                         contentAlignment = Alignment.Center
                                     ) {
@@ -502,7 +502,7 @@ fun SmartConverterCategoriesView(
                                             text = if (isBn) "${categoryConverters.size}টি" else "${categoryConverters.size}",
                                             fontSize = 10.5.sp,
                                             fontWeight = FontWeight.Bold,
-                                            color = Color.White
+                                            color = themeColors.buttonEqualBg
                                         )
                                     }
                                 }
