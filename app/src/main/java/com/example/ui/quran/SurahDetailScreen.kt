@@ -143,7 +143,7 @@ fun SurahDetailScreen(
     LaunchedEffect(currentSurahNum, currentAyahIndex, ayahs) {
         if (currentSurahNum == surah.number && currentAyahIndex in ayahs.indices) {
             // Index 0: Tajweed Guide, 1: Surah Banner, 2: Bismillah, so ayah index corresponds to item index + 3
-            val offset = if (surah.number != 9) 3 else 2
+            val offset = 3
             val scrollIndex = (currentAyahIndex + offset).coerceIn(0, ayahs.size + offset)
             try {
                 listState.animateScrollToItem(scrollIndex)
@@ -638,11 +638,14 @@ fun SurahDetailScreen(
 
                 Button(
                     onClick = { showSettingsSheet = false },
-                    colors = ButtonDefaults.buttonColors(containerColor = emeraldPrimary),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = emeraldPrimary,
+                        contentColor = Color.White
+                    ),
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("সেভ করে বন্ধ করুন", fontWeight = FontWeight.Bold)
+                    Text("সেভ করে বন্ধ করুন", fontWeight = FontWeight.Bold, color = Color.White)
                 }
                 Spacer(modifier = Modifier.height(12.dp))
             }
@@ -987,14 +990,17 @@ fun AyahCard(
     val emeraldColor = if (themeColors.isDark) Color(0xFF34D399) else Color(0xFF047857)
     val amberColor = if (themeColors.isDark) Color(0xFFFBBF24) else Color(0xFFB45309)
     val slateTextColor = if (themeColors.isDark) Color(0xFFE2E8F0) else Color(0xFF1E293B)
+    val pronunciationColor = if (themeColors.isDark) Color(0xFF94A3B8) else Color(0xFF475569)
+    val translationTextColor = if (themeColors.isDark) Color(0xFFF1F5F9) else Color(0xFF163C31)
 
     val banglaPronunciation = remember(ayah) { ayah.getBanglaPronunciation() }
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(if (isCurrentPlaying) 3.dp else 1.dp, RoundedCornerShape(16.dp)),
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = if (isCurrentPlaying) 3.dp else 1.dp
+        ),
         colors = CardDefaults.cardColors(
             containerColor = if (isCurrentPlaying) {
                 emeraldColor.copy(alpha = if (themeColors.isDark) 0.12f else 0.06f)
@@ -1162,21 +1168,21 @@ fun AyahCard(
                 Spacer(modifier = Modifier.height(10.dp))
                 Surface(
                     shape = RoundedCornerShape(10.dp),
-                    color = amberColor.copy(alpha = 0.08f),
-                    border = BorderStroke(1.dp, amberColor.copy(alpha = 0.25f)),
+                    color = pronunciationColor.copy(alpha = 0.06f),
+                    border = BorderStroke(1.dp, pronunciationColor.copy(alpha = 0.20f)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Surface(
                                 shape = RoundedCornerShape(4.dp),
-                                color = amberColor.copy(alpha = 0.2f)
+                                color = pronunciationColor.copy(alpha = 0.15f)
                             ) {
                                 Text(
                                     text = "উচ্চারণ",
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = amberColor,
+                                    color = pronunciationColor,
                                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                 )
                             }
@@ -1186,7 +1192,7 @@ fun AyahCard(
                             text = banglaPronunciation,
                             fontSize = banglaFontSize.sp,
                             fontWeight = FontWeight.Medium,
-                            color = amberColor,
+                            color = pronunciationColor,
                             lineHeight = (banglaFontSize * 1.45f).sp
                         )
                     }
@@ -1198,8 +1204,8 @@ fun AyahCard(
                 Spacer(modifier = Modifier.height(8.dp))
                 Surface(
                     shape = RoundedCornerShape(10.dp),
-                    color = slateTextColor.copy(alpha = 0.04f),
-                    border = BorderStroke(1.dp, slateTextColor.copy(alpha = 0.12f)),
+                    color = translationTextColor.copy(alpha = 0.05f),
+                    border = BorderStroke(1.dp, translationTextColor.copy(alpha = 0.15f)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp)) {
@@ -1222,7 +1228,7 @@ fun AyahCard(
                             text = ayah.textBangla,
                             fontSize = banglaFontSize.sp,
                             fontWeight = FontWeight.Normal,
-                            color = slateTextColor,
+                            color = translationTextColor,
                             lineHeight = (banglaFontSize * 1.5f).sp
                         )
                     }

@@ -83,27 +83,15 @@ import com.example.util.LanguageManager
 val ScallopedBadgeShape = GenericShape { size, _ ->
     val cx = size.width / 2f
     val cy = size.height / 2f
-    val maxR = size.width / 2f
-    val minR = maxR * 0.82f
-    val numPoints = 16
-
-    for (i in 0 until numPoints) {
-        val angle = (i * 2.0 * Math.PI / numPoints - Math.PI / 2).toFloat()
-        val r = if (i % 2 == 0) maxR else minR
+    val r = size.width / 2f
+    for (i in 0 until 6) {
+        val angle = (-Math.PI / 2 + i * Math.PI / 3).toFloat()
         val x = cx + r * kotlin.math.cos(angle)
         val y = cy + r * kotlin.math.sin(angle)
-
         if (i == 0) {
             moveTo(x, y)
         } else {
-            val prevAngle = ((i - 1) * 2.0 * Math.PI / numPoints - Math.PI / 2).toFloat()
-            val prevR = if ((i - 1) % 2 == 0) maxR else minR
-            val px = cx + prevR * kotlin.math.cos(prevAngle)
-            val py = cy + prevR * kotlin.math.sin(prevAngle)
-
-            val ctrlX = cx + (maxR * 1.04f) * kotlin.math.cos((angle + prevAngle) / 2)
-            val ctrlY = cy + (maxR * 1.04f) * kotlin.math.sin((angle + prevAngle) / 2)
-            quadraticTo(ctrlX, ctrlY, x, y)
+            lineTo(x, y)
         }
     }
     close()
@@ -1308,8 +1296,8 @@ fun DashboardCategoriesView(
                                             .background(
                                                 Brush.linearGradient(
                                                     colors = listOf(
-                                                        themeColors.buttonEqualBg,
-                                                        themeColors.buttonEqualBg.copy(alpha = 0.75f)
+                                                        themeColors.buttonEqualBg.copy(alpha = 0.18f),
+                                                        themeColors.buttonEqualBg.copy(alpha = 0.05f)
                                                     )
                                                 )
                                             ),
@@ -1318,7 +1306,7 @@ fun DashboardCategoriesView(
                                         Icon(
                                             imageVector = item.icon,
                                             contentDescription = item.titleEn,
-                                            tint = Color.White,
+                                            tint = themeColors.buttonEqualBg,
                                             modifier = Modifier.size(24.dp)
                                         )
                                     }
@@ -1770,7 +1758,7 @@ fun DashboardCategoriesView(
                                     Box(
                                         modifier = Modifier
                                             .size(32.dp)
-                                            .clip(ScallopedBadgeShape)
+                                            .clip(CircleShape)
                                             .background(
                                                 Brush.linearGradient(
                                                     colors = listOf(
@@ -1876,7 +1864,7 @@ fun DashboardCategoriesView(
                                         Box(
                                             modifier = Modifier
                                                 .size(28.dp)
-                                                .clip(ScallopedBadgeShape)
+                                                .clip(CircleShape)
                                                 .background(
                                                     Brush.linearGradient(
                                                         colors = listOf(
@@ -2224,8 +2212,8 @@ fun ToolGridCardItem(
                             .background(
                                 Brush.linearGradient(
                                     colors = listOf(
-                                        themeColors.buttonEqualBg,
-                                        themeColors.buttonEqualBg.copy(alpha = 0.75f)
+                                        themeColors.buttonEqualBg.copy(alpha = 0.18f),
+                                        themeColors.buttonEqualBg.copy(alpha = 0.05f)
                                     )
                                 )
                             ),
@@ -2234,7 +2222,7 @@ fun ToolGridCardItem(
                         Icon(
                             imageVector = toolType.icon,
                             contentDescription = toolType.getTitle(viewModel.selectedLanguage),
-                            tint = Color.White,
+                            tint = themeColors.buttonEqualBg,
                             modifier = Modifier.size(20.dp)
                         )
                     }
