@@ -57,6 +57,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import android.content.Context
 import android.location.Geocoder
 import android.location.Location
@@ -216,6 +217,7 @@ fun DashboardCategoriesView(
     }
 
     val allTools = ToolType.values()
+    val toolUsage by viewModel.allToolUsage.collectAsStateWithLifecycle()
     val searchQuery = viewModel.toolSearchQuery.lowercase().trim()
     val selectedFilter = viewModel.selectedToolCategoryFilter
     var showWeatherDialog by remember { mutableStateOf(false) }
@@ -246,14 +248,16 @@ fun DashboardCategoriesView(
         }
     }
 
-    val filteredTools = allTools.filter { tool ->
-        val matchesCategory = selectedFilter == null || tool.category == selectedFilter
-        val matchesSearch = searchQuery.isEmpty() ||
-                tool.titleEn.lowercase().contains(searchQuery) ||
-                tool.titleBn.lowercase().contains(searchQuery) ||
-                tool.descriptionBn.lowercase().contains(searchQuery)
-        matchesCategory && matchesSearch
-    }
+    val filteredTools = viewModel.getSortedTools(
+        allTools.filter { tool ->
+            val matchesCategory = selectedFilter == null || tool.category == selectedFilter
+            val matchesSearch = searchQuery.isEmpty() ||
+                    tool.titleEn.lowercase().contains(searchQuery) ||
+                    tool.titleBn.lowercase().contains(searchQuery) ||
+                    tool.descriptionBn.lowercase().contains(searchQuery)
+            matchesCategory && matchesSearch
+        }
+    )
 
     Column(
         modifier = Modifier

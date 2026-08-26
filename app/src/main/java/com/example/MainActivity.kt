@@ -13,6 +13,7 @@ import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModelProvider
 import com.example.data.database.CalculatorDatabase
 import com.example.data.repository.HistoryRepository
+import com.example.data.repository.ToolUsageRepository
 import com.example.ui.MainApp
 import com.example.ui.theme.MyApplicationTheme
 import com.example.ui.viewmodel.CalculatorViewModel
@@ -39,9 +40,10 @@ class MainActivity : ComponentActivity() {
         // Initialize database and repository
         val database = CalculatorDatabase.getDatabase(this)
         val repository = HistoryRepository(database.historyDao())
+        val usageRepository = ToolUsageRepository(database.toolUsageDao())
 
         // Create ViewModel
-        val viewModelFactory = CalculatorViewModelFactory(repository, this)
+        val viewModelFactory = CalculatorViewModelFactory(repository, usageRepository, this)
         viewModel = ViewModelProvider(this, viewModelFactory)[CalculatorViewModel::class.java]
 
         // Explicitly set default active tab to 0 (Dashboard) on activity creation

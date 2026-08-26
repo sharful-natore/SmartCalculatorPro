@@ -48,6 +48,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.TextRange
@@ -175,6 +176,7 @@ fun SmartConverterCategoriesView(
     }
 
     val allConverters = ConverterType.values()
+    val toolUsage by viewModel.allToolUsage.collectAsStateWithLifecycle()
     val searchQuery = viewModel.converterSearchQuery.lowercase().trim()
     val selectedFilter = viewModel.selectedCategoryFilter
 
@@ -201,14 +203,16 @@ fun SmartConverterCategoriesView(
         }
     }
 
-    val filteredConverters = allConverters.filter { converter ->
-        val matchesCategory = selectedFilter == null || converter.category == selectedFilter
-        val matchesSearch = searchQuery.isEmpty() ||
-                converter.titleEn.lowercase().contains(searchQuery) ||
-                converter.titleBn.lowercase().contains(searchQuery) ||
-                converter.units.any { it.lowercase().contains(searchQuery) }
-        matchesCategory && matchesSearch
-    }
+    val filteredConverters = viewModel.getSortedConverters(
+        allConverters.filter { converter ->
+            val matchesCategory = selectedFilter == null || converter.category == selectedFilter
+            val matchesSearch = searchQuery.isEmpty() ||
+                    converter.titleEn.lowercase().contains(searchQuery) ||
+                    converter.titleBn.lowercase().contains(searchQuery) ||
+                    converter.units.any { it.lowercase().contains(searchQuery) }
+            matchesCategory && matchesSearch
+        }
+    )
 
     Column(
         modifier = Modifier

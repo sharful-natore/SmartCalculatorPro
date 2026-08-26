@@ -217,7 +217,7 @@ fun BatteryMonitorTool(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .themeCardShadow(themeColors),
+                    .themeCardShadow(themeColors, shape = RoundedCornerShape(32.dp)),
                 colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
                 shape = RoundedCornerShape(32.dp)
             ) {
@@ -280,26 +280,39 @@ fun BatteryMonitorTool(
                         ) {
                             if (isCurrentlyCharging) {
                                 Canvas(modifier = Modifier.fillMaxSize()) {
-                                    val wavePath = Path()
+                                    val wavePath1 = Path()
+                                    val wavePath2 = Path()
                                     val centerY = size.height * (1f - (batteryLevel / 100f))
-                                    val waveWidth = size.width
                                     val waveHeight = 8.dp.toPx()
                                     
-                                    wavePath.moveTo(0f, size.height)
-                                    wavePath.lineTo(0f, centerY)
-                                    
+                                    // Primary Wave
+                                    wavePath1.moveTo(0f, size.height)
+                                    wavePath1.lineTo(0f, centerY)
                                     for (x in 0..size.width.toInt() step 5) {
                                         val y = centerY + kotlin.math.sin(Math.toRadians(x.toDouble() + waveOffset)) * waveHeight
-                                        wavePath.lineTo(x.toFloat(), y.toFloat())
+                                        wavePath1.lineTo(x.toFloat(), y.toFloat())
                                     }
-                                    
-                                    wavePath.lineTo(size.width, size.height)
-                                    wavePath.close()
+                                    wavePath1.lineTo(size.width, size.height)
+                                    wavePath1.close()
+
+                                    // Secondary Wave
+                                    wavePath2.moveTo(0f, size.height)
+                                    wavePath2.lineTo(0f, centerY)
+                                    for (x in 0..size.width.toInt() step 5) {
+                                        val y = centerY + kotlin.math.cos(Math.toRadians(x.toDouble() + waveOffset * 0.8)) * (waveHeight * 0.7f)
+                                        wavePath2.lineTo(x.toFloat(), y.toFloat())
+                                    }
+                                    wavePath2.lineTo(size.width, size.height)
+                                    wavePath2.close()
                                     
                                     drawPath(
-                                        path = wavePath,
+                                        path = wavePath2,
+                                        color = circularColor.copy(alpha = 0.15f)
+                                    )
+                                    drawPath(
+                                        path = wavePath1,
                                         brush = Brush.verticalGradient(
-                                            colors = listOf(circularColor.copy(alpha = 0.4f), circularColor.copy(alpha = 0.1f))
+                                            colors = listOf(circularColor.copy(alpha = 0.4f), circularColor.copy(alpha = 0.15f))
                                         )
                                     )
                                 }
@@ -437,7 +450,7 @@ fun BatteryMonitorTool(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .themeCardShadow(themeColors),
+                    .themeCardShadow(themeColors, shape = RoundedCornerShape(32.dp)),
                 colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
                 shape = RoundedCornerShape(32.dp)
             ) {
@@ -555,7 +568,16 @@ fun BatteryMonitorTool(
                                     strokeWidth = 1.dp.toPx()
                                 )
 
-                                // 3. Draw The Main Wave Line
+                                // 3. Draw The Main Wave Line with Glow
+                                drawPath(
+                                    path = strokePath,
+                                    color = waveColor.copy(alpha = 0.3f),
+                                    style = Stroke(
+                                        width = 6.dp.toPx(),
+                                        cap = androidx.compose.ui.graphics.StrokeCap.Round,
+                                        join = androidx.compose.ui.graphics.StrokeJoin.Round
+                                    )
+                                )
                                 drawPath(
                                     path = strokePath,
                                     color = waveColor,
@@ -565,6 +587,22 @@ fun BatteryMonitorTool(
                                         join = androidx.compose.ui.graphics.StrokeJoin.Round
                                     )
                                 )
+
+                                // 4. Draw Point Markers
+                                for (i in 0 until pointsCount) {
+                                    val point = getPoint(i)
+                                    drawCircle(
+                                        color = Color.White,
+                                        radius = 1.5.dp.toPx(),
+                                        center = point
+                                    )
+                                    drawCircle(
+                                        color = waveColor,
+                                        radius = 3.dp.toPx(),
+                                        center = point,
+                                        style = Stroke(width = 1.dp.toPx())
+                                    )
+                                }
                             }
                         }
                     }
@@ -585,7 +623,7 @@ fun BatteryMonitorTool(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .themeCardShadow(themeColors),
+                    .themeCardShadow(themeColors, shape = RoundedCornerShape(32.dp)),
                 colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
                 shape = RoundedCornerShape(32.dp)
             ) {

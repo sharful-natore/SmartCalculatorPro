@@ -417,8 +417,8 @@ fun Modifier.themeCardShadow(
 ): Modifier = this.shadow(
     elevation = elevation,
     shape = shape,
-    clip = false,
-    ambientColor = themeColors.buttonEqualBg.copy(alpha = 0.12f),
-    spotColor = themeColors.buttonEqualBg.copy(alpha = 0.22f)
+    clip = true,
+    ambientColor = themeColors.displayText.copy(alpha = 0.08f),
+    spotColor = themeColors.displayText.copy(alpha = 0.12f)
 )
 

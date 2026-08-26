@@ -12,7 +12,9 @@ import androidx.lifecycle.viewModelScope
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import com.example.data.model.HistoryEntry
+import com.example.data.model.ToolUsage
 import com.example.data.repository.HistoryRepository
+import com.example.data.repository.ToolUsageRepository
 import com.example.ui.theme.CalculatorThemeType
 import com.example.util.AppLanguage
 import com.example.util.ExpressionEvaluator
@@ -38,6 +40,7 @@ import java.util.*
 
 class CalculatorViewModel(
     private val repository: HistoryRepository,
+    private val usageRepository: ToolUsageRepository,
     private val context: Context
 ) : ViewModel() {
 
@@ -431,6 +434,28 @@ class CalculatorViewModel(
                 onResult(false, errorMsg)
             }
         }
+    }
+
+    val allToolUsage = usageRepository.allUsage.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000),
+        emptyList()
+    )
+
+    fun recordToolUsage(toolId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            usageRepository.recordUsage(toolId)
+        }
+    }
+
+    fun getSortedTools(tools: List<com.example.data.model.ToolType>): List<com.example.data.model.ToolType> {
+        val usages = allToolUsage.value.associate { it.toolId to it.usageCount }
+        return tools.sortedByDescending { usages["TOOL_${it.name}"] ?: 0 }
+    }
+
+    fun getSortedConverters(converters: List<com.example.data.model.ConverterType>): List<com.example.data.model.ConverterType> {
+        val usages = allToolUsage.value.associate { it.toolId to it.usageCount }
+        return converters.sortedByDescending { usages["CONV_${it.name}"] ?: 0 }
     }
 
     // History deletion confirmation state
@@ -2604,6 +2629,7 @@ How can I help you today?"""
             }
         }
         selectedToolType = type
+        recordToolUsage("TOOL_${type.name}")
         activeTab = 0
     }
 
@@ -3456,6 +3482,7 @@ How can I help you today?"""
         toUnit = type.units.getOrNull(1) ?: fromUnit
         converterInput = "1"
         calculateConverter()
+        recordToolUsage("CONV_${type.name}")
         activeTab = 1
     }
 
@@ -3919,12 +3946,13 @@ How can I help you today?"""
 
 class CalculatorViewModelFactory(
     private val repository: HistoryRepository,
+    private val usageRepository: ToolUsageRepository,
     private val context: Context
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(CalculatorViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return CalculatorViewModel(repository, context) as T
+            return CalculatorViewModel(repository, usageRepository, context) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

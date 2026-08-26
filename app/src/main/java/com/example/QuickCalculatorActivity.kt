@@ -31,6 +31,7 @@ import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModelProvider
 import com.example.data.database.CalculatorDatabase
 import com.example.data.repository.HistoryRepository
+import com.example.data.repository.ToolUsageRepository
 import com.example.ui.screens.CalculatorScreen
 import com.example.ui.theme.CalculatorThemeColors
 import com.example.ui.theme.MyApplicationTheme
@@ -56,7 +57,8 @@ class QuickCalculatorActivity : ComponentActivity() {
 
         val database = CalculatorDatabase.getDatabase(this)
         val repository = HistoryRepository(database.historyDao())
-        val viewModelFactory = CalculatorViewModelFactory(repository, this)
+        val usageRepository = ToolUsageRepository(database.toolUsageDao())
+        val viewModelFactory = CalculatorViewModelFactory(repository, usageRepository, this)
         viewModel = ViewModelProvider(this, viewModelFactory)[CalculatorViewModel::class.java]
 
         setContent {

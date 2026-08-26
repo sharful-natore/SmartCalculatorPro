@@ -5,10 +5,12 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.example.data.model.HistoryEntry
+import com.example.data.model.ToolUsage
 
-@Database(entities = [HistoryEntry::class], version = 2, exportSchema = false)
+@Database(entities = [HistoryEntry::class, ToolUsage::class], version = 3, exportSchema = false)
 abstract class CalculatorDatabase : RoomDatabase() {
     abstract fun historyDao(): HistoryDao
+    abstract fun toolUsageDao(): ToolUsageDao
 
     companion object {
         @Volatile
