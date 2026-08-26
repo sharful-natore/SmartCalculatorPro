@@ -190,7 +190,7 @@
             android:orientation="vertical">
 
             <!-- Sunrise Row -->
-            <View
+            <FrameLayout
                 android:layout_width="1dp"
                 android:layout_height="0dp"
                 android:layout_weight="1" />
@@ -227,7 +227,7 @@
                     android:textStyle="bold" />
             </LinearLayout>
 
-            <View
+            <FrameLayout
                 android:layout_width="1dp"
                 android:layout_height="0dp"
                 android:layout_weight="1" />
@@ -265,7 +265,7 @@
                     android:textStyle="bold" />
             </LinearLayout>
 
-            <View
+            <FrameLayout
                 android:layout_width="1dp"
                 android:layout_height="0dp"
                 android:layout_weight="1" />
@@ -286,7 +286,7 @@
         android:paddingHorizontal="9dp"
         android:paddingVertical="3dp">
 
-        <View
+        <FrameLayout
             android:layout_width="1dp"
             android:layout_height="0dp"
             android:layout_weight="1" />
@@ -462,7 +462,7 @@
             </LinearLayout>
         </LinearLayout>
 
-        <View
+        <FrameLayout
             android:layout_width="1dp"
             android:layout_height="0dp"
             android:layout_weight="1" />
@@ -533,7 +533,7 @@
             </LinearLayout>
         </LinearLayout>
 
-        <View
+        <FrameLayout
             android:layout_width="1dp"
             android:layout_height="0dp"
             android:layout_weight="1" />

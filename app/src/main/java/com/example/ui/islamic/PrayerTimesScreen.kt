@@ -808,7 +808,7 @@ fun ModernPrayerTimesCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp).weight(1f, fill = false))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // --- 1. DUAL HERO STATUS CARDS (এখন & পরবর্তী) ---
             Row(
@@ -1124,7 +1124,7 @@ fun ModernPrayerTimesCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp).weight(1f, fill = false))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // --- 2. SUNRISE & SUNSET CARD (সূর্যোদয়, সূর্যাস্ত ও দিনের দৈর্ঘ্য) ---
             Card(
@@ -1260,7 +1260,7 @@ fun ModernPrayerTimesCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp).weight(1f, fill = false))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // --- 3. DATE NAVIGATION BAR (TRIPLE CALENDAR SELECTOR) ---
             Card(
@@ -1342,7 +1342,7 @@ fun ModernPrayerTimesCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp).weight(1f, fill = false))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // --- 4. DAILY SALAH TRACKER (দৈনিক ৫ ওয়াক্ত সালাত ট্র্যাকার - ওয়াক্তের সময়ের উপরে ও ডেট সিলেক্টরের নিচে) ---
             Card(
@@ -1480,7 +1480,7 @@ fun ModernPrayerTimesCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp).weight(1f, fill = false))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // --- 5. PRAYER SCHEDULE TIMETABLE (LIST / TABLE) ---
             Card(

@@ -3987,29 +3987,74 @@ private fun cropToAspectRatio(src: android.graphics.Bitmap, targetW: Float, targ
     return android.graphics.Bitmap.createBitmap(src, left, top, width, height)
 }
 
-private fun saveProcessedPhotoToGallery(context: android.content.Context, result: ProcessedPhotoResult): String? {
-    try {
-        val ext = when (result.format) {
-            "PNG" -> "png"
-            "WEBP" -> "webp"
-            else -> "jpg"
-        }
-        val mimeType = when (result.format) {
-            "PNG" -> "image/png"
-            "WEBP" -> "image/webp"
-            else -> "image/jpeg"
-        }
-        val filename = "PhotoResizer_${System.currentTimeMillis()}.$ext"
+private suspend fun saveProcessedPhotoToGallery(context: android.content.Context, result: ProcessedPhotoResult): String? = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+    val ext = when (result.format.uppercase()) {
+        "PNG" -> "png"
+        "WEBP" -> "webp"
+        else -> "jpg"
+    }
+    val mimeType = when (result.format.uppercase()) {
+        "PNG" -> "image/png"
+        "WEBP" -> "image/webp"
+        else -> "image/jpeg"
+    }
+    val filename = "PhotoResizer_${System.currentTimeMillis()}.$ext"
 
+    // Method 1: MediaStore on Android Q+ (API 29+)
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+        try {
+            val contentValues = android.content.ContentValues().apply {
+                put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, filename)
+                put(android.provider.MediaStore.MediaColumns.MIME_TYPE, mimeType)
+                put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, android.os.Environment.DIRECTORY_PICTURES + "/PhotoResizer")
+                put(android.provider.MediaStore.MediaColumns.IS_PENDING, 1)
+            }
+            val resolver = context.contentResolver
+            val uri = resolver.insert(android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+            if (uri != null) {
+                resolver.openOutputStream(uri)?.use { os ->
+                    os.write(result.byteArray)
+                    os.flush()
+                }
+                contentValues.clear()
+                contentValues.put(android.provider.MediaStore.MediaColumns.IS_PENDING, 0)
+                resolver.update(uri, contentValues, null, null)
+                return@withContext filename
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    // Method 2: Public Pictures Directory Direct File Save + MediaScanner
+    try {
+        val picturesDir = android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_PICTURES)
+        val appFolder = java.io.File(picturesDir, "PhotoResizer")
+        if (!appFolder.exists()) {
+            appFolder.mkdirs()
+        }
+        val targetFile = java.io.File(appFolder, filename)
+        java.io.FileOutputStream(targetFile).use { fos ->
+            fos.write(result.byteArray)
+            fos.flush()
+        }
+        android.media.MediaScannerConnection.scanFile(
+            context,
+            arrayOf(targetFile.absolutePath),
+            arrayOf(mimeType),
+            null
+        )
+        return@withContext filename
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+
+    // Method 3: Standard MediaStore (Legacy API)
+    try {
         val contentValues = android.content.ContentValues().apply {
             put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, filename)
             put(android.provider.MediaStore.MediaColumns.MIME_TYPE, mimeType)
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/PhotoResizer")
-                put(android.provider.MediaStore.MediaColumns.IS_PENDING, 1)
-            }
         }
-
         val resolver = context.contentResolver
         val uri = resolver.insert(android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
         if (uri != null) {
@@ -4017,17 +4062,34 @@ private fun saveProcessedPhotoToGallery(context: android.content.Context, result
                 os.write(result.byteArray)
                 os.flush()
             }
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                contentValues.clear()
-                contentValues.put(android.provider.MediaStore.MediaColumns.IS_PENDING, 0)
-                resolver.update(uri, contentValues, null, null)
-            }
-            return filename
+            return@withContext filename
         }
     } catch (e: Exception) {
         e.printStackTrace()
     }
-    return null
+
+    // Method 4: App External Files Pictures dir fallback
+    try {
+        val extDir = context.getExternalFilesDir(android.os.Environment.DIRECTORY_PICTURES)
+        if (extDir != null) {
+            val targetFile = java.io.File(extDir, filename)
+            java.io.FileOutputStream(targetFile).use { fos ->
+                fos.write(result.byteArray)
+                fos.flush()
+            }
+            android.media.MediaScannerConnection.scanFile(
+                context,
+                arrayOf(targetFile.absolutePath),
+                arrayOf(mimeType),
+                null
+            )
+            return@withContext filename
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+
+    return@withContext null
 }
 
 data class ProcessedPhotoResult(
@@ -4402,36 +4464,63 @@ private fun InteractiveCropDialog(
                         )
                     }
 
-                    // PicsArt Style Crop Grid & Corner Drag Handles Overlay
+                    // PicsArt Style Crop Grid & Corner Drag Handles Overlay (Outer area dimmed, Inner area crystal clear & bright)
                     Canvas(modifier = Modifier.fillMaxSize()) {
-                        // 1. Semi-transparent dark background for cropped outer area using EvenOdd path
-                        val path = Path().apply {
-                            addRect(Rect(0f, 0f, size.width, size.height))
-                            addRect(cropRect)
-                            fillType = PathFillType.EvenOdd
+                        val darkScrimColor = Color.Black.copy(alpha = 0.65f)
+
+                        // 1. Top dark overlay
+                        if (cropRect.top > 0f) {
+                            drawRect(
+                                color = darkScrimColor,
+                                topLeft = Offset(0f, 0f),
+                                size = Size(size.width, cropRect.top)
+                            )
                         }
-                        drawPath(path, Color.Black.copy(alpha = 0.75f))
+                        // 2. Bottom dark overlay
+                        if (cropRect.bottom < size.height) {
+                            drawRect(
+                                color = darkScrimColor,
+                                topLeft = Offset(0f, cropRect.bottom),
+                                size = Size(size.width, size.height - cropRect.bottom)
+                            )
+                        }
+                        // 3. Left dark overlay
+                        if (cropRect.left > 0f) {
+                            drawRect(
+                                color = darkScrimColor,
+                                topLeft = Offset(0f, cropRect.top),
+                                size = Size(cropRect.left, cropRect.height)
+                            )
+                        }
+                        // 4. Right dark overlay
+                        if (cropRect.right < size.width) {
+                            drawRect(
+                                color = darkScrimColor,
+                                topLeft = Offset(cropRect.right, cropRect.top),
+                                size = Size(size.width - cropRect.right, cropRect.height)
+                            )
+                        }
                         
-                        // 3. Crisp white boundary stroke
+                        // 5. Crisp white boundary stroke around cropRect
                         drawRect(
-                            color = Color.White.copy(alpha = 0.85f),
+                            color = Color.White,
                             topLeft = cropRect.topLeft,
                             size = cropRect.size,
-                            style = Stroke(width = 1.5.dp.toPx())
+                            style = Stroke(width = 2.dp.toPx())
                         )
                         
-                        // 4. Rule of Thirds Grid Lines
+                        // 6. Rule of Thirds Grid Lines (Clean and subtle)
                         val colW = cropRect.width / 3f
-                        drawLine(Color.White.copy(alpha = 0.35f), Offset(cropRect.left + colW, cropRect.top), Offset(cropRect.left + colW, cropRect.bottom), strokeWidth = 1.dp.toPx())
-                        drawLine(Color.White.copy(alpha = 0.35f), Offset(cropRect.left + colW * 2, cropRect.top), Offset(cropRect.left + colW * 2, cropRect.bottom), strokeWidth = 1.dp.toPx())
+                        drawLine(Color.White.copy(alpha = 0.45f), Offset(cropRect.left + colW, cropRect.top), Offset(cropRect.left + colW, cropRect.bottom), strokeWidth = 1.dp.toPx())
+                        drawLine(Color.White.copy(alpha = 0.45f), Offset(cropRect.left + colW * 2, cropRect.top), Offset(cropRect.left + colW * 2, cropRect.bottom), strokeWidth = 1.dp.toPx())
                         
                         val rowH = cropRect.height / 3f
-                        drawLine(Color.White.copy(alpha = 0.35f), Offset(cropRect.left, cropRect.top + rowH), Offset(cropRect.right, cropRect.top + rowH), strokeWidth = 1.dp.toPx())
-                        drawLine(Color.White.copy(alpha = 0.35f), Offset(cropRect.left, cropRect.top + rowH * 2), Offset(cropRect.right, cropRect.top + rowH * 2), strokeWidth = 1.dp.toPx())
+                        drawLine(Color.White.copy(alpha = 0.45f), Offset(cropRect.left, cropRect.top + rowH), Offset(cropRect.right, cropRect.top + rowH), strokeWidth = 1.dp.toPx())
+                        drawLine(Color.White.copy(alpha = 0.45f), Offset(cropRect.left, cropRect.top + rowH * 2), Offset(cropRect.right, cropRect.top + rowH * 2), strokeWidth = 1.dp.toPx())
 
-                        // 5. Heavy Corner Handles (PicsArt Style)
+                        // 7. Heavy Corner Handles (PicsArt Style)
                         val cornerStroke = 4.dp.toPx()
-                        val cornerLength = 22.dp.toPx()
+                        val cornerLength = 24.dp.toPx()
 
                         // Top-Left corner
                         drawLine(Color.White, Offset(cropRect.left - cornerStroke/2, cropRect.top), Offset(cropRect.left + cornerLength, cropRect.top), strokeWidth = cornerStroke)

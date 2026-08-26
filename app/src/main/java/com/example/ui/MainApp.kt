@@ -1838,34 +1838,6 @@ fun MainContent(
                         // Modern Interactive Developer Info Card
                         val context = LocalContext.current
                         val localPhotoFile = remember { java.io.File(context.filesDir, "developer_photo.jpg") }
-                        var photoDownloaded by remember { mutableStateOf(localPhotoFile.exists()) }
-
-                        LaunchedEffect(Unit) {
-                            if (!photoDownloaded) {
-                                withContext(Dispatchers.IO) {
-                                    try {
-                                        val client = OkHttpClient.Builder().build()
-                                        val request = Request.Builder()
-                                            .url("https://www.dropbox.com/scl/fi/io67lcl16o1wddcq4yx4m/Dev_photo.jpg?rlkey=erlthhlxwjhbgtd2w3tv9jbvv&st=djqdym2s&dl=1")
-                                            .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
-                                            .build()
-                                        val response = client.newCall(request).execute()
-                                        if (response.isSuccessful) {
-                                            val bytes = response.body?.bytes()
-                                            if (bytes != null) {
-                                                localPhotoFile.writeBytes(bytes)
-                                                withContext(Dispatchers.Main) {
-                                                    photoDownloaded = true
-                                                }
-                                            }
-                                        }
-                                        response.close()
-                                    } catch (e: Exception) {
-                                        e.printStackTrace()
-                                    }
-                                }
-                            }
-                        }
 
                         Card(
                             modifier = Modifier.fillMaxWidth(),
@@ -1905,7 +1877,7 @@ fun MainContent(
 
                                     Spacer(modifier = Modifier.width(10.dp))
 
-                                    // Circular Developer Photo with nice border and design
+                                    // Circular Developer Photo with nice border and smooth cached rendering
                                     Box(
                                         modifier = Modifier
                                             .size(60.dp)
@@ -1914,50 +1886,45 @@ fun MainContent(
                                             .border(3.dp, themeColors.buttonEqualBg, CircleShape),
                                         contentAlignment = Alignment.Center
                                     ) {
-                                        val photoData = remember(photoDownloaded) {
-                                            if (photoDownloaded && localPhotoFile.exists()) localPhotoFile 
-                                            else "https://www.dropbox.com/scl/fi/io67lcl16o1wddcq4yx4m/Dev_photo.jpg?rlkey=erlthhlxwjhbgtd2w3tv9jbvv&st=djqdym2s&dl=1"
+                                        val photoModel = remember {
+                                            if (localPhotoFile.exists() && localPhotoFile.length() > 500) {
+                                                localPhotoFile
+                                            } else {
+                                                "https://www.dropbox.com/scl/fi/io67lcl16o1wddcq4yx4m/Dev_photo.jpg?rlkey=erlthhlxwjhbgtd2w3tv9jbvv&st=djqdym2s&dl=1"
+                                            }
                                         }
 
-                                        val painter = rememberAsyncImagePainter(
+                                        coil.compose.SubcomposeAsyncImage(
                                             model = ImageRequest.Builder(LocalContext.current)
-                                                .data(photoData)
+                                                .data(photoModel)
+                                                .crossfade(true)
                                                 .diskCachePolicy(coil.request.CachePolicy.ENABLED)
                                                 .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
-                                                .listener(
-                                                    onSuccess = { _, result ->
-                                                        if (!photoDownloaded) {
-                                                            val bitmap = (result.drawable as? android.graphics.drawable.BitmapDrawable)?.bitmap
-                                                            if (bitmap != null) {
-                                                                try {
-                                                                    java.io.FileOutputStream(localPhotoFile).use { out ->
-                                                                        bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 95, out)
-                                                                    }
-                                                                    photoDownloaded = true
-                                                                } catch (e: Exception) {
-                                                                    e.printStackTrace()
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                )
-                                                .build()
+                                                .build(),
+                                            contentDescription = "Developer Photo",
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier.fillMaxSize(),
+                                            loading = {
+                                                Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Person,
+                                                        contentDescription = "Avatar Placeholder",
+                                                        tint = themeColors.buttonEqualBg.copy(alpha = 0.8f),
+                                                        modifier = Modifier.size(32.dp)
+                                                    )
+                                                }
+                                            },
+                                            error = {
+                                                Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Person,
+                                                        contentDescription = "Avatar Placeholder",
+                                                        tint = themeColors.buttonEqualBg.copy(alpha = 0.8f),
+                                                        modifier = Modifier.size(32.dp)
+                                                    )
+                                                }
+                                            }
                                         )
-                                        if (painter.state is coil.compose.AsyncImagePainter.State.Success || photoDownloaded) {
-                                            Image(
-                                                painter = painter,
-                                                contentDescription = "Developer Photo",
-                                                contentScale = ContentScale.Crop,
-                                                modifier = Modifier.fillMaxSize()
-                                            )
-                                        } else {
-                                            Icon(
-                                                imageVector = Icons.Default.Person,
-                                                contentDescription = "Avatar Placeholder",
-                                                tint = themeColors.buttonEqualBg.copy(alpha = 0.8f),
-                                                modifier = Modifier.size(32.dp)
-                                            )
-                                        }
                                     }
                                 }
 

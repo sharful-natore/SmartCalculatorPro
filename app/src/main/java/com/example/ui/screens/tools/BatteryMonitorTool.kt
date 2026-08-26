@@ -8,6 +8,7 @@ import android.os.BatteryManager
 import android.os.SystemClock
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -43,6 +44,26 @@ import com.example.util.AppLanguage
 import kotlinx.coroutines.delay
 import java.util.Locale
 import kotlin.math.abs
+
+private data class BatteryTimeTuple<A, B, C, D>(
+    val first: A,
+    val second: B,
+    val third: C,
+    val fourth: D
+)
+
+private fun convertBatteryBnDigits(input: String): String {
+    val bnDigits = charArrayOf('০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯')
+    val sb = StringBuilder()
+    for (ch in input) {
+        if (ch in '0'..'9') {
+            sb.append(bnDigits[ch - '0'])
+        } else {
+            sb.append(ch)
+        }
+    }
+    return sb.toString()
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -106,7 +127,6 @@ fun BatteryMonitorTool(
             val rawCurrentNow = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW)
             
             // Standard Android reports in microamperes (uA), but some manufacturers use milliamperes (mA)
-            // We heuristically determine the unit: if abs value is > 20,000, it's definitely uA.
             var currentMa = if (abs(rawCurrentNow) > 20000) {
                 rawCurrentNow / 1000
             } else {
@@ -117,12 +137,6 @@ fun BatteryMonitorTool(
             val isCharging = batteryStatus == BatteryManager.BATTERY_STATUS_CHARGING ||
                     batteryStatus == BatteryManager.BATTERY_STATUS_FULL
             
-            // On many devices, discharge is negative and charge is positive.
-            // If the status is charging but current is negative, we invert it for display consistency
-            // if the user expects positive values for charging.
-            // However, the graph looks better if we show real values (neg for discharge, pos for charge)
-            // Let's ensure the textual display matches the intent.
-            
             if (isCharging && currentMa < 0) {
                 currentMa = abs(currentMa)
             } else if (!isCharging && currentMa > 0) {
@@ -130,7 +144,6 @@ fun BatteryMonitorTool(
             }
             
             // Fallback for some emulators or devices that return 0 for CURRENT_NOW
-            // Some devices use BATTERY_PROPERTY_CURRENT_AVERAGE instead
             if (currentMa == 0) {
                 val avgCurrent = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_AVERAGE)
                 currentMa = if (abs(avgCurrent) > 20000) avgCurrent / 1000 else avgCurrent
@@ -206,6 +219,83 @@ fun BatteryMonitorTool(
             else -> Color(0xFF9C27B0)
         }
     } else themeColors.displayText
+
+    // Dynamic Time Estimation (Discharging remaining time & Charging remaining time)
+    val timeEstimation = remember(
+        batteryLevel,
+        batteryStatus,
+        batteryCurrentMa,
+        isCurrentlyCharging,
+        batteryPlugged,
+        isBn
+    ) {
+        if (batteryLevel >= 100 || batteryStatus == BatteryManager.BATTERY_STATUS_FULL) {
+            val title = if (isBn) "ফুল চার্জ সম্পন্ন" else "Full Charge Complete"
+            val value = if (isBn) "১০০% চার্জড" else "100% Charged"
+            val sub = if (isBn) "ডিভাইস সম্পূর্ণ চার্জ হয়েছে" else "Device battery is fully charged"
+            val icon = Icons.Default.CheckCircle
+            BatteryTimeTuple(title, value, sub, icon)
+        } else if (isCurrentlyCharging) {
+            // Android System API check on P+
+            val sysRemainingMs = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                try { batteryManager.computeChargeTimeRemaining() } catch (e: Exception) { -1L }
+            } else -1L
+
+            val totalMins = if (sysRemainingMs > 0L) {
+                (sysRemainingMs / 60000L).toInt()
+            } else {
+                // Precise heuristic estimation
+                val neededPercent = (100 - batteryLevel).coerceAtLeast(1)
+                val effectiveMa = when {
+                    batteryCurrentMa > 200 -> batteryCurrentMa.toDouble()
+                    batteryPlugged == BatteryManager.BATTERY_PLUGGED_AC -> 1600.0
+                    batteryPlugged == BatteryManager.BATTERY_PLUGGED_WIRELESS -> 900.0
+                    else -> 500.0
+                }
+                // Assumed standard 5000 mAh capacity
+                val neededCapacityMah = (neededPercent / 100.0) * 5000.0
+                val hours = (neededCapacityMah / effectiveMa) * 1.12 // 12% CC/CV taper
+                (hours * 60).toInt().coerceIn(2, 600)
+            }
+
+            val hrs = totalMins / 60
+            val mins = totalMins % 60
+            val timeFormatted = if (hrs > 0 && mins > 0) {
+                if (isBn) "${convertBatteryBnDigits(hrs.toString())} ঘণ্টা ${convertBatteryBnDigits(mins.toString())} মিনিট"
+                else "${hrs}h ${mins}m"
+            } else if (hrs > 0) {
+                if (isBn) "${convertBatteryBnDigits(hrs.toString())} ঘণ্টা" else "${hrs} hr"
+            } else {
+                if (isBn) "${convertBatteryBnDigits(mins.toString())} মিনিট" else "${mins} min"
+            }
+
+            val title = if (isBn) "ফুল চার্জ হতে বাকি" else "Time to Full Charge"
+            val sub = if (isBn) "বর্তমান চার্জিং গতির ভিত্তিতে আনুমানিক হিসাব" else "Estimated based on active charging current"
+            val icon = Icons.Default.BatteryChargingFull
+            BatteryTimeTuple(title, timeFormatted, sub, icon)
+        } else {
+            // Discharging state
+            val effectiveDrainMa = if (abs(batteryCurrentMa) > 50) abs(batteryCurrentMa).toDouble() else 380.0
+            val remainingMah = (batteryLevel / 100.0) * 5000.0
+            val hours = remainingMah / effectiveDrainMa
+            val totalMins = (hours * 60).toInt().coerceIn(5, 7200)
+            val hrs = totalMins / 60
+            val mins = totalMins % 60
+            val timeFormatted = if (hrs > 0 && mins > 0) {
+                if (isBn) "${convertBatteryBnDigits(hrs.toString())} ঘণ্টা ${convertBatteryBnDigits(mins.toString())} মিনিট"
+                else "${hrs}h ${mins}m"
+            } else if (hrs > 0) {
+                if (isBn) "${convertBatteryBnDigits(hrs.toString())} ঘণ্টা" else "${hrs} hr"
+            } else {
+                if (isBn) "${convertBatteryBnDigits(mins.toString())} মিনিট" else "${mins} min"
+            }
+
+            val title = if (isBn) "ব্যাটারি ব্যাকআপ চলবে" else "Estimated Battery Life"
+            val sub = if (isBn) "বর্তমান পাওয়ার খরচের হারে আনুমানিক সময়" else "Estimated runtime on current power drain"
+            val icon = Icons.Default.HourglassTop
+            BatteryTimeTuple(title, timeFormatted, sub, icon)
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -446,6 +536,70 @@ fun BatteryMonitorTool(
                 }
             }
 
+            // Time Remaining Estimation Card (Discharging runtime & Charging time to full)
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .themeCardShadow(themeColors, shape = RoundedCornerShape(24.dp)),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (isCurrentlyCharging) Color(0xFF00E5FF).copy(alpha = 0.08f) else themeColors.buttonEqualBg.copy(alpha = 0.08f)
+                ),
+                shape = RoundedCornerShape(24.dp),
+                border = BorderStroke(
+                    1.dp,
+                    if (isCurrentlyCharging) Color(0xFF00E5FF).copy(alpha = 0.25f) else themeColors.buttonEqualBg.copy(alpha = 0.2f)
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 18.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (isCurrentlyCharging) Color(0xFF00E5FF).copy(alpha = 0.15f)
+                                else themeColors.buttonEqualBg.copy(alpha = 0.15f)
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = timeEstimation.fourth,
+                            contentDescription = null,
+                            tint = if (isCurrentlyCharging) Color(0xFF00B0FF) else themeColors.buttonEqualBg,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(14.dp))
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = timeEstimation.first,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = themeColors.displayText.copy(alpha = 0.7f)
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = timeEstimation.second,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Black,
+                            color = if (isCurrentlyCharging) Color(0xFF00B0FF) else themeColors.displayText
+                        )
+                        Spacer(modifier = Modifier.height(1.dp))
+                        Text(
+                            text = timeEstimation.third,
+                            fontSize = 10.5.sp,
+                            color = themeColors.displayText.copy(alpha = 0.5f)
+                        )
+                    }
+                }
+            }
+
             // Real-Time Waveform Graphical Visualizer
             Card(
                 modifier = Modifier
@@ -504,18 +658,18 @@ fun BatteryMonitorTool(
                             val height = size.height
                             
                             // Draw Grid Lines (Subtle)
-                            val gridLines = 5
+                            val gridLines = 4
                             for (i in 0..gridLines) {
                                 val y = (height / gridLines) * i
                                 drawLine(
-                                    color = themeColors.displayText.copy(alpha = 0.03f),
+                                    color = themeColors.displayText.copy(alpha = 0.04f),
                                     start = androidx.compose.ui.geometry.Offset(0f, y),
                                     end = androidx.compose.ui.geometry.Offset(width, y),
                                     strokeWidth = 0.5.dp.toPx()
                                 )
                             }
 
-                            // Plot telemetry points with Smooth Curves and Gradient Fill
+                            // Plot telemetry points with Smooth Single Line ONLY (no extra glow strokes or area fill)
                             if (telemetryHistory.size > 1) {
                                 val pointsCount = telemetryHistory.size
                                 val stepX = width / (pointsCount - 1)
@@ -523,7 +677,6 @@ fun BatteryMonitorTool(
                                 var maxVal = telemetryHistory.maxOf { abs(it) }
                                 if (maxVal < 100f) maxVal = 800f 
 
-                                val fillPath = Path()
                                 val strokePath = Path()
                                 
                                 val getPoint = { index: Int ->
@@ -534,33 +687,17 @@ fun BatteryMonitorTool(
                                     androidx.compose.ui.geometry.Offset(x, y)
                                 }
 
-                                fillPath.moveTo(0f, height)
                                 val firstPoint = getPoint(0)
-                                fillPath.lineTo(firstPoint.x, firstPoint.y)
                                 strokePath.moveTo(firstPoint.x, firstPoint.y)
 
                                 for (i in 0 until pointsCount - 1) {
                                     val p0 = getPoint(i)
                                     val p1 = getPoint(i + 1)
-                                    
                                     val controlX = (p0.x + p1.x) / 2f
-                                    
-                                    fillPath.cubicTo(controlX, p0.y, controlX, p1.y, p1.x, p1.y)
                                     strokePath.cubicTo(controlX, p0.y, controlX, p1.y, p1.x, p1.y)
                                 }
 
-                                fillPath.lineTo(width, height)
-                                fillPath.close()
-
-                                // 1. Draw Gradient Area
-                                drawPath(
-                                    path = fillPath,
-                                    brush = Brush.verticalGradient(
-                                        colors = listOf(waveColor.copy(alpha = 0.25f), Color.Transparent)
-                                    )
-                                )
-
-                                // 2. Draw Smooth Baseline Zero
+                                // 1. Draw Smooth Baseline Zero
                                 drawLine(
                                     color = themeColors.displayText.copy(alpha = 0.1f),
                                     start = androidx.compose.ui.geometry.Offset(0f, height / 2),
@@ -568,21 +705,12 @@ fun BatteryMonitorTool(
                                     strokeWidth = 1.dp.toPx()
                                 )
 
-                                // 3. Draw The Main Wave Line with Glow
-                                drawPath(
-                                    path = strokePath,
-                                    color = waveColor.copy(alpha = 0.3f),
-                                    style = Stroke(
-                                        width = 6.dp.toPx(),
-                                        cap = androidx.compose.ui.graphics.StrokeCap.Round,
-                                        join = androidx.compose.ui.graphics.StrokeJoin.Round
-                                    )
-                                )
+                                // 2. Draw The Single Clean Line (without extra glow or duplicate strokes)
                                 drawPath(
                                     path = strokePath,
                                     color = waveColor,
                                     style = Stroke(
-                                        width = 2.5.dp.toPx(),
+                                        width = 2.dp.toPx(),
                                         cap = androidx.compose.ui.graphics.StrokeCap.Round,
                                         join = androidx.compose.ui.graphics.StrokeJoin.Round
                                     )
@@ -594,7 +722,7 @@ fun BatteryMonitorTool(
                     Spacer(modifier = Modifier.height(8.dp))
                     
                     Text(
-                        text = if (isBn) "প্রতি ১.৫ সেকেন্ডে রিয়েল-টাইম রিডিং আপডেট করা হয়" else "Updates telemetry dynamically every 1.5s",
+                        text = if (isBn) "প্রতি ১ সেকেন্ডে রিয়েল-টাইম রিডিং আপডেট করা হয়" else "Updates telemetry dynamically every 1s",
                         fontSize = 11.sp,
                         color = themeColors.displayText.copy(alpha = 0.4f),
                         textAlign = TextAlign.Center,
@@ -625,6 +753,15 @@ fun BatteryMonitorTool(
                     )
 
                     HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.06f))
+
+                    // Row 0: Estimated Time Left
+                    MetricRow(
+                        icon = timeEstimation.fourth,
+                        title = timeEstimation.first,
+                        value = timeEstimation.second,
+                        valueColor = if (isCurrentlyCharging) Color(0xFF00B0FF) else themeColors.buttonEqualBg,
+                        themeColors = themeColors
+                    )
 
                     // Row 1: Charging Speed Power
                     MetricRow(
