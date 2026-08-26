@@ -437,6 +437,8 @@ fun SurahDetailScreen(
         }
     }
 
+    val currentRecitationMode by viewModel.audioPlayer.recitationMode.collectAsStateWithLifecycle()
+
     // 5. Quran View & Font Customizer Bottom Sheet
     if (showSettingsSheet) {
         ModalBottomSheet(
@@ -469,6 +471,45 @@ fun SurahDetailScreen(
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
+
+                // Recitation Audio Mode Selection
+                Text(
+                    text = "অডিও তেলাওয়াত মোড নির্বাচন করুন:",
+                    fontSize = 13.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = themeColors.displayText
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    com.example.data.quran.RecitationMode.values().forEach { mode ->
+                        val isSelected = currentRecitationMode == mode
+                        Surface(
+                            onClick = { viewModel.audioPlayer.setRecitationMode(mode) },
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (isSelected) emeraldPrimary else emeraldPrimary.copy(alpha = 0.1f),
+                            border = BorderStroke(1.dp, if (isSelected) emeraldPrimary else emeraldPrimary.copy(alpha = 0.3f)),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Box(
+                                modifier = Modifier.padding(vertical = 10.dp, horizontal = 4.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = mode.titleBn,
+                                    fontSize = 12.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (isSelected) Color.White else themeColors.displayText,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
 
                 // Arabic Font Size Slider
                 Text(

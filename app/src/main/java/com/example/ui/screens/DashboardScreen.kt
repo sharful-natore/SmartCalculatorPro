@@ -39,6 +39,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -78,6 +79,35 @@ import com.example.ui.theme.CalculatorThemeColors
 import com.example.ui.theme.themeCardShadow
 import com.example.ui.viewmodel.CalculatorViewModel
 import com.example.util.LanguageManager
+
+val ScallopedBadgeShape = GenericShape { size, _ ->
+    val cx = size.width / 2f
+    val cy = size.height / 2f
+    val maxR = size.width / 2f
+    val minR = maxR * 0.82f
+    val numPoints = 16
+
+    for (i in 0 until numPoints) {
+        val angle = (i * 2.0 * Math.PI / numPoints - Math.PI / 2).toFloat()
+        val r = if (i % 2 == 0) maxR else minR
+        val x = cx + r * kotlin.math.cos(angle)
+        val y = cy + r * kotlin.math.sin(angle)
+
+        if (i == 0) {
+            moveTo(x, y)
+        } else {
+            val prevAngle = ((i - 1) * 2.0 * Math.PI / numPoints - Math.PI / 2).toFloat()
+            val prevR = if ((i - 1) % 2 == 0) maxR else minR
+            val px = cx + prevR * kotlin.math.cos(prevAngle)
+            val py = cy + prevR * kotlin.math.sin(prevAngle)
+
+            val ctrlX = cx + (maxR * 1.04f) * kotlin.math.cos((angle + prevAngle) / 2)
+            val ctrlY = cy + (maxR * 1.04f) * kotlin.math.sin((angle + prevAngle) / 2)
+            quadraticTo(ctrlX, ctrlY, x, y)
+        }
+    }
+    close()
+}
 
 data class FeaturedDashboardItem(
     val key: String,
@@ -1274,8 +1304,15 @@ fun DashboardCategoriesView(
                                     Box(
                                         modifier = Modifier
                                             .size(48.dp)
-                                            .clip(CircleShape)
-                                            .background(themeColors.buttonEqualBg),
+                                            .clip(ScallopedBadgeShape)
+                                            .background(
+                                                Brush.linearGradient(
+                                                    colors = listOf(
+                                                        themeColors.buttonEqualBg,
+                                                        themeColors.buttonEqualBg.copy(alpha = 0.75f)
+                                                    )
+                                                )
+                                            ),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Icon(
@@ -1733,8 +1770,15 @@ fun DashboardCategoriesView(
                                     Box(
                                         modifier = Modifier
                                             .size(32.dp)
-                                            .clip(CircleShape)
-                                            .background(themeColors.buttonEqualBg),
+                                            .clip(ScallopedBadgeShape)
+                                            .background(
+                                                Brush.linearGradient(
+                                                    colors = listOf(
+                                                        themeColors.buttonEqualBg,
+                                                        themeColors.buttonEqualBg.copy(alpha = 0.8f)
+                                                    )
+                                                )
+                                            ),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Icon(
@@ -1808,80 +1852,101 @@ fun DashboardCategoriesView(
                         if (categoryTools.isNotEmpty()) {
                             val isCategoryExpanded = expandedCategories.getOrDefault(category, false)
 
-                            // Category Header
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween,
+                            // Category Header Card
+                            Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(top = 8.dp, bottom = 8.dp)
+                                    .padding(top = 10.dp, bottom = 6.dp)
+                                    .themeCardShadow(themeColors, elevation = 1.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
+                                border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.15f))
                             ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(28.dp)
-                                            .clip(CircleShape)
-                                            .background(themeColors.buttonEqualBg),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = category.icon,
-                                            contentDescription = category.titleEn,
-                                            tint = Color.White,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = category.getTitle(viewModel.selectedLanguage),
-                                        fontSize = 15.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = themeColors.displayText
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Box(
-                                        modifier = Modifier
-                                            .defaultMinSize(minWidth = 22.dp, minHeight = 22.dp)
-                                            .clip(CircleShape)
-                                            .background(themeColors.buttonEqualBg.copy(alpha = 0.15f))
-                                            .padding(horizontal = 6.dp, vertical = 2.dp),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = if (isBn) "${categoryTools.size}টি" else "${categoryTools.size}",
-                                            fontSize = 10.5.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = themeColors.buttonEqualBg
-                                        )
-                                    }
-                                }
-
-                                if (isOverviewMode && categoryTools.size > 2) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                                ) {
                                     Row(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(8.dp))
-                                            .background(themeColors.buttonEqualBg.copy(alpha = 0.08f))
-                                            .clickable { expandedCategories[category] = !isCategoryExpanded }
-                                            .padding(horizontal = 8.dp, vertical = 4.dp),
-                                        verticalAlignment = Alignment.CenterVertically
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.weight(1f, fill = false)
                                     ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(28.dp)
+                                                .clip(ScallopedBadgeShape)
+                                                .background(
+                                                    Brush.linearGradient(
+                                                        colors = listOf(
+                                                            themeColors.buttonEqualBg,
+                                                            themeColors.buttonEqualBg.copy(alpha = 0.8f)
+                                                        )
+                                                    )
+                                                ),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = category.icon,
+                                                contentDescription = category.titleEn,
+                                                tint = Color.White,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(8.dp))
                                         Text(
-                                            text = if (isCategoryExpanded) {
-                                                if (isBn) "সংকুচিত করুন" else "Collapse"
-                                            } else {
-                                                if (isBn) "সব দেখুন" else "See all"
-                                            },
-                                            fontSize = 11.sp,
+                                            text = category.getTitle(viewModel.selectedLanguage),
+                                            fontSize = 14.5.sp,
                                             fontWeight = FontWeight.Bold,
-                                            color = themeColors.buttonEqualBg
+                                            color = themeColors.displayText,
+                                            maxLines = 1
                                         )
-                                        Spacer(modifier = Modifier.width(2.dp))
-                                        Icon(
-                                            imageVector = if (isCategoryExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                                            contentDescription = null,
-                                            tint = themeColors.buttonEqualBg,
-                                            modifier = Modifier.size(14.dp)
-                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Box(
+                                            modifier = Modifier
+                                                .defaultMinSize(minWidth = 22.dp, minHeight = 22.dp)
+                                                .clip(CircleShape)
+                                                .background(themeColors.buttonEqualBg.copy(alpha = 0.15f))
+                                                .padding(horizontal = 6.dp, vertical = 2.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = if (isBn) "${categoryTools.size}টি" else "${categoryTools.size}",
+                                                fontSize = 10.5.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = themeColors.buttonEqualBg
+                                            )
+                                        }
+                                    }
+
+                                    if (isOverviewMode && categoryTools.size > 2) {
+                                        Row(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(8.dp))
+                                                .background(themeColors.buttonEqualBg.copy(alpha = 0.12f))
+                                                .clickable { expandedCategories[category] = !isCategoryExpanded }
+                                                .padding(horizontal = 8.dp, vertical = 5.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = if (isCategoryExpanded) {
+                                                    if (isBn) "সংকুচিত করুন" else "Collapse"
+                                                } else {
+                                                    if (isBn) "সব দেখুন" else "See all"
+                                                },
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = themeColors.buttonEqualBg
+                                            )
+                                            Spacer(modifier = Modifier.width(2.dp))
+                                            Icon(
+                                                imageVector = if (isCategoryExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                                contentDescription = null,
+                                                tint = themeColors.buttonEqualBg,
+                                                modifier = Modifier.size(14.dp)
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -2155,8 +2220,15 @@ fun ToolGridCardItem(
                     Box(
                         modifier = Modifier
                             .size(38.dp)
-                            .clip(CircleShape)
-                            .background(themeColors.buttonEqualBg),
+                            .clip(ScallopedBadgeShape)
+                            .background(
+                                Brush.linearGradient(
+                                    colors = listOf(
+                                        themeColors.buttonEqualBg,
+                                        themeColors.buttonEqualBg.copy(alpha = 0.75f)
+                                    )
+                                )
+                            ),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(

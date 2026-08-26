@@ -25,6 +25,12 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.io.File
 
+enum class RecitationMode(val code: String, val titleBn: String, val titleEn: String) {
+    ARABIC_AND_BANGLA("ARABIC_AND_BANGLA", "আরবি + বাংলা", "Arabic + Bangla"),
+    ARABIC_ONLY("ARABIC_ONLY", "শুধু আরবি", "Arabic Only"),
+    BANGLA_ONLY("BANGLA_ONLY", "শুধু বাংলা", "Bangla Only")
+}
+
 class QuranAudioPlayer private constructor(private val context: Context) {
 
     companion object {
@@ -53,6 +59,9 @@ class QuranAudioPlayer private constructor(private val context: Context) {
 
     private val _isPlayerActive = MutableStateFlow(false)
     val isPlayerActive: StateFlow<Boolean> = _isPlayerActive.asStateFlow()
+
+    private val _recitationMode = MutableStateFlow(RecitationMode.ARABIC_AND_BANGLA)
+    val recitationMode: StateFlow<RecitationMode> = _recitationMode.asStateFlow()
 
     private val _currentSurahNumber = MutableStateFlow<Int?>(null)
     val currentSurahNumber: StateFlow<Int?> = _currentSurahNumber.asStateFlow()
@@ -85,7 +94,25 @@ class QuranAudioPlayer private constructor(private val context: Context) {
         _isDetailScreenOpen.value = isOpen
     }
 
+    fun setRecitationMode(mode: RecitationMode) {
+        if (_recitationMode.value != mode) {
+            _recitationMode.value = mode
+            val surahNum = _currentSurahNumber.value
+            val curIndex = _currentAyahIndex.value
+            if (surahNum != null && activeAyahs.isNotEmpty()) {
+                playSurah(
+                    surahNumber = surahNum,
+                    surahNameBangla = _currentSurahNameBangla.value,
+                    surahNameArabic = _currentSurahNameArabic.value,
+                    startAyahIndex = curIndex,
+                    ayahs = activeAyahs
+                )
+            }
+        }
+    }
+
     private var activeAyahs: List<AyahEntity> = emptyList()
+    private var ayahIndexMap = mutableListOf<Int>()
 
     init {
         createNotificationChannel()
@@ -104,8 +131,8 @@ class QuranAudioPlayer private constructor(private val context: Context) {
 
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 val currentIndex = player.currentMediaItemIndex
-                if (currentIndex in activeAyahs.indices) {
-                    _currentAyahIndex.value = currentIndex
+                if (currentIndex in ayahIndexMap.indices) {
+                    _currentAyahIndex.value = ayahIndexMap[currentIndex]
                     updateNotification()
                 }
             }
@@ -152,22 +179,71 @@ class QuranAudioPlayer private constructor(private val context: Context) {
         _currentAyahIndex.value = startAyahIndex.coerceIn(ayahs.indices)
         _isPlayerActive.value = true
 
-        val mediaItems = ayahs.map { ayah ->
-            val localFile = File(
+        val mediaItems = mutableListOf<MediaItem>()
+        ayahIndexMap.clear()
+
+        val mode = _recitationMode.value
+
+        // Prepend Bismillah recitation if starting from the beginning (index 0),
+        // except for Surah 9 (Al-Tawbah) and Surah 1 (Al-Fatihah, which has Bismillah as Ayah 1).
+        if (startAyahIndex == 0 && surahNumber != 9 && surahNumber != 1) {
+            val bismillahArabic = Uri.parse("https://cdn.islamic.network/quran/audio/128/ar.alafasy/1.mp3")
+            val bismillahBangla = Uri.parse("https://cdn.islamic.network/quran/audio/128/bn.bengali/1.mp3")
+            when (mode) {
+                RecitationMode.ARABIC_AND_BANGLA -> {
+                    mediaItems.add(MediaItem.fromUri(bismillahArabic))
+                    ayahIndexMap.add(0)
+                    mediaItems.add(MediaItem.fromUri(bismillahBangla))
+                    ayahIndexMap.add(0)
+                }
+                RecitationMode.ARABIC_ONLY -> {
+                    mediaItems.add(MediaItem.fromUri(bismillahArabic))
+                    ayahIndexMap.add(0)
+                }
+                RecitationMode.BANGLA_ONLY -> {
+                    mediaItems.add(MediaItem.fromUri(bismillahBangla))
+                    ayahIndexMap.add(0)
+                }
+            }
+        }
+
+        for ((idx, ayah) in ayahs.withIndex()) {
+            val numInQuran = ayah.numberInQuran
+            val localFileArabic = File(
                 context.getExternalFilesDir("quran_audio/surah_$surahNumber"),
                 "ayah_${ayah.numberInSurah}.mp3"
             )
-            val uri = if (localFile.exists() && localFile.length() > 0) {
-                Uri.fromFile(localFile)
+            val arabicUri = if (localFileArabic.exists() && localFileArabic.length() > 0) {
+                Uri.fromFile(localFileArabic)
             } else {
-                Uri.parse(ayah.audioUrl)
+                Uri.parse(if (ayah.audioUrl.isNotEmpty()) ayah.audioUrl else "https://cdn.islamic.network/quran/audio/128/ar.alafasy/$numInQuran.mp3")
             }
-            MediaItem.fromUri(uri)
+
+            val banglaUri = Uri.parse("https://cdn.islamic.network/quran/audio/128/bn.bengali/$numInQuran.mp3")
+
+            when (mode) {
+                RecitationMode.ARABIC_AND_BANGLA -> {
+                    mediaItems.add(MediaItem.fromUri(arabicUri))
+                    ayahIndexMap.add(idx)
+                    mediaItems.add(MediaItem.fromUri(banglaUri))
+                    ayahIndexMap.add(idx)
+                }
+                RecitationMode.ARABIC_ONLY -> {
+                    mediaItems.add(MediaItem.fromUri(arabicUri))
+                    ayahIndexMap.add(idx)
+                }
+                RecitationMode.BANGLA_ONLY -> {
+                    mediaItems.add(MediaItem.fromUri(banglaUri))
+                    ayahIndexMap.add(idx)
+                }
+            }
         }
+
+        val startMediaIndex = ayahIndexMap.indexOfFirst { it == _currentAyahIndex.value }.coerceAtLeast(0)
 
         player.stop()
         player.clearMediaItems()
-        player.setMediaItems(mediaItems, startAyahIndex, 0L)
+        player.setMediaItems(mediaItems, startMediaIndex, 0L)
         player.playbackParameters = PlaybackParameters(_playbackSpeed.value)
         player.prepare()
         player.play()
@@ -178,9 +254,12 @@ class QuranAudioPlayer private constructor(private val context: Context) {
     fun playAyahAtIndex(index: Int) {
         if (index in activeAyahs.indices) {
             _currentAyahIndex.value = index
-            player.seekTo(index, 0L)
-            player.play()
-            updateNotification()
+            val targetMediaItemIndex = ayahIndexMap.indexOfFirst { it == index }
+            if (targetMediaItemIndex != -1) {
+                player.seekTo(targetMediaItemIndex, 0L)
+                player.play()
+                updateNotification()
+            }
         }
     }
 
