@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -153,6 +154,8 @@ fun SurahDetailScreen(
         }
     }
 
+    val isArabicPlaying by viewModel.audioPlayer.isArabicPartPlaying.collectAsStateWithLifecycle()
+
     Scaffold(
         modifier = Modifier.nestedScroll(nestedScrollConnection),
         containerColor = themeColors.background,
@@ -256,7 +259,7 @@ fun SurahDetailScreen(
                                 }
                             ) {
                                 Icon(
-                                    imageVector = if (isSurahDownloaded) Icons.Default.CheckCircle else Icons.Default.Download,
+                                    imageVector = if (isSurahDownloaded) Icons.Rounded.DownloadDone else Icons.Default.Download,
                                     contentDescription = if (isSurahDownloaded) "Downloaded Offline" else "Download Full Surah",
                                     tint = if (isSurahDownloaded) Color(0xFF6EE7B7) else Color.White,
                                     modifier = Modifier.size(20.dp)
@@ -275,6 +278,7 @@ fun SurahDetailScreen(
                     currentAyahIndex = currentAyahIndex,
                     totalAyahs = ayahs.size,
                     isPlaying = isPlaying && currentSurahNum == surah.number,
+                    isArabicPlaying = isArabicPlaying,
                     currentPositionMs = currentPositionMs,
                     durationMs = durationMs,
                     playbackSpeed = playbackSpeed,
@@ -376,6 +380,7 @@ fun SurahDetailScreen(
                             surah = surah,
                             index = index,
                             isCurrentPlaying = isCurrentPlayingAyah,
+                            isArabicPlaying = isArabicPlaying,
                             isAyahDownloaded = isAyahDownloaded,
                             isBookmarked = isBookmarked,
                             downloadProgress = progress,
@@ -971,6 +976,7 @@ fun AyahCard(
     surah: SurahEntity,
     index: Int,
     isCurrentPlaying: Boolean,
+    isArabicPlaying: Boolean,
     isAyahDownloaded: Boolean,
     isBookmarked: Boolean,
     downloadProgress: Int?,
@@ -999,17 +1005,17 @@ fun AyahCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = if (isCurrentPlaying) 3.dp else 1.dp
+            defaultElevation = 0.dp
         ),
         colors = CardDefaults.cardColors(
             containerColor = if (isCurrentPlaying) {
-                emeraldColor.copy(alpha = if (themeColors.isDark) 0.12f else 0.06f)
+                emeraldColor.copy(alpha = if (themeColors.isDark) 0.08f else 0.05f)
             } else {
                 themeColors.cardBg
             }
         ),
         border = if (isCurrentPlaying) {
-            BorderStroke(1.dp, emeraldColor.copy(alpha = 0.5f))
+            BorderStroke(1.dp, emeraldColor.copy(alpha = 0.2f))
         } else {
             BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.08f))
         }
@@ -1079,10 +1085,10 @@ fun AyahCard(
                             modifier = Modifier.size(32.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Default.CheckCircle,
+                                imageVector = Icons.Rounded.DownloadDone,
                                 contentDescription = "Downloaded",
                                 tint = Color(0xFF10B981),
-                                modifier = Modifier.size(19.dp)
+                                modifier = Modifier.size(22.dp)
                             )
                         }
                     }
@@ -1159,7 +1165,7 @@ fun AyahCard(
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.End,
                 lineHeight = (arabicFontSize * 1.8f).sp,
-                color = emeraldColor,
+                color = if (isCurrentPlaying && isArabicPlaying) emeraldColor else emeraldColor.copy(alpha = 0.7f),
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -1204,8 +1210,8 @@ fun AyahCard(
                 Spacer(modifier = Modifier.height(8.dp))
                 Surface(
                     shape = RoundedCornerShape(10.dp),
-                    color = translationTextColor.copy(alpha = 0.05f),
-                    border = BorderStroke(1.dp, translationTextColor.copy(alpha = 0.15f)),
+                    color = if (isCurrentPlaying && !isArabicPlaying) emeraldColor.copy(alpha = 0.12f) else translationTextColor.copy(alpha = 0.05f),
+                    border = BorderStroke(1.dp, if (isCurrentPlaying && !isArabicPlaying) emeraldColor.copy(alpha = 0.4f) else translationTextColor.copy(alpha = 0.15f)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp)) {
@@ -1245,6 +1251,7 @@ fun SurahAudioControlBar(
     currentAyahIndex: Int,
     totalAyahs: Int,
     isPlaying: Boolean,
+    isArabicPlaying: Boolean,
     currentPositionMs: Long,
     durationMs: Long,
     playbackSpeed: Float,
@@ -1283,17 +1290,29 @@ fun SurahAudioControlBar(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = "${surah.nameBangla} (${surah.nameArabic})",
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = themeColors.displayText
-                )
-                Spacer(modifier = Modifier.weight(1f))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "${surah.nameBangla} (${surah.nameArabic})",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.displayText,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    if (isPlaying) {
+                        Text(
+                            text = if (isArabicPlaying) "• আরবি তেলাওয়াত হচ্ছে" else "• বাংলা অনুবাদ তেলাওয়াত হচ্ছে",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = emeraldPrimary.copy(alpha = 0.9f)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "আয়াত ${currentAyahIndex + 1} / $totalAyahs",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium,
+                    fontSize = 11.5.sp,
+                    fontWeight = FontWeight.Bold,
                     color = emeraldPrimary
                 )
                 Spacer(modifier = Modifier.width(8.dp))

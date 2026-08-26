@@ -158,8 +158,14 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
             val downloaded = mutableSetOf<String>()
             if (dir.exists()) {
                 ayahs.forEach { ayah ->
-                    val file = File(dir, "ayah_${ayah.numberInSurah}.mp3")
-                    if (file.exists() && file.length() > 0) {
+                    val arabicFile = File(dir, "arabic_${ayah.numberInSurah}.mp3")
+                    val banglaFile = File(dir, "bangla_${ayah.numberInSurah}.mp3")
+                    val oldFile = File(dir, "ayah_${ayah.numberInSurah}.mp3")
+                    
+                    val isArabicOk = (arabicFile.exists() && arabicFile.length() > 0) || (oldFile.exists() && oldFile.length() > 0)
+                    val isBanglaOk = banglaFile.exists() && banglaFile.length() > 0
+                    
+                    if (isArabicOk && isBanglaOk) {
                         downloaded.add("${surahNumber}_${ayah.numberInSurah}")
                     }
                 }
@@ -186,36 +192,29 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val dir = repository.getAudioDirectory(getApplication(), surahNumber)
                 if (!dir.exists()) dir.mkdirs()
-                val targetFile = File(dir, "ayah_${ayah.numberInSurah}.mp3")
-                val client = OkHttpClient()
-                val request = Request.Builder().url(ayah.audioUrl).build()
-                val response = client.newCall(request).execute()
-                val body = response.body
-                if (response.isSuccessful && body != null) {
-                    val totalBytes = body.contentLength()
-                    val inputStream = body.byteStream()
-                    val outputStream = FileOutputStream(targetFile)
-                    val buffer = ByteArray(8192)
-                    var bytesRead: Int
-                    var downloadedBytes = 0L
-                    while (inputStream.read(buffer).also { bytesRead = it } != -1) {
-                        outputStream.write(buffer, 0, bytesRead)
-                        downloadedBytes += bytesRead
-                        if (totalBytes > 0) {
-                            val progress = ((downloadedBytes.toFloat() / totalBytes) * 100).toInt()
-                            _ayahDownloadProgress.update { it + (key to progress.coerceIn(1, 99)) }
-                        }
-                    }
-                    outputStream.flush()
-                    outputStream.close()
-                    inputStream.close()
-
+                
+                val arabicUrl = String.format(java.util.Locale.US, "https://www.everyayah.com/data/Alafasy_128kbps/%03d%03d.mp3", surahNumber, ayah.numberInSurah)
+                val banglaUrl = String.format(java.util.Locale.US, "https://www.everyayah.com/data/Bengali_Zohurul_Hoque_128kbps/%03d%03d.mp3", surahNumber, ayah.numberInSurah)
+                
+                val arabicFile = File(dir, "arabic_${ayah.numberInSurah}.mp3")
+                val banglaFile = File(dir, "bangla_${ayah.numberInSurah}.mp3")
+                
+                var success = true
+                
+                // Download Arabic
+                if (!downloadFileSync(arabicUrl, arabicFile)) success = false
+                _ayahDownloadProgress.update { it + (key to 50) }
+                
+                // Download Bangla
+                if (!downloadFileSync(banglaUrl, banglaFile)) success = false
+                
+                if (success) {
                     _ayahDownloadProgress.update { it + (key to 100) }
                     _downloadedAyahKeys.update { it + key }
                     withContext(Dispatchers.Main) {
                         Toast.makeText(
                             getApplication(),
-                            "আয়াত ${ayah.numberInSurah} ডাউনলোড সম্পন্ন হয়েছে!",
+                            "আয়াত ${ayah.numberInSurah} (আরবি ও বাংলা) ডাউনলোড সম্পন্ন হয়েছে!",
                             Toast.LENGTH_SHORT
                         ).show()
                     }
@@ -226,6 +225,31 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
                 e.printStackTrace()
                 _ayahDownloadProgress.update { it + (key to -1) }
             }
+        }
+    }
+
+    private fun downloadFileSync(url: String, targetFile: File): Boolean {
+        return try {
+            val client = OkHttpClient()
+            val request = Request.Builder().url(url).build()
+            val response = client.newCall(request).execute()
+            val body = response.body
+            if (response.isSuccessful && body != null) {
+                val inputStream = body.byteStream()
+                val outputStream = FileOutputStream(targetFile)
+                val buffer = ByteArray(8192)
+                var bytesRead: Int
+                while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                    outputStream.write(buffer, 0, bytesRead)
+                }
+                outputStream.flush()
+                outputStream.close()
+                inputStream.close()
+                targetFile.length() > 0
+            } else false
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
         }
     }
 
@@ -271,15 +295,27 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
     private fun isAyahLocallyAvailable(surahNumber: Int, ayahNumberInSurah: Int): Boolean {
         val dir = repository.getAudioDirectory(getApplication(), surahNumber)
         if (!dir.exists()) return false
-        val file = File(dir, "ayah_${ayahNumberInSurah}.mp3")
-        return file.exists() && file.length() > 0
+        val arabicFile = File(dir, "arabic_${ayahNumberInSurah}.mp3")
+        val banglaFile = File(dir, "bangla_${ayahNumberInSurah}.mp3")
+        val oldFile = File(dir, "ayah_${ayahNumberInSurah}.mp3")
+        
+        val isArabicOk = (arabicFile.exists() && arabicFile.length() > 0) || (oldFile.exists() && oldFile.length() > 0)
+        val isBanglaOk = banglaFile.exists() && banglaFile.length() > 0
+        
+        return isArabicOk && isBanglaOk
     }
 
     private fun isSurahAudioLocallyAvailable(surahNumber: Int): Boolean {
         val dir = repository.getAudioDirectory(getApplication(), surahNumber)
         if (!dir.exists()) return false
-        val firstAyahFile = File(dir, "ayah_1.mp3")
-        return firstAyahFile.exists() && firstAyahFile.length() > 0
+        val firstArabicFile = File(dir, "arabic_1.mp3")
+        val firstBanglaFile = File(dir, "bangla_1.mp3")
+        val oldFirstFile = File(dir, "ayah_1.mp3")
+        
+        val isArabicOk = (firstArabicFile.exists() && firstArabicFile.length() > 0) || (oldFirstFile.exists() && oldFirstFile.length() > 0)
+        val isBanglaOk = firstBanglaFile.exists() && firstBanglaFile.length() > 0
+        
+        return isArabicOk && isBanglaOk
     }
 
     fun selectSurahByNumber(surahNumber: Int) {

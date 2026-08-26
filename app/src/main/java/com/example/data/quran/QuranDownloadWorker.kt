@@ -34,25 +34,31 @@ class QuranDownloadWorker(
             }
 
             val surahDir = repository.getAudioDirectory(appContext, surahNumber)
-            val totalAyahs = ayahs.size
+            val totalParts = ayahs.size * 2
+            var partsDownloaded = 0
 
-            for ((index, ayah) in ayahs.withIndex()) {
+            for (ayah in ayahs) {
                 if (isStopped) {
                     return@withContext Result.failure()
                 }
 
-                val ayahFile = File(surahDir, "ayah_${ayah.numberInSurah}.mp3")
-                if (!ayahFile.exists() || ayahFile.length() == 0L) {
-                    val downloaded = downloadFile(ayah.audioUrl, ayahFile)
-                    if (!downloaded) {
-                        // Retry current file once
-                        downloadFile(ayah.audioUrl, ayahFile)
-                    }
+                // Download Arabic
+                val arabicFile = File(surahDir, "arabic_${ayah.numberInSurah}.mp3")
+                if (!arabicFile.exists() || arabicFile.length() == 0L) {
+                    val arabicUrl = String.format(java.util.Locale.US, "https://www.everyayah.com/data/Alafasy_128kbps/%03d%03d.mp3", surahNumber, ayah.numberInSurah)
+                    downloadFile(arabicUrl, arabicFile)
                 }
+                partsDownloaded++
+                updateSurahProgress(surahNumber, partsDownloaded, totalParts, repository)
 
-                val currentProgress = (((index + 1).toFloat() / totalAyahs) * 100).toInt()
-                setProgress(workDataOf(KEY_PROGRESS to currentProgress))
-                repository.updateDownloadStatus(surahNumber, isDownloaded = false, progress = currentProgress)
+                // Download Bangla
+                val banglaFile = File(surahDir, "bangla_${ayah.numberInSurah}.mp3")
+                if (!banglaFile.exists() || banglaFile.length() == 0L) {
+                    val banglaUrl = String.format(java.util.Locale.US, "https://www.everyayah.com/data/Bengali_Zohurul_Hoque_128kbps/%03d%03d.mp3", surahNumber, ayah.numberInSurah)
+                    downloadFile(banglaUrl, banglaFile)
+                }
+                partsDownloaded++
+                updateSurahProgress(surahNumber, partsDownloaded, totalParts, repository)
             }
 
             // Successfully downloaded all ayahs for this Surah
@@ -63,6 +69,12 @@ class QuranDownloadWorker(
             repository.updateDownloadStatus(surahNumber, isDownloaded = false, progress = 0)
             Result.failure()
         }
+    }
+
+    private suspend fun updateSurahProgress(surahNumber: Int, partsDownloaded: Int, totalParts: Int, repository: QuranRepository) {
+        val currentProgress = ((partsDownloaded.toFloat() / totalParts) * 100).toInt()
+        setProgress(workDataOf(KEY_PROGRESS to currentProgress))
+        repository.updateDownloadStatus(surahNumber, isDownloaded = false, progress = currentProgress)
     }
 
     private fun downloadFile(url: String, targetFile: File): Boolean {

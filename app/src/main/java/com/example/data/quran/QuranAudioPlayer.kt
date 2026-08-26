@@ -8,13 +8,13 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.PlaybackException
 import androidx.media3.exoplayer.ExoPlayer
-import android.speech.tts.TextToSpeech
-import android.speech.tts.UtteranceProgressListener
 import java.util.Locale
 import com.example.MainActivity
 import com.example.R
@@ -66,6 +66,9 @@ class QuranAudioPlayer private constructor(private val context: Context) {
 
     private val _recitationMode = MutableStateFlow(RecitationMode.ARABIC_AND_BANGLA)
     val recitationMode: StateFlow<RecitationMode> = _recitationMode.asStateFlow()
+
+    private val _isArabicPartPlaying = MutableStateFlow(true)
+    val isArabicPartPlaying: StateFlow<Boolean> = _isArabicPartPlaying.asStateFlow()
 
     private val _currentSurahNumber = MutableStateFlow<Int?>(null)
     val currentSurahNumber: StateFlow<Int?> = _currentSurahNumber.asStateFlow()
@@ -119,10 +122,15 @@ class QuranAudioPlayer private constructor(private val context: Context) {
     private var tts: TextToSpeech? = null
     private var isTtsInitialized = false
     private var isCurrentlySpeakingTts = false
+    
+    // EveryAyah CDN Config
+    private val arabicReciter = "Alafasy_128kbps"
+    private val bengaliReciter = "Bengali_Dr_Abu_Bakr_Muhammad_Zakaria_128kbps" // As requested by user
+    private val fallbackBengaliReciter = "Bengali_Zohurul_Hoque_128kbps"
 
     init {
         createNotificationChannel()
-
+        
         tts = TextToSpeech(context.applicationContext) { status ->
             if (status == TextToSpeech.SUCCESS) {
                 isTtsInitialized = true
@@ -153,39 +161,39 @@ class QuranAudioPlayer private constructor(private val context: Context) {
                 if (playbackState == Player.STATE_READY) {
                     _durationMs.value = player.duration.coerceAtLeast(0L)
                 } else if (playbackState == Player.STATE_ENDED) {
-                    val mode = _recitationMode.value
-                    if (mode == RecitationMode.ARABIC_AND_BANGLA) {
-                        val currentIndex = _currentAyahIndex.value
-                        if (currentIndex in activeAyahs.indices) {
-                            speakBanglaText(activeAyahs[currentIndex].textBangla) {
-                                onAyahPlaybackFinished()
-                            }
-                        } else {
-                            onAyahPlaybackFinished()
-                        }
-                    } else {
-                        onAyahPlaybackFinished()
-                    }
+                    handlePlaybackEnded()
                 }
             }
 
             override fun onPlayerError(error: PlaybackException) {
                 error.printStackTrace()
-                val mode = _recitationMode.value
-                if (mode == RecitationMode.ARABIC_AND_BANGLA) {
+                // If Bengali CDN fails, fallback to TTS
+                if (!_isArabicPartPlaying.value && !isCurrentlySpeakingTts) {
                     val currentIndex = _currentAyahIndex.value
                     if (currentIndex in activeAyahs.indices) {
                         speakBanglaText(activeAyahs[currentIndex].textBangla) {
                             onAyahPlaybackFinished()
                         }
                     } else {
-                        onAyahPlaybackFinished()
+                        handlePlaybackEnded()
                     }
                 } else {
-                    onAyahPlaybackFinished()
+                    handlePlaybackEnded()
                 }
             }
         })
+    }
+
+    private fun handlePlaybackEnded() {
+        val mode = _recitationMode.value
+        if (mode == RecitationMode.ARABIC_AND_BANGLA && _isArabicPartPlaying.value) {
+            // Arabic finished, now play Bangla via TTS
+            _isArabicPartPlaying.value = false
+            playCurrentAyahPart()
+        } else {
+            // Current Ayah fully finished
+            onAyahPlaybackFinished()
+        }
     }
 
     private fun createNotificationChannel() {
@@ -214,9 +222,16 @@ class QuranAudioPlayer private constructor(private val context: Context) {
             return
         }
         try {
+            // Set flags immediately to prevent ExoPlayer events from interfering
             isCurrentlySpeakingTts = true
             _isPlaying.value = true
             _isPlayerActive.value = true
+            
+            // Estimate duration for progress bar: ~180ms per char
+            val estimatedDuration = (cleanText.length * 180L).coerceAtLeast(2000L)
+            _durationMs.value = estimatedDuration
+            _currentPositionMs.value = 0L
+            
             updateNotification()
 
             val bnLocale = Locale("bn", "BD")
@@ -230,16 +245,22 @@ class QuranAudioPlayer private constructor(private val context: Context) {
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 ttsObj.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-                    override fun onStart(utteranceId: String?) {}
+                    override fun onStart(utteranceId: String?) {
+                        scope.launch {
+                            startTtsPositionTracker(estimatedDuration)
+                        }
+                    }
                     override fun onDone(utteranceId: String?) {
                         scope.launch {
                             isCurrentlySpeakingTts = false
+                            stopTtsPositionTracker()
                             onDone()
                         }
                     }
                     override fun onError(utteranceId: String?) {
                         scope.launch {
                             isCurrentlySpeakingTts = false
+                            stopTtsPositionTracker()
                             onDone()
                         }
                     }
@@ -250,8 +271,11 @@ class QuranAudioPlayer private constructor(private val context: Context) {
                 val params = HashMap<String, String>()
                 params[TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID] = "bangla_translation"
                 ttsObj.speak(cleanText, TextToSpeech.QUEUE_FLUSH, params)
+                startTtsPositionTracker(estimatedDuration)
                 scope.launch {
+                    delay(estimatedDuration)
                     isCurrentlySpeakingTts = false
+                    stopTtsPositionTracker()
                     onDone()
                 }
             }
@@ -262,6 +286,25 @@ class QuranAudioPlayer private constructor(private val context: Context) {
         }
     }
 
+    private var ttsJob: Job? = null
+    private fun startTtsPositionTracker(duration: Long) {
+        ttsJob?.cancel()
+        ttsJob = scope.launch {
+            val startTime = System.currentTimeMillis()
+            while (isActive && isCurrentlySpeakingTts) {
+                val elapsed = System.currentTimeMillis() - startTime
+                _currentPositionMs.value = elapsed.coerceAtMost(duration)
+                if (elapsed >= duration) break
+                delay(100)
+            }
+        }
+    }
+
+    private fun stopTtsPositionTracker() {
+        ttsJob?.cancel()
+        ttsJob = null
+    }
+
     private fun stopTts() {
         try {
             tts?.stop()
@@ -269,12 +312,12 @@ class QuranAudioPlayer private constructor(private val context: Context) {
             e.printStackTrace()
         }
         isCurrentlySpeakingTts = false
+        stopTtsPositionTracker()
     }
 
     private fun playCurrentAyah() {
         stopTts()
         player.stop()
-
         val currentIndex = _currentAyahIndex.value
         if (currentIndex !in activeAyahs.indices) {
             _isPlaying.value = false
@@ -284,34 +327,55 @@ class QuranAudioPlayer private constructor(private val context: Context) {
             return
         }
 
-        val ayah = activeAyahs[currentIndex]
         val mode = _recitationMode.value
+        _isArabicPartPlaying.value = mode != RecitationMode.BANGLA_ONLY
+        playCurrentAyahPart()
+    }
 
+    private fun playCurrentAyahPart() {
+        val currentIndex = _currentAyahIndex.value
+        if (currentIndex !in activeAyahs.indices) return
+        
+        val ayah = activeAyahs[currentIndex]
+        val surahNum = _currentSurahNumber.value ?: ayah.surahNumber
+        val ayahInSurah = ayah.numberInSurah
+        
         _isPlayerActive.value = true
+        isCurrentlySpeakingTts = false // Reset TTS flag when starting ExoPlayer part
 
-        if (mode == RecitationMode.BANGLA_ONLY) {
-            speakBanglaText(ayah.textBangla) {
-                onAyahPlaybackFinished()
+        val isArabic = _isArabicPartPlaying.value
+        
+        if (isArabic) {
+            // Play Arabic via EveryAyah (Local first, then CDN)
+            val localFile = File(
+                context.getExternalFilesDir("quran_audio/surah_$surahNum"),
+                "arabic_$ayahInSurah.mp3"
+            )
+            val fallbackFile = File(context.getExternalFilesDir("quran_audio/surah_$surahNum"), "ayah_$ayahInSurah.mp3")
+
+            val uri = if (localFile.exists() && localFile.length() > 0) {
+                Uri.fromFile(localFile)
+            } else if (fallbackFile.exists() && fallbackFile.length() > 0) {
+                Uri.fromFile(fallbackFile)
+            } else {
+                val url = String.format(Locale.US, "https://www.everyayah.com/data/%s/%03d%03d.mp3", arabicReciter, surahNum, ayahInSurah)
+                Uri.parse(url)
             }
-            return
-        }
 
-        val numInQuran = ayah.numberInQuran
-        val localFileArabic = File(
-            context.getExternalFilesDir("quran_audio/surah_${_currentSurahNumber.value}"),
-            "ayah_${ayah.numberInSurah}.mp3"
-        )
-        val arabicUri = if (localFileArabic.exists() && localFileArabic.length() > 0) {
-            Uri.fromFile(localFileArabic)
+            _isPlaying.value = true
+            player.setMediaItem(MediaItem.fromUri(uri))
+            player.playbackParameters = PlaybackParameters(_playbackSpeed.value)
+            player.prepare()
+            player.play()
         } else {
-            Uri.parse(if (ayah.audioUrl.isNotEmpty()) ayah.audioUrl else "https://cdn.islamic.network/quran/audio/128/ar.alafasy/$numInQuran.mp3")
+            // Play Bengali via EveryAyah CDN
+            val url = String.format(Locale.US, "https://www.everyayah.com/data/%s/%03d%03d.mp3", bengaliReciter, surahNum, ayahInSurah)
+            _isPlaying.value = true
+            player.setMediaItem(MediaItem.fromUri(Uri.parse(url)))
+            player.playbackParameters = PlaybackParameters(_playbackSpeed.value)
+            player.prepare()
+            player.play()
         }
-
-        _isPlaying.value = true
-        player.setMediaItem(MediaItem.fromUri(arabicUri))
-        player.playbackParameters = PlaybackParameters(_playbackSpeed.value)
-        player.prepare()
-        player.play()
         updateNotification()
     }
 
@@ -358,20 +422,12 @@ class QuranAudioPlayer private constructor(private val context: Context) {
         if (isCurrentlySpeakingTts) {
             stopTts()
             _isPlaying.value = false
-        } else if (player.isPlaying) {
-            player.pause()
-            _isPlaying.value = false
         } else {
-            _isPlaying.value = true
-            val mode = _recitationMode.value
-            if (mode == RecitationMode.BANGLA_ONLY) {
-                val currentIndex = _currentAyahIndex.value
-                if (currentIndex in activeAyahs.indices) {
-                    speakBanglaText(activeAyahs[currentIndex].textBangla) {
-                        onAyahPlaybackFinished()
-                    }
-                }
+            if (player.isPlaying) {
+                player.pause()
+                _isPlaying.value = false
             } else {
+                _isPlaying.value = true
                 player.play()
             }
         }
@@ -379,8 +435,11 @@ class QuranAudioPlayer private constructor(private val context: Context) {
     }
 
     fun pause() {
-        stopTts()
-        player.pause()
+        if (isCurrentlySpeakingTts) {
+            stopTts()
+        } else {
+            player.pause()
+        }
         _isPlaying.value = false
         updateNotification()
     }
@@ -412,7 +471,6 @@ class QuranAudioPlayer private constructor(private val context: Context) {
     }
 
     fun stopAndClose() {
-        stopTts()
         player.stop()
         player.clearMediaItems()
         _isPlaying.value = false
@@ -527,14 +585,14 @@ class QuranAudioPlayer private constructor(private val context: Context) {
     }
 
     fun release() {
-        stopPositionTracker()
         stopTts()
+        stopPositionTracker()
+        notificationManager.cancel(NOTIFICATION_ID)
+        player.release()
         try {
             tts?.shutdown()
         } catch (e: Exception) {
             e.printStackTrace()
         }
-        notificationManager.cancel(NOTIFICATION_ID)
-        player.release()
     }
 }

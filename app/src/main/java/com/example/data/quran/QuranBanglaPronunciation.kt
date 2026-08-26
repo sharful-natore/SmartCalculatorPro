@@ -119,7 +119,32 @@ object QuranBanglaPronunciation {
         "lirabbika" to "লিরাব্বিকা",
         "wanhar" to "ওয়ানহার",
         "shani'aka" to "শানিয়াকা",
-        "al-abtar" to "আল-আবতার"
+        "al-abtar" to "আল-আবতার",
+        "min" to "মিন",
+        "sharri" to "শাররি",
+        "ma" to "মা",
+        "khalaq" to "খালাক",
+        "wa-min" to "ওয়া মিন",
+        "gasikin" to "গাসিকিন",
+        "iza" to "ইযা",
+        "wakab" to "ওয়াকাব",
+        "naffasati" to "নাফফাসাতি",
+        "fil" to "ফিল",
+        "uqad" to "উকাদ",
+        "hasidin" to "হাসিদিন",
+        "hasad" to "হাসাদ",
+        "nas" to "নাস",
+        "malikin" to "মালিকিন",
+        "ilahin" to "ইলাহিন",
+        "waswasil" to "ওয়াসওয়াসিল",
+        "khannas" to "খান্নাস",
+        "allazi" to "আল্লাযী",
+        "yuwaswisu" to "ইউওয়াসউইসু",
+        "fi" to "ফী",
+        "sudurin" to "সুদূরিন",
+        "minal" to "মিনাল",
+        "jinnati" to "জিন্নাতি",
+        "wannas" to "ওয়ান নাস"
     )
 
     fun getPronunciation(surahNumber: Int, ayahNumberInSurah: Int, englishTransliteration: String): String {
@@ -130,7 +155,40 @@ object QuranBanglaPronunciation {
         if (englishTransliteration.isBlank()) return ""
 
         // 2. Perform intelligent English/Arabic transliteration to Bengali
-        return convertTransliterationToBangla(englishTransliteration)
+        val rawBangla = convertTransliterationToBangla(englishTransliteration)
+        
+        // 3. Sanitize and clean up the final output
+        return sanitizeBangla(rawBangla)
+    }
+
+    private fun sanitizeBangla(input: String): String {
+        var text = input
+            // Remove hyphens completely as they are seen as "machine-generated" artifacts
+            .replace("-", "")
+            
+            // Remove duplicate vowel signs (kar-chinha)
+            .replace("াা", "া")
+            .replace("িি", "ি")
+            .replace("ীী", "ী")
+            .replace("ুু", "ু")
+            .replace("ূূ", "ূ")
+            .replace("েে", "ে")
+            .replace("ৈৈ", "ৈ")
+            .replace("োো", "ো")
+            .replace("ৌৌ", "ৌ")
+            
+            // Clean up apostrophes and weird symbols that make reading hard
+            .replace("’", "")
+            .replace("'", "")
+            .replace("ঃ ", " ") // Remove unnecessary visarga at word ends
+            .replace("ঃ", "")
+            .replace("`", "")
+            
+            // Fix spacing issues commonly found in transliteration
+            .replace("\\s+".toRegex(), " ")
+            .trim()
+
+        return text
     }
 
     private fun convertTransliterationToBangla(input: String): String {
@@ -171,12 +229,12 @@ object QuranBanglaPronunciation {
         if (word.isEmpty()) return ""
 
         var w = word.lowercase(Locale.ROOT)
-        // Normalize prefixes
-        w = w.replace("al-", "আল-")
-        w = w.replace("wa-", "ওয়া-")
-        w = w.replace("fa-", "ফা-")
-        w = w.replace("bi-", "বি-")
-        w = w.replace("la-", "লা-")
+        // Normalize prefixes - NO HYPHENS as per user requirement
+        w = w.replace("al-", "আল")
+        w = w.replace("wa-", "ওয়া")
+        w = w.replace("fa-", "ফা")
+        w = w.replace("bi-", "বি")
+        w = w.replace("la-", "লা")
 
         val sb = StringBuilder()
         var i = 0
@@ -191,47 +249,58 @@ object QuranBanglaPronunciation {
                 w.startsWith("dh", i) -> { sb.append("য"); i += 2 }
                 w.startsWith("zh", i) -> { sb.append("য"); i += 2 }
                 w.startsWith("ph", i) -> { sb.append("ফ"); i += 2 }
-                w.startsWith("aa", i) -> {
-                    if (sb.isEmpty() || sb.last().isWhitespace() || sb.last() == '-') sb.append("আ") else sb.append("া")
-                    i += 2
+                w.startsWith("aa", i) || w.startsWith("ā", i) -> {
+                    if (sb.isEmpty() || sb.last().isWhitespace()) sb.append("আ") 
+                    else if (sb.last().toString() != "া") sb.append("া")
+                    i += if (w.startsWith("aa", i)) 2 else 1
                 }
-                w.startsWith("ee", i) -> {
-                    if (sb.isEmpty() || sb.last().isWhitespace() || sb.last() == '-') sb.append("ঈ") else sb.append("ী")
-                    i += 2
+                w.startsWith("ee", i) || w.startsWith("ī", i) -> {
+                    if (sb.isEmpty() || sb.last().isWhitespace()) sb.append("ঈ") 
+                    else if (sb.last().toString() != "ী") sb.append("ী")
+                    i += if (w.startsWith("ee", i)) 2 else 1
                 }
-                w.startsWith("oo", i) -> {
-                    if (sb.isEmpty() || sb.last().isWhitespace() || sb.last() == '-') sb.append("ঊ") else sb.append("ূ")
-                    i += 2
+                w.startsWith("oo", i) || w.startsWith("ū", i) -> {
+                    if (sb.isEmpty() || sb.last().isWhitespace()) sb.append("ঊ") 
+                    else if (sb.last().toString() != "ূ") sb.append("ূ")
+                    i += if (w.startsWith("oo", i)) 2 else 1
                 }
                 w.startsWith("ai", i) -> {
-                    if (sb.isEmpty() || sb.last().isWhitespace() || sb.last() == '-') sb.append("আই") else sb.append("াই")
+                    if (sb.isEmpty() || sb.last().isWhitespace()) sb.append("আই") 
+                    else if (sb.last().toString() != "াই") sb.append("াই")
                     i += 2
                 }
                 w.startsWith("au", i) -> {
-                    if (sb.isEmpty() || sb.last().isWhitespace() || sb.last() == '-') sb.append("আউ") else sb.append("াউ")
+                    if (sb.isEmpty() || sb.last().isWhitespace()) sb.append("আউ") 
+                    else if (sb.last().toString() != "াউ") sb.append("াউ")
                     i += 2
                 }
                 w.startsWith("ou", i) -> {
-                    if (sb.isEmpty() || sb.last().isWhitespace() || sb.last() == '-') sb.append("উ") else sb.append("ু")
+                    if (sb.isEmpty() || sb.last().isWhitespace()) sb.append("উ") 
+                    else if (sb.last().toString() != "ু") sb.append("ু")
                     i += 2
                 }
                 else -> {
                     val ch = w[i]
                     when (ch) {
                         'a' -> {
-                            if (sb.isEmpty() || sb.last().isWhitespace() || sb.last() == '-') sb.append("আ") else sb.append("া")
+                            if (sb.isEmpty() || sb.last().isWhitespace()) sb.append("আ") 
+                            else if (sb.last().toString() != "া") sb.append("া")
                         }
                         'i' -> {
-                            if (sb.isEmpty() || sb.last().isWhitespace() || sb.last() == '-') sb.append("ই") else sb.append("ি")
+                            if (sb.isEmpty() || sb.last().isWhitespace()) sb.append("ই") 
+                            else if (sb.last().toString() != "ি") sb.append("ি")
                         }
                         'u' -> {
-                            if (sb.isEmpty() || sb.last().isWhitespace() || sb.last() == '-') sb.append("উ") else sb.append("ু")
+                            if (sb.isEmpty() || sb.last().isWhitespace()) sb.append("উ") 
+                            else if (sb.last().toString() != "ু") sb.append("ু")
                         }
                         'e' -> {
-                            if (sb.isEmpty() || sb.last().isWhitespace() || sb.last() == '-') sb.append("এ") else sb.append("ে")
+                            if (sb.isEmpty() || sb.last().isWhitespace()) sb.append("এ") 
+                            else if (sb.last().toString() != "ে") sb.append("ে")
                         }
                         'o' -> {
-                            if (sb.isEmpty() || sb.last().isWhitespace() || sb.last() == '-') sb.append("ও") else sb.append("ো")
+                            if (sb.isEmpty() || sb.last().isWhitespace()) sb.append("ও") 
+                            else if (sb.last().toString() != "ো") sb.append("ো")
                         }
                         'b' -> sb.append("ব")
                         'c' -> sb.append("ক")
@@ -253,8 +322,8 @@ object QuranBanglaPronunciation {
                         'w' -> sb.append("ওয়া")
                         'y' -> sb.append("ইয়া")
                         'z' -> sb.append("য")
-                        '\'' -> sb.append("’")
-                        '-' -> sb.append("-")
+                        '\'' -> { /* Ignore apostrophes in conversion as per rule */ }
+                        '-' -> { /* Ignore hyphens */ }
                         else -> sb.append(ch)
                     }
                     i++

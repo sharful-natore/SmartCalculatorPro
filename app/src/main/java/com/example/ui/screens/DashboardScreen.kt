@@ -1292,12 +1292,12 @@ fun DashboardCategoriesView(
                                     Box(
                                         modifier = Modifier
                                             .size(48.dp)
-                                            .clip(ScallopedBadgeShape)
+                                            .clip(CircleShape)
                                             .background(
                                                 Brush.linearGradient(
                                                     colors = listOf(
-                                                        themeColors.buttonEqualBg.copy(alpha = 0.18f),
-                                                        themeColors.buttonEqualBg.copy(alpha = 0.05f)
+                                                        themeColors.buttonEqualBg,
+                                                        themeColors.buttonEqualBg.copy(alpha = 0.85f)
                                                     )
                                                 )
                                             ),
@@ -1306,7 +1306,7 @@ fun DashboardCategoriesView(
                                         Icon(
                                             imageVector = item.icon,
                                             contentDescription = item.titleEn,
-                                            tint = themeColors.buttonEqualBg,
+                                            tint = Color.White,
                                             modifier = Modifier.size(24.dp)
                                         )
                                     }
@@ -2208,12 +2208,12 @@ fun ToolGridCardItem(
                     Box(
                         modifier = Modifier
                             .size(38.dp)
-                            .clip(ScallopedBadgeShape)
+                            .clip(CircleShape)
                             .background(
                                 Brush.linearGradient(
                                     colors = listOf(
-                                        themeColors.buttonEqualBg.copy(alpha = 0.18f),
-                                        themeColors.buttonEqualBg.copy(alpha = 0.05f)
+                                        themeColors.buttonEqualBg,
+                                        themeColors.buttonEqualBg.copy(alpha = 0.85f)
                                     )
                                 )
                             ),
@@ -2222,7 +2222,7 @@ fun ToolGridCardItem(
                         Icon(
                             imageVector = toolType.icon,
                             contentDescription = toolType.getTitle(viewModel.selectedLanguage),
-                            tint = themeColors.buttonEqualBg,
+                            tint = Color.White,
                             modifier = Modifier.size(20.dp)
                         )
                     }

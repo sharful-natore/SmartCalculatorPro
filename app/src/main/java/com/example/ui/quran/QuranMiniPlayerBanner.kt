@@ -65,6 +65,8 @@ fun QuranMiniPlayerBanner(
     val islamicPos by islamicAudioPlayer.currentPositionMs.collectAsStateWithLifecycle()
     val islamicDur by islamicAudioPlayer.durationMs.collectAsStateWithLifecycle()
 
+    val isArabicPlaying by audioPlayer.isArabicPartPlaying.collectAsStateWithLifecycle()
+
     val isQuranVisible = quranActive && currentSurahNum != null && !isDetailScreenOpen
     val isIslamicVisible = islamicActive && !isQuranVisible
 
@@ -94,8 +96,12 @@ fun QuranMiniPlayerBanner(
                 "সূরা $currentSurahNum"
             }
             val ayahText = if (totalAyahs > 0) "আয়াত ${currentAyahIndex + 1} / $totalAyahs" else "তেলাওয়াত চলছে..."
+            val statusText = if (quranPlaying) {
+                if (isArabicPlaying) " (আরবি)" else " (অনুবাদ)"
+            } else ""
+            
             title = surahTitle
-            subtitle = "$ayahText • স্পর্শ করে দেখুন"
+            subtitle = "$ayahText$statusText • স্পর্শ করুন"
             isPlaying = quranPlaying
             progress = if (quranDur > 0) (quranPos.toFloat() / quranDur.toFloat()).coerceIn(0f, 1f) else 0f
             onPlayPauseToggle = { audioPlayer.togglePlayPause() }
