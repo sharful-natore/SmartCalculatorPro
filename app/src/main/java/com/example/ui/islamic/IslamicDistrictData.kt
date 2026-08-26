@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import com.example.ui.theme.CalculatorThemeColors
 import com.example.ui.viewmodel.CalculatorViewModel
 import com.example.util.AppLanguage
+import com.example.util.horizontalBounceOverscroll
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -462,7 +463,9 @@ fun DistrictSelectionSheet(
             // Division Filter Chips
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalBounceOverscroll()
             ) {
                 items(BdDivision.values()) { division ->
                     val isSelected = selectedDivision == division

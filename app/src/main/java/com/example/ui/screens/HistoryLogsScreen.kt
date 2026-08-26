@@ -43,6 +43,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import com.example.util.horizontalBounceOverscroll
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -380,6 +381,7 @@ fun HistoryLogsScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .horizontalBounceOverscroll()
                 .horizontalScroll(rememberScrollState())
                 .padding(vertical = 4.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)

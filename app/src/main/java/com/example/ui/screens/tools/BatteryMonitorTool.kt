@@ -221,7 +221,17 @@ fun BatteryMonitorTool(
     } else themeColors.displayText
 
     // Dynamic Time Estimation (Discharging remaining time & Charging remaining time)
+    // Updated every 30 seconds as requested
+    var backupEstimateTick by remember { mutableLongStateOf(0L) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            backupEstimateTick = System.currentTimeMillis()
+            delay(30000L) // 30 seconds interval
+        }
+    }
+
     val timeEstimation = remember(
+        backupEstimateTick,
         batteryLevel,
         batteryStatus,
         batteryCurrentMa,
@@ -536,18 +546,18 @@ fun BatteryMonitorTool(
                 }
             }
 
-            // Time Remaining Estimation Card (Discharging runtime & Charging time to full)
+            // Time Remaining Estimation Card (Discharging runtime & Charging time to full) - Crisp White Card
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .themeCardShadow(themeColors, shape = RoundedCornerShape(24.dp)),
                 colors = CardDefaults.cardColors(
-                    containerColor = if (isCurrentlyCharging) Color(0xFF00E5FF).copy(alpha = 0.08f) else themeColors.buttonEqualBg.copy(alpha = 0.08f)
+                    containerColor = Color.White
                 ),
                 shape = RoundedCornerShape(24.dp),
                 border = BorderStroke(
                     1.dp,
-                    if (isCurrentlyCharging) Color(0xFF00E5FF).copy(alpha = 0.25f) else themeColors.buttonEqualBg.copy(alpha = 0.2f)
+                    Color(0xFFE2E8F0)
                 )
             ) {
                 Row(
@@ -561,15 +571,15 @@ fun BatteryMonitorTool(
                             .size(44.dp)
                             .clip(CircleShape)
                             .background(
-                                if (isCurrentlyCharging) Color(0xFF00E5FF).copy(alpha = 0.15f)
-                                else themeColors.buttonEqualBg.copy(alpha = 0.15f)
+                                if (isCurrentlyCharging) Color(0xFFE0F2FE)
+                                else Color(0xFFF1F5F9)
                             ),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = timeEstimation.fourth,
                             contentDescription = null,
-                            tint = if (isCurrentlyCharging) Color(0xFF00B0FF) else themeColors.buttonEqualBg,
+                            tint = if (isCurrentlyCharging) Color(0xFF0284C7) else Color(0xFF334155),
                             modifier = Modifier.size(24.dp)
                         )
                     }
@@ -581,20 +591,20 @@ fun BatteryMonitorTool(
                             text = timeEstimation.first,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium,
-                            color = themeColors.displayText.copy(alpha = 0.7f)
+                            color = Color(0xFF64748B)
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = timeEstimation.second,
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Black,
-                            color = if (isCurrentlyCharging) Color(0xFF00B0FF) else themeColors.displayText
+                            color = if (isCurrentlyCharging) Color(0xFF0284C7) else Color(0xFF0F172A)
                         )
                         Spacer(modifier = Modifier.height(1.dp))
                         Text(
                             text = timeEstimation.third,
                             fontSize = 10.5.sp,
-                            color = themeColors.displayText.copy(alpha = 0.5f)
+                            color = Color(0xFF94A3B8)
                         )
                     }
                 }
@@ -611,10 +621,12 @@ fun BatteryMonitorTool(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(20.dp)
+                        .padding(horizontal = 14.dp, vertical = 18.dp)
                 ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 4.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -640,91 +652,161 @@ fun BatteryMonitorTool(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
-                    // Live Wave Graph Canvas
-                    Box(
+                    val waveColor = if (isCurrentlyCharging) Color(0xFF00E5FF) else Color(0xFF4CAF50)
+                    var maxVal = telemetryHistory.maxOfOrNull { abs(it) } ?: 800f
+                    if (maxVal < 100f) maxVal = 800f
+                    val maxValInt = maxVal.toInt()
+
+                    // Graph Container with Left Numeric Scale and Right Canvas
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(140.dp)
-                            .padding(top = 8.dp)
+                            .padding(top = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        val waveColor = if (isCurrentlyCharging) Color(0xFF00E5FF) else Color(0xFF4CAF50)
-                        
-                        Canvas(
-                            modifier = Modifier.fillMaxSize()
+                        // Left Numeric Scale Column
+                        Column(
+                            modifier = Modifier
+                                .width(34.dp)
+                                .fillMaxHeight()
+                                .padding(vertical = 4.dp),
+                            verticalArrangement = Arrangement.SpaceBetween,
+                            horizontalAlignment = Alignment.Start
                         ) {
-                            val width = size.width
-                            val height = size.height
-                            
-                            // Draw Grid Lines (Subtle)
-                            val gridLines = 4
-                            for (i in 0..gridLines) {
-                                val y = (height / gridLines) * i
+                            Text(
+                                text = "+${if (isBn) convertBatteryBnDigits(maxValInt.toString()) else maxValInt.toString()}",
+                                fontSize = 9.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.displayText.copy(alpha = 0.55f),
+                                maxLines = 1
+                            )
+                            Text(
+                                text = if (isBn) "০ mA" else "0 mA",
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = themeColors.displayText.copy(alpha = 0.4f),
+                                maxLines = 1
+                            )
+                            Text(
+                                text = "-${if (isBn) convertBatteryBnDigits(maxValInt.toString()) else maxValInt.toString()}",
+                                fontSize = 9.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.displayText.copy(alpha = 0.55f),
+                                maxLines = 1
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(4.dp))
+
+                        // Live Wave Graph Canvas with Under-Line Shadow
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                        ) {
+                            Canvas(
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                val width = size.width
+                                val height = size.height
+
+                                // Draw Horizontal Grid Lines aligned with scale
                                 drawLine(
-                                    color = themeColors.displayText.copy(alpha = 0.04f),
-                                    start = androidx.compose.ui.geometry.Offset(0f, y),
-                                    end = androidx.compose.ui.geometry.Offset(width, y),
-                                    strokeWidth = 0.5.dp.toPx()
+                                    color = themeColors.displayText.copy(alpha = 0.08f),
+                                    start = androidx.compose.ui.geometry.Offset(0f, 6.dp.toPx()),
+                                    end = androidx.compose.ui.geometry.Offset(width, 6.dp.toPx()),
+                                    strokeWidth = 0.8.dp.toPx()
                                 )
-                            }
-
-                            // Plot telemetry points with Smooth Single Line ONLY (no extra glow strokes or area fill)
-                            if (telemetryHistory.size > 1) {
-                                val pointsCount = telemetryHistory.size
-                                val stepX = width / (pointsCount - 1)
-                                
-                                var maxVal = telemetryHistory.maxOf { abs(it) }
-                                if (maxVal < 100f) maxVal = 800f 
-
-                                val strokePath = Path()
-                                
-                                val getPoint = { index: Int ->
-                                    val x = index * stepX
-                                    val rawVal = telemetryHistory[index]
-                                    val relativeY = (rawVal / maxVal) * (height / 2.3f)
-                                    val y = (height / 2f) - relativeY
-                                    androidx.compose.ui.geometry.Offset(x, y)
-                                }
-
-                                val firstPoint = getPoint(0)
-                                strokePath.moveTo(firstPoint.x, firstPoint.y)
-
-                                for (i in 0 until pointsCount - 1) {
-                                    val p0 = getPoint(i)
-                                    val p1 = getPoint(i + 1)
-                                    val controlX = (p0.x + p1.x) / 2f
-                                    strokePath.cubicTo(controlX, p0.y, controlX, p1.y, p1.x, p1.y)
-                                }
-
-                                // 1. Draw Smooth Baseline Zero
                                 drawLine(
-                                    color = themeColors.displayText.copy(alpha = 0.1f),
-                                    start = androidx.compose.ui.geometry.Offset(0f, height / 2),
-                                    end = androidx.compose.ui.geometry.Offset(width, height / 2),
+                                    color = themeColors.displayText.copy(alpha = 0.14f),
+                                    start = androidx.compose.ui.geometry.Offset(0f, height / 2f),
+                                    end = androidx.compose.ui.geometry.Offset(width, height / 2f),
                                     strokeWidth = 1.dp.toPx()
                                 )
-
-                                // 2. Draw The Single Clean Line (without extra glow or duplicate strokes)
-                                drawPath(
-                                    path = strokePath,
-                                    color = waveColor,
-                                    style = Stroke(
-                                        width = 2.dp.toPx(),
-                                        cap = androidx.compose.ui.graphics.StrokeCap.Round,
-                                        join = androidx.compose.ui.graphics.StrokeJoin.Round
-                                    )
+                                drawLine(
+                                    color = themeColors.displayText.copy(alpha = 0.08f),
+                                    start = androidx.compose.ui.geometry.Offset(0f, height - 6.dp.toPx()),
+                                    end = androidx.compose.ui.geometry.Offset(width, height - 6.dp.toPx()),
+                                    strokeWidth = 0.8.dp.toPx()
                                 )
+
+                                if (telemetryHistory.size > 1) {
+                                    val pointsCount = telemetryHistory.size
+                                    val stepX = width / (pointsCount - 1)
+
+                                    val strokePath = Path()
+                                    val fillPath = Path()
+
+                                    val getPoint = { index: Int ->
+                                        val x = index * stepX
+                                        val rawVal = telemetryHistory[index]
+                                        val relativeY = (rawVal / maxVal) * (height / 2.35f)
+                                        val y = (height / 2f) - relativeY
+                                        androidx.compose.ui.geometry.Offset(x, y)
+                                    }
+
+                                    val firstPoint = getPoint(0)
+                                    strokePath.moveTo(firstPoint.x, firstPoint.y)
+
+                                    for (i in 0 until pointsCount - 1) {
+                                        val p0 = getPoint(i)
+                                        val p1 = getPoint(i + 1)
+                                        val controlX = (p0.x + p1.x) / 2f
+                                        strokePath.cubicTo(controlX, p0.y, controlX, p1.y, p1.x, p1.y)
+                                    }
+
+                                    // Build closed fillPath for smooth shadow under the line
+                                    fillPath.moveTo(firstPoint.x, height)
+                                    fillPath.lineTo(firstPoint.x, firstPoint.y)
+                                    for (i in 0 until pointsCount - 1) {
+                                        val p0 = getPoint(i)
+                                        val p1 = getPoint(i + 1)
+                                        val controlX = (p0.x + p1.x) / 2f
+                                        fillPath.cubicTo(controlX, p0.y, controlX, p1.y, p1.x, p1.y)
+                                    }
+                                    val lastPoint = getPoint(pointsCount - 1)
+                                    fillPath.lineTo(lastPoint.x, height)
+                                    fillPath.close()
+
+                                    // 1. Draw smooth gradient shadow under the line
+                                    drawPath(
+                                        path = fillPath,
+                                        brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                                            colors = listOf(
+                                                waveColor.copy(alpha = 0.28f),
+                                                waveColor.copy(alpha = 0.05f),
+                                                Color.Transparent
+                                            ),
+                                            startY = 0f,
+                                            endY = height
+                                        )
+                                    )
+
+                                    // 2. Draw The Single Clean Line
+                                    drawPath(
+                                        path = strokePath,
+                                        color = waveColor,
+                                        style = Stroke(
+                                            width = 2.dp.toPx(),
+                                            cap = androidx.compose.ui.graphics.StrokeCap.Round,
+                                            join = androidx.compose.ui.graphics.StrokeJoin.Round
+                                        )
+                                    )
+                                }
                             }
                         }
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
-                    
+
                     Text(
-                        text = if (isBn) "প্রতি ১ সেকেন্ডে রিয়েল-টাইম রিডিং আপডেট করা হয়" else "Updates telemetry dynamically every 1s",
-                        fontSize = 11.sp,
-                        color = themeColors.displayText.copy(alpha = 0.4f),
+                        text = if (isBn) "প্রতি ১ সেকেন্ডে লাইভ কারেন্ট রিডিং আপডেট হয় এবং প্রতি ৩০ সেকেন্ডে ব্যাকআপ সময় পুনর্গণনা হয়"
+                        else "Current updates dynamically every 1s • Backup time refreshes every 30s",
+                        fontSize = 10.5.sp,
+                        color = themeColors.displayText.copy(alpha = 0.45f),
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
                     )

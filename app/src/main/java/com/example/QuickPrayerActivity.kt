@@ -34,6 +34,7 @@ import com.example.ui.theme.MyApplicationTheme
 import com.example.ui.viewmodel.CalculatorViewModel
 import com.example.ui.viewmodel.CalculatorViewModelFactory
 import com.example.util.AppLanguage
+import com.example.util.bounceOverscroll
 import android.graphics.Color as AndroidColor
 
 class QuickPrayerActivity : ComponentActivity() {
@@ -230,6 +231,7 @@ class QuickPrayerActivity : ComponentActivity() {
                                         modifier = Modifier
                                             .fillMaxSize()
                                             .padding(horizontal = 10.dp, vertical = 4.dp)
+                                            .bounceOverscroll()
                                             .verticalScroll(rememberScrollState())
                                     ) {
                                         PrayerTimesCard(
@@ -241,6 +243,7 @@ class QuickPrayerActivity : ComponentActivity() {
                                         modifier = Modifier
                                             .fillMaxSize()
                                             .padding(horizontal = 10.dp, vertical = 4.dp)
+                                            .bounceOverscroll()
                                             .verticalScroll(rememberScrollState())
                                     ) {
                                         ModernSehriIftarCard(
@@ -248,17 +251,29 @@ class QuickPrayerActivity : ComponentActivity() {
                                             themeColors = themeColors
                                         )
                                     }
-                                    2 -> com.example.ui.quran.HolyQuranModuleScreen(
-                                        themeColors = themeColors,
-                                        onBackClick = { selectedTab = 0 },
-                                        quranViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
-                                        isBn = isBn
-                                    )
-                                    else -> com.example.ui.islamic.HadithLibraryScreen(
-                                        viewModel = viewModel,
-                                        themeColors = themeColors,
-                                        onBackClick = { selectedTab = 0 }
-                                    )
+                                    2 -> Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .bounceOverscroll()
+                                    ) {
+                                        com.example.ui.quran.HolyQuranModuleScreen(
+                                            themeColors = themeColors,
+                                            onBackClick = { selectedTab = 0 },
+                                            quranViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+                                            isBn = isBn
+                                        )
+                                    }
+                                    else -> Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .bounceOverscroll()
+                                    ) {
+                                        com.example.ui.islamic.HadithLibraryScreen(
+                                            viewModel = viewModel,
+                                            themeColors = themeColors,
+                                            onBackClick = { selectedTab = 0 }
+                                        )
+                                    }
                                 }
                             }
                         }

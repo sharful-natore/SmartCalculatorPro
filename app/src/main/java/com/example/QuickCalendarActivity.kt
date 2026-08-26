@@ -34,6 +34,7 @@ import com.example.ui.theme.MyApplicationTheme
 import com.example.ui.viewmodel.CalculatorViewModel
 import com.example.ui.viewmodel.CalculatorViewModelFactory
 import com.example.util.AppLanguage
+import com.example.util.bounceOverscroll
 import java.text.SimpleDateFormat
 import java.util.*
 import android.graphics.Color as AndroidColor
@@ -151,11 +152,12 @@ class QuickCalendarActivity : ComponentActivity() {
 
                             Spacer(modifier = Modifier.height(8.dp))
 
-                            // Calendar Screen Content with Vertical Scroll
+                            // Calendar Screen Content with Vertical Scroll and Smooth Bounce Overscroll
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .weight(1f)
+                                    .bounceOverscroll()
                                     .verticalScroll(rememberScrollState())
                             ) {
                                 MultiCalendarCard(

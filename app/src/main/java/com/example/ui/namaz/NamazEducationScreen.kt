@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import com.example.util.horizontalBounceOverscroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -260,6 +261,7 @@ fun WuduAndTaharatSection(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .horizontalBounceOverscroll()
                     .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -542,6 +544,7 @@ fun DailyPrayersSection(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .horizontalBounceOverscroll()
                     .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -995,6 +998,7 @@ fun AllDuasAndSurahsSection(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .horizontalBounceOverscroll()
                     .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {

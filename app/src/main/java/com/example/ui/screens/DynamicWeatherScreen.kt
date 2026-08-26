@@ -42,6 +42,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.style.TextAlign
 import com.example.ui.theme.CalculatorThemeColors
 import com.example.ui.viewmodel.CalculatorViewModel
+import com.example.util.horizontalBounceOverscroll
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.*
@@ -232,6 +233,7 @@ fun DynamicWeatherScreen(
                     LazyRow(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .horizontalBounceOverscroll()
                             .padding(bottom = 4.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
@@ -333,7 +335,8 @@ fun DynamicWeatherScreen(
                         modifier = Modifier.padding(bottom = 4.dp)
                     )
                     LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.horizontalBounceOverscroll()
                     ) {
                         items(24) { index ->
                             val globalHourIndex = index
@@ -861,7 +864,8 @@ fun DailyWeatherItem(
 
                     LazyRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        contentPadding = PaddingValues(horizontal = 2.dp)
+                        contentPadding = PaddingValues(horizontal = 2.dp),
+                        modifier = Modifier.horizontalBounceOverscroll()
                     ) {
                         items(24) { hIndex ->
                             val globalHourIndex = dayIndex * 24 + hIndex

@@ -42,6 +42,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import com.example.util.scaleOnPress
+import com.example.util.bounceOverscroll
+import com.example.util.horizontalBounceOverscroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.automirrored.filled.*
@@ -1073,6 +1075,7 @@ fun DashboardCategoriesView(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .horizontalBounceOverscroll()
                 .horizontalScroll(featuredScrollState)
                 .padding(vertical = 4.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -1457,6 +1460,7 @@ fun DashboardCategoriesView(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .horizontalBounceOverscroll()
                 .horizontalScroll(filterScrollState)
                 .padding(bottom = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -1758,6 +1762,7 @@ fun DashboardCategoriesView(
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
+                                            .horizontalBounceOverscroll()
                                             .horizontalScroll(
                                                 remember(category.name) {
                                                     categoryScrollStates.getOrPut(category.name) {

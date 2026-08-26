@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.sp
 import com.example.ui.theme.CalculatorThemeColors
 import com.example.ui.viewmodel.CalculatorViewModel
 import com.example.util.AppLanguage
+import com.example.util.horizontalBounceOverscroll
 import com.example.ui.islamic.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ui.namaz.NamazViewModel
@@ -1119,6 +1120,7 @@ fun DigitalTasbihCard(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .horizontalBounceOverscroll()
                     .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
@@ -1152,6 +1154,7 @@ fun DigitalTasbihCard(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .horizontalBounceOverscroll()
                     .horizontalScroll(rememberScrollState()),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -2534,6 +2537,7 @@ fun IslamicDuasCard(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .horizontalBounceOverscroll()
                     .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {

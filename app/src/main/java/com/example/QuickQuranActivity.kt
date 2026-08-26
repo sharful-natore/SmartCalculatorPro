@@ -31,6 +31,7 @@ import com.example.ui.theme.MyApplicationTheme
 import com.example.ui.viewmodel.CalculatorViewModel
 import com.example.ui.viewmodel.CalculatorViewModelFactory
 import com.example.util.AppLanguage
+import com.example.util.bounceOverscroll
 import android.graphics.Color as AndroidColor
 
 class QuickQuranActivity : ComponentActivity() {
@@ -148,6 +149,7 @@ class QuickQuranActivity : ComponentActivity() {
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .weight(1f)
+                                    .bounceOverscroll()
                             ) {
                                 HolyQuranModuleScreen(
                                     themeColors = themeColors,

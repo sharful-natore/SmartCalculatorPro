@@ -35,6 +35,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import com.example.util.scaleOnPress
+import com.example.util.bounceOverscroll
+import com.example.util.horizontalBounceOverscroll
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.Icons
@@ -287,6 +289,7 @@ fun SmartConverterCategoriesView(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .horizontalBounceOverscroll()
                 .horizontalScroll(filterScrollState)
                 .padding(bottom = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -610,6 +613,7 @@ fun SmartConverterCategoriesView(
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
+                                            .horizontalBounceOverscroll()
                                             .horizontalScroll(
                                                 remember(category.name) {
                                                     categoryScrollStates.getOrPut(category.name) {
