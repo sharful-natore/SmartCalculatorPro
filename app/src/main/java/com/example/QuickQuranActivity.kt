@@ -154,6 +154,9 @@ class QuickQuranActivity : ComponentActivity() {
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .weight(1f)
+                                    .padding(bottom = 6.dp)
+                                    .clip(RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp))
+                                    .clipToBounds()
                                     .bounceOverscroll()
                             ) {
                                 HolyQuranModuleScreen(

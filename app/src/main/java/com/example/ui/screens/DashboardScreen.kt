@@ -1637,14 +1637,8 @@ fun DashboardCategoriesView(
                                 }
                             }
 
-                            val categorySortedByUsage = remember(categoryTools, usageMap) {
-                                categoryTools.sortedWith(
-                                    compareByDescending<ToolType> { (usageMap[it.name] ?: 0) as Int }
-                                        .thenBy { it.name }
-                                )
-                            }
-                            val categoryToolRankMap = remember(categorySortedByUsage) {
-                                categorySortedByUsage.mapIndexed { index, tool -> tool.name to (index + 1) }.toMap()
+                            val categoryToolRankMap = remember(categoryTools) {
+                                categoryTools.mapIndexed { index, tool -> tool.name to (if (index < 3) index + 1 else 0) }.toMap()
                             }
 
                             // Dynamic Layout: Horizontal Scrolling Row when collapsed in Overview Mode, Vertical Grid when expanded or filtered
@@ -1965,7 +1959,9 @@ fun ToolGridCardItem(
             if (categoryRank in 1..3) {
                 CategoryRankBadge(
                     rank = categoryRank,
-                    modifier = Modifier.align(Alignment.TopStart)
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(top = 11.dp, end = 38.dp)
                 )
             }
         }

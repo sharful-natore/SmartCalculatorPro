@@ -547,17 +547,8 @@ fun SmartConverterCategoriesView(
                             }
 
                             val toolUsageList by viewModel.allToolUsage.collectAsState()
-                            val usageMap = remember(toolUsageList) {
-                                toolUsageList.associate { it.toolId to it.usageCount }
-                            }
-                            val categorySortedByUsage = remember(categoryConverters, usageMap) {
-                                categoryConverters.sortedWith(
-                                    compareByDescending<ConverterType> { (usageMap[it.name] ?: usageMap["CONV_${it.name}"] ?: 0) as Int }
-                                        .thenBy { it.name }
-                                )
-                            }
-                            val categoryRankMap = remember(categorySortedByUsage) {
-                                categorySortedByUsage.mapIndexed { index, conv -> conv.name to (index + 1) }.toMap()
+                            val categoryRankMap = remember(categoryConverters) {
+                                categoryConverters.mapIndexed { index, conv -> conv.name to (if (index < 3) index + 1 else 0) }.toMap()
                             }
 
                             // Dynamic Layout: Horizontal Scrolling Row when collapsed in Overview Mode, Vertical Grid when expanded or filtered
@@ -882,7 +873,9 @@ fun ConverterCardItem(
             if (categoryRank in 1..3) {
                 CategoryRankBadge(
                     rank = categoryRank,
-                    modifier = Modifier.align(Alignment.TopStart)
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(top = 11.dp, end = 38.dp)
                 )
             }
         }

@@ -231,7 +231,8 @@ class QuickPrayerActivity : ComponentActivity() {
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .weight(1f)
-                                    .clip(dialogShape)
+                                    .padding(bottom = 6.dp)
+                                    .clip(RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp))
                                     .clipToBounds()
                             ) {
                                 when (selectedTab) {
@@ -262,6 +263,8 @@ class QuickPrayerActivity : ComponentActivity() {
                                     2 -> Box(
                                         modifier = Modifier
                                             .fillMaxSize()
+                                            .padding(horizontal = 6.dp)
+                                            .clip(RoundedCornerShape(bottomStart = 18.dp, bottomEnd = 18.dp))
                                             .bounceOverscroll()
                                     ) {
                                         com.example.ui.quran.HolyQuranModuleScreen(
@@ -274,6 +277,8 @@ class QuickPrayerActivity : ComponentActivity() {
                                     else -> Box(
                                         modifier = Modifier
                                             .fillMaxSize()
+                                            .padding(horizontal = 6.dp)
+                                            .clip(RoundedCornerShape(bottomStart = 18.dp, bottomEnd = 18.dp))
                                             .bounceOverscroll()
                                     ) {
                                         com.example.ui.islamic.HadithLibraryScreen(
