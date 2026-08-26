@@ -1099,8 +1099,41 @@ fun PdfReaderTool(
                         modifier = Modifier
                             .fillMaxSize()
                             .pointerInput(containerWidth, containerHeight) {
+                                val tapThreshold = 300L
+                                var lastTapTime = 0L
+                                var lastTapOffset = Offset.Zero
+                                
                                 awaitEachGesture {
-                                    awaitFirstDown(requireUnconsumed = false)
+                                    val down = awaitFirstDown(requireUnconsumed = false)
+                                    val now = android.os.SystemClock.uptimeMillis()
+                                    
+                                    // Manual Double Tap Detection
+                                    if (now - lastTapTime < tapThreshold && (down.position - lastTapOffset).getDistance() < 40f) {
+                                        val tapOffset = down.position
+                                        if (docScale > 1.1f) {
+                                            docScale = 1.0f
+                                            docOffset = Offset.Zero
+                                        } else {
+                                            docScale = 2.5f
+                                            val targetOffsetX = (containerWidth / 2f - tapOffset.x) * 1.5f
+                                            val targetOffsetY = (containerHeight / 2f - tapOffset.y) * 1.5f
+                                            val maxPanX = (containerWidth * (2.5f - 1.0f)) / 2f
+                                            val maxPanY = (containerHeight * (2.5f - 1.0f)) / 2f
+                                            docOffset = Offset(
+                                                targetOffsetX.coerceIn(-maxPanX, maxPanX),
+                                                targetOffsetY.coerceIn(-maxPanY, maxPanY)
+                                            )
+                                        }
+                                        lastTapTime = 0
+                                        down.consume()
+                                    } else {
+                                        lastTapTime = now
+                                        lastTapOffset = down.position
+                                        
+                                        // Handle Single Tap for UI Toggles
+                                        // We don't consume 'down' yet, we wait for 'up'
+                                    }
+
                                     var isMultiTouch = false
                                     do {
                                         val event = awaitPointerEvent()
@@ -1154,42 +1187,24 @@ fun PdfReaderTool(
                                                 if (overscroll != 0f) {
                                                     verticalLazyListState.dispatchRawDelta(-overscroll / docScale)
                                                 }
-                                                // Only consume if we significantly panned (avoid breaking tap)
                                                 if (pan.getDistance() > 1f) {
                                                     event.changes.forEach { it.consume() }
+                                                }
+                                            }
+                                        } else if (docScale == 1.0f && pressedCount == 1 && !isMultiTouch) {
+                                            // Detect Single Tap on Up
+                                            val upEvent = event.changes.find { !it.pressed && it.previousPressed }
+                                            if (upEvent != null && now - lastTapTime != 0L) {
+                                                if (isFullscreen) {
+                                                    isFullscreen = false
+                                                    isControlsVisible = true
+                                                } else {
+                                                    isControlsVisible = !isControlsVisible
                                                 }
                                             }
                                         }
                                     } while (event.changes.any { it.pressed })
                                 }
-                            }
-                            .pointerInput(containerWidth, containerHeight) {
-                                detectTapGestures(
-                                    onDoubleTap = { tapOffset ->
-                                        if (docScale > 1.1f) {
-                                            docScale = 1.0f
-                                            docOffset = Offset.Zero
-                                        } else {
-                                            docScale = 2.5f
-                                            val targetOffsetX = (containerWidth / 2f - tapOffset.x) * 1.5f
-                                            val targetOffsetY = (containerHeight / 2f - tapOffset.y) * 1.5f
-                                            val maxPanX = (containerWidth * (2.5f - 1.0f)) / 2f
-                                            val maxPanY = (containerHeight * (2.5f - 1.0f)) / 2f
-                                            docOffset = Offset(
-                                                targetOffsetX.coerceIn(-maxPanX, maxPanX),
-                                                targetOffsetY.coerceIn(-maxPanY, maxPanY)
-                                            )
-                                        }
-                                    },
-                                    onTap = {
-                                        if (isFullscreen) {
-                                            isFullscreen = false
-                                            isControlsVisible = true
-                                        } else {
-                                            isControlsVisible = !isControlsVisible
-                                        }
-                                    }
-                                )
                             }
                     ) {
                         if (pageCount > 0) {

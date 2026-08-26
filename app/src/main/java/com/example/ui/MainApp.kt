@@ -1837,6 +1837,36 @@ fun MainContent(
                         
                         // Modern Interactive Developer Info Card
                         val context = LocalContext.current
+                        val localPhotoFile = remember { java.io.File(context.filesDir, "developer_photo.jpg") }
+                        var photoDownloaded by remember { mutableStateOf(localPhotoFile.exists()) }
+
+                        LaunchedEffect(Unit) {
+                            if (!photoDownloaded) {
+                                withContext(Dispatchers.IO) {
+                                    try {
+                                        val client = OkHttpClient.Builder().build()
+                                        val request = Request.Builder()
+                                            .url("https://www.dropbox.com/scl/fi/io67lcl16o1wddcq4yx4m/Dev_photo.jpg?rlkey=erlthhlxwjhbgtd2w3tv9jbvv&st=djqdym2s&dl=1")
+                                            .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
+                                            .build()
+                                        val response = client.newCall(request).execute()
+                                        if (response.isSuccessful) {
+                                            val bytes = response.body?.bytes()
+                                            if (bytes != null) {
+                                                localPhotoFile.writeBytes(bytes)
+                                                withContext(Dispatchers.Main) {
+                                                    photoDownloaded = true
+                                                }
+                                            }
+                                        }
+                                        response.close()
+                                    } catch (e: Exception) {
+                                        e.printStackTrace()
+                                    }
+                                }
+                            }
+                        }
+
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             colors = CardDefaults.cardColors(containerColor = themeColors.buttonEqualBg.copy(alpha = 0.08f)),
@@ -1878,19 +1908,42 @@ fun MainContent(
                                     // Circular Developer Photo with nice border and design
                                     Box(
                                         modifier = Modifier
-                                            .size(56.dp)
+                                            .size(60.dp)
                                             .clip(CircleShape)
                                             .background(themeColors.buttonEqualBg.copy(alpha = 0.12f))
-                                            .border(2.5.dp, themeColors.buttonEqualBg, CircleShape),
+                                            .border(3.dp, themeColors.buttonEqualBg, CircleShape),
                                         contentAlignment = Alignment.Center
                                     ) {
+                                        val photoData = remember(photoDownloaded) {
+                                            if (photoDownloaded && localPhotoFile.exists()) localPhotoFile 
+                                            else "https://www.dropbox.com/scl/fi/io67lcl16o1wddcq4yx4m/Dev_photo.jpg?rlkey=erlthhlxwjhbgtd2w3tv9jbvv&st=djqdym2s&dl=1"
+                                        }
+
                                         val painter = rememberAsyncImagePainter(
                                             model = ImageRequest.Builder(LocalContext.current)
-                                                .data("https://www.dropbox.com/scl/fi/io67lcl16o1wddcq4yx4m/Dev_photo.jpg?rlkey=erlthhlxwjhbgtd2w3tv9jbvv&st=djqdym2s&dl=1")
-                                                .crossfade(false)
+                                                .data(photoData)
+                                                .diskCachePolicy(coil.request.CachePolicy.ENABLED)
+                                                .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
+                                                .listener(
+                                                    onSuccess = { _, result ->
+                                                        if (!photoDownloaded) {
+                                                            val bitmap = (result.drawable as? android.graphics.drawable.BitmapDrawable)?.bitmap
+                                                            if (bitmap != null) {
+                                                                try {
+                                                                    java.io.FileOutputStream(localPhotoFile).use { out ->
+                                                                        bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 95, out)
+                                                                    }
+                                                                    photoDownloaded = true
+                                                                } catch (e: Exception) {
+                                                                    e.printStackTrace()
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                )
                                                 .build()
                                         )
-                                        if (painter.state is coil.compose.AsyncImagePainter.State.Success) {
+                                        if (painter.state is coil.compose.AsyncImagePainter.State.Success || photoDownloaded) {
                                             Image(
                                                 painter = painter,
                                                 contentDescription = "Developer Photo",

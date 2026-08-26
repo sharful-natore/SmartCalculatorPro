@@ -104,19 +104,38 @@ fun BatteryMonitorTool(
     LaunchedEffect(Unit) {
         while (true) {
             val rawCurrentNow = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW)
-            // divide microamperes by 1000 to get milliamperes (mA)
-            var currentMa = rawCurrentNow / 1000
             
-            // Adjust current polarity if device reports opposite values
+            // Standard Android reports in microamperes (uA), but some manufacturers use milliamperes (mA)
+            // We heuristically determine the unit: if abs value is > 20,000, it's definitely uA.
+            var currentMa = if (abs(rawCurrentNow) > 20000) {
+                rawCurrentNow / 1000
+            } else {
+                rawCurrentNow
+            }
+            
+            // Adjust current polarity based on battery status if it seems inconsistent
             val isCharging = batteryStatus == BatteryManager.BATTERY_STATUS_CHARGING ||
                     batteryStatus == BatteryManager.BATTERY_STATUS_FULL
             
+            // On many devices, discharge is negative and charge is positive.
+            // If the status is charging but current is negative, we invert it for display consistency
+            // if the user expects positive values for charging.
+            // However, the graph looks better if we show real values (neg for discharge, pos for charge)
+            // Let's ensure the textual display matches the intent.
+            
             if (isCharging && currentMa < 0) {
-                currentMa = -currentMa
+                currentMa = abs(currentMa)
             } else if (!isCharging && currentMa > 0) {
                 currentMa = -currentMa
             }
             
+            // Fallback for some emulators or devices that return 0 for CURRENT_NOW
+            // Some devices use BATTERY_PROPERTY_CURRENT_AVERAGE instead
+            if (currentMa == 0) {
+                val avgCurrent = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_AVERAGE)
+                currentMa = if (abs(avgCurrent) > 20000) avgCurrent / 1000 else avgCurrent
+            }
+
             batteryCurrentMa = currentMa
 
             // Add to telemetry history for active graphical wave
@@ -125,7 +144,7 @@ fun BatteryMonitorTool(
             }
             telemetryHistory.add(currentMa.toFloat())
 
-            delay(1500)
+            delay(1000) // Poll faster (every second) for better real-time feel
         }
     }
 
