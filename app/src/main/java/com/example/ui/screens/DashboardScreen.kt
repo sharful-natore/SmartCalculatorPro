@@ -2,6 +2,7 @@ package com.example.ui.screens
 
 import com.example.ui.components.ToolInfoSection
 import com.example.ui.components.InfoToggleButton
+import com.example.ui.components.CategoryRankBadge
 import android.content.Intent
 import android.speech.RecognizerIntent
 import android.widget.Toast
@@ -276,9 +277,9 @@ fun DashboardCategoriesView(
         val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
 
         // Time-based Greeting & Multi-Date Header Banner
-            val dateInfo = remember { com.example.util.CalendarUtils.getMultiDateInfo(java.util.Calendar.getInstance(), isBn) }
+        val dateInfo = remember(isBn) { com.example.util.CalendarUtils.getMultiDateInfo(java.util.Calendar.getInstance(), isBn) }
 
-            val currentHour = remember { java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY) }
+        val currentHour = remember { java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY) }
             val (greetingText, greetingIcon) = remember(currentHour, isBn) {
                 when (currentHour) {
                     in 5..11 -> Pair(if (isBn) "শুভ সকাল" else "Good Morning", Icons.Default.WbSunny)
@@ -714,7 +715,6 @@ fun DashboardCategoriesView(
         // Pending Favorite Add/Remove Confirmation Dialog
         viewModel.pendingFavoriteConfirmAction?.let { action ->
             val isAdding = !action.isCurrentlyFavorite
-            val itemKey = if (action.isTool) action.key else "CONV_${action.key}"
             val context = LocalContext.current
 
             AlertDialog(
@@ -734,92 +734,17 @@ fun DashboardCategoriesView(
                     ) {
                         Text(
                             text = if (isBn) {
-                                if (isAdding) "\"${action.titleBn}\" কে প্রিয় তালিকায় যুক্ত বা ওপরের সেরা ৪টিতে পিন করতে পারেন।"
-                                else "\"${action.titleBn}\" কে প্রিয় তালিকা থেকে সরাতে পারেন।"
+                                if (isAdding) "\"${action.titleBn}\" কে প্রিয় (Favorites) তালিকায় যুক্ত করতে পারেন অথবা ফোনের হোমস্ক্রিনে শর্টকাট আইকন রাখতে পারেন।"
+                                else "\"${action.titleBn}\" কে প্রিয় তালিকা থেকে সরাতে পারেন অথবা হোমস্ক্রিনে শর্টকাট রাখতে পারেন।"
                             } else {
-                                if (isAdding) "Add \"${action.titleEn}\" to favorites or pin to Top 4 on main screen."
-                                else "Remove \"${action.titleEn}\" from your favorites list."
+                                if (isAdding) "Add \"${action.titleEn}\" to your Favorites on the Dashboard or pin a quick shortcut to your phone's Home Screen."
+                                else "Remove \"${action.titleEn}\" from Favorites or add a quick shortcut to your Home Screen."
                             },
                             fontSize = 13.5.sp,
                             color = themeColors.displayText.copy(alpha = 0.85f),
                             lineHeight = 18.sp
                         )
 
-                        // Pin to Top 4 Section
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = themeColors.displayBackground,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(12.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.PushPin,
-                                        contentDescription = null,
-                                        tint = themeColors.buttonEqualBg,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                    Text(
-                                        text = if (isBn) "📌 সেরা ৪টি প্রাইমারি কার্ডে পিন করুন:" else "📌 Pin to Top 4 Featured Cards:",
-                                        fontSize = 12.5.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = themeColors.buttonEqualBg
-                                    )
-                                }
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    listOf(
-                                        0 to if (isBn) "১ম স্থানে" else "Pos 1",
-                                        1 to if (isBn) "২য় স্থানে" else "Pos 2",
-                                        2 to if (isBn) "৩য় স্থানে" else "Pos 3",
-                                        3 to if (isBn) "৪র্থ স্থানে" else "Pos 4"
-                                    ).forEach { (pos, label) ->
-                                        Button(
-                                            onClick = {
-                                                if (action.isTool) {
-                                                    val tool = com.example.data.model.ToolType.values().find { it.name == action.key }
-                                                    if (tool != null) viewModel.pinToolToCategoryTop4(tool, pos)
-                                                } else {
-                                                    val conv = com.example.data.model.ConverterType.values().find { it.name == action.key }
-                                                    if (conv != null) viewModel.pinConverterToCategoryTop4(conv, pos)
-                                                }
-                                                viewModel.dismissPendingFavoriteAction()
-                                                val posText = if (isBn) "${pos + 1} নম্বর" else "Pos ${pos + 1}"
-                                                Toast.makeText(
-                                                    context,
-                                                    if (isBn) "\"${action.titleBn}\" $posText স্থানে পিন করা হয়েছে!" else "\"${action.titleEn}\" pinned to position $posText!",
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                            },
-                                            modifier = Modifier.weight(1f),
-                                            shape = RoundedCornerShape(8.dp),
-                                            colors = ButtonDefaults.buttonColors(
-                                                containerColor = themeColors.buttonEqualBg.copy(alpha = 0.15f),
-                                                contentColor = themeColors.buttonEqualBg
-                                            ),
-                                            contentPadding = PaddingValues(vertical = 6.dp, horizontal = 2.dp)
-                                        ) {
-                                            Text(
-                                                text = label,
-                                                fontSize = 10.5.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                maxLines = 1,
-                                                softWrap = false
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
                         // Add to Home Screen Button
                         Button(
                             onClick = {
@@ -859,15 +784,15 @@ fun DashboardCategoriesView(
                             viewModel.confirmPendingFavoriteAction()
                         },
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = if (isAdding) themeColors.buttonEqualBg.copy(alpha = 0.15f) else Color.Red.copy(alpha = 0.15f),
-                            contentColor = if (isAdding) themeColors.buttonEqualBg else Color.Red
+                            containerColor = if (isAdding) themeColors.buttonEqualBg else Color.Red,
+                            contentColor = Color.White
                         )
                     ) {
                         Text(
                             text = if (isBn) {
                                 if (isAdding) "⭐ প্রিয় তালিকায় যোগ" else "🗑️ প্রিয় তালিকা থেকে সরান"
                             } else {
-                                if (isAdding) "⭐ Add Favorite" else "🗑️ Remove Favorite"
+                                if (isAdding) "⭐ Add to Favorites" else "🗑️ Remove Favorite"
                             },
                             fontWeight = FontWeight.Bold
                         )
@@ -1029,7 +954,11 @@ fun DashboardCategoriesView(
             }
 
         // Horizontal Scroll Layout for the Combined Featured & Favorite Tools and Converters
-        val combinedList = remember(viewModel.orderedFavoriteTools) {
+        val toolUsageList by viewModel.allToolUsage.collectAsState()
+        val usageMap = remember(toolUsageList) {
+            toolUsageList.associate { it.toolId to it.usageCount }
+        }
+        val rawCombinedList = remember(viewModel.orderedFavoriteTools) {
             viewModel.orderedFavoriteTools.mapNotNull { name ->
                 if (name.startsWith("CONV_")) {
                     val cName = name.removePrefix("CONV_")
@@ -1070,6 +999,14 @@ fun DashboardCategoriesView(
                     }
                 }
             }.distinctBy { it.key }
+        }
+        val combinedList = remember(rawCombinedList, usageMap) {
+            rawCombinedList.sortedWith(
+                compareByDescending<FeaturedDashboardItem> { item ->
+                    val id = if (item.isTool && item.toolType != null) item.toolType.name else item.converterType?.name ?: item.key
+                    (usageMap[id] ?: usageMap[item.key] ?: 0) as Int
+                }.thenBy { if (isBn) it.titleBn else it.titleEn }
+            )
         }
 
         Row(
@@ -1700,6 +1637,16 @@ fun DashboardCategoriesView(
                                 }
                             }
 
+                            val categorySortedByUsage = remember(categoryTools, usageMap) {
+                                categoryTools.sortedWith(
+                                    compareByDescending<ToolType> { (usageMap[it.name] ?: 0) as Int }
+                                        .thenBy { it.name }
+                                )
+                            }
+                            val categoryToolRankMap = remember(categorySortedByUsage) {
+                                categorySortedByUsage.mapIndexed { index, tool -> tool.name to (index + 1) }.toMap()
+                            }
+
                             // Dynamic Layout: Horizontal Scrolling Row when collapsed in Overview Mode, Vertical Grid when expanded or filtered
                             AnimatedContent(
                                 targetState = if (isOverviewMode) isCategoryExpanded else true,
@@ -1733,7 +1680,7 @@ fun DashboardCategoriesView(
                                                                 viewModel = viewModel,
                                                                 themeColors = themeColors,
                                                                 modifier = Modifier.fillMaxHeight(),
-                                                                showPinIcon = !isOverviewMode,
+                                                                categoryRank = categoryToolRankMap[tool.name] ?: 0,
                                                                 titleLines = rowTitleLines,
                                                                 subtitleLines = rowSubtitleLines,
                                                                 onClick = { viewModel.openTool(tool) }
@@ -1767,7 +1714,7 @@ fun DashboardCategoriesView(
                                                 remember(category.name) {
                                                     categoryScrollStates.getOrPut(category.name) {
                                                         androidx.compose.foundation.ScrollState(0)
-                                                     }
+                                                      }
                                                 }
                                             )
                                             .padding(bottom = 6.dp),
@@ -1785,7 +1732,7 @@ fun DashboardCategoriesView(
                                                         viewModel = viewModel,
                                                         themeColors = themeColors,
                                                         modifier = Modifier.fillMaxSize(),
-                                                        showPinIcon = false,
+                                                        categoryRank = categoryToolRankMap[tool.name] ?: 0,
                                                         titleLines = titleLines,
                                                         subtitleLines = subtitleLines,
                                                         onClick = { viewModel.openTool(tool) }
@@ -1919,16 +1866,15 @@ fun ToolGridCardItem(
     viewModel: CalculatorViewModel,
     themeColors: CalculatorThemeColors,
     modifier: Modifier = Modifier,
-    showPinIcon: Boolean = true,
+    categoryRank: Int = 0,
     titleLines: Int = 2,
     subtitleLines: Int = 2,
     onClick: () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
-    val cardContext = LocalContext.current
     val isBn = viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI
     val isFavorite = viewModel.favoriteTools.contains(toolType.name)
-    val isPinned = viewModel.isToolPinnedInTop4(toolType)
+
     ElevatedCard(
         modifier = modifier
             .fillMaxWidth()
@@ -1949,45 +1895,31 @@ fun ToolGridCardItem(
         ),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp)
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize().padding(12.dp),
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(12.dp),
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(38.dp)
-                        .clip(CircleShape)
-                        .background(themeColors.buttonEqualBg),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = toolType.icon,
-                        contentDescription = toolType.getTitle(viewModel.selectedLanguage),
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    if (showPinIcon) {
-                        IconButton(
-                            onClick = { viewModel.requestToggleFavoriteTool(toolType) },
-                            modifier = Modifier.size(28.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.PushPin,
-                                contentDescription = "Pin Position",
-                                tint = if (isPinned) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.35f),
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(CircleShape)
+                            .background(themeColors.buttonEqualBg),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = toolType.icon,
+                            contentDescription = toolType.getTitle(viewModel.selectedLanguage),
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                     IconButton(
                         onClick = { viewModel.toggleFavoriteTool(toolType.name) },
@@ -1996,37 +1928,44 @@ fun ToolGridCardItem(
                         Icon(
                             imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                             contentDescription = "Favorite",
-                            tint = if (isFavorite) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.3f),
+                            tint = if (isFavorite) Color(0xFFE53935) else themeColors.displayText.copy(alpha = 0.35f),
                             modifier = Modifier.size(18.dp)
                         )
                     }
                 }
+
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = toolType.getTitle(viewModel.selectedLanguage),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.displayText,
+                        maxLines = titleLines,
+                        minLines = titleLines,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                        lineHeight = 16.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(3.dp))
+
+                    Text(
+                        text = toolType.getDescription(viewModel.selectedLanguage),
+                        fontSize = 10.sp,
+                        color = themeColors.displayText.copy(alpha = 0.55f),
+                        maxLines = subtitleLines,
+                        minLines = subtitleLines,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                        lineHeight = 12.5.sp
+                    )
+                }
             }
 
-            Column(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = toolType.getTitle(viewModel.selectedLanguage),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = themeColors.displayText,
-                    maxLines = titleLines,
-                    minLines = titleLines,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                    lineHeight = 16.sp
-                )
-
-                Spacer(modifier = Modifier.height(3.dp))
-
-                Text(
-                    text = toolType.getDescription(viewModel.selectedLanguage),
-                    fontSize = 10.sp,
-                    color = themeColors.displayText.copy(alpha = 0.55f),
-                    maxLines = subtitleLines,
-                    minLines = subtitleLines,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                    lineHeight = 12.5.sp
+            if (categoryRank in 1..3) {
+                CategoryRankBadge(
+                    rank = categoryRank,
+                    modifier = Modifier.align(Alignment.TopStart)
                 )
             }
         }

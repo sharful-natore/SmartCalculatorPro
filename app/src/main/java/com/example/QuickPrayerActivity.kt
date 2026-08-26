@@ -19,6 +19,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -68,6 +69,8 @@ class QuickPrayerActivity : ComponentActivity() {
                 var isMaximized by remember { mutableStateOf(false) }
                 var showCloseConfirmDialog by remember { mutableStateOf(false) }
 
+                val dialogShape = if (isMaximized) RoundedCornerShape(0.dp) else RoundedCornerShape(24.dp)
+
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -85,20 +88,23 @@ class QuickPrayerActivity : ComponentActivity() {
                     )
 
                     Surface(
-                        modifier = if (isMaximized) {
+                        modifier = (if (isMaximized) {
                             Modifier.fillMaxSize()
                         } else {
                             Modifier
                                 .fillMaxWidth(0.96f)
                                 .fillMaxHeight(0.92f)
-                        },
-                        shape = if (isMaximized) RoundedCornerShape(0.dp) else RoundedCornerShape(24.dp),
+                        }).clip(dialogShape),
+                        shape = dialogShape,
                         color = themeColors.background,
                         tonalElevation = 8.dp,
                         shadowElevation = 16.dp
                     ) {
                         Column(
-                            modifier = Modifier.fillMaxSize()
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(dialogShape)
+                                .clipToBounds()
                         ) {
                             Row(
                                 modifier = Modifier
@@ -225,6 +231,8 @@ class QuickPrayerActivity : ComponentActivity() {
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .weight(1f)
+                                    .clip(dialogShape)
+                                    .clipToBounds()
                             ) {
                                 when (selectedTab) {
                                     0 -> Box(

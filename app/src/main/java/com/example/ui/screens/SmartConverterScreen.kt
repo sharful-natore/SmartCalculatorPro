@@ -1,5 +1,6 @@
 package com.example.ui.screens
 
+import com.example.ui.components.CategoryRankBadge
 import android.content.Intent
 import android.speech.RecognizerIntent
 import android.widget.Toast
@@ -545,6 +546,20 @@ fun SmartConverterCategoriesView(
                                 }
                             }
 
+                            val toolUsageList by viewModel.allToolUsage.collectAsState()
+                            val usageMap = remember(toolUsageList) {
+                                toolUsageList.associate { it.toolId to it.usageCount }
+                            }
+                            val categorySortedByUsage = remember(categoryConverters, usageMap) {
+                                categoryConverters.sortedWith(
+                                    compareByDescending<ConverterType> { (usageMap[it.name] ?: usageMap["CONV_${it.name}"] ?: 0) as Int }
+                                        .thenBy { it.name }
+                                )
+                            }
+                            val categoryRankMap = remember(categorySortedByUsage) {
+                                categorySortedByUsage.mapIndexed { index, conv -> conv.name to (index + 1) }.toMap()
+                            }
+
                             // Dynamic Layout: Horizontal Scrolling Row when collapsed in Overview Mode, Vertical Grid when expanded or filtered
                             AnimatedContent(
                                 targetState = if (isOverviewMode) isCategoryExpanded else true,
@@ -581,7 +596,7 @@ fun SmartConverterCategoriesView(
                                                                 viewModel = viewModel,
                                                                 themeColors = themeColors,
                                                                 modifier = Modifier.fillMaxHeight(),
-                                                                showPinIcon = !isOverviewMode,
+                                                                categoryRank = categoryRankMap[type.name] ?: 0,
                                                                 titleLines = rowTitleLines,
                                                                 subtitleLines = rowSubtitleLines,
                                                                 onClick = { viewModel.openConverter(type) }
@@ -636,7 +651,7 @@ fun SmartConverterCategoriesView(
                                                         viewModel = viewModel,
                                                         themeColors = themeColors,
                                                         modifier = Modifier.fillMaxSize(),
-                                                        showPinIcon = false,
+                                                        categoryRank = categoryRankMap[type.name] ?: 0,
                                                         titleLines = titleLines,
                                                         subtitleLines = subtitleLines,
                                                         onClick = { viewModel.openConverter(type) }
@@ -769,16 +784,14 @@ fun ConverterCardItem(
     viewModel: CalculatorViewModel,
     themeColors: CalculatorThemeColors,
     modifier: Modifier = Modifier,
-    showPinIcon: Boolean = true,
+    categoryRank: Int = 0,
     titleLines: Int = 2,
     subtitleLines: Int = 2,
     onClick: () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
-    val cardContext = androidx.compose.ui.platform.LocalContext.current
-    val isBn = viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI
     val isFavorite = viewModel.favoriteConverters.contains(converterType.name)
-    val isPinned = viewModel.isConverterPinnedInTop4(converterType)
+
     ElevatedCard(
         modifier = modifier
             .fillMaxWidth()
@@ -790,7 +803,7 @@ fun ConverterCardItem(
                 indication = androidx.compose.foundation.LocalIndication.current,
                 onClick = onClick,
                 onLongClick = {
-                    com.example.util.ShortcutUtils.pinConverterShortcut(cardContext, converterType, isBn)
+                    viewModel.requestToggleFavoriteConverter(converterType)
                 }
             ),
         shape = RoundedCornerShape(16.dp),
@@ -799,45 +812,31 @@ fun ConverterCardItem(
         ),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp)
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize().padding(12.dp),
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(12.dp),
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(38.dp)
-                        .clip(CircleShape)
-                        .background(themeColors.buttonEqualBg),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = converterType.icon,
-                        contentDescription = converterType.getTitle(viewModel.selectedLanguage),
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    if (showPinIcon) {
-                        IconButton(
-                            onClick = { viewModel.requestToggleFavoriteConverter(converterType) },
-                            modifier = Modifier.size(28.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.PushPin,
-                                contentDescription = "Pin Position",
-                                tint = if (isPinned) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.35f),
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(CircleShape)
+                            .background(themeColors.buttonEqualBg),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = converterType.icon,
+                            contentDescription = converterType.getTitle(viewModel.selectedLanguage),
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                     IconButton(
                         onClick = { viewModel.toggleFavoriteConverter(converterType.name) },
@@ -846,37 +845,44 @@ fun ConverterCardItem(
                         Icon(
                             imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                             contentDescription = "Favorite",
-                            tint = if (isFavorite) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.3f),
+                            tint = if (isFavorite) Color(0xFFE53935) else themeColors.displayText.copy(alpha = 0.35f),
                             modifier = Modifier.size(18.dp)
                         )
                     }
                 }
+
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = converterType.getTitle(viewModel.selectedLanguage),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.displayText,
+                        maxLines = titleLines,
+                        minLines = titleLines,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                        lineHeight = 16.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(3.dp))
+
+                    Text(
+                        text = converterType.units.map { converterType.getLocalizedUnitName(it, viewModel.selectedLanguage) }.joinToString(", "),
+                        fontSize = 10.sp,
+                        color = themeColors.displayText.copy(alpha = 0.55f),
+                        maxLines = subtitleLines,
+                        minLines = subtitleLines,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                        lineHeight = 12.5.sp
+                    )
+                }
             }
 
-            Column(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = converterType.getTitle(viewModel.selectedLanguage),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = themeColors.displayText,
-                    maxLines = titleLines,
-                    minLines = titleLines,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                    lineHeight = 16.sp
-                )
-
-                Spacer(modifier = Modifier.height(3.dp))
-
-                Text(
-                    text = converterType.units.map { converterType.getLocalizedUnitName(it, viewModel.selectedLanguage) }.joinToString(", "),
-                    fontSize = 10.sp,
-                    color = themeColors.displayText.copy(alpha = 0.55f),
-                    maxLines = subtitleLines,
-                    minLines = subtitleLines,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                    lineHeight = 12.5.sp
+            if (categoryRank in 1..3) {
+                CategoryRankBadge(
+                    rank = categoryRank,
+                    modifier = Modifier.align(Alignment.TopStart)
                 )
             }
         }

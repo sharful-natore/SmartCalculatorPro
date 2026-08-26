@@ -27,6 +27,38 @@ object UpdateManager {
     const val KEY_APP_VERSION = "App_version"
     const val KEY_CHANGE_NOTE = "Change_note"
     const val KEY_UPDATE_URL = "Update_url"
+    const val KEY_DEV_PHOTO = "Dev_photo"
+
+    fun fetchDevPhotoUrl(context: Context, onResult: (String) -> Unit) {
+        initFirebase(context)
+        if (FirebaseApp.getApps(context).isEmpty()) {
+            onResult("")
+            return
+        }
+        try {
+            val remoteConfig = FirebaseRemoteConfig.getInstance()
+            val configSettings = FirebaseRemoteConfigSettings.Builder()
+                .setMinimumFetchIntervalInSeconds(0)
+                .build()
+            remoteConfig.setConfigSettingsAsync(configSettings)
+            remoteConfig.fetchAndActivate().addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    val devPhoto = getRemoteString(remoteConfig, KEY_DEV_PHOTO, "dev_photo", "developer_photo", "DevPhoto")
+                    if (devPhoto.isNotEmpty()) {
+                        context.getSharedPreferences("app_settings_prefs", Context.MODE_PRIVATE)
+                            .edit().putString("remote_dev_photo_url", devPhoto).apply()
+                        onResult(devPhoto)
+                    } else {
+                        onResult("")
+                    }
+                } else {
+                    onResult("")
+                }
+            }
+        } catch (e: Exception) {
+            onResult("")
+        }
+    }
 
     private fun getRemoteString(remoteConfig: FirebaseRemoteConfig, vararg keys: String): String {
         for (key in keys) {

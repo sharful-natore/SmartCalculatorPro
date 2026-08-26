@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.scale
 
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.drawWithContent
@@ -2817,21 +2818,24 @@ fun MainContent(
                 onDismissRequest = { viewModel.showCalculatorDialog = false },
                 properties = DialogProperties(usePlatformDefaultWidth = false)
             ) {
+                val calcShape = if (isCalcMaximized) RoundedCornerShape(0.dp) else RoundedCornerShape(24.dp)
                 Surface(
-                    modifier = if (isCalcMaximized) {
+                    modifier = (if (isCalcMaximized) {
                         Modifier.fillMaxSize()
                     } else {
                         Modifier
                             .fillMaxWidth(0.96f)
                             .fillMaxHeight(0.90f)
-                    },
-                    shape = if (isCalcMaximized) RoundedCornerShape(0.dp) else RoundedCornerShape(24.dp),
+                    }).clip(calcShape),
+                    shape = calcShape,
                     color = themeColors.background,
                     tonalElevation = 8.dp
                 ) {
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
+                            .clip(calcShape)
+                            .clipToBounds()
                             .padding(12.dp)
                     ) {
                         // Windows 11-Style Titlebar Header with Title and Minimize, Maximize, Close controls
@@ -3019,21 +3023,24 @@ fun MainContent(
                 onDismissRequest = { isCalMinimized = true },
                 properties = DialogProperties(usePlatformDefaultWidth = false)
             ) {
+                val calShape = if (isCalMaximized) RoundedCornerShape(0.dp) else RoundedCornerShape(24.dp)
                 Surface(
-                    modifier = if (isCalMaximized) {
+                    modifier = (if (isCalMaximized) {
                         Modifier.fillMaxSize()
                     } else {
                         Modifier
                             .fillMaxWidth(0.96f)
                             .fillMaxHeight(0.92f)
-                    },
-                    shape = if (isCalMaximized) RoundedCornerShape(0.dp) else RoundedCornerShape(24.dp),
+                    }).clip(calShape),
+                    shape = calShape,
                     color = themeColors.background,
                     tonalElevation = 8.dp
                 ) {
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
+                            .clip(calShape)
+                            .clipToBounds()
                             .padding(12.dp)
                     ) {
                         // Titlebar with Window Controls
@@ -3237,21 +3244,25 @@ fun MainContent(
                 onDismissRequest = { isMarketMinimized = true },
                 properties = DialogProperties(usePlatformDefaultWidth = false)
             ) {
+                val marketShape = if (isMarketMaximized) RoundedCornerShape(0.dp) else RoundedCornerShape(24.dp)
                 Surface(
-                    modifier = if (isMarketMaximized) {
+                    modifier = (if (isMarketMaximized) {
                         Modifier.fillMaxSize()
                     } else {
                         Modifier
                             .fillMaxWidth(0.96f)
                             .fillMaxHeight(0.94f)
-                    },
-                    shape = if (isMarketMaximized) RoundedCornerShape(0.dp) else RoundedCornerShape(24.dp),
+                    }).clip(marketShape),
+                    shape = marketShape,
                     color = themeColors.background,
                     tonalElevation = 8.dp,
                     shadowElevation = 16.dp
                 ) {
                     Column(
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(marketShape)
+                            .clipToBounds()
                     ) {
                         // Header Bar (Windows 11 Style)
                         Row(

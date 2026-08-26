@@ -275,8 +275,20 @@ class CalculatorViewModel(
     var hijriAdjustmentDays by mutableStateOf(islamicPrefs.getInt("hijri_adjustment_days", 0))
     var hijriSyncVersion by mutableStateOf(0)
 
+    var developerPhotoUrl by mutableStateOf(
+        sharedPrefs.getString("remote_dev_photo_url", "https://www.dropbox.com/scl/fi/io67lcl16o1wddcq4yx4m/Dev_photo.jpg?rlkey=erlthhlxwjhbgtd2w3tv9jbvv&st=djqdym2s&dl=1")
+            ?: "https://www.dropbox.com/scl/fi/io67lcl16o1wddcq4yx4m/Dev_photo.jpg?rlkey=erlthhlxwjhbgtd2w3tv9jbvv&st=djqdym2s&dl=1"
+    )
+
     init {
         com.example.util.CalendarUtils.hijriOffsetDays = hijriAdjustmentDays
+        try {
+            com.example.util.UpdateManager.fetchDevPhotoUrl(context) { url ->
+                if (url.isNotBlank()) {
+                    developerPhotoUrl = url
+                }
+            }
+        } catch (_: Exception) {}
         try {
             val savedExpr = sharedPrefs.getString("saved_calc_expression", null)
             val savedSel = sharedPrefs.getInt("saved_calc_selection", 0)
@@ -3276,10 +3288,13 @@ How can I help you today?"""
                 val barcode = sharedPrefs.getString("barcode_scan_history_list", null)
                 val favTools = orderedFavoriteTools
                 val favConv = favoriteConverters.toList()
+                val customRates = sharedPrefs.getString("custom_utility_rates_v1", null)
+                val customThemes = sharedPrefs.getString("user_custom_themes_v1", null)
+                val toolUsage = sharedPrefs.getString("tool_usage_counts_v1", null)
 
                 val dateFormat = SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault())
                 val backup = GlobalAppBackup(
-                    version = 2,
+                    version = 3,
                     appName = "ToolsMate All-in-One",
                     backupDate = dateFormat.format(Date()),
                     timestamp = System.currentTimeMillis(),
@@ -3290,7 +3305,10 @@ How can I help you today?"""
                     notesJson = notes,
                     favoriteTools = favTools,
                     favoriteConverters = favConv,
-                    barcodeHistory = barcode
+                    barcodeHistory = barcode,
+                    customRatesJson = customRates,
+                    customThemesJson = customThemes,
+                    toolUsageJson = toolUsage
                 )
 
                 val moshi = com.squareup.moshi.Moshi.Builder()
@@ -3456,6 +3474,16 @@ How can I help you today?"""
                     withContext(Dispatchers.Main) {
                         loadScanHistory()
                     }
+                }
+
+                if (!backup.customRatesJson.isNullOrBlank()) {
+                    sharedPrefs.edit().putString("custom_utility_rates_v1", backup.customRatesJson).apply()
+                }
+                if (!backup.customThemesJson.isNullOrBlank()) {
+                    sharedPrefs.edit().putString("user_custom_themes_v1", backup.customThemesJson).apply()
+                }
+                if (!backup.toolUsageJson.isNullOrBlank()) {
+                    sharedPrefs.edit().putString("tool_usage_counts_v1", backup.toolUsageJson).apply()
                 }
 
                 val isBn = selectedLanguage == AppLanguage.BENGALI
@@ -4048,7 +4076,7 @@ data class ScanHistoryItem(
 
 @JsonClass(generateAdapter = true)
 data class GlobalAppBackup(
-    val version: Int = 2,
+    val version: Int = 3,
     val appName: String = "ToolsMate All-in-One",
     val backupDate: String = "",
     val timestamp: Long = System.currentTimeMillis(),
@@ -4059,5 +4087,8 @@ data class GlobalAppBackup(
     val notesJson: String? = null,
     val favoriteTools: List<String> = emptyList(),
     val favoriteConverters: List<String> = emptyList(),
-    val barcodeHistory: String? = null
+    val barcodeHistory: String? = null,
+    val customRatesJson: String? = null,
+    val customThemesJson: String? = null,
+    val toolUsageJson: String? = null
 )

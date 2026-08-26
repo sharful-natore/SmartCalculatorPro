@@ -221,21 +221,18 @@ fun BatteryMonitorTool(
     } else themeColors.displayText
 
     // Dynamic Time Estimation (Discharging remaining time & Charging remaining time)
-    // Updated every 30 seconds as requested
+    // Updated every 10 seconds as requested
     var backupEstimateTick by remember { mutableLongStateOf(0L) }
     LaunchedEffect(Unit) {
         while (true) {
             backupEstimateTick = System.currentTimeMillis()
-            delay(30000L) // 30 seconds interval
+            delay(10000L) // 10 seconds interval
         }
     }
 
     val timeEstimation = remember(
         backupEstimateTick,
-        batteryLevel,
         batteryStatus,
-        batteryCurrentMa,
-        isCurrentlyCharging,
         batteryPlugged,
         isBn
     ) {
@@ -546,70 +543,6 @@ fun BatteryMonitorTool(
                 }
             }
 
-            // Time Remaining Estimation Card (Discharging runtime & Charging time to full) - Crisp White Card
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .themeCardShadow(themeColors, shape = RoundedCornerShape(24.dp)),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color.White
-                ),
-                shape = RoundedCornerShape(24.dp),
-                border = BorderStroke(
-                    1.dp,
-                    Color(0xFFE2E8F0)
-                )
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 18.dp, vertical = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(44.dp)
-                            .clip(CircleShape)
-                            .background(
-                                if (isCurrentlyCharging) Color(0xFFE0F2FE)
-                                else Color(0xFFF1F5F9)
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = timeEstimation.fourth,
-                            contentDescription = null,
-                            tint = if (isCurrentlyCharging) Color(0xFF0284C7) else Color(0xFF334155),
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(14.dp))
-
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = timeEstimation.first,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color(0xFF64748B)
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = timeEstimation.second,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Black,
-                            color = if (isCurrentlyCharging) Color(0xFF0284C7) else Color(0xFF0F172A)
-                        )
-                        Spacer(modifier = Modifier.height(1.dp))
-                        Text(
-                            text = timeEstimation.third,
-                            fontSize = 10.5.sp,
-                            color = Color(0xFF94A3B8)
-                        )
-                    }
-                }
-            }
-
             // Real-Time Waveform Graphical Visualizer
             Card(
                 modifier = Modifier
@@ -771,12 +704,13 @@ fun BatteryMonitorTool(
                                     fillPath.lineTo(lastPoint.x, height)
                                     fillPath.close()
 
-                                    // 1. Draw smooth gradient shadow under the line
+                                    // 1. Draw smooth gradient shadow under the line (darker & defined gradient)
                                     drawPath(
                                         path = fillPath,
                                         brush = androidx.compose.ui.graphics.Brush.verticalGradient(
                                             colors = listOf(
-                                                waveColor.copy(alpha = 0.28f),
+                                                waveColor.copy(alpha = 0.55f),
+                                                waveColor.copy(alpha = 0.22f),
                                                 waveColor.copy(alpha = 0.05f),
                                                 Color.Transparent
                                             ),
@@ -803,8 +737,8 @@ fun BatteryMonitorTool(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = if (isBn) "প্রতি ১ সেকেন্ডে লাইভ কারেন্ট রিডিং আপডেট হয় এবং প্রতি ৩০ সেকেন্ডে ব্যাকআপ সময় পুনর্গণনা হয়"
-                        else "Current updates dynamically every 1s • Backup time refreshes every 30s",
+                        text = if (isBn) "প্রতি ১ সেকেন্ডে লাইভ কারেন্ট রিডিং আপডেট হয় এবং প্রতি ১০ সেকেন্ডে ব্যাকআপ সময় পুনর্গণনা হয়"
+                        else "Current updates dynamically every 1s • Backup time refreshes every 10s",
                         fontSize = 10.5.sp,
                         color = themeColors.displayText.copy(alpha = 0.45f),
                         textAlign = TextAlign.Center,
