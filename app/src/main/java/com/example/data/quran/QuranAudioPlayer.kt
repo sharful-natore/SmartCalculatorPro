@@ -226,8 +226,10 @@ class QuranAudioPlayer private constructor(private val context: Context) {
             } else {
                 ttsObj.language = Locale.getDefault()
             }
-            ttsObj.setPitch(1.0f)
-            ttsObj.setSpeechRate(1.00f)
+            val savedPitch = com.example.util.TtsSettingsManager.getPitch(context)
+            val savedRate = com.example.util.TtsSettingsManager.getSpeechRate(context)
+            ttsObj.setPitch(savedPitch)
+            ttsObj.setSpeechRate(savedRate)
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 ttsObj.setOnUtteranceProgressListener(object : UtteranceProgressListener() {

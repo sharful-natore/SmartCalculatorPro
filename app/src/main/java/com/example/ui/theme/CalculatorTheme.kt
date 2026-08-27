@@ -127,7 +127,11 @@ enum class CalculatorThemeType {
     MINT_SWEET,
     ROSE_GLOW,
     LAVENDER_DREAM,
-    PEACH_BLOSSOM;
+    PEACH_BLOSSOM,
+    DEEP_FOREST,
+    ROYAL_GOLD,
+    OCEAN_BLUE,
+    CHARCOAL_DARK;
 
     fun getColors(): CalculatorThemeColors {
         return when (this) {
@@ -262,6 +266,94 @@ enum class CalculatorThemeType {
                 isDark = false,
                 themeName = "Peach Blossom",
                 themeNameBn = "পিচ ব্লসম"
+            )
+            DEEP_FOREST -> CalculatorThemeColors(
+                background = Color(0xFFF1F9F1),
+                displayBackground = Color(0xFFE2EFE2),
+                displayText = Color(0xFF0F3A0F),
+                displayExpressionText = Color(0xFF1B531B),
+                buttonNormalBg = Color(0xFFFFFFFF),
+                buttonNormalText = Color(0xFF0F3A0F),
+                buttonOperatorBg = Color(0xFFC8E6C9),
+                buttonOperatorText = Color(0xFF1B5E20),
+                buttonFunctionBg = Color(0xFFE8F5E9),
+                buttonFunctionText = Color(0xFF2E7D32),
+                buttonEqualBg = Color(0xFF2E7D32),
+                buttonEqualText = Color(0xFFFFFFFF),
+                cardBg = Color(0xFFFFFFFF),
+                unselectedItemText = Color(0xFF1B531B),
+                navBarBg = Color(0xFF2E7D32),
+                titleBarBg = Color(0xFF2E7D32),
+                chipBg = Color(0xFFC8E6C9),
+                isDark = false,
+                themeName = "Deep Forest",
+                themeNameBn = "ডিপ ফরেস্ট"
+            )
+            ROYAL_GOLD -> CalculatorThemeColors(
+                background = Color(0xFF0F172A),
+                displayBackground = Color(0xFF1E293B),
+                displayText = Color(0xFFF8FAFC),
+                displayExpressionText = Color(0xFF94A3B8),
+                buttonNormalBg = Color(0xFF1E293B),
+                buttonNormalText = Color(0xFFF8FAFC),
+                buttonOperatorBg = Color(0xFF334155),
+                buttonOperatorText = Color(0xFFF59E0B),
+                buttonFunctionBg = Color(0xFF1E293B),
+                buttonFunctionText = Color(0xFF94A3B8),
+                buttonEqualBg = Color(0xFFD97706),
+                buttonEqualText = Color(0xFFFFFFFF),
+                cardBg = Color(0xFF1E293B),
+                unselectedItemText = Color(0xFF94A3B8),
+                navBarBg = Color(0xFF1E293B),
+                titleBarBg = Color(0xFF1E293B),
+                chipBg = Color(0xFF334155),
+                isDark = true,
+                themeName = "Royal Gold",
+                themeNameBn = "রয়্যাল গোল্ড"
+            )
+            OCEAN_BLUE -> CalculatorThemeColors(
+                background = Color(0xFFEBF5FB),
+                displayBackground = Color(0xFFD4E6F1),
+                displayText = Color(0xFF1B4F72),
+                displayExpressionText = Color(0xFF2471A3),
+                buttonNormalBg = Color(0xFFFFFFFF),
+                buttonNormalText = Color(0xFF1B4F72),
+                buttonOperatorBg = Color(0xFFAED6F1),
+                buttonOperatorText = Color(0xFF1A5276),
+                buttonFunctionBg = Color(0xFFEBF5FB),
+                buttonFunctionText = Color(0xFF2980B9),
+                buttonEqualBg = Color(0xFF2980B9),
+                buttonEqualText = Color(0xFFFFFFFF),
+                cardBg = Color(0xFFFFFFFF),
+                unselectedItemText = Color(0xFF2471A3),
+                navBarBg = Color(0xFF1A5276),
+                titleBarBg = Color(0xFF1A5276),
+                chipBg = Color(0xFFAED6F1),
+                isDark = false,
+                themeName = "Ocean Blue",
+                themeNameBn = "ওশান ব্লু"
+            )
+            CHARCOAL_DARK -> CalculatorThemeColors(
+                background = Color(0xFF121212),
+                displayBackground = Color(0xFF1E1E1E),
+                displayText = Color(0xFFF5F5F5),
+                displayExpressionText = Color(0xFFA0A0A0),
+                buttonNormalBg = Color(0xFF1E1E1E),
+                buttonNormalText = Color(0xFFF5F5F5),
+                buttonOperatorBg = Color(0xFF2A2A2A),
+                buttonOperatorText = Color(0xFF00ADB5),
+                buttonFunctionBg = Color(0xFF1E1E1E),
+                buttonFunctionText = Color(0xFFA0A0A0),
+                buttonEqualBg = Color(0xFF00ADB5),
+                buttonEqualText = Color(0xFFFFFFFF),
+                cardBg = Color(0xFF1E1E1E),
+                unselectedItemText = Color(0xFFA0A0A0),
+                navBarBg = Color(0xFF121212),
+                titleBarBg = Color(0xFF121212),
+                chipBg = Color(0xFF2A2A2A),
+                isDark = true,
+                themeName = "Charcoal Dark",
+                themeNameBn = "চারকোল ডার্ক"
             )
         }
     }

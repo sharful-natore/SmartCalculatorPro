@@ -134,20 +134,21 @@ fun MainContent(
         SideEffect {
         val window = (context as? Activity)?.window
         if (window != null) {
-            val barColor = themeColors.buttonEqualBg
+            val statusBarColor = themeColors.titleBarBg
+            val navBarColor = themeColors.navBarBg
             window.statusBarColor = android.graphics.Color.rgb(
-                (barColor.red * 255).toInt(),
-                (barColor.green * 255).toInt(),
-                (barColor.blue * 255).toInt()
+                (statusBarColor.red * 255).toInt(),
+                (statusBarColor.green * 255).toInt(),
+                (statusBarColor.blue * 255).toInt()
             )
             window.navigationBarColor = android.graphics.Color.rgb(
-                (barColor.red * 255).toInt(),
-                (barColor.green * 255).toInt(),
-                (barColor.blue * 255).toInt()
+                (navBarColor.red * 255).toInt(),
+                (navBarColor.green * 255).toInt(),
+                (navBarColor.blue * 255).toInt()
             )
             WindowCompat.getInsetsController(window, window.decorView).apply {
-                isAppearanceLightStatusBars = !themeColors.isDark && barColor.luminance() > 0.5f
-                isAppearanceLightNavigationBars = !themeColors.isDark && barColor.luminance() > 0.5f
+                isAppearanceLightStatusBars = !themeColors.isDark && statusBarColor.luminance() > 0.5f
+                isAppearanceLightNavigationBars = !themeColors.isDark && navBarColor.luminance() > 0.5f
             }
         }
     }
@@ -174,6 +175,7 @@ fun MainContent(
     val coroutineScope = rememberCoroutineScope()
 
     var showSettingsDialog by remember { mutableStateOf(false) }
+    var showTtsSettingsDialog by remember { mutableStateOf(false) }
     var showGlobalBackupDialog by remember { mutableStateOf(false) }
     var showTermsDialog by remember { mutableStateOf(false) }
     var showPrivacyDialog by remember { mutableStateOf(false) }
@@ -479,6 +481,14 @@ fun MainContent(
                                             onClick = {
                                                 isMoreMenuExpanded = false
                                                 showSettingsDialog = true
+                                            }
+                                        )
+                                        DropdownMenuItem(
+                                            text = { Text(if (viewModel.selectedLanguage == AppLanguage.BENGALI) "টিটিএস সেটিংস" else "TTS Settings", color = themeColors.displayText) },
+                                            leadingIcon = { Icon(Icons.Default.VolumeUp, contentDescription = null, tint = themeColors.buttonEqualBg) },
+                                            onClick = {
+                                                isMoreMenuExpanded = false
+                                                showTtsSettingsDialog = true
                                             }
                                         )
                                         DropdownMenuItem(
@@ -1400,6 +1410,178 @@ fun MainContent(
                 confirmButton = {
                     TextButton(
                         onClick = { showSettingsDialog = false }
+                    ) {
+                        Text(
+                            text = LanguageManager.getString("close", viewModel.selectedLanguage),
+                            color = themeColors.buttonEqualBg,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                },
+                containerColor = themeColors.cardBg,
+                shape = RoundedCornerShape(16.dp)
+            )
+        }
+
+        // --- TTS Settings Dialog ---
+        if (showTtsSettingsDialog) {
+            val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
+            var selectedVoice by remember { mutableStateOf(com.example.util.TtsSettingsManager.getVoiceType(context)) }
+            var currentRate by remember { mutableStateOf(com.example.util.TtsSettingsManager.getSpeechRate(context)) }
+            var currentPitch by remember { mutableStateOf(com.example.util.TtsSettingsManager.getPitch(context)) }
+
+            AlertDialog(
+                onDismissRequest = { showTtsSettingsDialog = false },
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.VolumeUp,
+                            contentDescription = null,
+                            tint = themeColors.buttonEqualBg,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = if (isBn) "টিটিএস সেটিংস" else "TTS Settings",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            color = themeColors.displayText
+                        )
+                    }
+                },
+                text = {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        // Voice Selection Choice
+                        Column {
+                            Text(
+                                text = if (isBn) "কণ্ঠস্বর নির্বাচন (Voice Selection)" else "Voice Selection",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
+                                color = themeColors.displayText
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                val voiceOptions = listOf(
+                                    Triple("MALE", "পুরুষ (Male)", "MALE"),
+                                    Triple("FEMALE", "নারী (Female)", "FEMALE"),
+                                    Triple("DEFAULT", "ডিফল্ট (System)", "DEFAULT")
+                                )
+                                voiceOptions.forEach { (type, labelBn, labelEn) ->
+                                    val isSelected = selectedVoice == type
+                                    Button(
+                                        onClick = {
+                                            selectedVoice = type
+                                            com.example.util.TtsSettingsManager.setVoiceType(context, type)
+                                            com.example.data.islamic.IslamicMaleTtsPlayer.getInstance(context).refreshSettings()
+                                        },
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = if (isSelected) themeColors.buttonEqualBg else themeColors.background,
+                                            contentColor = if (isSelected) Color.White else themeColors.displayText
+                                        ),
+                                        modifier = Modifier.weight(1f),
+                                        shape = RoundedCornerShape(8.dp),
+                                        border = if (!isSelected) androidx.compose.foundation.BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.2f)) else null,
+                                        contentPadding = PaddingValues(vertical = 8.dp)
+                                    ) {
+                                        Text(
+                                            text = if (isBn) labelBn else labelEn,
+                                            fontSize = 12.sp,
+                                            maxLines = 1,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.1f))
+
+                        // Speech Rate Slider
+                        Column {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = if (isBn) "পড়ার গতি (Speech Rate)" else "Speech Rate",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    color = themeColors.displayText
+                                )
+                                Text(
+                                    text = String.format(java.util.Locale.US, "%.2fx", currentRate),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    color = themeColors.buttonEqualBg
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Slider(
+                                value = currentRate,
+                                onValueChange = {
+                                    currentRate = it
+                                    com.example.util.TtsSettingsManager.setSpeechRate(context, it)
+                                    com.example.data.islamic.IslamicMaleTtsPlayer.getInstance(context).refreshSettings()
+                                },
+                                valueRange = 0.5f..1.5f,
+                                colors = SliderDefaults.colors(
+                                    thumbColor = themeColors.buttonEqualBg,
+                                    activeTrackColor = themeColors.buttonEqualBg,
+                                    inactiveTrackColor = themeColors.displayText.copy(alpha = 0.1f)
+                                )
+                            )
+                        }
+
+                        HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.1f))
+
+                        // Pitch Slider
+                        Column {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = if (isBn) "কণ্ঠের সুর (Pitch)" else "Voice Pitch",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    color = themeColors.displayText
+                                )
+                                Text(
+                                    text = String.format(java.util.Locale.US, "%.2f", currentPitch),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    color = themeColors.buttonEqualBg
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Slider(
+                                value = currentPitch,
+                                onValueChange = {
+                                    currentPitch = it
+                                    com.example.util.TtsSettingsManager.setPitch(context, it)
+                                    com.example.data.islamic.IslamicMaleTtsPlayer.getInstance(context).refreshSettings()
+                                },
+                                valueRange = 0.5f..1.5f,
+                                colors = SliderDefaults.colors(
+                                    thumbColor = themeColors.buttonEqualBg,
+                                    activeTrackColor = themeColors.buttonEqualBg,
+                                    inactiveTrackColor = themeColors.displayText.copy(alpha = 0.1f)
+                                )
+                            )
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = { showTtsSettingsDialog = false }
                     ) {
                         Text(
                             text = LanguageManager.getString("close", viewModel.selectedLanguage),
