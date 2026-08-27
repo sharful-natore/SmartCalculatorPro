@@ -8,6 +8,8 @@ object TtsSettingsManager {
     private const val KEY_VOICE_TYPE = "voice_type"
     private const val KEY_SPEECH_RATE = "speech_rate"
     private const val KEY_PITCH = "pitch"
+    private const val KEY_ARABIC_VOICE_NAME = "arabic_voice_name"
+    private const val KEY_BANGLA_VOICE_NAME = "bangla_voice_name"
 
     fun getPrefs(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -19,6 +21,22 @@ object TtsSettingsManager {
 
     fun setVoiceType(context: Context, value: String) {
         getPrefs(context).edit().putString(KEY_VOICE_TYPE, value).apply()
+    }
+
+    fun getArabicVoiceName(context: Context): String {
+        return getPrefs(context).getString(KEY_ARABIC_VOICE_NAME, "") ?: ""
+    }
+
+    fun setArabicVoiceName(context: Context, value: String) {
+        getPrefs(context).edit().putString(KEY_ARABIC_VOICE_NAME, value).apply()
+    }
+
+    fun getBanglaVoiceName(context: Context): String {
+        return getPrefs(context).getString(KEY_BANGLA_VOICE_NAME, "") ?: ""
+    }
+
+    fun setBanglaVoiceName(context: Context, value: String) {
+        getPrefs(context).edit().putString(KEY_BANGLA_VOICE_NAME, value).apply()
     }
 
     fun getSpeechRate(context: Context): Float {

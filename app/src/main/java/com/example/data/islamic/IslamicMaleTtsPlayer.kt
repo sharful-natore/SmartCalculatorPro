@@ -67,6 +67,7 @@ class IslamicMaleTtsPlayer private constructor(private val context: Context) : T
         val ttsObj = tts ?: return
         val arLocale = Locale("ar")
         val voiceType = com.example.util.TtsSettingsManager.getVoiceType(context)
+        val selectedVoiceName = com.example.util.TtsSettingsManager.getArabicVoiceName(context)
         try {
             ttsObj.language = arLocale
             if (voiceType == "DEFAULT") {
@@ -76,69 +77,83 @@ class IslamicMaleTtsPlayer private constructor(private val context: Context) : T
 
             val availableVoices = ttsObj.voices
             if (availableVoices != null) {
-                val matchingVoice = if (voiceType == "MALE") {
-                    // EXCLUDE female voices strictly: ar-x-a, ar-x-b, ar-xa-a, ar-xa-b, female, woman, fem, girl, sfb, sfa
-                    // INCLUDE male voices: ar-x-c, ar-x-d, ar-x-e, ar-xa-c, ar-xa-d, male, man
-                    availableVoices.firstOrNull { voice ->
-                        val name = voice.name.lowercase()
-                        val lang = voice.locale.language.lowercase()
-                        (lang == "ar" || name.contains("ar")) &&
-                        (name.contains("male") ||
-                         name.contains("man") ||
-                         name.contains("ar-x-c") ||
-                         name.contains("ar-x-d") ||
-                         name.contains("ar-x-e") ||
-                         name.contains("ar-xa-c") ||
-                         name.contains("ar-xa-d") ||
-                         name.contains("#male")) &&
-                        !name.contains("female") &&
-                        !name.contains("woman") &&
-                        !name.contains("fem") &&
-                        !name.contains("girl") &&
-                        !name.contains("ar-x-a") &&
-                        !name.contains("ar-x-b") &&
-                        !name.contains("ar-xa-a") &&
-                        !name.contains("ar-xa-b") &&
-                        !name.contains("sfb") &&
-                        !name.contains("sfa")
-                    } ?: availableVoices.firstOrNull { voice ->
-                        val name = voice.name.lowercase()
-                        val lang = voice.locale.language.lowercase()
-                        (lang == "ar" || name.contains("ar")) &&
-                        !name.contains("female") &&
-                        !name.contains("woman") &&
-                        !name.contains("fem") &&
-                        !name.contains("girl") &&
-                        !name.contains("ar-x-a") &&
-                        !name.contains("ar-x-b") &&
-                        !name.contains("ar-xa-a") &&
-                        !name.contains("ar-xa-b") &&
-                        !name.contains("sfb") &&
-                        !name.contains("sfa")
-                    }
-                } else {
-                    // Filter female voices
-                    availableVoices.firstOrNull { voice ->
-                        val name = voice.name.lowercase()
-                        val lang = voice.locale.language.lowercase()
-                        (lang == "ar" || name.contains("ar")) &&
-                        (name.contains("female") ||
-                         name.contains("woman") ||
-                         name.contains("fem") ||
-                         name.contains("girl") ||
-                         name.contains("ar-x-a") ||
-                         name.contains("ar-x-b") ||
-                         name.contains("ar-xa-a") ||
-                         name.contains("ar-xa-b") ||
-                         name.contains("sfa") ||
-                         name.contains("sfb") ||
-                         name.contains("#female"))
+                var matchingVoice: android.speech.tts.Voice? = null
+                
+                // If the user selected a specific voice name, find it first!
+                if (selectedVoiceName.isNotEmpty()) {
+                    matchingVoice = availableVoices.firstOrNull { it.name == selectedVoiceName }
+                }
+
+                // If not found, use automatic filtering
+                if (matchingVoice == null) {
+                    matchingVoice = if (voiceType == "MALE") {
+                        // EXCLUDE female voices strictly: ar-x-a, ar-x-b, ar-xa-a, ar-xa-b, female, woman, fem, girl, sfb, sfa
+                        // INCLUDE male voices: ar-x-c, ar-x-d, ar-x-e, ar-xa-c, ar-xa-d, male, man
+                        availableVoices.firstOrNull { voice ->
+                            val name = voice.name.lowercase()
+                            val lang = voice.locale.language.lowercase()
+                            (lang == "ar" || name.contains("ar")) &&
+                            (name.contains("male") ||
+                             name.contains("man") ||
+                             name.contains("ar-x-c") ||
+                             name.contains("ar-x-d") ||
+                             name.contains("ar-x-e") ||
+                             name.contains("ar-xa-c") ||
+                             name.contains("ar-xa-d") ||
+                             name.contains("#male")) &&
+                            !name.contains("female") &&
+                            !name.contains("woman") &&
+                            !name.contains("fem") &&
+                            !name.contains("girl") &&
+                            !name.contains("ar-x-a") &&
+                            !name.contains("ar-x-b") &&
+                            !name.contains("ar-xa-a") &&
+                            !name.contains("ar-xa-b") &&
+                            !name.contains("sfb") &&
+                            !name.contains("sfa")
+                        } ?: availableVoices.firstOrNull { voice ->
+                            val name = voice.name.lowercase()
+                            val lang = voice.locale.language.lowercase()
+                            (lang == "ar" || name.contains("ar")) &&
+                            !name.contains("female") &&
+                            !name.contains("woman") &&
+                            !name.contains("fem") &&
+                            !name.contains("girl") &&
+                            !name.contains("ar-x-a") &&
+                            !name.contains("ar-x-b") &&
+                            !name.contains("ar-xa-a") &&
+                            !name.contains("ar-xa-b") &&
+                            !name.contains("sfb") &&
+                            !name.contains("sfa")
+                        }
+                    } else {
+                        // Filter female voices
+                        availableVoices.firstOrNull { voice ->
+                            val name = voice.name.lowercase()
+                            val lang = voice.locale.language.lowercase()
+                            (lang == "ar" || name.contains("ar")) &&
+                            (name.contains("female") ||
+                             name.contains("woman") ||
+                             name.contains("fem") ||
+                             name.contains("girl") ||
+                             name.contains("ar-x-a") ||
+                             name.contains("ar-x-b") ||
+                             name.contains("ar-xa-a") ||
+                             name.contains("ar-xa-b") ||
+                             name.contains("sfa") ||
+                             name.contains("sfb") ||
+                             name.contains("#female"))
+                        }
                     }
                 }
 
                 if (matchingVoice != null) {
                     cachedMaleVoice = matchingVoice
                     ttsObj.voice = matchingVoice
+                    // Auto-sync setting if empty
+                    if (selectedVoiceName.isEmpty()) {
+                        com.example.util.TtsSettingsManager.setArabicVoiceName(context, matchingVoice.name)
+                    }
                 }
             }
         } catch (e: Exception) {
@@ -146,6 +161,30 @@ class IslamicMaleTtsPlayer private constructor(private val context: Context) : T
         }
 
         configureMaleVoiceParams()
+    }
+
+    fun getAvailableArabicVoices(): List<android.speech.tts.Voice> {
+        val ttsObj = tts ?: return emptyList()
+        return try {
+            ttsObj.voices?.filter { voice ->
+                val lang = voice.locale.language.lowercase()
+                lang == "ar" || voice.name.lowercase().contains("ar")
+            }?.sortedBy { it.name } ?: emptyList()
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
+    fun getAvailableBanglaVoices(): List<android.speech.tts.Voice> {
+        val ttsObj = tts ?: return emptyList()
+        return try {
+            ttsObj.voices?.filter { voice ->
+                val lang = voice.locale.language.lowercase()
+                lang == "bn" || voice.name.lowercase().contains("bn")
+            }?.sortedBy { it.name } ?: emptyList()
+        } catch (_: Exception) {
+            emptyList()
+        }
     }
 
     private fun configureMaleVoiceParams() {

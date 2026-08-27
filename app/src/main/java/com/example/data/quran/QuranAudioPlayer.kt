@@ -223,6 +223,16 @@ class QuranAudioPlayer private constructor(private val context: Context) {
             val bnLocale = Locale("bn", "BD")
             if (ttsObj.isLanguageAvailable(bnLocale) >= TextToSpeech.LANG_AVAILABLE) {
                 ttsObj.language = bnLocale
+                
+                // Retrieve and apply the user's explicitly selected Bangla voice name
+                val savedBnVoiceName = com.example.util.TtsSettingsManager.getBanglaVoiceName(context)
+                if (savedBnVoiceName.isNotEmpty()) {
+                    val availableVoices = ttsObj.voices
+                    val matchingVoice = availableVoices?.firstOrNull { it.name == savedBnVoiceName }
+                    if (matchingVoice != null) {
+                        ttsObj.voice = matchingVoice
+                    }
+                }
             } else {
                 ttsObj.language = Locale.getDefault()
             }

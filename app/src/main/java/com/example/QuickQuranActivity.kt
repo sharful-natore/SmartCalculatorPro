@@ -56,6 +56,10 @@ class QuickQuranActivity : ComponentActivity() {
         val viewModelFactory = CalculatorViewModelFactory(repository, usageRepository, this)
         viewModel = ViewModelProvider(this, viewModelFactory)[CalculatorViewModel::class.java]
 
+        // Pre-initialize TTS engines asynchronously for instant 0ms audio playback
+        com.example.data.islamic.IslamicMaleTtsPlayer.getInstance(applicationContext)
+        com.example.data.quran.QuranAudioPlayer.getInstance(applicationContext)
+
         // Record usage for Holy Quran
         viewModel.recordToolUsage("TOOL_HOLY_QURAN")
 

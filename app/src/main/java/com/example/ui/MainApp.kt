@@ -135,7 +135,7 @@ fun MainContent(
         val window = (context as? Activity)?.window
         if (window != null) {
             val statusBarColor = themeColors.titleBarBg
-            val navBarColor = themeColors.navBarBg
+            val navBarColor = themeColors.titleBarBg
             window.statusBarColor = android.graphics.Color.rgb(
                 (statusBarColor.red * 255).toInt(),
                 (statusBarColor.green * 255).toInt(),
@@ -406,7 +406,7 @@ fun MainContent(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(themeColors.buttonEqualBg)
+                            .background(themeColors.titleBarBg)
                             .statusBarsPadding()
                             .padding(horizontal = 12.dp, vertical = 6.dp)
                     ) {
@@ -592,7 +592,7 @@ fun MainContent(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(themeColors.navBarBg)
+                        .background(themeColors.titleBarBg)
                         .navigationBarsPadding(),
                     contentAlignment = Alignment.BottomCenter
                 ) {
@@ -1429,6 +1429,18 @@ fun MainContent(
             var selectedVoice by remember { mutableStateOf(com.example.util.TtsSettingsManager.getVoiceType(context)) }
             var currentRate by remember { mutableStateOf(com.example.util.TtsSettingsManager.getSpeechRate(context)) }
             var currentPitch by remember { mutableStateOf(com.example.util.TtsSettingsManager.getPitch(context)) }
+            val arabicVoices = remember {
+                com.example.data.islamic.IslamicMaleTtsPlayer.getInstance(context).getAvailableArabicVoices()
+            }
+            val banglaVoices = remember {
+                com.example.data.islamic.IslamicMaleTtsPlayer.getInstance(context).getAvailableBanglaVoices()
+            }
+            var selectedArabicVoiceName by remember {
+                mutableStateOf(com.example.util.TtsSettingsManager.getArabicVoiceName(context))
+            }
+            var selectedBanglaVoiceName by remember {
+                mutableStateOf(com.example.util.TtsSettingsManager.getBanglaVoiceName(context))
+            }
 
             AlertDialog(
                 onDismissRequest = { showTtsSettingsDialog = false },
@@ -1501,6 +1513,144 @@ fun MainContent(
                         }
 
                         HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.1f))
+
+                        // Explicit System Voice Direct Selector Lists
+                        if (arabicVoices.isNotEmpty()) {
+                            Column(
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = if (isBn) "আরবি কণ্ঠস্বর নির্বাচন (Arabic Voice List)" else "Select Arabic Voice",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp,
+                                    color = themeColors.displayText
+                                )
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(themeColors.background.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
+                                        .padding(4.dp)
+                                ) {
+                                    arabicVoices.forEach { voice ->
+                                        val isVoiceSelected = selectedArabicVoiceName == voice.name
+                                        val friendlyName = remember(voice.name) {
+                                            val nameUpper = voice.name.replace("-local", "").replace("network", "(Network)").uppercase()
+                                            val genderText = when {
+                                                voice.name.lowercase().contains("female") || voice.name.lowercase().contains("woman") || voice.name.lowercase().contains("fem") || voice.name.lowercase().contains("ar-x-a") || voice.name.lowercase().contains("ar-x-b") || voice.name.lowercase().contains("ar-xa-a") || voice.name.lowercase().contains("ar-xa-b") -> if (isBn) " [নারী]" else " [Female]"
+                                                voice.name.lowercase().contains("male") || voice.name.lowercase().contains("man") || voice.name.lowercase().contains("ar-x-c") || voice.name.lowercase().contains("ar-x-d") || voice.name.lowercase().contains("ar-x-e") || voice.name.lowercase().contains("ar-xa-c") || voice.name.lowercase().contains("ar-xa-d") -> if (isBn) " [পুরুষ]" else " [Male]"
+                                                else -> ""
+                                            }
+                                            val numLabel = when {
+                                                voice.name.lowercase().contains("ar-x-a") || voice.name.lowercase().contains("ar-xa-a") || voice.name.lowercase().contains("sfa") -> "Voice I"
+                                                voice.name.lowercase().contains("ar-x-b") || voice.name.lowercase().contains("ar-xa-b") || voice.name.lowercase().contains("sfb") -> "Voice II"
+                                                voice.name.lowercase().contains("ar-x-c") || voice.name.lowercase().contains("ar-xa-c") -> "Voice III"
+                                                voice.name.lowercase().contains("ar-x-d") || voice.name.lowercase().contains("ar-xa-d") -> "Voice IV"
+                                                voice.name.lowercase().contains("ar-x-e") || voice.name.lowercase().contains("ar-xa-e") -> "Voice V"
+                                                else -> voice.name.substringAfterLast(".").replace("-local", "").uppercase()
+                                            }
+                                            "$numLabel$genderText (${voice.locale.country})"
+                                        }
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clickable {
+                                                    selectedArabicVoiceName = voice.name
+                                                    com.example.util.TtsSettingsManager.setArabicVoiceName(context, voice.name)
+                                                    com.example.util.TtsSettingsManager.setVoiceType(context, "MALE")
+                                                    com.example.data.islamic.IslamicMaleTtsPlayer.getInstance(context).refreshSettings()
+                                                }
+                                                .padding(vertical = 4.dp, horizontal = 8.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            androidx.compose.material3.RadioButton(
+                                                selected = isVoiceSelected,
+                                                onClick = {
+                                                    selectedArabicVoiceName = voice.name
+                                                    com.example.util.TtsSettingsManager.setArabicVoiceName(context, voice.name)
+                                                    com.example.util.TtsSettingsManager.setVoiceType(context, "MALE")
+                                                    com.example.data.islamic.IslamicMaleTtsPlayer.getInstance(context).refreshSettings()
+                                                },
+                                                colors = androidx.compose.material3.RadioButtonDefaults.colors(selectedColor = themeColors.buttonEqualBg)
+                                            )
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(
+                                                text = friendlyName,
+                                                fontSize = 11.sp,
+                                                color = if (isVoiceSelected) themeColors.buttonEqualBg else themeColors.displayText,
+                                                fontWeight = if (isVoiceSelected) FontWeight.Bold else FontWeight.Normal
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                            HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.1f))
+                        }
+
+                        if (banglaVoices.isNotEmpty()) {
+                            Column(
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = if (isBn) "বাংলা অনুবাদ কণ্ঠস্বর (Bangla Voice List)" else "Select Bangla Voice",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp,
+                                    color = themeColors.displayText
+                                )
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(themeColors.background.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
+                                        .padding(4.dp)
+                                ) {
+                                    banglaVoices.forEach { voice ->
+                                        val isVoiceSelected = selectedBanglaVoiceName == voice.name
+                                        val friendlyName = remember(voice.name) {
+                                            val genderText = when {
+                                                voice.name.lowercase().contains("female") || voice.name.lowercase().contains("woman") || voice.name.lowercase().contains("fem") || voice.name.lowercase().contains("bn-x-a") || voice.name.lowercase().contains("bn-xa-a") -> if (isBn) " [নারী]" else " [Female]"
+                                                voice.name.lowercase().contains("male") || voice.name.lowercase().contains("man") || voice.name.lowercase().contains("bn-x-b") || voice.name.lowercase().contains("bn-xa-b") -> if (isBn) " [পুরুষ]" else " [Male]"
+                                                else -> ""
+                                            }
+                                            val numLabel = when {
+                                                voice.name.lowercase().contains("bn-x-a") || voice.name.lowercase().contains("bn-xa-a") -> "Voice I"
+                                                voice.name.lowercase().contains("bn-x-b") || voice.name.lowercase().contains("bn-xa-b") -> "Voice II"
+                                                voice.name.lowercase().contains("bn-x-c") || voice.name.lowercase().contains("bn-xa-c") -> "Voice III"
+                                                else -> voice.name.substringAfterLast(".").replace("-local", "").uppercase()
+                                            }
+                                            "$numLabel$genderText (${voice.locale.country})"
+                                        }
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clickable {
+                                                    selectedBanglaVoiceName = voice.name
+                                                    com.example.util.TtsSettingsManager.setBanglaVoiceName(context, voice.name)
+                                                }
+                                                .padding(vertical = 4.dp, horizontal = 8.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            androidx.compose.material3.RadioButton(
+                                                selected = isVoiceSelected,
+                                                onClick = {
+                                                    selectedBanglaVoiceName = voice.name
+                                                    com.example.util.TtsSettingsManager.setBanglaVoiceName(context, voice.name)
+                                                },
+                                                colors = androidx.compose.material3.RadioButtonDefaults.colors(selectedColor = themeColors.buttonEqualBg)
+                                            )
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(
+                                                text = friendlyName,
+                                                fontSize = 11.sp,
+                                                color = if (isVoiceSelected) themeColors.buttonEqualBg else themeColors.displayText,
+                                                fontWeight = if (isVoiceSelected) FontWeight.Bold else FontWeight.Normal
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                            HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.1f))
+                        }
 
                         // Speech Rate Slider
                         Column {
@@ -1576,6 +1726,89 @@ fun MainContent(
                                     inactiveTrackColor = themeColors.displayText.copy(alpha = 0.1f)
                                 )
                             )
+                        }
+
+                        // Premium Arabic Voice Troubleshooting Guide Card
+                        androidx.compose.material3.Card(
+                            colors = androidx.compose.material3.CardDefaults.cardColors(
+                                containerColor = themeColors.background
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(12.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Info,
+                                        contentDescription = null,
+                                        tint = themeColors.buttonEqualBg,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = if (isBn) "পুরুষ কণ্ঠের সমাধান গাইড" else "Male Voice Guide & Fix",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 12.sp,
+                                        color = themeColors.displayText
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    text = if (isBn) {
+                                        "সেটিংস থেকে 'পুরুষ কণ্ঠ' সেট করার পরও যদি মেয়ে কণ্ঠে আরবি শোনা যায়, তার কারণ আপনার ফোনে আরবি পুরুষ কণ্ঠের ভয়েস ফাইলটি ডাউনলোড করা নেই।\n\nএটি সমাধান করতে নিচের বাটনে ক্লিক করে Android TTS সেটিংসে যান, Arabic (Saudi Arabia) ভাষা সিলেক্ট করে তার ভেতর থেকে Voice 2, 3 বা 4 (যা পুরুষ কণ্ঠ) ডাউনলোড করে নিন।"
+                                    } else {
+                                        "If a female voice still plays after selecting 'Male Voice', your device lacks the offline Arabic male voice files.\n\nTo fix this, click below to open Android TTS settings, choose Arabic (Saudi Arabia) language, and download Voice 2, 3 or 4 (which are male voices)."
+                                    },
+                                    fontSize = 10.sp,
+                                    lineHeight = 14.sp,
+                                    color = themeColors.displayText.copy(alpha = 0.8f)
+                                )
+                                Spacer(modifier = Modifier.height(10.dp))
+                                OutlinedButton(
+                                    onClick = {
+                                        try {
+                                            val intent = android.content.Intent().apply {
+                                                action = "com.android.settings.TTS_SETTINGS"
+                                            }
+                                            context.startActivity(intent)
+                                        } catch (e: Exception) {
+                                            try {
+                                                val intent = android.content.Intent().apply {
+                                                    action = android.speech.tts.TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA
+                                                }
+                                                context.startActivity(intent)
+                                            } catch (e2: Exception) {
+                                                try {
+                                                    val intent = android.content.Intent(android.provider.Settings.ACTION_SETTINGS)
+                                                    context.startActivity(intent)
+                                                } catch (e3: Exception) {}
+                                            }
+                                        }
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(8.dp),
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, themeColors.buttonEqualBg),
+                                    contentPadding = PaddingValues(vertical = 6.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Settings,
+                                        contentDescription = null,
+                                        tint = themeColors.buttonEqualBg,
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = if (isBn) "সিস্টেম টিটিএস সেটিংস খুলুন" else "Open Android TTS Settings",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = themeColors.buttonEqualBg
+                                    )
+                                }
+                            }
                         }
                     }
                 },
