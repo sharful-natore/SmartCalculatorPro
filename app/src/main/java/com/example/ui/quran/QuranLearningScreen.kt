@@ -14,6 +14,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -894,94 +895,98 @@ fun LettersTab(
             }
         }
 
-        // GRID OF 29 LETTERS
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(3),
-            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-            modifier = Modifier.weight(1f)
-        ) {
-            items(filteredLetters, key = { it.id }) { letter ->
-                val isRevealed = !isShuffleMode || (letter.id in revealedLetters)
+        // GRID OF 29 LETTERS IN RIGHT-TO-LEFT DIRECTORY FLOW FOR ARABIC
+        CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Rtl) {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(3),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                items(filteredLetters, key = { it.id }) { letter ->
+                    val isRevealed = !isShuffleMode || (letter.id in revealedLetters)
 
-                Surface(
-                    shape = RoundedCornerShape(16.dp),
-                    color = themeColors.cardBg,
-                    border = BorderStroke(1.dp, if (isRevealed) primaryGreen.copy(alpha = 0.3f) else primaryGreen),
-                    shadowElevation = 2.dp,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(16.dp))
-                        .clickable {
-                            ttsPlayer.speakFastArabic("letter_${letter.id}", letter.arabic)
-                            if (isShuffleMode) {
-                                if (letter.id !in revealedLetters) {
-                                    revealedLetters = revealedLetters + letter.id
-                                    coroutineScope.launch {
-                                        delay(10000L) // Auto-hide after 10 seconds
-                                        revealedLetters = revealedLetters - letter.id
+                    CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) {
+                        Surface(
+                            shape = RoundedCornerShape(16.dp),
+                            color = themeColors.cardBg,
+                            border = BorderStroke(1.dp, if (isRevealed) primaryGreen.copy(alpha = 0.3f) else primaryGreen),
+                            shadowElevation = 2.dp,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(16.dp))
+                                .clickable {
+                                    ttsPlayer.speakFastArabic("letter_${letter.id}", letter.arabic)
+                                    if (isShuffleMode) {
+                                        if (letter.id !in revealedLetters) {
+                                            revealedLetters = revealedLetters + letter.id
+                                            coroutineScope.launch {
+                                                delay(10000L) // Auto-hide after 10 seconds
+                                                revealedLetters = revealedLetters - letter.id
+                                            }
+                                        }
+                                    } else {
+                                        selectedLetterDetail = letter
                                     }
                                 }
-                            } else {
-                                selectedLetterDetail = letter
-                            }
-                        }
-                ) {
-                    Column(
-                        modifier = Modifier.padding(12.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(56.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(primaryGreen.copy(alpha = 0.1f)),
-                            contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = letter.arabic,
-                                fontSize = 34.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = primaryGreen,
-                                textAlign = TextAlign.Center
-                            )
-                        }
+                            Column(
+                                modifier = Modifier.padding(12.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(56.dp)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(primaryGreen.copy(alpha = 0.1f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = letter.arabic,
+                                        fontSize = 34.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = primaryGreen,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                                Spacer(modifier = Modifier.height(8.dp))
 
-                        if (isRevealed) {
-                            Text(
-                                text = letter.banglaName,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = themeColors.displayText
-                            )
-                        } else {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.VisibilityOff,
-                                    contentDescription = null,
-                                    tint = primaryGreen,
-                                    modifier = Modifier.size(13.dp)
-                                )
-                                Spacer(modifier = Modifier.width(3.dp))
+                                if (isRevealed) {
+                                    Text(
+                                        text = letter.banglaName,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = themeColors.displayText
+                                    )
+                                } else {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            imageVector = Icons.Default.VisibilityOff,
+                                            contentDescription = null,
+                                            tint = primaryGreen,
+                                            modifier = Modifier.size(13.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(3.dp))
+                                        Text(
+                                            text = "উচ্চারণ দেখুন",
+                                            fontSize = 11.5.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = primaryGreen
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(2.dp))
+
                                 Text(
-                                    text = "উচ্চারণ দেখুন",
-                                    fontSize = 11.5.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = primaryGreen
+                                    text = if (isRevealed) "#${letter.id} • ${letter.categoryBn}" else "ট্যাপ করুন",
+                                    fontSize = 10.sp,
+                                    color = themeColors.displayText.copy(alpha = 0.6f)
                                 )
                             }
                         }
-
-                        Spacer(modifier = Modifier.height(2.dp))
-
-                        Text(
-                            text = if (isRevealed) "#${letter.id} • ${letter.categoryBn}" else "ট্যাপ করুন",
-                            fontSize = 10.sp,
-                            color = themeColors.displayText.copy(alpha = 0.6f)
-                        )
                     }
                 }
             }
@@ -1136,40 +1141,46 @@ fun HarakatTab(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // EXAMPLES GRID
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        lesson.exampleWords.forEach { (ar, bn) ->
-                            Surface(
-                                shape = RoundedCornerShape(12.dp),
-                                color = primaryGreen.copy(alpha = 0.06f),
-                                border = BorderStroke(1.dp, primaryGreen.copy(alpha = 0.2f)),
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .clickable {
-                                        ttsPlayer.speakFastArabic("harakat_${ar}", ar)
+                    // EXAMPLES GRID WITH HORIZONTAL SCROLL AND RTL LAYOUT DIRECTION
+                    CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Rtl) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState())
+                        ) {
+                            lesson.exampleWords.forEach { (ar, bn) ->
+                                CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) {
+                                    Surface(
+                                        shape = RoundedCornerShape(12.dp),
+                                        color = primaryGreen.copy(alpha = 0.06f),
+                                        border = BorderStroke(1.dp, primaryGreen.copy(alpha = 0.2f)),
+                                        modifier = Modifier
+                                            .width(76.dp)
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .clickable {
+                                                ttsPlayer.speakFastArabic("harakat_${ar}", ar)
+                                            }
+                                    ) {
+                                        Column(
+                                            modifier = Modifier.padding(vertical = 8.dp),
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            Text(
+                                                text = ar,
+                                                fontSize = 24.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = primaryGreen
+                                            )
+                                            Spacer(modifier = Modifier.height(2.dp))
+                                            Text(
+                                                text = bn,
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Medium,
+                                                color = themeColors.displayText
+                                            )
+                                        }
                                     }
-                            ) {
-                                Column(
-                                    modifier = Modifier.padding(vertical = 8.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Text(
-                                        text = ar,
-                                        fontSize = 24.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = primaryGreen
-                                    )
-                                    Spacer(modifier = Modifier.height(2.dp))
-                                    Text(
-                                        text = bn,
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = themeColors.displayText
-                                    )
                                 }
                             }
                         }
@@ -1239,38 +1250,42 @@ fun SukoonTashdeedTab(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        items(lesson.exampleWords) { (ar, bn) ->
-                            Surface(
-                                shape = RoundedCornerShape(12.dp),
-                                color = primaryGreen.copy(alpha = 0.08f),
-                                border = BorderStroke(1.dp, primaryGreen.copy(alpha = 0.25f)),
-                                modifier = Modifier
-                                    .width(90.dp)
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .clickable {
-                                        ttsPlayer.speakFastArabic("st_${ar}", ar)
+                    CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Rtl) {
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            items(lesson.exampleWords) { (ar, bn) ->
+                                CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) {
+                                    Surface(
+                                        shape = RoundedCornerShape(12.dp),
+                                        color = primaryGreen.copy(alpha = 0.08f),
+                                        border = BorderStroke(1.dp, primaryGreen.copy(alpha = 0.25f)),
+                                        modifier = Modifier
+                                            .width(90.dp)
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .clickable {
+                                                ttsPlayer.speakFastArabic("st_${ar}", ar)
+                                            }
+                                    ) {
+                                        Column(
+                                            modifier = Modifier.padding(10.dp),
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            Text(
+                                                text = ar,
+                                                fontSize = 26.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = primaryGreen
+                                            )
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                            Text(
+                                                text = bn,
+                                                fontSize = 11.5.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = themeColors.displayText
+                                            )
+                                        }
                                     }
-                            ) {
-                                Column(
-                                    modifier = Modifier.padding(10.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Text(
-                                        text = ar,
-                                        fontSize = 26.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = primaryGreen
-                                    )
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text(
-                                        text = bn,
-                                        fontSize = 11.5.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = themeColors.displayText
-                                    )
                                 }
                             }
                         }

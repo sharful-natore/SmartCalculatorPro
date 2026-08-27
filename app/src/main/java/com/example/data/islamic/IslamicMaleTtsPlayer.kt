@@ -168,7 +168,10 @@ class IslamicMaleTtsPlayer private constructor(private val context: Context) : T
         return try {
             ttsObj.voices?.filter { voice ->
                 val lang = voice.locale.language.lowercase()
-                lang == "ar" || voice.name.lowercase().contains("ar")
+                val name = voice.name.lowercase()
+                (lang == "ar" || name.contains("ar")) && 
+                !name.contains("network") && 
+                !name.contains("online")
             }?.sortedBy { it.name } ?: emptyList()
         } catch (_: Exception) {
             emptyList()
@@ -180,7 +183,10 @@ class IslamicMaleTtsPlayer private constructor(private val context: Context) : T
         return try {
             ttsObj.voices?.filter { voice ->
                 val lang = voice.locale.language.lowercase()
-                lang == "bn" || voice.name.lowercase().contains("bn")
+                val name = voice.name.lowercase()
+                (lang == "bn" || name.contains("bn")) && 
+                !name.contains("network") && 
+                !name.contains("online")
             }?.sortedBy { it.name } ?: emptyList()
         } catch (_: Exception) {
             emptyList()
@@ -261,6 +267,68 @@ class IslamicMaleTtsPlayer private constructor(private val context: Context) : T
         }
         _isSpeaking.value = false
         _activeAudioId.value = null
+    }
+
+    fun speakArabicSample(arabicText: String, voiceName: String) {
+        val ttsObj = tts ?: return
+        if (!isInitialized) return
+        try {
+            ttsObj.stop()
+        } catch (_: Exception) {}
+
+        try {
+            ttsObj.language = Locale("ar")
+            val targetVoice = ttsObj.voices?.firstOrNull { it.name == voiceName }
+            if (targetVoice != null) {
+                ttsObj.voice = targetVoice
+            }
+            
+            val pitch = com.example.util.TtsSettingsManager.getPitch(context)
+            val speechRate = com.example.util.TtsSettingsManager.getSpeechRate(context)
+            
+            ttsObj.setPitch(pitch)
+            ttsObj.setSpeechRate(speechRate)
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                ttsObj.speak(arabicText, TextToSpeech.QUEUE_FLUSH, null, "sample_ar")
+            } else {
+                @Suppress("DEPRECATION")
+                ttsObj.speak(arabicText, TextToSpeech.QUEUE_FLUSH, null)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    fun speakBanglaSample(banglaText: String, voiceName: String) {
+        val ttsObj = tts ?: return
+        if (!isInitialized) return
+        try {
+            ttsObj.stop()
+        } catch (_: Exception) {}
+
+        try {
+            ttsObj.language = Locale("bn")
+            val targetVoice = ttsObj.voices?.firstOrNull { it.name == voiceName }
+            if (targetVoice != null) {
+                ttsObj.voice = targetVoice
+            }
+            
+            val pitch = com.example.util.TtsSettingsManager.getPitch(context)
+            val speechRate = com.example.util.TtsSettingsManager.getSpeechRate(context)
+            
+            ttsObj.setPitch(pitch)
+            ttsObj.setSpeechRate(speechRate)
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                ttsObj.speak(banglaText, TextToSpeech.QUEUE_FLUSH, null, "sample_bn")
+            } else {
+                @Suppress("DEPRECATION")
+                ttsObj.speak(banglaText, TextToSpeech.QUEUE_FLUSH, null)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 }
 
