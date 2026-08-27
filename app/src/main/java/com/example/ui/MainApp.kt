@@ -1525,11 +1525,11 @@ fun MainContent(
                                             color = themeColors.displayText
                                         )
                                         Spacer(modifier = Modifier.height(6.dp))
-                                        Column(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .background(themeColors.background.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
-                                                .padding(4.dp)
+                                        @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+                                        androidx.compose.foundation.layout.FlowRow(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            verticalArrangement = Arrangement.spacedBy(8.dp)
                                         ) {
                                             arabicVoices.forEach { voice ->
                                                 val isVoiceSelected = selectedArabicVoiceName == voice.name
@@ -1553,39 +1553,42 @@ fun MainContent(
                                                     }
                                                     "$numLabel$genderText"
                                                 }
-                                                Row(
-                                                    modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .clickable {
-                                                            selectedArabicVoiceName = voice.name
-                                                            com.example.util.TtsSettingsManager.setArabicVoiceName(context, voice.name)
-                                                            com.example.util.TtsSettingsManager.setVoiceType(context, "MALE")
-                                                            val player = com.example.data.islamic.IslamicMaleTtsPlayer.getInstance(context)
-                                                            player.refreshSettings()
-                                                            player.speakArabicSample("الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ", voice.name)
-                                                        }
-                                                        .padding(vertical = 6.dp, horizontal = 8.dp),
-                                                    verticalAlignment = Alignment.CenterVertically
+                                                val isFemale = friendlyName.contains("নারী") || friendlyName.contains("Female")
+                                                Surface(
+                                                    onClick = {
+                                                        selectedArabicVoiceName = voice.name
+                                                        com.example.util.TtsSettingsManager.setArabicVoiceName(context, voice.name)
+                                                        com.example.util.TtsSettingsManager.setVoiceType(context, "MALE")
+                                                        val player = com.example.data.islamic.IslamicMaleTtsPlayer.getInstance(context)
+                                                        player.refreshSettings()
+                                                        player.speakArabicSample("الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ", voice.name)
+                                                    },
+                                                    shape = RoundedCornerShape(20.dp),
+                                                    color = if (isVoiceSelected) themeColors.buttonEqualBg else themeColors.background,
+                                                    border = androidx.compose.foundation.BorderStroke(
+                                                        width = 1.2.dp,
+                                                        color = if (isVoiceSelected) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.2f)
+                                                    )
                                                 ) {
-                                                    androidx.compose.material3.RadioButton(
-                                                        selected = isVoiceSelected,
-                                                        onClick = {
-                                                            selectedArabicVoiceName = voice.name
-                                                            com.example.util.TtsSettingsManager.setArabicVoiceName(context, voice.name)
-                                                            com.example.util.TtsSettingsManager.setVoiceType(context, "MALE")
-                                                            val player = com.example.data.islamic.IslamicMaleTtsPlayer.getInstance(context)
-                                                            player.refreshSettings()
-                                                            player.speakArabicSample("الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ", voice.name)
-                                                        },
-                                                        colors = androidx.compose.material3.RadioButtonDefaults.colors(selectedColor = themeColors.buttonEqualBg)
-                                                    )
-                                                    Spacer(modifier = Modifier.width(4.dp))
-                                                    Text(
-                                                        text = friendlyName,
-                                                        fontSize = 12.sp,
-                                                        color = if (isVoiceSelected) themeColors.buttonEqualBg else themeColors.displayText,
-                                                        fontWeight = if (isVoiceSelected) FontWeight.Bold else FontWeight.Normal
-                                                    )
+                                                    Row(
+                                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                                        verticalAlignment = Alignment.CenterVertically,
+                                                        horizontalArrangement = Arrangement.Center
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = if (isFemale) Icons.Default.Face else Icons.Default.Person,
+                                                            contentDescription = null,
+                                                            tint = if (isVoiceSelected) Color.White else themeColors.displayText.copy(alpha = 0.7f),
+                                                            modifier = Modifier.size(14.dp)
+                                                        )
+                                                        Spacer(modifier = Modifier.width(4.dp))
+                                                        Text(
+                                                            text = friendlyName,
+                                                            fontSize = 11.sp,
+                                                            fontWeight = FontWeight.Bold,
+                                                            color = if (isVoiceSelected) Color.White else themeColors.displayText
+                                                        )
+                                                    }
                                                 }
                                             }
                                         }
@@ -1680,11 +1683,11 @@ fun MainContent(
                                             color = themeColors.displayText
                                         )
                                         Spacer(modifier = Modifier.height(6.dp))
-                                        Column(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .background(themeColors.background.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
-                                                .padding(4.dp)
+                                        @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+                                        androidx.compose.foundation.layout.FlowRow(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            verticalArrangement = Arrangement.spacedBy(8.dp)
                                         ) {
                                             banglaVoices.forEach { voice ->
                                                 val isVoiceSelected = selectedBanglaVoiceName == voice.name
@@ -1706,33 +1709,39 @@ fun MainContent(
                                                     }
                                                     "$numLabel$genderText"
                                                 }
-                                                Row(
-                                                    modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .clickable {
-                                                            selectedBanglaVoiceName = voice.name
-                                                            com.example.util.TtsSettingsManager.setBanglaVoiceName(context, voice.name)
-                                                            com.example.data.islamic.IslamicMaleTtsPlayer.getInstance(context).speakBanglaSample("আলহামদুলিল্লাহ, এটি একটি বাংলা কণ্ঠস্বর টেস্ট উদাহরণ।", voice.name)
-                                                        }
-                                                        .padding(vertical = 6.dp, horizontal = 8.dp),
-                                                    verticalAlignment = Alignment.CenterVertically
+                                                val isFemale = friendlyName.contains("নারী") || friendlyName.contains("Female")
+                                                Surface(
+                                                    onClick = {
+                                                        selectedBanglaVoiceName = voice.name
+                                                        com.example.util.TtsSettingsManager.setBanglaVoiceName(context, voice.name)
+                                                        com.example.data.islamic.IslamicMaleTtsPlayer.getInstance(context).speakBanglaSample("আলহামদুলিল্লাহ, এটি একটি বাংলা কণ্ঠস্বর টেস্ট উদাহরণ।", voice.name)
+                                                    },
+                                                    shape = RoundedCornerShape(20.dp),
+                                                    color = if (isVoiceSelected) themeColors.buttonEqualBg else themeColors.background,
+                                                    border = androidx.compose.foundation.BorderStroke(
+                                                        width = 1.2.dp,
+                                                        color = if (isVoiceSelected) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.2f)
+                                                    )
                                                 ) {
-                                                    androidx.compose.material3.RadioButton(
-                                                        selected = isVoiceSelected,
-                                                        onClick = {
-                                                            selectedBanglaVoiceName = voice.name
-                                                            com.example.util.TtsSettingsManager.setBanglaVoiceName(context, voice.name)
-                                                            com.example.data.islamic.IslamicMaleTtsPlayer.getInstance(context).speakBanglaSample("আলহামদুলিল্লাহ, এটি একটি বাংলা কণ্ঠস্বর টেস্ট উদাহরণ।", voice.name)
-                                                        },
-                                                        colors = androidx.compose.material3.RadioButtonDefaults.colors(selectedColor = themeColors.buttonEqualBg)
-                                                    )
-                                                    Spacer(modifier = Modifier.width(4.dp))
-                                                    Text(
-                                                        text = friendlyName,
-                                                        fontSize = 12.sp,
-                                                        color = if (isVoiceSelected) themeColors.buttonEqualBg else themeColors.displayText,
-                                                        fontWeight = if (isVoiceSelected) FontWeight.Bold else FontWeight.Normal
-                                                    )
+                                                    Row(
+                                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                                        verticalAlignment = Alignment.CenterVertically,
+                                                        horizontalArrangement = Arrangement.Center
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = if (isFemale) Icons.Default.Face else Icons.Default.Person,
+                                                            contentDescription = null,
+                                                            tint = if (isVoiceSelected) Color.White else themeColors.displayText.copy(alpha = 0.7f),
+                                                            modifier = Modifier.size(14.dp)
+                                                        )
+                                                        Spacer(modifier = Modifier.width(4.dp))
+                                                        Text(
+                                                            text = friendlyName,
+                                                            fontSize = 11.sp,
+                                                            fontWeight = FontWeight.Bold,
+                                                            color = if (isVoiceSelected) Color.White else themeColors.displayText
+                                                        )
+                                                    }
                                                 }
                                             }
                                         }

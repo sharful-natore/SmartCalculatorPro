@@ -115,6 +115,55 @@ object HadithStorageManager {
         }
     }
 
+    fun saveBookContentStream(context: Context, bookId: String, chapters: List<HadithChapter>) {
+        try {
+            val file = getBookFile(context, bookId)
+            file.bufferedWriter().use { writer ->
+                writer.write("{\"bookId\":\"$bookId\",\"downloadedAt\":${System.currentTimeMillis()},\"chapters\":[")
+                for (i in chapters.indices) {
+                    val chap = chapters[i]
+                    if (i > 0) writer.write(",")
+                    writer.write("{")
+                    writer.write("\"chapterId\":${chap.chapterId},")
+                    writer.write("\"titleBn\":\"${escapeJson(chap.titleBn)}\",")
+                    writer.write("\"titleEn\":\"${escapeJson(chap.titleEn)}\",")
+                    writer.write("\"hadithCount\":${chap.hadithCount},")
+                    writer.write("\"hadiths\":[")
+                    
+                    val hadithList = com.example.data.islamic.AuthenticHadithDatabase.getHadithsForBookAndChapter(bookId, chap.chapterId)
+                    for (j in hadithList.indices) {
+                        val h = hadithList[j]
+                        if (j > 0) writer.write(",")
+                        writer.write("{")
+                        writer.write("\"id\":${h.id},")
+                        writer.write("\"hadithNumberBn\":\"${escapeJson(h.hadithNumberBn)}\",")
+                        writer.write("\"hadithNumberEn\":\"${escapeJson(h.hadithNumberEn)}\",")
+                        writer.write("\"narratorBn\":\"${escapeJson(h.narratorBn)}\",")
+                        writer.write("\"arabicText\":\"${escapeJson(h.arabicText)}\",")
+                        writer.write("\"banglaText\":\"${escapeJson(h.banglaText)}\",")
+                        writer.write("\"englishText\":\"${escapeJson(h.englishText)}\",")
+                        writer.write("\"gradeBn\":\"${escapeJson(h.gradeBn)}\",")
+                        writer.write("\"referenceBn\":\"${escapeJson(h.referenceBn)}\"")
+                        writer.write("}")
+                    }
+                    writer.write("]")
+                    writer.write("}")
+                }
+                writer.write("]}")
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun escapeJson(input: String): String {
+        return input.replace("\\", "\\\\")
+            .replace("\"", "\\\"")
+            .replace("\n", "\\n")
+            .replace("\r", "\\r")
+            .replace("\t", "\\t")
+    }
+
     fun deleteBook(context: Context, bookId: String) {
         try {
             val file = getBookFile(context, bookId)
@@ -428,6 +477,13 @@ fun HadithLibraryScreen(
 
     // Download Progress tracking state for books
     val downloadingBooks = remember { mutableStateMapOf<String, Float>() }
+    val downloadedBooks = remember {
+        mutableStateMapOf<String, Boolean>().apply {
+            HadithRepository.BOOK_LIST.forEach { book ->
+                this[book.id] = HadithStorageManager.isBookDownloaded(context, book.id, book.isDefaultDownloaded)
+            }
+        }
+    }
     var selectedGradeFilter by remember { mutableStateOf("All") }
 
     // Bookmarked Hadiths
@@ -759,7 +815,7 @@ fun HadithLibraryScreen(
                                 }
 
                                 items(filteredBooks, key = { it.id }) { book ->
-                                    val isDownloaded = HadithStorageManager.isBookDownloaded(context, book.id, book.isDefaultDownloaded)
+                                    val isDownloaded = downloadedBooks[book.id] ?: book.isDefaultDownloaded
                                     val downloadProgress = downloadingBooks[book.id]
 
                                     HadithBookCardItem(
@@ -781,11 +837,12 @@ fun HadithLibraryScreen(
                                                 downloadingBooks[book.id] = 0.85f
                                                 delay(250)
 
-                                                HadithStorageManager.saveBookContent(
-                                                    context,
-                                                    book.id,
-                                                    HadithRepository.generateFullBookJson(book.id)
-                                                )
+                                                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                                    val chapters = HadithRepository.getChaptersForBook(book.id)
+                                                    HadithStorageManager.saveBookContentStream(context, book.id, chapters)
+                                                }
+
+                                                downloadedBooks[book.id] = true
                                                 downloadingBooks.remove(book.id)
                                                 Toast.makeText(
                                                     context,
@@ -796,6 +853,7 @@ fun HadithLibraryScreen(
                                         },
                                         onDeleteClick = {
                                             HadithStorageManager.deleteBook(context, book.id)
+                                            downloadedBooks[book.id] = false
                                             Toast.makeText(
                                                 context,
                                                 if (isBn) "বইটি মেমোরি থেকে মুছে ফেলা হয়েছে" else "Book removed from storage",
@@ -897,7 +955,7 @@ fun HadithLibraryScreen(
                                     }
 
                                     items(filteredBooks, key = { "b_${it.id}" }) { book ->
-                                        val isDownloaded = HadithStorageManager.isBookDownloaded(context, book.id, book.isDefaultDownloaded)
+                                        val isDownloaded = downloadedBooks[book.id] ?: book.isDefaultDownloaded
                                         val downloadProgress = downloadingBooks[book.id]
 
                                         HadithBookCardItem(
@@ -919,11 +977,12 @@ fun HadithLibraryScreen(
                                                     downloadingBooks[book.id] = 0.85f
                                                     delay(250)
 
-                                                    HadithStorageManager.saveBookContent(
-                                                        context,
-                                                        book.id,
-                                                        HadithRepository.generateFullBookJson(book.id)
-                                                    )
+                                                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                                        val chapters = HadithRepository.getChaptersForBook(book.id)
+                                                        HadithStorageManager.saveBookContentStream(context, book.id, chapters)
+                                                    }
+
+                                                    downloadedBooks[book.id] = true
                                                     downloadingBooks.remove(book.id)
                                                     Toast.makeText(
                                                         context,
@@ -934,6 +993,7 @@ fun HadithLibraryScreen(
                                             },
                                             onDeleteClick = {
                                                 HadithStorageManager.deleteBook(context, book.id)
+                                                downloadedBooks[book.id] = false
                                                 Toast.makeText(
                                                     context,
                                                     if (isBn) "বইটি মেমোরি থেকে মুছে ফেলা হয়েছে" else "Book removed from storage",
