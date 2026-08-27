@@ -504,13 +504,12 @@ fun QuranLearningScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .statusBarsPadding()
-                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                                .padding(horizontal = 10.dp, vertical = 4.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             IconButton(
                                 onClick = onBackClick,
-                                modifier = Modifier.size(40.dp)
+                                modifier = Modifier.size(36.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -519,11 +518,11 @@ fun QuranLearningScreen(
                                 )
                             }
 
-                            Spacer(modifier = Modifier.width(6.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
 
                             Box(
                                 modifier = Modifier
-                                    .size(38.dp)
+                                    .size(34.dp)
                                     .clip(CircleShape)
                                     .background(primaryGreen.copy(alpha = 0.15f)),
                                 contentAlignment = Alignment.Center
@@ -532,16 +531,16 @@ fun QuranLearningScreen(
                                     imageVector = Icons.Default.MenuBook,
                                     contentDescription = null,
                                     tint = primaryGreen,
-                                    modifier = Modifier.size(22.dp)
+                                    modifier = Modifier.size(20.dp)
                                 )
                             }
 
-                            Spacer(modifier = Modifier.width(10.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
 
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = if (isBn) "কুরআন শিক্ষা" else "Learn Quran",
-                                    fontSize = 16.5.sp,
+                                    fontSize = 15.5.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = themeColors.displayText,
                                     maxLines = 1,
@@ -549,7 +548,7 @@ fun QuranLearningScreen(
                                 )
                                 Text(
                                     text = if (isBn) "শব্দে শব্দে অডিও, মাখরাজ ও তাজভীদ" else "Makhraj, Harakat & Audio Lessons",
-                                    fontSize = 11.sp,
+                                    fontSize = 10.5.sp,
                                     color = primaryGreen,
                                     fontWeight = FontWeight.Medium
                                 )
@@ -563,7 +562,8 @@ fun QuranLearningScreen(
                                         if (isBn) "যেকোনো আরবি হরফ বা শব্দে ট্যাপ করে পুরুষ কণ্ঠে বিশুদ্ধ উচ্চারণ শুনুন" else "Tap any letter or word to hear male audio",
                                         Toast.LENGTH_SHORT
                                     ).show()
-                                }
+                                },
+                                modifier = Modifier.size(36.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.VolumeUp,

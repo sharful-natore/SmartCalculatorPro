@@ -42,6 +42,10 @@ class MainActivity : ComponentActivity() {
         val repository = HistoryRepository(database.historyDao())
         val usageRepository = ToolUsageRepository(database.toolUsageDao())
 
+        // Pre-initialize TTS engines asynchronously for instant 0ms audio playback
+        com.example.data.islamic.IslamicMaleTtsPlayer.getInstance(applicationContext)
+        com.example.data.quran.QuranAudioPlayer.getInstance(applicationContext)
+
         // Create ViewModel
         val viewModelFactory = CalculatorViewModelFactory(repository, usageRepository, this)
         viewModel = ViewModelProvider(this, viewModelFactory)[CalculatorViewModel::class.java]

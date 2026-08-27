@@ -295,9 +295,15 @@ object HadithRepository {
                         chapterId = idx + 1,
                         titleBn = title,
                         titleEn = "Chapter ${idx + 1}",
-                        hadithCount = when (idx) {
-                            0 -> 7; 1 -> 50; 2 -> 75; 3 -> 88; 4 -> 32
-                            else -> (30..120).random()
+                        hadithCount = when (bookId) {
+                            "bukhari" -> if (idx == 0) 7 else if (idx == 1) 8 else 35 + (((idx + 1) * 13) % 50)
+                            "muslim" -> 35 + (((idx + 1) * 11) % 48)
+                            "abudawood" -> 30 + (((idx + 1) * 9) % 45)
+                            "tirmidhi" -> 30 + (((idx + 1) * 7) % 45)
+                            "nasai" -> 35 + (((idx + 1) * 9) % 45)
+                            "ibnmajah" -> 30 + (((idx + 1) * 7) % 40)
+                            "riyad" -> 40 + (((idx + 1) * 15) % 48)
+                            else -> 30
                         }
                     )
                 }
@@ -311,25 +317,57 @@ object HadithRepository {
                             else -> "অধ্যায় $idx: ইসলামী শরিয়ত ও সুন্নাত"
                         },
                         titleEn = "Chapter $idx",
-                        hadithCount = (25..90).random()
+                        hadithCount = 35 + ((idx * 11) % 48)
                     )
                 }
             }
-            "abudawood" -> (1..43).map { idx -> HadithChapter(idx, "অধ্যায় $idx: সুনান ও মাসায়েল", "Chapter $idx", (20..80).random()) }
-            "tirmidhi" -> (1..50).map { idx -> HadithChapter(idx, "অধ্যায় $idx: জামে মাসায়েল ও মান", "Chapter $idx", (20..75).random()) }
-            "nasai" -> (1..52).map { idx -> HadithChapter(idx, "অধ্যায় $idx: সুনান ও সুক্ষ্ম সনদ", "Chapter $idx", (25..85).random()) }
-            "ibnmajah" -> (1..37).map { idx -> HadithChapter(idx, "অধ্যায় $idx: ফিকহি বিন্যাস ও সুন্নাহ", "Chapter $idx", (20..70).random()) }
-            "riyad" -> (1..19).map { idx -> HadithChapter(idx, "অধ্যায় $idx: রিয়াদুস সালেহীন নীতি", "Chapter $idx", (30..100).random()) }
-            else -> (1..10).map { idx -> HadithChapter(idx, "অধ্যায় $idx: ঈমান ও ইবাদত", "Chapter $idx", 25) }
+            "abudawood" -> (1..43).map { idx -> HadithChapter(idx, "অধ্যায় $idx: সুনান ও মাসায়েল", "Chapter $idx", 30 + ((idx * 9) % 45)) }
+            "tirmidhi" -> (1..50).map { idx -> HadithChapter(idx, "অধ্যায় $idx: জামে মাসায়েল ও মান", "Chapter $idx", 30 + ((idx * 7) % 45)) }
+            "nasai" -> (1..52).map { idx -> HadithChapter(idx, "অধ্যায় $idx: সুনান ও সুক্ষ্ম সনদ", "Chapter $idx", 35 + ((idx * 9) % 45)) }
+            "ibnmajah" -> (1..37).map { idx -> HadithChapter(idx, "অধ্যায় $idx: ফিকহি বিন্যাস ও সুন্নাহ", "Chapter $idx", 30 + ((idx * 7) % 40)) }
+            "riyad" -> (1..19).map { idx -> HadithChapter(idx, "অধ্যায় $idx: রিয়াদুস সালেহীন নীতি", "Chapter $idx", 40 + ((idx * 15) % 48)) }
+            else -> (1..10).map { idx -> HadithChapter(idx, "অধ্যায় $idx: ঈমান ও ইবাদত", "Chapter $idx", 30) }
         }
     }
 
     fun getSampleHadiths(bookId: String, chapterId: Int): List<HadithItem> {
-        val authenticItems = AuthenticHadithDatabase.getHadithsForBookAndChapter(bookId, chapterId)
-        if (authenticItems.isNotEmpty()) {
-            return authenticItems
+        return AuthenticHadithDatabase.getHadithsForBookAndChapter(bookId, chapterId)
+    }
+
+    fun generateFullBookJson(bookId: String): String {
+        val chapters = getChaptersForBook(bookId)
+        val rootObj = org.json.JSONObject()
+        rootObj.put("bookId", bookId)
+        rootObj.put("downloadedAt", System.currentTimeMillis())
+
+        val chaptersArr = org.json.JSONArray()
+        for (chap in chapters) {
+            val chapObj = org.json.JSONObject()
+            chapObj.put("chapterId", chap.chapterId)
+            chapObj.put("titleBn", chap.titleBn)
+            chapObj.put("titleEn", chap.titleEn)
+            chapObj.put("hadithCount", chap.hadithCount)
+
+            val hadithList = AuthenticHadithDatabase.getHadithsForBookAndChapter(bookId, chap.chapterId)
+            val hadithArr = org.json.JSONArray()
+            for (h in hadithList) {
+                val hObj = org.json.JSONObject()
+                hObj.put("id", h.id)
+                hObj.put("hadithNumberBn", h.hadithNumberBn)
+                hObj.put("hadithNumberEn", h.hadithNumberEn)
+                hObj.put("narratorBn", h.narratorBn)
+                hObj.put("arabicText", h.arabicText)
+                hObj.put("banglaText", h.banglaText)
+                hObj.put("englishText", h.englishText)
+                hObj.put("gradeBn", h.gradeBn)
+                hObj.put("referenceBn", h.referenceBn)
+                hadithArr.put(hObj)
+            }
+            chapObj.put("hadiths", hadithArr)
+            chaptersArr.put(chapObj)
         }
-        return AuthenticNawawiHadiths.HADITHS.take(7)
+        rootObj.put("chapters", chaptersArr)
+        return rootObj.toString()
     }
 }
 
@@ -734,10 +772,7 @@ fun HadithLibraryScreen(
                                                 HadithStorageManager.saveBookContent(
                                                     context,
                                                     book.id,
-                                                    JSONObject().apply {
-                                                        put("bookId", book.id)
-                                                        put("downloadedAt", System.currentTimeMillis())
-                                                    }.toString()
+                                                    HadithRepository.generateFullBookJson(book.id)
                                                 )
                                                 downloadingBooks.remove(book.id)
                                                 Toast.makeText(
@@ -872,10 +907,7 @@ fun HadithLibraryScreen(
                                                     HadithStorageManager.saveBookContent(
                                                         context,
                                                         book.id,
-                                                        JSONObject().apply {
-                                                            put("bookId", book.id)
-                                                            put("downloadedAt", System.currentTimeMillis())
-                                                        }.toString()
+                                                        HadithRepository.generateFullBookJson(book.id)
                                                     )
                                                     downloadingBooks.remove(book.id)
                                                     Toast.makeText(

@@ -25,8 +25,9 @@ class IslamicMaleTtsPlayer private constructor(context: Context) : TextToSpeech.
     }
 
     private var tts: TextToSpeech? = TextToSpeech(context.applicationContext, this)
-    private var isInitialized = false
-    private var isBnAvailable = false
+    @Volatile private var isInitialized = false
+    @Volatile private var isBnAvailable = false
+    private var cachedMaleVoice: android.speech.tts.Voice? = null
 
     private val _isSpeaking = MutableStateFlow(false)
     val isSpeaking: StateFlow<Boolean> = _isSpeaking.asStateFlow()
@@ -83,6 +84,7 @@ class IslamicMaleTtsPlayer private constructor(context: Context) : TextToSpeech.
                     !name.contains("fem")
                 }
                 if (maleVoice != null) {
+                    cachedMaleVoice = maleVoice
                     ttsObj.voice = maleVoice
                 }
             }
@@ -96,8 +98,8 @@ class IslamicMaleTtsPlayer private constructor(context: Context) : TextToSpeech.
     }
 
     fun speakFastArabic(id: String, arabicText: String) {
-        if (!isInitialized) return
         val ttsObj = tts ?: return
+        if (!isInitialized) return
 
         try {
             ttsObj.stop()
@@ -107,7 +109,12 @@ class IslamicMaleTtsPlayer private constructor(context: Context) : TextToSpeech.
         _isSpeaking.value = true
 
         val cleanAr = arabicText.replace("\n", " ").trim()
-        setupArabicMaleVoice()
+        try {
+            ttsObj.language = Locale("ar")
+            cachedMaleVoice?.let { ttsObj.voice = it }
+            ttsObj.setPitch(0.68f)
+            ttsObj.setSpeechRate(0.95f)
+        } catch (_: Exception) {}
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             ttsObj.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
