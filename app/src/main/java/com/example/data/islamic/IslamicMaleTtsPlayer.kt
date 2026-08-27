@@ -59,13 +59,28 @@ class IslamicMaleTtsPlayer private constructor(context: Context) : TextToSpeech.
             ttsObj.language = arLocale
             val availableVoices = ttsObj.voices
             if (availableVoices != null) {
+                // Strictly exclude female voices and look for male voices
                 val maleVoice = availableVoices.firstOrNull { voice ->
+                    val name = voice.name.lowercase()
                     voice.locale.language == "ar" &&
-                    (voice.name.lowercase().contains("male") ||
-                     voice.name.lowercase().contains("man") ||
-                     voice.name.lowercase().contains("ar-x-a") ||
-                     voice.name.lowercase().contains("ar-x-d") ||
-                     !voice.name.lowercase().contains("female"))
+                    (name.contains("male") ||
+                     name.contains("man") ||
+                     name.contains("ar-x-a") ||
+                     name.contains("ar-x-c") ||
+                     name.contains("#male")) &&
+                    !name.contains("female") &&
+                    !name.contains("ar-x-b") &&
+                    !name.contains("ar-x-d") &&
+                    !name.contains("sfb") &&
+                    !name.contains("fem")
+                } ?: availableVoices.firstOrNull { voice ->
+                    val name = voice.name.lowercase()
+                    voice.locale.language == "ar" &&
+                    !name.contains("female") &&
+                    !name.contains("ar-x-b") &&
+                    !name.contains("ar-x-d") &&
+                    !name.contains("sfb") &&
+                    !name.contains("fem")
                 }
                 if (maleVoice != null) {
                     ttsObj.voice = maleVoice
@@ -75,9 +90,9 @@ class IslamicMaleTtsPlayer private constructor(context: Context) : TextToSpeech.
             e.printStackTrace()
         }
 
-        // Set dignified male pitch (0.76f) and natural speech rate (0.98f)
-        ttsObj.setPitch(0.76f)
-        ttsObj.setSpeechRate(0.98f)
+        // Set deep, dignified male pitch (0.68f) and natural speech rate (0.95f)
+        ttsObj.setPitch(0.68f)
+        ttsObj.setSpeechRate(0.95f)
     }
 
     fun speakFastArabic(id: String, arabicText: String) {
@@ -141,7 +156,7 @@ class IslamicMaleTtsPlayer private constructor(context: Context) : TextToSpeech.
                                 } else {
                                     ttsObj.language = Locale.getDefault()
                                 }
-                                ttsObj.setPitch(0.95f)
+                                ttsObj.setPitch(0.70f)
                                 ttsObj.setSpeechRate(1.0f)
                                 ttsObj.speak(cleanBn, TextToSpeech.QUEUE_FLUSH, null, id)
                             } catch (e: Exception) {

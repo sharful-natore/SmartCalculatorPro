@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.islamic.IslamicMaleTtsPlayer
 import com.example.ui.theme.CalculatorThemeColors
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -384,6 +385,21 @@ fun QuranLearningScreen(
     var activeTab by remember { mutableIntStateOf(0) }
     var searchQuery by remember { mutableStateOf("") }
     var selectedLetterCategory by remember { mutableStateOf("All") }
+    var isHeaderVisible by remember { mutableStateOf(true) }
+
+    val headerNestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                val delta = available.y
+                if (delta < -12f && isHeaderVisible) {
+                    isHeaderVisible = false
+                } else if (delta > 12f && !isHeaderVisible) {
+                    isHeaderVisible = true
+                }
+                return Offset.Zero
+            }
+        }
+    }
 
     // Quiz State
     var currentQuizIndex by remember { mutableIntStateOf(0) }
@@ -464,6 +480,7 @@ fun QuranLearningScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(themeColors.background)
+            .nestedScroll(headerNestedScrollConnection)
             .nestedScroll(bounceNestedScrollConnection)
     ) {
         Column(
@@ -479,75 +496,81 @@ fun QuranLearningScreen(
                 shadowElevation = 3.dp
             ) {
                 Column {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .statusBarsPadding()
-                            .padding(horizontal = 12.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                    AnimatedVisibility(
+                        visible = isHeaderVisible,
+                        enter = expandVertically() + fadeIn(),
+                        exit = shrinkVertically() + fadeOut()
                     ) {
-                        IconButton(
-                            onClick = onBackClick,
-                            modifier = Modifier.size(40.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back",
-                                tint = themeColors.displayText
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(6.dp))
-
-                        Box(
+                        Row(
                             modifier = Modifier
-                                .size(38.dp)
-                                .clip(CircleShape)
-                                .background(primaryGreen.copy(alpha = 0.15f)),
-                            contentAlignment = Alignment.Center
+                                .fillMaxWidth()
+                                .statusBarsPadding()
+                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.MenuBook,
-                                contentDescription = null,
-                                tint = primaryGreen,
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(10.dp))
-
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = if (isBn) "কুরআন শিক্ষা" else "Learn Quran",
-                                fontSize = 16.5.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = themeColors.displayText,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            Text(
-                                text = if (isBn) "শব্দে শব্দে অডিও, মাখরাজ ও তাজভীদ" else "Makhraj, Harakat & Audio Lessons",
-                                fontSize = 11.sp,
-                                color = primaryGreen,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
-
-                        // Search Toggle or Speaker Info
-                        IconButton(
-                            onClick = {
-                                Toast.makeText(
-                                    context,
-                                    if (isBn) "যেকোনো আরবি হরফ বা শব্দে ট্যাপ করে পুরুষ কণ্ঠে বিশুদ্ধ উচ্চারণ শুনুন" else "Tap any letter or word to hear male audio",
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                            IconButton(
+                                onClick = onBackClick,
+                                modifier = Modifier.size(40.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = "Back",
+                                    tint = themeColors.displayText
+                                )
                             }
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.VolumeUp,
-                                contentDescription = "Audio Info",
-                                tint = primaryGreen
-                            )
+
+                            Spacer(modifier = Modifier.width(6.dp))
+
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .clip(CircleShape)
+                                    .background(primaryGreen.copy(alpha = 0.15f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.MenuBook,
+                                    contentDescription = null,
+                                    tint = primaryGreen,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(10.dp))
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = if (isBn) "কুরআন শিক্ষা" else "Learn Quran",
+                                    fontSize = 16.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.displayText,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Text(
+                                    text = if (isBn) "শব্দে শব্দে অডিও, মাখরাজ ও তাজভীদ" else "Makhraj, Harakat & Audio Lessons",
+                                    fontSize = 11.sp,
+                                    color = primaryGreen,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+
+                            // Search Toggle or Speaker Info
+                            IconButton(
+                                onClick = {
+                                    Toast.makeText(
+                                        context,
+                                        if (isBn) "যেকোনো আরবি হরফ বা শব্দে ট্যাপ করে পুরুষ কণ্ঠে বিশুদ্ধ উচ্চারণ শুনুন" else "Tap any letter or word to hear male audio",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+                                    contentDescription = "Audio Info",
+                                    tint = primaryGreen
+                                )
+                            }
                         }
                     }
 
@@ -613,6 +636,7 @@ fun LettersTab(
     ttsPlayer: IslamicMaleTtsPlayer,
     primaryGreen: Color
 ) {
+    val coroutineScope = rememberCoroutineScope()
     var selectedCategory by remember { mutableStateOf("সব হরফ") }
     var selectedLetterDetail by remember { mutableStateOf<ArabicLetter?>(null) }
     var isShuffleMode by remember { mutableStateOf(false) }
@@ -659,7 +683,7 @@ fun LettersTab(
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = if (isShuffleMode) {
-                            if (isBn) "এলোমেলো প্র্যাকটিস চলছে (উচ্চারণ লুকানো আছে, স্পর্শ করলে শোনা যাবে)" else "Random Practice Mode (Pronunciation hidden until tapped)"
+                            if (isBn) "এলোমেলো প্র্যাকটিস চলছে (ট্যাপ করলে উচ্চারণ ১০ সেকেন্ড পর অটো হাইড হবে)" else "Random Practice Mode (Reveals for 10s when tapped)"
                         } else {
                             if (isBn) "যেকোনো আরবি বর্ণে স্পর্শ করলেই দ্রুত পুরুষ কণ্ঠে উচ্চারণ শুনবেন" else "Tap any letter to hear fast male pronunciation"
                         },
@@ -769,7 +793,7 @@ fun LettersTab(
             }
         }
 
-        // CATEGORY CHIPS
+        // CATEGORY CHIPS MATCHING APP DESIGN
         LazyRow(
             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -777,20 +801,34 @@ fun LettersTab(
             items(categories) { cat ->
                 val isSelected = selectedCategory == cat
                 Surface(
-                    shape = RoundedCornerShape(20.dp),
+                    shape = RoundedCornerShape(12.dp),
                     color = if (isSelected) primaryGreen else themeColors.cardBg,
                     border = BorderStroke(1.dp, if (isSelected) primaryGreen else themeColors.displayText.copy(alpha = 0.15f)),
+                    shadowElevation = if (isSelected) 2.dp else 0.dp,
                     modifier = Modifier
-                        .clip(RoundedCornerShape(20.dp))
+                        .clip(RoundedCornerShape(12.dp))
                         .clickable { selectedCategory = cat }
                 ) {
-                    Text(
-                        text = cat,
-                        fontSize = 11.5.sp,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                        color = if (isSelected) Color.White else themeColors.displayText,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp)
+                    ) {
+                        if (isSelected) {
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.White)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                        }
+                        Text(
+                            text = cat,
+                            fontSize = 12.sp,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            color = if (isSelected) Color.White else themeColors.displayText
+                        )
+                    }
                 }
             }
         }
@@ -815,8 +853,14 @@ fun LettersTab(
                         .clip(RoundedCornerShape(16.dp))
                         .clickable {
                             ttsPlayer.speakFastArabic("letter_${letter.id}", letter.arabic)
-                            if (isShuffleMode && letter.id !in revealedLetters) {
-                                revealedLetters = revealedLetters + letter.id
+                            if (isShuffleMode) {
+                                if (letter.id !in revealedLetters) {
+                                    revealedLetters = revealedLetters + letter.id
+                                    coroutineScope.launch {
+                                        delay(10000L) // Auto-hide after 10 seconds
+                                        revealedLetters = revealedLetters - letter.id
+                                    }
+                                }
                             } else {
                                 selectedLetterDetail = letter
                             }
@@ -1427,18 +1471,19 @@ fun AudioLetterQuizTab(
     var score by remember { mutableIntStateOf(0) }
     var selectedOption by remember { mutableStateOf<ArabicLetter?>(null) }
     var isAnswered by remember { mutableStateOf(false) }
+    var isSequentialOrder by remember { mutableStateOf(false) }
 
-    val targetLetter = remember(currentRound) {
-        allLetters[(currentRound - 1) % allLetters.size]
+    val targetLetter = remember(currentRound, isSequentialOrder) {
+        if (isSequentialOrder) {
+            allLetters[(currentRound - 1) % allLetters.size]
+        } else {
+            allLetters.shuffled(java.util.Random(currentRound.toLong() * 37L + score)).first()
+        }
     }
 
-    val options = remember(currentRound) {
+    val options = remember(currentRound, isSequentialOrder) {
         val distractors = allLetters.filter { it.id != targetLetter.id }.shuffled().take(3)
         (distractors + targetLetter).shuffled()
-    }
-
-    LaunchedEffect(currentRound) {
-        ttsPlayer.speakFastArabic("audio_quiz_${targetLetter.id}", targetLetter.arabic)
     }
 
     Column(
@@ -1448,30 +1493,109 @@ fun AudioLetterQuizTab(
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // TOP SCORE BANNER
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = if (isBn) "অডিও কুইজ: রাউন্ড $currentRound" else "Audio Quiz: Round $currentRound",
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
-                color = themeColors.displayText
-            )
-
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = primaryGreen.copy(alpha = 0.15f)
+        // TOP SCORE BANNER & ORDER SELECTOR
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (isBn) "স্কোর: $score পয়েন্ট" else "Score: $score pts",
-                    fontSize = 12.5.sp,
+                    text = if (isBn) "অডিও কুইজ: রাউন্ড $currentRound" else "Audio Quiz: Round $currentRound",
+                    fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
-                    color = primaryGreen,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    color = themeColors.displayText
                 )
+
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = primaryGreen.copy(alpha = 0.15f)
+                ) {
+                    Text(
+                        text = if (isBn) "স্কোর: $score পয়েন্ট" else "Score: $score pts",
+                        fontSize = 12.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = primaryGreen,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // MODE TOGGLE CHIPS (Random vs Sequential)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = if (!isSequentialOrder) primaryGreen else themeColors.cardBg,
+                    border = BorderStroke(1.dp, if (!isSequentialOrder) primaryGreen else themeColors.displayText.copy(alpha = 0.15f)),
+                    shadowElevation = if (!isSequentialOrder) 2.dp else 0.dp,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable {
+                            isSequentialOrder = false
+                            selectedOption = null
+                            isAnswered = false
+                        }
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Shuffle,
+                            contentDescription = null,
+                            tint = if (!isSequentialOrder) Color.White else themeColors.displayText,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(5.dp))
+                        Text(
+                            text = if (isBn) "এলোমেলো প্র্যাকটিস" else "Random Practice",
+                            fontSize = 11.5.sp,
+                            fontWeight = if (!isSequentialOrder) FontWeight.Bold else FontWeight.Medium,
+                            color = if (!isSequentialOrder) Color.White else themeColors.displayText
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = if (isSequentialOrder) primaryGreen else themeColors.cardBg,
+                    border = BorderStroke(1.dp, if (isSequentialOrder) primaryGreen else themeColors.displayText.copy(alpha = 0.15f)),
+                    shadowElevation = if (isSequentialOrder) 2.dp else 0.dp,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable {
+                            isSequentialOrder = true
+                            selectedOption = null
+                            isAnswered = false
+                        }
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.FormatListBulleted,
+                            contentDescription = null,
+                            tint = if (isSequentialOrder) Color.White else themeColors.displayText,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(5.dp))
+                        Text(
+                            text = if (isBn) "সিরিয়াল অনুযায়ী" else "Sequential Order",
+                            fontSize = 11.5.sp,
+                            fontWeight = if (isSequentialOrder) FontWeight.Bold else FontWeight.Medium,
+                            color = if (isSequentialOrder) Color.White else themeColors.displayText
+                        )
+                    }
+                }
             }
         }
 

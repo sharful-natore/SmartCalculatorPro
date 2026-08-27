@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -156,13 +157,13 @@ class QuickPrayerActivity : ComponentActivity() {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 10.dp, vertical = 4.dp),
+                                    .padding(horizontal = 10.dp, vertical = 4.dp)
+                                    .horizontalScroll(rememberScrollState()),
                                 horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 Button(
                                     onClick = { selectedTab = 0 },
-                                    modifier = Modifier.weight(1f),
-                                    contentPadding = PaddingValues(horizontal = 2.dp, vertical = 6.dp),
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = if (selectedTab == 0) themeColors.buttonEqualBg else themeColors.cardBg
                                     ),
@@ -177,8 +178,7 @@ class QuickPrayerActivity : ComponentActivity() {
                                 }
                                 Button(
                                     onClick = { selectedTab = 1 },
-                                    modifier = Modifier.weight(1f),
-                                    contentPadding = PaddingValues(horizontal = 2.dp, vertical = 6.dp),
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = if (selectedTab == 1) themeColors.buttonEqualBg else themeColors.cardBg
                                     ),
@@ -193,8 +193,7 @@ class QuickPrayerActivity : ComponentActivity() {
                                 }
                                 Button(
                                     onClick = { selectedTab = 2 },
-                                    modifier = Modifier.weight(1f),
-                                    contentPadding = PaddingValues(horizontal = 2.dp, vertical = 6.dp),
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = if (selectedTab == 2) themeColors.buttonEqualBg else themeColors.cardBg
                                     ),
@@ -209,8 +208,7 @@ class QuickPrayerActivity : ComponentActivity() {
                                 }
                                 Button(
                                     onClick = { selectedTab = 3 },
-                                    modifier = Modifier.weight(1f),
-                                    contentPadding = PaddingValues(horizontal = 2.dp, vertical = 6.dp),
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = if (selectedTab == 3) themeColors.buttonEqualBg else themeColors.cardBg
                                     ),
@@ -219,6 +217,21 @@ class QuickPrayerActivity : ComponentActivity() {
                                     Text(
                                         text = if (isBn) "হাদিস" else "Hadith",
                                         color = if (selectedTab == 3) Color.White else themeColors.displayText,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 12.sp
+                                    )
+                                }
+                                Button(
+                                    onClick = { selectedTab = 4 },
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (selectedTab == 4) themeColors.buttonEqualBg else themeColors.cardBg
+                                    ),
+                                    shape = RoundedCornerShape(10.dp)
+                                ) {
+                                    Text(
+                                        text = if (isBn) "কুরআন শিক্ষা" else "Learn Quran",
+                                        color = if (selectedTab == 4) Color.White else themeColors.displayText,
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 12.sp
                                     )
@@ -274,7 +287,7 @@ class QuickPrayerActivity : ComponentActivity() {
                                             isBn = isBn
                                         )
                                     }
-                                    else -> Box(
+                                    3 -> Box(
                                         modifier = Modifier
                                             .fillMaxSize()
                                             .padding(horizontal = 6.dp)
@@ -285,6 +298,19 @@ class QuickPrayerActivity : ComponentActivity() {
                                             viewModel = viewModel,
                                             themeColors = themeColors,
                                             onBackClick = { selectedTab = 0 }
+                                        )
+                                    }
+                                    else -> Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(horizontal = 6.dp)
+                                            .clip(RoundedCornerShape(bottomStart = 18.dp, bottomEnd = 18.dp))
+                                            .bounceOverscroll()
+                                    ) {
+                                        com.example.ui.quran.QuranLearningScreen(
+                                            themeColors = themeColors,
+                                            onBackClick = { selectedTab = 0 },
+                                            isBn = isBn
                                         )
                                     }
                                 }
