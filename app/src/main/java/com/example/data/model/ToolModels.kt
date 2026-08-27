@@ -403,8 +403,8 @@ enum class ToolType(
         ToolCategory.ISLAMIC, Icons.Default.LibraryBooks
     ),
     QURAN_LEARNING(
-        "Learn Quran (Noorani Qaida)", "কুরআন শিক্ষা (নূরানী কায়দা)",
-        "সহজ নিয়মে আরবি হরফ, মাখরাজ, হরকত, তানভীন, তাশদীদ, মাদ, তাজভীদ ও শব্দে শব্দে অডিও সহ কুরআন শিক্ষা",
+        "Learn Quran", "কুরআন শিক্ষা",
+        "সহজ নিয়মে আরবি হরফ, মাখরাজ, হরকত, তাশদীদ, তাজভীদ ও অডিও সহ প্র্যাকটিস",
         ToolCategory.ISLAMIC, Icons.Default.RecordVoiceOver
     );
 

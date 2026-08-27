@@ -26,6 +26,7 @@ class IslamicMaleTtsPlayer private constructor(context: Context) : TextToSpeech.
 
     private var tts: TextToSpeech? = TextToSpeech(context.applicationContext, this)
     private var isInitialized = false
+    private var isBnAvailable = false
 
     private val _isSpeaking = MutableStateFlow(false)
     val isSpeaking: StateFlow<Boolean> = _isSpeaking.asStateFlow()
@@ -37,6 +38,17 @@ class IslamicMaleTtsPlayer private constructor(context: Context) : TextToSpeech.
         if (status == TextToSpeech.SUCCESS) {
             isInitialized = true
             setupArabicMaleVoice()
+            checkBanglaSupport()
+        }
+    }
+
+    private fun checkBanglaSupport() {
+        val ttsObj = tts ?: return
+        try {
+            val bnLocale = Locale("bn", "BD")
+            isBnAvailable = ttsObj.isLanguageAvailable(bnLocale) >= TextToSpeech.LANG_AVAILABLE
+        } catch (e: Exception) {
+            isBnAvailable = false
         }
     }
 
@@ -63,9 +75,44 @@ class IslamicMaleTtsPlayer private constructor(context: Context) : TextToSpeech.
             e.printStackTrace()
         }
 
-        // Set male pitch and speech rate for dignified Arabic recitation
-        ttsObj.setPitch(0.82f)
-        ttsObj.setSpeechRate(0.85f)
+        // Set dignified male pitch (0.76f) and natural speech rate (0.98f)
+        ttsObj.setPitch(0.76f)
+        ttsObj.setSpeechRate(0.98f)
+    }
+
+    fun speakFastArabic(id: String, arabicText: String) {
+        if (!isInitialized) return
+        val ttsObj = tts ?: return
+
+        try {
+            ttsObj.stop()
+        } catch (_: Exception) {}
+
+        _activeAudioId.value = id
+        _isSpeaking.value = true
+
+        val cleanAr = arabicText.replace("\n", " ").trim()
+        setupArabicMaleVoice()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            ttsObj.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+                override fun onStart(utteranceId: String?) {}
+                override fun onDone(utteranceId: String?) {
+                    _isSpeaking.value = false
+                    _activeAudioId.value = null
+                }
+                override fun onError(utteranceId: String?) {
+                    _isSpeaking.value = false
+                    _activeAudioId.value = null
+                }
+            })
+            ttsObj.speak(cleanAr, TextToSpeech.QUEUE_FLUSH, null, id)
+        } else {
+            @Suppress("DEPRECATION")
+            val params = HashMap<String, String>()
+            params[TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID] = id
+            ttsObj.speak(cleanAr, TextToSpeech.QUEUE_FLUSH, params)
+        }
     }
 
     fun speakOrStop(id: String, arabicText: String, banglaText: String? = null) {
@@ -89,14 +136,13 @@ class IslamicMaleTtsPlayer private constructor(context: Context) : TextToSpeech.
                     override fun onDone(utteranceId: String?) {
                         if (utteranceId == "${id}_ar" && cleanBn.isNotEmpty()) {
                             try {
-                                val bnLocale = Locale("bn", "BD")
-                                if (ttsObj.isLanguageAvailable(bnLocale) >= TextToSpeech.LANG_AVAILABLE) {
-                                    ttsObj.language = bnLocale
+                                if (isBnAvailable) {
+                                    ttsObj.language = Locale("bn", "BD")
                                 } else {
                                     ttsObj.language = Locale.getDefault()
                                 }
-                                ttsObj.setPitch(1.0f)
-                                ttsObj.setSpeechRate(0.95f)
+                                ttsObj.setPitch(0.95f)
+                                ttsObj.setSpeechRate(1.0f)
                                 ttsObj.speak(cleanBn, TextToSpeech.QUEUE_FLUSH, null, id)
                             } catch (e: Exception) {
                                 _isSpeaking.value = false
@@ -136,3 +182,4 @@ class IslamicMaleTtsPlayer private constructor(context: Context) : TextToSpeech.
         _activeAudioId.value = null
     }
 }
+
