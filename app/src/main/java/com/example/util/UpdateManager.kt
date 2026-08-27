@@ -29,6 +29,41 @@ object UpdateManager {
     const val KEY_UPDATE_URL = "Update_url"
     const val KEY_DEV_PHOTO = "Dev_photo"
 
+    fun isNetworkAvailable(context: Context): Boolean {
+        return try {
+            val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? android.net.ConnectivityManager
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                val network = connectivityManager?.activeNetwork ?: return false
+                val activeNetwork = connectivityManager.getNetworkCapabilities(network) ?: return false
+                activeNetwork.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
+                (activeNetwork.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI) ||
+                 activeNetwork.hasTransport(android.net.NetworkCapabilities.TRANSPORT_CELLULAR) ||
+                 activeNetwork.hasTransport(android.net.NetworkCapabilities.TRANSPORT_ETHERNET))
+            } else {
+                @Suppress("DEPRECATION")
+                val networkInfo = connectivityManager?.activeNetworkInfo ?: return false
+                @Suppress("DEPRECATION")
+                networkInfo.isConnected
+            }
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    fun shouldCheckForUpdateToday(context: Context): Boolean {
+        if (!isNetworkAvailable(context)) return false
+        val prefs = context.getSharedPreferences("app_settings_prefs", Context.MODE_PRIVATE)
+        val lastCheck = prefs.getLong("last_update_check_time", 0L)
+        val now = System.currentTimeMillis()
+        val oneDayMillis = 24 * 60 * 60 * 1000L // 24 hours
+        return (now - lastCheck) >= oneDayMillis
+    }
+
+    fun recordUpdateCheckTime(context: Context) {
+        val prefs = context.getSharedPreferences("app_settings_prefs", Context.MODE_PRIVATE)
+        prefs.edit().putLong("last_update_check_time", System.currentTimeMillis()).apply()
+    }
+
     fun fetchDevPhotoUrl(context: Context, onResult: (String) -> Unit) {
         initFirebase(context)
         if (FirebaseApp.getApps(context).isEmpty()) {
@@ -131,6 +166,7 @@ object UpdateManager {
         onNoUpdate: () -> Unit,
         onError: (Throwable) -> Unit
     ) {
+        recordUpdateCheckTime(context)
         initFirebase(context)
         
         if (FirebaseApp.getApps(context).isEmpty()) {

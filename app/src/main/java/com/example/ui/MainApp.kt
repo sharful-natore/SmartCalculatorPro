@@ -218,7 +218,20 @@ fun MainContent(
 
     val performUpdateCheck: (Boolean) -> Unit = remember(context, viewModel.selectedLanguage) {
         { isManual ->
-            if (isManual) {
+            if (!isManual) {
+                if (!UpdateManager.shouldCheckForUpdateToday(context)) {
+                    // Check only once a day when internet is active to prevent excessive Firebase requests
+                    return@remember
+                }
+            } else {
+                if (!UpdateManager.isNetworkAvailable(context)) {
+                    Toast.makeText(
+                        context,
+                        if (viewModel.selectedLanguage == AppLanguage.BENGALI) "ইন্টারনেট সংযোগ নেই।" else "No internet connection.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    return@remember
+                }
                 isCheckingForUpdate = true
                 updateErrorMessage = null
                 isUpdateFailed = false
@@ -1470,19 +1483,27 @@ fun MainContent(
                                     color = themeColors.buttonEqualBg
                                 )
                                 val items = if (isBn) listOf(
-                                    "• 🧮 ক্যালকুলেটর হিস্টোরি",
-                                    "• 🛒 বাজারের ফর্দ ও কেনাকাটা",
+                                    "• 🧮 ক্যালকুলেটর হিস্টোরি ও হিসাব",
+                                    "• 🛒 বাজারের ফর্দ, কেনাকাটা ও মেমো",
                                     "• 📝 সেভ করা নোটস ও খসড়া",
                                     "• 🤖 এআই চ্যাট হিস্টোরি",
-                                    "• ⭐ পছন্দের টুলস ও কনভার্টার",
-                                    "• 📷 বারকোড স্ক্যান রেকর্ডস"
+                                    "• 📖 আল-কুরআন ও হাদিস বুকমার্কস",
+                                    "• 🕌 সালাত ট্র্যাকার ও ইসলামিক পছন্দ",
+                                    "• ⭐ পছন্দের টুলস ও কনভার্টার বিন্যাস",
+                                    "• 🎨 কাস্টম থিমস ও ইউজার প্রিফারেন্স",
+                                    "• 📷 বারকোড স্ক্যান ও পিডিএফ হিস্টোরি",
+                                    "• ⚙️ ইউটিলিটি রেট ও অ্যাপ সেটিংস"
                                 ) else listOf(
-                                    "• 🧮 Calculator History Log",
-                                    "• 🛒 Market & Grocery Memos",
+                                    "• 🧮 Calculator History & Logs",
+                                    "• 🛒 Grocery Lists & Market Memos",
                                     "• 📝 Saved Personal Notes",
-                                    "• 🤖 AI Assistant Chat Logs",
-                                    "• ⭐ Favorite Tools & Converters",
-                                    "• 📷 Barcode Scanner Logs"
+                                    "• 🤖 AI Assistant Chat History",
+                                    "• 📖 Quran & Hadith Bookmarks",
+                                    "• 🕌 Daily Prayer Tracker & Settings",
+                                    "• ⭐ Favorite Tools & Converters Order",
+                                    "• 🎨 Custom Themes & Color Palettes",
+                                    "• 📷 Barcode Scanner & PDF History",
+                                    "• ⚙️ Utility Rates & App Configurations"
                                 )
                                 items.forEach { item ->
                                     Text(
@@ -2071,16 +2092,36 @@ fun MainContent(
         if (showFeedbackDialog) {
             val context = androidx.compose.ui.platform.LocalContext.current
             var feedbackText by remember { mutableStateOf("") }
+            var attachedImageUri by remember { mutableStateOf<android.net.Uri?>(null) }
+            val imagePickerLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.GetContent()
+            ) { uri ->
+                attachedImageUri = uri
+            }
 
             AlertDialog(
-                onDismissRequest = { showFeedbackDialog = false },
+                onDismissRequest = { 
+                    showFeedbackDialog = false
+                    attachedImageUri = null
+                },
                 title = {
-                    Text(
-                        text = if (isBn) "রিপোর্ট ও ফিডব্যাক" else "Report & Feedback",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = themeColors.displayText
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Feedback,
+                            contentDescription = null,
+                            tint = themeColors.buttonEqualBg,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Text(
+                            text = if (isBn) "রিপোর্ট ও ফিডব্যাক" else "Report & Feedback",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            color = themeColors.displayText
+                        )
+                    }
                 },
                 text = {
                     Column(
@@ -2091,9 +2132,9 @@ fun MainContent(
                     ) {
                         Text(
                             text = if (isBn) {
-                                "আপনার মূল্যবান মতামত, পরামর্শ বা যেকোনো সমস্যার কথা আমাদের জানান। নিচে আপনার বার্তাটি লিখুন এবং সরাসরি ইমেইল বা হোয়াটসঅ্যাপের মাধ্যমে পাঠান।"
+                                "আপনার মূল্যবান মতামত, পরামর্শ বা যেকোনো সমস্যার কথা আমাদের জানান। প্রয়োজনে সমস্যার স্ক্রিনশট বা ছবি সংযুক্ত করে সরাসরি ইমেইল বা হোয়াটসঅ্যাপে পাঠান।"
                             } else {
-                                "Please share your valuable feedback, suggestions, or reports with us. Type your message below and send instantly via WhatsApp or Email."
+                                "Please share your valuable feedback, suggestions, or bug reports. You can also attach a screenshot or photo and send directly via WhatsApp or Email."
                             },
                             fontSize = 12.sp,
                             lineHeight = 17.sp,
@@ -2105,9 +2146,9 @@ fun MainContent(
                             onValueChange = { feedbackText = it },
                             placeholder = {
                                 Text(
-                                    text = if (isBn) "এখানে আপনার মতামত বা রিপোর্ট লিখুন..." else "Type your feedback or report here...",
+                                    text = if (isBn) "এখানে আপনার মতামত বা সমস্যার বিবরণ লিখুন..." else "Type your feedback or problem details here...",
                                     color = themeColors.displayText.copy(alpha = 0.4f),
-                                    fontSize = 14.sp
+                                    fontSize = 13.5.sp
                                 )
                             },
                             minLines = 3,
@@ -2122,6 +2163,86 @@ fun MainContent(
                                 cursorColor = themeColors.buttonEqualBg
                             )
                         )
+
+                        // Screenshot / Image Attachment Section
+                        if (attachedImageUri == null) {
+                            OutlinedButton(
+                                onClick = { imagePickerLauncher.launch("image/*") },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(10.dp),
+                                border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.6f)),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = themeColors.buttonEqualBg
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.AddPhotoAlternate,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = if (isBn) "স্ক্রিনশট বা ছবি যুক্ত করুন (ঐচ্ছিক)" else "Attach Screenshot or Photo (Optional)",
+                                    fontSize = 12.5.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        } else {
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp),
+                                color = themeColors.buttonEqualBg.copy(alpha = 0.1f),
+                                border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.3f))
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        coil.compose.SubcomposeAsyncImage(
+                                            model = attachedImageUri,
+                                            contentDescription = "Attached Screenshot",
+                                            modifier = Modifier
+                                                .size(44.dp)
+                                                .clip(RoundedCornerShape(8.dp)),
+                                            contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                                        )
+                                        Column {
+                                            Text(
+                                                text = if (isBn) "স্ক্রিনশট সংযুক্ত করা হয়েছে" else "Screenshot attached",
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 12.sp,
+                                                color = themeColors.displayText
+                                            )
+                                            Text(
+                                                text = if (isBn) "বার্তা পাঠানোর সাথে এটি যুক্ত থাকবে" else "Will be sent along with message",
+                                                fontSize = 10.5.sp,
+                                                color = themeColors.displayText.copy(alpha = 0.6f)
+                                            )
+                                        }
+                                    }
+
+                                    IconButton(
+                                        onClick = { attachedImageUri = null },
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Close,
+                                            contentDescription = "Remove screenshot",
+                                            tint = Color(0xFFEF4444),
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
                 },
                 confirmButton = {
@@ -2137,9 +2258,11 @@ fun MainContent(
                                     context = context,
                                     email = "Connect.shariful@gmail.com",
                                     subject = "ToolsMate - Report/Feedback",
-                                    body = msg
+                                    body = msg,
+                                    imageUri = attachedImageUri
                                 )
                                 showFeedbackDialog = false
+                                attachedImageUri = null
                             },
                             modifier = Modifier.fillMaxWidth(),
                             colors = ButtonDefaults.buttonColors(
@@ -2166,11 +2289,14 @@ fun MainContent(
                             onClick = {
                                 val msg = feedbackText.trim()
                                 val finalMsg = if (msg.isEmpty()) "Hello! I want to share feedback." else msg
-                                launchUriSafely(
+                                launchWhatsAppSafely(
                                     context = context,
-                                    uriString = "https://wa.me/8801768899599?text=${android.net.Uri.encode(finalMsg)}"
+                                    phoneWithCountryCode = "+8801768899599",
+                                    message = finalMsg,
+                                    imageUri = attachedImageUri
                                 )
                                 showFeedbackDialog = false
+                                attachedImageUri = null
                             },
                             modifier = Modifier.fillMaxWidth(),
                             colors = ButtonDefaults.buttonColors(
@@ -2194,7 +2320,10 @@ fun MainContent(
 
                         // Close button
                         TextButton(
-                            onClick = { showFeedbackDialog = false },
+                            onClick = { 
+                                showFeedbackDialog = false
+                                attachedImageUri = null
+                            },
                             modifier = Modifier.align(Alignment.CenterHorizontally)
                         ) {
                             Text(
@@ -4383,25 +4512,93 @@ fun FavoritesDialog(
     }
 }
 
-private fun launchEmailSafely(context: android.content.Context, email: String, subject: String, body: String = "") {
+private fun launchEmailSafely(
+    context: android.content.Context,
+    email: String,
+    subject: String,
+    body: String = "",
+    imageUri: android.net.Uri? = null
+) {
     try {
-        val uriString = "mailto:$email?subject=${android.net.Uri.encode(subject)}&body=${android.net.Uri.encode(body)}"
-        val intent = android.content.Intent(android.content.Intent.ACTION_SENDTO, android.net.Uri.parse(uriString)).apply {
-            addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-        context.startActivity(intent)
-    } catch (e: Exception) {
-        try {
+        if (imageUri != null) {
             val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                type = "plain/text"
+                type = "image/*"
                 putExtra(android.content.Intent.EXTRA_EMAIL, arrayOf(email))
                 putExtra(android.content.Intent.EXTRA_SUBJECT, subject)
                 putExtra(android.content.Intent.EXTRA_TEXT, body)
+                putExtra(android.content.Intent.EXTRA_STREAM, imageUri)
+                addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(android.content.Intent.createChooser(intent, "Send Email"))
+        } else {
+            val uriString = "mailto:$email?subject=${android.net.Uri.encode(subject)}&body=${android.net.Uri.encode(body)}"
+            val intent = android.content.Intent(android.content.Intent.ACTION_SENDTO, android.net.Uri.parse(uriString)).apply {
+                addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(intent)
+        }
+    } catch (e: Exception) {
+        try {
+            val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                type = if (imageUri != null) "image/*" else "plain/text"
+                putExtra(android.content.Intent.EXTRA_EMAIL, arrayOf(email))
+                putExtra(android.content.Intent.EXTRA_SUBJECT, subject)
+                putExtra(android.content.Intent.EXTRA_TEXT, body)
+                if (imageUri != null) {
+                    putExtra(android.content.Intent.EXTRA_STREAM, imageUri)
+                    addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
                 addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             context.startActivity(android.content.Intent.createChooser(intent, "Send Email"))
         } catch (ex: Exception) {
             android.widget.Toast.makeText(context, "No email client found.", android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
+}
+
+private fun launchWhatsAppSafely(
+    context: android.content.Context,
+    phoneWithCountryCode: String,
+    message: String,
+    imageUri: android.net.Uri? = null
+) {
+    try {
+        if (imageUri != null) {
+            val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                type = "image/*"
+                `package` = "com.whatsapp"
+                putExtra(android.content.Intent.EXTRA_TEXT, message)
+                putExtra(android.content.Intent.EXTRA_STREAM, imageUri)
+                addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(intent)
+        } else {
+            val cleanPhone = phoneWithCountryCode.replace("+", "").replace(" ", "").replace("-", "")
+            val uriString = "https://wa.me/$cleanPhone?text=${android.net.Uri.encode(message)}"
+            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(uriString)).apply {
+                addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(intent)
+        }
+    } catch (e: Exception) {
+        if (imageUri != null) {
+            try {
+                val chooser = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                    type = "image/*"
+                    putExtra(android.content.Intent.EXTRA_TEXT, message)
+                    putExtra(android.content.Intent.EXTRA_STREAM, imageUri)
+                    addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(android.content.Intent.createChooser(chooser, "Send Feedback"))
+            } catch (ex: Exception) {
+                android.widget.Toast.makeText(context, "Could not open app for sharing.", android.widget.Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            android.widget.Toast.makeText(context, "Could not open WhatsApp.", android.widget.Toast.LENGTH_SHORT).show()
         }
     }
 }

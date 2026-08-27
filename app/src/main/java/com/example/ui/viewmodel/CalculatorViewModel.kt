@@ -1,6 +1,7 @@
 package com.example.ui.viewmodel
 
 import android.content.Context
+import android.content.SharedPreferences
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
@@ -3307,6 +3308,21 @@ How can I help you today?"""
                 val favConv = favoriteConverters.toList()
                 val customRates = sharedPrefs.getString("custom_utility_rates_v1", null)
                 val customThemes = sharedPrefs.getString("user_custom_themes_v1", null)
+
+                val quranPrefs = context.getSharedPreferences("quran_bookmarks_prefs", Context.MODE_PRIVATE)
+                val quranJson = if (quranPrefs.all.isNotEmpty()) org.json.JSONObject(quranPrefs.all as Map<*, *>).toString() else null
+
+                val hadithPrefs = context.getSharedPreferences("hadith_library_prefs", Context.MODE_PRIVATE)
+                val hadithJson = if (hadithPrefs.all.isNotEmpty()) org.json.JSONObject(hadithPrefs.all as Map<*, *>).toString() else null
+
+                val prayerPrefs = context.getSharedPreferences("prayer_tracker_prefs", Context.MODE_PRIVATE)
+                val prayerJson = if (prayerPrefs.all.isNotEmpty()) org.json.JSONObject(prayerPrefs.all as Map<*, *>).toString() else null
+
+                val pdfPrefs = context.getSharedPreferences("pdf_maker_history_prefs", Context.MODE_PRIVATE)
+                val pdfJson = if (pdfPrefs.all.isNotEmpty()) org.json.JSONObject(pdfPrefs.all as Map<*, *>).toString() else null
+
+                val islamicLocPrefs = context.getSharedPreferences("islamic_location_prefs", Context.MODE_PRIVATE)
+                val islamicLocJson = if (islamicLocPrefs.all.isNotEmpty()) org.json.JSONObject(islamicLocPrefs.all as Map<*, *>).toString() else null
                 
                 val usageList = usageRepository.getAllUsageList()
                 val moshi = com.squareup.moshi.Moshi.Builder()
@@ -3318,7 +3334,7 @@ How can I help you today?"""
 
                 val dateFormat = SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault())
                 val backup = GlobalAppBackup(
-                    version = 3,
+                    version = 4,
                     appName = "ToolsMate All-in-One",
                     backupDate = dateFormat.format(Date()),
                     timestamp = System.currentTimeMillis(),
@@ -3332,7 +3348,12 @@ How can I help you today?"""
                     barcodeHistory = barcode,
                     customRatesJson = customRates,
                     customThemesJson = customThemes,
-                    toolUsageJson = toolUsageJson
+                    toolUsageJson = toolUsageJson,
+                    quranBookmarksJson = quranJson,
+                    hadithBookmarksJson = hadithJson,
+                    prayerTrackerJson = prayerJson,
+                    pdfHistoryJson = pdfJson,
+                    islamicLocationJson = islamicLocJson
                 )
 
                 val adapter = moshi.adapter(GlobalAppBackup::class.java)
@@ -3345,9 +3366,9 @@ How can I help you today?"""
                 val isBn = selectedLanguage == AppLanguage.BENGALI
                 withContext(Dispatchers.Main) {
                     backupStatusMessage = if (isBn) {
-                        "✅ অ্যাপের সমস্ত ডেটা সফলভাবে ব্যাকআপ করা হয়েছে!\n\n• হিস্টোরি: ${history.size}টি\n• বাজার ফর্দ ও মেমো সংরক্ষিত\n• এআই চ্যাট ও নোটস সংরক্ষিত"
+                        "✅ অ্যাপের সমস্ত ডেটা সফলভাবে ব্যাকআপ করা হয়েছে!\n\n• ক্যালকুলেটর হিস্টোরি: ${history.size}টি\n• বাজার ফর্দ, কেনাকাটা ও মেমো\n• সেভ করা নোটস ও এআই চ্যাট\n• কুরআন ও হাদিস বুকমার্কস\n• প্রিয় টুলস ও কাস্টম থিমস"
                     } else {
-                        "✅ All app data successfully backed up!\n\n• History: ${history.size} items\n• Shopping lists & memos saved\n• AI Chat & Notes saved"
+                        "✅ All app data successfully backed up!\n\n• Calculator History: ${history.size} items\n• Shopping lists & Memos\n• Saved Notes & AI Chat\n• Quran & Hadith Bookmarks\n• Favorite Tools & Custom Themes"
                     }
                     showBackupStatusDialog = true
                 }
@@ -3424,14 +3445,16 @@ How can I help you today?"""
                         "• বাজার ফর্দ (Plans): ${planCount}টি\n" +
                         "• বাজার মেমো (Memos): ${memoCount}টি\n" +
                         "• সেভ করা নোটস: ${notesCount}টি\n" +
-                        "• প্রিয় টুলস ও কনভার্টার: ${backupObj.favoriteTools.size + backupObj.favoriteConverters.size}টি"
+                        "• প্রিয় টুলস ও কনভার্টার: ${backupObj.favoriteTools.size + backupObj.favoriteConverters.size}টি\n" +
+                        "• কুরআন ও ইসলামিক ডেটা: ${if (backupObj.quranBookmarksJson != null || backupObj.hadithBookmarksJson != null) "সংরক্ষিত" else "নাই"}"
                     } else {
                         "Date: ${backupObj.backupDate.ifBlank { "N/A" }}\n\n" +
                         "• Calculator History: ${backupObj.historyEntries.size}\n" +
                         "• Market Plans: $planCount\n" +
                         "• Bazaar Memos: $memoCount\n" +
                         "• Saved Notes: $notesCount\n" +
-                        "• Favorite Tools & Conv: ${backupObj.favoriteTools.size + backupObj.favoriteConverters.size}"
+                        "• Favorite Tools & Conv: ${backupObj.favoriteTools.size + backupObj.favoriteConverters.size}\n" +
+                        "• Quran & Islamic Data: ${if (backupObj.quranBookmarksJson != null || backupObj.hadithBookmarksJson != null) "Included" else "None"}"
                     }
                     showGlobalRestoreDialog = true
                 }
@@ -3443,6 +3466,36 @@ How can I help you today?"""
                     showBackupStatusDialog = true
                 }
             }
+        }
+    }
+
+    private fun restoreSharedPreferencesFromJson(prefs: SharedPreferences, jsonStr: String?) {
+        if (jsonStr.isNullOrBlank()) return
+        try {
+            val jsonObj = org.json.JSONObject(jsonStr)
+            val editor = prefs.edit()
+            val keys = jsonObj.keys()
+            while (keys.hasNext()) {
+                val key = keys.next()
+                val value = jsonObj.get(key)
+                when (value) {
+                    is Boolean -> editor.putBoolean(key, value)
+                    is Int -> editor.putInt(key, value)
+                    is Long -> editor.putLong(key, value)
+                    is Double -> editor.putFloat(key, value.toFloat())
+                    is String -> editor.putString(key, value)
+                    is org.json.JSONArray -> {
+                        val set = mutableSetOf<String>()
+                        for (i in 0 until value.length()) {
+                            set.add(value.getString(i))
+                        }
+                        editor.putStringSet(key, set)
+                    }
+                }
+            }
+            editor.apply()
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
@@ -3503,6 +3556,39 @@ How can I help you today?"""
                 if (!backup.customThemesJson.isNullOrBlank()) {
                     sharedPrefs.edit().putString("user_custom_themes_v1", backup.customThemesJson).apply()
                 }
+
+                // Restore Islamic and PDF preferences
+                if (!backup.quranBookmarksJson.isNullOrBlank()) {
+                    restoreSharedPreferencesFromJson(
+                        context.getSharedPreferences("quran_bookmarks_prefs", Context.MODE_PRIVATE),
+                        backup.quranBookmarksJson
+                    )
+                }
+                if (!backup.hadithBookmarksJson.isNullOrBlank()) {
+                    restoreSharedPreferencesFromJson(
+                        context.getSharedPreferences("hadith_library_prefs", Context.MODE_PRIVATE),
+                        backup.hadithBookmarksJson
+                    )
+                }
+                if (!backup.prayerTrackerJson.isNullOrBlank()) {
+                    restoreSharedPreferencesFromJson(
+                        context.getSharedPreferences("prayer_tracker_prefs", Context.MODE_PRIVATE),
+                        backup.prayerTrackerJson
+                    )
+                }
+                if (!backup.pdfHistoryJson.isNullOrBlank()) {
+                    restoreSharedPreferencesFromJson(
+                        context.getSharedPreferences("pdf_maker_history_prefs", Context.MODE_PRIVATE),
+                        backup.pdfHistoryJson
+                    )
+                }
+                if (!backup.islamicLocationJson.isNullOrBlank()) {
+                    restoreSharedPreferencesFromJson(
+                        context.getSharedPreferences("islamic_location_prefs", Context.MODE_PRIVATE),
+                        backup.islamicLocationJson
+                    )
+                }
+
                 if (!backup.toolUsageJson.isNullOrBlank()) {
                     try {
                         val toolUsageType = com.squareup.moshi.Types.newParameterizedType(List::class.java, com.example.data.model.ToolUsage::class.java)
@@ -4106,7 +4192,7 @@ data class ScanHistoryItem(
 
 @JsonClass(generateAdapter = true)
 data class GlobalAppBackup(
-    val version: Int = 3,
+    val version: Int = 4,
     val appName: String = "ToolsMate All-in-One",
     val backupDate: String = "",
     val timestamp: Long = System.currentTimeMillis(),
@@ -4120,5 +4206,10 @@ data class GlobalAppBackup(
     val barcodeHistory: String? = null,
     val customRatesJson: String? = null,
     val customThemesJson: String? = null,
-    val toolUsageJson: String? = null
+    val toolUsageJson: String? = null,
+    val quranBookmarksJson: String? = null,
+    val hadithBookmarksJson: String? = null,
+    val prayerTrackerJson: String? = null,
+    val pdfHistoryJson: String? = null,
+    val islamicLocationJson: String? = null
 )

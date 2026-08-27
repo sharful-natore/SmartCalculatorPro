@@ -1,5 +1,6 @@
 package com.example.ui.screens
 
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.ui.unit.TextUnit
 
 import androidx.compose.animation.*
@@ -790,26 +791,23 @@ fun CalculatorScreen(
                             .onGloballyPositioned { resultViewportWidth = it.size.width },
                         contentAlignment = Alignment.CenterEnd
                     ) {
-                        Text(
-                            text = viewModel.result,
-                            color = resultColor,
-                            fontSize = resultSize.sp,
-                            fontFamily = FontFamily.Monospace,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.End,
-                            maxLines = 1,
-                            onTextLayout = { resultLayoutResult = it },
-                            style = TextStyle(
-                                platformStyle = PlatformTextStyle(includeFontPadding = false)
-                            ),
-                            modifier = Modifier
-                                .clickable {
-                                    if (viewModel.result.isNotEmpty()) {
-                                        clipboardManager.setText(AnnotatedString(viewModel.result))
-                                    }
-                                }
-                                .testTag("result_display")
-                        )
+                        SelectionContainer {
+                            Text(
+                                text = viewModel.result,
+                                color = resultColor,
+                                fontSize = resultSize.sp,
+                                fontFamily = FontFamily.Monospace,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.End,
+                                maxLines = 1,
+                                onTextLayout = { resultLayoutResult = it },
+                                style = TextStyle(
+                                    platformStyle = PlatformTextStyle(includeFontPadding = false)
+                                ),
+                                modifier = Modifier
+                                    .testTag("result_display")
+                            )
+                        }
                     }
 
                     // Result Badge (Left)
