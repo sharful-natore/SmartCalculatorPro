@@ -396,10 +396,23 @@ object AuthenticHadithDatabase {
             }
         }
 
+        val bookTitleBn = when (hadith.bookId) {
+            "bukhari" -> "সহীহ আল-বুখারী"
+            "muslim" -> "সহীহ মুসলিম"
+            "abudawood" -> "সুনান আবু দাউদ"
+            "tirmidhi" -> "জামে' আত-তিরমিজি"
+            "nasai" -> "সুনান আন-নাসায়ী"
+            "ibnmajah" -> "সুনান ইবনে মাজাহ"
+            "riyad" -> "রিয়াদুস সালেহীন"
+            else -> "সহীহ হাদিস"
+        }
+        val newRefText = "$bookTitleBn (তাওহীদ: ${hadith.hadithNumberBn} | আন্তর্জাতিক সূচক: $collectionName $trueId)"
+
         return hadith.copy(
             global_hadith_id = trueId,
             collection_name = collectionName,
-            book_slug = hadith.bookId
+            book_slug = hadith.bookId,
+            referenceBn = newRefText
         )
     }
 

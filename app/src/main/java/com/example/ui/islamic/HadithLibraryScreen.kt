@@ -880,6 +880,7 @@ fun HadithLibraryScreen(
                                         val isBookmarked = bookmarkedSet.contains(bookmarkKey)
                                         val bookMeta = HadithRepository.BOOK_LIST.find { it.id == hadith.bookId }
                                         val bookTitle = bookMeta?.let { if (isBn) it.titleBn else it.titleEn } ?: ""
+                                        val chapMeta = HadithRepository.getChaptersForBook(hadith.bookId).find { it.chapterId == hadith.chapterId }
 
                                         HadithReaderCardItem(
                                             hadith = hadith,
@@ -888,6 +889,8 @@ fun HadithLibraryScreen(
                                             isBn = isBn,
                                             themeColors = themeColors,
                                             bookTitle = bookTitle,
+                                            chapterTitleBn = chapMeta?.titleBn,
+                                            chapterTitleEn = chapMeta?.titleEn,
                                             isPlaying = isTtsSpeaking && activeTtsId == "hadith_${hadith.id}",
                                             onBookmarkToggle = {
                                                 val newState = HadithStorageManager.toggleBookmark(context, bookmarkKey)
@@ -1207,6 +1210,7 @@ fun HadithLibraryScreen(
                                     items(inBookMatchedHadiths, key = { "inbook_${it.bookId}_${it.id}" }) { hadith ->
                                         val bookmarkKey = "${hadith.bookId}_${hadith.id}"
                                         val isBookmarked = bookmarkedSet.contains(bookmarkKey)
+                                        val chapMeta = chapters.find { it.chapterId == hadith.chapterId }
 
                                         HadithReaderCardItem(
                                             hadith = hadith,
@@ -1215,6 +1219,8 @@ fun HadithLibraryScreen(
                                             isBn = isBn,
                                             themeColors = themeColors,
                                             bookTitle = if (isBn) currentBook.titleBn else currentBook.titleEn,
+                                            chapterTitleBn = chapMeta?.titleBn,
+                                            chapterTitleEn = chapMeta?.titleEn,
                                             isPlaying = isTtsSpeaking && activeTtsId == "hadith_${hadith.id}",
                                             onBookmarkToggle = {
                                                 val newState = HadithStorageManager.toggleBookmark(context, bookmarkKey)
@@ -1543,6 +1549,8 @@ fun HadithLibraryScreen(
                                     isBn = isBn,
                                     themeColors = themeColors,
                                     bookTitle = if (isBn) currentBook.titleBn else currentBook.titleEn,
+                                    chapterTitleBn = currentChap.titleBn,
+                                    chapterTitleEn = currentChap.titleEn,
                                     isPlaying = isTtsSpeaking && activeTtsId == "hadith_${hadith.id}",
                                     onBookmarkToggle = {
                                         val newState = HadithStorageManager.toggleBookmark(context, bookmarkKey)
@@ -1659,6 +1667,7 @@ fun HadithLibraryScreen(
                                 items(allHadiths, key = { "${it.bookId}_${it.id}" }) { hadith ->
                                     val bookmarkKey = "${hadith.bookId}_${hadith.id}"
                                     val currentBook = HadithRepository.BOOK_LIST.find { it.id == hadith.bookId } ?: HadithRepository.BOOK_LIST[0]
+                                    val chapMeta = HadithRepository.getChaptersForBook(hadith.bookId).find { it.chapterId == hadith.chapterId }
 
                                     HadithReaderCardItem(
                                         hadith = hadith,
@@ -1666,6 +1675,9 @@ fun HadithLibraryScreen(
                                         readerFontSize = readerFontSize,
                                         isBn = isBn,
                                         themeColors = themeColors,
+                                        bookTitle = if (isBn) currentBook.titleBn else currentBook.titleEn,
+                                        chapterTitleBn = chapMeta?.titleBn,
+                                        chapterTitleEn = chapMeta?.titleEn,
                                         isPlaying = isTtsSpeaking && activeTtsId == "hadith_${hadith.id}",
                                         onBookmarkToggle = {
                                             HadithStorageManager.toggleBookmark(context, bookmarkKey)
@@ -2110,6 +2122,8 @@ fun HadithReaderCardItem(
     isBn: Boolean,
     themeColors: CalculatorThemeColors,
     bookTitle: String? = null,
+    chapterTitleBn: String? = null,
+    chapterTitleEn: String? = null,
     isPlaying: Boolean = false,
     onBookmarkToggle: () -> Unit,
     onCopyClick: () -> Unit,
@@ -2133,37 +2147,27 @@ fun HadithReaderCardItem(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.weight(1f, fill = false)
                 ) {
-                    if (!bookTitle.isNullOrBlank()) {
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = themeColors.buttonEqualBg.copy(alpha = 0.15f)
-                        ) {
-                            Text(
-                                text = bookTitle,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = themeColors.buttonEqualBg,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
-                                maxLines = 1
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(6.dp))
-                    }
-
                     val globalNumEn = hadith.global_hadith_id.toString()
                     val globalNumBn = com.example.data.islamic.AuthenticHadithDatabase.toBanglaDigit(hadith.global_hadith_id)
+                    
+                    val headerText = if (!bookTitle.isNullOrBlank()) {
+                        if (isBn) "$bookTitle • হাদিস #$globalNumBn" else "$bookTitle • Hadith #$globalNumEn"
+                    } else {
+                        if (isBn) "হাদিস #$globalNumBn" else "Hadith #$globalNumEn"
+                    }
 
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(themeColors.displayText.copy(alpha = 0.08f))
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = themeColors.buttonEqualBg.copy(alpha = 0.15f)
                     ) {
                         Text(
-                            text = if (isBn) "হাদিস #$globalNumBn" else "Hadith #$globalNumEn",
+                            text = headerText,
                             fontSize = 11.5.sp,
                             fontWeight = FontWeight.Bold,
-                            color = themeColors.displayText
+                            color = themeColors.buttonEqualBg,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
 
