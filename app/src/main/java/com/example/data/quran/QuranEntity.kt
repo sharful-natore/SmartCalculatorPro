@@ -13,9 +13,7 @@ data class SurahEntity(
     val revelationType: String,  // "Meccan" or "Medinan"
     val numberOfAyahs: Int,
     val isAudioDownloaded: Boolean = false,
-    val downloadProgress: Int = 0, // 0 - 100
-    val lastDownloadError: String? = null,
-    val downloadedType: String? = null // "ARABIC", "BANGLA", "BOTH"
+    val downloadProgress: Int = 0 // 0 - 100
 )
 
 @Entity(tableName = "ayahs")

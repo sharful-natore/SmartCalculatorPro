@@ -123,10 +123,8 @@ class QuranAudioPlayer private constructor(private val context: Context) {
     private var isTtsInitialized = false
     private var isCurrentlySpeakingTts = false
     
-    // EveryAyah CDN Config
+    // EveryAyah CDN Config (Arabic only)
     private val arabicReciter = "Alafasy_128kbps"
-    private val bengaliReciter = "Bengali_Dr_Abu_Bakr_Muhammad_Zakaria_128kbps" // As requested by user
-    private val fallbackBengaliReciter = "Bengali_Zohurul_Hoque_128kbps"
 
     init {
         createNotificationChannel()
@@ -167,19 +165,7 @@ class QuranAudioPlayer private constructor(private val context: Context) {
 
             override fun onPlayerError(error: PlaybackException) {
                 error.printStackTrace()
-                // If Bengali CDN fails, fallback to TTS
-                if (!_isArabicPartPlaying.value && !isCurrentlySpeakingTts) {
-                    val currentIndex = _currentAyahIndex.value
-                    if (currentIndex in activeAyahs.indices) {
-                        speakBanglaText(activeAyahs[currentIndex].textBangla) {
-                            onAyahPlaybackFinished()
-                        }
-                    } else {
-                        handlePlaybackEnded()
-                    }
-                } else {
-                    handlePlaybackEnded()
-                }
+                handlePlaybackEnded()
             }
         })
     }
@@ -367,29 +353,13 @@ class QuranAudioPlayer private constructor(private val context: Context) {
             player.playbackParameters = PlaybackParameters(_playbackSpeed.value)
             player.prepare()
             player.play()
+            updateNotification()
         } else {
-            // Play Bengali (Local first, then EveryAyah CDN)
-            val localBanglaFile = File(
-                context.getExternalFilesDir("quran_audio/surah_$surahNum"),
-                "bangla_$ayahInSurah.mp3"
-            )
-            
-            if (localBanglaFile.exists() && localBanglaFile.length() > 0) {
-                _isPlaying.value = true
-                player.setMediaItem(MediaItem.fromUri(Uri.fromFile(localBanglaFile)))
-                player.playbackParameters = PlaybackParameters(_playbackSpeed.value)
-                player.prepare()
-                player.play()
-            } else {
-                val url = String.format(Locale.US, "https://www.everyayah.com/data/%s/%03d%03d.mp3", bengaliReciter, surahNum, ayahInSurah)
-                _isPlaying.value = true
-                player.setMediaItem(MediaItem.fromUri(Uri.parse(url)))
-                player.playbackParameters = PlaybackParameters(_playbackSpeed.value)
-                player.prepare()
-                player.play()
+            // Play Bengali translation smoothly via TTS
+            speakBanglaText(ayah.textBangla) {
+                onAyahPlaybackFinished()
             }
         }
-        updateNotification()
     }
 
     private fun onAyahPlaybackFinished() {

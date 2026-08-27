@@ -6,6 +6,8 @@ import androidx.compose.animation.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -56,10 +58,6 @@ fun QuranScreen(
 
     val aiDialogVisible by viewModel.aiDialogVisible.collectAsStateWithLifecycle()
     val storageDialogVisible by viewModel.storageDialogVisible.collectAsStateWithLifecycle()
-    
-    var showFullDownloadDialog by remember { mutableStateOf(false) }
-    var selectedSurahForDownload by remember { mutableStateOf<Int?>(null) }
-    var showBookmarksSheet by remember { mutableStateOf(false) }
 
     // Dynamic theme-derived palette matching main app theme
     val cyanPrimary = themeColors.buttonEqualBg
@@ -108,39 +106,13 @@ fun QuranScreen(
                     tonalElevation = 2.dp,
                     shadowElevation = 2.dp
                 ) {
-                    Column {
-                        // Error Banner for any surah
-                        val errorSurah = surahs.find { it.lastDownloadError != null }
-                        if (errorSurah != null) {
-                            Surface(
-                                color = Color(0xFFEF4444),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { viewModel.clearDownloadError(errorSurah.number) }
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(vertical = 6.dp, horizontal = 12.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(Icons.Default.ErrorOutline, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = "সূরা ${errorSurah.number} ডাউনলোড ব্যর্থ: ${errorSurah.lastDownloadError} (ট্যাপ করে বন্ধ করুন)",
-                                        color = Color.White,
-                                        fontSize = 11.sp,
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                }
-                            }
-                        }
-
-                        // Minimal & Theme-Matching Slim Header
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 12.dp, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
+                    // Minimal & Theme-Matching Slim Header
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         IconButton(onClick = onBackClick) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -162,13 +134,8 @@ fun QuranScreen(
                                 color = cyanAccent
                             )
                         }
-                        IconButton(onClick = { viewModel.openStorageManager(context) }) {
-                            Icon(
-                                imageVector = Icons.Default.SdCard,
-                                contentDescription = "Storage Manager",
-                                tint = cyanPrimary
-                            )
-                        }
+
+                        var showBookmarksSheet by remember { mutableStateOf(false) }
 
                         IconButton(onClick = { showBookmarksSheet = true }) {
                             Icon(
@@ -177,12 +144,151 @@ fun QuranScreen(
                                 tint = Color(0xFFD97706)
                             )
                         }
+
+                        if (showBookmarksSheet) {
+                            val bookmarkPrefs = remember { context.getSharedPreferences("quran_bookmarks_prefs", Context.MODE_PRIVATE) }
+                            var bookmarkedSet by remember {
+                                mutableStateOf(bookmarkPrefs.getStringSet("bookmarked_ayah_keys", emptySet()) ?: emptySet())
+                            }
+
+                            AlertDialog(
+                                onDismissRequest = { showBookmarksSheet = false },
+                                title = {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            imageVector = Icons.Default.Bookmark,
+                                            contentDescription = null,
+                                            tint = Color(0xFFD97706),
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = if (isBn) "বুকমার্ককৃত আয়াতসমূহ" else "Bookmarked Ayahs",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 16.5.sp,
+                                            color = themeColors.displayText
+                                        )
+                                    }
+                                },
+                                text = {
+                                    if (bookmarkedSet.isEmpty()) {
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 20.dp),
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.BookmarkBorder,
+                                                contentDescription = null,
+                                                tint = themeColors.displayText.copy(alpha = 0.4f),
+                                                modifier = Modifier.size(48.dp)
+                                            )
+                                            Spacer(modifier = Modifier.height(10.dp))
+                                            Text(
+                                                text = if (isBn) "কোনো বুকমার্ককৃত আয়াত নেই।" else "No bookmarked ayahs found.",
+                                                fontSize = 13.5.sp,
+                                                color = themeColors.displayText.copy(alpha = 0.7f),
+                                                textAlign = TextAlign.Center
+                                            )
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                            Text(
+                                                text = if (isBn) "সুরা পাঠকালে যেকোনো আয়াতের বুকমার্ক আইকনে চাপ দিলে এখানে সংরক্ষিত হবে।" else "Tap the bookmark icon on any Ayah while reading to save it here.",
+                                                fontSize = 11.5.sp,
+                                                color = themeColors.displayText.copy(alpha = 0.5f),
+                                                textAlign = TextAlign.Center
+                                            )
+                                        }
+                                    } else {
+                                        LazyColumn(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .heightIn(max = 350.dp),
+                                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                                        ) {
+                                            val keysList = bookmarkedSet.toList()
+                                            items(keysList) { key ->
+                                                val parts = key.split("_")
+                                                val surahNum = parts.getOrNull(0)?.toIntOrNull() ?: 1
+                                                val ayahNum = parts.getOrNull(1)?.toIntOrNull() ?: 1
+                                                val surahObj = surahs.find { it.number == surahNum }
+
+                                                Surface(
+                                                    shape = RoundedCornerShape(12.dp),
+                                                    color = themeColors.displayBackground,
+                                                    border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.12f)),
+                                                    modifier = Modifier.fillMaxWidth()
+                                                ) {
+                                                    Row(
+                                                        modifier = Modifier.padding(10.dp),
+                                                        verticalAlignment = Alignment.CenterVertically,
+                                                        horizontalArrangement = Arrangement.SpaceBetween
+                                                    ) {
+                                                        Column(modifier = Modifier.weight(1f)) {
+                                                            Text(
+                                                                text = "${surahObj?.nameBangla ?: "সূরা $surahNum"} • আয়াত $ayahNum",
+                                                                fontWeight = FontWeight.Bold,
+                                                                fontSize = 13.5.sp,
+                                                                color = cyanPrimary
+                                                            )
+                                                            Text(
+                                                                text = "${surahObj?.nameEnglish ?: "Surah $surahNum"} (Verse $ayahNum)",
+                                                                fontSize = 11.sp,
+                                                                color = themeColors.displayText.copy(alpha = 0.6f)
+                                                            )
+                                                        }
+
+                                                        Row {
+                                                            if (surahObj != null) {
+                                                                IconButton(
+                                                                    onClick = {
+                                                                        showBookmarksSheet = false
+                                                                        onSurahClick(surahObj)
+                                                                    }
+                                                                ) {
+                                                                    Icon(
+                                                                        imageVector = Icons.Default.MenuBook,
+                                                                        contentDescription = "Read",
+                                                                        tint = cyanPrimary,
+                                                                        modifier = Modifier.size(20.dp)
+                                                                    )
+                                                                }
+                                                            }
+
+                                                            IconButton(
+                                                                onClick = {
+                                                                    val updated = bookmarkedSet - key
+                                                                    bookmarkedSet = updated
+                                                                    bookmarkPrefs.edit().putStringSet("bookmarked_ayah_keys", updated).apply()
+                                                                }
+                                                            ) {
+                                                                Icon(
+                                                                    imageVector = Icons.Default.Delete,
+                                                                    contentDescription = "Delete",
+                                                                    tint = Color(0xFFEF4444),
+                                                                    modifier = Modifier.size(20.dp)
+                                                                )
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                confirmButton = {
+                                    TextButton(onClick = { showBookmarksSheet = false }) {
+                                        Text(if (isBn) "বন্ধ করুন" else "Close", color = cyanPrimary, fontWeight = FontWeight.Bold)
+                                    }
+                                },
+                                containerColor = themeColors.cardBg
+                            )
+                        }
                     }
                 }
             }
         }
-        }
-) { paddingValues ->
+    ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -273,112 +379,108 @@ fun QuranScreen(
                         )
                     }
 
-                        // 2. AI Assistant & Storage Action Buttons (Scrolls away smoothly)
-                        item {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 6.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                    // 2. AI Assistant & Storage Action Buttons (Scrolls away smoothly)
+                    item {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 6.dp),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Surface(
+                                onClick = { viewModel.openAiAssistant() },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(12.dp),
+                                color = cyanPrimary.copy(alpha = 0.1f),
+                                border = BorderStroke(1.dp, cyanPrimary.copy(alpha = 0.25f))
                             ) {
                                 Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 9.dp, horizontal = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
                                 ) {
-                                    Surface(
-                                        onClick = { viewModel.openAiAssistant() },
-                                        modifier = Modifier.weight(1f),
-                                        shape = RoundedCornerShape(12.dp),
-                                        color = cyanPrimary.copy(alpha = 0.1f),
-                                        border = BorderStroke(1.dp, cyanPrimary.copy(alpha = 0.25f))
-                                    ) {
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(vertical = 9.dp, horizontal = 10.dp),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.Center
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.AutoAwesome,
-                                                contentDescription = null,
-                                                modifier = Modifier.size(16.dp),
-                                                tint = cyanPrimary
-                                            )
-                                            Spacer(modifier = Modifier.width(6.dp))
-                                            Text(
-                                                text = "এআই অ্যাসিস্ট্যান্ট",
-                                                fontSize = 12.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = cyanPrimary
-                                            )
-                                        }
-                                    }
-
-                                    Surface(
-                                        onClick = { viewModel.openStorageManager(context) },
-                                        modifier = Modifier.weight(1f),
-                                        shape = RoundedCornerShape(12.dp),
-                                        color = cyanPrimary.copy(alpha = 0.1f),
-                                        border = BorderStroke(1.dp, cyanPrimary.copy(alpha = 0.25f))
-                                    ) {
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(vertical = 9.dp, horizontal = 10.dp),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.Center
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.SdCard,
-                                                contentDescription = null,
-                                                modifier = Modifier.size(16.dp),
-                                                tint = cyanPrimary
-                                            )
-                                            Spacer(modifier = Modifier.width(6.dp))
-                                            Text(
-                                                text = "অফলাইন স্টোরেজ",
-                                                fontSize = 12.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = cyanPrimary
-                                            )
-                                        }
-                                    }
-                                }
-
-                                // Full Quran Download Button
-                                Surface(
-                                    onClick = { showFullDownloadDialog = true },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(12.dp),
-                                    color = Color(0xFFD97706).copy(alpha = 0.1f),
-                                    border = BorderStroke(1.dp, Color(0xFFD97706).copy(alpha = 0.25f))
-                                ) {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(vertical = 10.dp, horizontal = 12.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.CloudDownload,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(18.dp),
-                                            tint = Color(0xFFD97706)
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(
-                                            text = "সম্পূর্ণ কুরআন অডিও ডাউনলোড করুন",
-                                            fontSize = 13.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color(0xFFD97706)
-                                        )
-                                    }
+                                    Icon(
+                                        imageVector = Icons.Default.AutoAwesome,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp),
+                                        tint = cyanPrimary
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "এআই অ্যাসিস্ট্যান্ট",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = cyanPrimary
+                                    )
                                 }
                             }
-                            Spacer(modifier = Modifier.height(4.dp))
+
+                            Surface(
+                                onClick = { viewModel.openStorageManager(context) },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(12.dp),
+                                color = cyanPrimary.copy(alpha = 0.1f),
+                                border = BorderStroke(1.dp, cyanPrimary.copy(alpha = 0.25f))
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 9.dp, horizontal = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.SdCard,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp),
+                                        tint = cyanPrimary
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "অফলাইন স্টোরেজ",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = cyanPrimary
+                                    )
+                                }
+                            }
                         }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Surface(
+                            onClick = { viewModel.downloadAllQuranAudio(context) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 2.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            color = cyanPrimary.copy(alpha = 0.12f),
+                            border = BorderStroke(1.dp, cyanPrimary.copy(alpha = 0.25f))
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 10.dp, horizontal = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.CloudDownload,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp),
+                                    tint = cyanPrimary
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "সম্পূর্ণ কুরআন অডিও একসাথে ডাউনলোড করুন (১১৪ সূরা)",
+                                    fontSize = 12.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = cyanPrimary
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                    }
                     items(
                         items = surahs,
                         key = { it.number }
@@ -391,7 +493,7 @@ fun QuranScreen(
                             themeColors = themeColors,
                             onCardClick = { onSurahClick(surah) },
                             onPlayClick = { viewModel.playSurah(surah) },
-                            onDownloadClick = { selectedSurahForDownload = surah.number },
+                            onDownloadClick = { viewModel.downloadSurahAudio(context, surah.number) },
                             onDownloadCompleteClick = { viewModel.openStorageManager(context) }
                         )
                     }
@@ -410,35 +512,6 @@ fun QuranScreen(
         )
     }
 
-    // Download Dialogs
-    if (showFullDownloadDialog) {
-        DownloadOptionsDialog(
-            themeColors = themeColors,
-            cyanPrimary = cyanPrimary,
-            isFullQuran = true,
-            onDismiss = { showFullDownloadDialog = false },
-            onConfirm = { type ->
-                showFullDownloadDialog = false
-                viewModel.downloadFullQuran(context, type)
-            }
-        )
-    }
-
-    selectedSurahForDownload?.let { surahNum ->
-        val selectedSurah = surahs.find { it.number == surahNum }
-        val downloadedType = if (selectedSurah?.isAudioDownloaded == true) selectedSurah.downloadedType else null
-        DownloadOptionsDialog(
-            themeColors = themeColors,
-            cyanPrimary = cyanPrimary,
-            downloadedType = downloadedType,
-            onDismiss = { selectedSurahForDownload = null },
-            onConfirm = { type ->
-                selectedSurahForDownload = null
-                viewModel.downloadSurahAudio(context, surahNum, type)
-            }
-        )
-    }
-
     // AI Quran Assistant Dialog
     if (aiDialogVisible) {
         AiQuranAssistantDialog(
@@ -447,146 +520,6 @@ fun QuranScreen(
             cyanPrimary = cyanPrimary,
             cyanDark = cyanDark,
             onDismiss = { viewModel.closeAiAssistant() }
-        )
-    }
-
-    if (showBookmarksSheet) {
-        val bookmarkPrefs = remember { context.getSharedPreferences("quran_bookmarks_prefs", Context.MODE_PRIVATE) }
-        var bookmarkedSet by remember {
-            mutableStateOf(bookmarkPrefs.getStringSet("bookmarked_ayah_keys", emptySet()) ?: emptySet())
-        }
-
-        AlertDialog(
-            onDismissRequest = { showBookmarksSheet = false },
-            title = {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Bookmark,
-                        contentDescription = null,
-                        tint = Color(0xFFD97706),
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = if (isBn) "বুকমার্ককৃত আয়াতসমূহ" else "Bookmarked Ayahs",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.5.sp,
-                        color = themeColors.displayText
-                    )
-                }
-            },
-            text = {
-                if (bookmarkedSet.isEmpty()) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 20.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.BookmarkBorder,
-                            contentDescription = null,
-                            tint = themeColors.displayText.copy(alpha = 0.4f),
-                            modifier = Modifier.size(48.dp)
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Text(
-                            text = if (isBn) "কোনো বুকমার্ককৃত আয়াত নেই।" else "No bookmarked ayahs found.",
-                            fontSize = 13.5.sp,
-                            color = themeColors.displayText.copy(alpha = 0.7f),
-                            textAlign = TextAlign.Center
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = if (isBn) "সুরা পাঠকালে যেকোনো আয়াতের বুকমার্ক আইকনে চাপ দিলে এখানে সংরক্ষিত হবে।" else "Tap the bookmark icon on any Ayah while reading to save it here.",
-                            fontSize = 11.5.sp,
-                            color = themeColors.displayText.copy(alpha = 0.5f),
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                } else {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = 350.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        val keysList = bookmarkedSet.toList()
-                        items(keysList) { key ->
-                            val parts = key.split("_")
-                            val surahNum = parts.getOrNull(0)?.toIntOrNull() ?: 1
-                            val ayahNum = parts.getOrNull(1)?.toIntOrNull() ?: 1
-                            val surahObj = surahs.find { it.number == surahNum }
-
-                            Surface(
-                                shape = RoundedCornerShape(12.dp),
-                                color = themeColors.displayBackground,
-                                border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.12f)),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(10.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            text = "${surahObj?.nameBangla ?: "সূরা $surahNum"} • আয়াত $ayahNum",
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 13.5.sp,
-                                            color = cyanPrimary
-                                        )
-                                        Text(
-                                            text = "${surahObj?.nameEnglish ?: "Surah $surahNum"} (Verse $ayahNum)",
-                                            fontSize = 11.sp,
-                                            color = themeColors.displayText.copy(alpha = 0.6f)
-                                        )
-                                    }
-
-                                    Row {
-                                        if (surahObj != null) {
-                                            IconButton(
-                                                onClick = {
-                                                    showBookmarksSheet = false
-                                                    onSurahClick(surahObj)
-                                                }
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Default.MenuBook,
-                                                    contentDescription = "Read",
-                                                    tint = cyanPrimary,
-                                                    modifier = Modifier.size(20.dp)
-                                                )
-                                            }
-                                        }
-
-                                        IconButton(
-                                            onClick = {
-                                                val updated = bookmarkedSet - key
-                                                bookmarkedSet = updated
-                                                bookmarkPrefs.edit().putStringSet("bookmarked_ayah_keys", updated).apply()
-                                            }
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.Delete,
-                                                contentDescription = "Delete",
-                                                tint = Color(0xFFEF4444),
-                                                modifier = Modifier.size(20.dp)
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showBookmarksSheet = false }) {
-                    Text(if (isBn) "বন্ধ করুন" else "Close", color = cyanPrimary, fontWeight = FontWeight.Bold)
-                }
-            },
-            containerColor = themeColors.cardBg
         )
     }
 }
@@ -722,13 +655,13 @@ fun SurahListItemCard(
                     if (surah.isAudioDownloaded) {
                         // Downloaded Complete Icon Button -> Click opens downloaded list dialog
                         IconButton(
-                            onClick = { if (surah.downloadedType == "BOTH") onDownloadCompleteClick() else onDownloadClick() },
+                            onClick = onDownloadCompleteClick,
                             modifier = Modifier.size(32.dp)
                         ) {
                             Icon(
-                                imageVector = if (surah.downloadedType == "BOTH") Icons.Default.DownloadDone else Icons.Default.CloudDownload,
+                                imageVector = Icons.Default.DownloadDone,
                                 contentDescription = "Downloaded List",
-                                tint = if (surah.downloadedType == "BOTH") Color(0xFF10B981) else Color(0xFFFBBF24),
+                                tint = Color(0xFF10B981),
                                 modifier = Modifier.size(22.dp)
                             )
                         }
@@ -749,6 +682,208 @@ fun SurahListItemCard(
             }
         }
     }
+}
+
+@Composable
+fun StorageManagerDialog(
+    viewModel: QuranViewModel,
+    themeColors: CalculatorThemeColors,
+    cyanPrimary: Color,
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+    val downloadedSurahs by viewModel.downloadedSurahs.collectAsStateWithLifecycle()
+    val storageBytes by viewModel.storageSizeBytes.collectAsStateWithLifecycle()
+
+    var selectedSurahNumbers by remember { mutableStateOf(setOf<Int>()) }
+
+    val formattedSize = Formatter.formatShortFileSize(context, storageBytes)
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = themeColors.cardBg,
+        titleContentColor = themeColors.displayText,
+        textContentColor = themeColors.displayText,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.SdCard, contentDescription = null, tint = cyanPrimary)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("অফলাইন স্টোরেজ ম্যানেজার", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+            }
+        },
+        text = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = cyanPrimary.copy(alpha = 0.1f),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "মোট ডাউনলোডকৃত অডিও সাইজ:",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = themeColors.displayText
+                            )
+                            Text(
+                                text = formattedSize,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = cyanPrimary
+                            )
+                        }
+                        Spacer(modifier = Modifier.weight(1f))
+                        if (downloadedSurahs.isNotEmpty()) {
+                            OutlinedButton(
+                                onClick = {
+                                    viewModel.deleteAllSurahAudio(context)
+                                    selectedSurahNumbers = emptySet()
+                                },
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Red),
+                                border = BorderStroke(1.dp, Color.Red.copy(alpha = 0.5f))
+                            ) {
+                                Icon(Icons.Default.DeleteForever, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("সব ডিলিট", fontSize = 11.sp)
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                if (downloadedSurahs.isEmpty()) {
+                    Text(
+                        text = "বর্তমানে কোনো অফলাইন অডিও ডিরেক্টরি ডাউনলোড করা নেই।",
+                        fontSize = 12.5.sp,
+                        color = themeColors.displayText.copy(alpha = 0.6f),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp)
+                    )
+                } else {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "ডাউনলোডকৃত সূরাসমূহ (${downloadedSurahs.size} টি):",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = themeColors.displayText
+                        )
+                        Spacer(modifier = Modifier.weight(1f))
+                        if (selectedSurahNumbers.isNotEmpty()) {
+                            TextButton(
+                                onClick = {
+                                    viewModel.deleteSelectedSurahAudios(context, selectedSurahNumbers.toList())
+                                    selectedSurahNumbers = emptySet()
+                                }
+                            ) {
+                                Text("নির্বাচিত ডিলিট (${selectedSurahNumbers.size})", color = Color.Red, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            }
+                        } else {
+                            Text(
+                                text = "লং প্রেস করে সিলেক্ট করুন",
+                                fontSize = 11.sp,
+                                color = themeColors.displayText.copy(alpha = 0.5f)
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 260.dp)
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        downloadedSurahs.forEach { surah ->
+                            val isSelected = selectedSurahNumbers.contains(surah.number)
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(if (isSelected) cyanPrimary.copy(alpha = 0.15f) else Color.Transparent, RoundedCornerShape(8.dp))
+                                    .pointerInput(surah.number) {
+                                        detectTapGestures(
+                                            onTap = {
+                                                if (selectedSurahNumbers.isNotEmpty()) {
+                                                    if (isSelected) selectedSurahNumbers -= surah.number
+                                                    else selectedSurahNumbers += surah.number
+                                                } else {
+                                                    viewModel.playSurah(surah)
+                                                    onDismiss()
+                                                }
+                                            },
+                                            onLongPress = {
+                                                if (isSelected) selectedSurahNumbers -= surah.number
+                                                else selectedSurahNumbers += surah.number
+                                            }
+                                        )
+                                    }
+                                    .padding(vertical = 6.dp, horizontal = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Checkbox(
+                                    checked = isSelected,
+                                    onCheckedChange = { checked ->
+                                        if (checked) selectedSurahNumbers += surah.number
+                                        else selectedSurahNumbers -= surah.number
+                                    }
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "${surah.number}. ${surah.nameBangla} (${surah.nameEnglish})",
+                                        fontSize = 13.5.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = themeColors.displayText
+                                    )
+                                    Text(
+                                        text = "${surah.numberOfAyahs} টি আয়াত • অফলাইন প্রস্তুত",
+                                        fontSize = 11.sp,
+                                        color = Color(0xFF10B981)
+                                    )
+                                }
+                                IconButton(
+                                    onClick = {
+                                        viewModel.playSurah(surah)
+                                        onDismiss()
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.PlayCircle,
+                                        contentDescription = "Play",
+                                        tint = cyanPrimary
+                                    )
+                                }
+                                IconButton(
+                                    onClick = { viewModel.deleteSurahAudio(context, surah.number) }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = "Delete",
+                                        tint = Color.Red.copy(alpha = 0.8f)
+                                    )
+                                }
+                            }
+                            HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.1f))
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("বন্ধ করুন", color = cyanPrimary, fontWeight = FontWeight.Bold)
+            }
+        }
+    )
 }
 
 @Composable

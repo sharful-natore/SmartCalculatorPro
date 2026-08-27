@@ -21,14 +21,8 @@ interface QuranDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSurahs(surahs: List<SurahEntity>)
 
-    @Query("UPDATE surahs SET isAudioDownloaded = :isDownloaded, downloadProgress = :progress, lastDownloadError = :error, downloadedType = :type WHERE number = :surahNumber")
-    suspend fun updateDownloadStatus(
-        surahNumber: Int, 
-        isDownloaded: Boolean, 
-        progress: Int, 
-        error: String? = null, 
-        type: String? = null
-    )
+    @Query("UPDATE surahs SET isAudioDownloaded = :isDownloaded, downloadProgress = :progress WHERE number = :surahNumber")
+    suspend fun updateDownloadStatus(surahNumber: Int, isDownloaded: Boolean, progress: Int)
 
     @Query("SELECT * FROM ayahs WHERE surahNumber = :surahNumber ORDER BY numberInSurah ASC")
     fun getAyahsForSurah(surahNumber: Int): Flow<List<AyahEntity>>

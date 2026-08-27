@@ -2213,7 +2213,7 @@ fun ToolGridCardItem(
                                 Brush.linearGradient(
                                     colors = listOf(
                                         themeColors.buttonEqualBg,
-                                        themeColors.buttonEqualBg.copy(alpha = 0.85f)
+                                        themeColors.buttonEqualBg.copy(alpha = 0.8f)
                                     )
                                 )
                             ),

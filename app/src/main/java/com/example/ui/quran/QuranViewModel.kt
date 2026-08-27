@@ -6,7 +6,6 @@ import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.Data
-import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.example.BuildConfig
@@ -160,13 +159,11 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
             if (dir.exists()) {
                 ayahs.forEach { ayah ->
                     val arabicFile = File(dir, "arabic_${ayah.numberInSurah}.mp3")
-                    val banglaFile = File(dir, "bangla_${ayah.numberInSurah}.mp3")
                     val oldFile = File(dir, "ayah_${ayah.numberInSurah}.mp3")
                     
                     val isArabicOk = (arabicFile.exists() && arabicFile.length() > 0) || (oldFile.exists() && oldFile.length() > 0)
-                    val isBanglaOk = banglaFile.exists() && banglaFile.length() > 0
                     
-                    if (isArabicOk && isBanglaOk) {
+                    if (isArabicOk) {
                         downloaded.add("${surahNumber}_${ayah.numberInSurah}")
                     }
                 }
@@ -195,27 +192,15 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
                 if (!dir.exists()) dir.mkdirs()
                 
                 val arabicUrl = String.format(java.util.Locale.US, "https://www.everyayah.com/data/Alafasy_128kbps/%03d%03d.mp3", surahNumber, ayah.numberInSurah)
-                val banglaUrl = String.format(java.util.Locale.US, "https://www.everyayah.com/data/Bengali_Zohurul_Hoque_128kbps/%03d%03d.mp3", surahNumber, ayah.numberInSurah)
-                
                 val arabicFile = File(dir, "arabic_${ayah.numberInSurah}.mp3")
-                val banglaFile = File(dir, "bangla_${ayah.numberInSurah}.mp3")
                 
-                var success = true
-                
-                // Download Arabic
-                if (!downloadFileSync(arabicUrl, arabicFile)) success = false
-                _ayahDownloadProgress.update { it + (key to 50) }
-                
-                // Download Bangla
-                if (!downloadFileSync(banglaUrl, banglaFile)) success = false
-                
-                if (success) {
+                if (downloadFileSync(arabicUrl, arabicFile)) {
                     _ayahDownloadProgress.update { it + (key to 100) }
                     _downloadedAyahKeys.update { it + key }
                     withContext(Dispatchers.Main) {
                         Toast.makeText(
                             getApplication(),
-                            "আয়াত ${ayah.numberInSurah} (আরবি ও বাংলা) ডাউনলোড সম্পন্ন হয়েছে!",
+                            "আয়াত ${ayah.numberInSurah} (আরবি) ডাউনলোড সম্পন্ন হয়েছে!",
                             Toast.LENGTH_SHORT
                         ).show()
                     }
@@ -297,26 +282,18 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
         val dir = repository.getAudioDirectory(getApplication(), surahNumber)
         if (!dir.exists()) return false
         val arabicFile = File(dir, "arabic_${ayahNumberInSurah}.mp3")
-        val banglaFile = File(dir, "bangla_${ayahNumberInSurah}.mp3")
         val oldFile = File(dir, "ayah_${ayahNumberInSurah}.mp3")
         
-        val isArabicOk = (arabicFile.exists() && arabicFile.length() > 0) || (oldFile.exists() && oldFile.length() > 0)
-        val isBanglaOk = banglaFile.exists() && banglaFile.length() > 0
-        
-        return isArabicOk && isBanglaOk
+        return (arabicFile.exists() && arabicFile.length() > 0) || (oldFile.exists() && oldFile.length() > 0)
     }
 
     private fun isSurahAudioLocallyAvailable(surahNumber: Int): Boolean {
         val dir = repository.getAudioDirectory(getApplication(), surahNumber)
         if (!dir.exists()) return false
         val firstArabicFile = File(dir, "arabic_1.mp3")
-        val firstBanglaFile = File(dir, "bangla_1.mp3")
         val oldFirstFile = File(dir, "ayah_1.mp3")
         
-        val isArabicOk = (firstArabicFile.exists() && firstArabicFile.length() > 0) || (oldFirstFile.exists() && oldFirstFile.length() > 0)
-        val isBanglaOk = firstBanglaFile.exists() && firstBanglaFile.length() > 0
-        
-        return isArabicOk && isBanglaOk
+        return (firstArabicFile.exists() && firstArabicFile.length() > 0) || (oldFirstFile.exists() && oldFirstFile.length() > 0)
     }
 
     fun selectSurahByNumber(surahNumber: Int) {
@@ -330,7 +307,7 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun downloadSurahAudio(context: Context, surahNumber: Int, downloadType: String = "BOTH") {
+    fun downloadSurahAudio(context: Context, surahNumber: Int) {
         if (!NetworkUtil.isOnline(context)) {
             Toast.makeText(
                 context,
@@ -342,7 +319,6 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
 
         val workData = Data.Builder()
             .putInt(QuranDownloadWorker.KEY_SURAH_NUMBER, surahNumber)
-            .putString(QuranDownloadWorker.KEY_DOWNLOAD_TYPE, downloadType)
             .build()
 
         val downloadWork = OneTimeWorkRequestBuilder<QuranDownloadWorker>()
@@ -350,34 +326,58 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
             .addTag("${QuranDownloadWorker.WORK_TAG_PREFIX}$surahNumber")
             .build()
 
-        WorkManager.getInstance(context).enqueueUniqueWork(
-            "${QuranDownloadWorker.WORK_TAG_PREFIX}$surahNumber",
-            ExistingWorkPolicy.REPLACE,
-            downloadWork
-        )
+        WorkManager.getInstance(context).enqueue(downloadWork)
         Toast.makeText(context, "সূরা $surahNumber ডাউনলোড শুরু হয়েছে...", Toast.LENGTH_SHORT).show()
     }
 
-    fun downloadFullQuran(context: Context, downloadType: String = "BOTH") {
-        viewModelScope.launch {
-            val surahs = repository.allSurahs.first()
-            surahs.forEach { surah ->
-                downloadSurahAudio(context, surah.number, downloadType)
+    fun downloadAllQuranAudio(context: Context) {
+        if (!NetworkUtil.isOnline(context)) {
+            Toast.makeText(
+                context,
+                "ইন্টারনেট সংযোগ নেই! সম্পূর্ণ কুরআন ডাউনলোড করতে ইন্টারনেট সংযোগ চালু করুন।",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
+
+        viewModelScope.launch(Dispatchers.IO) {
+            val surahsList = repository.allSurahs.first()
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "সম্পূর্ণ কুরআনের অডিও ডাউনলোড শুরু হচ্ছে (১১৪টি সূরা)...", Toast.LENGTH_LONG).show()
             }
-            Toast.makeText(context, "পুরো কুরআন ডাউনলোড শুরু হয়েছে...", Toast.LENGTH_LONG).show()
+            for (surah in surahsList) {
+                val workData = Data.Builder()
+                    .putInt(QuranDownloadWorker.KEY_SURAH_NUMBER, surah.number)
+                    .build()
+                val downloadWork = OneTimeWorkRequestBuilder<QuranDownloadWorker>()
+                    .setInputData(workData)
+                    .addTag("${QuranDownloadWorker.WORK_TAG_PREFIX}${surah.number}")
+                    .build()
+                WorkManager.getInstance(context).enqueue(downloadWork)
+            }
         }
     }
 
-    fun clearDownloadError(surahNumber: Int) {
+    fun deleteSurahAudio(context: Context, surahNumber: Int) {
         viewModelScope.launch {
-            repository.updateDownloadStatus(surahNumber, isDownloaded = false, progress = 0, error = null)
-        }
-    }
-
-    fun deleteSurahAudio(context: Context, surahNumber: Int, type: String = "ALL") {
-        viewModelScope.launch {
-            repository.deleteSurahAudio(context, surahNumber, type)
+            repository.deleteSurahAudio(context, surahNumber)
             refreshStorageSize(context)
+        }
+    }
+
+    fun deleteAllSurahAudio(context: Context) {
+        viewModelScope.launch {
+            repository.deleteAllSurahAudio(context)
+            refreshStorageSize(context)
+            Toast.makeText(context, "সকল অফলাইন অডিও ডিলিট করা হয়েছে।", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun deleteSelectedSurahAudios(context: Context, surahNumbers: List<Int>) {
+        viewModelScope.launch {
+            repository.deleteSurahAudios(context, surahNumbers)
+            refreshStorageSize(context)
+            Toast.makeText(context, "নির্বাচিত সূরাসমূহের অডিও ডিলিট করা হয়েছে।", Toast.LENGTH_SHORT).show()
         }
     }
 
