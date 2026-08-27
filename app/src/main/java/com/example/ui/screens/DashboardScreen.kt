@@ -1759,20 +1759,13 @@ fun DashboardCategoriesView(
                                         modifier = Modifier
                                             .size(32.dp)
                                             .clip(CircleShape)
-                                            .background(
-                                                Brush.linearGradient(
-                                                    colors = listOf(
-                                                        themeColors.buttonEqualBg,
-                                                        themeColors.buttonEqualBg.copy(alpha = 0.8f)
-                                                    )
-                                                )
-                                            ),
+                                            .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Icon(
                                             imageVector = currentFilter.icon,
                                             contentDescription = null,
-                                            tint = Color.White,
+                                            tint = themeColors.buttonEqualBg,
                                             modifier = Modifier.size(18.dp)
                                         )
                                     }
@@ -1865,20 +1858,13 @@ fun DashboardCategoriesView(
                                             modifier = Modifier
                                                 .size(28.dp)
                                                 .clip(CircleShape)
-                                                .background(
-                                                    Brush.linearGradient(
-                                                        colors = listOf(
-                                                            themeColors.buttonEqualBg,
-                                                            themeColors.buttonEqualBg.copy(alpha = 0.8f)
-                                                        )
-                                                    )
-                                                ),
+                                                .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
                                             contentAlignment = Alignment.Center
                                         ) {
                                             Icon(
                                                 imageVector = category.icon,
                                                 contentDescription = category.titleEn,
-                                                tint = Color.White,
+                                                tint = themeColors.buttonEqualBg,
                                                 modifier = Modifier.size(16.dp)
                                             )
                                         }
@@ -3539,7 +3525,14 @@ fun DashboardSearchResultsView(
                                                     modifier = Modifier
                                                         .size(38.dp)
                                                         .clip(CircleShape)
-                                                        .background(themeColors.buttonEqualBg),
+                                                        .background(
+                                                            Brush.linearGradient(
+                                                                colors = listOf(
+                                                                    themeColors.buttonEqualBg,
+                                                                    themeColors.buttonEqualBg.copy(alpha = 0.8f)
+                                                                )
+                                                            )
+                                                        ),
                                                     contentAlignment = Alignment.Center
                                                 ) {
                                                     Icon(
@@ -3657,7 +3650,14 @@ fun DashboardSearchResultsView(
                                                     modifier = Modifier
                                                         .size(38.dp)
                                                         .clip(CircleShape)
-                                                        .background(themeColors.buttonEqualBg),
+                                                        .background(
+                                                            Brush.linearGradient(
+                                                                colors = listOf(
+                                                                    themeColors.buttonEqualBg,
+                                                                    themeColors.buttonEqualBg.copy(alpha = 0.8f)
+                                                                )
+                                                            )
+                                                        ),
                                                     contentAlignment = Alignment.Center
                                                 ) {
                                                     Icon(

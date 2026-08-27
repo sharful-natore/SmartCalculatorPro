@@ -39,6 +39,7 @@ class QuranDownloadWorker(
 
             for (ayah in ayahs) {
                 if (isStopped) {
+                    repository.updateDownloadStatus(surahNumber, isDownloaded = false, progress = 0)
                     return@withContext Result.failure()
                 }
 

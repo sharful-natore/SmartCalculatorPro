@@ -58,6 +58,8 @@ fun QuranScreen(
 
     val aiDialogVisible by viewModel.aiDialogVisible.collectAsStateWithLifecycle()
     val storageDialogVisible by viewModel.storageDialogVisible.collectAsStateWithLifecycle()
+    val downloadConfirmSurah by viewModel.downloadConfirmSurah.collectAsStateWithLifecycle()
+    val showDownloadAllConfirmDialog by viewModel.showDownloadAllConfirmDialog.collectAsStateWithLifecycle()
 
     // Dynamic theme-derived palette matching main app theme
     val cyanPrimary = themeColors.buttonEqualBg
@@ -481,6 +483,90 @@ fun QuranScreen(
                         }
                         Spacer(modifier = Modifier.height(4.dp))
                     }
+                    // Active Downloading Banner (shows when any download is in progress)
+                    val activeDownloadingSurahs = surahs.filter { it.downloadProgress in 1..99 }
+                    if (activeDownloadingSurahs.isNotEmpty()) {
+                        item {
+                            val firstDownloading = activeDownloadingSurahs.first()
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(containerColor = cyanPrimary.copy(alpha = 0.12f)),
+                                border = BorderStroke(1.dp, cyanPrimary.copy(alpha = 0.35f))
+                            ) {
+                                Column(modifier = Modifier.padding(12.dp)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier.weight(1f)
+                                        ) {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier.size(16.dp),
+                                                strokeWidth = 2.dp,
+                                                color = cyanPrimary
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(
+                                                text = if (activeDownloadingSurahs.size > 1) {
+                                                    "ডাউনলোড হচ্ছে: সূরা ${firstDownloading.nameBangla} সহ ${activeDownloadingSurahs.size}টি সূরা (${firstDownloading.downloadProgress}%)"
+                                                } else {
+                                                    "ডাউনলোড হচ্ছে: সূরা ${firstDownloading.nameBangla} (${firstDownloading.downloadProgress}%)"
+                                                },
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = cyanPrimary,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Surface(
+                                            onClick = { viewModel.cancelAllDownloads(context) },
+                                            shape = RoundedCornerShape(8.dp),
+                                            color = Color(0xFFEF4444).copy(alpha = 0.12f),
+                                            border = BorderStroke(1.dp, Color(0xFFEF4444).copy(alpha = 0.3f))
+                                        ) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Cancel,
+                                                    contentDescription = "Cancel",
+                                                    tint = Color(0xFFEF4444),
+                                                    modifier = Modifier.size(14.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(3.dp))
+                                                Text(
+                                                    text = "বাতিল",
+                                                    color = Color(0xFFEF4444),
+                                                    fontSize = 11.5.sp,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            }
+                                        }
+                                    }
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    LinearProgressIndicator(
+                                        progress = { firstDownloading.downloadProgress / 100f },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(5.dp)
+                                            .clip(RoundedCornerShape(3.dp)),
+                                        color = cyanPrimary,
+                                        trackColor = cyanPrimary.copy(alpha = 0.2f)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
                     items(
                         items = surahs,
                         key = { it.number }
@@ -493,13 +579,36 @@ fun QuranScreen(
                             themeColors = themeColors,
                             onCardClick = { onSurahClick(surah) },
                             onPlayClick = { viewModel.playSurah(surah) },
-                            onDownloadClick = { viewModel.downloadSurahAudio(context, surah.number) },
+                            onDownloadClick = { viewModel.requestDownloadSurah(surah) },
+                            onCancelDownloadClick = { viewModel.cancelSurahDownload(context, surah.number) },
                             onDownloadCompleteClick = { viewModel.openStorageManager(context) }
                         )
                     }
                 }
             }
         }
+    }
+
+    // Surah Download Confirmation Dialog
+    downloadConfirmSurah?.let { surah ->
+        SurahDownloadConfirmDialog(
+            surah = surah,
+            viewModel = viewModel,
+            themeColors = themeColors,
+            cyanPrimary = cyanPrimary,
+            onConfirm = { viewModel.downloadSurahAudio(context, surah.number) },
+            onDismiss = { viewModel.dismissDownloadSurahConfirm() }
+        )
+    }
+
+    // Full Quran Download Confirmation Dialog
+    if (showDownloadAllConfirmDialog) {
+        FullQuranDownloadConfirmDialog(
+            themeColors = themeColors,
+            cyanPrimary = cyanPrimary,
+            onConfirm = { viewModel.downloadAllQuranAudio(context) },
+            onDismiss = { viewModel.dismissDownloadAllConfirm() }
+        )
     }
 
     // Storage Manager Dialog
@@ -534,6 +643,7 @@ fun SurahListItemCard(
     onCardClick: () -> Unit,
     onPlayClick: () -> Unit,
     onDownloadClick: () -> Unit,
+    onCancelDownloadClick: () -> Unit,
     onDownloadCompleteClick: () -> Unit
 ) {
     ElevatedCard(
@@ -651,7 +761,7 @@ fun SurahListItemCard(
                         )
                     }
 
-                    // Download or Download Complete Button
+                    // Download or Download Complete or Cancel Download Button
                     if (surah.isAudioDownloaded) {
                         // Downloaded Complete Icon Button -> Click opens downloaded list dialog
                         IconButton(
@@ -665,7 +775,19 @@ fun SurahListItemCard(
                                 modifier = Modifier.size(22.dp)
                             )
                         }
-                    } else if (surah.downloadProgress == 0) {
+                    } else if (surah.downloadProgress in 1..99) {
+                        IconButton(
+                            onClick = onCancelDownloadClick,
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Cancel,
+                                contentDescription = "Cancel Download",
+                                tint = Color(0xFFEF4444),
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    } else {
                         IconButton(
                             onClick = onDownloadClick,
                             modifier = Modifier.size(32.dp)

@@ -71,7 +71,11 @@ fun SurahDetailScreen(
     val ayahDownloadProgress by viewModel.ayahDownloadProgress.collectAsStateWithLifecycle()
     val downloadedAyahKeys by viewModel.downloadedAyahKeys.collectAsStateWithLifecycle()
     val downloadedSurahs by viewModel.downloadedSurahs.collectAsStateWithLifecycle()
-    val isSurahDownloaded = surah.isAudioDownloaded || downloadedSurahs.any { it.number == surah.number }
+    val allSurahsList by viewModel.surahs.collectAsStateWithLifecycle()
+    val currentSurahState = allSurahsList.find { it.number == surah.number } ?: surah
+    val isSurahDownloading = currentSurahState.downloadProgress in 1..99
+    val isSurahDownloaded = currentSurahState.isAudioDownloaded || downloadedSurahs.any { it.number == surah.number }
+    val downloadConfirmSurah by viewModel.downloadConfirmSurah.collectAsStateWithLifecycle()
 
     // Persistent User Preferences for Quran Reading
     val quranPrefs = remember { context.getSharedPreferences("quran_view_prefs", Context.MODE_PRIVATE) }
@@ -255,15 +259,28 @@ fun SurahDetailScreen(
                             // Download Full Surah Icon Button
                             IconButton(
                                 onClick = {
-                                    viewModel.downloadSurahAudio(context, surah.number)
+                                    if (isSurahDownloading) {
+                                        viewModel.cancelSurahDownload(context, surah.number)
+                                    } else {
+                                        viewModel.requestDownloadSurah(currentSurahState)
+                                    }
                                 }
                             ) {
-                                Icon(
-                                    imageVector = if (isSurahDownloaded) Icons.Rounded.DownloadDone else Icons.Default.Download,
-                                    contentDescription = if (isSurahDownloaded) "Downloaded Offline" else "Download Full Surah",
-                                    tint = if (isSurahDownloaded) Color(0xFF6EE7B7) else Color.White,
-                                    modifier = Modifier.size(20.dp)
-                                )
+                                if (isSurahDownloading) {
+                                    Icon(
+                                        imageVector = Icons.Default.Cancel,
+                                        contentDescription = "Cancel Download",
+                                        tint = Color(0xFFEF4444),
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                } else {
+                                    Icon(
+                                        imageVector = if (isSurahDownloaded) Icons.Rounded.DownloadDone else Icons.Default.Download,
+                                        contentDescription = if (isSurahDownloaded) "Downloaded Offline" else "Download Full Surah",
+                                        tint = if (isSurahDownloaded) Color(0xFF6EE7B7) else Color.White,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
                             }
                         }
                     }
@@ -726,6 +743,18 @@ fun SurahDetailScreen(
             },
             containerColor = themeColors.cardBg,
             shape = RoundedCornerShape(20.dp)
+        )
+    }
+
+    // Surah Download Confirmation Dialog
+    downloadConfirmSurah?.let { s ->
+        SurahDownloadConfirmDialog(
+            surah = s,
+            viewModel = viewModel,
+            themeColors = themeColors,
+            cyanPrimary = emeraldPrimary,
+            onConfirm = { viewModel.downloadSurahAudio(context, s.number) },
+            onDismiss = { viewModel.dismissDownloadSurahConfirm() }
         )
     }
 }

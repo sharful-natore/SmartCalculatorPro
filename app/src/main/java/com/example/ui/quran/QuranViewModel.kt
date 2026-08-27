@@ -128,6 +128,38 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
     private val _aiDialogVisible = MutableStateFlow(false)
     val aiDialogVisible: StateFlow<Boolean> = _aiDialogVisible.asStateFlow()
 
+    // Download Confirmation Dialog States
+    private val _downloadConfirmSurah = MutableStateFlow<SurahEntity?>(null)
+    val downloadConfirmSurah: StateFlow<SurahEntity?> = _downloadConfirmSurah.asStateFlow()
+
+    private val _showDownloadAllConfirmDialog = MutableStateFlow(false)
+    val showDownloadAllConfirmDialog: StateFlow<Boolean> = _showDownloadAllConfirmDialog.asStateFlow()
+
+    fun requestDownloadSurah(surah: SurahEntity) {
+        _downloadConfirmSurah.value = surah
+    }
+
+    fun dismissDownloadSurahConfirm() {
+        _downloadConfirmSurah.value = null
+    }
+
+    fun requestDownloadAllQuran() {
+        _showDownloadAllConfirmDialog.value = true
+    }
+
+    fun dismissDownloadAllConfirm() {
+        _showDownloadAllConfirmDialog.value = false
+    }
+
+    fun getEstimatedSurahSize(surah: SurahEntity): String {
+        val bytes = (surah.numberOfAyahs * 115L * 1024L)
+        return if (bytes < 1024 * 1024) {
+            "${bytes / 1024} KB"
+        } else {
+            String.format(java.util.Locale.US, "%.1f MB", bytes / (1024f * 1024f))
+        }
+    }
+
     private val _aiQuestion = MutableStateFlow("")
     val aiQuestion: StateFlow<String> = _aiQuestion.asStateFlow()
 
@@ -328,6 +360,27 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
 
         WorkManager.getInstance(context).enqueue(downloadWork)
         Toast.makeText(context, "সূরা $surahNumber ডাউনলোড শুরু হয়েছে...", Toast.LENGTH_SHORT).show()
+    }
+
+    fun cancelSurahDownload(context: Context, surahNumber: Int) {
+        WorkManager.getInstance(context).cancelAllWorkByTag("${QuranDownloadWorker.WORK_TAG_PREFIX}$surahNumber")
+        viewModelScope.launch {
+            repository.updateDownloadStatus(surahNumber, isDownloaded = false, progress = 0)
+            Toast.makeText(context, "সূরা $surahNumber এর ডাউনলোড বাতিল করা হয়েছে।", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun cancelAllDownloads(context: Context) {
+        viewModelScope.launch {
+            val surahsList = repository.allSurahs.first()
+            for (surah in surahsList) {
+                WorkManager.getInstance(context).cancelAllWorkByTag("${QuranDownloadWorker.WORK_TAG_PREFIX}${surah.number}")
+                if (surah.downloadProgress in 1..99) {
+                    repository.updateDownloadStatus(surah.number, isDownloaded = false, progress = 0)
+                }
+            }
+            Toast.makeText(context, "সকল চলমান ডাউনলোড বাতিল/পজ করা হয়েছে।", Toast.LENGTH_SHORT).show()
+        }
     }
 
     fun downloadAllQuranAudio(context: Context) {
