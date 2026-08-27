@@ -338,11 +338,77 @@ object AuthenticHadithDatabase {
         return sb.toString()
     }
 
+    fun mapHadithMetadata(hadith: HadithItem): HadithItem {
+        val cleanSig = HadithValidator.getArabicSignature(hadith.arabicText)
+        
+        var trueId = hadith.id
+        val collectionName = when (hadith.bookId) {
+            "bukhari" -> "Sahih Bukhari"
+            "muslim" -> "Sahih Muslim"
+            "abudawood" -> "Sunan Abu Dawood"
+            "tirmidhi" -> "Jami` at-Tirmidhi"
+            "nasai" -> "Sunan an-Nasa'i"
+            "ibnmajah" -> "Sunan Ibn Majah"
+            "riyad" -> "Riyad as-Salihin"
+            "nawawi40" -> "40 Hadith Nawawi"
+            else -> "Hadith"
+        }
+
+        // Official mappings based on Arabic text signature matching
+        if (cleanSig.contains(HadithValidator.getArabicSignature("أحب الأعمال إلى الله أدومها وإن قل"))) {
+            trueId = if (hadith.bookId == "muslim") 782 else 6465
+        } else if (cleanSig.contains(HadithValidator.getArabicSignature("المسلم أخو المسلم"))) {
+            trueId = if (hadith.bookId == "muslim") 2580 else 2442
+        } else if (cleanSig.contains(HadithValidator.getArabicSignature("من رأى منكم منكرا فليغيره بيده"))) {
+            trueId = 49
+        } else if (cleanSig.contains(HadithValidator.getArabicSignature("إنما الأعمال بالنيات"))) {
+            trueId = if (hadith.bookId == "muslim") 1907 else 1
+        } else if (cleanSig.contains(HadithValidator.getArabicSignature("الطهور شطر الإيمان"))) {
+            trueId = 223
+        } else if (cleanSig.contains(HadithValidator.getArabicSignature("الدين النصيحة"))) {
+            trueId = 55
+        } else if (cleanSig.contains(HadithValidator.getArabicSignature("خيركم من تعلم القرآن وعلمه"))) {
+            trueId = 5027
+        } else if (cleanSig.contains(HadithValidator.getArabicSignature("لا تغضب"))) {
+            trueId = 6116
+        } else if (cleanSig.contains(HadithValidator.getArabicSignature("كلمتان خفيفتان على اللسان"))) {
+            trueId = 6406
+        } else if (cleanSig.contains(HadithValidator.getArabicSignature("أنا وكافل اليتيم في الجنة هكذا"))) {
+            trueId = 6005
+        } else if (cleanSig.contains(HadithValidator.getArabicSignature("من سلك طريقا يلتمس فيه علما"))) {
+            trueId = 2699
+        } else if (cleanSig.contains(HadithValidator.getArabicSignature("يسروا ولا تعسروا"))) {
+            trueId = 6125
+        } else if (cleanSig.contains(HadithValidator.getArabicSignature("مثل الذي يذكر ربه"))) {
+            trueId = 6407
+        } else if (cleanSig.contains(HadithValidator.getArabicSignature("كل معروف صدقة"))) {
+            trueId = 6021
+        } else if (cleanSig.contains(HadithValidator.getArabicSignature("عليكم بالصدق"))) {
+            trueId = 2607
+        } else if (cleanSig.contains(HadithValidator.getArabicSignature("من كان يؤمن بالله واليوم الآخر فليقل خيرا أو ليصمت"))) {
+            trueId = 6018
+        } else if (cleanSig.contains(HadithValidator.getArabicSignature("مثل المؤمنين في توادهم وتراحمهم"))) {
+            trueId = 6011
+        } else {
+            val parsedNum = hadith.hadithNumberEn.toIntOrNull()
+            if (parsedNum != null) {
+                trueId = parsedNum
+            }
+        }
+
+        return hadith.copy(
+            global_hadith_id = trueId,
+            collection_name = collectionName,
+            book_slug = hadith.bookId
+        )
+    }
+
     private data class HadithTemplate(
         val narratorBn: String,
         val arabicText: String,
         val banglaText: String,
-        val englishText: String
+        val englishText: String,
+        val bookSlugs: List<String> = listOf("bukhari", "muslim", "riyad", "tirmidhi", "abudawood", "ibnmajah", "nasai")
     )
 
     private val CORE_HADITH_TEMPLATES = listOf(
@@ -380,7 +446,8 @@ object AuthenticHadithDatabase {
             narratorBn = "হযরত আবু সাইদ আল-খুদরী (রাঃ) থেকে বর্ণিত:",
             arabicText = "مَنْ رَأَى مِنْكُمْ مُنْكَرًا فَلْيُغَيِّرْهُ بِيَدِهِ، فَإِنْ لَمْ يَسْتَطِعْ فَبِلِسَانِهِ، فَإِنْ لَمْ يَسْتَطِعْ فَبِقَلْبِهِ...",
             banglaText = "তোমাদের মধ্যে কেউ অন্যায় বা অসৎ কাজ হতে দেখলে তা হাত দিয়ে প্রতিরোধ করবে; তা না পারলে মুখ ফুটে প্রতিবাদ করবে; আর তাও না পারলে অন্তরে তা ঘৃণা করবে—আর এটিই ঈমানের দুর্বলতম স্তর।",
-            englishText = "Whoever among you sees an evil, let him change it with his hand; if he cannot, then with his tongue; if he cannot, then with his heart."
+            englishText = "Whoever among you sees an evil, let him change it with his hand; if he cannot, then with his tongue; if he cannot, then with his heart.",
+            bookSlugs = listOf("muslim", "riyad", "tirmidhi", "abudawood", "ibnmajah", "nasai")
         ),
         HadithTemplate(
             narratorBn = "হযরত জাবের ইবনে আবদুল্লাহ (রাঃ) থেকে বর্ণিত:",
@@ -411,11 +478,13 @@ object AuthenticHadithDatabase {
     fun getAllAuthenticHadiths(): List<HadithItem> {
         val list = mutableListOf<HadithItem>()
         // Nawawi 40
-        list.addAll(AuthenticNawawiHadiths.HADITHS)
+        list.addAll(AuthenticNawawiHadiths.HADITHS.map { mapHadithMetadata(it) })
         // Bukhari chapter hadiths
-        BUKHARI_CHAPTER_HADITHS.values.forEach { list.addAll(it) }
+        BUKHARI_CHAPTER_HADITHS.values.forEach { subList ->
+            list.addAll(subList.map { mapHadithMetadata(it) })
+        }
         // Master authentic collection
-        list.addAll(MASTER_AUTHENTIC_COLLECTION)
+        list.addAll(MASTER_AUTHENTIC_COLLECTION.map { mapHadithMetadata(it) })
         return list.distinctBy { "${it.bookId}_${it.id}" }
     }
 
@@ -490,8 +559,8 @@ object AuthenticHadithDatabase {
     fun getHadithsForBookAndChapter(bookId: String, chapterId: Int): List<HadithItem> {
         if (bookId == "nawawi40") {
             val nawawiFiltered = AuthenticNawawiHadiths.HADITHS.filter { it.chapterId == chapterId }
-            if (nawawiFiltered.isNotEmpty()) return nawawiFiltered
-            return AuthenticNawawiHadiths.HADITHS.take(8)
+            val baseList = if (nawawiFiltered.isNotEmpty()) nawawiFiltered else AuthenticNawawiHadiths.HADITHS.take(8)
+            return baseList.map { mapHadithMetadata(it) }
         }
 
         // Get any curated Hadiths for this book and chapter
@@ -514,7 +583,7 @@ object AuthenticHadithDatabase {
         }
 
         if (curated.size >= targetCount) {
-            return curated
+            return curated.map { mapHadithMetadata(it) }
         }
 
         // Fill up to targetCount with authentic structured items and precise references
@@ -566,11 +635,13 @@ object AuthenticHadithDatabase {
         }
 
         val needed = targetCount - result.size
+        val templatesForBook = CORE_HADITH_TEMPLATES.filter { it.bookSlugs.contains(bookId) }
+
         for (i in 1..needed) {
             val hadithIndex = result.size + 1
             val globalNum = startOffset + hadithIndex
-            val tmplIndex = ((chapterId * 3) + i) % CORE_HADITH_TEMPLATES.size
-            val tmpl = CORE_HADITH_TEMPLATES[tmplIndex]
+            val tmplIndex = ((chapterId * 3) + i) % templatesForBook.size
+            val tmpl = templatesForBook[tmplIndex]
 
             val bnNum = toBanglaDigit(globalNum)
             val enNum = globalNum.toString()
@@ -604,6 +675,6 @@ object AuthenticHadithDatabase {
             )
         }
 
-        return result
+        return result.map { mapHadithMetadata(it) }
     }
 }

@@ -82,7 +82,10 @@ data class HadithItem(
     val englishText: String,
     val gradeBn: String = "সহীহ (Authentic)",
     val referenceBn: String = "",
-    var isBookmarked: Boolean = false
+    var isBookmarked: Boolean = false,
+    val book_slug: String = bookId,
+    val global_hadith_id: Int = id,
+    val collection_name: String = bookId
 )
 
 // ==========================================
@@ -839,8 +842,9 @@ fun HadithLibraryScreen(
                                             },
                                             onCopyClick = {
                                                 val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                                val bnGlobalNo = com.example.data.islamic.AuthenticHadithDatabase.toBanglaDigit(hadith.global_hadith_id)
                                                 val fullText = """
-                                                    ${bookTitle} - হাদিস #${hadith.hadithNumberBn}
+                                                    ${bookTitle} - হাদিস #$bnGlobalNo
                                                     ${hadith.narratorBn}
                                                     
                                                     ${hadith.arabicText}
@@ -854,8 +858,9 @@ fun HadithLibraryScreen(
                                                 Toast.makeText(context, if (isBn) "হাদিসটি কপি করা হয়েছে" else "Hadith copied to clipboard", Toast.LENGTH_SHORT).show()
                                             },
                                             onShareClick = {
+                                                val bnGlobalNo = com.example.data.islamic.AuthenticHadithDatabase.toBanglaDigit(hadith.global_hadith_id)
                                                 val shareText = """
-                                                    ${bookTitle} - হাদিস #${hadith.hadithNumberBn}
+                                                    ${bookTitle} - হাদিস #$bnGlobalNo
                                                     
                                                     ${hadith.arabicText}
                                                     
@@ -1162,8 +1167,9 @@ fun HadithLibraryScreen(
                                             },
                                             onCopyClick = {
                                                 val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                                val bnGlobalNo = com.example.data.islamic.AuthenticHadithDatabase.toBanglaDigit(hadith.global_hadith_id)
                                                 val fullText = """
-                                                    ${currentBook.titleBn} - হাদিস #${hadith.hadithNumberBn}
+                                                    ${currentBook.titleBn} - হাদিস #$bnGlobalNo
                                                     ${hadith.narratorBn}
                                                     
                                                     ${hadith.arabicText}
@@ -1177,8 +1183,9 @@ fun HadithLibraryScreen(
                                                 Toast.makeText(context, if (isBn) "হাদিসটি কপি করা হয়েছে" else "Hadith copied to clipboard", Toast.LENGTH_SHORT).show()
                                             },
                                             onShareClick = {
+                                                val bnGlobalNo = com.example.data.islamic.AuthenticHadithDatabase.toBanglaDigit(hadith.global_hadith_id)
                                                 val shareText = """
-                                                    ${currentBook.titleBn} - হাদিস #${hadith.hadithNumberBn}
+                                                    ${currentBook.titleBn} - হাদিস #$bnGlobalNo
                                                     
                                                     ${hadith.arabicText}
                                                     
@@ -1330,8 +1337,12 @@ fun HadithLibraryScreen(
                                 allChapHadiths.filter { hadith ->
                                     val normNoBn = AuthenticHadithDatabase.normalizeDigits(hadith.hadithNumberBn)
                                     val normNoEn = AuthenticHadithDatabase.normalizeDigits(hadith.hadithNumberEn)
+                                    val normGlobalEn = hadith.global_hadith_id.toString()
+                                    val normGlobalBn = AuthenticHadithDatabase.normalizeDigits(AuthenticHadithDatabase.toBanglaDigit(hadith.global_hadith_id))
                                     normNoBn.contains(normQuery, ignoreCase = true) ||
                                             normNoEn.contains(normQuery, ignoreCase = true) ||
+                                            normGlobalEn.contains(normQuery, ignoreCase = true) ||
+                                            normGlobalBn.contains(normQuery, ignoreCase = true) ||
                                             hadith.narratorBn.contains(readerSearchQuery, ignoreCase = true) ||
                                             hadith.banglaText.contains(readerSearchQuery, ignoreCase = true) ||
                                             hadith.arabicText.contains(readerSearchQuery, ignoreCase = true) ||
@@ -1484,8 +1495,9 @@ fun HadithLibraryScreen(
                                     },
                                     onCopyClick = {
                                         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                        val bnGlobalNo = com.example.data.islamic.AuthenticHadithDatabase.toBanglaDigit(hadith.global_hadith_id)
                                         val fullText = """
-                                            ${currentBook.titleBn} - হাদিস #${hadith.hadithNumberBn}
+                                            ${currentBook.titleBn} - হাদিস #$bnGlobalNo
                                             ${hadith.narratorBn}
                                             
                                             ${hadith.arabicText}
@@ -1499,8 +1511,9 @@ fun HadithLibraryScreen(
                                         Toast.makeText(context, if (isBn) "হাদিসটি কপি করা হয়েছে" else "Hadith copied to clipboard", Toast.LENGTH_SHORT).show()
                                     },
                                     onShareClick = {
+                                        val bnGlobalNo = com.example.data.islamic.AuthenticHadithDatabase.toBanglaDigit(hadith.global_hadith_id)
                                         val shareText = """
-                                            ${currentBook.titleBn} - হাদিস #${hadith.hadithNumberBn}
+                                            ${currentBook.titleBn} - হাদিস #$bnGlobalNo
                                             
                                             ${hadith.arabicText}
                                             
@@ -1605,8 +1618,9 @@ fun HadithLibraryScreen(
                                         },
                                         onCopyClick = {
                                             val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                            val bnGlobalNo = com.example.data.islamic.AuthenticHadithDatabase.toBanglaDigit(hadith.global_hadith_id)
                                             val fullText = """
-                                                ${currentBook.titleBn} - হাদিস #${hadith.hadithNumberBn}
+                                                ${currentBook.titleBn} - হাদিস #$bnGlobalNo
                                                 ${hadith.narratorBn}
                                                 
                                                 ${hadith.arabicText}
@@ -1620,8 +1634,9 @@ fun HadithLibraryScreen(
                                             Toast.makeText(context, if (isBn) "হাদিসটি কপি করা হয়েছে" else "Hadith copied to clipboard", Toast.LENGTH_SHORT).show()
                                         },
                                         onShareClick = {
+                                            val bnGlobalNo = com.example.data.islamic.AuthenticHadithDatabase.toBanglaDigit(hadith.global_hadith_id)
                                             val shareText = """
-                                                ${currentBook.titleBn} - হাদিস #${hadith.hadithNumberBn}
+                                                ${currentBook.titleBn} - হাদিস #$bnGlobalNo
                                                 
                                                 ${hadith.arabicText}
                                                 
@@ -1766,7 +1781,7 @@ fun HadithLibraryScreen(
                                             }
                                         }
                                         Text(
-                                            text = "হাদিস নং ${hadith.hadithNumberBn}: ${hadith.narratorBn}",
+                                            text = "হাদিস নং ${com.example.data.islamic.AuthenticHadithDatabase.toBanglaDigit(hadith.global_hadith_id)}: ${hadith.narratorBn}",
                                             fontSize = 11.5.sp,
                                             fontWeight = FontWeight.SemiBold,
                                             color = themeColors.displayText.copy(alpha = 0.85f),
@@ -2075,6 +2090,9 @@ fun HadithReaderCardItem(
                         Spacer(modifier = Modifier.width(6.dp))
                     }
 
+                    val globalNumEn = hadith.global_hadith_id.toString()
+                    val globalNumBn = com.example.data.islamic.AuthenticHadithDatabase.toBanglaDigit(hadith.global_hadith_id)
+
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(8.dp))
@@ -2082,7 +2100,7 @@ fun HadithReaderCardItem(
                             .padding(horizontal = 8.dp, vertical = 4.dp)
                     ) {
                         Text(
-                            text = if (isBn) "হাদিস #${hadith.hadithNumberBn}" else "Hadith #${hadith.hadithNumberEn}",
+                            text = if (isBn) "হাদিস #$globalNumBn" else "Hadith #$globalNumEn",
                             fontSize = 11.5.sp,
                             fontWeight = FontWeight.Bold,
                             color = themeColors.displayText
