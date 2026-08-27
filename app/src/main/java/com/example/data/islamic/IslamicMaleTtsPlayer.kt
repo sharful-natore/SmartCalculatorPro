@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Build
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
+import android.speech.tts.Voice
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,8 +27,8 @@ class IslamicMaleTtsPlayer private constructor(context: Context) : TextToSpeech.
 
     private var tts: TextToSpeech? = TextToSpeech(context.applicationContext, this)
     @Volatile private var isInitialized = false
-    @Volatile private var isBnAvailable = false
-    private var cachedMaleVoice: android.speech.tts.Voice? = null
+    private var cachedMaleVoice: Voice? = null
+    @Volatile private var pendingAction: (() -> Unit)? = null
 
     private val _isSpeaking = MutableStateFlow(false)
     val isSpeaking: StateFlow<Boolean> = _isSpeaking.asStateFlow()
@@ -39,18 +40,20 @@ class IslamicMaleTtsPlayer private constructor(context: Context) : TextToSpeech.
         if (status == TextToSpeech.SUCCESS) {
             isInitialized = true
             setupArabicMaleVoice()
-            checkBanglaSupport()
+            warmupEngine()
+            pendingAction?.invoke()
+            pendingAction = null
         }
     }
 
-    private fun checkBanglaSupport() {
+    private fun warmupEngine() {
         val ttsObj = tts ?: return
         try {
-            val bnLocale = Locale("bn", "BD")
-            isBnAvailable = ttsObj.isLanguageAvailable(bnLocale) >= TextToSpeech.LANG_AVAILABLE
-        } catch (e: Exception) {
-            isBnAvailable = false
-        }
+            configureMaleVoiceParams()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                ttsObj.speak(" ", TextToSpeech.QUEUE_FLUSH, null, "warmup")
+            }
+        } catch (_: Exception) {}
     }
 
     private fun setupArabicMaleVoice() {
@@ -60,46 +63,74 @@ class IslamicMaleTtsPlayer private constructor(context: Context) : TextToSpeech.
             ttsObj.language = arLocale
             val availableVoices = ttsObj.voices
             if (availableVoices != null) {
-                // Strictly exclude female voices and look for male voices
-                val maleVoice = availableVoices.firstOrNull { voice ->
+                // EXCLUDE female voices strictly: ar-x-a, ar-x-b, ar-xa-a, ar-xa-b, female, woman, fem, girl, sfb, sfa
+                // INCLUDE male voices: ar-x-c, ar-x-d, ar-x-e, ar-xa-c, ar-xa-d, male, man
+                val explicitMaleVoice = availableVoices.firstOrNull { voice ->
                     val name = voice.name.lowercase()
-                    voice.locale.language == "ar" &&
+                    val lang = voice.locale.language.lowercase()
+                    (lang == "ar" || name.contains("ar")) &&
                     (name.contains("male") ||
                      name.contains("man") ||
-                     name.contains("ar-x-a") ||
                      name.contains("ar-x-c") ||
+                     name.contains("ar-x-d") ||
+                     name.contains("ar-x-e") ||
+                     name.contains("ar-xa-c") ||
+                     name.contains("ar-xa-d") ||
                      name.contains("#male")) &&
                     !name.contains("female") &&
+                    !name.contains("woman") &&
+                    !name.contains("fem") &&
+                    !name.contains("girl") &&
+                    !name.contains("ar-x-a") &&
                     !name.contains("ar-x-b") &&
-                    !name.contains("ar-x-d") &&
+                    !name.contains("ar-xa-a") &&
+                    !name.contains("ar-xa-b") &&
                     !name.contains("sfb") &&
-                    !name.contains("fem")
+                    !name.contains("sfa")
                 } ?: availableVoices.firstOrNull { voice ->
                     val name = voice.name.lowercase()
-                    voice.locale.language == "ar" &&
+                    val lang = voice.locale.language.lowercase()
+                    (lang == "ar" || name.contains("ar")) &&
                     !name.contains("female") &&
+                    !name.contains("woman") &&
+                    !name.contains("fem") &&
+                    !name.contains("girl") &&
+                    !name.contains("ar-x-a") &&
                     !name.contains("ar-x-b") &&
-                    !name.contains("ar-x-d") &&
+                    !name.contains("ar-xa-a") &&
+                    !name.contains("ar-xa-b") &&
                     !name.contains("sfb") &&
-                    !name.contains("fem")
+                    !name.contains("sfa")
                 }
-                if (maleVoice != null) {
-                    cachedMaleVoice = maleVoice
-                    ttsObj.voice = maleVoice
+                if (explicitMaleVoice != null) {
+                    cachedMaleVoice = explicitMaleVoice
+                    ttsObj.voice = explicitMaleVoice
                 }
             }
         } catch (e: Exception) {
             e.printStackTrace()
         }
 
-        // Set deep, dignified male pitch (0.68f) and natural speech rate (0.95f)
-        ttsObj.setPitch(0.68f)
-        ttsObj.setSpeechRate(0.95f)
+        configureMaleVoiceParams()
+    }
+
+    private fun configureMaleVoiceParams() {
+        val ttsObj = tts ?: return
+        try {
+            ttsObj.language = Locale("ar")
+            cachedMaleVoice?.let { ttsObj.voice = it }
+            // Set natural, resonant male pitch (0.78f) and natural speech rate (0.95f)
+            ttsObj.setPitch(0.78f)
+            ttsObj.setSpeechRate(0.95f)
+        } catch (_: Exception) {}
     }
 
     fun speakFastArabic(id: String, arabicText: String) {
         val ttsObj = tts ?: return
-        if (!isInitialized) return
+        if (!isInitialized) {
+            pendingAction = { speakFastArabic(id, arabicText) }
+            return
+        }
 
         try {
             ttsObj.stop()
@@ -109,12 +140,7 @@ class IslamicMaleTtsPlayer private constructor(context: Context) : TextToSpeech.
         _isSpeaking.value = true
 
         val cleanAr = arabicText.replace("\n", " ").trim()
-        try {
-            ttsObj.language = Locale("ar")
-            cachedMaleVoice?.let { ttsObj.voice = it }
-            ttsObj.setPitch(0.68f)
-            ttsObj.setSpeechRate(0.95f)
-        } catch (_: Exception) {}
+        configureMaleVoiceParams()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             ttsObj.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
@@ -138,59 +164,16 @@ class IslamicMaleTtsPlayer private constructor(context: Context) : TextToSpeech.
     }
 
     fun speakOrStop(id: String, arabicText: String, banglaText: String? = null) {
-        if (!isInitialized) return
-        val ttsObj = tts ?: return
+        if (!isInitialized) {
+            pendingAction = { speakOrStop(id, arabicText, banglaText) }
+            return
+        }
 
         if (_isSpeaking.value && _activeAudioId.value == id) {
             stop()
         } else {
             stop()
-            setupArabicMaleVoice()
-            _activeAudioId.value = id
-            _isSpeaking.value = true
-
-            val cleanAr = arabicText.replace("\n", " ").trim()
-            val cleanBn = banglaText?.replace("\n", " ")?.trim() ?: ""
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                ttsObj.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-                    override fun onStart(utteranceId: String?) {}
-                    override fun onDone(utteranceId: String?) {
-                        if (utteranceId == "${id}_ar" && cleanBn.isNotEmpty()) {
-                            try {
-                                if (isBnAvailable) {
-                                    ttsObj.language = Locale("bn", "BD")
-                                } else {
-                                    ttsObj.language = Locale.getDefault()
-                                }
-                                ttsObj.setPitch(0.70f)
-                                ttsObj.setSpeechRate(1.0f)
-                                ttsObj.speak(cleanBn, TextToSpeech.QUEUE_FLUSH, null, id)
-                            } catch (e: Exception) {
-                                _isSpeaking.value = false
-                                _activeAudioId.value = null
-                            }
-                        } else if (utteranceId == id || utteranceId == "${id}_ar") {
-                            _isSpeaking.value = false
-                            _activeAudioId.value = null
-                        }
-                    }
-                    override fun onError(utteranceId: String?) {
-                        _isSpeaking.value = false
-                        _activeAudioId.value = null
-                    }
-                })
-                if (cleanBn.isNotEmpty()) {
-                    ttsObj.speak(cleanAr, TextToSpeech.QUEUE_FLUSH, null, "${id}_ar")
-                } else {
-                    ttsObj.speak(cleanAr, TextToSpeech.QUEUE_FLUSH, null, id)
-                }
-            } else {
-                @Suppress("DEPRECATION")
-                val params = HashMap<String, String>()
-                params[TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID] = id
-                ttsObj.speak(cleanAr, TextToSpeech.QUEUE_FLUSH, params)
-            }
+            speakFastArabic(id, arabicText)
         }
     }
 

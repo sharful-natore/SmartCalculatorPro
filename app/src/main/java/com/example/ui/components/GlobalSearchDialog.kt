@@ -77,6 +77,18 @@ sealed class SearchResult(
         icon = Icons.Default.History,
         onClick = onAction
     )
+    class QuranSurah(val surahNum: Int, val nameEn: String, val nameBn: String, val onAction: () -> Unit) : SearchResult(
+        title = nameBn,
+        subTitle = "কুরআন সূরা • $nameEn • Surah $surahNum",
+        icon = Icons.Default.AutoStories,
+        onClick = onAction
+    )
+    class Hadith(val reference: String, val narrator: String, val text: String, val onAction: () -> Unit) : SearchResult(
+        title = reference,
+        subTitle = if (narrator.isNotEmpty()) "$narrator: $text" else text,
+        icon = Icons.Default.LibraryBooks,
+        onClick = onAction
+    )
 }
 
 fun ConverterType.matchesConverterQuery(query: String): Boolean {
@@ -171,6 +183,7 @@ fun GlobalSearchDialog(
 ) {
     if (!viewModel.showGlobalSearch) return
 
+    val quranViewModel: com.example.ui.quran.QuranViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
     val dialogWidth = (screenWidth * 0.92f).coerceAtMost(500.dp)
@@ -286,6 +299,51 @@ fun GlobalSearchDialog(
                                     viewModel.showGlobalSearch = false
                                 })
                             }
+                        }
+
+                        // Search Quran Surahs
+                        try {
+                            com.example.data.quran.QuranMetadata.defaultSurahList.forEach { surah ->
+                                val nameEnMatch = surah.nameEnglish.contains(query, ignoreCase = true) || surah.nameTranslation.contains(query, ignoreCase = true)
+                                val nameBnMatch = surah.nameBangla.contains(query, ignoreCase = true)
+                                val surahNumMatch = surah.number.toString() == normalizedQuery
+                                
+                                if (nameEnMatch || nameBnMatch || surahNumMatch) {
+                                    results.add(SearchResult.QuranSurah(surah.number, surah.nameEnglish, surah.nameBangla) {
+                                        viewModel.selectedToolType = com.example.data.model.ToolType.HOLY_QURAN
+                                        viewModel.activeTab = 0
+                                        quranViewModel.selectSurahByNumber(surah.number)
+                                        viewModel.showGlobalSearch = false
+                                    })
+                                }
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+
+                        // Search Hadiths
+                        try {
+                            val matchedHadiths = com.example.data.islamic.AuthenticHadithDatabase.searchHadiths(query)
+                            matchedHadiths.take(5).forEach { hadith ->
+                                val bookName = when (hadith.bookId) {
+                                    "bukhari" -> "সহীহ বুখারী"
+                                    "muslim" -> "সহীহ মুসলিম"
+                                    "nawawi40" -> "ইমাম নববীর ৪০ হাদিস"
+                                    else -> "হাদিস"
+                                }
+                                results.add(SearchResult.Hadith(
+                                    reference = "$bookName - হাদিস নং ${hadith.hadithNumberBn}",
+                                    narrator = hadith.narratorBn,
+                                    text = hadith.banglaText
+                                ) {
+                                    viewModel.selectedToolType = com.example.data.model.ToolType.HADITH_LIBRARY
+                                    viewModel.activeTab = 0
+                                    viewModel.globalHadithSearchQuery = query
+                                    viewModel.showGlobalSearch = false
+                                })
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
                         }
 
                         results

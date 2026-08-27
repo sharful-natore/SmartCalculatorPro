@@ -393,6 +393,13 @@ fun HadithLibraryScreen(
 
     // Search query for Global Books & Hadiths
     var searchQuery by remember { mutableStateOf("") }
+    
+    androidx.compose.runtime.LaunchedEffect(viewModel.globalHadithSearchQuery) {
+        if (viewModel.globalHadithSearchQuery.isNotEmpty()) {
+            searchQuery = viewModel.globalHadithSearchQuery
+            viewModel.globalHadithSearchQuery = ""
+        }
+    }
     // Search query for selected book (In-Book Search)
     var bookSearchQuery by remember { mutableStateOf("") }
     // Search query for selected chapter/reader (In-Reader Search)
@@ -428,6 +435,8 @@ fun HadithLibraryScreen(
     var showBookmarksSheet by remember { mutableStateOf(false) }
 
     val ttsPlayer = remember { com.example.data.islamic.IslamicMaleTtsPlayer.getInstance(context) }
+    val isTtsSpeaking by ttsPlayer.isSpeaking.collectAsState()
+    val activeTtsId by ttsPlayer.activeAudioId.collectAsState()
 
     var isHeaderVisible by remember { mutableStateOf(true) }
     val nestedScrollConnection = remember {
@@ -818,6 +827,7 @@ fun HadithLibraryScreen(
                                             isBn = isBn,
                                             themeColors = themeColors,
                                             bookTitle = bookTitle,
+                                            isPlaying = isTtsSpeaking && activeTtsId == "hadith_${hadith.id}",
                                             onBookmarkToggle = {
                                                 val newState = HadithStorageManager.toggleBookmark(context, bookmarkKey)
                                                 bookmarkedSet = HadithStorageManager.getBookmarks(context)
@@ -1140,6 +1150,7 @@ fun HadithLibraryScreen(
                                             isBn = isBn,
                                             themeColors = themeColors,
                                             bookTitle = if (isBn) currentBook.titleBn else currentBook.titleEn,
+                                            isPlaying = isTtsSpeaking && activeTtsId == "hadith_${hadith.id}",
                                             onBookmarkToggle = {
                                                 val newState = HadithStorageManager.toggleBookmark(context, bookmarkKey)
                                                 bookmarkedSet = HadithStorageManager.getBookmarks(context)
@@ -1461,6 +1472,7 @@ fun HadithLibraryScreen(
                                     isBn = isBn,
                                     themeColors = themeColors,
                                     bookTitle = if (isBn) currentBook.titleBn else currentBook.titleEn,
+                                    isPlaying = isTtsSpeaking && activeTtsId == "hadith_${hadith.id}",
                                     onBookmarkToggle = {
                                         val newState = HadithStorageManager.toggleBookmark(context, bookmarkKey)
                                         bookmarkedSet = HadithStorageManager.getBookmarks(context)
@@ -1581,6 +1593,7 @@ fun HadithLibraryScreen(
                                         readerFontSize = readerFontSize,
                                         isBn = isBn,
                                         themeColors = themeColors,
+                                        isPlaying = isTtsSpeaking && activeTtsId == "hadith_${hadith.id}",
                                         onBookmarkToggle = {
                                             HadithStorageManager.toggleBookmark(context, bookmarkKey)
                                             bookmarkedSet = HadithStorageManager.getBookmarks(context)
@@ -2022,6 +2035,7 @@ fun HadithReaderCardItem(
     isBn: Boolean,
     themeColors: CalculatorThemeColors,
     bookTitle: String? = null,
+    isPlaying: Boolean = false,
     onBookmarkToggle: () -> Unit,
     onCopyClick: () -> Unit,
     onShareClick: () -> Unit,
@@ -2168,17 +2182,17 @@ fun HadithReaderCardItem(
             ) {
                 TextButton(onClick = onListenClick) {
                     Icon(
-                        imageVector = Icons.Default.VolumeUp,
-                        contentDescription = "Listen",
-                        tint = themeColors.buttonEqualBg,
+                        imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.VolumeUp,
+                        contentDescription = if (isPlaying) "Pause" else "Listen",
+                        tint = if (isPlaying) Color(0xFFEF4444) else themeColors.buttonEqualBg,
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = if (isBn) "শুনুন" else "Listen",
+                        text = if (isPlaying) (if (isBn) "থামুন" else "Pause") else (if (isBn) "শুনুন" else "Listen"),
                         fontSize = 11.5.sp,
                         fontWeight = FontWeight.Bold,
-                        color = themeColors.buttonEqualBg
+                        color = if (isPlaying) Color(0xFFEF4444) else themeColors.buttonEqualBg
                     )
                 }
 

@@ -442,20 +442,6 @@ fun MainContent(
                                 }
                             }
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                IconButton(
-                                    onClick = { 
-                                        viewModel.showGlobalSearch = true 
-                                    },
-                                    modifier = Modifier.size(40.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Search,
-                                        contentDescription = "Global Search",
-                                        tint = Color.White,
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                }
-
                                 if (viewModel.showFavoritesDialog) {
                                     FavoritesDialog(
                                         viewModel = viewModel,
@@ -1055,11 +1041,12 @@ fun MainContent(
                 }
             }
 
-            // Floating Pill AI Button with 2dp Animated Rotating Gemini Border on Right Side (Hides on Calculator tab or when inside Holy Quran / PDF tools with smooth enter/exit animation)
-            val isAiFabVisible = !viewModel.showAiChat && viewModel.activeTab != 2 &&
-                    viewModel.selectedToolType != ToolType.HOLY_QURAN &&
-                    viewModel.selectedToolType != ToolType.PDF_READER &&
-                    viewModel.selectedToolType != ToolType.PDF_MAKER
+            // Floating Pill AI Button with 2dp Animated Rotating Gemini Border on Right Side (Hides on Calculator, Themes, tools or when inside other screens with smooth enter/exit animation)
+            val isAiFabVisible = !viewModel.showAiChat && (
+                    (viewModel.activeTab == 0 && viewModel.selectedToolType == null) ||
+                    (viewModel.activeTab == 1) ||
+                    (viewModel.activeTab == 3)
+                )
 
             Box(
                 modifier = Modifier

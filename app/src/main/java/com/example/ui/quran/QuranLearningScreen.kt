@@ -934,7 +934,7 @@ fun LettersTab(
             confirmButton = {
                 Button(
                     onClick = {
-                        ttsPlayer.speakOrStop("letter_${letter.id}", letter.arabic, letter.banglaName)
+                        ttsPlayer.speakFastArabic("letter_${letter.id}", letter.arabic)
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = primaryGreen)
                 ) {
@@ -1089,7 +1089,7 @@ fun HarakatTab(
                                     .weight(1f)
                                     .clip(RoundedCornerShape(12.dp))
                                     .clickable {
-                                        ttsPlayer.speakOrStop("harakat_${ar}", ar, bn)
+                                        ttsPlayer.speakFastArabic("harakat_${ar}", ar)
                                     }
                             ) {
                                 Column(
@@ -1190,7 +1190,7 @@ fun SukoonTashdeedTab(
                                     .width(90.dp)
                                     .clip(RoundedCornerShape(12.dp))
                                     .clickable {
-                                        ttsPlayer.speakOrStop("st_${ar}", ar, bn)
+                                        ttsPlayer.speakFastArabic("st_${ar}", ar)
                                     }
                             ) {
                                 Column(
@@ -1322,7 +1322,7 @@ fun TajweedTab(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(12.dp))
                                     .clickable {
-                                        ttsPlayer.speakOrStop("tajweed_${ar}", ar, bn)
+                                        ttsPlayer.speakFastArabic("tajweed_${ar}", ar)
                                     }
                             ) {
                                 Row(
@@ -1420,7 +1420,7 @@ fun WordPracticeTab(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(14.dp))
                                     .clickable {
-                                        ttsPlayer.speakOrStop("word_${word.audioKey}", word.arabic, word.banglaTrans)
+                                        ttsPlayer.speakFastArabic("word_${word.audioKey}", word.arabic)
                                     }
                             ) {
                                 Column(

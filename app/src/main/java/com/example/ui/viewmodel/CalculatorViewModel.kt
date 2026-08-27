@@ -223,6 +223,7 @@ class CalculatorViewModel(
     var isScientificExpanded by mutableStateOf(false)
 
     var showGlobalSearch by mutableStateOf(false)
+    var globalHadithSearchQuery by mutableStateOf("")
     var showFavoritesDialog by mutableStateOf(false)
     var showCalculatorDialog by mutableStateOf(false)
     var showCalendarDialog by mutableStateOf(false)
@@ -817,6 +818,78 @@ How can I help you today?"""
                     actionType = "converter",
                     actionLabel = if (isBn) "মুদ্রা রূপান্তরে সরাসরি যান" else "Open Currency Converter",
                     actionData = "CURRENCY,$fromU,$toU,$primaryNum"
+                )
+            }
+            normalized.contains("কিবলা") || normalized.contains("qibla") || normalized.contains("মক্কা") || normalized.contains("কাবা") -> {
+                OfflineResult(
+                    replyText = "",
+                    actionType = "navigate_tool",
+                    actionLabel = if (isBn) "কিবলা কম্পাসে যান" else "Go to Qibla Compass",
+                    actionData = "QIBLA_COMPASS"
+                )
+            }
+            normalized.contains("কুরআন") || normalized.contains("কোরআন") || normalized.contains("quran") || normalized.contains("কোরান") || normalized.contains("সূরা") || normalized.contains("আয়াত") || normalized.contains("তেলাওয়াত") -> {
+                OfflineResult(
+                    replyText = "",
+                    actionType = "navigate_tool",
+                    actionLabel = if (isBn) "আল কুরআনে যান" else "Go to Al Quran",
+                    actionData = "HOLY_QURAN"
+                )
+            }
+            normalized.contains("তাসবিহ") || normalized.contains("তাসবীহ") || normalized.contains("tasbih") || normalized.contains("জিকির") || normalized.contains("কাউন্টার") -> {
+                OfflineResult(
+                    replyText = "",
+                    actionType = "navigate_tool",
+                    actionLabel = if (isBn) "ডিজিটাল তাসবিহে যান" else "Go to Digital Tasbih",
+                    actionData = "DIGITAL_TASBIH"
+                )
+            }
+            normalized.contains("নামাজের সময়") || normalized.contains("নামাজের সময়সূচি") || normalized.contains("prayer times") || normalized.contains("সালাত") || normalized.contains("ওয়াক্ত") -> {
+                OfflineResult(
+                    replyText = "",
+                    actionType = "navigate_tool",
+                    actionLabel = if (isBn) "নামাজের সময়সূচিতে যান" else "Go to Prayer Times",
+                    actionData = "PRAYER_TIMES"
+                )
+            }
+            normalized.contains("সেহরি") || normalized.contains("ইফতার") || normalized.contains("রমজান") || normalized.contains("sehri") || normalized.contains("iftar") -> {
+                OfflineResult(
+                    replyText = "",
+                    actionType = "navigate_tool",
+                    actionLabel = if (isBn) "সেহরি ও ইফতারের সময়সূচিতে যান" else "Go to Sehri & Iftar Schedule",
+                    actionData = "SEHRI_IFTAR"
+                )
+            }
+            normalized.contains("দোয়া") || normalized.contains("দোয়া") || normalized.contains("dua") || normalized.contains("মুনাজাত") || normalized.contains("মোনাজাত") -> {
+                OfflineResult(
+                    replyText = "",
+                    actionType = "navigate_tool",
+                    actionLabel = if (isBn) "দৈনন্দিন দোয়ায় যান" else "Go to Daily Duas",
+                    actionData = "ISLAMIC_DUAS"
+                )
+            }
+            normalized.contains("নামাজ শিক্ষা") || normalized.contains("অজু") || normalized.contains("নামাজের নিয়ম") || normalized.contains("ওজু") || normalized.contains("namaz education") || normalized.contains("wudu") -> {
+                OfflineResult(
+                    replyText = "",
+                    actionType = "navigate_tool",
+                    actionLabel = if (isBn) "নামাজ ও অজু শিক্ষায় যান" else "Go to Namaz & Wudu Guide",
+                    actionData = "NAMAZ_EDUCATION"
+                )
+            }
+            normalized.contains("হাদিস") || normalized.contains("হাদীস") || normalized.contains("hadith") || normalized.contains("বুখারী") || normalized.contains("মুসলিম") -> {
+                OfflineResult(
+                    replyText = "",
+                    actionType = "navigate_tool",
+                    actionLabel = if (isBn) "হাদিস গ্রন্থে যান" else "Go to Hadith Books",
+                    actionData = "HADITH_LIBRARY"
+                )
+            }
+            normalized.contains("কুরআন শিক্ষা") || normalized.contains("কোরআন শিক্ষা") || normalized.contains("learn quran") || normalized.contains("হরকত") || normalized.contains("তাজভীদ") || normalized.contains("মাখরাজ") -> {
+                OfflineResult(
+                    replyText = "",
+                    actionType = "navigate_tool",
+                    actionLabel = if (isBn) "কুরআন শিক্ষায় যান" else "Go to Learn Quran",
+                    actionData = "QURAN_LEARNING"
                 )
             }
             else -> null
