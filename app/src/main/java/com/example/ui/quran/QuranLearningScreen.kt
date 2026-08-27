@@ -111,7 +111,7 @@ object QuranLearningData {
     val ARABIC_LETTERS = listOf(
         ArabicLetter(1, "ا", "আলিফ", "Alif", "কণ্ঠনালীর শেষ ভাগ থেকে ফাঁকা মুখে উচ্চারিত হয়", "হলকী"),
         ArabicLetter(2, "ب", "বা", "Ba", "দুই ঠোঁটের ভেজা অংশ থেকে উচ্চারিত হয়", "শাফাভী"),
-        ArabicLetter(3, "ত", "তা", "Ta", "জিহ্বার ডগা উপরের সামনের দুটি দাঁতের গোড়ার সাথে লাগিয়ে", "নীতঈ"),
+        ArabicLetter(3, "ت", "তা", "Ta", "জিহ্বার ডগা উপরের সামনের দুটি দাঁতের গোড়ার সাথে লাগিয়ে", "নীতঈ"),
         ArabicLetter(4, "ث", "ছা", "Sa", "জিহ্বার ডগা উপরের সামনের দুটি দাঁতের মাথার সাথে লাগিয়ে", "লাছভী"),
         ArabicLetter(5, "ج", "জীম", "Jeem", "জিহ্বার মধ্যখান তার বরাবর উপরের তালুর সাথে লাগিয়ে", "শাজারী"),
         ArabicLetter(6, "ح", "হা", "Ha", "কণ্ঠনালীর মধ্যখান থেকে স্পষ্ট স্বরে উচ্চারিত হয়", "হলকী"),
@@ -147,7 +147,7 @@ object QuranLearningData {
         ),
         HarakatLesson(
             2, "ِ (যেৱ / Kasra)", "ই শব্দ", "নিম্নরেশা হরফের নিচে থাকে এবং 'ই' ধ্বনি তৈরি করে",
-            listOf("بِ" to "বি", "তِ" to "তি", "ثِ" to "ছি", "جِ" to "জি", "حِ" to "হি", "خِ" to "খি")
+            listOf("بِ" to "বি", "تِ" to "তি", "ثِ" to "ছি", "جِ" to "জি", "حِ" to "হি", "خِ" to "খি")
         ),
         HarakatLesson(
             3, "ُ (পেশ / Dammah)", "উ শব্দ", "হরফের উপরে ওয়াও-এর মতো চিহ্ন থাকে এবং 'উ' ধ্বনি দেয়",
@@ -159,11 +159,11 @@ object QuranLearningData {
         ),
         HarakatLesson(
             5, "ٍ (দুই যেৱ / Tanween Kasra)", "ইন/ইনঁ শব্দ", "দুই যের থাকলে হরফের নিচে 'ইন' ধ্বনি দেয়",
-            listOf("بٍ" to "বিন", "তٍ" to "তিন", "ثٍ" to "ছিন", "جٍ" to "জিন", "حٍ" to "হিন", "خٍ" to "খিন")
+            listOf("بٍ" to "বিন", "تٍ" to "তিন", "ثٍ" to "ছিন", "جٍ" to "জিন", "حٍ" to "হিন", "خٍ" to "খিন")
         ),
         HarakatLesson(
             6, "ٌ (দুই পেশ / Tanween Dammah)", "উন/উনঁ শব্দ", "দুই পেশ থাকলে হরফের উপরে 'উন' ধ্বনি দেয়",
-            listOf("بٌ" to "বুন", "তٌ" to "তুন", "ثٌ" to "ছুন", "جٌ" to "জুন", "حٌ" to "হুন", "خٌ" to "খুন")
+            listOf("بٌ" to "বুন", "تٌ" to "তুন", "ثٌ" to "ছুন", "جٌ" to "জুন", "حٌ" to "হুন", "خٌ" to "খুন")
         )
     )
 
@@ -659,7 +659,7 @@ fun LettersTab(
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = if (isShuffleMode) {
-                            if (isBn) "🔀 এলোমেলো প্র্যাকটিস চলছে (বাংলা উচ্চারণ লুকানো আছে, স্পর্শ করলে দেখা যাবে)" else "🔀 Random Practice Mode (Pronunciation hidden until tapped)"
+                            if (isBn) "এলোমেলো প্র্যাকটিস চলছে (উচ্চারণ লুকানো আছে, স্পর্শ করলে শোনা যাবে)" else "Random Practice Mode (Pronunciation hidden until tapped)"
                         } else {
                             if (isBn) "যেকোনো আরবি বর্ণে স্পর্শ করলেই দ্রুত পুরুষ কণ্ঠে উচ্চারণ শুনবেন" else "Tap any letter to hear fast male pronunciation"
                         },
@@ -683,13 +683,24 @@ fun LettersTab(
                                 revealedLetters = emptySet()
                             }
                     ) {
-                        Text(
-                            text = if (isBn) "🎲 এলোমেলো প্র্যাকটিস" else "🎲 Random Practice",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White,
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                        )
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Shuffle,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = if (isBn) "এলোমেলো প্র্যাকটিস" else "Random Practice",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
                     }
                 } else {
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -703,13 +714,24 @@ fun LettersTab(
                                     revealedLetters = emptySet()
                                 }
                         ) {
-                            Text(
-                                text = if (isBn) "🔄 পুনর্বিন্যাস" else "🔄 Reshuffle",
-                                fontSize = 10.5.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
-                            )
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Refresh,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(13.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = if (isBn) "পুনর্বিন্যাস" else "Reshuffle",
+                                    fontSize = 10.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                            }
                         }
 
                         Surface(
@@ -723,13 +745,24 @@ fun LettersTab(
                                     revealedLetters = emptySet()
                                 }
                         ) {
-                            Text(
-                                text = if (isBn) "📋 সাধারণ মোড" else "📋 Normal Mode",
-                                fontSize = 10.5.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = primaryGreen,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
-                            )
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.FormatListBulleted,
+                                    contentDescription = null,
+                                    tint = primaryGreen,
+                                    modifier = Modifier.size(13.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = if (isBn) "সাধারণ মোড" else "Normal Mode",
+                                    fontSize = 10.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = primaryGreen
+                                )
+                            }
                         }
                     }
                 }
@@ -812,12 +845,30 @@ fun LettersTab(
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        Text(
-                            text = if (isRevealed) letter.banglaName else "🙈 উচ্চারণ দেখুন",
-                            fontSize = if (isRevealed) 14.sp else 11.5.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (isRevealed) themeColors.displayText else primaryGreen
-                        )
+                        if (isRevealed) {
+                            Text(
+                                text = letter.banglaName,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.displayText
+                            )
+                        } else {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.VisibilityOff,
+                                    contentDescription = null,
+                                    tint = primaryGreen,
+                                    modifier = Modifier.size(13.dp)
+                                )
+                                Spacer(modifier = Modifier.width(3.dp))
+                                Text(
+                                    text = "উচ্চারণ দেখুন",
+                                    fontSize = 11.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = primaryGreen
+                                )
+                            }
+                        }
 
                         Spacer(modifier = Modifier.height(2.dp))
 
@@ -1461,7 +1512,7 @@ fun AudioLetterQuizTab(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = if (isBn) "🔊 উচ্চারণটি শুনুন এবং সঠিক হরফটি বাছাই করুন" else "Listen to the audio and pick the correct letter",
+                    text = if (isBn) "উচ্চারণটি শুনুন এবং সঠিক হরফটি বাছাই করুন" else "Listen to the audio and pick the correct letter",
                     fontSize = 13.5.sp,
                     fontWeight = FontWeight.Bold,
                     color = themeColors.displayText,
@@ -1586,7 +1637,7 @@ fun AudioLetterQuizTab(
                     Spacer(modifier = Modifier.width(10.dp))
                     Column {
                         Text(
-                            text = if (isCorrectAnswer) "মাশাল্লাহ! সঠিক উত্তর 🎉" else "ভুল উত্তর! সঠিক হরফ: ${targetLetter.arabic} (${targetLetter.banglaName})",
+                            text = if (isCorrectAnswer) "মাশাল্লাহ! সঠিক উত্তর" else "ভুল উত্তর! সঠিক হরফ: ${targetLetter.arabic} (${targetLetter.banglaName})",
                             fontSize = 13.5.sp,
                             fontWeight = FontWeight.Bold,
                             color = themeColors.displayText
@@ -1797,12 +1848,26 @@ fun QuizTab(
                         border = BorderStroke(1.dp, primaryGreen.copy(alpha = 0.2f)),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(
-                            text = "💡 ব্যাখ্যা: ${currentQ.explanationBn}",
-                            fontSize = 12.sp,
-                            color = themeColors.displayText,
-                            modifier = Modifier.padding(12.dp)
-                        )
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Info,
+                                contentDescription = null,
+                                tint = primaryGreen,
+                                modifier = Modifier
+                                    .size(18.dp)
+                                    .padding(top = 2.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "ব্যাখ্যা: ${currentQ.explanationBn}",
+                                fontSize = 12.sp,
+                                color = themeColors.displayText,
+                                lineHeight = 17.sp
+                            )
+                        }
                     }
                 }
             }
@@ -1857,7 +1922,7 @@ fun QuizTab(
                             text = if (currentIndex < sessionQuestions.size - 1) {
                                 if (isBn) "পরবর্তী প্রশ্ন →" else "Next Question →"
                             } else {
-                                if (isBn) "ফলাফল দেখুন 🎉" else "See Results 🎉"
+                                if (isBn) "ফলাফল দেখুন" else "See Results"
                             },
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
@@ -1881,7 +1946,16 @@ fun QuizTab(
                     modifier = Modifier.padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(text = "🎉 মাশাল্লাহ!", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = primaryGreen)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = null,
+                            tint = primaryGreen,
+                            modifier = Modifier.size(28.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(text = "মাশাল্লাহ!", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = primaryGreen)
+                    }
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = if (isBn) "আপনি ১০টি প্রশ্নের কুইজ পর্ব সম্পন্ন করেছেন" else "You completed 10 quiz questions!",
@@ -1932,12 +2006,21 @@ fun QuizTab(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(14.dp)
                     ) {
-                        Text(
-                            text = if (isBn) "নতুন ১০টি কুইজ শুরু করুন 🔄" else "Start New 10-Question Quiz 🔄",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = if (isBn) "নতুন ১০টি কুইজ শুরু করুন" else "Start New 10-Question Quiz",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
                     }
                 }
             }
