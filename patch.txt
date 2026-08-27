@@ -1,0 +1,6 @@
+                                Icon(
+                                    imageVector = if (isFullyDownloaded) Icons.Rounded.DownloadDone else if (isSurahDownloaded) Icons.Default.CloudDownload else Icons.Default.Download,
+                                    contentDescription = if (isFullyDownloaded) "Fully Downloaded Offline" else if (isSurahDownloaded) "Partially Downloaded" else "Download Full Surah",
+                                    tint = if (isFullyDownloaded) Color(0xFF6EE7B7) else if (isSurahDownloaded) Color(0xFFFBBF24) else Color.White,
+                                    modifier = Modifier.size(20.dp)
+                                )

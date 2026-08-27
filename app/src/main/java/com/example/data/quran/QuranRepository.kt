@@ -56,8 +56,14 @@ class QuranRepository(
         return emptyList()
     }
 
-    suspend fun updateDownloadStatus(surahNumber: Int, isDownloaded: Boolean, progress: Int) {
-        quranDao.updateDownloadStatus(surahNumber, isDownloaded, progress)
+    suspend fun updateDownloadStatus(
+        surahNumber: Int, 
+        isDownloaded: Boolean, 
+        progress: Int, 
+        error: String? = null, 
+        type: String? = null
+    ) {
+        quranDao.updateDownloadStatus(surahNumber, isDownloaded, progress, error, type)
     }
 
     fun getAudioDirectory(context: Context, surahNumber: Int): File {
@@ -69,12 +75,35 @@ class QuranRepository(
         return surahDir
     }
 
-    suspend fun deleteSurahAudio(context: Context, surahNumber: Int) {
+    suspend fun deleteSurahAudio(context: Context, surahNumber: Int, type: String = "ALL") {
         val dir = getAudioDirectory(context, surahNumber)
         if (dir.exists()) {
-            dir.deleteRecursively()
+            when (type) {
+                "ALL" -> {
+                    dir.deleteRecursively()
+                    updateDownloadStatus(surahNumber, isDownloaded = false, progress = 0, type = null)
+                }
+                "ARABIC" -> {
+                    dir.listFiles()?.filter { it.name.startsWith("arabic_") }?.forEach { it.delete() }
+                    // Update type: if it was BOTH, now it's BANGLA
+                    val surah = allSurahs.first().find { it.number == surahNumber }
+                    if (surah?.downloadedType == "BOTH") {
+                        updateDownloadStatus(surahNumber, isDownloaded = true, progress = 100, type = "BANGLA")
+                    } else {
+                        updateDownloadStatus(surahNumber, isDownloaded = false, progress = 0, type = null)
+                    }
+                }
+                "BANGLA" -> {
+                    dir.listFiles()?.filter { it.name.startsWith("bangla_") }?.forEach { it.delete() }
+                    val surah = allSurahs.first().find { it.number == surahNumber }
+                    if (surah?.downloadedType == "BOTH") {
+                        updateDownloadStatus(surahNumber, isDownloaded = true, progress = 100, type = "ARABIC")
+                    } else {
+                        updateDownloadStatus(surahNumber, isDownloaded = false, progress = 0, type = null)
+                    }
+                }
+            }
         }
-        quranDao.updateDownloadStatus(surahNumber, isDownloaded = false, progress = 0)
     }
 
     fun getTotalAudioStorageBytes(context: Context): Long {

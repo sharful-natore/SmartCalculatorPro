@@ -6,6 +6,7 @@ import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.Data
+import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.example.BuildConfig
@@ -329,7 +330,7 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun downloadSurahAudio(context: Context, surahNumber: Int) {
+    fun downloadSurahAudio(context: Context, surahNumber: Int, downloadType: String = "BOTH") {
         if (!NetworkUtil.isOnline(context)) {
             Toast.makeText(
                 context,
@@ -341,6 +342,7 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
 
         val workData = Data.Builder()
             .putInt(QuranDownloadWorker.KEY_SURAH_NUMBER, surahNumber)
+            .putString(QuranDownloadWorker.KEY_DOWNLOAD_TYPE, downloadType)
             .build()
 
         val downloadWork = OneTimeWorkRequestBuilder<QuranDownloadWorker>()
@@ -348,13 +350,33 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
             .addTag("${QuranDownloadWorker.WORK_TAG_PREFIX}$surahNumber")
             .build()
 
-        WorkManager.getInstance(context).enqueue(downloadWork)
+        WorkManager.getInstance(context).enqueueUniqueWork(
+            "${QuranDownloadWorker.WORK_TAG_PREFIX}$surahNumber",
+            ExistingWorkPolicy.REPLACE,
+            downloadWork
+        )
         Toast.makeText(context, "সূরা $surahNumber ডাউনলোড শুরু হয়েছে...", Toast.LENGTH_SHORT).show()
     }
 
-    fun deleteSurahAudio(context: Context, surahNumber: Int) {
+    fun downloadFullQuran(context: Context, downloadType: String = "BOTH") {
         viewModelScope.launch {
-            repository.deleteSurahAudio(context, surahNumber)
+            val surahs = repository.allSurahs.first()
+            surahs.forEach { surah ->
+                downloadSurahAudio(context, surah.number, downloadType)
+            }
+            Toast.makeText(context, "পুরো কুরআন ডাউনলোড শুরু হয়েছে...", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    fun clearDownloadError(surahNumber: Int) {
+        viewModelScope.launch {
+            repository.updateDownloadStatus(surahNumber, isDownloaded = false, progress = 0, error = null)
+        }
+    }
+
+    fun deleteSurahAudio(context: Context, surahNumber: Int, type: String = "ALL") {
+        viewModelScope.launch {
+            repository.deleteSurahAudio(context, surahNumber, type)
             refreshStorageSize(context)
         }
     }

@@ -368,13 +368,26 @@ class QuranAudioPlayer private constructor(private val context: Context) {
             player.prepare()
             player.play()
         } else {
-            // Play Bengali via EveryAyah CDN
-            val url = String.format(Locale.US, "https://www.everyayah.com/data/%s/%03d%03d.mp3", bengaliReciter, surahNum, ayahInSurah)
-            _isPlaying.value = true
-            player.setMediaItem(MediaItem.fromUri(Uri.parse(url)))
-            player.playbackParameters = PlaybackParameters(_playbackSpeed.value)
-            player.prepare()
-            player.play()
+            // Play Bengali (Local first, then EveryAyah CDN)
+            val localBanglaFile = File(
+                context.getExternalFilesDir("quran_audio/surah_$surahNum"),
+                "bangla_$ayahInSurah.mp3"
+            )
+            
+            if (localBanglaFile.exists() && localBanglaFile.length() > 0) {
+                _isPlaying.value = true
+                player.setMediaItem(MediaItem.fromUri(Uri.fromFile(localBanglaFile)))
+                player.playbackParameters = PlaybackParameters(_playbackSpeed.value)
+                player.prepare()
+                player.play()
+            } else {
+                val url = String.format(Locale.US, "https://www.everyayah.com/data/%s/%03d%03d.mp3", bengaliReciter, surahNum, ayahInSurah)
+                _isPlaying.value = true
+                player.setMediaItem(MediaItem.fromUri(Uri.parse(url)))
+                player.playbackParameters = PlaybackParameters(_playbackSpeed.value)
+                player.prepare()
+                player.play()
+            }
         }
         updateNotification()
     }

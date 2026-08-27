@@ -72,6 +72,7 @@ fun SurahDetailScreen(
     val downloadedAyahKeys by viewModel.downloadedAyahKeys.collectAsStateWithLifecycle()
     val downloadedSurahs by viewModel.downloadedSurahs.collectAsStateWithLifecycle()
     val isSurahDownloaded = surah.isAudioDownloaded || downloadedSurahs.any { it.number == surah.number }
+    val isFullyDownloaded = isSurahDownloaded && (downloadedSurahs.find { it.number == surah.number }?.downloadedType == "BOTH" || surah.downloadedType == "BOTH")
 
     // Persistent User Preferences for Quran Reading
     val quranPrefs = remember { context.getSharedPreferences("quran_view_prefs", Context.MODE_PRIVATE) }
@@ -90,6 +91,10 @@ fun SurahDetailScreen(
     // Modal Sheet & Dialog States
     var showSettingsSheet by remember { mutableStateOf(false) }
     var showJumpDialog by remember { mutableStateOf(false) }
+    var showDownloadOptionsDialog by remember { mutableStateOf(false) }
+
+    // Error banner state
+    val downloadError = surah.lastDownloadError
 
     // Auto-collapsing TopBar on scroll for immersive reading
     var isTopBarVisible by remember { mutableStateOf(true) }
@@ -182,12 +187,43 @@ fun SurahDetailScreen(
                                     }
                                 )
                             )
-                            .padding(horizontal = 8.dp, vertical = 10.dp)
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
+                        Column {
+                            // Error Banner
+                            if (downloadError != null) {
+                                Surface(
+                                    color = Color(0xFFEF4444),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { viewModel.clearDownloadError(surah.number) }
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(vertical = 6.dp, horizontal = 12.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.ErrorOutline,
+                                            contentDescription = null,
+                                            tint = Color.White,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = "ডাউনলোড ব্যর্থ: $downloadError (ট্যাপ করে বন্ধ করুন)",
+                                            color = Color.White,
+                                            fontSize = 11.sp,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                    }
+                                }
+                            }
+
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 8.dp, vertical = 10.dp)
+                            ) {
                             IconButton(onClick = onBackClick) {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -255,13 +291,17 @@ fun SurahDetailScreen(
                             // Download Full Surah Icon Button
                             IconButton(
                                 onClick = {
-                                    viewModel.downloadSurahAudio(context, surah.number)
+                                    if (isFullyDownloaded) {
+                                        Toast.makeText(context, "সূরাটি সম্পূর্ণ অফলাইনে সংরক্ষিত রয়েছে", Toast.LENGTH_SHORT).show()
+                                    } else {
+                                        showDownloadOptionsDialog = true
+                                    }
                                 }
                             ) {
                                 Icon(
-                                    imageVector = if (isSurahDownloaded) Icons.Rounded.DownloadDone else Icons.Default.Download,
-                                    contentDescription = if (isSurahDownloaded) "Downloaded Offline" else "Download Full Surah",
-                                    tint = if (isSurahDownloaded) Color(0xFF6EE7B7) else Color.White,
+                                    imageVector = if (isFullyDownloaded) Icons.Rounded.DownloadDone else if (isSurahDownloaded) Icons.Default.CloudDownload else Icons.Default.Download,
+                                    contentDescription = if (isFullyDownloaded) "Fully Downloaded Offline" else if (isSurahDownloaded) "Partially Downloaded" else "Download Full Surah",
+                                    tint = if (isFullyDownloaded) Color(0xFF6EE7B7) else if (isSurahDownloaded) Color(0xFFFBBF24) else Color.White,
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -269,8 +309,9 @@ fun SurahDetailScreen(
                     }
                 }
             }
-        },
-        bottomBar = {
+        }
+    },
+    bottomBar = {
             if (isPlayerVisible) {
                 // Bottom Floating Audio Control Bar
                 SurahAudioControlBar(
@@ -728,6 +769,19 @@ fun SurahDetailScreen(
             shape = RoundedCornerShape(20.dp)
         )
     }
+
+    if (showDownloadOptionsDialog) {
+        DownloadOptionsDialog(
+            themeColors = themeColors,
+            cyanPrimary = cyanPrimary,
+            downloadedType = if (isSurahDownloaded) surah.downloadedType else null,
+            onDismiss = { showDownloadOptionsDialog = false },
+            onConfirm = { type ->
+                showDownloadOptionsDialog = false
+                viewModel.downloadSurahAudio(context, surah.number, type)
+            }
+        )
+    }
 }
 
 // --- SURAH HERO BANNER CARD ---
@@ -1051,7 +1105,7 @@ fun AyahCard(
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                // Actions: Bookmark, Download, Play, Copy, Share
+                // Actions: Bookmark, Play, Copy, Share
                 // 1. Bookmark Button
                 IconButton(
                     onClick = onToggleBookmark,
@@ -1065,49 +1119,7 @@ fun AyahCard(
                     )
                 }
 
-                // 2. Download / Status Button
-                when {
-                    downloadProgress != null && downloadProgress in 1..99 -> {
-                        CircularProgressIndicator(
-                            progress = { downloadProgress / 100f },
-                            modifier = Modifier
-                                .padding(horizontal = 6.dp)
-                                .size(18.dp),
-                            strokeWidth = 2.dp,
-                            color = emeraldColor
-                        )
-                    }
-                    isAyahDownloaded -> {
-                        IconButton(
-                            onClick = {
-                                Toast.makeText(context, "আয়াতটি অফলাইনে সংরক্ষিত রয়েছে", Toast.LENGTH_SHORT).show()
-                            },
-                            modifier = Modifier.size(32.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.DownloadDone,
-                                contentDescription = "Downloaded",
-                                tint = Color(0xFF10B981),
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-                    }
-                    else -> {
-                        IconButton(
-                            onClick = onDownloadAyah,
-                            modifier = Modifier.size(32.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Download,
-                                contentDescription = "Download Ayah Audio",
-                                tint = themeColors.displayText.copy(alpha = 0.6f),
-                                modifier = Modifier.size(19.dp)
-                            )
-                        }
-                    }
-                }
-
-                // 3. Play/Pause Ayah Audio
+                // 2. Play/Pause Ayah Audio
                 IconButton(
                     onClick = onPlayAyah,
                     modifier = Modifier
@@ -1426,6 +1438,7 @@ fun SurahAudioControlBar(
                 }
             }
         }
+
     }
 }
 
