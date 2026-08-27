@@ -401,6 +401,11 @@ enum class ToolType(
         "Hadith Books", "হাদিস গ্রন্থ",
         "বুখারী, মুসলিম, রিয়াদুস সালেহীন সহ অন্যান্য মূল হাদিস গ্রন্থ ডাউনলোড ও অফলাইনে পড়ুন",
         ToolCategory.ISLAMIC, Icons.Default.LibraryBooks
+    ),
+    QURAN_LEARNING(
+        "Learn Quran (Noorani Qaida)", "কুরআন শিক্ষা (নূরানী কায়দা)",
+        "সহজ নিয়মে আরবি হরফ, মাখরাজ, হরকত, তানভীন, তাশদীদ, মাদ, তাজভীদ ও শব্দে শব্দে অডিও সহ কুরআন শিক্ষা",
+        ToolCategory.ISLAMIC, Icons.Default.RecordVoiceOver
     );
 
     fun getTitle(language: AppLanguage): String {
@@ -470,6 +475,7 @@ enum class ToolType(
                 HOLY_QURAN -> "Holy Quran text, audio recitation, Bangla translation, and AI assistant"
                 NAMAZ_EDUCATION -> "Complete Namaz and Wudu learning guide with Rakat table, step-by-step visual postures, and duas"
                 HADITH_LIBRARY -> "Read Sahih Bukhari, Sahih Muslim, Riyad as-Salihin and major Hadith collections with zero app size impact"
+                QURAN_LEARNING -> "Learn Quran recitation, Noorani Qaida, Makhraj, Harakat, Tajweed rules and word-by-word practice with audio"
                 PDF_READER -> "View, zoom and read PDF documents on your device using native renderer"
                 PDF_MAKER -> "Create custom A4 PDF documents from notes, text, and photos with zero app size impact"
             }

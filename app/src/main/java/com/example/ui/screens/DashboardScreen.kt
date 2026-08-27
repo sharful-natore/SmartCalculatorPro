@@ -2336,6 +2336,7 @@ fun ToolDetailView(
     val isQuranOrNamaz = toolType == com.example.data.model.ToolType.HOLY_QURAN ||
                          toolType == com.example.data.model.ToolType.NAMAZ_EDUCATION ||
                          toolType == com.example.data.model.ToolType.HADITH_LIBRARY ||
+                         toolType == com.example.data.model.ToolType.QURAN_LEARNING ||
                          toolType == com.example.data.model.ToolType.PDF_READER ||
                          toolType == com.example.data.model.ToolType.PDF_MAKER
 
@@ -2521,6 +2522,11 @@ fun ToolDetailView(
             )
             ToolType.NAMAZ_EDUCATION -> com.example.ui.namaz.NamazEducationScreen(themeColors = themeColors, onBackClick = { viewModel.selectedToolType = null })
             ToolType.HADITH_LIBRARY -> com.example.ui.islamic.HadithLibraryScreen(viewModel = viewModel, themeColors = themeColors, onBackClick = { viewModel.selectedToolType = null })
+            ToolType.QURAN_LEARNING -> com.example.ui.quran.QuranLearningScreen(
+                themeColors = themeColors,
+                onBackClick = { viewModel.selectedToolType = null },
+                isBn = viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI
+            )
         }
     }
 }
@@ -3120,6 +3126,17 @@ private fun getToolInfoItems(toolType: ToolType, isBn: Boolean): List<Pair<Strin
         } else {
             listOf(
                 "1. Custom PDF Creator" to "Create professional A4 PDF documents from notes, text, titles, and photos to save or share effortlessly."
+            )
+        }
+        ToolType.QURAN_LEARNING -> if (isBn) {
+            listOf(
+                "১. আরবি ২৯টি হরফ ও মাখরাজ" to "সহজ নিয়মে আরবি বর্ণমালার মাখরাজ বা উচ্চারণের স্থান অডিও সহ অনুশীলন করুন।",
+                "২. তাজভীদের নিয়মাবলী ও কুইজ" to "গুন্নাহ, ইখফা, ইদগাম, মাদের নিয়ম ও কুইজ টেস্টের মাধ্যমে কুরআন তিলাওয়াত শুদ্ধ করুন।"
+            )
+        } else {
+            listOf(
+                "1. Arabic Alphabets & Makhraj" to "Learn the precise origin and pronunciation of all 29 Arabic letters with audio.",
+                "2. Tajweed Rules & Practice Quiz" to "Master Tajweed rules (Gunnah, Ikhfa, Idgham, Madd) and test your knowledge with interactive quizzes."
             )
         }
     }
