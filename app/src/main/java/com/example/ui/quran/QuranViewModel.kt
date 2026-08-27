@@ -371,7 +371,7 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun cancelAllDownloads(context: Context) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val surahsList = repository.allSurahs.first()
             for (surah in surahsList) {
                 WorkManager.getInstance(context).cancelAllWorkByTag("${QuranDownloadWorker.WORK_TAG_PREFIX}${surah.number}")
@@ -379,7 +379,9 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
                     repository.updateDownloadStatus(surah.number, isDownloaded = false, progress = 0)
                 }
             }
-            Toast.makeText(context, "সকল চলমান ডাউনলোড বাতিল/পজ করা হয়েছে।", Toast.LENGTH_SHORT).show()
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "সকল চলমান ডাউনলোড বাতিল/পজ করা হয়েছে।", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -395,10 +397,17 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
 
         viewModelScope.launch(Dispatchers.IO) {
             val surahsList = repository.allSurahs.first()
-            withContext(Dispatchers.Main) {
-                Toast.makeText(context, "সম্পূর্ণ কুরআনের অডিও ডাউনলোড শুরু হচ্ছে (১১৪টি সূরা)...", Toast.LENGTH_LONG).show()
+            val toDownload = surahsList.filter { !it.isAudioDownloaded }
+            if (toDownload.isEmpty()) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "আলহামদুলিল্লাহ! সকল সূরার অডিও ইতিমধ্যে অফলাইনে সেভ করা আছে।", Toast.LENGTH_SHORT).show()
+                }
+                return@launch
             }
-            for (surah in surahsList) {
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "${toDownload.size}টি সূরার অডিও ডাউনলোড শুরু হচ্ছে...", Toast.LENGTH_LONG).show()
+            }
+            for (surah in toDownload) {
                 val workData = Data.Builder()
                     .putInt(QuranDownloadWorker.KEY_SURAH_NUMBER, surah.number)
                     .build()

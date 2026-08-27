@@ -1,5 +1,6 @@
 package com.example.ui.screens
 
+import com.example.ui.theme.getToolIconGradient
 import com.example.ui.components.ToolInfoSection
 import com.example.ui.components.InfoToggleButton
 import com.example.ui.components.CategoryRankBadge
@@ -1447,7 +1448,7 @@ fun DashboardCategoriesView(
                                                     modifier = Modifier
                                                         .size(40.dp)
                                                         .clip(CircleShape)
-                                                        .background(themeColors.buttonEqualBg),
+                                                        .background(getToolIconGradient(themeColors.buttonEqualBg)),
                                                     contentAlignment = Alignment.Center
                                                 ) {
                                                     Icon(
@@ -2195,14 +2196,7 @@ fun ToolGridCardItem(
                         modifier = Modifier
                             .size(38.dp)
                             .clip(CircleShape)
-                            .background(
-                                Brush.linearGradient(
-                                    colors = listOf(
-                                        themeColors.buttonEqualBg,
-                                        themeColors.buttonEqualBg.copy(alpha = 0.8f)
-                                    )
-                                )
-                            ),
+                            .background(getToolIconGradient(themeColors.buttonEqualBg)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -3525,14 +3519,7 @@ fun DashboardSearchResultsView(
                                                     modifier = Modifier
                                                         .size(38.dp)
                                                         .clip(CircleShape)
-                                                        .background(
-                                                            Brush.linearGradient(
-                                                                colors = listOf(
-                                                                    themeColors.buttonEqualBg,
-                                                                    themeColors.buttonEqualBg.copy(alpha = 0.8f)
-                                                                )
-                                                            )
-                                                        ),
+                                                        .background(getToolIconGradient(themeColors.buttonEqualBg)),
                                                     contentAlignment = Alignment.Center
                                                 ) {
                                                     Icon(
@@ -3650,14 +3637,7 @@ fun DashboardSearchResultsView(
                                                     modifier = Modifier
                                                         .size(38.dp)
                                                         .clip(CircleShape)
-                                                        .background(
-                                                            Brush.linearGradient(
-                                                                colors = listOf(
-                                                                    themeColors.buttonEqualBg,
-                                                                    themeColors.buttonEqualBg.copy(alpha = 0.8f)
-                                                                )
-                                                            )
-                                                        ),
+                                                        .background(getToolIconGradient(themeColors.buttonEqualBg)),
                                                     contentAlignment = Alignment.Center
                                                 ) {
                                                     Icon(

@@ -50,6 +50,24 @@ fun safeParseColor(colorStr: String?, defaultHex: String = "#6366F1"): Color {
     }
 }
 
+fun getToolIconGradient(baseColor: Color): androidx.compose.ui.graphics.Brush {
+    val colorLight = Color(
+        red = (baseColor.red * 1.38f + 0.15f).coerceIn(0f, 1f),
+        green = (baseColor.green * 1.38f + 0.15f).coerceIn(0f, 1f),
+        blue = (baseColor.blue * 1.38f + 0.15f).coerceIn(0f, 1f),
+        alpha = 1f
+    )
+    val colorDark = Color(
+        red = (baseColor.red * 0.58f).coerceIn(0f, 1f),
+        green = (baseColor.green * 0.58f).coerceIn(0f, 1f),
+        blue = (baseColor.blue * 0.58f).coerceIn(0f, 1f),
+        alpha = 1f
+    )
+    return androidx.compose.ui.graphics.Brush.linearGradient(
+        colors = listOf(colorLight, baseColor, colorDark)
+    )
+}
+
 @com.squareup.moshi.JsonClass(generateAdapter = true)
 data class CustomTheme(
     val id: String = java.util.UUID.randomUUID().toString(),

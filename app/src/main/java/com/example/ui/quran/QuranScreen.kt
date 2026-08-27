@@ -450,35 +450,108 @@ fun QuranScreen(
                             }
                         }
                         Spacer(modifier = Modifier.height(4.dp))
-                        Surface(
-                            onClick = { viewModel.downloadAllQuranAudio(context) },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 2.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            color = cyanPrimary.copy(alpha = 0.12f),
-                            border = BorderStroke(1.dp, cyanPrimary.copy(alpha = 0.25f))
-                        ) {
-                            Row(
+                        val downloadedCount = surahs.count { it.isAudioDownloaded }
+                        val activeDownloadCount = surahs.count { it.downloadProgress in 1..99 }
+                        
+                        if (activeDownloadCount > 0) {
+                            Surface(
+                                onClick = { viewModel.cancelAllDownloads(context) },
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(vertical = 10.dp, horizontal = 12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center
+                                    .padding(horizontal = 16.dp, vertical = 2.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                color = Color(0xFFEF4444).copy(alpha = 0.12f),
+                                border = BorderStroke(1.dp, Color(0xFFEF4444).copy(alpha = 0.35f))
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.CloudDownload,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp),
-                                    tint = cyanPrimary
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "সম্পূর্ণ কুরআন অডিও একসাথে ডাউনলোড করুন (১১৪ সূরা)",
-                                    fontSize = 12.5.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = cyanPrimary
-                                )
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 10.dp, horizontal = 12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Cancel,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp),
+                                        tint = Color(0xFFEF4444)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "ডাউনলোড চলছে ($activeDownloadCount টি বাকি) • পজ বা বাতিল করতে ট্যাপ করুন",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFFEF4444)
+                                    )
+                                }
+                            }
+                        } else if (downloadedCount == 114 && surahs.isNotEmpty()) {
+                            Surface(
+                                onClick = { viewModel.openStorageManager(context) },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 2.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                color = Color(0xFF10B981).copy(alpha = 0.12f),
+                                border = BorderStroke(1.dp, Color(0xFF10B981).copy(alpha = 0.35f))
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 10.dp, horizontal = 12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.CloudDone,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp),
+                                        tint = Color(0xFF10B981)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "আলহামদুলিল্লাহ! সম্পূর্ণ ১১৪টি সূরা অফলাইনে সংরক্ষিত",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF10B981)
+                                    )
+                                }
+                            }
+                        } else {
+                            Surface(
+                                onClick = { viewModel.requestDownloadAllQuran() },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 2.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                color = cyanPrimary.copy(alpha = 0.12f),
+                                border = BorderStroke(1.dp, cyanPrimary.copy(alpha = 0.25f))
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 10.dp, horizontal = 12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.CloudDownload,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp),
+                                        tint = cyanPrimary
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = if (downloadedCount > 0) {
+                                            "বাকি ${114 - downloadedCount}টি সূরা একসাথে ডাউনলোড করুন"
+                                        } else {
+                                            "সম্পূর্ণ কুরআন অডিও একসাথে ডাউনলোড করুন (১১৪ সূরা)"
+                                        },
+                                        fontSize = 12.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = cyanPrimary
+                                    )
+                                }
                             }
                         }
                         Spacer(modifier = Modifier.height(4.dp))

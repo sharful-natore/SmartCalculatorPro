@@ -836,14 +836,7 @@ fun ConverterCardItem(
                         modifier = Modifier
                             .size(38.dp)
                             .clip(CircleShape)
-                            .background(
-                                Brush.linearGradient(
-                                    colors = listOf(
-                                        themeColors.buttonEqualBg,
-                                        themeColors.buttonEqualBg.copy(alpha = 0.8f)
-                                    )
-                                )
-                            ),
+                            .background(com.example.ui.theme.getToolIconGradient(themeColors.buttonEqualBg)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
