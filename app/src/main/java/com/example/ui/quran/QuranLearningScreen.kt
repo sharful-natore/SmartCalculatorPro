@@ -61,8 +61,12 @@ data class ArabicLetter(
     val banglaName: String,
     val englishName: String,
     val makhrajBn: String,
-    val categoryBn: String
-)
+    val categoryBn: String,
+    val spokenArabic: String = ""
+) {
+    val ttsText: String
+        get() = spokenArabic.ifEmpty { arabic }
+}
 
 data class JoinedLetter(
     val id: Int,
@@ -73,7 +77,8 @@ data class JoinedLetter(
     val nameBn: String,
     val nameEn: String,
     val example: String,
-    val exampleBn: String
+    val exampleBn: String,
+    val canConnectAfter: Boolean = true
 )
 
 data class HarakatLesson(
@@ -88,7 +93,9 @@ data class TajweedRule(
     val id: Int,
     val titleBn: String,
     val titleEn: String,
+    val lettersBn: String = "",
     val descriptionBn: String,
+    val howToSayBn: String = "",
     val colorHex: Color,
     val examples: List<Pair<String, String>>
 )
@@ -123,103 +130,110 @@ data class QuizQuestion(
 object QuranLearningData {
 
     val ARABIC_LETTERS = listOf(
-        ArabicLetter(1, "ا", "আলিফ", "Alif", "কণ্ঠনালীর শেষ ভাগ থেকে ফাঁকা মুখে উচ্চারিত হয়", "হলকী"),
-        ArabicLetter(2, "ب", "বা", "Ba", "দুই ঠোঁটের ভেজা অংশ থেকে উচ্চারিত হয়", "শাফাভী"),
-        ArabicLetter(3, "ت", "তা", "Ta", "জিহ্বার ডগা উপরের সামনের দুটি দাঁতের গোড়ার সাথে লাগিয়ে", "নীতঈ"),
-        ArabicLetter(4, "ث", "ছা", "Sa", "জিহ্বার ডগা উপরের সামনের দুটি দাঁতের মাথার সাথে লাগিয়ে", "লাছভী"),
-        ArabicLetter(5, "ج", "জীম", "Jeem", "জিহ্বার মধ্যখান তার বরাবর উপরের তালুর সাথে লাগিয়ে", "শাজারী"),
-        ArabicLetter(6, "ح", "হা", "Ha", "কণ্ঠনালীর মধ্যখান থেকে স্পষ্ট স্বরে উচ্চারিত হয়", "হলকী"),
-        ArabicLetter(7, "خ", "খ-আ", "Kha", "কণ্ঠনালীর শুরু (মুখের দিকের) অংশ থেকে মোটা স্বরে", "হলকী"),
-        ArabicLetter(8, "د", "দাল", "Dal", "জিহ্বার ডগা উপরের সামনের দুটি দাঁতের গোড়ার সাথে লাগিয়ে", "নীতঈ"),
-        ArabicLetter(9, "ذ", "যাল", "Zal", "জিহ্বার ডগা উপরের সামনের দুটি দাঁতের মাথার সাথে লাগিয়ে", "লাছভী"),
-        ArabicLetter(10, "ر", "রা", "Ra", "জিহ্বার ডগার পিঠ উপরের তালুর সাথে লাগিয়ে", "যালক্বী"),
-        ArabicLetter(11, "ز", "যা", "Zaa", "জিহ্বার ডগা নিচের সামনের দাঁতের মাথার সাথে লাগিয়ে", "আছলী"),
-        ArabicLetter(12, "س", "সীন", "Seen", "জিহ্বার ডগা নিচের সামনের দাঁতের মাথার সাথে লাগিয়ে নরম স্বরে", "আছলী"),
-        ArabicLetter(13, "ش", "শীন", "Sheen", "জিহ্বার মধ্যখান তার বরাবর উপরের তালুর সাথে লাগিয়ে", "শাজারী"),
-        ArabicLetter(14, "ص", "ছ-দ", "Saad", "জিহ্বার ডগা নিচের সামনের দাঁতের গোড়ার সাথে লাগিয়ে মোটা স্বরে", "আছলী"),
-        ArabicLetter(15, "ض", "দ্ব-দ", "Dhaad", "জিহ্বার গোড়ার কিনারা উপরের মাড়ির দাঁতের গোড়ার সাথে", "জার্সী"),
-        ArabicLetter(16, "ط", "ত্ব-আ", "Thaa", "জিহ্বার ডগা উপরের সামনের দুটি দাঁতের গোড়ার সাথে লাগিয়ে মোটা স্বরে", "নীতঈ"),
-        ArabicLetter(17, "ظ", "য-অ", "Zhaa", "জিহ্বার ডগা উপরের সামনের দুটি দাঁতের মাথার সাথে লাগিয়ে মোটা স্বরে", "লাছভী"),
-        ArabicLetter(18, "ع", "আইন", "Ayn", "কণ্ঠনালীর মধ্যখান থেকে চিপে বা চেপে উচ্চারিত হয়", "হলকী"),
-        ArabicLetter(19, "غ", "গাইন", "Ghayn", "কণ্ঠনালীর শুরু অংশ থেকে মোটা স্বরে উচ্চারিত হয়", "হলকী"),
-        ArabicLetter(20, "ف", "ফা", "Fa", "নিচের ঠোঁটের পেট উপরের সামনের দুটি দাঁতের মাথার সাথে", "শাফাভী"),
-        ArabicLetter(21, "ق", "ক্বাফ", "Qaf", "জিহ্বার গোড়া তার বরাবর উপরের নরম তালুর সাথে লাগিয়ে মোটা স্বরে", "লাহাবিয়া"),
-        ArabicLetter(22, "ك", "কাফ", "Kaf", "জিহ্বার গোড়া থেকে একটু আগে বাড়াইয়া শক্ত তালুর সাথে", "লাহাবিয়া"),
-        ArabicLetter(23, "ل", "লাম", "Lam", "জিহ্বার ডগার কিনারা উপরের সামনের দাঁতের মাড়ির সাথে", "যালক্বী"),
-        ArabicLetter(24, "م", "মীম", "Meem", "দুই ঠোঁটের শুকনো অংশ চেপে গুন্নাহসহ উচ্চারিত হয়", "শাফাভী"),
-        ArabicLetter(25, "ن", "নূন", "Noon", "জিহ্বার ডগা উপরের সামনের দাঁতের মাড়ির সাথে লাগিয়ে গুন্নাহসহ", "যালক্বী"),
-        ArabicLetter(26, "و", "ওয়াও", "Waw", "দুই ঠোঁট গোল করে ফাঁকা রেখে উচ্চারিত হয়", "শাফাভী"),
-        ArabicLetter(27, "هـ", "হা (গোল)", "Haa", "কণ্ঠনালীর শেষ (বুকের দিকের) অংশ থেকে হালকা স্বরে", "হলকী"),
-        ArabicLetter(28, "ء", "হামযাহ", "Hamzah", "কণ্ঠনালীর শেষ অংশ থেকে ঝটকা দিয়ে উচ্চারিত হয়", "হলকী"),
-        ArabicLetter(29, "ي", "ইয়া", "Yaa", "জিহ্বার মধ্যখান তার বরাবর উপরের তালুর সাথে লাগিয়ে", "শাজারী")
+        ArabicLetter(1, "ا", "আলিফ", "Alif", "১ নং মাখরাজ: মুখের খালি জায়গা থেকে ফাঁকা মুখে উচ্চারিত হয়", "জাওফী", "أَلِفْ"),
+        ArabicLetter(2, "ب", "বা", "Ba", "১৬ নং মাখরাজ: দুই ঠোঁটের ভেজা অংশ মিলিয়ে উচ্চারিত হয়", "শাফাভী", "بَاءْ"),
+        ArabicLetter(3, "ت", "তা", "Ta", "১২ নং মাখরাজ: জিহ্বার ডগা উপরের সামনের দুটি দাঁতের গোড়ার সাথে লাগিয়ে", "নীতঈ", "تَاءْ"),
+        ArabicLetter(4, "ث", "ছা", "Sa", "১৩ নং মাখরাজ: জিহ্বার ডগা উপরের সামনের দুটি দাঁতের আগার সাথে লাগিয়ে নরমভাবে", "লাছভী", "ثَاءْ"),
+        ArabicLetter(5, "ج", "জীম", "Jeem", "৭ নং মাখরাজ: জিহ্বার মধ্যখান তার বরাবর উপরের তালুর সাথে লাগিয়ে", "শাজারী", "جِيمْ"),
+        ArabicLetter(6, "ح", "হা", "Ha", "৩ নং মাখরাজ: কণ্ঠনালীর মধ্যখান থেকে পরিষ্কার স্পষ্ট স্বরে", "হলকী", "حَاءْ"),
+        ArabicLetter(7, "خ", "খা", "Kha", "৪ নং মাখরাজ: কণ্ঠনালীর শুরু (মুখের দিকের) অংশ থেকে খসখসে মোটা স্বরে", "হলকী", "خَاءْ"),
+        ArabicLetter(8, "د", "দাল", "Dal", "১২ নং মাখরাজ: জিহ্বার ডগা উপরের সামনের দুটি দাঁতের গোড়ার সাথে লাগিয়ে", "নীতঈ", "دَالْ"),
+        ArabicLetter(9, "ذ", "যাল", "Zal", "১৩ নং মাখরাজ: জিহ্বার ডগা উপরের সামনের দুটি দাঁতের আগার সাথে লাগিয়ে নরমভাবে", "লাছভী", "ذَالْ"),
+        ArabicLetter(10, "ر", "রা", "Ra", "১১ নং মাখরাজ: জিহ্বার ডগার পিঠ উপরের তালুর সাথে লাগিয়ে", "যালক্বী", "رَاءْ"),
+        ArabicLetter(11, "ز", "যা (ঝা)", "Zaa", "১৪ নং মাখরাজ: জিহ্বার ডগা নিচের সামনের দাঁতের আগার সাথে লাগিয়ে শিস দিয়ে তীক্ষ্ণ স্বরে", "আছলী", "زَايْ"),
+        ArabicLetter(12, "س", "সীন", "Seen", "১৪ নং মাখরাজ: জিহ্বার ডগা নিচের সামনের দাঁতের আগার সাথে লাগিয়ে নরম শিস দিয়ে", "আছলী", "سِينْ"),
+        ArabicLetter(13, "ش", "শীন", "Sheen", "৭ নং মাখরাজ: জিহ্বার মধ্যখান তার বরাবর উপরের তালুর সাথে লাগিয়ে বাতাস ছড়িয়ে", "শাজারী", "شِينْ"),
+        ArabicLetter(14, "ص", "ছোয়াদ (সোয়াদ)", "Saad", "১৪ নং মাখরাজ: জিহ্বার ডগা নিচের সামনের দাঁতের পেটের সাথে লাগিয়ে শিস ও মোটা স্বরে", "আছলী", "صَادْ"),
+        ArabicLetter(15, "ض", "দোয়াদ (দ্বদ)", "Dhaad", "৮ নং মাখরাজ: জিহ্বার গোড়ার কিনারা উপরের মাড়ির দাঁতের গোড়ার সাথে লাগিয়ে গম্ভীর স্বরে", "জার্সী", "ضَادْ"),
+        ArabicLetter(16, "ط", "ত্বোয়া (ত্বা)", "Thaa", "১২ নং মাখরাজ: জিহ্বার ডগা উপরের সামনের দুটি দাঁতের গোড়ার সাথে লাগিয়ে মোটা স্বরে", "নীতঈ", "طَاءْ"),
+        ArabicLetter(17, "ظ", "যোয়া (জোয়া)", "Zhaa", "১৩ নং মাখরাজ: জিহ্বার ডগা উপরের সামনের দুটি দাঁতের আগার সাথে লাগিয়ে নরম ও মোটা স্বরে", "লাছভী", "ظَاءْ"),
+        ArabicLetter(18, "ع", "আইন", "Ayn", "৩ নং মাখরাজ: কণ্ঠনালীর মধ্যখান থেকে চেপে স্পষ্ট স্বরে", "হলকী", "عَيْنْ"),
+        ArabicLetter(19, "غ", "গাইন", "Ghayn", "৪ নং মাখরাজ: কণ্ঠনালীর শুরু অংশ থেকে গম্ভীর মোটা স্বরে", "হলকী", "غَيْنْ"),
+        ArabicLetter(20, "ف", "ফা", "Fa", "১৫ নং মাখরাজ: নিচের ঠোঁটের পেট উপরের সামনের দুটি দাঁতের আগার সাথে লাগিয়ে", "শাফাভী", "فَاءْ"),
+        ArabicLetter(21, "ق", "ক্বাফ", "Qaf", "৫ নং মাখরাজ: জিহ্বার গোড়া তার বরাবর উপরের নরম তালুর সাথে লাগিয়ে মোটা স্বরে", "লাহভী", "قَافْ"),
+        ArabicLetter(22, "ك", "কাফ", "Kaf", "৬ নং মাখরাজ: জিহ্বার গোড়া থেকে একটু আগে বাড়িয়ে শক্ত তালুর সাথে লাগিয়ে পাতলা স্বরে", "লাহভী", "كَافْ"),
+        ArabicLetter(23, "ل", "লাম", "Lam", "৯ নং মাখরাজ: জিহ্বার ডগার কিনারা উপরের সামনের দাঁতের মাড়ির সাথে লাগিয়ে", "যালক্বী", "لَامْ"),
+        ArabicLetter(24, "م", "মীম", "Meem", "১৬ নং মাখরাজ: দুই ঠোঁটের শুকনো অংশ মিলিয়ে গুন্নাহসহ উচ্চারিত হয়", "শাফাভী", "مِيمْ"),
+        ArabicLetter(25, "ن", "নূন", "Noon", "১০ নং মাখরাজ: জিহ্বার ডগা উপরের সামনের দাঁতের মাড়ির সাথে লাগিয়ে গুন্নাহসহ", "যালক্বী", "نُونْ"),
+        ArabicLetter(26, "و", "ওয়াও", "Waw", "১৬ নং মাখরাজ: দুই ঠোঁট গোল করে ফাঁকা রেখে উচ্চারিত হয়", "শাফাভী", "وَاوْ"),
+        ArabicLetter(27, "هـ", "হা (গোল হা)", "Haa", "২ নং মাখরাজ: কণ্ঠনালীর শেষ (বুকের দিকের) অংশ থেকে হালকা স্বরে", "হলকী", "هَاءْ"),
+        ArabicLetter(28, "ء", "হামযাহ", "Hamzah", "২ নং মাখরাজ: কণ্ঠনালীর শেষ অংশ থেকে ঝটকা দিয়ে স্পষ্ট স্বরে", "হলকী", "هَمْزَة"),
+        ArabicLetter(29, "ي", "ইয়া", "Yaa", "৭ নং মাখরাজ: জিহ্বার মধ্যখান তার বরাবর উপরের তালুর সাথে লাগিয়ে", "শাজারী", "يَاءْ")
     )
 
-        val JOINED_LETTERS = listOf(
-        JoinedLetter(1, "ب", "بـ", "ـبـ", "ـب", "বা", "Ba", "بَيْت", "বাইত (ঘর)"),
-        JoinedLetter(2, "ت", "تـ", "ـتـ", "ـت", "তা", "Ta", "تَمْر", "তামর (খেজুর)"),
-        JoinedLetter(3, "ث", "ثـ", "ـثـ", "ـث", "ছা", "Sa", "ثَمَر", "ছামার (ফল)"),
-        JoinedLetter(4, "ج", "جـ", "ـجـ", "ـج", "জীম", "Jeem", "جَمَل", "জামাল (উট)"),
-        JoinedLetter(5, "ح", "حـ", "ـحـ", "ـح", "হা", "Ha", "حَجّ", "হাজ্জ (হজ)"),
-        JoinedLetter(6, "خ", "خـ", "ـخـ", "ـخ", "খা", "Kha", "خُبْز", "খুবয (রুটি)"),
-        JoinedLetter(7, "س", "سـ", "ـسـ", "ـس", "সীন", "Seen", "سَمَك", "সামাক (মাছ)"),
-        JoinedLetter(8, "ش", "شـ", "ـشـ", "ـش", "শীন", "Sheen", "شَمْس", "শামস (সূর্য)"),
-        JoinedLetter(9, "ص", "صـ", "ـصـ", "ـص", "ছাদ", "Saad", "صَبْر", "ছবর (ধৈর্য)"),
-        JoinedLetter(10, "ض", "ضـ", "ـضـ", "ـض", "দ্বাদ", "Dhaad", "ضَوْء", "দ্বাউ (আলো)"),
-        JoinedLetter(11, "ط", "طـ", "ـطـ", "ـط", "ত্বা", "Thaa", "طِفْل", "ত্বিফল (শিশু)"),
-        JoinedLetter(12, "ظ", "ظـ", "ـظـ", "ـظ", "য-অ", "Zhaa", "ظِلّ", "যিলল (ছায়া)"),
-        JoinedLetter(13, "ع", "عـ", "ـعـ", "ـع", "আইন", "Ayn", "عَيْن", "আইন (চোখ)"),
-        JoinedLetter(14, "غ", "غـ", "ـغـ", "ـغ", "গাইন", "Ghayn", "غَار", "গার (গুহা)"),
-        JoinedLetter(15, "ف", "فـ", "ـفـ", "ـف", "ফা", "Fa", "فِيل", "ফীল (হাতি)"),
-        JoinedLetter(16, "ق", "قـ", "ـقـ", "ـق", "ক্বাফ", "Qaf", "قَلَم", "ক্বালাম (কলম)"),
-        JoinedLetter(17, "ك", "كـ", "ـكـ", "ـك", "কাফ", "Kaf", "كِتَاب", "কিতাব (বই)"),
-        JoinedLetter(18, "ل", "لـ", "ـلـ", "ـل", "লাম", "Lam", "لَبَن", "লাবান (দুধ)"),
-        JoinedLetter(19, "م", "مـ", "ـمـ", "ـم", "মীম", "Meem", "مَاء", "মাআ (পানি)"),
-        JoinedLetter(20, "ن", "نـ", "ـنـ", "ـن", "নূন", "Noon", "نُور", "নূর (আলো)"),
-        JoinedLetter(21, "هـ", "هـ", "ـهـ", "ـه", "হা (গোল)", "Haa", "هِلال", "হিলাল (চাঁদ)"),
-        JoinedLetter(22, "ي", "يـ", "ـيـ", "ـي", "ইয়া", "Yaa", "يَد", "ইয়াদ (হাত)")
+    val JOINED_LETTERS = listOf(
+        JoinedLetter(1, "ا", "ا", "ـا", "ـا", "আলিফ", "Alif", "أَمَل", "আমাল (আশা)", canConnectAfter = false),
+        JoinedLetter(2, "ب", "بـ", "ـبـ", "ـب", "বা", "Ba", "بَيْت", "বাইত (ঘর)", canConnectAfter = true),
+        JoinedLetter(3, "ت", "تـ", "ـتـ", "ـت", "তা", "Ta", "تَمْر", "তামর (খেজুর)", canConnectAfter = true),
+        JoinedLetter(4, "ث", "ثـ", "ـثـ", "ـث", "ছা", "Sa", "ثَمَر", "ছামার (ফল)", canConnectAfter = true),
+        JoinedLetter(5, "ج", "جـ", "ـجـ", "ـج", "জীম", "Jeem", "جَمَل", "জামাল (উট)", canConnectAfter = true),
+        JoinedLetter(6, "ح", "حـ", "ـحـ", "ـح", "হা", "Ha", "حَجّ", "হাজ্জ (হজ)", canConnectAfter = true),
+        JoinedLetter(7, "خ", "خـ", "ـخـ", "ـخ", "খা", "Kha", "خُبْز", "খুবয (রুটি)", canConnectAfter = true),
+        JoinedLetter(8, "د", "د", "ـد", "ـد", "দাল", "Dal", "دِين", "দীন (জীবনবিধান)", canConnectAfter = false),
+        JoinedLetter(9, "ذ", "ذ", "ـذ", "ـذ", "যাল", "Zal", "ذِكْر", "যিকর (স্মরণ)", canConnectAfter = false),
+        JoinedLetter(10, "ر", "ر", "ـر", "ـر", "রা", "Ra", "رَحْمَة", "রহমাহ (দয়া)", canConnectAfter = false),
+        JoinedLetter(11, "ز", "ز", "ـز", "ـز", "যা (ঝা)", "Zaa", "زَيْت", "যাইত (তেল)", canConnectAfter = false),
+        JoinedLetter(12, "س", "سـ", "ـسـ", "ـس", "সীন", "Seen", "سَمَك", "সামাক (মাছ)", canConnectAfter = true),
+        JoinedLetter(13, "ش", "شـ", "ـشـ", "ـش", "শীন", "Sheen", "شَمْس", "শামস (সূর্য)", canConnectAfter = true),
+        JoinedLetter(14, "ص", "صـ", "ـصـ", "ـص", "ছোয়াদ (সোয়াদ)", "Saad", "صَبْر", "সবর (ধৈর্য)", canConnectAfter = true),
+        JoinedLetter(15, "ض", "ضـ", "ـضـ", "ـض", "দোয়াদ (দ্বদ)", "Dhaad", "ضَوْء", "দ্বাউ (আলো)", canConnectAfter = true),
+        JoinedLetter(16, "ط", "طـ", "ـطـ", "ـط", "ত্বোয়া (ত্বা)", "Thaa", "طِفْل", "ত্বিফল (শিশু)", canConnectAfter = true),
+        JoinedLetter(17, "ظ", "ظـ", "ـظـ", "ـظ", "যোয়া (জোয়া)", "Zhaa", "ظِلّ", "যিলল (ছায়া)", canConnectAfter = true),
+        JoinedLetter(18, "ع", "عـ", "ـعـ", "ـع", "আইন", "Ayn", "عَيْن", "আইন (চোখ)", canConnectAfter = true),
+        JoinedLetter(19, "غ", "غـ", "ـغـ", "ـغ", "গাইন", "Ghayn", "غَار", "গার (গুহা)", canConnectAfter = true),
+        JoinedLetter(20, "ف", "فـ", "ـفـ", "ـف", "ফা", "Fa", "فِيل", "ফীল (হাতি)", canConnectAfter = true),
+        JoinedLetter(21, "ق", "قـ", "ـقـ", "ـق", "ক্বাফ", "Qaf", "قَلَم", "ক্বালাম (কলম)", canConnectAfter = true),
+        JoinedLetter(22, "ك", "كـ", "ـكـ", "ـك", "কাফ", "Kaf", "كِتَاب", "কিতাব (বই)", canConnectAfter = true),
+        JoinedLetter(23, "ل", "لـ", "ـلـ", "ـل", "লাম", "Lam", "لَبَن", "লাবান (দুধ)", canConnectAfter = true),
+        JoinedLetter(24, "م", "مـ", "ـمـ", "ـم", "মীম", "Meem", "مَاء", "মাআ (পানি)", canConnectAfter = true),
+        JoinedLetter(25, "ن", "نـ", "ـنـ", "ـن", "নূন", "Noon", "نُور", "নূর (আলো)", canConnectAfter = true),
+        JoinedLetter(26, "و", "و", "ـو", "ـو", "ওয়াও", "Waw", "وَلَد", "ওয়ালাদ (সন্তান)", canConnectAfter = false),
+        JoinedLetter(27, "هـ", "هـ", "ـهـ", "ـه", "হা (গোল হা)", "Haa", "هِلال", "হিলাল (নতুন চাঁদ)", canConnectAfter = true),
+        JoinedLetter(28, "ء", "ء / أ", "ـئـ / ـؤ / ـأ", "ـء / ـأ", "হামযাহ", "Hamzah", "سَمَاء", "সামাআ (আকাশ)", canConnectAfter = false),
+        JoinedLetter(29, "ي", "يـ", "ـيـ", "ـي", "ইয়া", "Yaa", "يَد", "ইয়াদ (হাত)", canConnectAfter = true)
     )
 
     val HARAKAT_LESSONS = listOf(
         HarakatLesson(
-            1, "َ (যবর / Fatha)", "অ/আ শব্দ", "উর্ধ্বরেশা হরফের উপরে থাকে এবং 'আ' বা 'অ' ধ্বনি দেয়। 💡 উচ্চারণ: তাড়াতাড়ি পড়বেন, টানা যাবে না (যেমন: ব-আ)।",
+            1, "َ (যবর / Fatha)", "আ/অ ধ্বনি", "হরফের উপরে এক দাগ থাকে এবং 'আ' বা 'অ' ধ্বনি দেয়। 💡 উচ্চারণ: তাড়াতাড়ি পড়বেন, এক আলিফও টানা যাবে না (যেমন: বা, তা, ছা)।",
             listOf(
                 "بَ" to "বা", "تَ" to "তা", "ثَ" to "ছা", "جَ" to "জা", "حَ" to "হা", "خَ" to "খা",
-                "دَ" to "দা", "رَ" to "রা", "سَ" to "সা", "شَ" to "শা", "صَ" to "ছা", "طَ" to "ত্বা"
+                "دَ" to "দা", "رَ" to "রা", "سَ" to "সা", "شَ" to "শা", "صَ" to "ছোয়া", "طَ" to "ত্বোয়া"
             )
         ),
         HarakatLesson(
-            2, "ِ (যেৱ / Kasra)", "ই শব্দ", "নিম্নরেশা হরফের নিচে থাকে এবং 'ই' ধ্বনি তৈরি করে। 💡 উচ্চারণ: তাড়াতাড়ি পড়বেন (যেমন: ব-ই বা বি)।",
+            2, "ِ (যের / Kasra)", "ই ধ্বনি", "হরফের নিচে এক দাগ থাকে এবং 'ই' ধ্বনি তৈরি করে। 💡 উচ্চারণ: তাড়াতাড়ি পড়বেন, টানা যাবে না (যেমন: বি, তি, ছি)।",
             listOf(
                 "بِ" to "বি", "تِ" to "তি", "ثِ" to "ছি", "جِ" to "জি", "حِ" to "হি", "خِ" to "খি",
-                "دِ" to "দি", "رِ" to "রি", "سِ" to "সি", "شِ" to "শি", "صِ" to "ছি", "طِ" to "ত্বি"
+                "دِ" to "দি", "رِ" to "রি", "سِ" to "সি", "شِ" to "শি", "صِ" to "ছোয়ি", "طِ" to "ত্বোয়ি"
             )
         ),
         HarakatLesson(
-            3, "ُ (পেশ / Dammah)", "উ শব্দ", "হরফের উপরে ওয়াও-এর মতো চিহ্ন থাকে এবং 'উ' ধ্বনি দেয়। 💡 উচ্চারণ: ঠোঁট গোল করে তাড়াতাড়ি পড়বেন (যেমন: ব-উ বা বু)।",
+            3, "ُ (পেশ / Dammah)", "উ ধ্বনি", "হরফের উপরে ছোট ওয়াও-এর মতো চিহ্ন থাকে এবং 'উ' ধ্বনি দেয়। 💡 উচ্চারণ: ঠোঁট গোল করে তাড়াতাড়ি পড়বেন (যেমন: বু, তু, ছু)।",
             listOf(
                 "بُ" to "বু", "تُ" to "তু", "ثُ" to "ছু", "جُ" to "জু", "حُ" to "হু", "خُ" to "খু",
-                "دُ" to "দু", "رُ" to "রু", "سُ" to "সু", "شُ" to "শু", "صُ" to "ছু", "طُ" to "ত্বু"
+                "دُ" to "দু", "رُ" to "রু", "سُ" to "সু", "شُ" to "শু", "صُ" to "ছোয়ু", "طُ" to "ত্বোয়ু"
             )
         ),
         HarakatLesson(
-            4, "ً (দুই যবর / Tanween Fatha)", "আন/আনঁ শব্দ", "দুই যবর থাকলে শেষে 'ন' বা গুন্নাহ যুক্ত হয়",
+            4, "ً (দুই যবর / Tanween Fatha)", "আন ধ্বনি", "হরফের উপরে দুই যবর থাকলে শেষে 'ন' যুক্ত হয়।",
             listOf(
                 "بً" to "বান", "تً" to "তান", "ثً" to "ছান", "جً" to "জান", "حً" to "হান", "خً" to "খান",
-                "دً" to "দান", "رً" to "রান", "سً" to "সান", "شً" to "শান", "صً" to "ছান", "طً" to "ত্বান"
+                "دً" to "দান", "رً" to "রান", "سً" to "সান", "شً" to "শান", "صً" to "ছোয়ান", "طً" to "ত্বোয়ান"
             )
         ),
         HarakatLesson(
-            5, "ٍ (দুই যেৱ / Tanween Kasra)", "ইন/ইনঁ শব্দ", "দুই যের থাকলে হরফের নিচে 'ইন' ধ্বনি দেয়",
+            5, "ٍ (দুই যের / Tanween Kasra)", "ইন ধ্বনি", "হরফের নিচে দুই যের থাকলে 'ইন' ধ্বনি দেয়।",
             listOf(
                 "بٍ" to "বিন", "تٍ" to "তিন", "ثٍ" to "ছিন", "جٍ" to "জিন", "حٍ" to "হিন", "خٍ" to "খিন",
-                "دٍ" to "দিন", "رٍ" to "রিন", "سٍ" to "সিন", "شٍ" to "শিন", "صٍ" to "ছিন", "طٍ" to "ত্বিন"
+                "دٍ" to "দিন", "رٍ" to "রিন", "سٍ" to "সিন", "شٍ" to "শিন", "صٍ" to "ছোয়িন", "طٍ" to "ত্বোয়িন"
             )
         ),
         HarakatLesson(
-            6, "ٌ (দুই পেশ / Tanween Dammah)", "উন/উনঁ শব্দ", "দুই পেশ থাকলে হরফের উপরে 'উন' ধ্বনি দেয়",
+            6, "ٌ (দুই পেশ / Tanween Dammah)", "উন ধ্বনি", "হরফের উপরে দুই পেশ থাকলে 'উন' ধ্বনি দেয়।",
             listOf(
                 "بٌ" to "বুন", "تٌ" to "তুন", "ثٌ" to "ছুন", "جٌ" to "জুন", "حٌ" to "হুন", "خٌ" to "খুন",
-                "دٌ" to "দুন", "رٌ" to "রুন", "سٌ" to "সুন", "شٌ" to "শুন", "صٌ" to "ছুন", "طٌ" to "ত্বুন"
+                "دٌ" to "দুন", "رٌ" to "রুন", "سٌ" to "সুন", "شٌ" to "শুন", "صٌ" to "ছোয়ুন", "طٌ" to "ত্বোয়ুন"
             )
         )
     )
@@ -243,40 +257,124 @@ object QuranLearningData {
 
     val TAJWEED_RULES = listOf(
         TajweedRule(
-            1, "মাদ আসলী (১ আলিফ মাদ)", "Madd Asli (1 Alif)",
-            "যবরের পর খালি আলিফ (َا), যেরের পর জযমওয়ালা ইয়া (ِيْ) এবং পেশের পর জযমওয়ালা ওয়াও (ُوْ) থাকলে ১ আলিফ পরিমাণ টেনে পড়তে হয়।\n\n💡 নির্দেশনাবলি: স্বাভাবিক উচ্চারণের চেয়ে একটু দীর্ঘ করে পড়ুন। যেমন: বা-আ, বি-ই, বু-উ (১ সেকেন্ড পরিমাণ টেনে পড়ুন)।",
-            Color(0xFF059669),
-            listOf("بَا" to "বা-আ (১ আলিফ)", "بِيْ" to "বি-ই (১ আলিফ)", "بُوْ" to "বু-উ (১ আলিফ)", "قَالَ" to "ক্বা-লা", "قِيْلَ" to "ক্বী-লা")
+            1, "ইযহার (স্পষ্ট করে পড়া)", "Izhar (Clarity)",
+            "হরফ ৬টি (হলকী বা কণ্ঠনালীর হরফ): ء, هـ, ع, ح, غ, خ",
+            "নূন সাকিন (نْ) বা তানভীনের পর ইযহারের ৬টি হরফের কোনো একটি আসলে নূনকে কোনো প্রকার গুন্নাহ ছাড়া সম্পূর্ণ স্পষ্ট ও স্বাভাবিকভাবে পড়তে হয়।",
+            "🗣️ যেভাবে উচ্চারণ করবেন (নির্দেশনাবলী):\n১. জিহ্বার আগা স্বাভাবিকভাবে উপরের দাঁতের মাড়িতে স্পর্শ করে পরিষ্কার 'ন' ধ্বনি উচ্চারণ করবেন।\n২. এখানে কোনো গুন্নাহ করবেন না এবং আওয়াজ নাকে আটকে রাখবেন না।\n৩. টান বা বিলম্ব ছাড়াই স্বাভাবিক গতি বজায় রাখবেন। যেমন: 'মান আমানা' (مَنْ آمَنَ), 'আনআমতা' (أَنْعَمْتَ)।",
+            Color(0xFF10B981),
+            listOf(
+                "مَنْ آمَنَ" to "মান আমানা (স্পষ্ট)",
+                "أَنْعَمْتَ" to "আন'আমতা (স্পষ্ট)",
+                "مِنْ غِلٍّ" to "মিন গিল্লিন (স্পষ্ট)",
+                "عَذَابٌ أَلِيمٌ" to "আযাবুন আলীম (স্পষ্ট)"
+            )
         ),
         TajweedRule(
-            2, "ওয়াজিব গুন্নাহ (নূন ও মীম তাশদীদ)", "Wajib Gunnah",
-            "নূন (نَّ) বা মীম (مَّ)-এর উপর তাশদীদ থাকলে এক আলিফ পরিমাণ সময় নাক দিয়ে গুন্নাহ করে পড়া ওয়াজিব।\n\n💡 নির্দেশনাবলি: আওয়াজকে নাকের বাঁশিতে নিয়ে ১ সেকেন্ড গুণগুণ শব্দ করে আটকে রাখুন। যেমন: ইন্ন্ন্না, ছুম্মম্মা।",
-            Color(0xFFDC2626),
-            listOf("إِنَّ" to "ইন্না (গুন্নাহ)", "ثُمَّ" to "ছুম্মা (গুন্নাহ)", "عَمَّ" to "আম্মা (গুন্নাহ)", "نَاسِ" to "আন্না-সি")
-        ),
-        TajweedRule(
-            3, "ইখফা (লুকিয়ে গুন্নাহ)", "Ikhfa (Concealment)",
-            "নূন সাকিন (نْ) বা তানভীনের পর ইখফার ১৫টি হরফের যেকোনো একটি আসলে নূনের আওয়াজকে নাকে লুকিয়ে গুন্নাহ করে পড়তে হয়।\n\n💡 নির্দেশনাবলি: জিহ্বার আগা তালুর সাথে না লাগিয়ে, আওয়াজ নাকে নিয়ে অস্পষ্ট করে গুণগুণ করে পড়ুন। যেমন: মান্কানা না পড়ে মাং-কানা (নাকের ভেতর) পড়ুন।",
-            Color(0xFF2563EB),
-            listOf("مَنْ كَانَ" to "মাঙ্কানা", "مِنْ قَبْلِ" to "মিন্ক্বাবলি", "عَنْ صَلَاتِهِمْ" to "আন্ছলাতিহিম", "أَنْفُسَكُمْ" to "আন্ফুসাকুম")
-        ),
-        TajweedRule(
-            4, "ইদগাম (মিলিয়ে পড়া)", "Idgham (Merging)",
-            "নূন সাকিন বা তানভীনের পর ইদগামের হরফ (ي, ر, م, ل, و, ن) আসলে প্রথম হরফকে দ্বিতীয় হরফের সাথে মিলিয়ে পড়তে হয়।\n\n💡 নির্দেশনাবলি: গুন্নাহ সহ (ي,ن,م,و) এবং গুন্নাহ ছাড়া (ر,ل) মিলিয়ে পড়ুন। যেমন: মিঁই-ওয়ালিন (নাকের ভেতর মিলিয়ে পড়া)।",
+            2, "ইদগাম (মিলিয়ে পড়া)", "Idgham (Merging)",
+            "হরফ ৬টি: ي, ر, م, ل, و, ن (সংক্ষেপে: 'ইয়ারমালূন' - يرملون)",
+            "নূন সাকিন বা তানভীনের পর ইদগামের হরফ আসলে নূনকে পরের হরফের সাথে মিলিয়ে পড়তে হয়। এটি দুই প্রকার:\n১) বা-গুন্নাহ (গুন্নাহসহ): ي, ن, م, و\n২) বিলা-গুন্নাহ (গুন্নাহ ছাড়া): ل, ر",
+            "🗣️ যেভাবে উচ্চারণ করবেন (নির্দেশনাবলী):\n১. বা-গুন্নাহ (ي, ن, م, و) পড়ার সময় নূনকে পরের হরফে মিলিয়ে নাকের ভেতর ১ সেকেন্ড গুণগুণ করে গুন্নাহ করবেন। যেমন: 'মাইঁ-ইয়াক্বূলু' (مَنْ يَقُولُ)।\n২. বিলা-গুন্নাহ (ل, ر) পড়ার সময় কোনো গুন্নাহ ছাড়া সরাসরি পরের হরফে তাশদীদের মতো মিলিয়ে পড়বেন। যেমন: 'মির-রব্বিহিম' (مِنْ رَبِّهِمْ)।",
             Color(0xFF7C3AED),
-            listOf("مَنْ يَقُولُ" to "মঁই-য়াক্বূলু", "مِنْ رَبِّهِمْ" to "মির্-রব্বিহিম", "مِنْ مَالٍ" to "মিম্-মা-লিন", "مِنْ وَالٍ" to "মিঁই-ওয়া-লিন")
+            listOf(
+                "مَنْ يَقُولُ" to "মাইঁ-ইয়াক্বূলু (গুন্নাহসহ)",
+                "مِنْ مَالٍ" to "মিম্-মালিন (গুন্নাহসহ)",
+                "مِنْ رَبِّهِمْ" to "মির্-রব্বিহিম (গুন্নাহ ছাড়া)",
+                "مِنْ لَدُنْهُ" to "মিল-লাদুনহু (গুন্নাহ ছাড়া)"
+            )
         ),
         TajweedRule(
-            5, "ইকলাব (বদল করা)", "Iqlab (Conversion)",
-            "নূন সাকিন বা তানভীনের পর 'বা' (ب) হরফ আসলে নূনকে 'মীম' (م) দ্বারা পরিবর্তন করে গুন্নাহ সহ পড়তে হয়।\n\n💡 নির্দেশনাবলি: ঠোঁট দুটি হালকা মিলিয়ে ছোট মীমের মতো উচ্চারণ করুন এবং নাকে ১ সেকেন্ড আওয়াজ ধরে রাখুন। যেমন: মিম্-বা'দি।",
+            3, "ইকলাব (বদল করে পড়া)", "Iqlab (Conversion)",
+            "হরফ ১টি: বা (ب)",
+            "নূন সাকিন বা তানভীনের পর 'বা' (ب) আসলে নূনকে একটি ছোট 'মীম' (م) দ্বারা পরিবর্তন করে গুন্নাহ সহকারে পড়তে হয়। কুরআনে এই স্থানে ছোট م প্রতীক থাকে।",
+            "🗣️ যেভাবে উচ্চারণ করবেন (নির্দেশনাবলী):\n১. নূন উচ্চারণ না করে তার জায়গায় 'মীম' উচ্চারণ করবেন।\n২. দুই ঠোঁট খুব শক্ত করে চেপে ধরবেন না, হালকাভাবে মিলিয়ে রাখবেন।\n৩. আওয়াজ নাকের গভীরে নিয়ে ১ সেকেন্ড গুন্নাহ বজায় রেখে তারপর 'বা' হরফে যাবেন। যেমন: 'মিম-বা'দি' (مِنْ بَعْدِ)।",
             Color(0xFFD97706),
-            listOf("مِنْ بَعْدِ" to "মিম্ বা'-দি", "أَنْبِئْهُمْ" to "আম্ বি'হুম", "سَمِيعٌ بَصِيرٌ" to "সামী'উম বাছীর")
+            listOf(
+                "مِنْ بَعْدِ" to "মিম্ বা'-দি",
+                "أَنْبِئْهُمْ" to "আম্ বি'হুম",
+                "سَمِيعٌ بَصِيرٌ" to "সামী'উম বাছীর",
+                "ذَنْبٍ" to "যাম্বিন"
+            )
         ),
         TajweedRule(
-            6, "কলকলাহ (প্রতিধ্বনি)", "Qalqalah (Echoing)",
-            "ক্বাফ (ق), ত্বা (ط), বা (ب), জীম (ج), দাল (د) এই ৫টি হরফে সাকীন (যযম) হলে প্রতিধ্বনি করে সজোরে ধাক্কা দিয়ে পড়তে হয়।\n\n💡 নির্দেশনাবলি: উচ্চারণ শেষে আওয়াজটা একটু বাউন্স বা প্রতিধ্বনি করবে। যেমন: ক্বুল হুওয়াল্লাহু আহাদ্ (আহাদ-দ)।",
+            4, "ইখফা (লুকিয়ে গুন্নাহ)", "Ikhfa (Concealment)",
+            "হরফ ১৫টি: ت, ث, ج, د, ذ, ز, س, ش, ص, ض, ط, ظ, ف, ق, ك",
+            "নূন সাকিন বা তানভীনের পর ইখফার ১৫টি হরফের যেকোনো একটি আসলে নূনের মাখরাজ গোপন করে নাকের ভেতর অস্পষ্ট আওয়াজে ১ আলিফ পরিমাণ গুন্নাহ করে পড়তে হয়।",
+            "🗣️ যেভাবে উচ্চারণ করবেন (নির্দেশনাবলী):\n১. জিহ্বার ডগা দাঁতের মাড়িতে না লাগিয়ে মুখের ভেতর কিছুটা ফাঁকা রাখুন।\n২. পরবর্তী হরফটি উচ্চারণের প্রস্তুতিতে মুখাবয়ব রাখুন।\n৩. আওয়াজকে অর্ধেক নাক দিয়ে ও অর্ধেক মুখ দিয়ে বের করে অস্পষ্ট 'ং' ধ্বনি সৃষ্টি করবেন। যেমন: 'মাংকানা' (مَنْ كَانَ)।",
+            Color(0xFF2563EB),
+            listOf(
+                "مَنْ كَانَ" to "মাংকানা (নাকের ভেতর)",
+                "مِنْ قَبْلِ" to "মিন্ক্বাবলি (ভারী গুন্নাহ)",
+                "عَنْ صَلَاتِهِمْ" to "আন্ছলাতিহিম",
+                "أَنْفُسَكُمْ" to "আন্ফুসাকুম",
+                "كُنْتُمْ" to "কুন্তুম"
+            )
+        ),
+        TajweedRule(
+            5, "ওয়াজিব গুন্নাহ (নূন ও মীম তাশদীদ)", "Wajib Gunnah",
+            "হরফ ২টি: নূন তাশদীদ (نَّ) ও মীম তাশদীদ (مَّ)",
+            "কুরআনে যেকোনো স্থানে নূন বা মীমের উপর তাশদীদ পাওয়া গেলে তা ১ আলিফ পরিমাণ সময় নাক দিয়ে গুন্নাহ করে পড়া ওয়াজিব বা আবশ্যক।",
+            "🗣️ যেভাবে উচ্চারণ করবেন (নির্দেশনাবলী):\n১. অক্ষরের মাখরাজে কিছুটা চাপ দিয়ে ধরে রাখুন।\n২. আওয়াজ নাকের বাঁশিতে নিয়ে ১ সেকেন্ড গুণগুণ করে আটকে রাখুন।\n৩. তাড়াহুড়ো না করে স্পষ্ট গুন্নাহ শেষ করে পরবর্তী হরকতে যাবেন। যেমন: 'ইন্-ন্না' (إِنَّ), 'ছুম্-মা' (ثُمَّ)।",
+            Color(0xFFDC2626),
+            listOf(
+                "إِنَّ" to "ইন্না (ওয়াজিব গুন্নাহ)",
+                "ثُمَّ" to "ছুম্মা (ওয়াজিব গুন্নাহ)",
+                "عَمَّ" to "আম্মা (ওয়াজিব গুন্নাহ)",
+                "النَّاسِ" to "আন্না-সি"
+            )
+        ),
+        TajweedRule(
+            6, "কলকলাহ (প্রতিধ্বনি বা বাউন্স)", "Qalqalah (Echoing)",
+            "হরফ ৫টি: ক্বাফ, ত্বোয়া, বা, জীম, দাল (ق, ط, ب, ج, د - সংক্ষেপে: 'ক্বুতবু জাদ্বিন')",
+            "এই ৫টি হরফে যখন সাকীন (যযম ْ) বা ওয়াকফ (থামা) হয়, তখন এদের মাখরাজে সজোরে আঘাত লেগে একটি প্রতিধ্বনি বা বাউন্স সৃষ্টি হয়।",
+            "🗣️ যেভাবে উচ্চারণ করবেন (নির্দেশনাবলী):\n১. মাখরাজে হরফটি স্পর্শ করার পর মুহূর্তের মধ্যে জিহ্বা বা ঠোঁটকে সজোরে মুক্ত করে দিন।\n২. এমনভাবে উচ্চারণ করবেন যেন একটি রাবারের বল দেওয়ালে লেগে বাউন্স করার মতো হালকা প্রতিধ্বনি শোনা যায়।\n৩. যেমন: 'ক্বুল হুওয়াল্লাহু আহাদ্-দ' (أَحَدٌ ۚ), 'আল-ফালাক্ব-ক্ব' (ٱلْفَلَقِ ۙ)।",
             Color(0xFF0284C7),
-            listOf("أَحَدٌ ۚ" to "আহাদ (প্রতিধ্বনি)", "ٱلْفَلَقِ ۙ" to "আল-ফলাক্ব", "ٱلْحَبْلِ" to "আল-হাব্ল", "وَٱلْفَجْرِ" to "ওয়াল-ফাজর্")
+            listOf(
+                "أَحَدٌ ۚ" to "আহাদ (বাউন্স)",
+                "ٱلْفَلَقِ ۙ" to "আল-ফলাক্ব (বাউন্স)",
+                "ٱلْحَبْلِ" to "আল-হাব্ল (বাউন্স)",
+                "وَٱلْفَجْرِ" to "ওয়াল-ফাজর্ (বাউন্স)",
+                "مُحِيطٌ ۙ" to "মুহীত্ব"
+            )
+        ),
+        TajweedRule(
+            7, "মাদ আসলী (১ আলিফ স্বাভাবিক মাদ)", "Madd Asli (1 Alif)",
+            "হরফ ৩টি: যবরের পর খালি আলিফ (َا), যেরের পর ইয়া সাকিন (ِيْ), পেশের পর ওয়াও সাকিন (ُوْ)",
+            "হরকতের সাথে মাদ্দের হরফ যুক্ত হলে স্বাভাবিক ১ আলিফ (১টি আঙুল খুলতে যে সময় লাগে, প্রায় ১.২ সেকেন্ড) টেনে পড়া ওয়াজিব।",
+            "🗣️ যেভাবে উচ্চারণ করবেন (নির্দেশনাবলী):\n১. হরকতকে তাড়াতাড়ি না পড়ে আওয়াজ কিছুটা দীর্ঘ করে সুর দিন।\n২. অতিরিক্ত টানবেন না, ঠিক এক আঙুল খুলতে যে সময় লাগে সে পরিমাণ টানবেন। যেমন: বা-আ (بَا), বি-ই (بِيْ), বু-উ (بُوْ), ক্বা-লা (قَالَ)।",
+            Color(0xFF059669),
+            listOf(
+                "بَا" to "বা-আ (১ আলিফ)",
+                "بِيْ" to "বি-ই (১ আলিফ)",
+                "بُوْ" to "বু-উ (১ আলিফ)",
+                "قَالَ" to "ক্বা-লা",
+                "نُوحِيهَا" to "নূ-হী-হা"
+            )
+        ),
+        TajweedRule(
+            8, "মাদ মুনফাসিল ও মুত্তাসিল (৩ ও ৪ আলিফ মাদ)", "Madd Far'ee (3 & 4 Alif)",
+            "চিহ্ন: চিকন ঢেউ চিহ্ন (~) ৩ আলিফ, মোটা বাঁকা চিহ্ন (~) ৪ আলিফ",
+            "মাদ্দের হরফের পর একই শব্দে হামযাহ আসলে মাদ মুত্তাসিল (৪ আলিফ টানা ওয়াজিব)। মাদ্দের হরফের পর ভিন্ন শব্দের শুরুতে হামযাহ আসলে মাদ মুনফাসিল (৩ আলিফ টানা জায়েজ)।",
+            "🗣️ যেভাবে উচ্চারণ করবেন (নির্দেশনাবলী):\n১. ৩ আলিফ মাদের ক্ষেত্রে তিনটি আঙুল ধারাবাহিকভাবে খুলতে যে সময় লাগে (প্রায় ৩ সেকেন্ড) ততটুকু সময় টেনে পড়ুন।\n২. ৪ আলিফ মাদের ক্ষেত্রে চারটি আঙুল খোলার সময় (প্রায় ৪ সেকেন্ড) সুর সহকারে দীর্ঘ করে টানুন। যেমন: 'জাআআআ' (جَاءَ), 'আস-সামাআআ-ই' (السَّمَاءِ)।",
+            Color(0xFFE11D48),
+            listOf(
+                "جَاءَ" to "জা-আ (৪ আলিফ)",
+                "السَّمَاءِ" to "আস-সামা-ই (৪ আলিফ)",
+                "فِي أَنْفُسِكُمْ" to "ফী-আংফুসিকুম (৩ আলিফ)",
+                "إِنَّا أَنْزَلْنَاهُ" to "ইন্না-আনযালনা-হু (৩ আলিফ)"
+            )
+        ),
+        TajweedRule(
+            9, "রা ও লাম পুর/বারিক (মোটা ও পাতলা পড়া)", "Tafkheem & Tarqeeq",
+            "হরফ ২টি: র (ر) এবং আল্লাহ শব্দের লাম (ل)",
+            "১) র (ر)-এর উপর যবর বা পেশ থাকলে মোটা (পুর) হয়, যের থাকলে পাতলা (বারিক) হয়।\n২) 'আল্লাহ' শব্দের পূর্বে যবর বা পেশ থাকলে লাম মোটা হবে, আর যের থাকলে পাতলা হবে।",
+            "🗣️ যেভাবে উচ্চারণ করবেন (নির্দেশনাবলী):\n১. মোটা (পুর) পড়ার সময় মুখের ভেতর ফাঁকা ও গোল করে গম্ভীর ভারী আওয়াজ তৈরি করবেন (যেমন: 'রব্বানা', 'ওয়াল্লাহু')।\n২. পাতলা (বারিক) পড়ার সময় মুখ চ্যাপ্টা ও স্বাভাবিক রেখে হালকাভাবে উচ্চারণ করবেন (যেমন: 'রিযক্বান', 'বিসমিল্লাহি')।",
+            Color(0xFF4F46E5),
+            listOf(
+                "رَبَّنَا" to "রব্বানা (মোটা 'র')",
+                "رِزْقًا" to "রিযক্বান (পাতলা 'র')",
+                "وَاللَّهِ" to "ওয়াল্লাহি (মোটা 'ল')",
+                "بِسْمِ اللَّهِ" to "বিসমিল্লাহি (পাতলা 'ল')"
+            )
         )
     )
 
@@ -713,7 +811,7 @@ fun QuranLearningScreen(
             ) { tab ->
                 when (tab) {
                     0 -> LettersTab(themeColors, isBn, ttsPlayer, primaryGreen)
-                    1 -> JoinedLettersTab(themeColors, isBn, primaryGreen)
+                    1 -> JoinedLettersTab(themeColors, isBn, ttsPlayer, primaryGreen)
                     2 -> HarakatTab(themeColors, isBn, ttsPlayer, primaryGreen)
                     3 -> SukoonTashdeedTab(themeColors, isBn, ttsPlayer, primaryGreen)
                     4 -> TajweedTab(themeColors, isBn, ttsPlayer, primaryGreen)
@@ -734,106 +832,370 @@ fun QuranLearningScreen(
 fun JoinedLettersTab(
     themeColors: CalculatorThemeColors,
     isBn: Boolean,
+    ttsPlayer: IslamicMaleTtsPlayer,
     primaryGreen: Color
 ) {
+    var selectedFilter by remember { mutableStateOf("সকল হরফ") }
+    var showConnectionRules by remember { mutableStateOf(false) }
+
+    val filterOptions = listOf("সকল হরফ", "উভমুখী হরফ", "একমুখী হরফ (৬টি)")
+    val filteredList = when (selectedFilter) {
+        "উভমুখী হরফ" -> QuranLearningData.JOINED_LETTERS.filter { it.canConnectAfter }
+        "একমুখী হরফ (৬টি)" -> QuranLearningData.JOINED_LETTERS.filter { !it.canConnectAfter }
+        else -> QuranLearningData.JOINED_LETTERS
+    }
+
     LazyColumn(
         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
         modifier = Modifier.fillMaxSize()
     ) {
+        // TOP INTRO CARD WITH EXPANDABLE GUIDE
         item {
             Surface(
                 shape = RoundedCornerShape(16.dp),
                 color = primaryGreen.copy(alpha = 0.08f),
+                border = BorderStroke(1.dp, primaryGreen.copy(alpha = 0.25f)),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Row(
-                    modifier = Modifier.padding(14.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = null, tint = primaryGreen)
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Text(
-                        text = if (isBn) "কুরআনে হরফগুলো শব্দের শুরুতে, মাঝে এবং শেষে বিভিন্ন রূপ ধারণ করে। নিচে এর উদাহরণ দেওয়া হলো। ডান থেকে বামে পড়ুন।" else "Arabic letters change shape depending on their position (initial, medial, final) in a word.",
-                        fontSize = 12.sp,
-                        lineHeight = 17.sp,
-                        color = themeColors.displayText
-                    )
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = null, tint = primaryGreen)
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            text = if (isBn) "আরবি হরফ যখন শব্দ গঠনের জন্য জোড়া লাগে, তখন তাদের আকার ও রূপ বদলে যায়। নিচে শব্দের শুরুতে, মাঝে এবং শেষে হরফের সঠিক রূপ ও উদাহরণ দেওয়া হলো।" else "Learn how Arabic letters connect and transform across Initial, Medial, and Final word positions.",
+                            fontSize = 12.sp,
+                            lineHeight = 17.sp,
+                            color = themeColors.displayText
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = primaryGreen.copy(alpha = 0.15f),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .clickable { showConnectionRules = !showConnectionRules }
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Info,
+                                    contentDescription = null,
+                                    tint = primaryGreen,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = if (isBn) "হরফ জোড়া লাগার মৌলিক নিয়মাবলী" else "Basic Connection Rules",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = primaryGreen
+                                )
+                            }
+                            Icon(
+                                imageVector = if (showConnectionRules) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                contentDescription = null,
+                                tint = primaryGreen,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+
+                    if (showConnectionRules) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = if (isBn) {
+                                "📌 ১. আরবি ডান দিক থেকে বামে লেখা ও পড়া হয়।\n" +
+                                "📌 ২. মোট ২৯টি হরফের মধ্যে ৬টি হরফ (ا، د، ذ، ر، ز، و) কেবল পূর্ববর্তী অক্ষরের সাথে জোড়া লাগে, কিন্তু পরবর্তী অক্ষরের সাথে কখনো জোড়া লাগে না (একমুখী সংযোগ)।\n" +
+                                "📌 ৩. বাকি ২৩টি হরফ আগে ও পরে উভয় হরফের সাথে হাত মিলিয়ে জোড়া লাগে (উভমুখী সংযোগ)।\n" +
+                                "📌 ৪. প্রতিটি হরফ বা শব্দের ওপর ট্যাপ করে শুদ্ধ পুরুষ কণ্ঠে উচ্চারণ শুনুন।"
+                            } else {
+                                "1. Arabic is written and read from right to left.\n2. Six letters (ا، د، ذ، ر، ز، و) never connect to the following letter.\n3. The remaining 23 letters connect both before and after.\n4. Tap any letter or word to hear authentic recitation."
+                            },
+                            fontSize = 11.5.sp,
+                            lineHeight = 17.sp,
+                            color = themeColors.displayText.copy(alpha = 0.85f)
+                        )
+                    }
                 }
             }
         }
 
-        items(QuranLearningData.JOINED_LETTERS, key = { it.id }) { jl ->
+        // FILTER CHIPS ROW
+        item {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                filterOptions.forEach { filter ->
+                    val isSelected = selectedFilter == filter
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = if (isSelected) primaryGreen else themeColors.cardBg,
+                        border = BorderStroke(1.dp, if (isSelected) primaryGreen else themeColors.displayText.copy(alpha = 0.15f)),
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(10.dp))
+                            .clickable { selectedFilter = filter }
+                    ) {
+                        Text(
+                            text = filter,
+                            fontSize = 12.sp,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            color = if (isSelected) Color.White else themeColors.displayText,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        )
+                    }
+                }
+            }
+        }
+
+        // JOINED LETTER CARDS
+        items(filteredList, key = { it.id }) { jl ->
             Surface(
                 shape = RoundedCornerShape(18.dp),
                 color = themeColors.cardBg,
+                border = BorderStroke(1.dp, if (!jl.canConnectAfter) Color(0xFFF59E0B).copy(alpha = 0.4f) else primaryGreen.copy(alpha = 0.25f)),
                 shadowElevation = 2.dp,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(14.dp)) {
+                    // HEADER
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = if (isBn) jl.nameBn else jl.nameEn,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = primaryGreen
-                        )
-                        Text(
-                            text = jl.isolated,
-                            fontSize = 32.sp,
-                            color = themeColors.displayText,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Column {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = if (isBn) jl.nameBn else jl.nameEn,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = primaryGreen
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "(${jl.nameEn})",
+                                    fontSize = 12.sp,
+                                    color = themeColors.displayText.copy(alpha = 0.6f)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = if (jl.canConnectAfter) {
+                                    if (isBn) "উভমুখী সংযোগ (আগে ও পরে জোড়া লাগে)" else "Connects both sides"
+                                } else {
+                                    if (isBn) "⚠️ একমুখী (শুধু আগে জোড়া লাগে, পরে লাগে না)" else "⚠️ Non-connector after"
+                                },
+                                fontSize = 10.5.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (jl.canConnectAfter) primaryGreen else Color(0xFFD97706)
+                            )
+                        }
+
+                        // ISOLATED BADGE (CLICKABLE AUDIO)
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = primaryGreen.copy(alpha = 0.12f),
+                            border = BorderStroke(1.dp, primaryGreen.copy(alpha = 0.3f)),
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable {
+                                    ttsPlayer.speakFastArabic("jl_iso_${jl.id}", jl.isolated)
+                                }
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = jl.isolated,
+                                    fontSize = 26.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = primaryGreen
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+                                    contentDescription = "Listen",
+                                    tint = primaryGreen,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
                     }
-                    
+
                     Spacer(modifier = Modifier.height(12.dp))
-                    
+
+                    // 4 FORMS GRID (RIGHT TO LEFT: Isolated, Initial, Medial, Final)
+                    Text(
+                        text = if (isBn) "হরফের ৪টি রূপ (ডান থেকে বামে পড়ুন):" else "4 Forms (Right-to-Left):",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.displayText.copy(alpha = 0.65f)
+                    )
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("শেষ", fontSize = 12.sp, color = themeColors.displayText.copy(alpha = 0.6f))
-                            Text(jl.final, fontSize = 28.sp, color = themeColors.displayText, fontWeight = FontWeight.Bold)
-                        }
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("মাঝ", fontSize = 12.sp, color = themeColors.displayText.copy(alpha = 0.6f))
-                            Text(jl.medial, fontSize = 28.sp, color = themeColors.displayText, fontWeight = FontWeight.Bold)
-                        }
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("শুরু", fontSize = 12.sp, color = themeColors.displayText.copy(alpha = 0.6f))
-                            Text(jl.initial, fontSize = 28.sp, color = themeColors.displayText, fontWeight = FontWeight.Bold)
-                        }
+                        // 1. শেষ (Final)
+                        PositionBox(
+                            label = if (isBn) "শেষ" else "Final",
+                            arabic = jl.final,
+                            themeColors = themeColors,
+                            primaryGreen = primaryGreen,
+                            modifier = Modifier.weight(1f),
+                            onClick = { ttsPlayer.speakFastArabic("jl_f_${jl.id}", jl.isolated) }
+                        )
+
+                        // 2. মাঝ (Medial)
+                        PositionBox(
+                            label = if (isBn) "মাঝ" else "Medial",
+                            arabic = jl.medial,
+                            themeColors = themeColors,
+                            primaryGreen = primaryGreen,
+                            modifier = Modifier.weight(1f),
+                            onClick = { ttsPlayer.speakFastArabic("jl_m_${jl.id}", jl.isolated) }
+                        )
+
+                        // 3. শুরু (Initial)
+                        PositionBox(
+                            label = if (isBn) "শুরু" else "Initial",
+                            arabic = jl.initial,
+                            themeColors = themeColors,
+                            primaryGreen = primaryGreen,
+                            modifier = Modifier.weight(1f),
+                            onClick = { ttsPlayer.speakFastArabic("jl_i_${jl.id}", jl.isolated) }
+                        )
+
+                        // 4. একক (Isolated)
+                        PositionBox(
+                            label = if (isBn) "একক" else "Isolated",
+                            arabic = jl.isolated,
+                            themeColors = themeColors,
+                            primaryGreen = primaryGreen,
+                            modifier = Modifier.weight(1f),
+                            onClick = { ttsPlayer.speakFastArabic("jl_iso_${jl.id}", jl.isolated) }
+                        )
                     }
-                    
+
                     Spacer(modifier = Modifier.height(12.dp))
-                    HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.1f))
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
+                    HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.08f))
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // QURANIC WORD EXAMPLE CONTAINER WITH AUDIO
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = primaryGreen.copy(alpha = 0.06f),
+                        border = BorderStroke(1.dp, primaryGreen.copy(alpha = 0.2f)),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable {
+                                ttsPlayer.speakFastArabic("jl_word_${jl.id}", jl.example)
+                            }
                     ) {
-                        Text(
-                            text = if (isBn) "উদাহরণ: ${jl.exampleBn}" else "Example: ${jl.exampleBn}",
-                            fontSize = 14.sp,
-                            color = themeColors.displayText.copy(alpha = 0.8f)
-                        )
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Text(
-                            text = jl.example,
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = themeColors.displayText
-                        )
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = if (isBn) "কুরআনিক শব্দের উদাহরণ (ট্যাপ করে শুনুন):" else "Quranic Example (Tap to listen):",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = primaryGreen
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = jl.exampleBn,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = themeColors.displayText
+                                )
+                            }
+
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = jl.example,
+                                    fontSize = 26.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = primaryGreen
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Surface(
+                                    shape = CircleShape,
+                                    color = primaryGreen.copy(alpha = 0.15f),
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+                                            contentDescription = "Play Audio",
+                                            tint = primaryGreen,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun PositionBox(
+    label: String,
+    arabic: String,
+    themeColors: CalculatorThemeColors,
+    primaryGreen: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = themeColors.displayText.copy(alpha = 0.03f),
+        border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.1f)),
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .clickable { onClick() }
+    ) {
+        Column(
+            modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = label,
+                fontSize = 10.5.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = themeColors.displayText.copy(alpha = 0.6f)
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = arabic,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = themeColors.displayText
+            )
         }
     }
 }
@@ -855,7 +1217,19 @@ fun LettersTab(
     var shuffleSeed by remember { mutableIntStateOf(0) }
     var revealedLetters by remember { mutableStateOf(setOf<Int>()) }
 
-    val categories = listOf("সব হরফ", "হলকী (কণ্ঠ)", "শাফাভী (ঠোঁট)", "লাছভী (দাঁত)", "আছলী (জিহ্বা)")
+    val categories = listOf(
+        "সব হরফ",
+        "হলকী (কণ্ঠ)",
+        "শাফাভী (ঠোঁট)",
+        "লাছভী (দাঁতের আগা)",
+        "নীতঈ (দাঁতের গোড়া)",
+        "আছলী (শিস)",
+        "শাজারী (তালু)",
+        "যালক্বী (মাড়ি)",
+        "লাহভী (আলজিভ)",
+        "জার্সী (মাড়ির দাঁত)",
+        "জাওফী (খালি মুখ)"
+    )
 
     val filteredLetters = remember(selectedCategory, isShuffleMode, shuffleSeed) {
         val baseList = if (selectedCategory == "সব হরফ") {
@@ -1066,7 +1440,7 @@ fun LettersTab(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(16.dp))
                                 .clickable {
-                                    ttsPlayer.speakFastArabic("letter_${letter.id}", letter.arabic)
+                                    ttsPlayer.speakFastArabic("letter_${letter.id}", letter.ttsText)
                                     if (isShuffleMode) {
                                         if (letter.id !in revealedLetters) {
                                             revealedLetters = revealedLetters + letter.id
@@ -1150,7 +1524,7 @@ fun LettersTab(
             confirmButton = {
                 Button(
                     onClick = {
-                        ttsPlayer.speakFastArabic("letter_${letter.id}", letter.arabic)
+                        ttsPlayer.speakFastArabic("letter_${letter.id}", letter.ttsText)
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = primaryGreen)
                 ) {
@@ -1310,7 +1684,7 @@ fun HarakatTab(
                         listOf(
                             ("যবর (َ)" to "বা যবর 'বা' (بَ), তা যবর 'তা' (تَ)"),
                             ("যের (ِ)" to "বা যের 'বি' (بِ), তা যের 'তি' (تِ)"),
-                            ("পেশ (ُ)" to "বা পেশ 'বু' (بُ), তা পেশ 'তু' (তُ)")
+                            ("পেশ (ُ)" to "বা পেশ 'বু' (بُ), তা পেশ 'তু' (تُ)")
                         ).forEach { (sign, example) ->
                             Row(
                                 modifier = Modifier
@@ -1336,9 +1710,9 @@ fun HarakatTab(
                         
                         // Items for Tanween
                         listOf(
-                            ("দুই যবর (ً)" to "বা দুই যবর 'বান' (بً), তা দুই যবর 'তান' (তً)"),
-                            ("দুই যের (ٍ)" to "বা দুই যের 'বিন' (بٍ), তা দুই যের 'তিন' (তٍ)"),
-                            ("দুই পেশ (ٌ)" to "বা দুই পেশ 'বুন' (بٌ), তা দুই পেশ 'তুন' (তٌ)")
+                            ("দুই যবর (ً)" to "বা দুই যবর 'বান' (بً), তা দুই যবর 'তান' (تً)"),
+                            ("দুই যের (ٍ)" to "বা দুই যের 'বিন' (بٍ), তা দুই যের 'তিন' (تٍ)"),
+                            ("দুই পেশ (ٌ)" to "বা দুই পেশ 'বুন' (بٌ), তা দুই পেশ 'তুন' (تٌ)")
                         ).forEach { (sign, example) ->
                             Row(
                                 modifier = Modifier
@@ -1491,6 +1865,29 @@ fun SukoonTashdeedTab(
         verticalArrangement = Arrangement.spacedBy(14.dp),
         modifier = Modifier.fillMaxSize()
     ) {
+        item {
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = primaryGreen.copy(alpha = 0.08f),
+                border = BorderStroke(1.dp, primaryGreen.copy(alpha = 0.25f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(imageVector = Icons.Default.Info, contentDescription = null, tint = primaryGreen)
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = if (isBn) "সুকূন (যযম ْ) স্বরহীন হসন্তের মতো আগের অক্ষরের সাথে যুক্ত হয়ে থেমে উচ্চারিত হয় (যেমন: আব্‌, মান্‌)। আর তাশদীদ ( ّ) থাকলে হরফটি দু'বার উচ্চারিত হয়—প্রথমবার সাকিনের মতো, দ্বিতীয়বার হরকতের সাথে সজোরে (যেমন: আব্বা, ইন্না)। উদাহরণের ওপর স্পর্শ করে বিশুদ্ধ তিলাওয়াত শুনুন।" else "Learn Sukoon (Jazam) and Tashdeed doubled letters with audio examples.",
+                        fontSize = 12.sp,
+                        lineHeight = 17.5.sp,
+                        color = themeColors.displayText
+                    )
+                }
+            }
+        }
+
         items(QuranLearningData.SUKOON_TASHDEED_LESSONS, key = { it.id }) { lesson ->
             Surface(
                 shape = RoundedCornerShape(18.dp),
@@ -1591,15 +1988,35 @@ fun TajweedTab(
     ttsPlayer: IslamicMaleTtsPlayer,
     primaryGreen: Color
 ) {
+    var selectedCategory by remember { mutableStateOf("সকল নিয়ম") }
+
+    val categories = listOf(
+        "সকল নিয়ম",
+        "নূন সাকিন ও তানভীন",
+        "গুন্নাহ ও কলকলাহ",
+        "মাদ্দের নিয়ম",
+        "মোটা ও পাতলা (র/ল)"
+    )
+
+    val filteredRules = when (selectedCategory) {
+        "নূন সাকিন ও তানভীন" -> QuranLearningData.TAJWEED_RULES.filter { it.id in listOf(1, 2, 3, 4) }
+        "গুন্নাহ ও কলকলাহ" -> QuranLearningData.TAJWEED_RULES.filter { it.id in listOf(5, 6) }
+        "মাদ্দের নিয়ম" -> QuranLearningData.TAJWEED_RULES.filter { it.id in listOf(7, 8) }
+        "মোটা ও পাতলা (র/ল)" -> QuranLearningData.TAJWEED_RULES.filter { it.id == 9 }
+        else -> QuranLearningData.TAJWEED_RULES
+    }
+
     LazyColumn(
         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
         modifier = Modifier.fillMaxSize()
     ) {
+        // INTRO CARD
         item {
             Surface(
                 shape = RoundedCornerShape(16.dp),
                 color = primaryGreen.copy(alpha = 0.08f),
+                border = BorderStroke(1.dp, primaryGreen.copy(alpha = 0.25f)),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
@@ -1609,68 +2026,183 @@ fun TajweedTab(
                     Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = null, tint = primaryGreen)
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
-                        text = if (isBn) "তাজভীদ হলো কুরআন বিশুদ্ধভাবে তিলাওয়াতের সহজ নিয়মাবলী। উদাহরণের ওপর ট্যাপ করে অডিও শুনুন।" else "Tajweed rules for correct Quran recitation with color coding and audio examples.",
+                        text = if (isBn) "তাজবীদ হলো কুরআন মাজীদ বিশুদ্ধ ও সঠিক উচ্চারণে তিলাওয়াত করার নিয়মাবলী। প্রতিটি নিয়মে কীভাবে মুখ ও জিহ্বা পরিচালনা করতে হবে তার বিস্তারিত দিকনির্দেশনা নিচে দেওয়া হলো। উদাহরণের ওপর ট্যাপ করে তিলাওয়াত শুনুন।" else "Tajweed rules for correct Quran recitation with mouth/tongue articulation instructions and audio examples.",
                         fontSize = 12.sp,
-                        lineHeight = 17.sp,
+                        lineHeight = 18.sp,
                         color = themeColors.displayText
                     )
                 }
             }
         }
 
-        items(QuranLearningData.TAJWEED_RULES, key = { it.id }) { rule ->
+        // CATEGORY CHIPS
+        item {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                categories.forEach { cat ->
+                    val isSelected = selectedCategory == cat
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = if (isSelected) primaryGreen else themeColors.cardBg,
+                        border = BorderStroke(1.dp, if (isSelected) primaryGreen else themeColors.displayText.copy(alpha = 0.15f)),
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(10.dp))
+                            .clickable { selectedCategory = cat }
+                    ) {
+                        Text(
+                            text = cat,
+                            fontSize = 12.sp,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            color = if (isSelected) Color.White else themeColors.displayText,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        )
+                    }
+                }
+            }
+        }
+
+        // TAJWEED RULES LIST
+        items(filteredRules, key = { it.id }) { rule ->
             Surface(
                 shape = RoundedCornerShape(18.dp),
                 color = themeColors.cardBg,
-                border = BorderStroke(1.dp, rule.colorHex.copy(alpha = 0.4f)),
+                border = BorderStroke(1.5.dp, rule.colorHex.copy(alpha = 0.45f)),
                 shadowElevation = 2.dp,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Column(modifier = Modifier.padding(14.dp)) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    // TITLE & BADGE
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(12.dp)
+                                .size(14.dp)
                                 .clip(CircleShape)
                                 .background(rule.colorHex)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = rule.titleBn,
-                            fontSize = 15.sp,
+                            fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
                             color = themeColors.displayText
                         )
                         Spacer(modifier = Modifier.weight(1f))
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = rule.colorHex.copy(alpha = 0.12f)
+                        ) {
+                            Text(
+                                text = rule.titleEn,
+                                fontSize = 11.sp,
+                                color = rule.colorHex,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                            )
+                        }
+                    }
+
+                    // APPLICABLE LETTERS PILL
+                    if (rule.lettersBn.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = themeColors.displayText.copy(alpha = 0.04f),
+                            border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.1f))
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "📌 সংশ্লিষ্ট হরফ: ",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = rule.colorHex
+                                )
+                                Text(
+                                    text = rule.lettersBn,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = themeColors.displayText
+                                )
+                            }
+                        }
+                    }
+
+                    // RULE DEFINITION
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = rule.descriptionBn,
+                        fontSize = 12.5.sp,
+                        color = themeColors.displayText.copy(alpha = 0.85f),
+                        lineHeight = 18.sp
+                    )
+
+                    // PRONUNCIATION / RECITATION INSTRUCTION BOX (HOW TO SAY)
+                    if (rule.howToSayBn.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = rule.colorHex.copy(alpha = 0.08f),
+                            border = BorderStroke(1.dp, rule.colorHex.copy(alpha = 0.25f)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.RecordVoiceOver,
+                                        contentDescription = null,
+                                        tint = rule.colorHex,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "মুখ ও জিহ্বা পরিচালনার সঠিক নিয়ম:",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = rule.colorHex
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    text = rule.howToSayBn,
+                                    fontSize = 12.sp,
+                                    color = themeColors.displayText,
+                                    lineHeight = 17.5.sp
+                                )
+                            }
+                        }
+                    }
+
+                    // EXAMPLES SECTION
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
                         Text(
-                            text = rule.titleEn,
-                            fontSize = 11.sp,
+                            text = "উদাহরণসমূহ (ট্যাপ করে শুনুন):",
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = themeColors.displayText.copy(alpha = 0.7f)
+                        )
+                        Spacer(modifier = Modifier.weight(1f))
+                        Text(
+                            text = "🔊 বিশুদ্ধ তিলাওয়াত",
+                            fontSize = 10.5.sp,
                             color = rule.colorHex,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.SemiBold
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = rule.descriptionBn,
-                        fontSize = 12.sp,
-                        color = themeColors.displayText.copy(alpha = 0.8f),
-                        lineHeight = 17.sp
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Text(
-                        text = "উদাহরণসমূহ (ট্যাপ করুন):",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = themeColors.displayText.copy(alpha = 0.6f)
-                    )
-
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     LazyRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -1679,7 +2211,7 @@ fun TajweedTab(
                             Surface(
                                 shape = RoundedCornerShape(12.dp),
                                 color = rule.colorHex.copy(alpha = 0.08f),
-                                border = BorderStroke(1.dp, rule.colorHex.copy(alpha = 0.3f)),
+                                border = BorderStroke(1.dp, rule.colorHex.copy(alpha = 0.35f)),
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(12.dp))
                                     .clickable {
@@ -1687,22 +2219,39 @@ fun TajweedTab(
                                     }
                             ) {
                                 Row(
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text(
-                                        text = ar,
-                                        fontSize = 20.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = rule.colorHex
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = bn,
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = themeColors.displayText
-                                    )
+                                    Column {
+                                        Text(
+                                            text = ar,
+                                            fontSize = 22.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = rule.colorHex
+                                        )
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Text(
+                                            text = bn,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = themeColors.displayText
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = rule.colorHex.copy(alpha = 0.2f),
+                                        modifier = Modifier.size(28.dp)
+                                    ) {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Icon(
+                                                imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+                                                contentDescription = "Play Audio",
+                                                tint = rule.colorHex,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -1847,6 +2396,10 @@ fun AudioLetterQuizTab(
         (distractors + targetLetter).shuffled()
     }
 
+    LaunchedEffect(targetLetter.id) {
+        ttsPlayer.speakFastArabic("audio_quiz_${targetLetter.id}", targetLetter.ttsText)
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -1972,7 +2525,7 @@ fun AudioLetterQuizTab(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(22.dp))
                 .clickable {
-                    ttsPlayer.speakFastArabic("audio_quiz_${targetLetter.id}", targetLetter.arabic)
+                    ttsPlayer.speakFastArabic("audio_quiz_${targetLetter.id}", targetLetter.ttsText)
                 }
         ) {
             Column(

@@ -23,6 +23,66 @@ class IslamicMaleTtsPlayer private constructor(private val context: Context) : T
                 instance
             }
         }
+
+        // Standard Arabic letter names with full diacritics for authentic TTS pronunciation
+        val ARABIC_LETTER_PHONETICS: Map<String, String> = mapOf(
+            "ا" to "أَلِفْ",
+            "أ" to "أَلِفْ",
+            "إ" to "أَلِفْ",
+            "آ" to "أَلِفْ",
+            "ب" to "بَاءْ",
+            "ت" to "تَاءْ",
+            "ث" to "ثَاءْ",
+            "ج" to "جِيمْ",
+            "ح" to "حَاءْ",
+            "خ" to "خَاءْ",
+            "د" to "دَالْ",
+            "ذ" to "ذَالْ",
+            "ر" to "رَاءْ",
+            "ز" to "زَايْ",
+            "س" to "سِينْ",
+            "ش" to "شِينْ",
+            "ص" to "صَادْ",
+            "ض" to "ضَادْ",
+            "ط" to "طَاءْ",
+            "ظ" to "ظَاءْ",
+            "ع" to "عَيْنْ",
+            "غ" to "غَيْنْ",
+            "ف" to "فَاءْ",
+            "ق" to "قَافْ",
+            "ك" to "كَافْ",
+            "ل" to "لَامْ",
+            "م" to "مِيمْ",
+            "ن" to "نُونْ",
+            "و" to "وَاوْ",
+            "هـ" to "هَاءْ",
+            "ه" to "هَاءْ",
+            "ـه" to "هَاءْ",
+            "ـهـ" to "هَاءْ",
+            "ة" to "تَاءْ مَرْبُوطَة",
+            "ـة" to "تَاءْ مَرْبُوطَة",
+            "ء" to "هَمْزَة",
+            "ئ" to "هَمْزَة",
+            "ؤ" to "هَمْزَة",
+            "ء / أ" to "هَمْزَة",
+            "ـئـ / ـؤ / ـأ" to "هَمْزَة",
+            "ـء / ـأ" to "هَمْزَة",
+            "ي" to "يَاءْ",
+            "ى" to "أَلِفْ مَقْصُورَة",
+            "لا" to "لَامْ أَلِفْ",
+            "لَا" to "لَامْ أَلِفْ",
+            "لـا" to "لَامْ أَلِفْ",
+            "ـلا" to "لَامْ أَلِفْ",
+            "ـلَا" to "لَامْ أَلِفْ"
+        )
+
+        fun resolveArabicPronunciation(text: String): String {
+            val trimmed = text.replace("\n", " ").trim()
+            val withoutTatweel = trimmed.replace("\u0640", "")
+            return ARABIC_LETTER_PHONETICS[trimmed]
+                ?: ARABIC_LETTER_PHONETICS[withoutTatweel]
+                ?: trimmed
+        }
     }
 
     private var tts: TextToSpeech? = TextToSpeech(context.applicationContext, this)
@@ -221,7 +281,7 @@ class IslamicMaleTtsPlayer private constructor(private val context: Context) : T
         _activeAudioId.value = id
         _isSpeaking.value = true
 
-        val cleanAr = arabicText.replace("\n", " ").trim()
+        val cleanAr = resolveArabicPronunciation(arabicText)
         configureMaleVoiceParams()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -289,11 +349,12 @@ class IslamicMaleTtsPlayer private constructor(private val context: Context) : T
             ttsObj.setPitch(pitch)
             ttsObj.setSpeechRate(speechRate)
 
+            val cleanAr = resolveArabicPronunciation(arabicText)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                ttsObj.speak(arabicText, TextToSpeech.QUEUE_FLUSH, null, "sample_ar")
+                ttsObj.speak(cleanAr, TextToSpeech.QUEUE_FLUSH, null, "sample_ar")
             } else {
                 @Suppress("DEPRECATION")
-                ttsObj.speak(arabicText, TextToSpeech.QUEUE_FLUSH, null)
+                ttsObj.speak(cleanAr, TextToSpeech.QUEUE_FLUSH, null)
             }
         } catch (e: Exception) {
             e.printStackTrace()

@@ -1488,7 +1488,7 @@ fun MainContent(
                                 contentPadding = PaddingValues(vertical = 10.dp)
                             ) {
                                 Text(
-                                    text = if (isBn) "আরবি কণ্ঠ (Arabic Voice)" else "Arabic Voice",
+                                    text = if (isBn) "আরবি ভয়েস" else "Arabic Voice",
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -1504,7 +1504,7 @@ fun MainContent(
                                 contentPadding = PaddingValues(vertical = 10.dp)
                             ) {
                                 Text(
-                                    text = if (isBn) "বাংলা কণ্ঠ (Bangla Voice)" else "Bangla Voice",
+                                    text = if (isBn) "বাংলা ভয়েস" else "Bangla Voice",
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -1519,7 +1519,7 @@ fun MainContent(
                                 if (arabicVoices.isNotEmpty()) {
                                     Column {
                                         Text(
-                                            text = if (isBn) "আরবি কণ্ঠস্বর নির্বাচন (Arabic Voice List)" else "Select Arabic Voice",
+                                            text = if (isBn) "আরবি ভয়েস নির্বাচন" else "Select Arabic Voice",
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 13.sp,
                                             color = themeColors.displayText
@@ -1677,7 +1677,7 @@ fun MainContent(
                                 if (banglaVoices.isNotEmpty()) {
                                     Column {
                                         Text(
-                                            text = if (isBn) "বাংলা অনুবাদ কণ্ঠস্বর (Bangla Voice List)" else "Select Bangla Voice",
+                                            text = if (isBn) "বাংলা ভয়েস নির্বাচন" else "Select Bangla Voice",
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 13.sp,
                                             color = themeColors.displayText
