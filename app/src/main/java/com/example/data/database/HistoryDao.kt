@@ -21,6 +21,9 @@ interface HistoryDao {
     @Query("DELETE FROM calculation_history WHERE id = :id")
     suspend fun deleteHistoryById(id: Long)
 
+    @Query("UPDATE calculation_history SET customName = :customName WHERE id = :id")
+    suspend fun updateCustomName(id: Long, customName: String?)
+
     @Query("DELETE FROM calculation_history")
     suspend fun clearHistory()
 }

@@ -160,15 +160,15 @@ object LanguageManager {
                 AppLanguage.GERMAN -> "Dashboard"
                 AppLanguage.CHINESE -> "仪表板"
             }
-            "tab_history" -> when (language) {
-                AppLanguage.ENGLISH -> "History"
-                AppLanguage.BENGALI -> "ইতিহাস"
-                AppLanguage.HINDI -> "इतिहास"
-                AppLanguage.ARABIC -> "السجل"
-                AppLanguage.FRENCH -> "Historique"
-                AppLanguage.SPANISH -> "Historial"
-                AppLanguage.GERMAN -> "Verlauf"
-                AppLanguage.CHINESE -> "历史"
+            "tab_history", "tab_finance" -> when (language) {
+                AppLanguage.ENGLISH -> "Finance"
+                AppLanguage.BENGALI -> "ফিন্যান্স"
+                AppLanguage.HINDI -> "वित्त"
+                AppLanguage.ARABIC -> "المالية"
+                AppLanguage.FRENCH -> "Finance"
+                AppLanguage.SPANISH -> "Finanzas"
+                AppLanguage.GERMAN -> "Finanzen"
+                AppLanguage.CHINESE -> "财务"
             }
             "search_tools" -> when (language) {
                 AppLanguage.ENGLISH -> "Search tools..."

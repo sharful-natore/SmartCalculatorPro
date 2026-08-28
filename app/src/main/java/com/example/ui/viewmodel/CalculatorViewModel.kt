@@ -3699,6 +3699,47 @@ How can I help you today?"""
         }
     }
 
+    private val financeRepository = com.example.data.repository.FinanceRepository(
+        com.example.data.database.CalculatorDatabase.getDatabase(context).financeDao()
+    )
+
+    val financeTransactions: StateFlow<List<com.example.data.model.FinanceTransaction>> = financeRepository.allTransactions
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    fun addFinanceTransaction(transaction: com.example.data.model.FinanceTransaction) {
+        viewModelScope.launch {
+            financeRepository.insert(transaction)
+        }
+    }
+
+    fun updateFinanceTransaction(transaction: com.example.data.model.FinanceTransaction) {
+        viewModelScope.launch {
+            financeRepository.update(transaction)
+        }
+    }
+
+    fun deleteFinanceTransaction(id: Long) {
+        viewModelScope.launch {
+            financeRepository.deleteById(id)
+        }
+    }
+
+    fun clearAllFinanceTransactions() {
+        viewModelScope.launch {
+            financeRepository.clearAll()
+        }
+    }
+
+    fun updateHistoryCustomName(id: Long, name: String?) {
+        viewModelScope.launch {
+            repository.updateCustomName(id, name)
+        }
+    }
+
     fun deleteHistoryItem(id: Long) {
         viewModelScope.launch {
             repository.deleteHistoryById(id)

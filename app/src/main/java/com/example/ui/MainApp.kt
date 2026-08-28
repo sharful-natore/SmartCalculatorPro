@@ -608,7 +608,7 @@ fun MainContent(
                         Triple(0, Icons.Default.Dashboard, LanguageManager.getString("tab_tools", viewModel.selectedLanguage)),
                         Triple(1, ImageVector.vectorResource(id = R.drawable.ic_convert_tab), LanguageManager.getString("tab_conv", viewModel.selectedLanguage)),
                         Triple(2, Icons.Default.Calculate, LanguageManager.getString("tab_calc", viewModel.selectedLanguage)),
-                        Triple(3, Icons.Default.History, LanguageManager.getString("tab_history", viewModel.selectedLanguage))
+                        Triple(3, Icons.Default.AccountBalance, LanguageManager.getString("tab_history", viewModel.selectedLanguage))
                     )
                     
                     // Left 2 tabs
@@ -996,7 +996,7 @@ fun MainContent(
                             0 -> DashboardScreen(viewModel, themeColors)
                             1 -> SmartConverterScreen(viewModel, themeColors)
                             2 -> CalculatorScreen(viewModel, themeColors)
-                            3 -> HistoryLogsScreen(viewModel, themeColors)
+                            3 -> FinanceScreen(viewModel, themeColors)
                             else -> DashboardScreen(viewModel, themeColors)
                         }
                     }
@@ -1020,7 +1020,7 @@ fun MainContent(
                                 0 -> DashboardScreen(viewModel, themeColors)
                                 1 -> SmartConverterScreen(viewModel, themeColors)
                                 2 -> CalculatorScreen(viewModel, themeColors)
-                                3 -> HistoryLogsScreen(viewModel, themeColors)
+                                3 -> FinanceScreen(viewModel, themeColors)
                                 else -> DashboardScreen(viewModel, themeColors)
                             }
                         }
@@ -1045,18 +1045,17 @@ fun MainContent(
                             0 -> DashboardScreen(viewModel, themeColors)
                             1 -> SmartConverterScreen(viewModel, themeColors)
                             2 -> CalculatorScreen(viewModel, themeColors)
-                            3 -> HistoryLogsScreen(viewModel, themeColors)
+                            3 -> FinanceScreen(viewModel, themeColors)
                             else -> DashboardScreen(viewModel, themeColors)
                         }
                     }
                 }
             }
 
-            // Floating Pill AI Button with 2dp Animated Rotating Gemini Border on Right Side (Hides on Calculator, Themes, tools or when inside other screens with smooth enter/exit animation)
+            // Floating Pill AI Button with 2dp Animated Rotating Gemini Border on Right Side (Hides on Calculator, Themes, Finance tab or when inside other screens with smooth enter/exit animation)
             val isAiFabVisible = !viewModel.showAiChat && (
                     (viewModel.activeTab == 0 && viewModel.selectedToolType == null) ||
-                    (viewModel.activeTab == 1) ||
-                    (viewModel.activeTab == 3)
+                    (viewModel.activeTab == 1)
                 )
 
             Box(

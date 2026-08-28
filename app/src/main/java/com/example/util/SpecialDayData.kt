@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Science
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.ui.graphics.vector.ImageVector
 import java.util.Calendar
@@ -26,7 +27,8 @@ data class SpecialDayEvent(
     val searchQuery: String,
     val icon: ImageVector = Icons.Default.Celebration,
     val isBirthday: Boolean = false,
-    val isFestival: Boolean = false
+    val isFestival: Boolean = false,
+    val isSearchFallback: Boolean = false
 )
 
 object SpecialDayManager {
@@ -354,10 +356,21 @@ object SpecialDayManager {
             titleEn = "Death Anniversary of Kazi Nazrul Islam",
             categoryBn = "জাতীয় স্মরণ দিবস",
             categoryEn = "National Remembrance",
-            descriptionBn = "আজ ১২ই ভাদ্র, আমাদের জাতীয় কবি কাজী নজরুল ইসলামের ৫০তম প্রয়াণ দিবস। তাঁর কালজয়ী সৃষ্টি আমাদের চিরপ্রেরণা।",
+            descriptionBn = "আজ ১২ই ভাদ্র, আমাদের জাতীয় কবি কাজী নজরুল ইসলামের প্রয়াণ দিবস। তাঁর কালজয়ী সৃষ্টি আমাদের চিরপ্রেরণা।",
             descriptionEn = "Commemorating the legacy of Rebel Poet Kazi Nazrul Islam on his death anniversary.",
             searchQuery = "Kazi Nazrul Islam death anniversary history biography",
             icon = Icons.Default.School
+        ),
+        SpecialDayEvent(
+            month = 8, day = 28,
+            titleBn = "মার্টিন লুথার কিং এর 'আই হ্যাভ আ ড্রীম' ভাষণের বার্ষিকী",
+            titleEn = "Martin Luther King Jr. 'I Have a Dream' Speech",
+            categoryBn = "ঐতিহাসিক স্মরণীয় ঘটনা",
+            categoryEn = "Historic World Event",
+            descriptionBn = "১৯৬৩ সালের ২৮শে আগস্ট ওয়াশিংটনে অনুষ্ঠিত মার্টিন লুথার কিং জুনিয়রের ঐতিহাসিক মানবাধিকার ভাষণ দিবস।",
+            descriptionEn = "Commemorating Martin Luther King Jr.'s landmark 'I Have a Dream' speech in 1963.",
+            searchQuery = "Martin Luther King Jr I Have a Dream speech August 28 1963 history",
+            icon = Icons.Default.Public
         ),
 
         // September
@@ -519,32 +532,39 @@ object SpecialDayManager {
         )
     )
 
-    fun getTodaySpecialEvent(calendar: Calendar = Calendar.getInstance()): SpecialDayEvent {
+    fun getTodaySpecialEvents(calendar: Calendar = Calendar.getInstance()): List<SpecialDayEvent> {
         val currentMonth = calendar.get(Calendar.MONTH) + 1 // 1-12
         val currentDay = calendar.get(Calendar.DAY_OF_MONTH)
 
-        val exactMatch = specialEventsList.find { it.month == currentMonth && it.day == currentDay }
-        if (exactMatch != null) {
-            return exactMatch
+        val exactMatches = specialEventsList.filter { it.month == currentMonth && it.day == currentDay }
+        if (exactMatches.isNotEmpty()) {
+            return exactMatches
         }
 
-        // Fallback for dates without exact hardcoded events - Dynamic "Today in History" generator
+        // Fallback search option when there are no specific hardcoded events for today
         val monthNamesBn = listOf("জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল", "মে", "জুন", "জুলাই", "আগস্ট", "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর")
         val monthNamesEn = listOf("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December")
         val monthBn = monthNamesBn.getOrElse(currentMonth - 1) { "" }
         val monthEn = monthNamesEn.getOrElse(currentMonth - 1) { "" }
 
-        return SpecialDayEvent(
+        val searchFallbackEvent = SpecialDayEvent(
             month = currentMonth,
             day = currentDay,
-            titleBn = "$currentDay $monthBn: আজকের গুরুত্বপূর্ণ ইতিহাস ও বিশেষ ঘটনা",
-            titleEn = "$monthEn $currentDay in History & Famous Events",
-            categoryBn = "ইতিহাসের এই দিনে",
-            categoryEn = "Today in History",
-            descriptionBn = "আজকের দিনে ঘটে যাওয়া বিশ্ববরেণ্য ব্যক্তিবর্গের উল্লেখযোগ্য আবিষ্কার, স্থান ও দিবস সম্পর্কে বিস্তারিত জানতে ক্লিক করুন।",
-            descriptionEn = "Discover remarkable historical events, birthdays of famous scientists and personalities on this day.",
-            searchQuery = "What happened on $monthEn $currentDay in world history famous birthdays",
-            icon = Icons.Default.Event
+            titleBn = "$currentDay $monthBn: ইতিহাস ও বিশেষ ঘটনা অনুসন্ধান",
+            titleEn = "Search History & Notable Events ($monthEn $currentDay)",
+            categoryBn = "ইতিহাস ও দিবস অনুসন্ধান",
+            categoryEn = "Search History",
+            descriptionBn = "আজকের দিনে বিশ্বজুড়ে ঘটে যাওয়া উল্লেখযোগ্য ইতিহাস, আবিষ্কার বা বিজ্ঞানীদের দিবস গুগলে খুঁজুন।",
+            descriptionEn = "Explore notable historical events, famous birthdays and discoveries on this day.",
+            searchQuery = "What happened on $monthEn $currentDay in world history famous events",
+            icon = Icons.Default.Search,
+            isSearchFallback = true
         )
+
+        return listOf(searchFallbackEvent)
+    }
+
+    fun getTodaySpecialEvent(calendar: Calendar = Calendar.getInstance()): SpecialDayEvent {
+        return getTodaySpecialEvents(calendar).first()
     }
 }

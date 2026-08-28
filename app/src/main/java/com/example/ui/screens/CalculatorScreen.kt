@@ -31,6 +31,13 @@ import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -844,7 +851,7 @@ fun CalculatorScreen(
                 }
             }
 
-            // Calculator History Dialog popup
+            // Calculator History Dialog popup (Full-Featured)
             if (showCalculatorHistoryOverlay) {
                 val historyEntries by viewModel.historyList.collectAsStateWithLifecycle()
                 val calcHistory = remember(historyEntries) {
@@ -853,40 +860,147 @@ fun CalculatorScreen(
                     }
                 }
 
+                var isMultiSelectMode by remember { mutableStateOf(false) }
+                var selectedIds by remember { mutableStateOf(setOf<Long>()) }
+                var namingTargetEntry by remember { mutableStateOf<com.example.data.model.HistoryEntry?>(null) }
+                var customNameInput by remember { mutableStateOf("") }
+                var showClearConfirm by remember { mutableStateOf(false) }
+
+                val backupLauncher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.CreateDocument("application/json")
+                ) { uri ->
+                    if (uri != null) {
+                        viewModel.backupHistoryToUri(uri)
+                    }
+                }
+
+                val restoreLauncher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.OpenDocument()
+                ) { uri ->
+                    if (uri != null) {
+                        viewModel.restoreHistoryFromUri(uri)
+                    }
+                }
+
                 AlertDialog(
                     onDismissRequest = { showCalculatorHistoryOverlay = false },
                     containerColor = themeColors.cardBg,
                     title = {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.History,
-                                    contentDescription = null,
-                                    tint = themeColors.buttonEqualBg,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                                Spacer(modifier = Modifier.width(10.dp))
-                                Text(
-                                    text = if (isBn) "ক্যালকুলেটর হিস্টোরি" else "Calculator History",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 18.sp,
-                                    color = themeColors.displayText
-                                )
-                            }
-                            IconButton(
-                                onClick = { showCalculatorHistoryOverlay = false },
-                                modifier = Modifier.size(32.dp)
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = "Close",
-                                    tint = themeColors.displayText,
-                                    modifier = Modifier.size(20.dp)
-                                )
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.History,
+                                        contentDescription = null,
+                                        tint = themeColors.buttonEqualBg,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = if (isBn) "ক্যালকুলেটর ইতিহাস" else "Calculator History",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 17.sp,
+                                        color = themeColors.displayText
+                                    )
+                                }
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    IconButton(
+                                        onClick = { 
+                                            isMultiSelectMode = !isMultiSelectMode
+                                            selectedIds = emptySet()
+                                        },
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = if (isMultiSelectMode) Icons.Default.CheckCircle else Icons.Default.Check,
+                                            contentDescription = "Select Mode",
+                                            tint = if (isMultiSelectMode) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.7f),
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                    IconButton(
+                                        onClick = { showCalculatorHistoryOverlay = false },
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Close,
+                                            contentDescription = "Close",
+                                            tint = themeColors.displayText,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(6.dp))
+
+                            // Action Bar inside Dialog: Backup, Restore, Delete Selected, Clear
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                if (isMultiSelectMode && selectedIds.isNotEmpty()) {
+                                    Button(
+                                        onClick = {
+                                            selectedIds.forEach { id -> viewModel.deleteHistoryItem(id) }
+                                            selectedIds = emptySet()
+                                            isMultiSelectMode = false
+                                        },
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444)),
+                                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                                        shape = RoundedCornerShape(10.dp),
+                                        modifier = Modifier.height(32.dp)
+                                    ) {
+                                        Icon(Icons.Default.Delete, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = if (isBn) "${selectedIds.size} টি মুছুন" else "Delete (${selectedIds.size})",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White
+                                        )
+                                    }
+                                } else {
+                                    // Backup Button
+                                    OutlinedButton(
+                                        onClick = { backupLauncher.launch("calculator_history.json") },
+                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                                        shape = RoundedCornerShape(10.dp),
+                                        modifier = Modifier.height(30.dp)
+                                    ) {
+                                        Icon(Icons.Default.ArrowDownward, contentDescription = null, modifier = Modifier.size(12.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(if (isBn) "ব্যাকআপ" else "Backup", fontSize = 10.5.sp)
+                                    }
+
+                                    // Restore Button
+                                    OutlinedButton(
+                                        onClick = { restoreLauncher.launch(arrayOf("application/json")) },
+                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                                        shape = RoundedCornerShape(10.dp),
+                                        modifier = Modifier.height(30.dp)
+                                    ) {
+                                        Icon(Icons.Default.ArrowUpward, contentDescription = null, modifier = Modifier.size(12.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(if (isBn) "রিস্টোর" else "Restore", fontSize = 10.5.sp)
+                                    }
+
+                                    if (calcHistory.isNotEmpty()) {
+                                        Spacer(modifier = Modifier.weight(1f))
+                                        TextButton(
+                                            onClick = { showClearConfirm = true },
+                                            contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp),
+                                            modifier = Modifier.height(30.dp)
+                                        ) {
+                                            Text(if (isBn) "সব মুছুন" else "Clear All", fontSize = 10.5.sp, color = Color(0xFFEF4444))
+                                        }
+                                    }
+                                }
                             }
                         }
                     },
@@ -918,56 +1032,128 @@ fun CalculatorScreen(
                                     verticalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                     calcHistory.forEach { entry ->
+                                        val isSelected = selectedIds.contains(entry.id)
                                         Card(
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .clickable {
-                                                    viewModel.selectHistoryItem(entry)
-                                                    showCalculatorHistoryOverlay = false
+                                                    if (isMultiSelectMode) {
+                                                        selectedIds = if (isSelected) selectedIds - entry.id else selectedIds + entry.id
+                                                    } else {
+                                                        viewModel.selectHistoryItem(entry)
+                                                        showCalculatorHistoryOverlay = false
+                                                    }
                                                 },
-                                            shape = RoundedCornerShape(12.dp),
+                                            shape = RoundedCornerShape(14.dp),
                                             colors = CardDefaults.cardColors(
-                                                containerColor = themeColors.background.copy(alpha = 0.8f)
-                                            )
+                                                containerColor = if (isSelected) themeColors.buttonEqualBg.copy(alpha = 0.18f) else themeColors.background.copy(alpha = 0.85f)
+                                            ),
+                                            border = if (isSelected) BorderStroke(1.5.dp, themeColors.buttonEqualBg) else null
                                         ) {
                                             Row(
                                                 modifier = Modifier
                                                     .fillMaxWidth()
-                                                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                                                    .padding(horizontal = 12.dp, vertical = 10.dp),
                                                 horizontalArrangement = Arrangement.SpaceBetween,
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
+                                                if (isMultiSelectMode) {
+                                                    Checkbox(
+                                                        checked = isSelected,
+                                                        onCheckedChange = { checked ->
+                                                            selectedIds = if (checked == true) selectedIds + entry.id else selectedIds - entry.id
+                                                        },
+                                                        colors = CheckboxDefaults.colors(checkedColor = themeColors.buttonEqualBg)
+                                                    )
+                                                    Spacer(modifier = Modifier.width(6.dp))
+                                                }
+
                                                 Column(modifier = Modifier.weight(1f)) {
+                                                    // Custom Name Badge Tag
+                                                    if (!entry.customName.isNullOrBlank()) {
+                                                        Surface(
+                                                            color = themeColors.buttonEqualBg.copy(alpha = 0.15f),
+                                                            shape = RoundedCornerShape(8.dp),
+                                                            modifier = Modifier.padding(bottom = 4.dp)
+                                                        ) {
+                                                            Row(
+                                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                                                verticalAlignment = Alignment.CenterVertically
+                                                            ) {
+                                                                Icon(
+                                                                    imageVector = Icons.Default.Bookmark,
+                                                                    contentDescription = null,
+                                                                    tint = themeColors.buttonEqualBg,
+                                                                    modifier = Modifier.size(11.dp)
+                                                                )
+                                                                Spacer(modifier = Modifier.width(4.dp))
+                                                                Text(
+                                                                    text = entry.customName,
+                                                                    fontSize = 11.sp,
+                                                                    fontWeight = FontWeight.Bold,
+                                                                    color = themeColors.buttonEqualBg
+                                                                )
+                                                            }
+                                                        }
+                                                    }
+
                                                     Text(
                                                         text = entry.expression,
-                                                        fontSize = 15.sp,
+                                                        fontSize = 14.5.sp,
                                                         fontFamily = FontFamily.Monospace,
                                                         color = themeColors.displayExpressionText
                                                     )
                                                     Spacer(modifier = Modifier.height(2.dp))
                                                     Text(
                                                         text = "= ${entry.result}",
-                                                        fontSize = 17.sp,
+                                                        fontSize = 16.5.sp,
                                                         fontFamily = FontFamily.Monospace,
                                                         fontWeight = FontWeight.Bold,
                                                         color = themeColors.displayText
                                                     )
-                                                    if (!entry.customName.isNullOrBlank()) {
-                                                        Spacer(modifier = Modifier.height(2.dp))
-                                                        Text(
-                                                            text = entry.customName,
-                                                            fontSize = 12.sp,
-                                                            color = themeColors.buttonEqualBg,
-                                                            fontWeight = FontWeight.Medium
+                                                }
+
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+                                                ) {
+                                                    // Edit / Add Name Label Button
+                                                    IconButton(
+                                                        onClick = {
+                                                            namingTargetEntry = entry
+                                                            customNameInput = entry.customName ?: ""
+                                                        },
+                                                        modifier = Modifier.size(28.dp)
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = Icons.Default.Edit,
+                                                            contentDescription = "Edit Label",
+                                                            tint = themeColors.displayText.copy(alpha = 0.5f),
+                                                            modifier = Modifier.size(15.dp)
                                                         )
                                                     }
+
+                                                    IconButton(
+                                                        onClick = { viewModel.deleteHistoryItem(entry.id) },
+                                                        modifier = Modifier.size(28.dp)
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = Icons.Default.Delete,
+                                                            contentDescription = "Delete",
+                                                            tint = Color(0xFFEF4444).copy(alpha = 0.7f),
+                                                            modifier = Modifier.size(15.dp)
+                                                        )
+                                                    }
+
+                                                    Icon(
+                                                        imageVector = Icons.Default.ArrowForward,
+                                                        contentDescription = "Load",
+                                                        tint = themeColors.buttonEqualBg,
+                                                        modifier = Modifier
+                                                            .padding(start = 4.dp)
+                                                            .size(18.dp)
+                                                    )
                                                 }
-                                                Icon(
-                                                    imageVector = Icons.Default.ArrowForward,
-                                                    contentDescription = "Load",
-                                                    tint = themeColors.buttonEqualBg,
-                                                    modifier = Modifier.size(20.dp)
-                                                )
                                             }
                                         }
                                     }
@@ -978,6 +1164,82 @@ fun CalculatorScreen(
                     confirmButton = {},
                     shape = RoundedCornerShape(24.dp)
                 )
+
+                // Dialog to assign custom name / badge label
+                if (namingTargetEntry != null) {
+                    val entryToName = namingTargetEntry!!
+                    AlertDialog(
+                        onDismissRequest = { namingTargetEntry = null },
+                        title = {
+                            Text(
+                                text = if (isBn) "হিসাবের নাম দিন (ব্যাজ tag)" else "Save Custom Label",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                color = themeColors.displayText
+                            )
+                        },
+                        text = {
+                            Column {
+                                Text(
+                                    text = "${entryToName.expression} = ${entryToName.result}",
+                                    fontSize = 13.sp,
+                                    fontFamily = FontFamily.Monospace,
+                                    color = themeColors.displayText.copy(alpha = 0.75f)
+                                )
+                                Spacer(modifier = Modifier.height(10.dp))
+                                OutlinedTextField(
+                                    value = customNameInput,
+                                    onValueChange = { customNameInput = it },
+                                    label = { Text(if (isBn) "ট্যাগ / নাম (যেমন: বাজার খরচ)" else "Custom Name Tag") },
+                                    singleLine = true,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+                        },
+                        confirmButton = {
+                            Button(
+                                onClick = {
+                                    viewModel.updateHistoryCustomName(entryToName.id, customNameInput.ifBlank { null })
+                                    namingTargetEntry = null
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg)
+                            ) {
+                                Text(if (isBn) "সংরক্ষণ" else "Save", color = Color.White)
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { namingTargetEntry = null }) {
+                                Text(if (isBn) "বাতিল" else "Cancel", color = themeColors.displayText)
+                            }
+                        },
+                        containerColor = themeColors.cardBg
+                    )
+                }
+
+                if (showClearConfirm) {
+                    AlertDialog(
+                        onDismissRequest = { showClearConfirm = false },
+                        title = { Text(if (isBn) "ক্যালকুলেটর ইতিহাস মুছবেন?" else "Clear History?", color = themeColors.displayText) },
+                        text = { Text(if (isBn) "সমস্ত সংরক্ষিত ক্যালকুলেশন মুছে ফেলা হবে।" else "This will permanently clear calculation history.", color = themeColors.displayText) },
+                        confirmButton = {
+                            Button(
+                                onClick = {
+                                    viewModel.clearAllHistory()
+                                    showClearConfirm = false
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))
+                            ) {
+                                Text(if (isBn) "সব মুছুন" else "Clear All", color = Color.White)
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showClearConfirm = false }) {
+                                Text(if (isBn) "বাতিল" else "Cancel", color = themeColors.displayText)
+                            }
+                        },
+                        containerColor = themeColors.cardBg
+                    )
+                }
             }
 
             // AC Undo Confirmation Dialog

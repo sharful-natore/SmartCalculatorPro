@@ -256,6 +256,7 @@ fun DashboardCategoriesView(
     var unfavoriteConfirmTool by remember { mutableStateOf<ToolType?>(null) }
     var showAllFeaturedDialog by remember { mutableStateOf(false) }
     var selectedItemForOptions by remember { mutableStateOf<FeaturedDashboardItem?>(null) }
+    var selectedSpecialEventDialog by remember { mutableStateOf<com.example.util.SpecialDayEvent?>(null) }
 
     val context = LocalContext.current
     val speechLauncher = rememberLauncherForActivityResult(
@@ -976,22 +977,24 @@ fun DashboardCategoriesView(
                 toolItems + converterItems
             }
 
-            // Today's Special Event Card Item for Featured Slider
-            val todaySpecialEvent = remember { SpecialDayManager.getTodaySpecialEvent() }
-            val specialDayFeaturedItem = remember(todaySpecialEvent) {
-                FeaturedDashboardItem(
-                    key = "SPECIAL_DAY_${todaySpecialEvent.month}_${todaySpecialEvent.day}",
-                    titleEn = todaySpecialEvent.titleEn,
-                    titleBn = todaySpecialEvent.titleBn,
-                    icon = todaySpecialEvent.icon,
-                    isTool = false,
-                    isSpecialDay = true,
-                    specialEvent = todaySpecialEvent
-                )
+            // Today's Special Event Card Items for Featured Slider
+            val todaySpecialEvents = remember { SpecialDayManager.getTodaySpecialEvents() }
+            val specialDayFeaturedItems = remember(todaySpecialEvents) {
+                todaySpecialEvents.mapIndexed { idx, event ->
+                    FeaturedDashboardItem(
+                        key = "SPECIAL_DAY_${event.month}_${event.day}_$idx",
+                        titleEn = event.titleEn,
+                        titleBn = event.titleBn,
+                        icon = event.icon,
+                        isTool = false,
+                        isSpecialDay = true,
+                        specialEvent = event
+                    )
+                }
             }
 
             // Top Most Used Tools/Converters for Featured (>= 3 uses)
-            val topFeaturedList = remember(allAvailableDashboardItems, usageMap, isBn, viewModel.featuredCustomOrder, viewModel.featuredRemovedKeys, specialDayFeaturedItem) {
+            val topFeaturedList = remember(allAvailableDashboardItems, usageMap, isBn, viewModel.featuredCustomOrder, viewModel.featuredRemovedKeys, specialDayFeaturedItems) {
                 val qualifyingItems = allAvailableDashboardItems.filter { item ->
                     val count = if (item.isTool && item.toolType != null) {
                         (usageMap["TOOL_${item.toolType.name}"] ?: usageMap[item.toolType.name] ?: 0) as Int
@@ -1028,7 +1031,7 @@ fun DashboardCategoriesView(
                     ).take(9)
                 }
 
-                listOf(specialDayFeaturedItem) + sortedTools
+                specialDayFeaturedItems + sortedTools
             }
 
             // User's Favorite Tools/Converters (up to 10, newest first)
@@ -1495,6 +1498,7 @@ fun DashboardCategoriesView(
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
+                                    .height(120.dp)
                                     .border(
                                         width = 1.dp,
                                         color = primaryAccent.copy(alpha = 0.40f),
@@ -1506,15 +1510,7 @@ fun DashboardCategoriesView(
                                         indication = androidx.compose.foundation.LocalIndication.current,
                                         onClick = {
                                             if (isSpecial && item.specialEvent != null) {
-                                                try {
-                                                    val intent = Intent(
-                                                        Intent.ACTION_VIEW,
-                                                        Uri.parse("https://www.google.com/search?q=" + Uri.encode(item.specialEvent.searchQuery))
-                                                    )
-                                                    context.startActivity(intent)
-                                                } catch (e: Exception) {
-                                                    e.printStackTrace()
-                                                }
+                                                selectedSpecialEventDialog = item.specialEvent
                                             } else if (item.isTool && item.toolType != null) {
                                                 viewModel.openTool(item.toolType)
                                             } else if (item.converterType != null) {
@@ -1533,6 +1529,7 @@ fun DashboardCategoriesView(
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
+                                        .height(120.dp)
                                         .background(
                                             Brush.linearGradient(
                                                 colors = bannerGradients,
@@ -1699,7 +1696,7 @@ fun DashboardCategoriesView(
                                             // Title
                                             Text(
                                                 text = if (isBn) item.titleBn else item.titleEn,
-                                                fontSize = 15.sp,
+                                                fontSize = 14.5.sp,
                                                 fontWeight = FontWeight.Bold,
                                                 color = Color.White,
                                                 maxLines = 1,
@@ -1711,23 +1708,32 @@ fun DashboardCategoriesView(
                                             // Description
                                             Text(
                                                 text = item.getSubtitle(viewModel.selectedLanguage),
-                                                fontSize = 11.sp,
+                                                fontSize = 10.5.sp,
                                                 color = Color.White.copy(alpha = 0.85f),
-                                                maxLines = if (isSpecial) 2 else 1,
+                                                maxLines = 1,
                                                 overflow = TextOverflow.Ellipsis,
-                                                lineHeight = 14.5.sp
+                                                lineHeight = 13.5.sp
                                             )
 
-                                            Spacer(modifier = Modifier.height(6.dp))
+                                            Spacer(modifier = Modifier.height(5.dp))
 
                                             // Action Pill Button
                                             Surface(
                                                 shape = RoundedCornerShape(20.dp),
                                                 color = Color.White,
-                                                shadowElevation = 2.dp
+                                                shadowElevation = 2.dp,
+                                                modifier = Modifier.clickable {
+                                                    if (isSpecial && item.specialEvent != null) {
+                                                        selectedSpecialEventDialog = item.specialEvent
+                                                    } else if (item.isTool && item.toolType != null) {
+                                                        viewModel.openTool(item.toolType)
+                                                    } else if (item.converterType != null) {
+                                                        viewModel.openConverter(item.converterType)
+                                                    }
+                                                }
                                             ) {
                                                 Row(
-                                                    modifier = Modifier.padding(horizontal = 11.dp, vertical = 4.dp),
+                                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                                                     verticalAlignment = Alignment.CenterVertically,
                                                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                                                 ) {
@@ -1738,10 +1744,18 @@ fun DashboardCategoriesView(
                                                         modifier = Modifier.size(11.dp)
                                                     )
                                                     Text(
-                                                        text = if (isSpecial) (if (isBn) "বিস্তারিত জানুন" else "Learn More") else (if (isBn) "ব্যবহার করুন" else "Open Tool"),
+                                                        text = if (isSpecial) {
+                                                            if (item.specialEvent?.isSearchFallback == true) {
+                                                                if (isBn) "অনুসন্ধান করুন" else "Search History"
+                                                            } else {
+                                                                if (isBn) "বিস্তারিত জানুন" else "Learn More"
+                                                            }
+                                                        } else (if (isBn) "ব্যবহার করুন" else "Open Tool"),
                                                         fontSize = 10.5.sp,
                                                         fontWeight = FontWeight.ExtraBold,
-                                                        color = bannerGradients.first()
+                                                        color = bannerGradients.first(),
+                                                        maxLines = 1,
+                                                        softWrap = false
                                                     )
                                                 }
                                             }
@@ -2126,6 +2140,136 @@ fun DashboardCategoriesView(
                     }
                 },
                 containerColor = themeColors.background
+            )
+        }
+
+        // Special Day / Historic Event Overview Dialog
+        if (selectedSpecialEventDialog != null) {
+            val event = selectedSpecialEventDialog!!
+            val monthNamesBn = listOf("জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল", "মে", "জুন", "জুলাই", "আগস্ট", "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর")
+            val monthNamesEn = listOf("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December")
+            val dateStr = if (isBn) {
+                "${event.day}শে ${monthNamesBn.getOrElse(event.month - 1) { "" }}"
+            } else {
+                "${monthNamesEn.getOrElse(event.month - 1) { "" }} ${event.day}"
+            }
+
+            AlertDialog(
+                onDismissRequest = { selectedSpecialEventDialog = null },
+                icon = {
+                    Box(
+                        modifier = Modifier
+                            .size(56.dp)
+                            .clip(CircleShape)
+                            .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = event.icon,
+                            contentDescription = null,
+                            tint = themeColors.buttonEqualBg,
+                            modifier = Modifier.size(30.dp)
+                        )
+                    }
+                },
+                title = {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = themeColors.buttonEqualBg.copy(alpha = 0.12f)
+                        ) {
+                            Text(
+                                text = if (isBn) event.categoryBn else event.categoryEn,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = themeColors.buttonEqualBg,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = if (isBn) event.titleBn else event.titleEn,
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = themeColors.displayText,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "🗓️ $dateStr",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = themeColors.displayText.copy(alpha = 0.65f)
+                        )
+                    }
+                },
+                text = {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(14.dp),
+                            color = themeColors.cardBg,
+                            border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.10f))
+                        ) {
+                            Text(
+                                text = if (isBn) event.descriptionBn else event.descriptionEn,
+                                fontSize = 13.5.sp,
+                                color = themeColors.displayText.copy(alpha = 0.90f),
+                                lineHeight = 19.sp,
+                                modifier = Modifier.padding(14.dp)
+                            )
+                        }
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            try {
+                                val intent = Intent(
+                                    Intent.ACTION_VIEW,
+                                    Uri.parse("https://www.google.com/search?q=" + Uri.encode(event.searchQuery))
+                                )
+                                context.startActivity(intent)
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
+                            selectedSpecialEventDialog = null
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = if (isBn) "গুগলে আরও বিস্তারিত খুঁজুন" else "Search More on Google",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.5.sp
+                        )
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { selectedSpecialEventDialog = null }) {
+                        Text(
+                            text = if (isBn) "বন্ধ করুন" else "Close",
+                            color = themeColors.displayText.copy(alpha = 0.70f),
+                            fontSize = 13.sp
+                        )
+                    }
+                },
+                containerColor = themeColors.background,
+                shape = RoundedCornerShape(24.dp)
             )
         }
 

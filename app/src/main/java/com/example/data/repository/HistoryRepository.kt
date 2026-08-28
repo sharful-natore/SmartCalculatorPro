@@ -17,6 +17,10 @@ class HistoryRepository(private val historyDao: HistoryDao) {
         historyDao.deleteHistoryById(id)
     }
 
+    suspend fun updateCustomName(id: Long, customName: String?) {
+        historyDao.updateCustomName(id, customName)
+    }
+
     suspend fun clearHistory() {
         historyDao.clearHistory()
     }
