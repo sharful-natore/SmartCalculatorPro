@@ -64,24 +64,30 @@ fun getToolIconGradient(baseColor: Color): androidx.compose.ui.graphics.Brush {
     val s = hsv[1]
     val v = hsv[2]
 
-    // Distinct Color 1 (Start Color - Shifted Hue, High Luminance)
+    // Soft, elegant pastel-frosted hues with controlled saturation & gentle luminance
     val startHsv = floatArrayOf(
-        (h - 38f + 360f) % 360f,
-        (s * 0.85f).coerceIn(0.4f, 0.95f),
-        (v * 1.20f + 0.10f).coerceIn(0.6f, 1f)
+        (h - 25f + 360f) % 360f,
+        (s * 0.50f).coerceIn(0.20f, 0.60f),
+        (v * 1.10f + 0.10f).coerceIn(0.70f, 0.98f)
     )
-    val startColor = Color(android.graphics.Color.HSVToColor(startHsv))
+    val startColor = Color(android.graphics.Color.HSVToColor(startHsv)).copy(alpha = 0.90f)
 
-    // Distinct Color 2 (End Color - Shifted Hue, Deep Saturation)
-    val endHsv = floatArrayOf(
-        (h + 42f) % 360f,
-        (s * 1.15f).coerceIn(0.6f, 1f),
-        (v * 0.78f).coerceIn(0.35f, 0.95f)
+    val midHsv = floatArrayOf(
+        h,
+        (s * 0.60f).coerceIn(0.25f, 0.70f),
+        (v * 1.02f).coerceIn(0.65f, 0.92f)
     )
-    val endColor = Color(android.graphics.Color.HSVToColor(endHsv))
+    val midColor = Color(android.graphics.Color.HSVToColor(midHsv)).copy(alpha = 0.88f)
+
+    val endHsv = floatArrayOf(
+        (h + 30f) % 360f,
+        (s * 0.70f).coerceIn(0.30f, 0.75f),
+        (v * 0.88f).coerceIn(0.55f, 0.88f)
+    )
+    val endColor = Color(android.graphics.Color.HSVToColor(endHsv)).copy(alpha = 0.85f)
 
     return androidx.compose.ui.graphics.Brush.linearGradient(
-        colors = listOf(startColor, baseColor, endColor),
+        colors = listOf(startColor, midColor, endColor),
         start = androidx.compose.ui.geometry.Offset(0f, 0f),
         end = androidx.compose.ui.geometry.Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
     )
@@ -150,6 +156,7 @@ enum class CalculatorThemeType {
     DEEP_FOREST,
     ROYAL_GOLD,
     OCEAN_BLUE,
+    INDIGO_CYAN,
     CHARCOAL_DARK;
 
     fun getColors(): CalculatorThemeColors {
@@ -351,6 +358,28 @@ enum class CalculatorThemeType {
                 isDark = false,
                 themeName = "Ocean Blue",
                 themeNameBn = "ওশান ব্লু"
+            )
+            INDIGO_CYAN -> CalculatorThemeColors(
+                background = Color(0xFFF0F4FA),
+                displayBackground = Color(0xFFE2ECF8),
+                displayText = Color(0xFF1E293B),
+                displayExpressionText = Color(0xFF475569),
+                buttonNormalBg = Color(0xFFFFFFFF),
+                buttonNormalText = Color(0xFF1E293B),
+                buttonOperatorBg = Color(0xFFE0E7FF),
+                buttonOperatorText = Color(0xFF4F46E5),
+                buttonFunctionBg = Color(0xFFE0F2FE),
+                buttonFunctionText = Color(0xFF0284C7),
+                buttonEqualBg = Color(0xFF4F46E5),
+                buttonEqualText = Color(0xFFFFFFFF),
+                cardBg = Color(0xFFFFFFFF),
+                unselectedItemText = Color(0xFF64748B),
+                navBarBg = Color(0xFF4F46E5),
+                titleBarBg = Color(0xFF4F46E5),
+                chipBg = Color(0xFFE0E7FF),
+                isDark = false,
+                themeName = "Indigo Cyan",
+                themeNameBn = "ইনডিগো সায়ান"
             )
             CHARCOAL_DARK -> CalculatorThemeColors(
                 background = Color(0xFF121212),

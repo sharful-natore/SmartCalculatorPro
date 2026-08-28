@@ -3423,9 +3423,9 @@ fun MainContent(
                 TextButton(onClick = { viewModel.confirmPendingFavoriteAction() }) {
                     Text(
                         text = if (isBn) {
-                            if (isAdding) "⭐ প্রিয় তালিকায় যোগ" else "🗑️ প্রিয় তালিকা থেকে সরান"
+                            if (isAdding) "প্রিয় তালিকায় যোগ" else "প্রিয় তালিকা থেকে সরান"
                         } else {
-                            if (isAdding) "⭐ Add to Favorites" else "🗑️ Remove Favorite"
+                            if (isAdding) "Add to Favorites" else "Remove Favorite"
                         },
                         color = if (isAdding) themeColors.buttonEqualBg else Color.Red,
                         fontWeight = FontWeight.Bold

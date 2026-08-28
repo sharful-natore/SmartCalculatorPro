@@ -577,8 +577,8 @@ fun SmartConverterCategoriesView(
                                     AnimatedContent(
                                         targetState = if (isOverviewMode) isCategoryExpanded else true,
                                         transitionSpec = {
-                                            (fadeIn(animationSpec = tween(220)) + scaleIn(initialScale = 0.96f, animationSpec = tween(220))) togetherWith
-                                                    fadeOut(animationSpec = tween(160))
+                                            (expandVertically(animationSpec = tween(300)) + fadeIn(animationSpec = tween(280))) togetherWith
+                                                    (shrinkVertically(animationSpec = tween(260)) + fadeOut(animationSpec = tween(200)))
                                         },
                                         label = "ConvertersDisplayMode_${category.name}"
                                     ) { isExpandedState ->
