@@ -229,7 +229,7 @@ fun SmartConverterCategoriesView(
                 translationY = bounceAnimatable.value
             }
             .verticalScroll(scrollState)
-            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .padding(horizontal = 6.dp, vertical = 10.dp)
     ) {
         val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
 
@@ -470,250 +470,252 @@ fun SmartConverterCategoriesView(
                         if (categoryConverters.isNotEmpty()) {
                             val isCategoryExpanded = expandedCategories.getOrDefault(category, false)
 
-                            // Category Header Card
+                            // Unified Category Container Card
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(top = 10.dp, bottom = 6.dp)
-                                    .themeCardShadow(themeColors, elevation = 1.dp),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
-                                border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.15f))
+                                    .padding(vertical = 6.dp),
+                                shape = RoundedCornerShape(18.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (themeColors.isDark) themeColors.cardBg.copy(alpha = 0.55f) else themeColors.buttonEqualBg.copy(alpha = 0.08f)
+                                ),
+                                border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.20f))
                             ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                                        .padding(horizontal = 6.dp, vertical = 10.dp)
                                 ) {
+                                    // Category Header Line (Direct Row inside Outer Card, no separate card color)
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier.weight(1f, fill = false)
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(bottom = 10.dp, start = 2.dp, end = 2.dp)
                                     ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(28.dp)
-                                                .clip(CircleShape)
-                                                .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Icon(
-                                                imageVector = category.icon,
-                                                contentDescription = category.titleEn,
-                                                tint = themeColors.buttonEqualBg,
-                                                modifier = Modifier.size(16.dp)
-                                            )
-                                        }
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(
-                                            text = category.getTitle(viewModel.selectedLanguage),
-                                            fontSize = 14.5.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = themeColors.displayText,
-                                            maxLines = 1
-                                        )
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Box(
-                                            modifier = Modifier
-                                                .defaultMinSize(minWidth = 22.dp, minHeight = 22.dp)
-                                                .clip(CircleShape)
-                                                .background(themeColors.buttonEqualBg.copy(alpha = 0.15f))
-                                                .padding(horizontal = 6.dp, vertical = 2.dp),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Text(
-                                                text = if (isBn) "${categoryConverters.size}টি" else "${categoryConverters.size}",
-                                                fontSize = 10.5.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = themeColors.buttonEqualBg
-                                            )
-                                        }
-                                    }
-
-                                    if (isOverviewMode && categoryConverters.size > 2) {
                                         Row(
-                                            modifier = Modifier
-                                                .clip(RoundedCornerShape(8.dp))
-                                                .background(themeColors.buttonEqualBg.copy(alpha = 0.12f))
-                                                .clickable { expandedCategories[category] = !isCategoryExpanded }
-                                                .padding(horizontal = 8.dp, vertical = 5.dp),
-                                            verticalAlignment = Alignment.CenterVertically
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier.weight(1f, fill = false)
                                         ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(30.dp)
+                                                    .clip(CircleShape)
+                                                    .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Icon(
+                                                    imageVector = category.icon,
+                                                    contentDescription = category.titleEn,
+                                                    tint = themeColors.buttonEqualBg,
+                                                    modifier = Modifier.size(17.dp)
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.width(8.dp))
                                             Text(
-                                                text = if (isCategoryExpanded) {
-                                                    if (isBn) "সংকুচিত করুন" else "Collapse"
-                                                } else {
-                                                    if (isBn) "সব দেখুন" else "See all"
-                                                },
-                                                fontSize = 11.sp,
+                                                text = category.getTitle(viewModel.selectedLanguage),
+                                                fontSize = 15.sp,
                                                 fontWeight = FontWeight.Bold,
-                                                color = themeColors.buttonEqualBg
+                                                color = themeColors.displayText,
+                                                maxLines = 1
                                             )
-                                            Spacer(modifier = Modifier.width(2.dp))
-                                            Icon(
-                                                imageVector = if (isCategoryExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                                                contentDescription = null,
-                                                tint = themeColors.buttonEqualBg,
-                                                modifier = Modifier.size(14.dp)
-                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Box(
+                                                modifier = Modifier
+                                                    .defaultMinSize(minWidth = 22.dp, minHeight = 22.dp)
+                                                    .clip(CircleShape)
+                                                    .background(themeColors.buttonEqualBg.copy(alpha = 0.15f))
+                                                    .padding(horizontal = 6.dp, vertical = 2.dp),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Text(
+                                                    text = if (isBn) "${categoryConverters.size}টি" else "${categoryConverters.size}",
+                                                    fontSize = 10.5.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = themeColors.buttonEqualBg
+                                                )
+                                            }
+                                        }
+
+                                        if (isOverviewMode && categoryConverters.size > 2) {
+                                            Row(
+                                                modifier = Modifier
+                                                    .clip(RoundedCornerShape(8.dp))
+                                                    .background(themeColors.buttonEqualBg.copy(alpha = 0.12f))
+                                                    .clickable { expandedCategories[category] = !isCategoryExpanded }
+                                                    .padding(horizontal = 8.dp, vertical = 5.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text(
+                                                    text = if (isCategoryExpanded) {
+                                                        if (isBn) "সংকুচিত করুন" else "Collapse"
+                                                    } else {
+                                                        if (isBn) "সব দেখুন" else "See all"
+                                                    },
+                                                    fontSize = 11.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = themeColors.buttonEqualBg
+                                                )
+                                                Spacer(modifier = Modifier.width(2.dp))
+                                                Icon(
+                                                    imageVector = if (isCategoryExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                                    contentDescription = null,
+                                                    tint = themeColors.buttonEqualBg,
+                                                    modifier = Modifier.size(14.dp)
+                                                )
+                                            }
                                         }
                                     }
-                                }
-                            }
 
-                            val toolUsageList by viewModel.allToolUsage.collectAsState()
-                            val categoryRankMap = remember(categoryConverters) {
-                                categoryConverters.mapIndexed { index, conv -> conv.name to (if (index < 3) index + 1 else 0) }.toMap()
-                            }
+                                    val toolUsageList by viewModel.allToolUsage.collectAsState()
+                                    val categoryRankMap = remember(categoryConverters) {
+                                        categoryConverters.mapIndexed { index, conv -> conv.name to (if (index < 3) index + 1 else 0) }.toMap()
+                                    }
 
-                            // Dynamic Layout: Horizontal Scrolling Row when collapsed in Overview Mode, Vertical Grid when expanded or filtered
-                            AnimatedContent(
-                                targetState = if (isOverviewMode) isCategoryExpanded else true,
-                                transitionSpec = {
-                                    (fadeIn(animationSpec = tween(220)) + scaleIn(initialScale = 0.96f, animationSpec = tween(220))) togetherWith
-                                            fadeOut(animationSpec = tween(160))
-                                },
-                                label = "ConvertersDisplayMode_${category.name}"
-                            ) { isExpandedState ->
-                                if (isExpandedState) {
-                                    // 2-column Vertical Grid
-                                    Column(
-                                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                                        modifier = Modifier.padding(bottom = 6.dp)
-                                    ) {
-                                        categoryConverters.chunked(2).forEach { rowItems ->
+                                    // Dynamic Layout: Horizontal Scrolling Row when collapsed in Overview Mode, Vertical Grid when expanded or filtered
+                                    AnimatedContent(
+                                        targetState = if (isOverviewMode) isCategoryExpanded else true,
+                                        transitionSpec = {
+                                            (fadeIn(animationSpec = tween(220)) + scaleIn(initialScale = 0.96f, animationSpec = tween(220))) togetherWith
+                                                    fadeOut(animationSpec = tween(160))
+                                        },
+                                        label = "ConvertersDisplayMode_${category.name}"
+                                    ) { isExpandedState ->
+                                        if (isExpandedState) {
+                                            // 2-column Vertical Grid
+                                            Column(
+                                                verticalArrangement = Arrangement.spacedBy(10.dp),
+                                                modifier = Modifier.padding(bottom = 2.dp)
+                                            ) {
+                                                categoryConverters.chunked(2).forEach { rowItems ->
+                                                    val isBn = viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI
+                                                    val subtitleTextOf = { type: ConverterType ->
+                                                        type.units.map { type.getLocalizedUnitName(it, viewModel.selectedLanguage) }.joinToString(", ")
+                                                    }
+                                                    val isAnyTitleLongInRow = rowItems.any { isTitleLong(it.getTitle(viewModel.selectedLanguage), isBn) }
+                                                    val isAnySubtitleLongInRow = rowItems.any { isSubtitleLong(subtitleTextOf(it), isBn) }
+                                                    val rowTitleLines = if (isAnyTitleLongInRow) 2 else 1
+                                                    val rowSubtitleLines = if (isAnySubtitleLongInRow) 2 else 1
+                                                    Row(
+                                                        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
+                                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                                    ) {
+                                                        rowItems.forEach { type ->
+                                                            key(type.name) {
+                                                                Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                                                                    ConverterCardItem(
+                                                                        converterType = type,
+                                                                        viewModel = viewModel,
+                                                                        themeColors = themeColors,
+                                                                        modifier = Modifier.fillMaxHeight(),
+                                                                        categoryRank = categoryRankMap[type.name] ?: 0,
+                                                                        titleLines = rowTitleLines,
+                                                                        subtitleLines = rowSubtitleLines,
+                                                                        onClick = { viewModel.openConverter(type) }
+                                                                    )
+                                                                }
+                                                            }
+                                                        }
+                                                        if (rowItems.size == 1) {
+                                                            Spacer(modifier = Modifier.weight(1f))
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        } else {
+                                            // Default Horizontal Scrolling Row
                                             val isBn = viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI
                                             val subtitleTextOf = { type: ConverterType ->
                                                 type.units.map { type.getLocalizedUnitName(it, viewModel.selectedLanguage) }.joinToString(", ")
                                             }
-                                            val isAnyTitleLongInRow = rowItems.any { isTitleLong(it.getTitle(viewModel.selectedLanguage), isBn) }
-                                            val isAnySubtitleLongInRow = rowItems.any { isSubtitleLong(subtitleTextOf(it), isBn) }
-                                            val rowTitleLines = if (isAnyTitleLongInRow) 2 else 1
-                                            val rowSubtitleLines = if (isAnySubtitleLongInRow) 2 else 1
+                                            val isAnyTitleLong = categoryConverters.any { isTitleLong(it.getTitle(viewModel.selectedLanguage), isBn) }
+                                            val isAnySubtitleLong = categoryConverters.any { isSubtitleLong(subtitleTextOf(it), isBn) }
+                                            val titleLines = if (isAnyTitleLong) 2 else 1
+                                            val subtitleLines = if (isAnySubtitleLong) 2 else 1
+                                            val cardHeight = when {
+                                                titleLines == 2 && subtitleLines == 2 -> 135.dp
+                                                titleLines == 2 || subtitleLines == 2 -> 122.dp
+                                                else -> 110.dp
+                                            }
                                             Row(
-                                                modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .horizontalBounceOverscroll()
+                                                    .horizontalScroll(
+                                                        remember(category.name) {
+                                                            categoryScrollStates.getOrPut(category.name) {
+                                                                androidx.compose.foundation.ScrollState(0)
+                                                            }
+                                                        }
+                                                    )
+                                                    .padding(bottom = 2.dp),
                                                 horizontalArrangement = Arrangement.spacedBy(10.dp)
                                             ) {
-                                                rowItems.forEach { type ->
+                                                categoryConverters.forEach { type ->
                                                     key(type.name) {
-                                                        Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                                                        Box(
+                                                            modifier = Modifier
+                                                                .width(152.dp)
+                                                                .height(cardHeight)
+                                                        ) {
                                                             ConverterCardItem(
                                                                 converterType = type,
                                                                 viewModel = viewModel,
                                                                 themeColors = themeColors,
-                                                                modifier = Modifier.fillMaxHeight(),
+                                                                modifier = Modifier.fillMaxSize(),
                                                                 categoryRank = categoryRankMap[type.name] ?: 0,
-                                                                titleLines = rowTitleLines,
-                                                                subtitleLines = rowSubtitleLines,
+                                                                titleLines = titleLines,
+                                                                subtitleLines = subtitleLines,
+                                                                showFavoriteIcon = false,
                                                                 onClick = { viewModel.openConverter(type) }
                                                             )
                                                         }
                                                     }
                                                 }
-                                                if (rowItems.size == 1) {
-                                                    Spacer(modifier = Modifier.weight(1f))
-                                                }
                                             }
                                         }
                                     }
-                                } else {
-                                    // Default Horizontal Scrolling Row
-                                    val isBn = viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI
-                                    val subtitleTextOf = { type: ConverterType ->
-                                        type.units.map { type.getLocalizedUnitName(it, viewModel.selectedLanguage) }.joinToString(", ")
-                                    }
-                                    val isAnyTitleLong = categoryConverters.any { isTitleLong(it.getTitle(viewModel.selectedLanguage), isBn) }
-                                    val isAnySubtitleLong = categoryConverters.any { isSubtitleLong(subtitleTextOf(it), isBn) }
-                                    val titleLines = if (isAnyTitleLong) 2 else 1
-                                    val subtitleLines = if (isAnySubtitleLong) 2 else 1
-                                    val cardHeight = when {
-                                        titleLines == 2 && subtitleLines == 2 -> 135.dp
-                                        titleLines == 2 || subtitleLines == 2 -> 122.dp
-                                        else -> 110.dp
-                                    }
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .horizontalBounceOverscroll()
-                                            .horizontalScroll(
-                                                remember(category.name) {
-                                                    categoryScrollStates.getOrPut(category.name) {
-                                                        androidx.compose.foundation.ScrollState(0)
-                                                    }
-                                                }
-                                            )
-                                            .padding(bottom = 6.dp),
-                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                                    ) {
-                                        categoryConverters.forEach { type ->
-                                            key(type.name) {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .width(152.dp)
-                                                        .height(cardHeight)
-                                                ) {
-                                                    ConverterCardItem(
-                                                        converterType = type,
-                                                        viewModel = viewModel,
-                                                        themeColors = themeColors,
-                                                        modifier = Modifier.fillMaxSize(),
-                                                        categoryRank = categoryRankMap[type.name] ?: 0,
-                                                        titleLines = titleLines,
-                                                        subtitleLines = subtitleLines,
-                                                        showFavoriteIcon = false,
-                                                        onClick = { viewModel.openConverter(type) }
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
 
-                            // Clean Collapse Button at the bottom of section when expanded in Overview mode
-                            if (isOverviewMode) {
-                                if (isCategoryExpanded) {
-                                    Surface(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(top = 4.dp, bottom = 14.dp)
-                                            .clip(RoundedCornerShape(12.dp))
-                                            .clickable { expandedCategories[category] = false },
-                                        shape = RoundedCornerShape(12.dp),
-                                        color = themeColors.cardBg.copy(alpha = 0.6f),
-                                        border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.12f))
-                                    ) {
-                                        Row(
+                                    // Clean Collapse Button at the bottom of section when expanded in Overview mode
+                                    if (isOverviewMode && isCategoryExpanded) {
+                                        Surface(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .padding(vertical = 9.dp, horizontal = 14.dp),
-                                            horizontalArrangement = Arrangement.Center,
-                                            verticalAlignment = Alignment.CenterVertically
+                                                .padding(top = 8.dp)
+                                                .clip(RoundedCornerShape(12.dp))
+                                                .clickable { expandedCategories[category] = false },
+                                            shape = RoundedCornerShape(12.dp),
+                                            color = themeColors.cardBg,
+                                            border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.12f))
                                         ) {
-                                            Icon(
-                                                imageVector = Icons.Default.KeyboardArrowUp,
-                                                contentDescription = null,
-                                                tint = themeColors.displayText.copy(alpha = 0.7f),
-                                                modifier = Modifier.size(18.dp)
-                                            )
-                                            Spacer(modifier = Modifier.width(6.dp))
-                                            Text(
-                                                text = if (isBn) 
-                                                    "সংকুচিত করুন (কম দেখুন)" 
-                                                else 
-                                                    "Collapse (Show Less)",
-                                                fontSize = 12.sp,
-                                                fontWeight = FontWeight.SemiBold,
-                                                color = themeColors.displayText.copy(alpha = 0.75f)
-                                            )
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(vertical = 8.dp, horizontal = 14.dp),
+                                                horizontalArrangement = Arrangement.Center,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.KeyboardArrowUp,
+                                                    contentDescription = null,
+                                                    tint = themeColors.displayText.copy(alpha = 0.7f),
+                                                    modifier = Modifier.size(18.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(6.dp))
+                                                Text(
+                                                    text = if (isBn) 
+                                                        "সংকুচিত করুন (কম দেখুন)" 
+                                                    else 
+                                                        "Collapse (Show Less)",
+                                                    fontSize = 12.sp,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    color = themeColors.displayText.copy(alpha = 0.75f)
+                                                )
+                                            }
                                         }
                                     }
-                                } else {
-                                    Spacer(modifier = Modifier.height(10.dp))
                                 }
-                            } else {
-                                Spacer(modifier = Modifier.height(10.dp))
                             }
                         }
                     }
@@ -825,7 +827,7 @@ fun ConverterCardItem(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(12.dp),
+                    .padding(horizontal = 6.dp, vertical = 10.dp),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
                 Row(
