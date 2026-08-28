@@ -65,8 +65,7 @@ import com.example.data.model.isTitleLong
 import com.example.data.model.isSubtitleLong
 import com.example.ui.theme.CalculatorThemeColors
 import com.example.ui.theme.themeCardShadow
-import com.example.ui.theme.getColor
-import com.example.ui.theme.getGradient
+import com.example.ui.theme.getToolIconGradient
 import com.example.ui.viewmodel.CalculatorViewModel
 import com.example.util.LanguageManager
 import java.text.DecimalFormat
@@ -316,7 +315,6 @@ fun SmartConverterCategoriesView(
                     icon = cat.icon,
                     themeColors = themeColors,
                     count = catCount,
-                    accentColor = cat.getColor(),
                     onClick = {
                         viewModel.selectedCategoryFilter = if (selectedFilter == cat) null else cat
                     }
@@ -372,14 +370,13 @@ fun SmartConverterCategoriesView(
                 Column(modifier = Modifier.fillMaxWidth()) {
                     // Category Active Banner when filtered
                     if (currentFilter != null) {
-                        val catColor = currentFilter.getColor()
                         Surface(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(bottom = 12.dp),
                             shape = RoundedCornerShape(14.dp),
                             color = themeColors.cardBg,
-                            border = BorderStroke(1.5.dp, catColor.copy(alpha = 0.35f))
+                            border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.25f))
                         ) {
                             Row(
                                 modifier = Modifier
@@ -394,15 +391,15 @@ fun SmartConverterCategoriesView(
                                 ) {
                                     Box(
                                         modifier = Modifier
-                                            .size(34.dp)
+                                            .size(32.dp)
                                             .clip(CircleShape)
-                                            .background(catColor.copy(alpha = 0.16f)),
+                                            .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Icon(
                                             imageVector = currentFilter.icon,
                                             contentDescription = null,
-                                            tint = catColor,
+                                            tint = themeColors.buttonEqualBg,
                                             modifier = Modifier.size(18.dp)
                                         )
                                     }
@@ -417,7 +414,7 @@ fun SmartConverterCategoriesView(
                                         Text(
                                             text = if (isBn) "মোট ${currentFilteredConverters.size}টি কনভার্টার" else "Total ${currentFilteredConverters.size} Converters",
                                             fontSize = 11.sp,
-                                            color = catColor,
+                                            color = themeColors.buttonEqualBg,
                                             fontWeight = FontWeight.SemiBold
                                         )
                                     }
@@ -427,7 +424,7 @@ fun SmartConverterCategoriesView(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(8.dp))
                                         .clickable { viewModel.selectedCategoryFilter = null },
-                                    color = catColor.copy(alpha = 0.12f),
+                                    color = themeColors.buttonEqualBg.copy(alpha = 0.12f),
                                     shape = RoundedCornerShape(8.dp)
                                 ) {
                                     Row(
@@ -437,7 +434,7 @@ fun SmartConverterCategoriesView(
                                         Icon(
                                             imageVector = Icons.Default.Apps,
                                             contentDescription = null,
-                                            tint = catColor,
+                                            tint = themeColors.buttonEqualBg,
                                             modifier = Modifier.size(14.dp)
                                         )
                                         Spacer(modifier = Modifier.width(4.dp))
@@ -445,7 +442,7 @@ fun SmartConverterCategoriesView(
                                             text = if (isBn) "সব কনভার্টার" else "All",
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.Bold,
-                                            color = catColor
+                                            color = themeColors.buttonEqualBg
                                         )
                                     }
                                 }
@@ -472,9 +469,8 @@ fun SmartConverterCategoriesView(
 
                         if (categoryConverters.isNotEmpty()) {
                             val isCategoryExpanded = expandedCategories.getOrDefault(category, false)
-                            val catColor = category.getColor()
 
-                            // Category Header Card with individual category color
+                            // Category Header Card
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -482,7 +478,7 @@ fun SmartConverterCategoriesView(
                                     .themeCardShadow(themeColors, elevation = 1.dp),
                                 shape = RoundedCornerShape(12.dp),
                                 colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
-                                border = BorderStroke(1.dp, catColor.copy(alpha = 0.25f))
+                                border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.15f))
                             ) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
@@ -499,13 +495,13 @@ fun SmartConverterCategoriesView(
                                             modifier = Modifier
                                                 .size(28.dp)
                                                 .clip(CircleShape)
-                                                .background(catColor.copy(alpha = 0.16f)),
+                                                .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
                                             contentAlignment = Alignment.Center
                                         ) {
                                             Icon(
                                                 imageVector = category.icon,
                                                 contentDescription = category.titleEn,
-                                                tint = catColor,
+                                                tint = themeColors.buttonEqualBg,
                                                 modifier = Modifier.size(16.dp)
                                             )
                                         }
@@ -522,7 +518,7 @@ fun SmartConverterCategoriesView(
                                             modifier = Modifier
                                                 .defaultMinSize(minWidth = 22.dp, minHeight = 22.dp)
                                                 .clip(CircleShape)
-                                                .background(catColor.copy(alpha = 0.16f))
+                                                .background(themeColors.buttonEqualBg.copy(alpha = 0.15f))
                                                 .padding(horizontal = 6.dp, vertical = 2.dp),
                                             contentAlignment = Alignment.Center
                                         ) {
@@ -530,7 +526,7 @@ fun SmartConverterCategoriesView(
                                                 text = if (isBn) "${categoryConverters.size}টি" else "${categoryConverters.size}",
                                                 fontSize = 10.5.sp,
                                                 fontWeight = FontWeight.Bold,
-                                                color = catColor
+                                                color = themeColors.buttonEqualBg
                                             )
                                         }
                                     }
@@ -539,7 +535,7 @@ fun SmartConverterCategoriesView(
                                         Row(
                                             modifier = Modifier
                                                 .clip(RoundedCornerShape(8.dp))
-                                                .background(catColor.copy(alpha = 0.12f))
+                                                .background(themeColors.buttonEqualBg.copy(alpha = 0.12f))
                                                 .clickable { expandedCategories[category] = !isCategoryExpanded }
                                                 .padding(horizontal = 8.dp, vertical = 5.dp),
                                             verticalAlignment = Alignment.CenterVertically
@@ -552,13 +548,13 @@ fun SmartConverterCategoriesView(
                                                 },
                                                 fontSize = 11.sp,
                                                 fontWeight = FontWeight.Bold,
-                                                color = catColor
+                                                color = themeColors.buttonEqualBg
                                             )
                                             Spacer(modifier = Modifier.width(2.dp))
                                             Icon(
                                                 imageVector = if (isCategoryExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                                                 contentDescription = null,
-                                                tint = catColor,
+                                                tint = themeColors.buttonEqualBg,
                                                 modifier = Modifier.size(14.dp)
                                             )
                                         }
@@ -734,20 +730,13 @@ fun FilterChipItem(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     themeColors: CalculatorThemeColors,
     count: Int = 0,
-    accentColor: Color? = null,
     onClick: () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
-    val effectiveColor = accentColor ?: themeColors.buttonEqualBg
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(12.dp))
-            .background(if (isSelected) effectiveColor else themeColors.cardBg)
-            .border(
-                width = 1.dp,
-                color = if (isSelected) effectiveColor else effectiveColor.copy(alpha = 0.25f),
-                shape = RoundedCornerShape(12.dp)
-            )
+            .background(if (isSelected) themeColors.buttonEqualBg else themeColors.cardBg)
             .scaleOnPress(interactionSource)
             .clickable(
                 interactionSource = interactionSource,
@@ -761,7 +750,7 @@ fun FilterChipItem(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = if (isSelected) Color.White else effectiveColor,
+                tint = if (isSelected) Color.White else themeColors.displayText.copy(alpha = 0.7f),
                 modifier = Modifier.size(16.dp)
             )
             Spacer(modifier = Modifier.width(6.dp))
@@ -779,7 +768,7 @@ fun FilterChipItem(
                         .clip(CircleShape)
                         .background(
                             if (isSelected) Color.White.copy(alpha = 0.28f)
-                            else effectiveColor.copy(alpha = 0.16f)
+                            else themeColors.buttonEqualBg
                         )
                         .padding(horizontal = 5.dp, vertical = 1.dp),
                     contentAlignment = Alignment.Center
@@ -788,7 +777,7 @@ fun FilterChipItem(
                         text = "$count",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.ExtraBold,
-                        color = if (isSelected) Color.White else effectiveColor
+                        color = Color.White
                     )
                 }
             }
@@ -811,8 +800,6 @@ fun ConverterCardItem(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isFavorite = viewModel.favoriteConverters.contains(converterType.name)
-    val catColor = converterType.category.getColor()
-    val catGradient = converterType.category.getGradient()
 
     ElevatedCard(
         modifier = modifier
@@ -820,7 +807,6 @@ fun ConverterCardItem(
             .testTag("card_${converterType.name.lowercase()}")
             .scaleOnPress(interactionSource)
             .themeCardShadow(themeColors, elevation = 1.dp)
-            .border(1.dp, catColor.copy(alpha = 0.20f), RoundedCornerShape(16.dp))
             .combinedClickable(
                 interactionSource = interactionSource,
                 indication = androidx.compose.foundation.LocalIndication.current,
@@ -851,7 +837,7 @@ fun ConverterCardItem(
                         modifier = Modifier
                             .size(38.dp)
                             .clip(CircleShape)
-                            .background(catGradient),
+                            .background(getToolIconGradient(themeColors.buttonEqualBg)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -1033,8 +1019,8 @@ fun ConverterDetailView(
                 Text(
                     text = converterType.category.getTitle(viewModel.selectedLanguage),
                     fontSize = 12.sp,
-                    color = converterType.category.getColor(),
-                    fontWeight = FontWeight.SemiBold
+                    color = themeColors.buttonEqualBg,
+                    fontWeight = FontWeight.Medium
                 )
             }
 

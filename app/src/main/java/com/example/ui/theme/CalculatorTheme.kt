@@ -51,20 +51,39 @@ fun safeParseColor(colorStr: String?, defaultHex: String = "#6366F1"): Color {
 }
 
 fun getToolIconGradient(baseColor: Color): androidx.compose.ui.graphics.Brush {
-    val colorLight = Color(
-        red = (baseColor.red * 1.38f + 0.15f).coerceIn(0f, 1f),
-        green = (baseColor.green * 1.38f + 0.15f).coerceIn(0f, 1f),
-        blue = (baseColor.blue * 1.38f + 0.15f).coerceIn(0f, 1f),
-        alpha = 1f
+    val hsv = FloatArray(3)
+    val argb = android.graphics.Color.argb(
+        (baseColor.alpha * 255).toInt().coerceIn(0, 255),
+        (baseColor.red * 255).toInt().coerceIn(0, 255),
+        (baseColor.green * 255).toInt().coerceIn(0, 255),
+        (baseColor.blue * 255).toInt().coerceIn(0, 255)
     )
-    val colorDark = Color(
-        red = (baseColor.red * 0.58f).coerceIn(0f, 1f),
-        green = (baseColor.green * 0.58f).coerceIn(0f, 1f),
-        blue = (baseColor.blue * 0.58f).coerceIn(0f, 1f),
-        alpha = 1f
+    android.graphics.Color.colorToHSV(argb, hsv)
+
+    val h = hsv[0]
+    val s = hsv[1]
+    val v = hsv[2]
+
+    // Distinct Color 1 (Start Color - Shifted Hue, High Luminance)
+    val startHsv = floatArrayOf(
+        (h - 38f + 360f) % 360f,
+        (s * 0.85f).coerceIn(0.4f, 0.95f),
+        (v * 1.20f + 0.10f).coerceIn(0.6f, 1f)
     )
+    val startColor = Color(android.graphics.Color.HSVToColor(startHsv))
+
+    // Distinct Color 2 (End Color - Shifted Hue, Deep Saturation)
+    val endHsv = floatArrayOf(
+        (h + 42f) % 360f,
+        (s * 1.15f).coerceIn(0.6f, 1f),
+        (v * 0.78f).coerceIn(0.35f, 0.95f)
+    )
+    val endColor = Color(android.graphics.Color.HSVToColor(endHsv))
+
     return androidx.compose.ui.graphics.Brush.linearGradient(
-        colors = listOf(colorLight, baseColor, colorDark)
+        colors = listOf(startColor, baseColor, endColor),
+        start = androidx.compose.ui.geometry.Offset(0f, 0f),
+        end = androidx.compose.ui.geometry.Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
     )
 }
 

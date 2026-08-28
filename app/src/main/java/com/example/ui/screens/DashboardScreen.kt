@@ -36,6 +36,9 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import kotlinx.coroutines.delay
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -78,8 +81,7 @@ import com.example.data.model.isTitleLong
 import com.example.data.model.isSubtitleLong
 import com.example.ui.theme.CalculatorThemeColors
 import com.example.ui.theme.themeCardShadow
-import com.example.ui.theme.getColor
-import com.example.ui.theme.getGradient
+import com.example.ui.theme.getToolIconGradient
 import com.example.ui.viewmodel.CalculatorViewModel
 import com.example.util.LanguageManager
 
@@ -1155,122 +1157,267 @@ fun DashboardCategoriesView(
             }
 
             if (activeDashboardTab == "FEATURED" && topFeaturedList.isEmpty()) {
-                // Empty Featured State
+                // Empty Featured State - Elegant Banner Card
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 4.dp)
-                        .themeCardShadow(themeColors, elevation = 1.dp),
-                    shape = RoundedCornerShape(14.dp),
+                        .themeCardShadow(themeColors, elevation = 2.dp)
+                        .border(
+                            width = 1.dp,
+                            color = themeColors.buttonEqualBg.copy(alpha = 0.20f),
+                            shape = RoundedCornerShape(18.dp)
+                        ),
+                    shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(containerColor = themeColors.cardBg)
                 ) {
-                    Row(
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(14.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                            .background(
+                                Brush.linearGradient(
+                                    colors = listOf(
+                                        themeColors.cardBg,
+                                        Color(0xFFFF6D00).copy(alpha = 0.08f),
+                                        themeColors.cardBg
+                                    ),
+                                    start = Offset(0f, 0f),
+                                    end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
+                                )
+                            )
+                            .padding(horizontal = 16.dp, vertical = 14.dp)
                     ) {
-                        Box(
+                        // Background watermark icon
+                        Icon(
+                            imageVector = Icons.Default.Whatshot,
+                            contentDescription = null,
+                            tint = Color(0xFFFF6D00).copy(alpha = 0.05f),
                             modifier = Modifier
-                                .size(40.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFFFF6D00).copy(alpha = 0.15f)),
-                            contentAlignment = Alignment.Center
+                                .size(100.dp)
+                                .align(Alignment.CenterEnd)
+                                .offset(x = 18.dp, y = 10.dp)
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Whatshot,
-                                contentDescription = null,
-                                tint = Color(0xFFFF6D00),
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text(
-                                text = if (isBn) "কোনো জনপ্রিয় টুল নেই" else "No Featured Tools Yet",
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = themeColors.displayText
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = if (isBn) "কমপক্ষে ৩ বার ব্যবহার করা টুলস ও কনভার্টার এখানে স্বয়ংক্রিয়ভাবে দেখাবে।" else "Tools & converters used at least 3 times will automatically appear here.",
-                                fontSize = 11.sp,
-                                color = themeColors.displayText.copy(alpha = 0.6f)
-                            )
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(end = 12.dp)
+                            ) {
+                                Surface(
+                                    shape = RoundedCornerShape(6.dp),
+                                    color = Color(0xFFFF6D00).copy(alpha = 0.15f)
+                                ) {
+                                    Text(
+                                        text = if (isBn) "🔥 পয়েন্ট গাইড" else "🔥 Smart Feature",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = Color(0xFFFF6D00),
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    text = if (isBn) "কোনো জনপ্রিয় টুল যুক্ত হয়নি" else "No Featured Tools Yet",
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.displayText
+                                )
+                                Spacer(modifier = Modifier.height(3.dp))
+                                Text(
+                                    text = if (isBn) "আপনার সবচেয়ে বেশি ব্যবহৃত (৩+ বার) টুলগুলো এখানে স্বয়ংক্রিয়ভাবে ফিচার্ড হয়ে স্ক্রল ব্যানারে সাজানো থাকবে।" else "Tools & converters used 3+ times will automatically show up here as featured slides.",
+                                    fontSize = 11.5.sp,
+                                    color = themeColors.displayText.copy(alpha = 0.65f),
+                                    lineHeight = 15.sp
+                                )
+                            }
+
+                            Box(
+                                modifier = Modifier
+                                    .size(52.dp)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(getToolIconGradient(Color(0xFFFF6D00)))
+                                    .border(
+                                        width = 1.5.dp,
+                                        color = Color.White.copy(alpha = 0.35f),
+                                        shape = RoundedCornerShape(16.dp)
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Whatshot,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(26.dp)
+                                )
+                            }
                         }
                     }
                 }
             } else if (activeDashboardTab == "FAVORITES" && topFavoritesList.isEmpty()) {
-                // Empty Favorites State
+                // Empty Favorites State - Elegant Banner Card
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 4.dp)
-                        .themeCardShadow(themeColors, elevation = 1.dp),
-                    shape = RoundedCornerShape(14.dp),
+                        .themeCardShadow(themeColors, elevation = 2.dp)
+                        .border(
+                            width = 1.dp,
+                            color = themeColors.buttonEqualBg.copy(alpha = 0.20f),
+                            shape = RoundedCornerShape(18.dp)
+                        ),
+                    shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(containerColor = themeColors.cardBg)
                 ) {
-                    Row(
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(14.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                            .background(
+                                Brush.linearGradient(
+                                    colors = listOf(
+                                        themeColors.cardBg,
+                                        Color(0xFFFFB300).copy(alpha = 0.08f),
+                                        themeColors.cardBg
+                                    ),
+                                    start = Offset(0f, 0f),
+                                    end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
+                                )
+                            )
+                            .padding(horizontal = 16.dp, vertical = 14.dp)
                     ) {
-                        Box(
+                        // Background watermark icon
+                        Icon(
+                            imageVector = Icons.Default.Star,
+                            contentDescription = null,
+                            tint = Color(0xFFFFB300).copy(alpha = 0.05f),
                             modifier = Modifier
-                                .size(40.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFFFBBF24).copy(alpha = 0.15f)),
-                            contentAlignment = Alignment.Center
+                                .size(100.dp)
+                                .align(Alignment.CenterEnd)
+                                .offset(x = 18.dp, y = 10.dp)
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.StarOutline,
-                                contentDescription = null,
-                                tint = Color(0xFFFBBF24),
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text(
-                                text = if (isBn) "কোনো প্রিয় টুল যুক্ত করা নেই" else "No Favorite Tools Added",
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = themeColors.displayText
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = if (isBn) "টুলের ওপরের ⭐ আইকনে চাপ দিয়ে পছন্দের তালিকায় যুক্ত করুন" else "Tap the ⭐ icon on any tool to save it here",
-                                fontSize = 11.sp,
-                                color = themeColors.displayText.copy(alpha = 0.6f)
-                            )
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(end = 12.dp)
+                            ) {
+                                Surface(
+                                    shape = RoundedCornerShape(6.dp),
+                                    color = Color(0xFFFFB300).copy(alpha = 0.15f)
+                                ) {
+                                    Text(
+                                        text = if (isBn) "⭐ প্রিয় তালিকা" else "⭐ Favorites Guide",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = Color(0xFFFF8F00),
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    text = if (isBn) "কোনো প্রিয় টুল যুক্ত করা নেই" else "No Favorite Tools Added",
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.displayText
+                                )
+                                Spacer(modifier = Modifier.height(3.dp))
+                                Text(
+                                    text = if (isBn) "যে কোনো টুলের বাটন দীর্ঘক্ষণ চেপে ধরে অথবা স্টারে চাপ দিয়ে আপনার পছন্দের তালিকায় যুক্ত করে রাখুন।" else "Long press any tool or tap the star icon to save your favorite tools here.",
+                                    fontSize = 11.5.sp,
+                                    color = themeColors.displayText.copy(alpha = 0.65f),
+                                    lineHeight = 15.sp
+                                )
+                            }
+
+                            Box(
+                                modifier = Modifier
+                                    .size(52.dp)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(getToolIconGradient(Color(0xFFFFB300)))
+                                    .border(
+                                        width = 1.5.dp,
+                                        color = Color.White.copy(alpha = 0.35f),
+                                        shape = RoundedCornerShape(16.dp)
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Star,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(26.dp)
+                                )
+                            }
                         }
                     }
                 }
             } else {
-                Row(
+                val bannerPagerState = rememberPagerState(
+                    initialPage = 0,
+                    pageCount = { currentDisplayList.size }
+                )
+                val coroutineScope = rememberCoroutineScope()
+
+                // Auto-scroll loop when multiple items are available
+                LaunchedEffect(bannerPagerState, currentDisplayList.size, activeDashboardTab) {
+                    if (currentDisplayList.size > 1) {
+                        while (true) {
+                            delay(4000L)
+                            if (!bannerPagerState.isScrollInProgress) {
+                                val targetPage = (bannerPagerState.currentPage + 1) % currentDisplayList.size
+                                bannerPagerState.animateScrollToPage(
+                                    page = targetPage,
+                                    animationSpec = tween(durationMillis = 750, easing = FastOutSlowInEasing)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .horizontalBounceOverscroll()
-                        .horizontalScroll(featuredScrollState)
-                        .padding(vertical = 4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        .padding(vertical = 2.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    currentDisplayList.forEachIndexed { index, item ->
-                        val isFavorited = if (item.isTool && item.toolType != null) {
-                            viewModel.favoriteTools.contains(item.toolType.name)
-                        } else if (item.converterType != null) {
-                            viewModel.favoriteConverters.contains(item.converterType.name)
-                        } else false
-                        val interactionSource = remember { MutableInteractionSource() }
-                        Box(
-                            modifier = Modifier.width(130.dp)
-                        ) {
+                    HorizontalPager(
+                        state = bannerPagerState,
+                        modifier = Modifier.fillMaxWidth(),
+                        pageSpacing = 10.dp
+                    ) { page ->
+                        val item = currentDisplayList.getOrNull(page)
+                        if (item != null) {
+                            val isFavorited = if (item.isTool && item.toolType != null) {
+                                viewModel.favoriteTools.contains(item.toolType.name)
+                            } else if (item.converterType != null) {
+                                viewModel.favoriteConverters.contains(item.converterType.name)
+                            } else false
+
+                            val categoryTitle = if (item.isTool && item.toolType != null) {
+                                item.toolType.category.getTitle(viewModel.selectedLanguage)
+                            } else if (item.converterType != null) {
+                                item.converterType.category.getTitle(viewModel.selectedLanguage)
+                            } else ""
+
+                            val interactionSource = remember { MutableInteractionSource() }
+
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .themeCardShadow(themeColors, elevation = 1.dp)
+                                    .themeCardShadow(themeColors, elevation = 2.dp)
+                                    .border(
+                                        width = 1.dp,
+                                        color = themeColors.buttonEqualBg.copy(alpha = 0.20f),
+                                        shape = RoundedCornerShape(18.dp)
+                                    )
+                                    .scaleOnPress(interactionSource)
                                     .combinedClickable(
                                         interactionSource = interactionSource,
                                         indication = androidx.compose.foundation.LocalIndication.current,
@@ -1283,84 +1430,223 @@ fun DashboardCategoriesView(
                                         },
                                         onLongClick = { selectedItemForOptions = item }
                                     ),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
+                                shape = RoundedCornerShape(18.dp),
+                                colors = CardDefaults.cardColors(containerColor = themeColors.cardBg)
                             ) {
-                                Column(
-                                    modifier = Modifier
-                                        .padding(12.dp)
-                                        .fillMaxWidth(),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(48.dp)
-                                            .clip(CircleShape)
-                                            .background(
-                                                Brush.linearGradient(
-                                                    colors = listOf(
-                                                        themeColors.buttonEqualBg,
-                                                        themeColors.buttonEqualBg.copy(alpha = 0.85f)
-                                                    )
-                                                )
-                                            ),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = item.icon,
-                                            contentDescription = item.titleEn,
-                                            tint = Color.White,
-                                            modifier = Modifier.size(24.dp)
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text(
-                                        text = if (isBn) item.titleBn else item.titleEn,
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = themeColors.displayText,
-                                        textAlign = TextAlign.Center,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text(
-                                        text = item.getSubtitle(viewModel.selectedLanguage),
-                                        fontSize = 10.sp,
-                                        color = themeColors.displayText.copy(alpha = 0.5f),
-                                        textAlign = TextAlign.Center,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                }
-                            }
-
-                            // If Featured tab, show Medal Badge for position 1..3 (index 0..2)
-                            if (activeDashboardTab == "FEATURED" && index in 0..2) {
-                                CategoryRankBadge(
-                                    rank = index + 1,
-                                    modifier = Modifier
-                                        .align(Alignment.TopEnd)
-                                        .padding(top = 4.dp, end = 4.dp)
-                                )
-                            } else if (isFavorited) {
                                 Box(
                                     modifier = Modifier
-                                        .align(Alignment.TopEnd)
-                                        .padding(top = 4.dp, end = 4.dp)
-                                ) {
-                                    IconButton(
-                                        onClick = { selectedItemForOptions = item },
-                                        modifier = Modifier.size(28.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Favorite,
-                                            contentDescription = "Options",
-                                            tint = themeColors.buttonEqualBg,
-                                            modifier = Modifier.size(18.dp)
+                                        .fillMaxWidth()
+                                        .background(
+                                            Brush.linearGradient(
+                                                colors = listOf(
+                                                    themeColors.cardBg,
+                                                    themeColors.buttonEqualBg.copy(alpha = 0.07f),
+                                                    themeColors.cardBg
+                                                ),
+                                                start = Offset(0f, 0f),
+                                                end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
+                                            )
                                         )
+                                        .padding(start = 16.dp, end = 14.dp, top = 14.dp, bottom = 14.dp)
+                                ) {
+                                    // Background decorative subtle watermark icon
+                                    Icon(
+                                        imageVector = item.icon,
+                                        contentDescription = null,
+                                        tint = themeColors.buttonEqualBg.copy(alpha = 0.04f),
+                                        modifier = Modifier
+                                            .size(110.dp)
+                                            .align(Alignment.CenterEnd)
+                                            .offset(x = 20.dp, y = 10.dp)
+                                    )
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        // Left Content Column
+                                        Column(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .padding(end = 12.dp),
+                                            verticalArrangement = Arrangement.Center
+                                        ) {
+                                            // Top Tag Row
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                            ) {
+                                                if (activeDashboardTab == "FEATURED" && page in 0..2) {
+                                                    Surface(
+                                                        shape = RoundedCornerShape(6.dp),
+                                                        color = when (page) {
+                                                            0 -> Color(0xFFFFD700)
+                                                            1 -> Color(0xFFC0C0C0)
+                                                            else -> Color(0xFFCD7F32)
+                                                        }.copy(alpha = 0.20f)
+                                                    ) {
+                                                        Text(
+                                                            text = when (page) {
+                                                                0 -> if (isBn) "🥇 শীর্ষ #১" else "🥇 Top #1"
+                                                                1 -> if (isBn) "🥈 শীর্ষ #২" else "🥈 Top #2"
+                                                                else -> if (isBn) "🥉 শীর্ষ #৩" else "🥉 Top #3"
+                                                            },
+                                                            fontSize = 10.sp,
+                                                            fontWeight = FontWeight.ExtraBold,
+                                                            color = when (page) {
+                                                                0 -> Color(0xFFFF8F00)
+                                                                1 -> Color(0xFF5A5A5A)
+                                                                else -> Color(0xFF8D6E63)
+                                                            },
+                                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                        )
+                                                    }
+                                                } else {
+                                                    Surface(
+                                                        shape = RoundedCornerShape(6.dp),
+                                                        color = themeColors.buttonEqualBg.copy(alpha = 0.12f)
+                                                    ) {
+                                                        Text(
+                                                            text = if (activeDashboardTab == "FEATURED") (if (isBn) "জনপ্রিয়" else "Featured") else (if (isBn) "পছন্দের" else "Favorite"),
+                                                            fontSize = 10.sp,
+                                                            fontWeight = FontWeight.Bold,
+                                                            color = themeColors.buttonEqualBg,
+                                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                        )
+                                                    }
+                                                }
+
+                                                if (categoryTitle.isNotEmpty()) {
+                                                    Text(
+                                                        text = "• $categoryTitle",
+                                                        fontSize = 10.5.sp,
+                                                        color = themeColors.displayText.copy(alpha = 0.55f),
+                                                        fontWeight = FontWeight.Medium,
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis
+                                                    )
+                                                }
+                                            }
+
+                                            Spacer(modifier = Modifier.height(6.dp))
+
+                                            // Title
+                                            Text(
+                                                text = if (isBn) item.titleBn else item.titleEn,
+                                                fontSize = 16.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = themeColors.displayText,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+
+                                            Spacer(modifier = Modifier.height(3.dp))
+
+                                            // Description
+                                            Text(
+                                                text = item.getSubtitle(viewModel.selectedLanguage),
+                                                fontSize = 11.5.sp,
+                                                color = themeColors.displayText.copy(alpha = 0.65f),
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+
+                                            Spacer(modifier = Modifier.height(8.dp))
+
+                                            // Action Pill Button
+                                            Surface(
+                                                shape = RoundedCornerShape(20.dp),
+                                                color = themeColors.buttonEqualBg,
+                                                shadowElevation = 1.dp
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp),
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                                ) {
+                                                    Text(
+                                                        text = if (isBn) "ব্যবহার করুন" else "Open Tool",
+                                                        fontSize = 11.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = Color.White
+                                                    )
+                                                    Icon(
+                                                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                                        contentDescription = null,
+                                                        tint = Color.White,
+                                                        modifier = Modifier.size(12.dp)
+                                                    )
+                                                }
+                                            }
+                                        }
+
+                                        // Right Side: Hero Visual & Options
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.Center
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(54.dp)
+                                                    .clip(RoundedCornerShape(16.dp))
+                                                    .background(
+                                                        getToolIconGradient(themeColors.buttonEqualBg)
+                                                    )
+                                                    .border(
+                                                        width = 1.5.dp,
+                                                        color = Color.White.copy(alpha = 0.35f),
+                                                        shape = RoundedCornerShape(16.dp)
+                                                    ),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Icon(
+                                                    imageVector = item.icon,
+                                                    contentDescription = item.titleEn,
+                                                    tint = Color.White,
+                                                    modifier = Modifier.size(28.dp)
+                                                )
+                                            }
+                                        }
                                     }
                                 }
+                            }
+                        }
+                    }
+
+                    // Dot Indicator
+                    if (currentDisplayList.size > 1) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            currentDisplayList.indices.forEach { index ->
+                                val isSelected = bannerPagerState.currentPage == index
+                                val dotWidth by animateDpAsState(
+                                    targetValue = if (isSelected) 20.dp else 6.dp,
+                                    animationSpec = tween(300),
+                                    label = "banner_dot_width"
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .padding(horizontal = 2.5.dp)
+                                        .height(5.dp)
+                                        .width(dotWidth)
+                                        .clip(CircleShape)
+                                        .background(
+                                            if (isSelected) themeColors.buttonEqualBg
+                                            else themeColors.displayText.copy(alpha = 0.20f)
+                                        )
+                                        .clickable {
+                                            coroutineScope.launch {
+                                                bannerPagerState.animateScrollToPage(
+                                                    page = index,
+                                                    animationSpec = tween(400)
+                                                )
+                                            }
+                                        }
+                                )
                             }
                         }
                     }
@@ -1697,7 +1983,6 @@ fun DashboardCategoriesView(
                     icon = cat.icon,
                     themeColors = themeColors,
                     count = catCount,
-                    accentColor = cat.getColor(),
                     onClick = {
                         viewModel.selectedToolCategoryFilter = if (selectedFilter == cat) null else cat
                     }
@@ -1740,14 +2025,13 @@ fun DashboardCategoriesView(
                 Column(modifier = Modifier.fillMaxWidth()) {
                     // Category Active Banner when filtered
                     if (!isOverviewMode && currentFilter != null) {
-                        val catColor = currentFilter.getColor()
                         Surface(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(bottom = 12.dp),
                             shape = RoundedCornerShape(14.dp),
                             color = themeColors.cardBg,
-                            border = BorderStroke(1.5.dp, catColor.copy(alpha = 0.35f))
+                            border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.25f))
                         ) {
                             Row(
                                 modifier = Modifier
@@ -1762,15 +2046,15 @@ fun DashboardCategoriesView(
                                 ) {
                                     Box(
                                         modifier = Modifier
-                                            .size(34.dp)
+                                            .size(32.dp)
                                             .clip(CircleShape)
-                                            .background(catColor.copy(alpha = 0.16f)),
+                                            .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Icon(
                                             imageVector = currentFilter.icon,
                                             contentDescription = null,
-                                            tint = catColor,
+                                            tint = themeColors.buttonEqualBg,
                                             modifier = Modifier.size(18.dp)
                                         )
                                     }
@@ -1785,7 +2069,7 @@ fun DashboardCategoriesView(
                                         Text(
                                             text = if (isBn) "মোট ${currentFilteredTools.size}টি টুলস" else "Total ${currentFilteredTools.size} Tools",
                                             fontSize = 11.sp,
-                                            color = catColor,
+                                            color = themeColors.buttonEqualBg,
                                             fontWeight = FontWeight.SemiBold
                                         )
                                     }
@@ -1795,7 +2079,7 @@ fun DashboardCategoriesView(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(8.dp))
                                         .clickable { viewModel.selectedToolCategoryFilter = null },
-                                    color = catColor.copy(alpha = 0.12f),
+                                    color = themeColors.buttonEqualBg.copy(alpha = 0.12f),
                                     shape = RoundedCornerShape(8.dp)
                                 ) {
                                     Row(
@@ -1805,7 +2089,7 @@ fun DashboardCategoriesView(
                                         Icon(
                                             imageVector = Icons.Default.Apps,
                                             contentDescription = null,
-                                            tint = catColor,
+                                            tint = themeColors.buttonEqualBg,
                                             modifier = Modifier.size(14.dp)
                                         )
                                         Spacer(modifier = Modifier.width(4.dp))
@@ -1813,7 +2097,7 @@ fun DashboardCategoriesView(
                                             text = if (isBn) "সকল টুলস" else "All Tools",
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.Bold,
-                                            color = catColor
+                                            color = themeColors.buttonEqualBg
                                         )
                                     }
                                 }
@@ -1837,9 +2121,8 @@ fun DashboardCategoriesView(
 
                         if (categoryTools.isNotEmpty()) {
                             val isCategoryExpanded = expandedCategories.getOrDefault(category, false)
-                            val catColor = category.getColor()
 
-                            // Category Header Card with distinct category color
+                            // Category Header Card
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -1847,7 +2130,7 @@ fun DashboardCategoriesView(
                                     .themeCardShadow(themeColors, elevation = 1.dp),
                                 shape = RoundedCornerShape(12.dp),
                                 colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
-                                border = BorderStroke(1.dp, catColor.copy(alpha = 0.25f))
+                                border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.15f))
                             ) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
@@ -1864,13 +2147,13 @@ fun DashboardCategoriesView(
                                             modifier = Modifier
                                                 .size(28.dp)
                                                 .clip(CircleShape)
-                                                .background(catColor.copy(alpha = 0.16f)),
+                                                .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
                                             contentAlignment = Alignment.Center
                                         ) {
                                             Icon(
                                                 imageVector = category.icon,
                                                 contentDescription = category.titleEn,
-                                                tint = catColor,
+                                                tint = themeColors.buttonEqualBg,
                                                 modifier = Modifier.size(16.dp)
                                             )
                                         }
@@ -1887,7 +2170,7 @@ fun DashboardCategoriesView(
                                             modifier = Modifier
                                                 .defaultMinSize(minWidth = 22.dp, minHeight = 22.dp)
                                                 .clip(CircleShape)
-                                                .background(catColor.copy(alpha = 0.16f))
+                                                .background(themeColors.buttonEqualBg.copy(alpha = 0.15f))
                                                 .padding(horizontal = 6.dp, vertical = 2.dp),
                                             contentAlignment = Alignment.Center
                                         ) {
@@ -1895,7 +2178,7 @@ fun DashboardCategoriesView(
                                                 text = if (isBn) "${categoryTools.size}টি" else "${categoryTools.size}",
                                                 fontSize = 10.5.sp,
                                                 fontWeight = FontWeight.Bold,
-                                                color = catColor
+                                                color = themeColors.buttonEqualBg
                                             )
                                         }
                                     }
@@ -1904,7 +2187,7 @@ fun DashboardCategoriesView(
                                         Row(
                                             modifier = Modifier
                                                 .clip(RoundedCornerShape(8.dp))
-                                                .background(catColor.copy(alpha = 0.12f))
+                                                .background(themeColors.buttonEqualBg.copy(alpha = 0.12f))
                                                 .clickable { expandedCategories[category] = !isCategoryExpanded }
                                                 .padding(horizontal = 8.dp, vertical = 5.dp),
                                             verticalAlignment = Alignment.CenterVertically
@@ -1917,13 +2200,13 @@ fun DashboardCategoriesView(
                                                 },
                                                 fontSize = 11.sp,
                                                 fontWeight = FontWeight.Bold,
-                                                color = catColor
+                                                color = themeColors.buttonEqualBg
                                             )
                                             Spacer(modifier = Modifier.width(2.dp))
                                             Icon(
                                                 imageVector = if (isCategoryExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                                                 contentDescription = null,
-                                                tint = catColor,
+                                                tint = themeColors.buttonEqualBg,
                                                 modifier = Modifier.size(14.dp)
                                             )
                                         }
@@ -2093,20 +2376,13 @@ fun ToolFilterChipItem(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     themeColors: CalculatorThemeColors,
     count: Int = 0,
-    accentColor: Color? = null,
     onClick: () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
-    val effectiveColor = accentColor ?: themeColors.buttonEqualBg
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(12.dp))
-            .background(if (isSelected) effectiveColor else themeColors.cardBg)
-            .border(
-                width = 1.dp,
-                color = if (isSelected) effectiveColor else effectiveColor.copy(alpha = 0.25f),
-                shape = RoundedCornerShape(12.dp)
-            )
+            .background(if (isSelected) themeColors.buttonEqualBg else themeColors.cardBg)
             .scaleOnPress(interactionSource)
             .clickable(
                 interactionSource = interactionSource,
@@ -2120,7 +2396,7 @@ fun ToolFilterChipItem(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = if (isSelected) Color.White else effectiveColor,
+                tint = if (isSelected) Color.White else themeColors.displayText.copy(alpha = 0.7f),
                 modifier = Modifier.size(16.dp)
             )
             Spacer(modifier = Modifier.width(6.dp))
@@ -2138,7 +2414,7 @@ fun ToolFilterChipItem(
                         .clip(CircleShape)
                         .background(
                             if (isSelected) Color.White.copy(alpha = 0.28f)
-                            else effectiveColor.copy(alpha = 0.16f)
+                            else themeColors.buttonEqualBg
                         )
                         .padding(horizontal = 5.dp, vertical = 1.dp),
                     contentAlignment = Alignment.Center
@@ -2147,7 +2423,7 @@ fun ToolFilterChipItem(
                         text = "$count",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.ExtraBold,
-                        color = if (isSelected) Color.White else effectiveColor
+                        color = Color.White
                     )
                 }
             }
@@ -2171,8 +2447,6 @@ fun ToolGridCardItem(
     val interactionSource = remember { MutableInteractionSource() }
     val isBn = viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI
     val isFavorite = viewModel.favoriteTools.contains(toolType.name)
-    val catColor = toolType.category.getColor()
-    val catGradient = toolType.category.getGradient()
 
     ElevatedCard(
         modifier = modifier
@@ -2180,7 +2454,6 @@ fun ToolGridCardItem(
             .testTag("tool_card_${toolType.name.lowercase()}")
             .scaleOnPress(interactionSource)
             .themeCardShadow(themeColors, elevation = 1.dp)
-            .border(1.dp, catColor.copy(alpha = 0.20f), RoundedCornerShape(16.dp))
             .combinedClickable(
                 interactionSource = interactionSource,
                 indication = androidx.compose.foundation.LocalIndication.current,
@@ -2211,7 +2484,7 @@ fun ToolGridCardItem(
                         modifier = Modifier
                             .size(38.dp)
                             .clip(CircleShape)
-                            .background(catGradient),
+                            .background(getToolIconGradient(themeColors.buttonEqualBg)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -3551,7 +3824,7 @@ fun DashboardSearchResultsView(
                                                     modifier = Modifier
                                                         .size(38.dp)
                                                         .clip(CircleShape)
-                                                        .background(tool.category.getGradient()),
+                                                        .background(getToolIconGradient(themeColors.buttonEqualBg)),
                                                     contentAlignment = Alignment.Center
                                                 ) {
                                                     Icon(
@@ -3669,7 +3942,7 @@ fun DashboardSearchResultsView(
                                                     modifier = Modifier
                                                         .size(38.dp)
                                                         .clip(CircleShape)
-                                                        .background(conv.category.getGradient()),
+                                                        .background(getToolIconGradient(themeColors.buttonEqualBg)),
                                                     contentAlignment = Alignment.Center
                                                 ) {
                                                     Icon(
