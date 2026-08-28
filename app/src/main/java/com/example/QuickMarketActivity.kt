@@ -68,11 +68,13 @@ class QuickMarketActivity : ComponentActivity() {
 
                 val dialogShape = if (isMaximized) RoundedCornerShape(0.dp) else RoundedCornerShape(24.dp)
 
-                // Full screen scrim overlay
+                // Full screen scrim overlay respecting system insets
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(Color.Black.copy(alpha = 0.55f))
+                        .windowInsetsPadding(WindowInsets.systemBars)
+                        .padding(horizontal = if (isMaximized) 0.dp else 10.dp, vertical = if (isMaximized) 0.dp else 10.dp)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
@@ -86,8 +88,8 @@ class QuickMarketActivity : ComponentActivity() {
                             Modifier.fillMaxSize()
                         } else {
                             Modifier
-                                .fillMaxWidth(0.96f)
-                                .fillMaxHeight(0.94f)
+                                .fillMaxWidth()
+                                .fillMaxHeight()
                         })
                         .clip(dialogShape)
                         .clickable(

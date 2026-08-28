@@ -7,6 +7,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import com.example.util.scaleOnPress
+import com.example.util.bounceOverscroll
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -3954,78 +3955,82 @@ fun MainContent(
                 properties = DialogProperties(usePlatformDefaultWidth = false)
             ) {
                 val marketShape = if (isMarketMaximized) RoundedCornerShape(0.dp) else RoundedCornerShape(24.dp)
-                Surface(
-                    modifier = (if (isMarketMaximized) {
-                        Modifier.fillMaxSize()
-                    } else {
-                        Modifier
-                            .fillMaxWidth(0.96f)
-                            .fillMaxHeight(0.94f)
-                    }).clip(marketShape),
-                    shape = marketShape,
-                    color = themeColors.background,
-                    tonalElevation = 8.dp,
-                    shadowElevation = 16.dp
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .windowInsetsPadding(WindowInsets.systemBars)
+                        .padding(horizontal = if (isMarketMaximized) 0.dp else 10.dp, vertical = if (isMarketMaximized) 0.dp else 10.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Column(
+                    Surface(
                         modifier = Modifier
                             .fillMaxSize()
-                            .clip(marketShape)
-                            .clipToBounds()
+                            .clip(marketShape),
+                        shape = marketShape,
+                        color = themeColors.background,
+                        tonalElevation = 8.dp,
+                        shadowElevation = 16.dp
                     ) {
-                        // Header Bar (Windows 11 Style)
-                        Row(
+                        Column(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 12.dp, vertical = 8.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                                .fillMaxSize()
+                                .clip(marketShape)
+                                .clipToBounds()
                         ) {
+                            // Header Bar (Windows 11 Style)
                             Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(36.dp)
-                                        .clip(CircleShape)
-                                        .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
-                                    contentAlignment = Alignment.Center
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Default.ShoppingBasket,
-                                        contentDescription = null,
-                                        tint = themeColors.buttonEqualBg,
-                                        modifier = Modifier.size(22.dp)
+                                    Box(
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .clip(CircleShape)
+                                            .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.ShoppingBasket,
+                                            contentDescription = null,
+                                            tint = themeColors.buttonEqualBg,
+                                            modifier = Modifier.size(22.dp)
+                                        )
+                                    }
+                                    Text(
+                                        text = if (isBn) "কুইক বাজার ফর্দ" else "Quick Market List",
+                                        fontSize = 17.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = themeColors.displayText
                                     )
                                 }
-                                Text(
-                                    text = if (isBn) "কুইক বাজার ফর্দ" else "Quick Market List",
-                                    fontSize = 17.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = themeColors.displayText
+
+                                Windows11TitlebarButtons(
+                                    isMaximized = isMarketMaximized,
+                                    onMinimize = { isMarketMinimized = true },
+                                    onMaximizeToggle = { isMarketMaximized = !isMarketMaximized },
+                                    onClose = { showMarketCloseConfirm = true },
+                                    themeColors = themeColors
                                 )
                             }
 
-                            Windows11TitlebarButtons(
-                                isMaximized = isMarketMaximized,
-                                onMinimize = { isMarketMinimized = true },
-                                onMaximizeToggle = { isMarketMaximized = !isMarketMaximized },
-                                onClose = { showMarketCloseConfirm = true },
-                                themeColors = themeColors
-                            )
-                        }
+                            HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.1f))
 
-                        HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.1f))
+                            Spacer(modifier = Modifier.height(4.dp))
 
-                        Spacer(modifier = Modifier.height(4.dp))
-
-                        // Market List Content inside Dialog
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f)
-                        ) {
+                            // Market List Content inside Dialog
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f)
+                                    .bounceOverscroll()
+                            ) {
                             com.example.ui.screens.MarketListScreen(
                                 viewModel = viewModel,
                                 themeColors = themeColors,
@@ -4091,6 +4096,7 @@ fun MainContent(
             )
         }
     }
+}
 }
 }
 }

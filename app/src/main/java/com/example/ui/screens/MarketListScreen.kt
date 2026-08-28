@@ -25,6 +25,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -40,6 +41,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -55,6 +57,7 @@ import androidx.core.content.FileProvider
 import com.example.ui.theme.CalculatorThemeColors
 import com.example.ui.viewmodel.CalculatorViewModel
 import com.example.util.AppLanguage
+import com.example.util.bounceOverscroll
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -310,8 +313,9 @@ fun MarketListScreen(
     var activeExecutingPlan by remember { mutableStateOf<MarketPlanList?>(null) }
     var editingPlan by remember { mutableStateOf<MarketPlanList?>(null) }
 
-    // Viewing a specific Completed Memo
+    // Viewing or Editing a specific Completed Memo
     var viewingMemo by remember { mutableStateOf<CompletedBazaarMemo?>(null) }
+    var editingMemo by remember { mutableStateOf<CompletedBazaarMemo?>(null) }
 
     // Deletion confirmation state for Plan or Memo
     var itemToDeletePrompt by remember { mutableStateOf<Pair<String, () -> Unit>?>(null) }
@@ -568,7 +572,8 @@ fun MarketListScreen(
                             LazyColumn(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .padding(horizontal = 4.dp, vertical = 8.dp),
+                                    .padding(horizontal = 4.dp, vertical = 8.dp)
+                                    .bounceOverscroll(),
                                 verticalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
                                 items(completedMemos, key = { it.id }) { memo ->
@@ -579,9 +584,12 @@ fun MarketListScreen(
                                         onClick = {
                                             viewingMemo = memo
                                         },
+                                        onEdit = {
+                                            editingMemo = memo
+                                        },
                                         onExportPdf = {
                                             pendingMemoToExport = memo
-                                            val defaultName = "Memo_${SimpleDateFormat("yyyyMMdd_HHmm", Locale.US).format(Date(memo.timestamp))}.pdf"
+                                            val defaultName = getSanitizedMemoPdfFileName(memo)
                                             createDocumentLauncher.launch(defaultName)
                                         },
                                         onSharePdf = {
@@ -616,6 +624,7 @@ fun MarketListScreen(
                 editingPlan = null
             },
             onSavePlan = { newPlan ->
+                MarketStorageManager.clearDraftPlan(context)
                 if (editingPlan != null) {
                     val idx = planLists.indexOfFirst { it.id == editingPlan!!.id }
                     if (idx != -1) {
@@ -633,6 +642,7 @@ fun MarketListScreen(
                 Toast.makeText(context, if (isBn) "ফর্দ সফলভাবে সেভ হয়েছে!" else "Shopping list saved!", Toast.LENGTH_SHORT).show()
             },
             onCompleteDirectBazaar = { newMemo ->
+                MarketStorageManager.clearDraftPlan(context)
                 completedMemos.add(0, newMemo)
                 persistMemos()
                 // Sync with general calculation history
@@ -660,6 +670,7 @@ fun MarketListScreen(
             themeColors = themeColors,
             onDismiss = { activeExecutingPlan = null },
             onCompleteBazaar = { completedMemo, deleteOriginalPlan ->
+                MarketStorageManager.clearDraftPlan(context)
                 completedMemos.add(0, completedMemo)
                 persistMemos()
                 if (deleteOriginalPlan) {
@@ -687,13 +698,45 @@ fun MarketListScreen(
             isBn = isBn,
             themeColors = themeColors,
             onDismiss = { viewingMemo = null },
+            onEditMemo = { memoToEdit ->
+                viewingMemo = null
+                editingMemo = memoToEdit
+            },
             onExportSafPdf = { memo ->
                 pendingMemoToExport = memo
-                val defaultName = "Memo_${SimpleDateFormat("yyyyMMdd_HHmm", Locale.US).format(Date(memo.timestamp))}.pdf"
+                val defaultName = getSanitizedMemoPdfFileName(memo)
                 createDocumentLauncher.launch(defaultName)
             },
             onSharePdf = { memo ->
                 shareMemoPdfDirect(context, memo, isBn)
+            }
+        )
+    }
+
+    // DIALOG 4: Edit Completed Bazaar Memo Dialog
+    if (editingMemo != null) {
+        EditCompletedMemoDialog(
+            memo = editingMemo!!,
+            isBn = isBn,
+            themeColors = themeColors,
+            onDismiss = { editingMemo = null },
+            onSaveEditedMemo = { updatedMemo ->
+                val idx = completedMemos.indexOfFirst { it.id == updatedMemo.id }
+                if (idx != -1) {
+                    completedMemos[idx] = updatedMemo
+                } else {
+                    completedMemos.add(0, updatedMemo)
+                }
+                persistMemos()
+                viewModel.saveCustomHistory(
+                    expression = updatedMemo.title,
+                    result = "৳ ${String.format(Locale.US, "%.2f", updatedMemo.totalCost)}",
+                    type = "Market Memo",
+                    customName = "${updatedMemo.title} (${updatedMemo.items.size} items)"
+                )
+                editingMemo = null
+                viewingMemo = updatedMemo
+                Toast.makeText(context, if (isBn) "মেমো সফলভাবে আপডেট হয়েছে!" else "Memo updated successfully!", Toast.LENGTH_SHORT).show()
             }
         )
     }
@@ -907,6 +950,7 @@ fun CompletedMemoCardItem(
     isBn: Boolean,
     themeColors: CalculatorThemeColors,
     onClick: () -> Unit,
+    onEdit: () -> Unit,
     onExportPdf: () -> Unit,
     onSharePdf: () -> Unit,
     onDelete: () -> Unit
@@ -964,16 +1008,29 @@ fun CompletedMemoCardItem(
                     }
                 }
 
-                IconButton(
-                    onClick = onDelete,
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Delete,
-                        contentDescription = "Delete Memo",
-                        tint = Color(0xFFEF4444),
-                        modifier = Modifier.size(20.dp)
-                    )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(
+                        onClick = onEdit,
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Edit Memo",
+                            tint = themeColors.buttonEqualBg,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    IconButton(
+                        onClick = onDelete,
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Delete,
+                            contentDescription = "Delete Memo",
+                            tint = Color(0xFFEF4444),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
             }
 
@@ -1017,10 +1074,10 @@ fun CompletedMemoCardItem(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Action Buttons (View Memo, Save to Folder, Share)
+            // Action Buttons (View Memo, Edit Memo, Save to Folder, Share)
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 OutlinedButton(
                     onClick = onClick,
@@ -1028,26 +1085,37 @@ fun CompletedMemoCardItem(
                     shape = RoundedCornerShape(10.dp),
                     contentPadding = PaddingValues(vertical = 6.dp)
                 ) {
-                    Icon(imageVector = Icons.Default.Visibility, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Icon(imageVector = Icons.Default.Visibility, contentDescription = null, modifier = Modifier.size(15.dp))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = if (isBn) "মেমো দেখুন" else "View Memo", fontSize = 12.sp)
+                    Text(text = if (isBn) "মেমো" else "View", fontSize = 12.sp)
+                }
+
+                OutlinedButton(
+                    onClick = onEdit,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(10.dp),
+                    contentPadding = PaddingValues(vertical = 6.dp)
+                ) {
+                    Icon(imageVector = Icons.Default.Edit, contentDescription = null, tint = themeColors.buttonEqualBg, modifier = Modifier.size(15.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(text = if (isBn) "এডিট" else "Edit", color = themeColors.buttonEqualBg, fontSize = 12.sp)
                 }
 
                 Button(
                     onClick = onExportPdf,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1.1f),
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444)),
                     contentPadding = PaddingValues(vertical = 6.dp)
                 ) {
-                    Icon(imageVector = Icons.Default.SaveAlt, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                    Icon(imageVector = Icons.Default.SaveAlt, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(text = if (isBn) "PDF সেভ" else "Save PDF", color = Color.White, fontSize = 12.sp)
                 }
 
                 IconButton(
                     onClick = onSharePdf,
-                    modifier = Modifier.size(38.dp)
+                    modifier = Modifier.size(36.dp)
                 ) {
                     Icon(imageVector = Icons.Default.Share, contentDescription = "Share", tint = themeColors.buttonEqualBg)
                 }
@@ -1069,6 +1137,7 @@ fun CreateOrBazaarModalDialog(
     editingPlan: MarketPlanList? = null
 ) {
     val context = LocalContext.current
+    var hasDraft by remember { mutableStateOf(if (editingPlan == null) MarketStorageManager.loadDraftPlan(context) != null else false) }
     val savedDraft = remember { if (editingPlan == null) MarketStorageManager.loadDraftPlan(context) else null }
     // 0 -> ফর্দ তৈরি, 1 -> বাজার সম্পন্ন
     var dialogTab by remember { mutableStateOf(if (editingPlan != null) 0 else initialTab) }
@@ -1082,8 +1151,6 @@ fun CreateOrBazaarModalDialog(
     }
 
     // Editable Items List
-    // In "ফর্দ তৈরি" mode, items are planned list
-    // In "বাজার সম্পন্ন" mode, items have checkboxes
     val items = remember {
         val list = mutableStateListOf<MarketItem>()
         if (editingPlan != null) {
@@ -1096,19 +1163,22 @@ fun CreateOrBazaarModalDialog(
         list
     }
 
-    // Auto-save draft on every change
+    var isSubmitted by remember { mutableStateOf(false) }
+
+    // Auto-save draft on change unless submitted
     LaunchedEffect(listTitle, items.map { "${it.name}_${it.unitPrice}_${it.quantity}_${it.unit}_${it.isChecked}" }) {
-        if (editingPlan == null) {
+        if (editingPlan == null && !isSubmitted) {
             val valid = items.any { it.name.isNotBlank() || it.unitPrice > 0 }
             if (valid || listTitle.isNotBlank()) {
                 MarketStorageManager.saveDraftPlan(context, MarketPlanList(title = listTitle, items = items.toList()))
+                hasDraft = true
             }
         }
     }
 
     // Auto-save and close on Back Press
     BackHandler {
-        if (editingPlan == null) {
+        if (editingPlan == null && !isSubmitted) {
             val valid = items.filter { it.name.isNotBlank() }
             if (valid.isNotEmpty()) {
                 MarketStorageManager.saveDraftPlan(context, MarketPlanList(title = listTitle, items = items.toList()))
@@ -1175,10 +1245,8 @@ fun CreateOrBazaarModalDialog(
     val calculatedGrandTotal by remember {
         derivedStateOf {
             if (dialogTab == 0) {
-                // In Plan mode, sum of all valid items
                 items.sumOf { it.total }
             } else {
-                // In Direct Bazaar mode, sum of checked items
                 items.filter { it.isChecked }.sumOf { it.total }
             }
         }
@@ -1188,307 +1256,348 @@ fun CreateOrBazaarModalDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
-        Surface(
+        Box(
             modifier = Modifier
-                .fillMaxWidth(0.96f)
-                .fillMaxHeight(0.92f),
-            shape = RoundedCornerShape(24.dp),
-            color = themeColors.background,
-            shadowElevation = 8.dp
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.systemBars)
+                .padding(horizontal = 10.dp, vertical = 8.dp),
+            contentAlignment = Alignment.Center
         ) {
-            Column(
+            Surface(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp)
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.96f),
+                shape = RoundedCornerShape(20.dp),
+                color = themeColors.background,
+                shadowElevation = 8.dp
             ) {
-                // Title and Close
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = if (dialogTab == 0) (if (isBn) "নতুন ফর্দ তৈরি" else "Create Shopping List")
-                        else (if (isBn) "সরাসরি বাজার সম্পন্ন" else "Instant Bazaar Shopping"),
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = themeColors.displayText
-                    )
-                    IconButton(onClick = onDismiss, modifier = Modifier.size(32.dp)) {
-                        Icon(imageVector = Icons.Default.Close, contentDescription = "Close", tint = themeColors.displayText)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // Top 2 Dialog Chips: "ফর্দ তৈরি" and "বাজার সম্পন্ন"
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Surface(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(40.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .clickable {
-                                dialogTab = 0
-                                validationErrorMsg = null
-                            },
-                        color = if (dialogTab == 0) themeColors.buttonEqualBg else themeColors.cardBg,
-                        border = if (dialogTab == 0) null else androidx.compose.foundation.BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.15f))
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxSize(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.PlaylistAdd,
-                                contentDescription = null,
-                                tint = if (dialogTab == 0) Color.White else themeColors.displayText,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = if (isBn) "ফর্দ তৈরি" else "Create List",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 13.sp,
-                                color = if (dialogTab == 0) Color.White else themeColors.displayText
-                            )
-                        }
-                    }
-
-                    Surface(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(40.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .clickable {
-                                dialogTab = 1
-                                validationErrorMsg = null
-                            },
-                        color = if (dialogTab == 1) Color(0xFF10B981) else themeColors.cardBg,
-                        border = if (dialogTab == 1) null else androidx.compose.foundation.BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.15f))
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxSize(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.CheckCircleOutline,
-                                contentDescription = null,
-                                tint = if (dialogTab == 1) Color.White else themeColors.displayText,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = if (isBn) "বাজার সম্পন্ন" else "Finish Bazaar",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 13.sp,
-                                color = if (dialogTab == 1) Color.White else themeColors.displayText
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // List / Memo Title Field with Voice Input Button
-                OutlinedTextField(
-                    value = listTitle,
-                    onValueChange = { listTitle = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    label = { Text(if (isBn) "ফর্দ / মেমো নাম (কাস্টমাইজ করতে লিখুন)" else "List / Memo Title (Custom Name)", fontSize = 12.sp) },
-                    trailingIcon = {
-                        IconButton(onClick = { launchVoiceFor(true, null) }) {
-                            Icon(
-                                imageVector = Icons.Default.Mic,
-                                contentDescription = "Voice Input for Title",
-                                tint = themeColors.buttonEqualBg,
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-                    },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = themeColors.displayText,
-                        unfocusedTextColor = themeColors.displayText,
-                        focusedLabelColor = themeColors.buttonEqualBg,
-                        unfocusedLabelColor = themeColors.displayText.copy(alpha = 0.6f),
-                        focusedPlaceholderColor = themeColors.displayText.copy(alpha = 0.5f),
-                        unfocusedPlaceholderColor = themeColors.displayText.copy(alpha = 0.5f),
-                        focusedBorderColor = themeColors.buttonEqualBg,
-                        unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f)
-                    ),
-                    shape = RoundedCornerShape(12.dp)
-                )
-
-                if (validationErrorMsg != null) {
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = validationErrorMsg!!,
-                        color = Color(0xFFEF4444),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Scrollable Item Entry Rows
-                LazyColumn(
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                        .fillMaxSize()
+                        .padding(14.dp)
                 ) {
-                    itemsIndexed(items, key = { index, item -> item.id }) { index, item ->
-                        ItemInputRow(
-                            index = index,
-                            item = item,
-                            isBazaarMode = (dialogTab == 1),
-                            isBn = isBn,
-                            unitsList = unitsList,
-                            themeColors = themeColors,
-                            onItemChange = { updated ->
-                                items[index] = updated
-                                validationErrorMsg = null
-                            },
-                            onDeleteClick = {
-                                itemIndexToDelete = index
-                            },
-                            onVoiceClick = {
-                                launchVoiceFor(false, index)
+                    // Title and Close
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = if (dialogTab == 0) (if (isBn) "নতুন ফর্দ তৈরি" else "Create Shopping List")
+                                else (if (isBn) "সরাসরি বাজার সম্পন্ন" else "Instant Bazaar Shopping"),
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.displayText
+                            )
+                            if (hasDraft && editingPlan == null) {
+                                Text(
+                                    text = if (isBn) "অসমাপ্ত খসড়া লোড করা হয়েছে" else "Saved draft loaded",
+                                    fontSize = 10.sp,
+                                    color = themeColors.buttonEqualBg
+                                )
                             }
+                        }
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (hasDraft && editingPlan == null) {
+                                TextButton(
+                                    onClick = {
+                                        MarketStorageManager.clearDraftPlan(context)
+                                        hasDraft = false
+                                        items.clear()
+                                        items.add(MarketItem(name = "", unitPrice = 0.0, quantity = 1.0, unit = if (isBn) "কেজি" else "kg", isChecked = (dialogTab == 1)))
+                                        listTitle = if (isBn) "বাজারের ফর্দ - " + SimpleDateFormat("dd MMM", Locale("bn")).format(Date())
+                                        else "Market List - " + SimpleDateFormat("dd MMM", Locale.US).format(Date())
+                                        Toast.makeText(context, if (isBn) "খসড়া মুছে ফেলা হয়েছে" else "Draft reset", Toast.LENGTH_SHORT).show()
+                                    },
+                                    contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        text = if (isBn) "খসড়া রিসেট" else "Reset Draft",
+                                        fontSize = 11.sp,
+                                        color = Color(0xFFEF4444)
+                                    )
+                                }
+                            }
+                            IconButton(onClick = onDismiss, modifier = Modifier.size(30.dp)) {
+                                Icon(imageVector = Icons.Default.Close, contentDescription = "Close", tint = themeColors.displayText)
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Top 2 Dialog Chips: "ফর্দ তৈরি" and "বাজার সম্পন্ন"
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Surface(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(38.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .clickable {
+                                    dialogTab = 0
+                                    validationErrorMsg = null
+                                },
+                            color = if (dialogTab == 0) themeColors.buttonEqualBg else themeColors.cardBg,
+                            border = if (dialogTab == 0) null else androidx.compose.foundation.BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.15f))
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxSize(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.PlaylistAdd,
+                                    contentDescription = null,
+                                    tint = if (dialogTab == 0) Color.White else themeColors.displayText,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = if (isBn) "ফর্দ তৈরি" else "Create List",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp,
+                                    color = if (dialogTab == 0) Color.White else themeColors.displayText
+                                )
+                            }
+                        }
+
+                        Surface(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(38.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .clickable {
+                                    dialogTab = 1
+                                    validationErrorMsg = null
+                                },
+                            color = if (dialogTab == 1) Color(0xFF10B981) else themeColors.cardBg,
+                            border = if (dialogTab == 1) null else androidx.compose.foundation.BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.15f))
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxSize(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircleOutline,
+                                    contentDescription = null,
+                                    tint = if (dialogTab == 1) Color.White else themeColors.displayText,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = if (isBn) "বাজার সম্পন্ন" else "Finish Bazaar",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp,
+                                    color = if (dialogTab == 1) Color.White else themeColors.displayText
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // List / Memo Title Field with Voice Input Button
+                    OutlinedTextField(
+                        value = listTitle,
+                        onValueChange = { listTitle = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        label = { Text(if (isBn) "ফর্দ / মেমো নাম" else "List / Memo Title", fontSize = 11.sp) },
+                        trailingIcon = {
+                            IconButton(onClick = { launchVoiceFor(true, null) }) {
+                                Icon(
+                                    imageVector = Icons.Default.Mic,
+                                    contentDescription = "Voice Input for Title",
+                                    tint = themeColors.buttonEqualBg,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = themeColors.displayText,
+                            unfocusedTextColor = themeColors.displayText,
+                            focusedLabelColor = themeColors.buttonEqualBg,
+                            unfocusedLabelColor = themeColors.displayText.copy(alpha = 0.6f),
+                            focusedPlaceholderColor = themeColors.displayText.copy(alpha = 0.5f),
+                            unfocusedPlaceholderColor = themeColors.displayText.copy(alpha = 0.5f),
+                            focusedBorderColor = themeColors.buttonEqualBg,
+                            unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f)
+                        ),
+                        shape = RoundedCornerShape(10.dp)
+                    )
+
+                    if (validationErrorMsg != null) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = validationErrorMsg!!,
+                            color = Color(0xFFEF4444),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium
                         )
                     }
 
-                    item {
-                        // Button: Add New Item
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    // Scrollable Item Entry Rows
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .bounceOverscroll(),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        itemsIndexed(items, key = { index, item -> item.id }) { index, item ->
+                            ItemInputRow(
+                                index = index,
+                                item = item,
+                                isBazaarMode = (dialogTab == 1),
+                                isBn = isBn,
+                                unitsList = unitsList,
+                                themeColors = themeColors,
+                                onItemChange = { updated ->
+                                    items[index] = updated
+                                    validationErrorMsg = null
+                                },
+                                onDeleteClick = {
+                                    itemIndexToDelete = index
+                                },
+                                onVoiceClick = {
+                                    launchVoiceFor(false, index)
+                                }
+                            )
+                        }
+
+                        item {
+                            // Button: Add New Item
+                            Button(
+                                onClick = {
+                                    items.add(
+                                        MarketItem(
+                                            name = "",
+                                            unitPrice = 0.0,
+                                            quantity = 1.0,
+                                            unit = if (isBn) "কেজি" else "kg",
+                                            isChecked = (dialogTab == 1)
+                                        )
+                                    )
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp),
+                                shape = RoundedCornerShape(10.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = themeColors.cardBg),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.4f))
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.AddCircleOutline,
+                                    contentDescription = null,
+                                    tint = themeColors.buttonEqualBg,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = if (isBn) "+ নতুন আইটেম যোগ করুন" else "+ Add New Item",
+                                    color = themeColors.buttonEqualBg,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+                    HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.1f))
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    // Bottom Total and Action Buttons
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = if (dialogTab == 0) (if (isBn) "মোট আনুমানিক হিসাব" else "Estimated Total")
+                                else (if (isBn) "সম্পন্ন মোট হিসাব" else "Total Purchased"),
+                                fontSize = 10.sp,
+                                color = themeColors.displayText.copy(alpha = 0.6f)
+                            )
+                            Text(
+                                text = "৳ ${String.format(Locale.US, "%.2f", calculatedGrandTotal)}",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (dialogTab == 0) themeColors.buttonEqualBg else Color(0xFF10B981)
+                            )
+                        }
+
                         Button(
                             onClick = {
-                                items.add(
-                                    MarketItem(
-                                        name = "",
-                                        unitPrice = 0.0,
-                                        quantity = 1.0,
-                                        unit = if (isBn) "কেজি" else "kg",
-                                        isChecked = (dialogTab == 1)
+                                val validItems = items.filter { it.name.isNotBlank() }
+                                if (validItems.isEmpty()) {
+                                    validationErrorMsg = if (isBn) "অনুগ্রহ করে অন্তত একটি পণ্যের নাম লিখুন!" else "Please enter at least one item name!"
+                                    return@Button
+                                }
+
+                                isSubmitted = true
+                                if (dialogTab == 0) {
+                                    // Plan Mode Save
+                                    val newPlan = MarketPlanList(
+                                        id = editingPlan?.id ?: java.util.UUID.randomUUID().toString(),
+                                        title = listTitle.ifBlank { if (isBn) "বাজারের ফর্দ" else "Shopping List" },
+                                        items = validItems,
+                                        timestamp = editingPlan?.timestamp ?: System.currentTimeMillis()
                                     )
-                                )
+                                    onSavePlan(newPlan)
+                                } else {
+                                    // Direct Bazaar Mode Validation
+                                    val checkedItems = items.filter { it.isChecked && it.name.isNotBlank() }
+                                    if (checkedItems.isEmpty()) {
+                                        validationErrorMsg = if (isBn) "অনুগ্রহ করে কেনাকাটা করা পণ্যগুলো টিক দিন!" else "Please check the items you bought!"
+                                        return@Button
+                                    }
+
+                                    val hasMissingInputs = checkedItems.any { it.unitPrice <= 0.0 || it.quantity <= 0.0 }
+                                    if (hasMissingInputs) {
+                                        validationErrorMsg = if (isBn) "বাজার সম্পন্ন করতে টিক দেওয়া প্রতিটি পণ্যের দর ও পরিমাণ ইনপুট দিতে হবে!"
+                                        else "Price and quantity must be provided for all checked items!"
+                                        return@Button
+                                    }
+
+                                    val memo = CompletedBazaarMemo(
+                                        title = listTitle.ifBlank { if (isBn) "সম্পন্ন বাজার মেমো" else "Completed Bazaar" },
+                                        items = checkedItems,
+                                        totalCost = checkedItems.sumOf { it.total }
+                                    )
+                                    onCompleteDirectBazaar(memo)
+                                }
                             },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp),
                             shape = RoundedCornerShape(10.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = themeColors.cardBg),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.4f))
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (dialogTab == 0) themeColors.buttonEqualBg else Color(0xFF10B981)
+                            ),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Default.AddCircleOutline,
+                                imageVector = if (dialogTab == 0) Icons.Default.Save else Icons.Default.Check,
                                 contentDescription = null,
-                                tint = themeColors.buttonEqualBg,
-                                modifier = Modifier.size(18.dp)
+                                tint = Color.White,
+                                modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = if (isBn) "+ নতুন আইটেম যোগ করুন" else "+ Add New Item",
-                                color = themeColors.buttonEqualBg,
+                                text = if (dialogTab == 0) (if (isBn) "ফর্দ সেভ করুন" else "Save List")
+                                else (if (isBn) "বাজার সম্পন্ন করুন" else "Complete Bazaar"),
+                                color = Color.White,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 13.sp
                             )
                         }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-                HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.1f))
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // Bottom Total and Action Buttons
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = if (dialogTab == 0) (if (isBn) "মোট আনুমানিক হিসাব" else "Estimated Total")
-                            else (if (isBn) "সম্পন্ন মোট হিসাব" else "Total Purchased"),
-                            fontSize = 11.sp,
-                            color = themeColors.displayText.copy(alpha = 0.6f)
-                        )
-                        Text(
-                            text = "৳ ${String.format(Locale.US, "%.2f", calculatedGrandTotal)}",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (dialogTab == 0) themeColors.buttonEqualBg else Color(0xFF10B981)
-                        )
-                    }
-
-                    Button(
-                        onClick = {
-                            val validItems = items.filter { it.name.isNotBlank() }
-                            if (validItems.isEmpty()) {
-                                validationErrorMsg = if (isBn) "অনুগ্রহ করে অন্তত একটি পণ্যের নাম লিখুন!" else "Please enter at least one item name!"
-                                return@Button
-                            }
-
-                            if (dialogTab == 0) {
-                                // Plan Mode Save
-                                val newPlan = MarketPlanList(
-                                    id = editingPlan?.id ?: java.util.UUID.randomUUID().toString(),
-                                    title = listTitle.ifBlank { if (isBn) "বাজারের ফর্দ" else "Shopping List" },
-                                    items = validItems,
-                                    timestamp = editingPlan?.timestamp ?: System.currentTimeMillis()
-                                )
-                                onSavePlan(newPlan)
-                            } else {
-                                // Direct Bazaar Mode Validation:
-                                // "দর ও পরিমাণ ইনপুট বাদ থাকলে সেভ বাটন কাজ করবেনা"
-                                val checkedItems = items.filter { it.isChecked && it.name.isNotBlank() }
-                                if (checkedItems.isEmpty()) {
-                                    validationErrorMsg = if (isBn) "অনুগ্রহ করে কেনাকাটা করা পণ্যগুলো টিক দিন!" else "Please check the items you bought!"
-                                    return@Button
-                                }
-
-                                val hasMissingInputs = checkedItems.any { it.unitPrice <= 0.0 || it.quantity <= 0.0 }
-                                if (hasMissingInputs) {
-                                    validationErrorMsg = if (isBn) "বাজার সম্পন্ন করতে টিক দেওয়া প্রতিটি পণ্যের দর ও পরিমাণ ইনপুট দিতে হবে!"
-                                    else "Price and quantity must be provided for all checked items!"
-                                    return@Button
-                                }
-
-                                val memo = CompletedBazaarMemo(
-                                    title = listTitle.ifBlank { if (isBn) "সম্পন্ন বাজার মেমো" else "Completed Bazaar" },
-                                    items = checkedItems,
-                                    totalCost = checkedItems.sumOf { it.total }
-                                )
-                                onCompleteDirectBazaar(memo)
-                            }
-                        },
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (dialogTab == 0) themeColors.buttonEqualBg else Color(0xFF10B981)
-                        ),
-                        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp)
-                    ) {
-                        Icon(
-                            imageVector = if (dialogTab == 0) Icons.Default.Save else Icons.Default.Check,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = if (dialogTab == 0) (if (isBn) "ফর্দ সেভ করুন" else "Save List")
-                            else (if (isBn) "বাজার সম্পন্ন করুন" else "Complete Bazaar"),
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp
-                        )
                     }
                 }
             }
@@ -1643,8 +1752,7 @@ fun parseBazaarVoiceText(spoken: String, currentItem: MarketItem, isBn: Boolean)
     )
 }
 
-// --- Item Input Row Composable (with Name, Rate, Quantity textboxes & Delete button) ---
-@OptIn(ExperimentalMaterial3Api::class)
+// --- Item Input Row Composable (Compact & Professional) ---
 @Composable
 fun ItemInputRow(
     index: Int,
@@ -1665,14 +1773,14 @@ fun ItemInputRow(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(10.dp),
         colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
         elevation = CardDefaults.cardElevation(1.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(10.dp)
+                .padding(horizontal = 8.dp, vertical = 6.dp)
         ) {
             // Row 1: Checkbox (if Bazaar Mode) + Name Field + Voice Button + Delete Button
             Row(
@@ -1685,130 +1793,183 @@ fun ItemInputRow(
                         onCheckedChange = { isChecked ->
                             onItemChange(item.copy(isChecked = isChecked))
                         },
-                        colors = CheckboxDefaults.colors(checkedColor = Color(0xFF10B981))
+                        colors = CheckboxDefaults.colors(checkedColor = Color(0xFF10B981)),
+                        modifier = Modifier.size(24.dp).padding(end = 4.dp)
                     )
+                    Spacer(modifier = Modifier.width(4.dp))
                 }
 
-                // Name Input with integrated Voice Mic Icon
-                OutlinedTextField(
-                    value = nameText,
-                    onValueChange = {
-                        nameText = it
-                        onItemChange(item.copy(name = it))
-                    },
-                    modifier = Modifier.weight(1f),
-                    singleLine = true,
-                    placeholder = { Text(if (isBn) "পণ্যের নাম (যেমন: আলু)" else "Item Name", fontSize = 13.sp) },
-                    trailingIcon = {
-                        IconButton(
-                            onClick = { onVoiceClick?.invoke() },
-                            modifier = Modifier.size(32.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Mic,
-                                contentDescription = "Voice Input for Item",
-                                tint = themeColors.buttonEqualBg,
-                                modifier = Modifier.size(18.dp)
-                            )
+                // Compact Name Input Container
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(36.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(themeColors.background)
+                        .border(1.dp, themeColors.displayText.copy(alpha = 0.15f), RoundedCornerShape(8.dp))
+                        .padding(horizontal = 8.dp),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        BasicTextField(
+                            value = nameText,
+                            onValueChange = {
+                                nameText = it
+                                onItemChange(item.copy(name = it))
+                            },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
+                            textStyle = androidx.compose.ui.text.TextStyle(
+                                color = themeColors.displayText,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Medium
+                            ),
+                            cursorBrush = SolidColor(themeColors.buttonEqualBg),
+                            decorationBox = { innerTextField ->
+                                if (nameText.isEmpty()) {
+                                    Text(
+                                        text = if (isBn) "পণ্যের নাম (আলু, চাল)" else "Item name (e.g. Rice)",
+                                        fontSize = 12.sp,
+                                        color = themeColors.displayText.copy(alpha = 0.4f)
+                                    )
+                                }
+                                innerTextField()
+                            }
+                        )
+
+                        if (onVoiceClick != null) {
+                            IconButton(
+                                onClick = onVoiceClick,
+                                modifier = Modifier.size(28.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Mic,
+                                    contentDescription = "Voice Input",
+                                    tint = themeColors.buttonEqualBg,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
                         }
-                    },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = themeColors.displayText,
-                        unfocusedTextColor = themeColors.displayText,
-                        focusedLabelColor = themeColors.buttonEqualBg,
-                        unfocusedLabelColor = themeColors.displayText.copy(alpha = 0.6f),
-                        focusedPlaceholderColor = themeColors.displayText.copy(alpha = 0.5f),
-                        unfocusedPlaceholderColor = themeColors.displayText.copy(alpha = 0.5f),
-                        focusedBorderColor = themeColors.buttonEqualBg,
-                        unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f)
-                    ),
-                    shape = RoundedCornerShape(8.dp)
-                )
+                    }
+                }
 
                 Spacer(modifier = Modifier.width(6.dp))
 
-                // Delete Button on the right with confirmation trigger
+                // Delete Button
                 IconButton(
                     onClick = onDeleteClick,
-                    modifier = Modifier.size(36.dp)
+                    modifier = Modifier.size(30.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Delete,
                         contentDescription = "Delete Row",
                         tint = Color(0xFFEF4444),
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
-            // Row 2: দর (Rate / Unit Price) + পরিমাণ (Qty) + একক (Unit) + Subtotal
+            // Row 2: দর (Rate) + পরিমাণ (Qty) + একক (Unit) + মোট (Total)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // দর (Rate)
-                OutlinedTextField(
-                    value = rateText,
-                    onValueChange = {
-                        rateText = it
-                        val p = it.toDoubleOrNull() ?: 0.0
-                        onItemChange(item.copy(unitPrice = p))
-                    },
-                    label = { Text(if (isBn) "দর (৳)" else "Rate (৳)", fontSize = 10.sp) },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.weight(1.1f),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = themeColors.displayText,
-                        unfocusedTextColor = themeColors.displayText,
-                        focusedLabelColor = themeColors.buttonEqualBg,
-                        unfocusedLabelColor = themeColors.displayText.copy(alpha = 0.6f),
-                        focusedPlaceholderColor = themeColors.displayText.copy(alpha = 0.5f),
-                        unfocusedPlaceholderColor = themeColors.displayText.copy(alpha = 0.5f),
-                        focusedBorderColor = themeColors.buttonEqualBg,
-                        unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f)
-                    ),
-                    shape = RoundedCornerShape(8.dp)
-                )
+                // दर (Rate)
+                Box(
+                    modifier = Modifier
+                        .weight(1.1f)
+                        .height(34.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(themeColors.background)
+                        .border(1.dp, themeColors.displayText.copy(alpha = 0.15f), RoundedCornerShape(8.dp))
+                        .padding(horizontal = 6.dp),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    BasicTextField(
+                        value = rateText,
+                        onValueChange = {
+                            rateText = it
+                            val p = it.toDoubleOrNull() ?: 0.0
+                            onItemChange(item.copy(unitPrice = p))
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        textStyle = androidx.compose.ui.text.TextStyle(
+                            color = themeColors.displayText,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium
+                        ),
+                        cursorBrush = SolidColor(themeColors.buttonEqualBg),
+                        decorationBox = { innerTextField ->
+                            if (rateText.isEmpty()) {
+                                Text(
+                                    text = if (isBn) "দর ৳" else "Rate ৳",
+                                    fontSize = 11.sp,
+                                    color = themeColors.displayText.copy(alpha = 0.4f)
+                                )
+                            }
+                            innerTextField()
+                        }
+                    )
+                }
 
                 // পরিমাণ (Qty)
-                OutlinedTextField(
-                    value = qtyText,
-                    onValueChange = {
-                        qtyText = it
-                        val q = it.toDoubleOrNull() ?: 1.0
-                        onItemChange(item.copy(quantity = q))
-                    },
-                    label = { Text(if (isBn) "পরিমাণ" else "Qty", fontSize = 10.sp) },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.weight(1f),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = themeColors.displayText,
-                        unfocusedTextColor = themeColors.displayText,
-                        focusedLabelColor = themeColors.buttonEqualBg,
-                        unfocusedLabelColor = themeColors.displayText.copy(alpha = 0.6f),
-                        focusedPlaceholderColor = themeColors.displayText.copy(alpha = 0.5f),
-                        unfocusedPlaceholderColor = themeColors.displayText.copy(alpha = 0.5f),
-                        focusedBorderColor = themeColors.buttonEqualBg,
-                        unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f)
-                    ),
-                    shape = RoundedCornerShape(8.dp)
-                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(34.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(themeColors.background)
+                        .border(1.dp, themeColors.displayText.copy(alpha = 0.15f), RoundedCornerShape(8.dp))
+                        .padding(horizontal = 6.dp),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    BasicTextField(
+                        value = qtyText,
+                        onValueChange = {
+                            qtyText = it
+                            val q = it.toDoubleOrNull() ?: 1.0
+                            onItemChange(item.copy(quantity = q))
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        textStyle = androidx.compose.ui.text.TextStyle(
+                            color = themeColors.displayText,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium
+                        ),
+                        cursorBrush = SolidColor(themeColors.buttonEqualBg),
+                        decorationBox = { innerTextField ->
+                            if (qtyText.isEmpty()) {
+                                Text(
+                                    text = if (isBn) "পরিমাণ" else "Qty",
+                                    fontSize = 11.sp,
+                                    color = themeColors.displayText.copy(alpha = 0.4f)
+                                )
+                            }
+                            innerTextField()
+                        }
+                    )
+                }
 
                 // একক Selector Dropdown
                 Box(modifier = Modifier.weight(0.9f)) {
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(54.dp)
+                            .height(34.dp)
                             .clip(RoundedCornerShape(8.dp))
-                            .border(1.dp, themeColors.displayText.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
+                            .border(1.dp, themeColors.displayText.copy(alpha = 0.15f), RoundedCornerShape(8.dp))
                             .clickable { unitMenuExpanded = true },
-                        color = themeColors.cardBg
+                        color = themeColors.background
                     ) {
                         Row(
                             modifier = Modifier
@@ -1819,11 +1980,11 @@ fun ItemInputRow(
                         ) {
                             Text(
                                 text = unitText,
-                                fontSize = 12.sp,
+                                fontSize = 11.sp,
                                 color = themeColors.displayText,
                                 maxLines = 1
                             )
-                            Icon(imageVector = Icons.Default.ArrowDropDown, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Icon(imageVector = Icons.Default.ArrowDropDown, contentDescription = null, modifier = Modifier.size(14.dp), tint = themeColors.displayText)
                         }
                     }
 
@@ -1833,7 +1994,7 @@ fun ItemInputRow(
                     ) {
                         unitsList.forEach { unit ->
                             DropdownMenuItem(
-                                text = { Text(unit) },
+                                text = { Text(unit, fontSize = 12.sp) },
                                 onClick = {
                                     unitText = unit
                                     onItemChange(item.copy(unit = unit))
@@ -1847,7 +2008,7 @@ fun ItemInputRow(
                 // Calculated Item Total
                 Box(
                     modifier = Modifier
-                        .weight(1f)
+                        .weight(1.1f)
                         .padding(start = 2.dp),
                     contentAlignment = Alignment.CenterEnd
                 ) {
@@ -1859,7 +2020,7 @@ fun ItemInputRow(
                         )
                         Text(
                             text = "৳ ${String.format(Locale.US, "%.1f", item.total)}",
-                            fontSize = 13.sp,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             color = if (isBazaarMode && !item.isChecked) themeColors.displayText.copy(alpha = 0.4f) else themeColors.buttonEqualBg
                         )
@@ -1871,7 +2032,6 @@ fun ItemInputRow(
 }
 
 // --- DIALOG 2: Execute Bazaar From Saved Plan (Interactive Checklist & Completion) ---
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExecuteBazaarFromPlanDialog(
     plan: MarketPlanList,
@@ -1892,7 +2052,6 @@ fun ExecuteBazaarFromPlanDialog(
     var itemIndexToDelete by remember { mutableStateOf<Int?>(null) }
     var validationErrorMsg by remember { mutableStateOf<String?>(null) }
 
-    // Auto-sync changes back to plan on change / back press so user never loses live shopping edits
     val syncChangesToPlan = {
         val currentLists = MarketStorageManager.loadPlanLists(context).toMutableList()
         val idx = currentLists.indexOfFirst { it.id == plan.id }
@@ -1907,7 +2066,6 @@ fun ExecuteBazaarFromPlanDialog(
         onDismiss()
     }
 
-    // Voice recognition targeting
     var voiceTargetItemIndex by remember { mutableStateOf<Int?>(null) }
     var isVoiceTargetTitle by remember { mutableStateOf(false) }
 
@@ -1967,228 +2125,235 @@ fun ExecuteBazaarFromPlanDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
-        Surface(
+        Box(
             modifier = Modifier
-                .fillMaxWidth(0.96f)
-                .fillMaxHeight(0.92f),
-            shape = RoundedCornerShape(24.dp),
-            color = themeColors.background,
-            shadowElevation = 8.dp
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.systemBars)
+                .padding(horizontal = 10.dp, vertical = 8.dp),
+            contentAlignment = Alignment.Center
         ) {
-            Column(
+            Surface(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp)
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.96f),
+                shape = RoundedCornerShape(20.dp),
+                color = themeColors.background,
+                shadowElevation = 8.dp
             ) {
-                // Header
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(14.dp)
                 ) {
-                    Column {
-                        Text(
-                            text = if (isBn) "বাজার সম্পন্নকরণ (লাইভ চেকলিস্ট)" else "Bazaar Shopping Checklist",
-                            fontSize = 17.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = themeColors.displayText
-                        )
-                        Text(
-                            text = if (isBn) "পণ্য কেনার পর টিক দিন ও প্রকৃত দর/পরিমাণ যাচাই করুন" else "Check items bought & verify actual rate/qty",
-                            fontSize = 11.sp,
-                            color = themeColors.displayText.copy(alpha = 0.6f)
-                        )
-                    }
-                    IconButton(onClick = onDismiss, modifier = Modifier.size(32.dp)) {
-                        Icon(imageVector = Icons.Default.Close, contentDescription = "Close", tint = themeColors.displayText)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // Title Input with Voice
-                OutlinedTextField(
-                    value = memoTitle,
-                    onValueChange = { memoTitle = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    label = { Text(if (isBn) "মেমোর নাম (কাস্টমাইজ করতে পারেন)" else "Memo Title (Custom Name)", fontSize = 12.sp) },
-                    trailingIcon = {
-                        IconButton(onClick = { launchVoiceFor(true, null) }) {
-                            Icon(
-                                imageVector = Icons.Default.Mic,
-                                contentDescription = "Voice Input for Memo Title",
-                                tint = themeColors.buttonEqualBg,
-                                modifier = Modifier.size(22.dp)
+                    // Header
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = if (isBn) "বাজার সম্পন্নকরণ (লাইভ চেকলিস্ট)" else "Bazaar Shopping Checklist",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.displayText
+                            )
+                            Text(
+                                text = if (isBn) "পণ্য কেনার পর টিক দিন ও প্রকৃত দর/পরিমাণ দিন" else "Check items bought & verify actual rate/qty",
+                                fontSize = 10.sp,
+                                color = themeColors.displayText.copy(alpha = 0.6f)
                             )
                         }
-                    },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = themeColors.displayText,
-                        unfocusedTextColor = themeColors.displayText,
-                        focusedLabelColor = themeColors.buttonEqualBg,
-                        unfocusedLabelColor = themeColors.displayText.copy(alpha = 0.6f),
-                        focusedPlaceholderColor = themeColors.displayText.copy(alpha = 0.5f),
-                        unfocusedPlaceholderColor = themeColors.displayText.copy(alpha = 0.5f),
-                        focusedBorderColor = themeColors.buttonEqualBg,
-                        unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f)
-                    ),
-                    shape = RoundedCornerShape(12.dp)
-                )
+                        IconButton(onClick = onDismiss, modifier = Modifier.size(30.dp)) {
+                            Icon(imageVector = Icons.Default.Close, contentDescription = "Close", tint = themeColors.displayText)
+                        }
+                    }
 
-                if (validationErrorMsg != null) {
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = validationErrorMsg!!,
-                        color = Color(0xFFEF4444),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Scrollable Checklist Items
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    itemsIndexed(executionItems, key = { index, item -> item.id }) { index, item ->
-                        ItemInputRow(
-                            index = index,
-                            item = item,
-                            isBazaarMode = true,
-                            isBn = isBn,
-                            unitsList = unitsList,
-                            themeColors = themeColors,
-                            onItemChange = { updated ->
-                                executionItems[index] = updated
-                                validationErrorMsg = null
-                            },
-                            onDeleteClick = {
-                                itemIndexToDelete = index
-                            },
-                            onVoiceClick = {
-                                launchVoiceFor(false, index)
+                    // Title Input with Voice
+                    OutlinedTextField(
+                        value = memoTitle,
+                        onValueChange = { memoTitle = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        label = { Text(if (isBn) "মেমোর নাম" else "Memo Title", fontSize = 11.sp) },
+                        trailingIcon = {
+                            IconButton(onClick = { launchVoiceFor(true, null) }) {
+                                Icon(
+                                    imageVector = Icons.Default.Mic,
+                                    contentDescription = "Voice Input",
+                                    tint = themeColors.buttonEqualBg,
+                                    modifier = Modifier.size(20.dp)
+                                )
                             }
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = themeColors.displayText,
+                            unfocusedTextColor = themeColors.displayText,
+                            focusedLabelColor = themeColors.buttonEqualBg,
+                            unfocusedLabelColor = themeColors.displayText.copy(alpha = 0.6f),
+                            focusedPlaceholderColor = themeColors.displayText.copy(alpha = 0.5f),
+                            unfocusedPlaceholderColor = themeColors.displayText.copy(alpha = 0.5f),
+                            focusedBorderColor = themeColors.buttonEqualBg,
+                            unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f)
+                        ),
+                        shape = RoundedCornerShape(10.dp)
+                    )
+
+                    if (validationErrorMsg != null) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = validationErrorMsg!!,
+                            color = Color(0xFFEF4444),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium
                         )
                     }
 
-                    item {
-                        // Button: Add Extra Item in market
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    // Scrollable Checklist Items
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .bounceOverscroll(),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        itemsIndexed(executionItems, key = { index, item -> item.id }) { index, item ->
+                            ItemInputRow(
+                                index = index,
+                                item = item,
+                                isBazaarMode = true,
+                                isBn = isBn,
+                                unitsList = unitsList,
+                                themeColors = themeColors,
+                                onItemChange = { updated ->
+                                    executionItems[index] = updated
+                                    validationErrorMsg = null
+                                },
+                                onDeleteClick = {
+                                    itemIndexToDelete = index
+                                },
+                                onVoiceClick = {
+                                    launchVoiceFor(false, index)
+                                }
+                            )
+                        }
+
+                        item {
+                            Button(
+                                onClick = {
+                                    executionItems.add(
+                                        MarketItem(
+                                            name = "",
+                                            unitPrice = 0.0,
+                                            quantity = 1.0,
+                                            unit = if (isBn) "কেজি" else "kg",
+                                            isChecked = true
+                                        )
+                                    )
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp),
+                                shape = RoundedCornerShape(10.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = themeColors.cardBg),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.4f))
+                            ) {
+                                Icon(imageVector = Icons.Default.AddCircleOutline, contentDescription = null, tint = themeColors.buttonEqualBg, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = if (isBn) "+ বাজারে অতিরিক্ত পণ্য যোগ করুন" else "+ Add Additional Item",
+                                    color = themeColors.buttonEqualBg,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = deleteOriginalPlanAfterCompletion,
+                            onCheckedChange = { deleteOriginalPlanAfterCompletion = it },
+                            colors = CheckboxDefaults.colors(checkedColor = themeColors.buttonEqualBg),
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = if (isBn) "বাজার সম্পন্ন হলে ফর্দ তালিকা থেকে এটি সরিয়ে ফেলুন" else "Remove from active lists after completion",
+                            fontSize = 11.sp,
+                            color = themeColors.displayText.copy(alpha = 0.8f)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+                    HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.1f))
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    // Bottom Total and Action
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = if (isBn) "কেনা হয়েছে (${executionItems.count { it.isChecked }}/${executionItems.size})" else "Checked (${executionItems.count { it.isChecked }}/${executionItems.size})",
+                                fontSize = 10.sp,
+                                color = themeColors.displayText.copy(alpha = 0.6f)
+                            )
+                            Text(
+                                text = "৳ ${String.format(Locale.US, "%.2f", livePurchasedTotal)}",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF10B981)
+                            )
+                        }
+
                         Button(
                             onClick = {
-                                executionItems.add(
-                                    MarketItem(
-                                        name = "",
-                                        unitPrice = 0.0,
-                                        quantity = 1.0,
-                                        unit = if (isBn) "কেজি" else "kg",
-                                        isChecked = true
-                                    )
+                                val checkedItems = executionItems.filter { it.isChecked && it.name.isNotBlank() }
+                                if (checkedItems.isEmpty()) {
+                                    validationErrorMsg = if (isBn) "অনুগ্রহ করে কেনা পণ্যগুলোতে টিক দিন!" else "Please check the items you bought!"
+                                    return@Button
+                                }
+
+                                val hasMissingInputs = checkedItems.any { it.unitPrice <= 0.0 || it.quantity <= 0.0 }
+                                if (hasMissingInputs) {
+                                    validationErrorMsg = if (isBn) "বাজার সম্পন্ন করতে টিক দেওয়া প্রতিটি পণ্যের দর ও পরিমাণ ইনপুট দিতে হবে!"
+                                    else "Unit price and quantity must be entered for all checked items!"
+                                    return@Button
+                                }
+
+                                val completedMemo = CompletedBazaarMemo(
+                                    title = memoTitle.ifBlank { plan.title },
+                                    items = checkedItems,
+                                    totalCost = checkedItems.sumOf { it.total }
                                 )
+
+                                onCompleteBazaar(completedMemo, deleteOriginalPlanAfterCompletion)
                             },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp),
                             shape = RoundedCornerShape(10.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = themeColors.cardBg),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.4f))
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)
                         ) {
-                            Icon(imageVector = Icons.Default.AddCircleOutline, contentDescription = null, tint = themeColors.buttonEqualBg, modifier = Modifier.size(18.dp))
+                            Icon(imageVector = Icons.Default.DoneAll, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = if (isBn) "+ বাজারে অতিরিক্ত পণ্য যোগ করুন" else "+ Add Additional Item",
-                                color = themeColors.buttonEqualBg,
+                                text = if (isBn) "বাজার সম্পন্ন করুন" else "Complete Bazaar",
+                                color = Color.White,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 13.sp
                             )
                         }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Option: Delete original plan list after bazaar completion
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Checkbox(
-                        checked = deleteOriginalPlanAfterCompletion,
-                        onCheckedChange = { deleteOriginalPlanAfterCompletion = it },
-                        colors = CheckboxDefaults.colors(checkedColor = themeColors.buttonEqualBg)
-                    )
-                    Text(
-                        text = if (isBn) "বাজার সম্পন্ন হলে ফর্দ তালিকা থেকে এটি সরিয়ে ফেলুন" else "Remove from active lists after completion",
-                        fontSize = 12.sp,
-                        color = themeColors.displayText.copy(alpha = 0.8f)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(6.dp))
-                HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.1f))
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Bottom Total and Action
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = if (isBn) "কেনা হয়েছে (${executionItems.count { it.isChecked }}/${executionItems.size})" else "Checked (${executionItems.count { it.isChecked }}/${executionItems.size})",
-                            fontSize = 11.sp,
-                            color = themeColors.displayText.copy(alpha = 0.6f)
-                        )
-                        Text(
-                            text = "৳ ${String.format(Locale.US, "%.2f", livePurchasedTotal)}",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF10B981)
-                        )
-                    }
-
-                    Button(
-                        onClick = {
-                            val checkedItems = executionItems.filter { it.isChecked && it.name.isNotBlank() }
-                            if (checkedItems.isEmpty()) {
-                                validationErrorMsg = if (isBn) "অনুগ্রহ করে কেনা পণ্যগুলোতে টিক দিন!" else "Please check the items you bought!"
-                                return@Button
-                            }
-
-                            // Strict validation as requested:
-                            // "দর ও পরিমাণ ইনপুট বাদ থাকলে সেভ বাটন কাজ করবেনা"
-                            val hasMissingInputs = checkedItems.any { it.unitPrice <= 0.0 || it.quantity <= 0.0 }
-                            if (hasMissingInputs) {
-                                validationErrorMsg = if (isBn) "বাজার সম্পন্ন করতে টিক দেওয়া প্রতিটি পণ্যের দর ও পরিমাণ ইনপুট দিতে হবে!"
-                                else "Unit price and quantity must be entered for all checked items!"
-                                return@Button
-                            }
-
-                            val completedMemo = CompletedBazaarMemo(
-                                title = memoTitle.ifBlank { plan.title },
-                                items = checkedItems,
-                                totalCost = checkedItems.sumOf { it.total }
-                            )
-
-                            onCompleteBazaar(completedMemo, deleteOriginalPlanAfterCompletion)
-                        },
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
-                        contentPadding = PaddingValues(horizontal = 18.dp, vertical = 12.dp)
-                    ) {
-                        Icon(imageVector = Icons.Default.DoneAll, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = if (isBn) "বাজার সম্পন্ন করুন" else "Complete Bazaar",
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp
-                        )
                     }
                 }
             }
@@ -2241,7 +2406,340 @@ fun ExecuteBazaarFromPlanDialog(
     }
 }
 
-// --- DIALOG 3: Memo Detail / Voucher View with Export PDF ---
+// --- DIALOG 3: Edit Completed Memo Dialog ---
+@Composable
+fun EditCompletedMemoDialog(
+    memo: CompletedBazaarMemo,
+    isBn: Boolean,
+    themeColors: CalculatorThemeColors,
+    onDismiss: () -> Unit,
+    onSaveEditedMemo: (CompletedBazaarMemo) -> Unit
+) {
+    val context = LocalContext.current
+    var memoTitle by remember { mutableStateOf(memo.title) }
+    val editableItems = remember {
+        mutableStateListOf<MarketItem>().apply {
+            addAll(memo.items.map { it.copy(isChecked = true) })
+        }
+    }
+
+    var itemIndexToDelete by remember { mutableStateOf<Int?>(null) }
+    var validationErrorMsg by remember { mutableStateOf<String?>(null) }
+
+    var voiceTargetItemIndex by remember { mutableStateOf<Int?>(null) }
+    var isVoiceTargetTitle by remember { mutableStateOf(false) }
+
+    val speechLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val matches = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+            val spokenText = matches?.firstOrNull() ?: ""
+            if (spokenText.isNotBlank()) {
+                if (isVoiceTargetTitle) {
+                    memoTitle = spokenText.trim()
+                } else {
+                    val idx = voiceTargetItemIndex
+                    if (idx != null && idx in editableItems.indices) {
+                        val current = editableItems[idx]
+                        val updated = parseBazaarVoiceText(spokenText, current, isBn)
+                        editableItems[idx] = updated
+                    }
+                }
+            }
+        }
+    }
+
+    val launchVoiceFor: (Boolean, Int?) -> Unit = { isTitle, idx ->
+        try {
+            isVoiceTargetTitle = isTitle
+            voiceTargetItemIndex = idx
+            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE, if (isBn) "bn-BD" else "en-US")
+                putExtra(
+                    RecognizerIntent.EXTRA_PROMPT,
+                    if (isTitle) (if (isBn) "মেমোর নাম বলুন..." else "Speak Memo Title...")
+                    else (if (isBn) "পণ্যের নাম বা বিবরণ বলুন..." else "Speak Item Details...")
+                )
+            }
+            speechLauncher.launch(intent)
+        } catch (e: Exception) {
+            Toast.makeText(context, if (isBn) "ভয়েস ইনপুট সমর্থিত নয়" else "Voice input not supported", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    val unitsList = if (isBn) {
+        listOf("কেজি", "গ্রাম", "লিটার", "পিস", "প্যাকেট", "বক্স", "ডজন", "হালি", "বস্তা")
+    } else {
+        listOf("kg", "gm", "liter", "pcs", "pkt", "box", "doz", "bag")
+    }
+
+    val totalCost by remember {
+        derivedStateOf {
+            editableItems.sumOf { it.total }
+        }
+    }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.systemBars)
+                .padding(horizontal = 10.dp, vertical = 8.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.96f),
+                shape = RoundedCornerShape(20.dp),
+                color = themeColors.background,
+                shadowElevation = 8.dp
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(14.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = if (isBn) "মেমো এডিট করুন" else "Edit Memo",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.displayText
+                            )
+                            Text(
+                                text = if (isBn) "মেমোর পণ্য, দর বা পরিমাণ পরিবর্তন করুন" else "Update memo items, rate or quantity",
+                                fontSize = 10.sp,
+                                color = themeColors.displayText.copy(alpha = 0.6f)
+                            )
+                        }
+                        IconButton(onClick = onDismiss, modifier = Modifier.size(30.dp)) {
+                            Icon(imageVector = Icons.Default.Close, contentDescription = "Close", tint = themeColors.displayText)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    OutlinedTextField(
+                        value = memoTitle,
+                        onValueChange = { memoTitle = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        label = { Text(if (isBn) "মেমোর নাম" else "Memo Title", fontSize = 11.sp) },
+                        trailingIcon = {
+                            IconButton(onClick = { launchVoiceFor(true, null) }) {
+                                Icon(
+                                    imageVector = Icons.Default.Mic,
+                                    contentDescription = "Voice Input",
+                                    tint = themeColors.buttonEqualBg,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = themeColors.displayText,
+                            unfocusedTextColor = themeColors.displayText,
+                            focusedLabelColor = themeColors.buttonEqualBg,
+                            unfocusedLabelColor = themeColors.displayText.copy(alpha = 0.6f),
+                            focusedPlaceholderColor = themeColors.displayText.copy(alpha = 0.5f),
+                            unfocusedPlaceholderColor = themeColors.displayText.copy(alpha = 0.5f),
+                            focusedBorderColor = themeColors.buttonEqualBg,
+                            unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f)
+                        ),
+                        shape = RoundedCornerShape(10.dp)
+                    )
+
+                    if (validationErrorMsg != null) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = validationErrorMsg!!,
+                            color = Color(0xFFEF4444),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .bounceOverscroll(),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        itemsIndexed(editableItems, key = { index, item -> item.id }) { index, item ->
+                            ItemInputRow(
+                                index = index,
+                                item = item,
+                                isBazaarMode = false,
+                                isBn = isBn,
+                                unitsList = unitsList,
+                                themeColors = themeColors,
+                                onItemChange = { updated ->
+                                    editableItems[index] = updated
+                                    validationErrorMsg = null
+                                },
+                                onDeleteClick = {
+                                    itemIndexToDelete = index
+                                },
+                                onVoiceClick = {
+                                    launchVoiceFor(false, index)
+                                }
+                            )
+                        }
+
+                        item {
+                            Button(
+                                onClick = {
+                                    editableItems.add(
+                                        MarketItem(
+                                            name = "",
+                                            unitPrice = 0.0,
+                                            quantity = 1.0,
+                                            unit = if (isBn) "কেজি" else "kg",
+                                            isChecked = true
+                                        )
+                                    )
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp),
+                                shape = RoundedCornerShape(10.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = themeColors.cardBg),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.4f))
+                            ) {
+                                Icon(imageVector = Icons.Default.AddCircleOutline, contentDescription = null, tint = themeColors.buttonEqualBg, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = if (isBn) "+ নতুন আইটেম যোগ করুন" else "+ Add New Item",
+                                    color = themeColors.buttonEqualBg,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+                    HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.1f))
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = if (isBn) "আপডেটকৃত মোট খরচ" else "Updated Total",
+                                fontSize = 10.sp,
+                                color = themeColors.displayText.copy(alpha = 0.6f)
+                            )
+                            Text(
+                                text = "৳ ${String.format(Locale.US, "%.2f", totalCost)}",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF10B981)
+                            )
+                        }
+
+                        Button(
+                            onClick = {
+                                val validItems = editableItems.filter { it.name.isNotBlank() }
+                                if (validItems.isEmpty()) {
+                                    validationErrorMsg = if (isBn) "অনুগ্রহ করে অন্তত একটি পণ্য রাখুন!" else "Please keep at least one item!"
+                                    return@Button
+                                }
+
+                                val hasMissing = validItems.any { it.unitPrice <= 0.0 || it.quantity <= 0.0 }
+                                if (hasMissing) {
+                                    validationErrorMsg = if (isBn) "প্রতিটি পণ্যের দর ও পরিমাণ ইনপুট দিতে হবে!" else "Rate and quantity are required!"
+                                    return@Button
+                                }
+
+                                val updatedMemo = memo.copy(
+                                    title = memoTitle.ifBlank { memo.title },
+                                    items = validItems,
+                                    totalCost = validItems.sumOf { it.total }
+                                )
+                                onSaveEditedMemo(updatedMemo)
+                            },
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)
+                        ) {
+                            Icon(imageVector = Icons.Default.Save, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = if (isBn) "মেমো সেভ করুন" else "Save Memo",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        if (itemIndexToDelete != null) {
+            val idx = itemIndexToDelete!!
+            val itemName = if (idx in editableItems.indices && editableItems[idx].name.isNotBlank()) editableItems[idx].name else if (isBn) "এই আইটেমটি" else "this item"
+
+            AlertDialog(
+                onDismissRequest = { itemIndexToDelete = null },
+                title = {
+                    Text(
+                        text = if (isBn) "আইটেম ডিলিট" else "Delete Item",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = themeColors.displayText
+                    )
+                },
+                text = {
+                    Text(
+                        text = if (isBn) "আপনি কি \"$itemName\" ডিলিট করতে চান?" else "Do you want to delete \"$itemName\"?",
+                        fontSize = 14.sp,
+                        color = themeColors.displayText.copy(alpha = 0.85f)
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            if (idx in editableItems.indices) {
+                                editableItems.removeAt(idx)
+                            }
+                            itemIndexToDelete = null
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))
+                    ) {
+                        Text(if (isBn) "ডিলিট" else "Delete", color = Color.White, fontWeight = FontWeight.Bold)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { itemIndexToDelete = null }) {
+                        Text(if (isBn) "বাতিল" else "Cancel", color = themeColors.displayText)
+                    }
+                },
+                containerColor = themeColors.cardBg,
+                shape = RoundedCornerShape(16.dp)
+            )
+        }
+    }
+}
+
+// --- DIALOG 4: Memo Detail / Voucher View with Export PDF ---
 @Composable
 fun MemoDetailDialog(
     memo: CompletedBazaarMemo,
@@ -2249,7 +2747,8 @@ fun MemoDetailDialog(
     themeColors: CalculatorThemeColors,
     onDismiss: () -> Unit,
     onExportSafPdf: (CompletedBazaarMemo) -> Unit,
-    onSharePdf: (CompletedBazaarMemo) -> Unit
+    onSharePdf: (CompletedBazaarMemo) -> Unit,
+    onEditMemo: ((CompletedBazaarMemo) -> Unit)? = null
 ) {
     val dateStr = SimpleDateFormat("dd MMMM, yyyy - hh:mm a", if (isBn) Locale("bn") else Locale.ENGLISH).format(Date(memo.timestamp))
 
@@ -2257,212 +2756,231 @@ fun MemoDetailDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
-        Surface(
+        Box(
             modifier = Modifier
-                .fillMaxWidth(0.96f)
-                .fillMaxHeight(0.90f),
-            shape = RoundedCornerShape(24.dp),
-            color = themeColors.background,
-            shadowElevation = 8.dp
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.systemBars)
+                .padding(horizontal = 10.dp, vertical = 8.dp),
+            contentAlignment = Alignment.Center
         ) {
-            Column(
+            Surface(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp)
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.96f),
+                shape = RoundedCornerShape(20.dp),
+                color = themeColors.background,
+                shadowElevation = 8.dp
             ) {
-                // Header
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = if (isBn) "বাজার ভাউচার মেমো" else "Shopping Memo Receipt",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = themeColors.displayText
-                    )
-                    IconButton(onClick = onDismiss, modifier = Modifier.size(32.dp)) {
-                        Icon(imageVector = Icons.Default.Close, contentDescription = "Close", tint = themeColors.displayText)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // Cash Memo Container Card
-                Card(
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
-                    elevation = CardDefaults.cardElevation(2.dp)
+                        .fillMaxSize()
+                        .padding(14.dp)
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(14.dp)
-                            .verticalScroll(rememberScrollState())
+                    // Header
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Memo Voucher Top Header
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = memo.title,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = themeColors.displayText,
-                                textAlign = TextAlign.Center
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = dateStr,
-                                fontSize = 12.sp,
-                                color = themeColors.displayText.copy(alpha = 0.6f)
-                            )
-                            Spacer(modifier = Modifier.height(10.dp))
-                            Surface(
-                                color = Color(0xFF10B981).copy(alpha = 0.12f),
-                                shape = RoundedCornerShape(20.dp)
-                            ) {
-                                Text(
-                                    text = if (isBn) "✓ কেনাকাটা সম্পন্ন ভাউচার" else "✓ Completed Shopping Memo",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF10B981),
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                                )
+                        Text(
+                            text = if (isBn) "বাজার ভাউচার মেমো" else "Shopping Memo Receipt",
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = themeColors.displayText
+                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (onEditMemo != null) {
+                                IconButton(
+                                    onClick = { onEditMemo(memo) },
+                                    modifier = Modifier.size(30.dp)
+                                ) {
+                                    Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit Memo", tint = themeColors.buttonEqualBg, modifier = Modifier.size(18.dp))
+                                }
+                            }
+                            IconButton(onClick = onDismiss, modifier = Modifier.size(30.dp)) {
+                                Icon(imageVector = Icons.Default.Close, contentDescription = "Close", tint = themeColors.displayText)
                             }
                         }
+                    }
 
-                        Spacer(modifier = Modifier.height(14.dp))
-                        HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.12f), thickness = 1.dp)
-                        Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                        // Table Header
-                        Row(
+                    // Cash Memo Container Card
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
+                        elevation = CardDefaults.cardElevation(2.dp)
+                    ) {
+                        Column(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .background(themeColors.background, RoundedCornerShape(8.dp))
-                                .padding(horizontal = 8.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                                .fillMaxSize()
+                                .padding(12.dp)
+                                .verticalScroll(rememberScrollState())
                         ) {
-                            Text(text = if (isBn) "নং" else "#", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText.copy(alpha = 0.7f), modifier = Modifier.width(26.dp))
-                            Text(text = if (isBn) "পণ্যের নাম" else "Item", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText.copy(alpha = 0.7f), modifier = Modifier.weight(1.5f))
-                            Text(text = if (isBn) "পরিমাণ" else "Qty", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText.copy(alpha = 0.7f), modifier = Modifier.weight(1f), textAlign = TextAlign.Center)
-                            Text(text = if (isBn) "দর" else "Rate", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText.copy(alpha = 0.7f), modifier = Modifier.weight(1f), textAlign = TextAlign.End)
-                            Text(text = if (isBn) "মোট" else "Total", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText.copy(alpha = 0.7f), modifier = Modifier.weight(1.2f), textAlign = TextAlign.End)
-                        }
+                            // Memo Voucher Top Header
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = memo.title,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.displayText,
+                                    textAlign = TextAlign.Center
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = dateStr,
+                                    fontSize = 11.sp,
+                                    color = themeColors.displayText.copy(alpha = 0.6f)
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Surface(
+                                    color = Color(0xFF10B981).copy(alpha = 0.12f),
+                                    shape = RoundedCornerShape(20.dp)
+                                ) {
+                                    Text(
+                                        text = if (isBn) "✓ কেনাকাটা সম্পন্ন ভাউচার" else "✓ Completed Shopping Memo",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF10B981),
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                    )
+                                }
+                            }
 
-                        Spacer(modifier = Modifier.height(6.dp))
+                            Spacer(modifier = Modifier.height(10.dp))
+                            HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.12f), thickness = 1.dp)
+                            Spacer(modifier = Modifier.height(8.dp))
 
-                        // Itemized Rows
-                        memo.items.forEachIndexed { index, item ->
+                            // Table Header
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
+                                    .background(themeColors.background, RoundedCornerShape(8.dp))
                                     .padding(horizontal = 8.dp, vertical = 6.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
+                                Text(text = if (isBn) "নং" else "#", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText.copy(alpha = 0.7f), modifier = Modifier.width(24.dp))
+                                Text(text = if (isBn) "পণ্যের নাম" else "Item", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText.copy(alpha = 0.7f), modifier = Modifier.weight(1.5f))
+                                Text(text = if (isBn) "পরিমাণ" else "Qty", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText.copy(alpha = 0.7f), modifier = Modifier.weight(1f), textAlign = TextAlign.Center)
+                                Text(text = if (isBn) "দর" else "Rate", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText.copy(alpha = 0.7f), modifier = Modifier.weight(1f), textAlign = TextAlign.End)
+                                Text(text = if (isBn) "মোট" else "Total", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText.copy(alpha = 0.7f), modifier = Modifier.weight(1.2f), textAlign = TextAlign.End)
+                            }
+
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            // Itemized Rows
+                            memo.items.forEachIndexed { index, item ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 8.dp, vertical = 5.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "${index + 1}",
+                                        fontSize = 11.sp,
+                                        color = themeColors.displayText.copy(alpha = 0.6f),
+                                        modifier = Modifier.width(24.dp)
+                                    )
+                                    Text(
+                                        text = item.name,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = themeColors.displayText,
+                                        modifier = Modifier.weight(1.5f)
+                                    )
+                                    Text(
+                                        text = "${if (item.quantity % 1.0 == 0.0) item.quantity.toInt() else item.quantity} ${item.unit}",
+                                        fontSize = 11.sp,
+                                        color = themeColors.displayText.copy(alpha = 0.8f),
+                                        modifier = Modifier.weight(1f),
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Text(
+                                        text = "৳${String.format(Locale.US, "%.1f", item.unitPrice)}",
+                                        fontSize = 11.sp,
+                                        color = themeColors.displayText.copy(alpha = 0.8f),
+                                        modifier = Modifier.weight(1f),
+                                        textAlign = TextAlign.End
+                                    )
+                                    Text(
+                                        text = "৳${String.format(Locale.US, "%.1f", item.total)}",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = themeColors.displayText,
+                                        modifier = Modifier.weight(1.2f),
+                                        textAlign = TextAlign.End
+                                    )
+                                }
+                                HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.05f), thickness = 0.5.dp)
+                            }
+
+                            Spacer(modifier = Modifier.height(10.dp))
+                            HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.15f), thickness = 1.5.dp)
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            // Grand Total Calculation
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
                                 Text(
-                                    text = "${index + 1}",
-                                    fontSize = 12.sp,
-                                    color = themeColors.displayText.copy(alpha = 0.6f),
-                                    modifier = Modifier.width(26.dp)
-                                )
-                                Text(
-                                    text = item.name,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = themeColors.displayText,
-                                    modifier = Modifier.weight(1.5f)
-                                )
-                                Text(
-                                    text = "${if (item.quantity % 1.0 == 0.0) item.quantity.toInt() else item.quantity} ${item.unit}",
-                                    fontSize = 12.sp,
-                                    color = themeColors.displayText.copy(alpha = 0.8f),
-                                    modifier = Modifier.weight(1f),
-                                    textAlign = TextAlign.Center
-                                )
-                                Text(
-                                    text = "৳${String.format(Locale.US, "%.1f", item.unitPrice)}",
-                                    fontSize = 12.sp,
-                                    color = themeColors.displayText.copy(alpha = 0.8f),
-                                    modifier = Modifier.weight(1f),
-                                    textAlign = TextAlign.End
-                                )
-                                Text(
-                                    text = "৳${String.format(Locale.US, "%.1f", item.total)}",
-                                    fontSize = 13.sp,
+                                    text = if (isBn) "সর্বমোট বাজার খরচ:" else "Grand Total Spent:",
+                                    fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = themeColors.displayText,
-                                    modifier = Modifier.weight(1.2f),
-                                    textAlign = TextAlign.End
+                                    color = themeColors.displayText
+                                )
+                                Text(
+                                    text = "৳ ${String.format(Locale.US, "%.2f", memo.totalCost)}",
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF10B981)
                                 )
                             }
-                            HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.05f), thickness = 0.5.dp)
                         }
+                    }
 
-                        Spacer(modifier = Modifier.height(14.dp))
-                        HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.15f), thickness = 1.5.dp)
-                        Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
-                        // Grand Total Calculation
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                    // Bottom Export & Share Buttons
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = { onExportSafPdf(memo) },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444)),
+                            contentPadding = PaddingValues(vertical = 10.dp)
                         ) {
+                            Icon(imageVector = Icons.Default.SaveAlt, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = if (isBn) "সর্বমোট বাজার খরচ:" else "Grand Total Spent:",
-                                fontSize = 15.sp,
+                                text = if (isBn) "PDF সেভ" else "Save PDF",
+                                color = Color.White,
                                 fontWeight = FontWeight.Bold,
-                                color = themeColors.displayText
-                            )
-                            Text(
-                                text = "৳ ${String.format(Locale.US, "%.2f", memo.totalCost)}",
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF10B981)
+                                fontSize = 12.sp
                             )
                         }
-                    }
-                }
 
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Bottom Export & Share Buttons
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Button(
-                        onClick = { onExportSafPdf(memo) },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444)),
-                        contentPadding = PaddingValues(vertical = 12.dp)
-                    ) {
-                        Icon(imageVector = Icons.Default.SaveAlt, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = if (isBn) "মেমরিতে PDF সেভ করুন" else "Save PDF to Storage",
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp
-                        )
-                    }
-
-                    OutlinedButton(
-                        onClick = { onSharePdf(memo) },
-                        shape = RoundedCornerShape(12.dp),
-                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp)
-                    ) {
-                        Icon(imageVector = Icons.Default.Share, contentDescription = "Share", tint = themeColors.buttonEqualBg, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(text = if (isBn) "শেয়ার" else "Share", color = themeColors.buttonEqualBg, fontSize = 13.sp)
+                        OutlinedButton(
+                            onClick = { onSharePdf(memo) },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(10.dp),
+                            contentPadding = PaddingValues(vertical = 10.dp)
+                        ) {
+                            Icon(imageVector = Icons.Default.Share, contentDescription = "Share", tint = themeColors.buttonEqualBg, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(text = if (isBn) "শেয়ার করুন" else "Share PDF", color = themeColors.buttonEqualBg, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
             }
@@ -2524,6 +3042,12 @@ fun EmptyStateView(
 
 // --- PDF Generation and Export Helpers ---
 
+fun getSanitizedMemoPdfFileName(memo: CompletedBazaarMemo): String {
+    val cleanTitle = memo.title.replace(Regex("[\\\\/:*?\"<>|\\s]+"), "_").take(30).trim('_')
+    val timeFormatted = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date(memo.timestamp))
+    return if (cleanTitle.isNotBlank()) "${cleanTitle}_$timeFormatted.pdf" else "Market_Memo_$timeFormatted.pdf"
+}
+
 fun generateMarketPdfDocument(memo: CompletedBazaarMemo, isBn: Boolean): PdfDocument {
     val pdfDocument = PdfDocument()
     val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create() // A4 Standard
@@ -2535,77 +3059,114 @@ fun generateMarketPdfDocument(memo: CompletedBazaarMemo, isBn: Boolean): PdfDocu
 
     // Top Header Banner
     paint.color = AndroidColor.parseColor("#0D9488")
-    canvas.drawRect(0f, 0f, 595f, 90f, paint)
+    canvas.drawRect(0f, 0f, 595f, 85f, paint)
 
     // Header Title
     paint.color = AndroidColor.WHITE
-    paint.textSize = 22f
+    paint.textSize = 20f
     paint.isFakeBoldText = true
-    canvas.drawText("বাজারের খরচ ও ভাউচার মেমো", 40f, 50f, paint)
+    canvas.drawText(if (isBn) "বাজারের খরচ ও ভাউচার মেমো" else "Market Expense & Voucher Memo", 40f, 48f, paint)
 
-    paint.textSize = 12f
+    // Subtitle without "Smart Calculator"
+    paint.textSize = 11f
     paint.isFakeBoldText = false
-    canvas.drawText("Smart Calculator & ToolsMate Market Tracker", 40f, 72f, paint)
+    canvas.drawText("ToolsMate Market Expense Tracker", 40f, 68f, paint)
 
-    // Memo Details
+    // Memo Details Box
     textPaint.color = AndroidColor.parseColor("#1E293B")
-    textPaint.textSize = 15f
+    textPaint.textSize = 14f
     textPaint.isFakeBoldText = true
-    canvas.drawText(memo.title, 40f, 120f, textPaint)
+    canvas.drawText(memo.title, 40f, 115f, textPaint)
 
     textPaint.color = AndroidColor.parseColor("#64748B")
-    textPaint.textSize = 11f
+    textPaint.textSize = 10f
     textPaint.isFakeBoldText = false
     val dateStr = SimpleDateFormat("dd MMMM, yyyy - hh:mm a", Locale.getDefault()).format(Date(memo.timestamp))
-    canvas.drawText("তারিখ / Date: $dateStr", 40f, 138f, textPaint)
+    canvas.drawText("তারিখ / Date: $dateStr", 40f, 132f, textPaint)
 
-    // Table Header
-    paint.color = AndroidColor.parseColor("#F1F5F9")
-    canvas.drawRect(40f, 160f, 555f, 190f, paint)
+    // Table Header Background
+    paint.color = AndroidColor.parseColor("#E2E8F0")
+    canvas.drawRect(40f, 150f, 555f, 178f, paint)
 
+    // Table Header Texts
     paint.color = AndroidColor.parseColor("#0F172A")
-    paint.textSize = 11f
+    paint.textSize = 10f
     paint.isFakeBoldText = true
-    canvas.drawText("নং", 50f, 180f, paint)
-    canvas.drawText("পণ্যের নাম (Item)", 90f, 180f, paint)
-    canvas.drawText("পরিমাণ (Qty)", 280f, 180f, paint)
-    canvas.drawText("দর (Rate)", 380f, 180f, paint)
-    canvas.drawText("মোট (Total)", 470f, 180f, paint)
+    canvas.drawText("নং", 50f, 168f, paint)
+    canvas.drawText("পণ্যের নাম (Item)", 85f, 168f, paint)
+    canvas.drawText("পরিমাণ (Qty)", 290f, 168f, paint)
+    canvas.drawText("দর (Rate)", 390f, 168f, paint)
+    canvas.drawText("মোট (Total)", 480f, 168f, paint)
 
-    // Border line
-    paint.color = AndroidColor.parseColor("#CBD5E1")
+    // Header separator line
+    paint.color = AndroidColor.parseColor("#94A3B8")
     paint.strokeWidth = 1f
-    canvas.drawLine(40f, 190f, 555f, 190f, paint)
+    canvas.drawLine(40f, 178f, 555f, 178f, paint)
 
-    // Rows
-    var yPos = 215f
-    textPaint.color = AndroidColor.parseColor("#334155")
-    textPaint.textSize = 11f
+    // Table Rows
+    var yPos = 200f
+    textPaint.textSize = 10f
 
-    memo.items.forEachIndexed { idx, item ->
-        if (yPos > 760f) return@forEachIndexed // Avoid overflow on 1 page
-
-        canvas.drawText("${idx + 1}", 50f, yPos, textPaint)
-
-        val displayName = if (item.name.length > 24) item.name.take(22) + ".." else item.name
-        canvas.drawText(displayName, 90f, yPos, textPaint)
-
-        val qtyStr = if (item.quantity % 1.0 == 0.0) "${item.quantity.toInt()} ${item.unit}" else "${item.quantity} ${item.unit}"
-        canvas.drawText(qtyStr, 280f, yPos, textPaint)
-
-        canvas.drawText("৳${String.format(Locale.US, "%.1f", item.unitPrice)}", 380f, yPos, textPaint)
-        canvas.drawText("৳${String.format(Locale.US, "%.1f", item.total)}", 470f, yPos, textPaint)
-
-        yPos += 24f
-        canvas.drawLine(40f, yPos - 8f, 555f, yPos - 8f, paint)
+    val linePaint = Paint().apply {
+        isAntiAlias = true
+        color = AndroidColor.parseColor("#E2E8F0")
+        strokeWidth = 0.75f
+    }
+    val altRowPaint = Paint().apply {
+        isAntiAlias = true
+        color = AndroidColor.parseColor("#F8FAFC")
     }
 
-    // Grand Total Box
-    yPos += 20f
+    memo.items.forEachIndexed { idx, item ->
+        if (yPos > 740f) return@forEachIndexed
+
+        if (idx % 2 == 1) {
+            canvas.drawRect(40f, yPos - 14f, 555f, yPos + 10f, altRowPaint)
+        }
+
+        textPaint.color = AndroidColor.parseColor("#475569")
+        canvas.drawText("${idx + 1}", 50f, yPos, textPaint)
+
+        textPaint.color = AndroidColor.parseColor("#0F172A")
+        val displayName = if (item.name.length > 28) item.name.take(26) + ".." else item.name
+        canvas.drawText(displayName, 85f, yPos, textPaint)
+
+        textPaint.color = AndroidColor.parseColor("#334155")
+        val qtyStr = if (item.quantity % 1.0 == 0.0) "${item.quantity.toInt()} ${item.unit}" else "${item.quantity} ${item.unit}"
+        canvas.drawText(qtyStr, 290f, yPos, textPaint)
+
+        canvas.drawText("৳${String.format(Locale.US, "%.1f", item.unitPrice)}", 390f, yPos, textPaint)
+
+        textPaint.color = AndroidColor.parseColor("#0F172A")
+        textPaint.isFakeBoldText = true
+        canvas.drawText("৳${String.format(Locale.US, "%.1f", item.total)}", 480f, yPos, textPaint)
+        textPaint.isFakeBoldText = false
+
+        canvas.drawLine(40f, yPos + 10f, 555f, yPos + 10f, linePaint)
+        yPos += 24f
+    }
+
+    // Grand Total Summary Box
+    yPos += 14f
+    paint.color = AndroidColor.parseColor("#F0FDF4")
+    canvas.drawRoundRect(40f, yPos - 12f, 555f, yPos + 32f, 8f, 8f, paint)
+
     paint.color = AndroidColor.parseColor("#10B981")
-    paint.textSize = 15f
+    paint.strokeWidth = 1.5f
+    paint.style = Paint.Style.STROKE
+    canvas.drawRoundRect(40f, yPos - 12f, 555f, yPos + 32f, 8f, 8f, paint)
+    paint.style = Paint.Style.FILL
+
+    paint.color = AndroidColor.parseColor("#065F46")
+    paint.textSize = 12f
     paint.isFakeBoldText = true
-    canvas.drawText("সর্বমোট বাজার খরচ (Grand Total): ৳${String.format(Locale.US, "%.2f", memo.totalCost)}", 200f, yPos, paint)
+    canvas.drawText(if (isBn) "মোট পণ্য: ${memo.items.size} টি" else "Total Items: ${memo.items.size}", 56f, yPos + 12f, paint)
+
+    paint.color = AndroidColor.parseColor("#047857")
+    paint.textSize = 14f
+    paint.isFakeBoldText = true
+    val totalLabel = if (isBn) "সর্বমোট বাজার খরচ:" else "Grand Total:"
+    canvas.drawText("$totalLabel ৳${String.format(Locale.US, "%.2f", memo.totalCost)}", 320f, yPos + 12f, paint)
 
     pdfDocument.finishPage(page)
     return pdfDocument
@@ -2629,7 +3190,8 @@ fun shareMemoPdfDirect(context: Context, memo: CompletedBazaarMemo, isBn: Boolea
     try {
         val pdfDocument = generateMarketPdfDocument(memo, isBn)
         val pdfDir = File(context.cacheDir, "pdf_exports").apply { mkdirs() }
-        val file = File(pdfDir, "Market_Memo_${System.currentTimeMillis()}.pdf")
+        val fileName = getSanitizedMemoPdfFileName(memo)
+        val file = File(pdfDir, fileName)
         pdfDocument.writeTo(FileOutputStream(file))
         pdfDocument.close()
 
