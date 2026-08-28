@@ -1498,7 +1498,7 @@ fun DashboardCategoriesView(
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(120.dp)
+                                    .height(136.dp)
                                     .border(
                                         width = 1.dp,
                                         color = primaryAccent.copy(alpha = 0.40f),
@@ -1529,7 +1529,7 @@ fun DashboardCategoriesView(
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height(120.dp)
+                                        .height(136.dp)
                                         .background(
                                             Brush.linearGradient(
                                                 colors = bannerGradients,
@@ -1715,7 +1715,7 @@ fun DashboardCategoriesView(
                                                 lineHeight = 13.5.sp
                                             )
 
-                                            Spacer(modifier = Modifier.height(5.dp))
+                                            Spacer(modifier = Modifier.height(7.dp))
 
                                             // Action Pill Button
                                             Surface(
@@ -1733,15 +1733,17 @@ fun DashboardCategoriesView(
                                                 }
                                             ) {
                                                 Row(
-                                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                                    modifier = Modifier
+                                                        .defaultMinSize(minHeight = 30.dp)
+                                                        .padding(horizontal = 13.dp, vertical = 6.dp),
                                                     verticalAlignment = Alignment.CenterVertically,
-                                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                                    horizontalArrangement = Arrangement.spacedBy(5.dp)
                                                 ) {
                                                     Icon(
                                                         imageVector = if (isSpecial) Icons.Default.Search else Icons.AutoMirrored.Filled.ArrowForward,
                                                         contentDescription = null,
                                                         tint = bannerGradients.first(),
-                                                        modifier = Modifier.size(11.dp)
+                                                        modifier = Modifier.size(13.dp)
                                                     )
                                                     Text(
                                                         text = if (isSpecial) {
@@ -1751,11 +1753,10 @@ fun DashboardCategoriesView(
                                                                 if (isBn) "বিস্তারিত জানুন" else "Learn More"
                                                             }
                                                         } else (if (isBn) "ব্যবহার করুন" else "Open Tool"),
-                                                        fontSize = 10.5.sp,
-                                                        fontWeight = FontWeight.ExtraBold,
+                                                        fontSize = 11.5.sp,
+                                                        fontWeight = FontWeight.Bold,
                                                         color = bannerGradients.first(),
-                                                        maxLines = 1,
-                                                        softWrap = false
+                                                        maxLines = 1
                                                     )
                                                 }
                                             }
