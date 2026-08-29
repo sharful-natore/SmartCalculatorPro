@@ -7,6 +7,8 @@ import kotlinx.coroutines.flow.Flow
 class FinanceRepository(private val financeDao: FinanceDao) {
     val allTransactions: Flow<List<FinanceTransaction>> = financeDao.getAllTransactions()
 
+    suspend fun getAllTransactionsList(): List<FinanceTransaction> = financeDao.getAllTransactionsList()
+
     suspend fun insert(transaction: FinanceTransaction) = financeDao.insertTransaction(transaction)
 
     suspend fun update(transaction: FinanceTransaction) = financeDao.updateTransaction(transaction)

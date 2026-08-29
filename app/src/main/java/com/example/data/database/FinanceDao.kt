@@ -13,6 +13,9 @@ interface FinanceDao {
     @Query("SELECT * FROM finance_transactions ORDER BY timestamp DESC")
     fun getAllTransactions(): Flow<List<FinanceTransaction>>
 
+    @Query("SELECT * FROM finance_transactions ORDER BY timestamp DESC")
+    suspend fun getAllTransactionsList(): List<FinanceTransaction>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTransaction(transaction: FinanceTransaction)
 

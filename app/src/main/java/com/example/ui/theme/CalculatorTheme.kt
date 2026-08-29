@@ -64,27 +64,27 @@ fun getToolIconGradient(baseColor: Color): androidx.compose.ui.graphics.Brush {
     val s = hsv[1]
     val v = hsv[2]
 
-    // Soft, elegant pastel-frosted hues with controlled saturation & gentle luminance
+    // Rich, deep, vibrant gradient with strong depth and contrast
     val startHsv = floatArrayOf(
-        (h - 25f + 360f) % 360f,
-        (s * 0.50f).coerceIn(0.20f, 0.60f),
-        (v * 1.10f + 0.10f).coerceIn(0.70f, 0.98f)
+        (h - 15f + 360f) % 360f,
+        (s * 1.15f).coerceIn(0.65f, 1.0f),
+        (v * 0.95f).coerceIn(0.60f, 0.92f)
     )
-    val startColor = Color(android.graphics.Color.HSVToColor(startHsv)).copy(alpha = 0.90f)
+    val startColor = Color(android.graphics.Color.HSVToColor(startHsv))
 
     val midHsv = floatArrayOf(
         h,
-        (s * 0.60f).coerceIn(0.25f, 0.70f),
-        (v * 1.02f).coerceIn(0.65f, 0.92f)
+        (s * 1.05f).coerceIn(0.70f, 1.0f),
+        (v * 0.85f).coerceIn(0.50f, 0.85f)
     )
-    val midColor = Color(android.graphics.Color.HSVToColor(midHsv)).copy(alpha = 0.88f)
+    val midColor = Color(android.graphics.Color.HSVToColor(midHsv))
 
     val endHsv = floatArrayOf(
-        (h + 30f) % 360f,
-        (s * 0.70f).coerceIn(0.30f, 0.75f),
-        (v * 0.88f).coerceIn(0.55f, 0.88f)
+        (h + 20f) % 360f,
+        (s * 1.20f).coerceIn(0.75f, 1.0f),
+        (v * 0.75f).coerceIn(0.40f, 0.78f)
     )
-    val endColor = Color(android.graphics.Color.HSVToColor(endHsv)).copy(alpha = 0.85f)
+    val endColor = Color(android.graphics.Color.HSVToColor(endHsv))
 
     return androidx.compose.ui.graphics.Brush.linearGradient(
         colors = listOf(startColor, midColor, endColor),

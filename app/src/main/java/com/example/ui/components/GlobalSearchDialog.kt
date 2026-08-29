@@ -19,6 +19,9 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.TrendingDown
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -87,6 +90,12 @@ sealed class SearchResult(
         title = reference,
         subTitle = if (narrator.isNotEmpty()) "$narrator: $text" else text,
         icon = Icons.Default.LibraryBooks,
+        onClick = onAction
+    )
+    class Finance(val itemTitle: String, val itemSubtitle: String, val iconType: ImageVector, val onAction: () -> Unit) : SearchResult(
+        title = itemTitle,
+        subTitle = itemSubtitle,
+        icon = iconType,
         onClick = onAction
     )
 }
@@ -223,6 +232,7 @@ fun GlobalSearchDialog(
                 val language = viewModel.selectedLanguage
                 var searchQuery by remember { mutableStateOf("") }
                 val historyItems by viewModel.historyList.collectAsState()
+                val financeItems by viewModel.financeTransactions.collectAsState()
 
                 val context = LocalContext.current
                 val globalSpeechLauncher = rememberLauncherForActivityResult(
@@ -247,7 +257,7 @@ fun GlobalSearchDialog(
                     }
                 }
 
-                val searchResults = remember(searchQuery, historyItems) {
+                val searchResults = remember(searchQuery, historyItems, financeItems) {
                     if (searchQuery.isBlank()) emptyList<SearchResult>()
                     else {
                         val query = searchQuery.trim()
@@ -341,6 +351,73 @@ fun GlobalSearchDialog(
                                     viewModel.globalHadithSearchQuery = query
                                     viewModel.showGlobalSearch = false
                                 })
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+
+                        // Search Finance Transactions
+                        try {
+                            financeItems.forEach { trans ->
+                                val titleMatch = trans.title.contains(query, ignoreCase = true)
+                                val catMatch = trans.category.contains(query, ignoreCase = true)
+                                val noteMatch = trans.note.contains(query, ignoreCase = true)
+                                val amountMatch = trans.amount.toString().contains(normalizedQuery) || trans.amount.toLong().toString().contains(normalizedQuery)
+                                val typeBn = when (trans.type) {
+                                    "INCOME" -> "আয়"
+                                    "EXPENSE" -> "ব্যয়"
+                                    "SAVINGS" -> "সঞ্চয়"
+                                    else -> if (trans.subType == "TAKEN") "দেনা" else "পাওনা"
+                                }
+                                val typeMatch = typeBn.contains(query, ignoreCase = true) || trans.type.contains(query, ignoreCase = true)
+
+                                if (titleMatch || catMatch || noteMatch || amountMatch || typeMatch) {
+                                    val icon = when (trans.type) {
+                                        "INCOME" -> Icons.AutoMirrored.Filled.TrendingUp
+                                        "EXPENSE" -> Icons.AutoMirrored.Filled.TrendingDown
+                                        "SAVINGS" -> Icons.Default.AccountBalance
+                                        else -> if (trans.subType == "TAKEN") Icons.Default.CallReceived else Icons.Default.CallMade
+                                    }
+                                    val formattedAmt = if (language == AppLanguage.BENGALI) "৳ ${trans.amount}" else "৳ ${trans.amount}"
+                                    val sub = "$typeBn • ${trans.category.ifEmpty { if (language == AppLanguage.BENGALI) "লেনদেন" else "Transaction" }} • $formattedAmt"
+                                    results.add(SearchResult.Finance(
+                                        itemTitle = trans.title,
+                                        itemSubtitle = sub,
+                                        iconType = icon
+                                    ) {
+                                        viewModel.selectedFinanceTransactionForDetail = trans
+                                        viewModel.activeTab = 3
+                                        viewModel.showGlobalSearch = false
+                                    })
+                                }
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+
+                        // Search Finance Contacts / Persons
+                        try {
+                            val financePrefs = context.getSharedPreferences("finance_prefs", android.content.Context.MODE_PRIVATE)
+                            val contactsJson = financePrefs.getString("contact_persons", null)
+                            if (!contactsJson.isNullOrBlank()) {
+                                val jsonArray = org.json.JSONArray(contactsJson)
+                                for (i in 0 until jsonArray.length()) {
+                                    val obj = jsonArray.getJSONObject(i)
+                                    val name = obj.optString("name", "")
+                                    val phone = obj.optString("phone", "")
+                                    val note = obj.optString("note", "")
+                                    if (name.contains(query, ignoreCase = true) || phone.contains(query, ignoreCase = true) || note.contains(query, ignoreCase = true)) {
+                                        results.add(SearchResult.Finance(
+                                            itemTitle = name,
+                                            itemSubtitle = if (language == AppLanguage.BENGALI) "ব্যক্তি ও খতিয়ান • ${if (phone.isNotEmpty()) phone else "লেনদেন তালিকা"}" else "Person Ledger • ${if (phone.isNotEmpty()) phone else "History"}",
+                                            iconType = Icons.Default.Person
+                                        ) {
+                                            viewModel.selectedFinancePersonForDetail = name
+                                            viewModel.activeTab = 3
+                                            viewModel.showGlobalSearch = false
+                                        })
+                                    }
+                                }
                             }
                         } catch (e: Exception) {
                             e.printStackTrace()

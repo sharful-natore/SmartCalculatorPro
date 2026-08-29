@@ -2,6 +2,7 @@ package com.example.ui.screens
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
 import androidx.compose.animation.*
 import androidx.compose.foundation.*
@@ -14,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.*
@@ -142,7 +144,7 @@ fun FinanceScreen(
     var rangeEndDate by remember { mutableStateOf<Long?>(null) }
     var showDateRangePickerDialog by remember { mutableStateOf(false) }
 
-    // Dialog flags
+    // Dialog and Navigation flags
     var showAddDialog by remember { mutableStateOf(false) }
     var editingTransaction by remember { mutableStateOf<FinanceTransaction?>(null) }
     var showDeleteConfirmDialog by remember { mutableStateOf<FinanceTransaction?>(null) }
@@ -150,9 +152,29 @@ fun FinanceScreen(
     var showMultiDeleteConfirmDialog by remember { mutableStateOf(false) }
     var showClearAllConfirm by remember { mutableStateOf(false) }
     var selectedTransactionDetails by remember { mutableStateOf<FinanceTransaction?>(null) }
+    var selectedPersonForLedger by remember { mutableStateOf<String?>(null) }
     var showTargetEditDialog by remember { mutableStateOf(false) }
     var showContactsManagerDialog by remember { mutableStateOf(false) }
     var showMonthYearPickerDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(viewModel.selectedFinanceTransactionForDetail) {
+        viewModel.selectedFinanceTransactionForDetail?.let {
+            selectedTransactionDetails = it
+            viewModel.selectedFinanceTransactionForDetail = null
+        }
+    }
+    LaunchedEffect(viewModel.selectedFinancePersonForDetail) {
+        viewModel.selectedFinancePersonForDetail?.let {
+            selectedPersonForLedger = it
+            viewModel.selectedFinancePersonForDetail = null
+        }
+    }
+    LaunchedEffect(viewModel.showFinanceContactsView) {
+        if (viewModel.showFinanceContactsView) {
+            showContactsManagerDialog = true
+            viewModel.showFinanceContactsView = false
+        }
+    }
 
     // Summary calculations
     val totalIncome = remember(transactions) {
@@ -456,7 +478,43 @@ fun FinanceScreen(
             }
         }
     ) { padding ->
-        val groupedTransactions = remember(filteredList, isBn) {
+        if (selectedPersonForLedger != null) {
+            PersonLedgerView(
+                personName = selectedPersonForLedger!!,
+                isBn = isBn,
+                themeColors = themeColors,
+                transactions = transactions,
+                contactsList = contactsList,
+                formatAmount = ::formatAmount,
+                onBack = { selectedPersonForLedger = null },
+                onAddTransaction = { pName ->
+                    editingTransaction = FinanceTransaction(
+                        id = 0L,
+                        title = pName,
+                        amount = 0.0,
+                        type = "DEBT",
+                        subType = "GIVEN",
+                        category = "ব্যক্তিগত ঋণ"
+                    )
+                    showAddDialog = true
+                },
+                onEditTransaction = { item ->
+                    editingTransaction = item
+                    showAddDialog = true
+                },
+                onDeleteTransaction = { item ->
+                    showDeleteConfirmDialog = item
+                },
+                onToggleSettled = { item ->
+                    viewModel.updateFinanceTransaction(item.copy(isSettled = !item.isSettled))
+                },
+                onSelectTransaction = { item ->
+                    selectedTransactionDetails = item
+                },
+                modifier = Modifier.padding(padding)
+            )
+        } else {
+            val groupedTransactions = remember(filteredList, isBn) {
             filteredList.groupBy { item ->
                 val cal = Calendar.getInstance().apply { timeInMillis = item.timestamp }
                 val day = cal.get(Calendar.DAY_OF_MONTH)
@@ -1140,6 +1198,7 @@ fun FinanceScreen(
                 }
             }
         }
+        }
     }
 
     // Savings Target Edit Dialog
@@ -1638,7 +1697,7 @@ fun FinanceScreen(
                             )
                         )
 
-                        Box(modifier = Modifier.height(200.dp)) {
+                        Box(modifier = Modifier.heightIn(max = 320.dp, min = 150.dp)) {
                             if (filteredContacts.isEmpty()) {
                                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                                     Text(
@@ -1650,75 +1709,141 @@ fun FinanceScreen(
                             } else {
                                 LazyColumn(
                                     modifier = Modifier.fillMaxSize(),
-                                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                     items(filteredContacts) { contact ->
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .clip(RoundedCornerShape(10.dp))
-                                                .background(themeColors.background)
-                                                .padding(8.dp),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        val pTrans = remember(transactions, contact.name) {
+                                            transactions.filter { it.title.trim().equals(contact.name.trim(), ignoreCase = true) }
+                                        }
+                                        val pGiven = remember(pTrans) {
+                                            pTrans.filter { it.type == "DEBT" && it.subType == "GIVEN" && !it.isSettled }.sumOf { it.amount }
+                                        }
+                                        val pTaken = remember(pTrans) {
+                                            pTrans.filter { it.type == "DEBT" && it.subType == "TAKEN" && !it.isSettled }.sumOf { it.amount }
+                                        }
+
+                                        Surface(
+                                            onClick = {
+                                                showContactsManagerDialog = false
+                                                selectedPersonForLedger = contact.name
+                                            },
+                                            shape = RoundedCornerShape(12.dp),
+                                            color = themeColors.background,
+                                            border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.08f)),
+                                            modifier = Modifier.fillMaxWidth()
                                         ) {
                                             Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(10.dp),
                                                 verticalAlignment = Alignment.CenterVertically,
-                                                modifier = Modifier.weight(1f)
+                                                horizontalArrangement = Arrangement.SpaceBetween
                                             ) {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .size(34.dp)
-                                                        .clip(CircleShape)
-                                                        .background(avatarGradients[contact.colorIndex % avatarGradients.size]),
-                                                    contentAlignment = Alignment.Center
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    modifier = Modifier.weight(1f)
                                                 ) {
-                                                    Text(
-                                                        text = contact.name.take(1).uppercase(),
-                                                        color = Color.White,
-                                                        fontSize = 14.sp,
-                                                        fontWeight = FontWeight.Bold
-                                                    )
-                                                }
-                                                Spacer(modifier = Modifier.width(10.dp))
-                                                Column {
-                                                    Text(
-                                                        text = contact.name,
-                                                        fontSize = 13.sp,
-                                                        fontWeight = FontWeight.Bold,
-                                                        color = themeColors.displayText
-                                                    )
-                                                    if (contact.phone.isNotEmpty()) {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .size(38.dp)
+                                                            .clip(CircleShape)
+                                                            .background(avatarGradients[contact.colorIndex % avatarGradients.size]),
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
                                                         Text(
-                                                            text = contact.phone,
-                                                            fontSize = 11.sp,
-                                                            color = themeColors.displayText.copy(alpha = 0.6f)
+                                                            text = contact.name.take(1).uppercase(),
+                                                            color = Color.White,
+                                                            fontSize = 15.sp,
+                                                            fontWeight = FontWeight.Bold
                                                         )
                                                     }
-                                                    if (contact.address.isNotEmpty()) {
+                                                    Spacer(modifier = Modifier.width(10.dp))
+                                                    Column {
                                                         Text(
-                                                            text = contact.address,
-                                                            fontSize = 10.sp,
-                                                            color = themeColors.displayText.copy(alpha = 0.5f),
-                                                            maxLines = 1,
-                                                            overflow = TextOverflow.Ellipsis
+                                                            text = contact.name,
+                                                            fontSize = 13.5.sp,
+                                                            fontWeight = FontWeight.Bold,
+                                                            color = themeColors.displayText
                                                         )
+                                                        if (contact.phone.isNotEmpty()) {
+                                                            Text(
+                                                                text = contact.phone,
+                                                                fontSize = 11.sp,
+                                                                color = themeColors.displayText.copy(alpha = 0.6f)
+                                                            )
+                                                        }
+                                                        Spacer(modifier = Modifier.height(3.dp))
+                                                        // Balance/Debt chips
+                                                        Row(
+                                                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                                            verticalAlignment = Alignment.CenterVertically
+                                                        ) {
+                                                            if (pGiven > 0.0) {
+                                                                Surface(
+                                                                    color = Color(0xFF16A34A).copy(alpha = 0.12f),
+                                                                    shape = RoundedCornerShape(4.dp)
+                                                                ) {
+                                                                    Text(
+                                                                        text = (if (isBn) "পাবেন: " else "Loan: ") + formatAmount(pGiven),
+                                                                        fontSize = 10.sp,
+                                                                        fontWeight = FontWeight.Bold,
+                                                                        color = Color(0xFF16A34A),
+                                                                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                                                    )
+                                                                }
+                                                            }
+                                                            if (pTaken > 0.0) {
+                                                                Surface(
+                                                                    color = Color(0xFFDC2626).copy(alpha = 0.12f),
+                                                                    shape = RoundedCornerShape(4.dp)
+                                                                ) {
+                                                                    Text(
+                                                                        text = (if (isBn) "দেবেন: " else "Debt: ") + formatAmount(pTaken),
+                                                                        fontSize = 10.sp,
+                                                                        fontWeight = FontWeight.Bold,
+                                                                        color = Color(0xFFDC2626),
+                                                                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                                                    )
+                                                                }
+                                                            }
+                                                            if (pGiven == 0.0 && pTaken == 0.0) {
+                                                                Surface(
+                                                                    color = themeColors.displayText.copy(alpha = 0.06f),
+                                                                    shape = RoundedCornerShape(4.dp)
+                                                                ) {
+                                                                    Text(
+                                                                        text = if (pTrans.isNotEmpty()) (if (isBn) "পরিশোধিত" else "Settled") else (if (isBn) "নতুন খতিয়ান" else "No debts"),
+                                                                        fontSize = 10.sp,
+                                                                        color = themeColors.displayText.copy(alpha = 0.6f),
+                                                                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                                                    )
+                                                                }
+                                                            }
+                                                        }
                                                     }
                                                 }
-                                            }
 
-                                            IconButton(
-                                                onClick = {
-                                                    deleteContactTarget = contact
-                                                },
-                                                modifier = Modifier.size(32.dp)
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Default.Delete,
-                                                    contentDescription = null,
-                                                    tint = Color.Red.copy(alpha = 0.6f),
-                                                    modifier = Modifier.size(16.dp)
-                                                )
+                                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                                    IconButton(
+                                                        onClick = {
+                                                            deleteContactTarget = contact
+                                                        },
+                                                        modifier = Modifier.size(32.dp)
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = Icons.Default.Delete,
+                                                            contentDescription = null,
+                                                            tint = Color.Red.copy(alpha = 0.6f),
+                                                            modifier = Modifier.size(16.dp)
+                                                        )
+                                                    }
+                                                    Icon(
+                                                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                                        contentDescription = "View Ledger",
+                                                        tint = themeColors.buttonEqualBg,
+                                                        modifier = Modifier.size(14.dp)
+                                                    )
+                                                }
                                             }
                                         }
                                     }
@@ -1767,197 +1892,62 @@ fun FinanceScreen(
         )
     }
 
-    // Details, Share, Edit, and Delete Dialog
+    // Details / Memo Voucher Dialog
     if (selectedTransactionDetails != null) {
         val item = selectedTransactionDetails!!
-        val (typeLabel, badgeBg, badgeTextColor, typeIcon) = remember(item) {
-            when (item.type) {
-                "INCOME" -> Quadruple(if (isBn) "আয়" else "Income", Color(0xFF22C55E).copy(alpha = 0.15f), Color(0xFF16A34A), Icons.AutoMirrored.Filled.TrendingUp)
-                "EXPENSE" -> Quadruple(if (isBn) "ব্যয়" else "Expense", Color(0xFFEF4444).copy(alpha = 0.15f), Color(0xFFDC2626), Icons.AutoMirrored.Filled.TrendingDown)
-                "SAVINGS" -> Quadruple(if (isBn) "সঞ্চয়" else "Savings", Color(0xFF3B82F6).copy(alpha = 0.15f), Color(0xFF2563EB), Icons.Default.AccountBalance) // Bank icon
-                else -> { // DEBT
-                    if (item.subType == "TAKEN") {
-                        Quadruple(if (isBn) "দেনা (দেবেন)" else "Debt", Color(0xFFF59E0B).copy(alpha = 0.15f), Color(0xFFD97706), Icons.Default.CallReceived)
+        TransactionMemoDialog(
+            item = item,
+            isBn = isBn,
+            themeColors = themeColors,
+            contactsList = contactsList,
+            formatAmount = ::formatAmount,
+            onDismiss = { selectedTransactionDetails = null },
+            onTypeChanged = { newType, newSubType ->
+                val updated = item.copy(type = newType, subType = newSubType)
+                viewModel.updateFinanceTransaction(updated)
+                selectedTransactionDetails = updated
+            },
+            onPersonClicked = { personName ->
+                selectedTransactionDetails = null
+                selectedPersonForLedger = personName
+            },
+            onToggleSettled = {
+                val updated = item.copy(isSettled = !item.isSettled)
+                viewModel.updateFinanceTransaction(updated)
+                selectedTransactionDetails = updated
+            },
+            onShare = {
+                try {
+                    val typeLabel = when (item.type) {
+                        "INCOME" -> if (isBn) "আয়" else "Income"
+                        "EXPENSE" -> if (isBn) "ব্যয়" else "Expense"
+                        "SAVINGS" -> if (isBn) "সঞ্চয়" else "Savings"
+                        else -> if (item.subType == "TAKEN") (if (isBn) "দেনা (নিয়েছি)" else "Debt") else (if (isBn) "পাওনা (দিয়েছি)" else "Loan")
+                    }
+                    val sdf = SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault())
+                    val formattedTime = sdf.format(Date(item.timestamp))
+                    val shareText = if (isBn) {
+                        "🧾 লেনদেন মেমো ভাউচার\n━━━━━━━━━━━━━━━━━━━━\n📌 শিরোনাম: ${item.title}\n📈 ধরণ: $typeLabel\n🏷️ ক্যাটাগরি: ${item.category}\n💰 পরিমাণ: ${formatAmount(item.amount)}\n🗓️ তারিখ ও সময়: $formattedTime\n⚖️ অবস্থা: ${if (item.type == "DEBT") (if (item.isSettled) "পরিশোধিত" else "বকেয়া") else "সম্পন্ন"}\n📝 নোট: ${item.note.ifBlank { "নেই" }}\n━━━━━━━━━━━━━━━━━━━━"
                     } else {
-                        Quadruple(if (isBn) "পাওনা (পাবেন)" else "Loan", Color(0xFF8B5CF6).copy(alpha = 0.15f), Color(0xFF7C3AED), Icons.Default.CallMade)
+                        "🧾 Transaction Memo Voucher\n━━━━━━━━━━━━━━━━━━━━\n📌 Title: ${item.title}\n📈 Type: $typeLabel\n🏷️ Category: ${item.category}\n💰 Amount: ${formatAmount(item.amount)}\n🗓️ Date & Time: $formattedTime\n⚖️ Status: ${if (item.type == "DEBT") (if (item.isSettled) "Settled" else "Pending") else "Completed"}\n📝 Note: ${item.note.ifBlank { "None" }}\n━━━━━━━━━━━━━━━━━━━━"
                     }
+                    val intent = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_TEXT, shareText)
+                    }
+                    context.startActivity(Intent.createChooser(intent, if (isBn) "ভাউচার শেয়ার করুন" else "Share Memo"))
+                } catch (e: Exception) {
+                    e.printStackTrace()
                 }
+            },
+            onEdit = {
+                editingTransaction = item
+                showAddDialog = true
+                selectedTransactionDetails = null
+            },
+            onDelete = {
+                showDeleteConfirmDialog = item
             }
-        }
-        val sdf = remember { SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault()) }
-        val formattedTime = sdf.format(Date(item.timestamp))
-
-        AlertDialog(
-            onDismissRequest = { selectedTransactionDetails = null },
-            icon = {
-                Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(CircleShape)
-                        .background(badgeBg),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = typeIcon,
-                        contentDescription = null,
-                        tint = badgeTextColor,
-                        modifier = Modifier.size(28.dp)
-                    )
-                }
-            },
-            title = {
-                Text(
-                    text = if (isBn) "লেনদেন বিবরণী" else "Transaction Details",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = themeColors.displayText,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            },
-            text = {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Surface(
-                        color = badgeBg,
-                        shape = RoundedCornerShape(16.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(14.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = typeLabel,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = badgeTextColor
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = (if (item.type == "EXPENSE" || (item.type == "DEBT" && item.subType == "GIVEN")) "-" else "+") + formatAmount(item.amount),
-                                fontSize = 26.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = badgeTextColor
-                            )
-                        }
-                    }
-
-                    DetailItemRow(
-                        label = if (isBn) "বিবরণ:" else "Description:",
-                        value = item.title,
-                        themeColors = themeColors
-                    )
-
-                    if (item.category.isNotEmpty()) {
-                        DetailItemRow(
-                            label = if (isBn) "ক্যাটাগরি:" else "Category:",
-                            value = item.category,
-                            themeColors = themeColors
-                        )
-                    }
-
-                    DetailItemRow(
-                        label = if (isBn) "তারিখ ও সময়:" else "Date & Time:",
-                        value = formattedTime,
-                        themeColors = themeColors
-                    )
-
-                    if (item.note.isNotBlank()) {
-                        DetailItemRow(
-                            label = if (isBn) "অতিরিক্ত নোট:" else "Note:",
-                            value = item.note,
-                            themeColors = themeColors
-                        )
-                    }
-
-                    if (item.type == "DEBT") {
-                        DetailItemRow(
-                            label = if (isBn) "অবস্থা:" else "Status:",
-                            value = if (item.isSettled) (if (isBn) "পরিশোধিত" else "Settled") else (if (isBn) "বকেয়া (ক্লিক করে মেটান)" else "Pending"),
-                            themeColors = themeColors,
-                            valueColor = if (item.isSettled) Color(0xFF16A34A) else Color(0xFFD97706)
-                        )
-                    }
-                }
-            },
-            confirmButton = {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    // Share button
-                    Button(
-                        onClick = {
-                            try {
-                                val shareText = if (isBn) {
-                                    "📊 লেনদেন বিবরণী:\n📌 শিরোনাম: ${item.title}\n📈 ধরণ: $typeLabel\n🏷️ ক্যাটাগরি: ${item.category}\n💰 পরিমাণ: ${formatAmount(item.amount)}\n🗓️ সময়: $formattedTime\n📝 নোট: ${item.note}"
-                                } else {
-                                    "📊 Transaction Details:\n📌 Title: ${item.title}\n📈 Type: $typeLabel\n🏷️ Category: ${item.category}\n💰 Amount: ${formatAmount(item.amount)}\n🗓️ Time: $formattedTime\n📝 Note: ${item.note}"
-                                }
-                                val intent = Intent(Intent.ACTION_SEND).apply {
-                                    type = "text/plain"
-                                    putExtra(Intent.EXTRA_TEXT, shareText)
-                                }
-                                context.startActivity(Intent.createChooser(intent, if (isBn) "শেয়ার করুন" else "Share via"))
-                            } catch (e: Exception) {
-                                e.printStackTrace()
-                            }
-                        },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
-                        shape = RoundedCornerShape(12.dp),
-                        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 10.dp)
-                    ) {
-                        Icon(Icons.Default.Share, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(if (isBn) "শেয়ার" else "Share", color = Color.White, fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
-                    }
-
-                    // Edit button
-                    Button(
-                        onClick = {
-                            editingTransaction = item
-                            showAddDialog = true
-                            selectedTransactionDetails = null
-                        },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg.copy(alpha = 0.15f)),
-                        shape = RoundedCornerShape(12.dp),
-                        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 10.dp)
-                    ) {
-                        Icon(Icons.Default.Edit, contentDescription = null, tint = themeColors.buttonEqualBg, modifier = Modifier.size(15.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(if (isBn) "এডিট" else "Edit", color = themeColors.buttonEqualBg, fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
-                    }
-
-                    // Delete button
-                    Button(
-                        onClick = {
-                            showDeleteConfirmDialog = item
-                        },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444).copy(alpha = 0.15f)),
-                        shape = RoundedCornerShape(12.dp),
-                        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 10.dp)
-                    ) {
-                        Icon(Icons.Default.Delete, contentDescription = null, tint = Color(0xFFDC2626), modifier = Modifier.size(15.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(if (isBn) "মুছুন" else "Delete", color = Color(0xFFDC2626), fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
-                    }
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { selectedTransactionDetails = null }) {
-                    Text(if (isBn) "বন্ধ করুন" else "Close", color = themeColors.displayText.copy(alpha = 0.7f))
-                }
-            },
-            containerColor = themeColors.cardBg,
-            shape = RoundedCornerShape(24.dp)
         )
     }
 
@@ -3187,4 +3177,841 @@ fun NumericCaptchaDeleteDialog(
         containerColor = themeColors.cardBg,
         shape = RoundedCornerShape(24.dp)
     )
+}
+
+@Composable
+fun TransactionMemoDialog(
+    item: FinanceTransaction,
+    isBn: Boolean,
+    themeColors: CalculatorThemeColors,
+    contactsList: List<ContactPerson>,
+    formatAmount: (Double) -> String,
+    onDismiss: () -> Unit,
+    onTypeChanged: (String, String) -> Unit,
+    onPersonClicked: (String) -> Unit,
+    onToggleSettled: () -> Unit,
+    onShare: () -> Unit,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit
+) {
+    val (typeLabel, badgeBg, badgeTextColor, typeIcon) = remember(item.type, item.subType) {
+        when (item.type) {
+            "INCOME" -> Quadruple(if (isBn) "আয় (Income)" else "Income", Color(0xFF22C55E).copy(alpha = 0.15f), Color(0xFF16A34A), Icons.AutoMirrored.Filled.TrendingUp)
+            "EXPENSE" -> Quadruple(if (isBn) "ব্যয় (Expense)" else "Expense", Color(0xFFEF4444).copy(alpha = 0.15f), Color(0xFFDC2626), Icons.AutoMirrored.Filled.TrendingDown)
+            "SAVINGS" -> Quadruple(if (isBn) "সঞ্চয় (Savings)" else "Savings", Color(0xFF3B82F6).copy(alpha = 0.15f), Color(0xFF2563EB), Icons.Default.AccountBalance)
+            else -> { // DEBT
+                if (item.subType == "TAKEN") {
+                    Quadruple(if (isBn) "দেনা (নিয়েছি)" else "Debt (Taken)", Color(0xFFF59E0B).copy(alpha = 0.15f), Color(0xFFD97706), Icons.Default.CallReceived)
+                } else {
+                    Quadruple(if (isBn) "পাওনা (দিয়েছি)" else "Loan (Given)", Color(0xFF8B5CF6).copy(alpha = 0.15f), Color(0xFF7C3AED), Icons.Default.CallMade)
+                }
+            }
+        }
+    }
+    val sdf = remember { SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault()) }
+    val formattedTime = sdf.format(Date(item.timestamp))
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(34.dp)
+                            .clip(CircleShape)
+                            .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ReceiptLong,
+                            contentDescription = null,
+                            tint = themeColors.buttonEqualBg,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    Text(
+                        text = if (isBn) "লেনদেন মেমো ভাউচার" else "Transaction Memo",
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.displayText
+                    )
+                }
+                Surface(
+                    color = themeColors.displayText.copy(alpha = 0.08f),
+                    shape = RoundedCornerShape(6.dp)
+                ) {
+                    Text(
+                        text = if (isBn) "#TRX-${toBanglaDigits(item.id.toString())}" else "#TRX-${item.id}",
+                        fontSize = 10.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.displayText.copy(alpha = 0.65f),
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                // Hero Amount Card
+                Surface(
+                    color = badgeBg,
+                    shape = RoundedCornerShape(16.dp),
+                    border = BorderStroke(1.dp, badgeTextColor.copy(alpha = 0.25f)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(14.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(imageVector = typeIcon, contentDescription = null, tint = badgeTextColor, modifier = Modifier.size(16.dp))
+                            Text(
+                                text = typeLabel,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = badgeTextColor
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = (if (item.type == "EXPENSE" || (item.type == "DEBT" && item.subType == "GIVEN")) "-" else "+") + formatAmount(item.amount),
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = badgeTextColor
+                        )
+                    }
+                }
+
+                // Category / Type Switcher Chips
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = if (isBn) "ধরণ পরিবর্তন (সুইচ করতে চিপে চাপ দিন):" else "Switch Category / Type:",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.displayText.copy(alpha = 0.7f)
+                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        val types = listOf(
+                            Triple("INCOME", "", if (isBn) "📈 আয়" else "📈 Income"),
+                            Triple("EXPENSE", "", if (isBn) "📉 ব্যয়" else "📉 Expense"),
+                            Triple("DEBT", "TAKEN", if (isBn) "📥 দেনা (নিয়েছি)" else "📥 Debt (Taken)"),
+                            Triple("DEBT", "GIVEN", if (isBn) "📤 পাওনা (দিয়েছি)" else "📤 Loan (Given)"),
+                            Triple("SAVINGS", "DEPOSIT", if (isBn) "🏦 সঞ্চয়" else "🏦 Savings")
+                        )
+                        types.forEach { (t, sub, label) ->
+                            val isSelected = item.type == t && (t != "DEBT" || item.subType == sub)
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = { onTypeChanged(t, sub) },
+                                label = {
+                                    Text(
+                                        text = label,
+                                        fontSize = 11.sp,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                    )
+                                },
+                                shape = RoundedCornerShape(8.dp),
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = themeColors.buttonEqualBg,
+                                    selectedLabelColor = Color.White,
+                                    containerColor = themeColors.cardBg,
+                                    labelColor = themeColors.displayText
+                                )
+                            )
+                        }
+                    }
+                }
+
+                // Person / Contact Link Banner
+                Surface(
+                    onClick = { onPersonClicked(item.title.trim()) },
+                    shape = RoundedCornerShape(12.dp),
+                    color = themeColors.buttonEqualBg.copy(alpha = 0.08f),
+                    border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.2f)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .clip(CircleShape)
+                                    .background(themeColors.buttonEqualBg),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = item.title.trim().take(1).uppercase(),
+                                    color = Color.White,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column {
+                                Text(
+                                    text = item.title,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.displayText
+                                )
+                                Text(
+                                    text = if (isBn) "ব্যক্তির খতিয়ান ও লেনদেন তালিকা দেখুন →" else "View person's full ledger & history →",
+                                    fontSize = 10.5.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = themeColors.buttonEqualBg
+                                )
+                            }
+                        }
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = null,
+                            tint = themeColors.buttonEqualBg,
+                            modifier = Modifier.size(13.dp)
+                        )
+                    }
+                }
+
+                // Details Rows
+                DetailItemRow(
+                    label = if (isBn) "শিরোনাম / বিবরণ:" else "Title / Description:",
+                    value = item.title,
+                    themeColors = themeColors
+                )
+
+                if (item.category.isNotEmpty()) {
+                    DetailItemRow(
+                        label = if (isBn) "ক্যাটাগরি:" else "Category:",
+                        value = item.category,
+                        themeColors = themeColors
+                    )
+                }
+
+                DetailItemRow(
+                    label = if (isBn) "তারিখ ও সময়:" else "Date & Time:",
+                    value = formattedTime,
+                    themeColors = themeColors
+                )
+
+                if (item.note.isNotBlank()) {
+                    DetailItemRow(
+                        label = if (isBn) "অতিরিক্ত নোট:" else "Note:",
+                        value = item.note,
+                        themeColors = themeColors
+                    )
+                }
+
+                if (item.type == "DEBT") {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = if (isBn) "পরিশোধের স্থিতি:" else "Settlement Status:",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = themeColors.displayText.copy(alpha = 0.6f)
+                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Surface(
+                                color = if (item.isSettled) Color(0xFF16A34A).copy(alpha = 0.15f) else Color(0xFFD97706).copy(alpha = 0.15f),
+                                shape = RoundedCornerShape(6.dp)
+                            ) {
+                                Text(
+                                    text = if (item.isSettled) (if (isBn) "পরিশোধিত" else "Settled") else (if (isBn) "বকেয়া রয়েছে" else "Pending"),
+                                    color = if (item.isSettled) Color(0xFF16A34A) else Color(0xFFD97706),
+                                    fontSize = 11.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                            TextButton(
+                                onClick = onToggleSettled,
+                                contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp)
+                            ) {
+                                Text(
+                                    text = if (item.isSettled) (if (isBn) "বকেয়া করুন" else "Mark Pending") else (if (isBn) "পরিশোধ করুন" else "Mark Settled"),
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.buttonEqualBg
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Share button
+                Button(
+                    onClick = onShare,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
+                    shape = RoundedCornerShape(12.dp),
+                    contentPadding = PaddingValues(horizontal = 6.dp, vertical = 10.dp)
+                ) {
+                    Icon(Icons.Default.Share, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(if (isBn) "শেয়ার" else "Share", color = Color.White, fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
+                }
+
+                // Edit button
+                Button(
+                    onClick = onEdit,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg.copy(alpha = 0.15f)),
+                    shape = RoundedCornerShape(12.dp),
+                    contentPadding = PaddingValues(horizontal = 6.dp, vertical = 10.dp)
+                ) {
+                    Icon(Icons.Default.Edit, contentDescription = null, tint = themeColors.buttonEqualBg, modifier = Modifier.size(15.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(if (isBn) "এডিট" else "Edit", color = themeColors.buttonEqualBg, fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
+                }
+
+                // Delete button
+                Button(
+                    onClick = onDelete,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444).copy(alpha = 0.15f)),
+                    shape = RoundedCornerShape(12.dp),
+                    contentPadding = PaddingValues(horizontal = 6.dp, vertical = 10.dp)
+                ) {
+                    Icon(Icons.Default.Delete, contentDescription = null, tint = Color(0xFFDC2626), modifier = Modifier.size(15.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(if (isBn) "মুছুন" else "Delete", color = Color(0xFFDC2626), fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(if (isBn) "বন্ধ করুন" else "Close", color = themeColors.displayText.copy(alpha = 0.7f))
+            }
+        },
+        containerColor = themeColors.cardBg,
+        shape = RoundedCornerShape(24.dp)
+    )
+}
+
+@Composable
+fun PersonLedgerView(
+    personName: String,
+    isBn: Boolean,
+    themeColors: CalculatorThemeColors,
+    transactions: List<FinanceTransaction>,
+    contactsList: List<ContactPerson>,
+    formatAmount: (Double) -> String,
+    onBack: () -> Unit,
+    onAddTransaction: (String) -> Unit,
+    onEditTransaction: (FinanceTransaction) -> Unit,
+    onDeleteTransaction: (FinanceTransaction) -> Unit,
+    onToggleSettled: (FinanceTransaction) -> Unit,
+    onSelectTransaction: (FinanceTransaction) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val matchedContact = remember(personName, contactsList) {
+        contactsList.find { it.name.trim().equals(personName.trim(), ignoreCase = true) }
+    }
+
+    val personTrans = remember(personName, transactions) {
+        transactions.filter { it.title.trim().equals(personName.trim(), ignoreCase = true) }
+    }
+
+    val totalGiven = remember(personTrans) {
+        personTrans.filter { it.type == "DEBT" && it.subType == "GIVEN" && !it.isSettled }.sumOf { it.amount }
+    }
+    val totalTaken = remember(personTrans) {
+        personTrans.filter { it.type == "DEBT" && it.subType == "TAKEN" && !it.isSettled }.sumOf { it.amount }
+    }
+    val totalSettled = remember(personTrans) {
+        personTrans.filter { it.isSettled }.sumOf { it.amount }
+    }
+
+    var selectedFilterTab by remember { mutableStateOf("ALL") } // ALL, PENDING, SETTLED
+    val filteredPersonTrans = remember(personTrans, selectedFilterTab) {
+        when (selectedFilterTab) {
+            "PENDING" -> personTrans.filter { !it.isSettled }
+            "SETTLED" -> personTrans.filter { it.isSettled }
+            else -> personTrans
+        }
+    }
+
+    LazyColumn(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(horizontal = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        item {
+            Spacer(modifier = Modifier.height(4.dp))
+            // Header Bar
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    IconButton(
+                        onClick = onBack,
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(CircleShape)
+                            .background(themeColors.displayText.copy(alpha = 0.07f))
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = themeColors.displayText,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Column {
+                        Text(
+                            text = if (isBn) "ব্যক্তির খতিয়ান খাতা" else "Person Ledger",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = themeColors.displayText.copy(alpha = 0.6f)
+                        )
+                        Text(
+                            text = personName,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = themeColors.displayText
+                        )
+                    }
+                }
+
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    // Call button if phone available
+                    if (!matchedContact?.phone.isNullOrBlank()) {
+                        IconButton(
+                            onClick = {
+                                try {
+                                    val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${matchedContact?.phone}"))
+                                    context.startActivity(intent)
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                            },
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF16A34A).copy(alpha = 0.12f))
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Call,
+                                contentDescription = "Call",
+                                tint = Color(0xFF16A34A),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+
+                    // Share statement
+                    IconButton(
+                        onClick = {
+                            try {
+                                val netStatus = when {
+                                    totalGiven > totalTaken -> if (isBn) "পাবেন: ${formatAmount(totalGiven - totalTaken)}" else "Receivable: ${formatAmount(totalGiven - totalTaken)}"
+                                    totalTaken > totalGiven -> if (isBn) "দেবেন: ${formatAmount(totalTaken - totalGiven)}" else "Payable: ${formatAmount(totalTaken - totalGiven)}"
+                                    else -> if (isBn) "হিসাব সমান / মিল রয়েছে" else "All Settled"
+                                }
+                                val shareText = if (isBn) {
+                                    "📑 লেনদেন খতিয়ান বিবরণী\n━━━━━━━━━━━━━━━━━━━━\n👤 ব্যক্তি: $personName\n${if (!matchedContact?.phone.isNullOrBlank()) "📞 ফোন: ${matchedContact?.phone}\n" else ""}📤 মোট পাওনা: ${formatAmount(totalGiven)}\n📥 মোট দেনা: ${formatAmount(totalTaken)}\n⚖️ বর্তমান স্থিতি: $netStatus\n📊 মোট লেনদেন সংখ্যা: ${personTrans.size} টি\n━━━━━━━━━━━━━━━━━━━━"
+                                } else {
+                                    "📑 Account Ledger Statement\n━━━━━━━━━━━━━━━━━━━━\n👤 Person: $personName\n${if (!matchedContact?.phone.isNullOrBlank()) "📞 Phone: ${matchedContact?.phone}\n" else ""}📤 Total Loan Given: ${formatAmount(totalGiven)}\n📥 Total Debt Taken: ${formatAmount(totalTaken)}\n⚖️ Current Balance: $netStatus\n📊 Total Transactions: ${personTrans.size}\n━━━━━━━━━━━━━━━━━━━━"
+                                }
+                                val intent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(Intent.EXTRA_TEXT, shareText)
+                                }
+                                context.startActivity(Intent.createChooser(intent, if (isBn) "খতিয়ান শেয়ার করুন" else "Share Ledger"))
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
+                        },
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(themeColors.buttonEqualBg.copy(alpha = 0.12f))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = "Share",
+                            tint = themeColors.buttonEqualBg,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+            }
+        }
+
+        // Summary Hero Card for this Person
+        item {
+            Card(
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
+                elevation = CardDefaults.cardElevation(2.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    // Net status badge
+                    val (netLabel, netColor) = when {
+                        totalGiven > totalTaken -> Pair(
+                            (if (isBn) "আপনি পাবেন: " else "You will get: ") + formatAmount(totalGiven - totalTaken),
+                            Color(0xFF16A34A)
+                        )
+                        totalTaken > totalGiven -> Pair(
+                            (if (isBn) "আপনাকে দিতে হবে: " else "You owe: ") + formatAmount(totalTaken - totalGiven),
+                            Color(0xFFDC2626)
+                        )
+                        else -> Pair(
+                            if (isBn) "সব দেনা-পাওনা পরিশোধিত / মিল রয়েছে" else "All balanced & settled",
+                            Color(0xFF3B82F6)
+                        )
+                    }
+
+                    Surface(
+                        color = netColor.copy(alpha = 0.12f),
+                        shape = RoundedCornerShape(10.dp),
+                        border = BorderStroke(1.dp, netColor.copy(alpha = 0.25f)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp, horizontal = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = netLabel,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = netColor
+                            )
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        // Loan Given Box (পাওনা)
+                        Surface(
+                            modifier = Modifier.weight(1f),
+                            color = Color(0xFF16A34A).copy(alpha = 0.08f),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(10.dp)) {
+                                Text(
+                                    text = if (isBn) "মোট পাওনা (দিয়েছেন)" else "Loan Given",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color(0xFF16A34A)
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = formatAmount(totalGiven),
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF16A34A)
+                                )
+                            }
+                        }
+
+                        // Debt Taken Box (দেনা)
+                        Surface(
+                            modifier = Modifier.weight(1f),
+                            color = Color(0xFFDC2626).copy(alpha = 0.08f),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(10.dp)) {
+                                Text(
+                                    text = if (isBn) "মোট দেনা (নিয়েছেন)" else "Debt Taken",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color(0xFFDC2626)
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = formatAmount(totalTaken),
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFFDC2626)
+                                )
+                            }
+                        }
+                    }
+
+                    // Contact extra details if available
+                    if (matchedContact != null && (matchedContact.phone.isNotBlank() || matchedContact.address.isNotBlank())) {
+                        Divider(color = themeColors.displayText.copy(alpha = 0.06f))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            if (matchedContact.phone.isNotBlank()) {
+                                Text(
+                                    text = "📞 ${matchedContact.phone}",
+                                    fontSize = 11.5.sp,
+                                    color = themeColors.displayText.copy(alpha = 0.7f)
+                                )
+                            }
+                            if (matchedContact.address.isNotBlank()) {
+                                Text(
+                                    text = "📍 ${matchedContact.address}",
+                                    fontSize = 11.5.sp,
+                                    color = themeColors.displayText.copy(alpha = 0.7f)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Action Row: Filter tabs + Add button
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                // Filter chips
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    val tabs = listOf(
+                        Pair("ALL", if (isBn) "সকল (${personTrans.size})" else "All (${personTrans.size})"),
+                        Pair("PENDING", if (isBn) "বকেয়া (${personTrans.count { !it.isSettled }})" else "Pending (${personTrans.count { !it.isSettled }})"),
+                        Pair("SETTLED", if (isBn) "পরিশোধ (${personTrans.count { it.isSettled }})" else "Settled (${personTrans.count { it.isSettled }})")
+                    )
+                    tabs.forEach { (tabKey, tabTitle) ->
+                        val isSelected = selectedFilterTab == tabKey
+                        Surface(
+                            onClick = { selectedFilterTab = tabKey },
+                            color = if (isSelected) themeColors.buttonEqualBg else themeColors.cardBg,
+                            shape = RoundedCornerShape(8.dp),
+                            border = BorderStroke(1.dp, if (isSelected) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.1f))
+                        ) {
+                            Text(
+                                text = tabTitle,
+                                fontSize = 11.sp,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                color = if (isSelected) Color.White else themeColors.displayText,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
+                            )
+                        }
+                    }
+                }
+
+                // Add button
+                Button(
+                    onClick = { onAddTransaction(personName) },
+                    colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
+                    shape = RoundedCornerShape(10.dp),
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                ) {
+                    Icon(imageVector = Icons.Default.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(if (isBn) "লেনদেন যোগ" else "Add Entry", color = Color.White, fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+
+        // Transactions list for this person
+        if (filteredPersonTrans.isEmpty()) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = if (isBn) "এই ব্যক্তির কোনো লেনদেন পাওয়া যায়নি" else "No transactions found for this person",
+                        fontSize = 13.sp,
+                        color = themeColors.displayText.copy(alpha = 0.5f)
+                    )
+                }
+            }
+        } else {
+            items(filteredPersonTrans) { trans ->
+                val sdf = remember { SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault()) }
+                val formattedTime = sdf.format(Date(trans.timestamp))
+                val isNegative = trans.type == "EXPENSE" || (trans.type == "DEBT" && trans.subType == "GIVEN")
+
+                Card(
+                    onClick = { onSelectTransaction(trans) },
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
+                    border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.08f)),
+                    elevation = CardDefaults.cardElevation(1.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                val typeTag = when (trans.type) {
+                                    "INCOME" -> Pair(if (isBn) "আয়" else "Income", Color(0xFF16A34A))
+                                    "EXPENSE" -> Pair(if (isBn) "ব্যয়" else "Expense", Color(0xFFDC2626))
+                                    "SAVINGS" -> Pair(if (isBn) "সঞ্চয়" else "Savings", Color(0xFF2563EB))
+                                    else -> if (trans.subType == "TAKEN") Pair(if (isBn) "দেনা (নিয়েছি)" else "Debt (Taken)", Color(0xFFD97706)) else Pair(if (isBn) "পাওনা (দিয়েছি)" else "Loan (Given)", Color(0xFF7C3AED))
+                                }
+                                Surface(
+                                    color = typeTag.second.copy(alpha = 0.12f),
+                                    shape = RoundedCornerShape(6.dp)
+                                ) {
+                                    Text(
+                                        text = typeTag.first,
+                                        fontSize = 10.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = typeTag.second,
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    )
+                                }
+                                if (trans.category.isNotBlank()) {
+                                    Text(
+                                        text = "• ${trans.category}",
+                                        fontSize = 11.5.sp,
+                                        color = themeColors.displayText.copy(alpha = 0.65f)
+                                    )
+                                }
+                            }
+
+                            Text(
+                                text = (if (isNegative) "-" else "+") + formatAmount(trans.amount),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isNegative) Color(0xFFDC2626) else Color(0xFF16A34A)
+                            )
+                        }
+
+                        if (trans.note.isNotBlank()) {
+                            Text(
+                                text = trans.note,
+                                fontSize = 11.5.sp,
+                                color = themeColors.displayText.copy(alpha = 0.8f)
+                            )
+                        }
+
+                        Divider(color = themeColors.displayText.copy(alpha = 0.05f))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = formattedTime,
+                                fontSize = 10.5.sp,
+                                color = themeColors.displayText.copy(alpha = 0.5f)
+                            )
+
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                if (trans.type == "DEBT") {
+                                    Surface(
+                                        onClick = { onToggleSettled(trans) },
+                                        color = if (trans.isSettled) Color(0xFF16A34A).copy(alpha = 0.12f) else Color(0xFFD97706).copy(alpha = 0.12f),
+                                        shape = RoundedCornerShape(6.dp)
+                                    ) {
+                                        Text(
+                                            text = if (trans.isSettled) (if (isBn) "✓ পরিশোধিত" else "✓ Settled") else (if (isBn) "⏳ বকেয়া" else "⏳ Pending"),
+                                            fontSize = 10.5.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (trans.isSettled) Color(0xFF16A34A) else Color(0xFFD97706),
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                        )
+                                    }
+                                }
+
+                                IconButton(
+                                    onClick = { onEditTransaction(trans) },
+                                    modifier = Modifier.size(28.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Edit,
+                                        contentDescription = "Edit",
+                                        tint = themeColors.buttonEqualBg,
+                                        modifier = Modifier.size(15.dp)
+                                    )
+                                }
+
+                                IconButton(
+                                    onClick = { onDeleteTransaction(trans) },
+                                    modifier = Modifier.size(28.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = "Delete",
+                                        tint = Color(0xFFDC2626).copy(alpha = 0.7f),
+                                        modifier = Modifier.size(15.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(30.dp))
+        }
+    }
 }

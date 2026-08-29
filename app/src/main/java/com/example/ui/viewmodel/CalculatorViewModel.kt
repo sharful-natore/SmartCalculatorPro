@@ -3405,9 +3405,15 @@ How can I help you today?"""
                 val toolUsageAdapter = moshi.adapter<List<com.example.data.model.ToolUsage>>(toolUsageType)
                 val toolUsageJson = toolUsageAdapter.toJson(usageList)
 
+                // Finance Data
+                val financeTransactionsList = try { financeRepository.getAllTransactionsList() } catch (e: Exception) { emptyList() }
+                val financePrefs = context.getSharedPreferences("finance_prefs", Context.MODE_PRIVATE)
+                val financeContactsStr = financePrefs.getString("contact_persons", null)
+                val financeSettingsJson = if (financePrefs.all.isNotEmpty()) org.json.JSONObject(financePrefs.all as Map<*, *>).toString() else null
+
                 val dateFormat = SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault())
                 val backup = GlobalAppBackup(
-                    version = 4,
+                    version = 5,
                     appName = "ToolsMate All-in-One",
                     backupDate = dateFormat.format(Date()),
                     timestamp = System.currentTimeMillis(),
@@ -3426,7 +3432,10 @@ How can I help you today?"""
                     hadithBookmarksJson = hadithJson,
                     prayerTrackerJson = prayerJson,
                     pdfHistoryJson = pdfJson,
-                    islamicLocationJson = islamicLocJson
+                    islamicLocationJson = islamicLocJson,
+                    financeTransactions = financeTransactionsList,
+                    financeContactsJson = financeContactsStr,
+                    financeSettingsJson = financeSettingsJson
                 )
 
                 val adapter = moshi.adapter(GlobalAppBackup::class.java)
@@ -3439,9 +3448,9 @@ How can I help you today?"""
                 val isBn = selectedLanguage == AppLanguage.BENGALI
                 withContext(Dispatchers.Main) {
                     backupStatusMessage = if (isBn) {
-                        "✅ অ্যাপের সমস্ত ডেটা সফলভাবে ব্যাকআপ করা হয়েছে!\n\n• ক্যালকুলেটর হিস্টোরি: ${history.size}টি\n• বাজার ফর্দ, কেনাকাটা ও মেমো\n• সেভ করা নোটস ও এআই চ্যাট\n• কুরআন ও হাদিস বুকমার্কস\n• প্রিয় টুলস ও কাস্টম থিমস"
+                        "✅ অ্যাপের সমস্ত ডেটা সফলভাবে ব্যাকআপ করা হয়েছে!\n\n• ক্যালকুলেটর হিস্টোরি: ${history.size}টি\n• আয়-ব্যয় ও দেনাপাওনা লেনদেন: ${financeTransactionsList.size}টি\n• বাজার ফর্দ, কেনাকাটা ও মেমো\n• সেভ করা নোটস ও এআই চ্যাট\n• কুরআন ও হাদিস বুকমার্কস\n• প্রিয় টুলস ও কাস্টম থিমস"
                     } else {
-                        "✅ All app data successfully backed up!\n\n• Calculator History: ${history.size} items\n• Shopping lists & Memos\n• Saved Notes & AI Chat\n• Quran & Hadith Bookmarks\n• Favorite Tools & Custom Themes"
+                        "✅ All app data successfully backed up!\n\n• Calculator History: ${history.size} items\n• Income, Expense & Debt records: ${financeTransactionsList.size}\n• Shopping lists & Memos\n• Saved Notes & AI Chat\n• Quran & Hadith Bookmarks\n• Favorite Tools & Custom Themes"
                     }
                     showBackupStatusDialog = true
                 }
@@ -3509,12 +3518,14 @@ How can I help you today?"""
                 backupObj.notesJson?.let {
                     notesCount = it.split("[NOTE_SEPARATOR]").filter { s -> s.isNotBlank() }.size
                 }
+                val financeCount = backupObj.financeTransactions.size
 
                 withContext(Dispatchers.Main) {
                     pendingGlobalRestoreBackup = backupObj
                     globalRestoreSummary = if (isBn) {
                         "তারিখ: ${backupObj.backupDate.ifBlank { "N/A" }}\n\n" +
                         "• ক্যালকুলেটর হিস্টোরি: ${backupObj.historyEntries.size}টি\n" +
+                        "• আয়-ব্যয় ও দেনাপাওনা লেনদেন: ${financeCount}টি\n" +
                         "• বাজার ফর্দ (Plans): ${planCount}টি\n" +
                         "• বাজার মেমো (Memos): ${memoCount}টি\n" +
                         "• সেভ করা নোটস: ${notesCount}টি\n" +
@@ -3523,6 +3534,7 @@ How can I help you today?"""
                     } else {
                         "Date: ${backupObj.backupDate.ifBlank { "N/A" }}\n\n" +
                         "• Calculator History: ${backupObj.historyEntries.size}\n" +
+                        "• Finance Records: ${financeCount}\n" +
                         "• Market Plans: $planCount\n" +
                         "• Bazaar Memos: $memoCount\n" +
                         "• Saved Notes: $notesCount\n" +
@@ -3675,6 +3687,22 @@ How can I help you today?"""
                     }
                 }
 
+                // Restore Finance transactions & contacts
+                if (backup.financeTransactions.isNotEmpty()) {
+                    backup.financeTransactions.forEach { trans ->
+                        financeRepository.insert(trans.copy(id = 0))
+                    }
+                }
+                if (!backup.financeContactsJson.isNullOrBlank() || !backup.financeSettingsJson.isNullOrBlank()) {
+                    val financePrefs = context.getSharedPreferences("finance_prefs", Context.MODE_PRIVATE)
+                    if (!backup.financeSettingsJson.isNullOrBlank()) {
+                        restoreSharedPreferencesFromJson(financePrefs, backup.financeSettingsJson)
+                    }
+                    if (!backup.financeContactsJson.isNullOrBlank()) {
+                        financePrefs.edit().putString("contact_persons", backup.financeContactsJson).apply()
+                    }
+                }
+
                 val isBn = selectedLanguage == AppLanguage.BENGALI
                 withContext(Dispatchers.Main) {
                     showGlobalRestoreDialog = false
@@ -3702,6 +3730,10 @@ How can I help you today?"""
     private val financeRepository = com.example.data.repository.FinanceRepository(
         com.example.data.database.CalculatorDatabase.getDatabase(context).financeDao()
     )
+
+    var selectedFinanceTransactionForDetail by mutableStateOf<com.example.data.model.FinanceTransaction?>(null)
+    var selectedFinancePersonForDetail by mutableStateOf<String?>(null)
+    var showFinanceContactsView by mutableStateOf(false)
 
     val financeTransactions: StateFlow<List<com.example.data.model.FinanceTransaction>> = financeRepository.allTransactions
         .stateIn(
@@ -4306,7 +4338,7 @@ data class ScanHistoryItem(
 
 @JsonClass(generateAdapter = true)
 data class GlobalAppBackup(
-    val version: Int = 4,
+    val version: Int = 5,
     val appName: String = "ToolsMate All-in-One",
     val backupDate: String = "",
     val timestamp: Long = System.currentTimeMillis(),
@@ -4325,5 +4357,8 @@ data class GlobalAppBackup(
     val hadithBookmarksJson: String? = null,
     val prayerTrackerJson: String? = null,
     val pdfHistoryJson: String? = null,
-    val islamicLocationJson: String? = null
+    val islamicLocationJson: String? = null,
+    val financeTransactions: List<com.example.data.model.FinanceTransaction> = emptyList(),
+    val financeContactsJson: String? = null,
+    val financeSettingsJson: String? = null
 )
