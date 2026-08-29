@@ -567,4 +567,8 @@ object SpecialDayManager {
     fun getTodaySpecialEvent(calendar: Calendar = Calendar.getInstance()): SpecialDayEvent {
         return getTodaySpecialEvents(calendar).first()
     }
+
+    fun getAllSpecialEvents(): List<SpecialDayEvent> {
+        return specialEventsList
+    }
 }

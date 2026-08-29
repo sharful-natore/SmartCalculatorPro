@@ -488,7 +488,13 @@ object AuthenticHadithDatabase {
         )
     )
 
+    private val chapterHadithsCache = java.util.concurrent.ConcurrentHashMap<String, List<HadithItem>>()
+    private val bookHadithsCache = java.util.concurrent.ConcurrentHashMap<String, List<HadithItem>>()
+    @Volatile
+    private var allAuthenticHadithsCache: List<HadithItem>? = null
+
     fun getAllAuthenticHadiths(): List<HadithItem> {
+        allAuthenticHadithsCache?.let { return it }
         val list = mutableListOf<HadithItem>()
         // Nawawi 40
         list.addAll(AuthenticNawawiHadiths.HADITHS.map { mapHadithMetadata(it) })
@@ -498,7 +504,9 @@ object AuthenticHadithDatabase {
         }
         // Master authentic collection
         list.addAll(MASTER_AUTHENTIC_COLLECTION.map { mapHadithMetadata(it) })
-        return list.distinctBy { "${it.bookId}_${it.id}" }
+        val result = list.distinctBy { "${it.bookId}_${it.id}" }
+        allAuthenticHadithsCache = result
+        return result
     }
 
     fun normalizeDigits(text: String): String {
@@ -511,46 +519,61 @@ object AuthenticHadithDatabase {
         return result
     }
 
-    fun searchHadiths(query: String, bookId: String? = null): List<HadithItem> {
+    fun searchHadiths(query: String, bookId: String? = null, maxResults: Int = 120): List<HadithItem> {
         val cleanQuery = query.trim()
         if (cleanQuery.isEmpty()) return emptyList()
 
         val normalizedQuery = normalizeDigits(cleanQuery).lowercase()
+        val queryLower = cleanQuery.lowercase()
+
         val all = if (bookId != null) {
             getHadithsForBook(bookId)
         } else {
             getAllAuthenticHadiths()
         }
 
-        return all.filter { hadith ->
+        val results = mutableListOf<HadithItem>()
+
+        for (hadith in all) {
+            // Fast direct checks first
+            val matchesFast = hadith.banglaText.contains(cleanQuery, ignoreCase = true) ||
+                    hadith.hadithNumberBn.contains(cleanQuery, ignoreCase = true) ||
+                    hadith.hadithNumberEn.contains(cleanQuery, ignoreCase = true) ||
+                    hadith.arabicText.contains(cleanQuery, ignoreCase = true) ||
+                    hadith.narratorBn.contains(cleanQuery, ignoreCase = true) ||
+                    hadith.referenceBn.contains(cleanQuery, ignoreCase = true) ||
+                    hadith.englishText.contains(cleanQuery, ignoreCase = true) ||
+                    hadith.gradeBn.contains(cleanQuery, ignoreCase = true) ||
+                    hadith.bookId.contains(cleanQuery, ignoreCase = true)
+
+            if (matchesFast) {
+                results.add(hadith)
+                if (results.size >= maxResults) break
+                continue
+            }
+
+            // If query has digits or normalized letters
             val numEnNorm = normalizeDigits(hadith.hadithNumberEn).lowercase()
             val numBnNorm = normalizeDigits(hadith.hadithNumberBn).lowercase()
-            val idNorm = normalizeDigits(hadith.id.toString()).lowercase()
+            val idNorm = hadith.id.toString()
             val refNorm = normalizeDigits(hadith.referenceBn).lowercase()
-            val narratorNorm = normalizeDigits(hadith.narratorBn).lowercase()
-            val banglaNorm = normalizeDigits(hadith.banglaText).lowercase()
-            val englishNorm = normalizeDigits(hadith.englishText).lowercase()
-            val arabicNorm = hadith.arabicText.lowercase()
-            val gradeNorm = hadith.gradeBn.lowercase()
 
-            cleanQuery.lowercase().let { q ->
-                hadith.hadithNumberBn.contains(q, ignoreCase = true) ||
-                hadith.hadithNumberEn.contains(q, ignoreCase = true) ||
-                numEnNorm.contains(normalizedQuery) ||
-                numBnNorm.contains(normalizedQuery) ||
-                idNorm.contains(normalizedQuery) ||
-                refNorm.contains(normalizedQuery) ||
-                narratorNorm.contains(normalizedQuery) ||
-                banglaNorm.contains(normalizedQuery) ||
-                englishNorm.contains(normalizedQuery) ||
-                arabicNorm.contains(cleanQuery, ignoreCase = true) ||
-                gradeNorm.contains(q) ||
-                hadith.bookId.contains(normalizedQuery, ignoreCase = true)
+            val matchesNorm = numEnNorm.contains(normalizedQuery) ||
+                    numBnNorm.contains(normalizedQuery) ||
+                    idNorm == normalizedQuery ||
+                    refNorm.contains(normalizedQuery)
+
+            if (matchesNorm) {
+                results.add(hadith)
+                if (results.size >= maxResults) break
             }
         }
+
+        return results
     }
 
     fun getHadithsForBook(bookId: String): List<HadithItem> {
+        bookHadithsCache[bookId]?.let { return it }
         val list = mutableListOf<HadithItem>()
         val totalChaps = when(bookId) {
             "nawawi40" -> 5
@@ -566,14 +589,20 @@ object AuthenticHadithDatabase {
         for (c in 1..totalChaps) {
             list.addAll(getHadithsForBookAndChapter(bookId, c))
         }
+        bookHadithsCache[bookId] = list
         return list
     }
 
     fun getHadithsForBookAndChapter(bookId: String, chapterId: Int): List<HadithItem> {
+        val cacheKey = "${bookId}_$chapterId"
+        chapterHadithsCache[cacheKey]?.let { return it }
+
         if (bookId == "nawawi40") {
             val nawawiFiltered = AuthenticNawawiHadiths.HADITHS.filter { it.chapterId == chapterId }
             val baseList = if (nawawiFiltered.isNotEmpty()) nawawiFiltered else AuthenticNawawiHadiths.HADITHS.take(8)
-            return baseList.map { mapHadithMetadata(it) }
+            val res = baseList.map { mapHadithMetadata(it) }
+            chapterHadithsCache[cacheKey] = res
+            return res
         }
 
         // Get any curated Hadiths for this book and chapter
@@ -596,7 +625,9 @@ object AuthenticHadithDatabase {
         }
 
         if (curated.size >= targetCount) {
-            return curated.map { mapHadithMetadata(it) }
+            val res = curated.map { mapHadithMetadata(it) }
+            chapterHadithsCache[cacheKey] = res
+            return res
         }
 
         // Fill up to targetCount with authentic structured items and precise references
@@ -688,6 +719,8 @@ object AuthenticHadithDatabase {
             )
         }
 
-        return result.map { mapHadithMetadata(it) }
+        val res = result.map { mapHadithMetadata(it) }
+        chapterHadithsCache[cacheKey] = res
+        return res
     }
 }

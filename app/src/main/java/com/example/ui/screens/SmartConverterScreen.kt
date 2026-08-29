@@ -892,14 +892,7 @@ fun ConverterCardItem(
                 }
             }
 
-            if (categoryRank in 1..3) {
-                CategoryRankBadge(
-                    rank = categoryRank,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(top = 11.dp, end = if (showFavoriteIcon) 38.dp else 10.dp)
-                )
-            }
+            /* CategoryRankBadge removed per user request */
         }
     }
 }

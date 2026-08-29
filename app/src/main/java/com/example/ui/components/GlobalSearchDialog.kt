@@ -257,18 +257,21 @@ fun GlobalSearchDialog(
                     }
                 }
 
-                val searchResults = remember(searchQuery, historyItems, financeItems) {
-                    if (searchQuery.isBlank()) emptyList<SearchResult>()
-                    else {
-                        val query = searchQuery.trim()
-                        val results = mutableListOf<SearchResult>()
+                val searchResults by produceState<List<SearchResult>>(initialValue = emptyList(), key1 = searchQuery, key2 = historyItems, key3 = financeItems) {
+                    if (searchQuery.isBlank()) {
+                        value = emptyList()
+                    } else {
+                        kotlinx.coroutines.delay(200)
+                        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                            val query = searchQuery.trim()
+                            val results = mutableListOf<SearchResult>()
 
-                        val eng = listOf("0", "1", "2", "3", "4", "5", "6", "7", "8", "9")
-                        val ben = listOf("০", "১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯")
-                        var normalizedQuery = query
-                        for (i in 0..9) {
-                            normalizedQuery = normalizedQuery.replace(ben[i], eng[i])
-                        }
+                            val eng = listOf("0", "1", "2", "3", "4", "5", "6", "7", "8", "9")
+                            val ben = listOf("০", "১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯")
+                            var normalizedQuery = query
+                            for (i in 0..9) {
+                                normalizedQuery = normalizedQuery.replace(ben[i], eng[i])
+                            }
 
                         // Search Converters
                         com.example.data.model.ConverterType.values().forEach { type ->
@@ -426,6 +429,7 @@ fun GlobalSearchDialog(
                         results
                     }
                 }
+            }
 
                 Column(
                     modifier = Modifier

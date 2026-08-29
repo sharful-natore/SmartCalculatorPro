@@ -1,5 +1,6 @@
 package com.example.ui.screens
 
+import androidx.activity.compose.BackHandler
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -173,6 +174,48 @@ fun FinanceScreen(
         if (viewModel.showFinanceContactsView) {
             showContactsManagerDialog = true
             viewModel.showFinanceContactsView = false
+        }
+    }
+
+    val hasActiveOverlay = showDeleteConfirmDialog != null ||
+            deleteContactTarget != null ||
+            showMultiDeleteConfirmDialog ||
+            showClearAllConfirm ||
+            showTargetEditDialog ||
+            showSortDialog ||
+            showMonthYearPickerDialog ||
+            showDateRangePickerDialog ||
+            showAddDialog ||
+            editingTransaction != null ||
+            selectedTransactionDetails != null ||
+            selectedPersonForLedger != null ||
+            showContactsManagerDialog ||
+            selectedIds.isNotEmpty() ||
+            searchQuery.isNotEmpty() ||
+            selectedFilterTab != "ALL" ||
+            dateFilterType != "ALL"
+
+    BackHandler(enabled = hasActiveOverlay) {
+        when {
+            showDeleteConfirmDialog != null -> showDeleteConfirmDialog = null
+            deleteContactTarget != null -> deleteContactTarget = null
+            showMultiDeleteConfirmDialog -> showMultiDeleteConfirmDialog = false
+            showClearAllConfirm -> showClearAllConfirm = false
+            showTargetEditDialog -> showTargetEditDialog = false
+            showSortDialog -> showSortDialog = false
+            showMonthYearPickerDialog -> showMonthYearPickerDialog = false
+            showDateRangePickerDialog -> showDateRangePickerDialog = false
+            showAddDialog || editingTransaction != null -> {
+                showAddDialog = false
+                editingTransaction = null
+            }
+            selectedTransactionDetails != null -> selectedTransactionDetails = null
+            selectedPersonForLedger != null -> selectedPersonForLedger = null
+            showContactsManagerDialog -> showContactsManagerDialog = false
+            selectedIds.isNotEmpty() -> selectedIds = emptySet()
+            searchQuery.isNotEmpty() -> searchQuery = ""
+            selectedFilterTab != "ALL" -> selectedFilterTab = "ALL"
+            dateFilterType != "ALL" -> dateFilterType = "ALL"
         }
     }
 
@@ -977,94 +1020,102 @@ fun FinanceScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .horizontalBounceOverscroll()
-                            .horizontalScroll(rememberScrollState())
                             .padding(vertical = 4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        val tabs = listOf(
-                            "ALL" to (if (isBn) "সব" else "All"),
-                            "INCOME" to (if (isBn) "আয়" else "Income"),
-                            "EXPENSE" to (if (isBn) "ব্যয়" else "Expense"),
-                            "DEBT_TAKEN" to (if (isBn) "দেনা" else "Debt"),
-                            "DEBT_GIVEN" to (if (isBn) "পাওনা" else "Loan")
-                        )
-
-                        fun toBnNum(num: Int): String {
-                            val benNumbers = mapOf(
-                                '0' to '০', '1' to '১', '2' to '২', '3' to '৩', '4' to '৪',
-                                '5' to '৫', '6' to '৬', '7' to '৭', '8' to '৮', '9' to '৯'
+                        Row(
+                            modifier = Modifier
+                                .weight(1f)
+                                .horizontalBounceOverscroll()
+                                .horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            val tabs = listOf(
+                                "ALL" to (if (isBn) "সব" else "All"),
+                                "INCOME" to (if (isBn) "আয়" else "Income"),
+                                "EXPENSE" to (if (isBn) "ব্যয়" else "Expense"),
+                                "DEBT_TAKEN" to (if (isBn) "দেনা" else "Debt"),
+                                "DEBT_GIVEN" to (if (isBn) "পাওনা" else "Loan")
                             )
-                            return num.toString().map { benNumbers[it] ?: it }.joinToString("")
-                        }
 
-                        tabs.forEach { (key, label) ->
-                            val isSelected = selectedFilterTab == key
-                            val count = when (key) {
-                                "ALL" -> countAll
-                                "INCOME" -> countIncome
-                                "EXPENSE" -> countExpense
-                                "DEBT_TAKEN" -> countDebtTaken
-                                "DEBT_GIVEN" -> countDebtGiven
-                                else -> 0
+                            fun toBnNum(num: Int): String {
+                                val benNumbers = mapOf(
+                                    '0' to '০', '1' to '১', '2' to '২', '3' to '৩', '4' to '৪',
+                                    '5' to '৫', '6' to '৬', '7' to '৭', '8' to '৮', '9' to '৯'
+                                )
+                                return num.toString().map { benNumbers[it] ?: it }.joinToString("")
                             }
 
-                            Box(
-                                modifier = Modifier
-                                    .wrapContentSize()
-                                    .padding(top = 4.dp, end = 4.dp), // Space for top-right badge overlap
-                                contentAlignment = Alignment.TopEnd
-                            ) {
-                                val chipBg = if (isSelected) primaryThemeColor else if (themeColors.isDark) themeColors.cardBg else Color.White
-                                val textColor = if (isSelected) Color.White else themeHarmonizedTextColor
-                                val borderColor = if (isSelected) primaryThemeColor else if (themeColors.isDark) Color(0xFF334155) else Color(0xFFE2E8F0)
-                                val borderSize = if (isSelected) 1.5.dp else 1.dp
-
-                                Row(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(16.dp))
-                                        .background(chipBg)
-                                        .border(borderSize, borderColor, RoundedCornerShape(16.dp))
-                                        .clickable { selectedFilterTab = key }
-                                        .padding(horizontal = 14.dp, vertical = 8.5.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = label,
-                                        fontSize = 12.5.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = textColor
-                                    )
+                            tabs.forEach { (key, label) ->
+                                val isSelected = selectedFilterTab == key
+                                val count = when (key) {
+                                    "ALL" -> countAll
+                                    "INCOME" -> countIncome
+                                    "EXPENSE" -> countExpense
+                                    "DEBT_TAKEN" -> countDebtTaken
+                                    "DEBT_GIVEN" -> countDebtGiven
+                                    else -> 0
                                 }
 
-                                // Dynamic pill/circle badge with count (compact height)
-                                if (count > 0) {
-                                    val badgeColor = if (key == "ALL") Color(0xFFEF4444) else primaryThemeColor
-                                    val countStr = if (isBn) toBnNum(count) else count.toString()
+                                Box(
+                                    modifier = Modifier
+                                        .wrapContentSize()
+                                        .padding(top = 4.dp, end = 4.dp), // Space for top-right badge overlap
+                                    contentAlignment = Alignment.TopEnd
+                                ) {
+                                    val chipBg = if (isSelected) primaryThemeColor else if (themeColors.isDark) themeColors.cardBg else Color.White
+                                    val textColor = if (isSelected) Color.White else themeHarmonizedTextColor
+                                    val borderColor = if (isSelected) primaryThemeColor else if (themeColors.isDark) Color(0xFF334155) else Color(0xFFE2E8F0)
+                                    val borderSize = if (isSelected) 1.5.dp else 1.dp
 
-                                    Box(
+                                    Row(
                                         modifier = Modifier
-                                            .offset(x = 4.dp, y = (-3).dp)
-                                            .defaultMinSize(minWidth = 14.dp, minHeight = 13.dp)
-                                            .background(badgeColor, RoundedCornerShape(7.dp))
-                                            .padding(horizontal = 3.dp, vertical = 0.dp),
-                                        contentAlignment = Alignment.Center
+                                            .clip(RoundedCornerShape(16.dp))
+                                            .background(chipBg)
+                                            .border(borderSize, borderColor, RoundedCornerShape(16.dp))
+                                            .clickable { selectedFilterTab = key }
+                                            .padding(horizontal = 14.dp, vertical = 8.5.dp),
+                                        verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(
-                                            text = countStr,
-                                            color = Color.White,
-                                            fontSize = 8.sp,
-                                            fontWeight = FontWeight.ExtraBold,
-                                            textAlign = TextAlign.Center,
-                                            lineHeight = 9.sp
+                                            text = label,
+                                            fontSize = 12.5.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = textColor
                                         )
+                                    }
+
+                                    // Dynamic pill/circle badge with count (compact height)
+                                    if (count > 0) {
+                                        val badgeColor = if (key == "ALL") Color(0xFFEF4444) else primaryThemeColor
+                                        val countStr = if (isBn) toBnNum(count) else count.toString()
+
+                                        Box(
+                                            modifier = Modifier
+                                                .offset(x = 4.dp, y = (-3).dp)
+                                                .defaultMinSize(minWidth = 14.dp, minHeight = 13.dp)
+                                                .background(badgeColor, RoundedCornerShape(7.dp))
+                                                .padding(horizontal = 3.dp, vertical = 0.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = countStr,
+                                                color = Color.White,
+                                                fontSize = 8.sp,
+                                                fontWeight = FontWeight.ExtraBold,
+                                                textAlign = TextAlign.Center,
+                                                lineHeight = 9.sp
+                                            )
+                                        }
                                     }
                                 }
                             }
                         }
 
-                        // Sort Button on the far right
+                        Spacer(modifier = Modifier.width(6.dp))
+
+                        // Sort Button Fixed on the Far Right
                         IconButton(
                             onClick = { showSortDialog = true },
                             modifier = Modifier
@@ -1192,6 +1243,16 @@ fun FinanceScreen(
                         onDelete = {
                             if (!isSelectionMode) {
                                 selectedIds = setOf(item.id)
+                            }
+                        },
+                        onPersonClick = { personName ->
+                            if (!isSelectionMode) {
+                                selectedPersonForLedger = personName
+                            }
+                        },
+                        onFilterClick = { filterKey ->
+                            if (!isSelectionMode) {
+                                selectedFilterTab = filterKey
                             }
                         }
                     )
@@ -1875,14 +1936,18 @@ fun FinanceScreen(
             isBn = isBn,
             themeColors = themeColors,
             contactsList = contactsList,
-            onDismiss = { showAddDialog = false },
+            onDismiss = {
+                showAddDialog = false
+                editingTransaction = null
+            },
             onSave = { transaction ->
-                if (editingTransaction != null) {
+                if (editingTransaction != null && editingTransaction?.id != 0L) {
                     viewModel.updateFinanceTransaction(transaction)
                 } else {
                     viewModel.addFinanceTransaction(transaction)
                 }
                 showAddDialog = false
+                editingTransaction = null
             },
             onAddQuickContact = { newContact ->
                 val newList = contactsList + newContact
@@ -1902,10 +1967,9 @@ fun FinanceScreen(
             contactsList = contactsList,
             formatAmount = ::formatAmount,
             onDismiss = { selectedTransactionDetails = null },
-            onTypeChanged = { newType, newSubType ->
-                val updated = item.copy(type = newType, subType = newSubType)
-                viewModel.updateFinanceTransaction(updated)
-                selectedTransactionDetails = updated
+            onFilterClick = { filterKey ->
+                selectedTransactionDetails = null
+                selectedFilterTab = filterKey
             },
             onPersonClicked = { personName ->
                 selectedTransactionDetails = null
@@ -2168,7 +2232,9 @@ fun TransactionCard(
     onToggleSelect: () -> Unit,
     onToggleSettled: () -> Unit,
     onClick: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onPersonClick: ((String) -> Unit)? = null,
+    onFilterClick: ((String) -> Unit)? = null
 ) {
     val (typeLabel, icon, color, isMinus) = remember(item) {
         when (item.type) {
@@ -2185,21 +2251,27 @@ fun TransactionCard(
         }
     }
 
+    val filterKey = remember(item.type, item.subType) {
+        when (item.type) {
+            "INCOME" -> "INCOME"
+            "EXPENSE" -> "EXPENSE"
+            "SAVINGS" -> "SAVINGS"
+            else -> if (item.subType == "TAKEN") "DEBT_TAKEN" else "DEBT_GIVEN"
+        }
+    }
+
     val (typeBadgeText, typeBadgeBg, typeBadgeTextCol) = when (item.type) {
         "INCOME" -> Triple(if (isBn) "আয়" else "Income", Color(0xFFE8F5E9), Color(0xFF2E7D32))
         "EXPENSE" -> Triple(if (isBn) "ব্যয়" else "Expense", Color(0xFFFFEBEE), Color(0xFFC62828))
         "SAVINGS" -> Triple(if (isBn) "সঞ্চয়" else "Savings", Color(0xFFE3F2FD), Color(0xFF1565C0))
         else -> { // DEBT
             if (item.subType == "TAKEN") {
-                Triple(if (isBn) "দেনা" else "Debt", Color(0xFFFFF8E1), Color(0xFFF57F17))
+                Triple(if (isBn) "দেনা" else "Debt", Color(0xFFFFF8E1), Color(0xFFD97706))
             } else {
-                Triple(if (isBn) "পাওনা" else "Loan", Color(0xFFE8EAF6), Color(0xFF283593))
+                Triple(if (isBn) "পাওনা" else "Loan", Color(0xFFE8EAF6), Color(0xFF7C3AED))
             }
         }
     }
-
-    val categoryBg = themeColors.buttonEqualBg.copy(alpha = 0.1f)
-    val categoryTextCol = themeColors.buttonEqualBg
 
     val sdf = remember { SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault()) }
     val timeString = sdf.format(Date(item.timestamp))
@@ -2243,7 +2315,7 @@ fun TransactionCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 12.dp),
+                .padding(horizontal = 14.dp, vertical = 11.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Checkbox for Selection Mode
@@ -2263,26 +2335,12 @@ fun TransactionCard(
             }
 
             // Left side circular Icon indicator
-            val iconBg = when (item.type) {
-                "INCOME" -> Color(0xFFE8F5E9)
-                "EXPENSE" -> Color(0xFFFFEBEE)
-                "SAVINGS" -> Color(0xFFE3F2FD)
-                else -> { // DEBT
-                    if (item.subType == "TAKEN") Color(0xFFFFF8E1) else Color(0xFFE8EAF6)
-                }
-            }
-            val iconTint = when (item.type) {
-                "INCOME" -> Color(0xFF2E7D32)
-                "EXPENSE" -> Color(0xFFC62828)
-                "SAVINGS" -> Color(0xFF1565C0)
-                else -> { // DEBT
-                    if (item.subType == "TAKEN") Color(0xFFF57F17) else Color(0xFF283593)
-                }
-            }
+            val iconBg = typeBadgeBg
+            val iconTint = typeBadgeTextCol
 
             Box(
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(38.dp)
                     .clip(CircleShape)
                     .background(iconBg),
                 contentAlignment = Alignment.Center
@@ -2295,101 +2353,152 @@ fun TransactionCard(
                 )
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(10.dp))
 
             // Text and Info Column extending all the way to the right
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.5.dp)
+                verticalArrangement = Arrangement.spacedBy(3.dp)
             ) {
-                // Line 1: Title & Category / Subcategory Badges (extends full width to the right margin)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text(
-                        text = item.title,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = titleTextColor,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-
-                    // Type Badge
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(typeBadgeBg)
-                            .padding(horizontal = 5.dp, vertical = 2.dp)
-                    ) {
-                        Text(
-                            text = typeBadgeText,
-                            fontSize = 8.5.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = typeBadgeTextCol
-                        )
-                    }
-
-                    // Category Badge
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(categoryBg)
-                            .padding(horizontal = 5.dp, vertical = 2.dp)
-                    ) {
-                        Text(
-                            text = item.category,
-                            fontSize = 8.5.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = categoryTextCol
-                        )
-                    }
-
-                    // Debt status badge
-                    if (item.type == "DEBT") {
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(
-                                    if (item.isSettled) Color(0xFFE8F5E9)
-                                    else Color(0xFFFFF8E1)
-                                )
-                                .clickable { onToggleSettled() }
-                                .padding(horizontal = 5.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = if (item.isSettled) (if (isBn) "পরিশোধিত" else "Settled") else (if (isBn) "বকেয়া" else "Pending"),
-                                fontSize = 8.5.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (item.isSettled) Color(0xFF2E7D32) else Color(0xFFF57F17)
-                            )
-                        }
-                    }
-                }
-
-                // Line 2: Timestamp on left and Amount on right
+                // Line 1: Title, Pill Badges (Type & Category & Debt), and Amount on right
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    // Timestamp
-                    Text(
-                        text = timeString,
-                        fontSize = 11.sp,
-                        color = themeColors.displayText.copy(alpha = 0.55f)
-                    )
+                    // Left side: Title + Badges
+                    Row(
+                        modifier = Modifier.weight(1f, fill = false),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(5.dp)
+                    ) {
+                        Text(
+                            text = item.title,
+                            fontSize = 14.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = titleTextColor,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.clickable {
+                                if (onPersonClick != null && item.title.isNotBlank()) {
+                                    onPersonClick(item.title.trim())
+                                } else {
+                                    onClick()
+                                }
+                            }
+                        )
 
-                    // Amount
+                        // Type Badge (Pill design matching screenshot)
+                        Surface(
+                            onClick = { onFilterClick?.invoke(filterKey) },
+                            shape = RoundedCornerShape(50),
+                            color = typeBadgeBg,
+                            border = BorderStroke(0.8.dp, typeBadgeTextCol.copy(alpha = 0.40f))
+                        ) {
+                            Text(
+                                text = typeBadgeText,
+                                fontSize = 9.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = typeBadgeTextCol,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp),
+                                maxLines = 1
+                            )
+                        }
+
+                        // Category Badge (Pill design matching screenshot)
+                        if (item.category.isNotBlank()) {
+                            val isSaleOrBuy = item.category.contains("বিক্রয়") || item.category.contains("ক্রয়")
+                            val catBg = if (isSaleOrBuy) Color(0xFFFCE4EC) else themeColors.buttonEqualBg.copy(alpha = 0.12f)
+                            val catTextCol = if (isSaleOrBuy) Color(0xFFC2185B) else themeColors.buttonEqualBg
+                            Surface(
+                                onClick = { onFilterClick?.invoke(filterKey) },
+                                shape = RoundedCornerShape(50),
+                                color = catBg,
+                                border = BorderStroke(0.8.dp, catTextCol.copy(alpha = 0.40f))
+                            ) {
+                                Text(
+                                    text = item.category,
+                                    fontSize = 9.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = catTextCol,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp),
+                                    maxLines = 1
+                                )
+                            }
+                        }
+
+                        // Debt status badge
+                        if (item.type == "DEBT") {
+                            val debtBg = if (item.isSettled) Color(0xFFE8F5E9) else Color(0xFFFFF8E1)
+                            val debtCol = if (item.isSettled) Color(0xFF2E7D32) else Color(0xFFD97706)
+                            Surface(
+                                onClick = { onToggleSettled() },
+                                shape = RoundedCornerShape(50),
+                                color = debtBg,
+                                border = BorderStroke(0.8.dp, debtCol.copy(alpha = 0.40f))
+                            ) {
+                                Text(
+                                    text = if (item.isSettled) (if (isBn) "পরিশোধিত" else "Settled") else (if (isBn) "বকেয়া" else "Pending"),
+                                    fontSize = 9.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = debtCol,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp),
+                                    maxLines = 1
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(6.dp))
+
+                    // Right side: Amount and optional delete icon
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = (if (isMinus) "-" else "+") + formatAmount(item.amount),
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = color,
+                            textAlign = TextAlign.End
+                        )
+                        if (!isSelectionMode) {
+                            IconButton(
+                                onClick = { onDelete() },
+                                modifier = Modifier.size(20.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = "Delete",
+                                    tint = Color(0xFF94A3B8),
+                                    modifier = Modifier.size(15.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Line 2: Note (if present) and Timestamp
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
                     Text(
-                        text = (if (isMinus) "-" else "+") + formatAmount(item.amount),
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = color,
-                        textAlign = TextAlign.End
+                        text = if (item.note.isNotBlank()) item.note else timeString,
+                        fontSize = 11.sp,
+                        color = themeColors.displayText.copy(alpha = 0.55f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
+                    if (item.note.isNotBlank()) {
+                        Text(
+                            text = timeString,
+                            fontSize = 10.5.sp,
+                            color = themeColors.displayText.copy(alpha = 0.45f)
+                        )
+                    }
                 }
             }
         }
@@ -3184,15 +3293,15 @@ fun TransactionMemoDialog(
     item: FinanceTransaction,
     isBn: Boolean,
     themeColors: CalculatorThemeColors,
-    contactsList: List<ContactPerson>,
     formatAmount: (Double) -> String,
     onDismiss: () -> Unit,
-    onTypeChanged: (String, String) -> Unit,
+    onFilterClick: (String) -> Unit,
     onPersonClicked: (String) -> Unit,
     onToggleSettled: () -> Unit,
     onShare: () -> Unit,
     onEdit: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    contactsList: List<ContactPerson> = emptyList()
 ) {
     val (typeLabel, badgeBg, badgeTextColor, typeIcon) = remember(item.type, item.subType) {
         when (item.type) {
@@ -3208,6 +3317,16 @@ fun TransactionMemoDialog(
             }
         }
     }
+
+    val filterKey = remember(item.type, item.subType) {
+        when (item.type) {
+            "INCOME" -> "INCOME"
+            "EXPENSE" -> "EXPENSE"
+            "SAVINGS" -> "SAVINGS"
+            else -> if (item.subType == "TAKEN") "DEBT_TAKEN" else "DEBT_GIVEN"
+        }
+    }
+
     val sdf = remember { SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault()) }
     val formattedTime = sdf.format(Date(item.timestamp))
 
@@ -3265,8 +3384,9 @@ fun TransactionMemoDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                // Hero Amount Card
+                // Hero Amount Card (Clicking switches filter chip in Finance view)
                 Surface(
+                    onClick = { onFilterClick(filterKey) },
                     color = badgeBg,
                     shape = RoundedCornerShape(16.dp),
                     border = BorderStroke(1.dp, badgeTextColor.copy(alpha = 0.25f)),
@@ -3298,106 +3418,63 @@ fun TransactionMemoDialog(
                     }
                 }
 
-                // Category / Type Switcher Chips
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(
-                        text = if (isBn) "ধরণ পরিবর্তন (সুইচ করতে চিপে চাপ দিন):" else "Switch Category / Type:",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = themeColors.displayText.copy(alpha = 0.7f)
-                    )
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        val types = listOf(
-                            Triple("INCOME", "", if (isBn) "📈 আয়" else "📈 Income"),
-                            Triple("EXPENSE", "", if (isBn) "📉 ব্যয়" else "📉 Expense"),
-                            Triple("DEBT", "TAKEN", if (isBn) "📥 দেনা (নিয়েছি)" else "📥 Debt (Taken)"),
-                            Triple("DEBT", "GIVEN", if (isBn) "📤 পাওনা (দিয়েছি)" else "📤 Loan (Given)"),
-                            Triple("SAVINGS", "DEPOSIT", if (isBn) "🏦 সঞ্চয়" else "🏦 Savings")
-                        )
-                        types.forEach { (t, sub, label) ->
-                            val isSelected = item.type == t && (t != "DEBT" || item.subType == sub)
-                            FilterChip(
-                                selected = isSelected,
-                                onClick = { onTypeChanged(t, sub) },
-                                label = {
-                                    Text(
-                                        text = label,
-                                        fontSize = 11.sp,
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                                    )
-                                },
-                                shape = RoundedCornerShape(8.dp),
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = themeColors.buttonEqualBg,
-                                    selectedLabelColor = Color.White,
-                                    containerColor = themeColors.cardBg,
-                                    labelColor = themeColors.displayText
-                                )
-                            )
-                        }
-                    }
-                }
-
                 // Person / Contact Link Banner
-                Surface(
-                    onClick = { onPersonClicked(item.title.trim()) },
-                    shape = RoundedCornerShape(12.dp),
-                    color = themeColors.buttonEqualBg.copy(alpha = 0.08f),
-                    border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.2f)),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                if (item.title.isNotBlank()) {
+                    Surface(
+                        onClick = { onPersonClicked(item.title.trim()) },
+                        shape = RoundedCornerShape(12.dp),
+                        color = themeColors.buttonEqualBg.copy(alpha = 0.08f),
+                        border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.2f)),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(10.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f)
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(34.dp)
-                                    .clip(CircleShape)
-                                    .background(themeColors.buttonEqualBg),
-                                contentAlignment = Alignment.Center
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.weight(1f)
                             ) {
-                                Text(
-                                    text = item.title.trim().take(1).uppercase(),
-                                    color = Color.White,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
+                                Box(
+                                    modifier = Modifier
+                                        .size(34.dp)
+                                        .clip(CircleShape)
+                                        .background(themeColors.buttonEqualBg),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = item.title.trim().take(1).uppercase(),
+                                        color = Color.White,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Column {
+                                    Text(
+                                        text = item.title,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = themeColors.displayText
+                                    )
+                                    Text(
+                                        text = if (isBn) "ব্যক্তির খতিয়ান ও লেনদেন তালিকা দেখুন →" else "View person's full ledger & history →",
+                                        fontSize = 10.5.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = themeColors.buttonEqualBg
+                                    )
+                                }
                             }
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Column {
-                                Text(
-                                    text = item.title,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = themeColors.displayText
-                                )
-                                Text(
-                                    text = if (isBn) "ব্যক্তির খতিয়ান ও লেনদেন তালিকা দেখুন →" else "View person's full ledger & history →",
-                                    fontSize = 10.5.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = themeColors.buttonEqualBg
-                                )
-                            }
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                contentDescription = null,
+                                tint = themeColors.buttonEqualBg,
+                                modifier = Modifier.size(13.dp)
+                            )
                         }
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                            contentDescription = null,
-                            tint = themeColors.buttonEqualBg,
-                            modifier = Modifier.size(13.dp)
-                        )
                     }
                 }
 

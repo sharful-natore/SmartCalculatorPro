@@ -651,11 +651,14 @@ fun HadithLibraryScreen(
                             "জ্ঞান" to "Knowledge"
                         )
 
-                        val matchedHadiths = remember(searchQuery) {
-                            if (searchQuery.isNotBlank()) {
-                                AuthenticHadithDatabase.searchHadiths(searchQuery)
+                        val matchedHadiths by produceState<List<HadithItem>>(initialValue = emptyList(), key1 = searchQuery) {
+                            if (searchQuery.isBlank()) {
+                                value = emptyList()
                             } else {
-                                emptyList()
+                                kotlinx.coroutines.delay(200)
+                                value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                                    AuthenticHadithDatabase.searchHadiths(searchQuery)
+                                }
                             }
                         }
 
@@ -1060,11 +1063,14 @@ fun HadithLibraryScreen(
                         val currentBook = selectedBook ?: HadithRepository.BOOK_LIST[0]
                         val chapters = HadithRepository.getChaptersForBook(currentBook.id)
 
-                        val inBookMatchedHadiths = remember(bookSearchQuery, currentBook.id) {
-                            if (bookSearchQuery.isNotBlank()) {
-                                AuthenticHadithDatabase.searchHadiths(bookSearchQuery, bookId = currentBook.id)
+                        val inBookMatchedHadiths by produceState<List<HadithItem>>(initialValue = emptyList(), key1 = bookSearchQuery, key2 = currentBook.id) {
+                            if (bookSearchQuery.isBlank()) {
+                                value = emptyList()
                             } else {
-                                emptyList()
+                                kotlinx.coroutines.delay(200)
+                                value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                                    AuthenticHadithDatabase.searchHadiths(bookSearchQuery, bookId = currentBook.id)
+                                }
                             }
                         }
 

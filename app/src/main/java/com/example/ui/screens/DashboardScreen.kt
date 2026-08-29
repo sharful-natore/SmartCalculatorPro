@@ -28,6 +28,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.ui.graphics.Brush
@@ -257,6 +259,7 @@ fun DashboardCategoriesView(
     var showAllFeaturedDialog by remember { mutableStateOf(false) }
     var selectedItemForOptions by remember { mutableStateOf<FeaturedDashboardItem?>(null) }
     var selectedSpecialEventDialog by remember { mutableStateOf<com.example.util.SpecialDayEvent?>(null) }
+    var showYearlySpecialDaysDialog by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val speechLauncher = rememberLauncherForActivityResult(
@@ -448,7 +451,10 @@ fun DashboardCategoriesView(
                                 text = greetingText,
                                 fontWeight = FontWeight.ExtraBold,
                                 fontSize = 15.sp,
-                                color = Color.White
+                                color = Color.White,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                softWrap = false
                             )
                         }
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -457,7 +463,10 @@ fun DashboardCategoriesView(
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White.copy(alpha = 0.85f),
-                                lineHeight = 15.sp
+                                lineHeight = 15.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                softWrap = false
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Icon(
@@ -543,7 +552,10 @@ fun DashboardCategoriesView(
                             text = dateInfo.bengaliDate,
                             fontSize = 11.sp,
                             color = Color.White.copy(alpha = 0.85f),
-                            fontWeight = FontWeight.SemiBold
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            softWrap = false
                         )
                     }
 
@@ -566,7 +578,10 @@ fun DashboardCategoriesView(
                             text = dateInfo.hijriDate,
                             fontSize = 11.sp,
                             color = Color.White.copy(alpha = 0.85f),
-                            fontWeight = FontWeight.SemiBold
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            softWrap = false
                         )
                     }
                 }
@@ -1468,7 +1483,7 @@ fun DashboardCategoriesView(
                                         )
                                     }
                                 } else {
-                                    when (page % 4) {
+                                    when (page % 10) {
                                         0 -> Triple(
                                             listOf(Color(0xFF091E3A), Color(0xFF1E40AF), Color(0xFF2563EB)),
                                             Color(0xFF60A5FA),
@@ -1484,10 +1499,40 @@ fun DashboardCategoriesView(
                                             Color(0xFF34D399),
                                             Color(0xFF6EE7B7)
                                         )
-                                        else -> Triple(
+                                        3 -> Triple(
                                             listOf(Color(0xFF450A0A), Color(0xFF78350F), Color(0xFFD97706)),
                                             Color(0xFFFBBF24),
                                             Color(0xFFF59E0B)
+                                        )
+                                        4 -> Triple(
+                                            listOf(Color(0xFF083344), Color(0xFF0E7490), Color(0xFF0284C7)),
+                                            Color(0xFF38BDF8),
+                                            Color(0xFF67E8F9)
+                                        )
+                                        5 -> Triple(
+                                            listOf(Color(0xFF4C0519), Color(0xFF881337), Color(0xFFBE123C)),
+                                            Color(0xFFFB7185),
+                                            Color(0xFFFDA4AF)
+                                        )
+                                        6 -> Triple(
+                                            listOf(Color(0xFF1E1B4B), Color(0xFF3730A3), Color(0xFF4F46E5)),
+                                            Color(0xFF818CF8),
+                                            Color(0xFFA5B4FC)
+                                        )
+                                        7 -> Triple(
+                                            listOf(Color(0xFF18181B), Color(0xFF27272A), Color(0xFF713F12)),
+                                            Color(0xFFEAB308),
+                                            Color(0xFFFDE047)
+                                        )
+                                        8 -> Triple(
+                                            listOf(Color(0xFF1C1917), Color(0xFF44403C), Color(0xFFC2410C)),
+                                            Color(0xFFFB923C),
+                                            Color(0xFFFFEDD5)
+                                        )
+                                        else -> Triple(
+                                            listOf(Color(0xFF0F172A), Color(0xFF334155), Color(0xFF0EA5E9)),
+                                            Color(0xFF38BDF8),
+                                            Color(0xFFE0F2FE)
                                         )
                                     }
                                 }
@@ -1540,48 +1585,247 @@ fun DashboardCategoriesView(
                                     Canvas(modifier = Modifier.matchParentSize()) {
                                         val width = size.width
                                         val height = size.height
+                                        val patternIdx = if (isSpecial) 0 else (page % 10)
 
-                                        // Glowing Radial Orbs
-                                        drawCircle(
-                                            brush = Brush.radialGradient(
-                                                colors = listOf(primaryAccent.copy(alpha = 0.35f), Color.Transparent),
-                                                center = Offset(width * 0.85f, height * 0.15f),
-                                                radius = size.maxDimension * 0.65f
-                                            ),
-                                            center = Offset(width * 0.85f, height * 0.15f),
-                                            radius = size.maxDimension * 0.65f
-                                        )
+                                        when (patternIdx) {
+                                            0 -> {
+                                                drawCircle(
+                                                    brush = Brush.radialGradient(
+                                                        colors = listOf(primaryAccent.copy(alpha = 0.45f), Color.Transparent),
+                                                        center = Offset(width * 0.85f, height * 0.15f),
+                                                        radius = size.maxDimension * 0.70f
+                                                    ),
+                                                    center = Offset(width * 0.85f, height * 0.15f),
+                                                    radius = size.maxDimension * 0.70f
+                                                )
+                                                drawCircle(
+                                                    color = primaryAccent.copy(alpha = 0.20f),
+                                                    radius = height * 0.75f,
+                                                    center = Offset(width * 0.85f, height * 0.15f),
+                                                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.dp.toPx())
+                                                )
+                                                drawCircle(
+                                                    color = secondaryAccent.copy(alpha = 0.25f),
+                                                    radius = height * 1.15f,
+                                                    center = Offset(width * 0.85f, height * 0.15f),
+                                                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.5.dp.toPx())
+                                                )
+                                                val rayPath = Path().apply {
+                                                    moveTo(width * 0.4f, 0f)
+                                                    lineTo(width * 0.65f, 0f)
+                                                    lineTo(width * 0.35f, height)
+                                                    lineTo(width * 0.1f, height)
+                                                    close()
+                                                }
+                                                drawPath(rayPath, brush = Brush.linearGradient(listOf(Color.White.copy(alpha = 0.08f), Color.Transparent)))
+                                            }
+                                            1 -> {
+                                                drawCircle(
+                                                    brush = Brush.radialGradient(
+                                                        colors = listOf(primaryAccent.copy(alpha = 0.50f), secondaryAccent.copy(alpha = 0.18f), Color.Transparent),
+                                                        center = Offset(width * 0.75f, height * 0.5f),
+                                                        radius = size.maxDimension * 0.65f
+                                                    ),
+                                                    center = Offset(width * 0.75f, height * 0.5f),
+                                                    radius = size.maxDimension * 0.65f
+                                                )
+                                                val wave1 = Path().apply {
+                                                    moveTo(0f, height * 0.8f)
+                                                    cubicTo(width * 0.3f, height * 0.2f, width * 0.6f, height * 0.9f, width, height * 0.3f)
+                                                    lineTo(width, height)
+                                                    lineTo(0f, height)
+                                                    close()
+                                                }
+                                                drawPath(wave1, brush = Brush.verticalGradient(listOf(primaryAccent.copy(alpha = 0.15f), Color.Transparent)))
+                                                val wave2 = Path().apply {
+                                                    moveTo(0f, height * 0.5f)
+                                                    cubicTo(width * 0.4f, height * 0.95f, width * 0.7f, height * 0.3f, width, height * 0.6f)
+                                                    lineTo(width, height)
+                                                    lineTo(0f, height)
+                                                    close()
+                                                }
+                                                drawPath(wave2, brush = Brush.verticalGradient(listOf(secondaryAccent.copy(alpha = 0.12f), Color.Transparent)))
+                                            }
+                                            2 -> {
+                                                drawCircle(
+                                                    brush = Brush.radialGradient(
+                                                        colors = listOf(primaryAccent.copy(alpha = 0.40f), Color.Transparent),
+                                                        center = Offset(width * 0.15f, height * 0.85f),
+                                                        radius = size.maxDimension * 0.60f
+                                                    ),
+                                                    center = Offset(width * 0.15f, height * 0.85f),
+                                                    radius = size.maxDimension * 0.60f
+                                                )
+                                                val stepX = width / 8f
+                                                for (i in 1..7) {
+                                                    drawLine(
+                                                        color = primaryAccent.copy(alpha = 0.12f),
+                                                        start = Offset(stepX * i, 0f),
+                                                        end = Offset(stepX * i, height),
+                                                        strokeWidth = 1.dp.toPx()
+                                                    )
+                                                }
+                                                drawCircle(color = secondaryAccent.copy(alpha = 0.6f), radius = 3.dp.toPx(), center = Offset(stepX * 5, height * 0.3f))
+                                                drawCircle(color = primaryAccent.copy(alpha = 0.8f), radius = 4.dp.toPx(), center = Offset(stepX * 6, height * 0.7f))
+                                                drawCircle(color = secondaryAccent.copy(alpha = 0.5f), radius = 2.5.dp.toPx(), center = Offset(stepX * 7, height * 0.4f))
+                                            }
+                                            3 -> {
+                                                drawCircle(
+                                                    brush = Brush.radialGradient(
+                                                        colors = listOf(secondaryAccent.copy(alpha = 0.50f), primaryAccent.copy(alpha = 0.25f), Color.Transparent),
+                                                        center = Offset(width * 0.85f, height * 0.8f),
+                                                        radius = size.maxDimension * 0.65f
+                                                    ),
+                                                    center = Offset(width * 0.85f, height * 0.8f),
+                                                    radius = size.maxDimension * 0.65f
+                                                )
+                                                drawCircle(
+                                                    color = primaryAccent.copy(alpha = 0.25f),
+                                                    radius = height * 0.6f,
+                                                    center = Offset(width * 0.85f, height * 0.8f),
+                                                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = 3.dp.toPx())
+                                                )
+                                                drawCircle(
+                                                    color = secondaryAccent.copy(alpha = 0.35f),
+                                                    radius = height * 0.95f,
+                                                    center = Offset(width * 0.85f, height * 0.8f),
+                                                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.5.dp.toPx())
+                                                )
+                                                drawCircle(color = Color.White.copy(alpha = 0.6f), radius = 3.dp.toPx(), center = Offset(width * 0.65f, height * 0.25f))
+                                                drawCircle(color = secondaryAccent.copy(alpha = 0.7f), radius = 2.5.dp.toPx(), center = Offset(width * 0.75f, height * 0.45f))
+                                            }
+                                            4 -> {
+                                                drawCircle(
+                                                    brush = Brush.radialGradient(
+                                                        colors = listOf(primaryAccent.copy(alpha = 0.42f), Color.Transparent),
+                                                        center = Offset(width * 0.5f, height * 0.2f),
+                                                        radius = size.maxDimension * 0.55f
+                                                    ),
+                                                    center = Offset(width * 0.5f, height * 0.2f),
+                                                    radius = size.maxDimension * 0.55f
+                                                )
+                                                val oceanPath = Path().apply {
+                                                    moveTo(0f, height * 0.4f)
+                                                    cubicTo(width * 0.35f, height * 0.1f, width * 0.65f, height * 0.8f, width, height * 0.5f)
+                                                    lineTo(width, height)
+                                                    lineTo(0f, height)
+                                                    close()
+                                                }
+                                                drawPath(oceanPath, brush = Brush.horizontalGradient(listOf(primaryAccent.copy(alpha = 0.14f), secondaryAccent.copy(alpha = 0.08f))))
+                                                drawCircle(color = Color.White.copy(alpha = 0.25f), radius = 8.dp.toPx(), center = Offset(width * 0.78f, height * 0.35f))
+                                                drawCircle(color = Color.White.copy(alpha = 0.35f), radius = 5.dp.toPx(), center = Offset(width * 0.85f, height * 0.65f))
+                                            }
+                                            5 -> {
+                                                drawCircle(
+                                                    brush = Brush.radialGradient(
+                                                        colors = listOf(primaryAccent.copy(alpha = 0.48f), secondaryAccent.copy(alpha = 0.20f), Color.Transparent),
+                                                        center = Offset(width * 0.8f, height * 0.3f),
+                                                        radius = size.maxDimension * 0.65f
+                                                    ),
+                                                    center = Offset(width * 0.8f, height * 0.3f),
+                                                    radius = size.maxDimension * 0.65f
+                                                )
+                                                val bokehs = listOf(
+                                                    Triple(width * 0.65f, height * 0.25f, 16.dp.toPx()),
+                                                    Triple(width * 0.82f, height * 0.7f, 22.dp.toPx()),
+                                                    Triple(width * 0.55f, height * 0.75f, 12.dp.toPx()),
+                                                    Triple(width * 0.9f, height * 0.2f, 10.dp.toPx())
+                                                )
+                                                bokehs.forEach { (bx, by, br) ->
+                                                    drawCircle(color = Color.White.copy(alpha = 0.12f), radius = br, center = Offset(bx, by))
+                                                    drawCircle(color = primaryAccent.copy(alpha = 0.25f), radius = br * 0.7f, center = Offset(bx, by))
+                                                }
+                                            }
+                                            6 -> {
+                                                drawCircle(
+                                                    brush = Brush.radialGradient(
+                                                        colors = listOf(primaryAccent.copy(alpha = 0.45f), Color.Transparent),
+                                                        center = Offset(width * 0.7f, height * 0.6f),
+                                                        radius = size.maxDimension * 0.65f
+                                                    ),
+                                                    center = Offset(width * 0.7f, height * 0.6f),
+                                                    radius = size.maxDimension * 0.65f
+                                                )
+                                                val p1 = Offset(width * 0.55f, height * 0.25f)
+                                                val p2 = Offset(width * 0.72f, height * 0.35f)
+                                                val p3 = Offset(width * 0.85f, height * 0.2f)
+                                                val p4 = Offset(width * 0.65f, height * 0.75f)
+                                                val p5 = Offset(width * 0.82f, height * 0.8f)
 
-                                        drawCircle(
-                                            brush = Brush.radialGradient(
-                                                colors = listOf(secondaryAccent.copy(alpha = 0.22f), Color.Transparent),
-                                                center = Offset(width * 0.15f, height * 0.85f),
-                                                radius = size.maxDimension * 0.50f
-                                            ),
-                                            center = Offset(width * 0.15f, height * 0.85f),
-                                            radius = size.maxDimension * 0.50f
-                                        )
+                                                drawLine(color = secondaryAccent.copy(alpha = 0.35f), start = p1, end = p2, strokeWidth = 1.dp.toPx())
+                                                drawLine(color = secondaryAccent.copy(alpha = 0.35f), start = p2, end = p3, strokeWidth = 1.dp.toPx())
+                                                drawLine(color = secondaryAccent.copy(alpha = 0.35f), start = p2, end = p4, strokeWidth = 1.dp.toPx())
+                                                drawLine(color = secondaryAccent.copy(alpha = 0.35f), start = p4, end = p5, strokeWidth = 1.dp.toPx())
 
-                                        // Geometric Wave Ribbon
-                                        val wavePath = Path().apply {
-                                            moveTo(width * 0.35f, 0f)
-                                            cubicTo(width * 0.55f, height * 0.35f, width * 0.50f, height * 0.65f, width * 0.85f, height)
-                                            lineTo(width, height)
-                                            lineTo(width, 0f)
-                                            close()
+                                                listOf(p1, p2, p3, p4, p5).forEach { pt ->
+                                                    drawCircle(color = Color.White, radius = 2.5.dp.toPx(), center = pt)
+                                                    drawCircle(color = primaryAccent, radius = 5.dp.toPx(), center = pt, style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.dp.toPx()))
+                                                }
+                                            }
+                                            7 -> {
+                                                drawCircle(
+                                                    brush = Brush.radialGradient(
+                                                        colors = listOf(primaryAccent.copy(alpha = 0.50f), Color.Transparent),
+                                                        center = Offset(width * 0.85f, height * 0.2f),
+                                                        radius = size.maxDimension * 0.60f
+                                                    ),
+                                                    center = Offset(width * 0.85f, height * 0.2f),
+                                                    radius = size.maxDimension * 0.60f
+                                                )
+                                                for (i in 0..4) {
+                                                    drawLine(
+                                                        color = primaryAccent.copy(alpha = 0.15f - i * 0.02f),
+                                                        start = Offset(width * (0.4f + i * 0.12f), 0f),
+                                                        end = Offset(width, height * (0.3f + i * 0.15f)),
+                                                        strokeWidth = (1.5 - i * 0.2).dp.toPx()
+                                                    )
+                                                }
+                                                drawCircle(color = secondaryAccent, radius = 3.dp.toPx(), center = Offset(width * 0.75f, height * 0.3f))
+                                            }
+                                            8 -> {
+                                                drawCircle(
+                                                    brush = Brush.radialGradient(
+                                                        colors = listOf(primaryAccent.copy(alpha = 0.42f), secondaryAccent.copy(alpha = 0.20f), Color.Transparent),
+                                                        center = Offset(width * 0.8f, height * 0.7f),
+                                                        radius = size.maxDimension * 0.65f
+                                                    ),
+                                                    center = Offset(width * 0.8f, height * 0.7f),
+                                                    radius = size.maxDimension * 0.65f
+                                                )
+                                                val c1 = Path().apply {
+                                                    moveTo(width * 0.3f, 0f)
+                                                    quadraticTo(width * 0.6f, height * 0.5f, width * 0.9f, height)
+                                                     lineTo(width, height)
+                                                     lineTo(width, 0f)
+                                                     close()
+                                                }
+                                                drawPath(c1, brush = Brush.linearGradient(listOf(Color.White.copy(alpha = 0.08f), Color.Transparent)))
+                                            }
+                                            else -> {
+                                                drawCircle(
+                                                    brush = Brush.radialGradient(
+                                                        colors = listOf(primaryAccent.copy(alpha = 0.45f), secondaryAccent.copy(alpha = 0.18f), Color.Transparent),
+                                                        center = Offset(width * 0.85f, height * 0.2f),
+                                                        radius = size.maxDimension * 0.65f
+                                                    ),
+                                                    center = Offset(width * 0.85f, height * 0.2f),
+                                                    radius = size.maxDimension * 0.65f
+                                                )
+                                                drawLine(
+                                                    brush = Brush.horizontalGradient(listOf(Color.Transparent, primaryAccent.copy(alpha = 0.6f), secondaryAccent.copy(alpha = 0.8f), Color.Transparent)),
+                                                    start = Offset(0f, 1.dp.toPx()),
+                                                    end = Offset(width, 1.dp.toPx()),
+                                                    strokeWidth = 2.dp.toPx()
+                                                )
+                                                drawCircle(color = secondaryAccent.copy(alpha = 0.7f), radius = 3.5.dp.toPx(), center = Offset(width * 0.7f, height * 0.3f))
+                                                drawCircle(color = primaryAccent.copy(alpha = 0.8f), radius = 2.5.dp.toPx(), center = Offset(width * 0.82f, height * 0.65f))
+                                            }
                                         }
-                                        drawPath(
-                                            path = wavePath,
-                                            brush = Brush.linearGradient(
-                                                colors = listOf(Color.White.copy(alpha = 0.07f), Color.White.copy(alpha = 0.01f))
-                                            )
-                                        )
 
                                         if (isSpecial) {
-                                            // Decorative Sparkle Bokeh Lights
-                                            drawCircle(color = Color.White.copy(alpha = 0.55f), radius = 3.5f, center = Offset(width * 0.72f, height * 0.22f))
-                                            drawCircle(color = Color.White.copy(alpha = 0.35f), radius = 5.5f, center = Offset(width * 0.82f, height * 0.62f))
-                                            drawCircle(color = Color.White.copy(alpha = 0.40f), radius = 2.5f, center = Offset(width * 0.58f, height * 0.78f))
+                                            drawCircle(color = Color.White.copy(alpha = 0.65f), radius = 3.5f, center = Offset(width * 0.72f, height * 0.22f))
+                                            drawCircle(color = Color.White.copy(alpha = 0.45f), radius = 5.5f, center = Offset(width * 0.82f, height * 0.62f))
+                                            drawCircle(color = Color.White.copy(alpha = 0.50f), radius = 2.5f, center = Offset(width * 0.58f, height * 0.78f))
                                         }
                                     }
 
@@ -2155,18 +2399,40 @@ fun DashboardCategoriesView(
                 onDismissRequest = { selectedSpecialEventDialog = null },
                 icon = {
                     Box(
-                        modifier = Modifier
-                            .size(56.dp)
-                            .clip(CircleShape)
-                            .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
+                        modifier = Modifier.fillMaxWidth(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            imageVector = event.icon,
-                            contentDescription = null,
-                            tint = themeColors.buttonEqualBg,
-                            modifier = Modifier.size(30.dp)
-                        )
+                        Box(
+                            modifier = Modifier
+                                .size(56.dp)
+                                .clip(CircleShape)
+                                .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = event.icon,
+                                contentDescription = null,
+                                tint = themeColors.buttonEqualBg,
+                                modifier = Modifier.size(30.dp)
+                            )
+                        }
+
+                        IconButton(
+                            onClick = { showYearlySpecialDaysDialog = true },
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .background(themeColors.buttonEqualBg.copy(alpha = 0.12f))
+                                .border(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.30f), CircleShape)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CalendarMonth,
+                                contentDescription = if (isBn) "সারা বছরের বিশেষ দিনসমূহ" else "Yearly Special Days",
+                                tint = themeColors.buttonEqualBg,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                     }
                 },
                 title = {
@@ -2267,6 +2533,253 @@ fun DashboardCategoriesView(
                 },
                 containerColor = themeColors.background,
                 shape = RoundedCornerShape(24.dp)
+            )
+        }
+
+        // Yearly Special Days Searchable Dialog
+        if (showYearlySpecialDaysDialog) {
+            var searchQuery by remember { mutableStateOf("") }
+            val allEvents = remember { com.example.util.SpecialDayManager.getAllSpecialEvents() }
+            val monthNamesBn = listOf("জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল", "মে", "জুন", "জুলাই", "আগস্ট", "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর")
+            val monthNamesEn = listOf("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December")
+
+            val filteredEvents = remember(searchQuery, allEvents) {
+                if (searchQuery.isBlank()) {
+                    allEvents
+                } else {
+                    val q = searchQuery.trim().lowercase()
+                    allEvents.filter { evt ->
+                        evt.titleBn.lowercase().contains(q) ||
+                        evt.titleEn.lowercase().contains(q) ||
+                        evt.categoryBn.lowercase().contains(q) ||
+                        evt.categoryEn.lowercase().contains(q) ||
+                        evt.descriptionBn.lowercase().contains(q) ||
+                        evt.descriptionEn.lowercase().contains(q) ||
+                        "${evt.day}".contains(q)
+                    }
+                }
+            }
+
+            AlertDialog(
+                onDismissRequest = { showYearlySpecialDaysDialog = false },
+                title = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .clip(CircleShape)
+                                    .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.CalendarMonth,
+                                    contentDescription = null,
+                                    tint = themeColors.buttonEqualBg,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            Text(
+                                text = if (isBn) "সারা বছরের বিশেষ দিবসসমূহ" else "Yearly Special Days",
+                                fontSize = 16.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.displayText
+                            )
+                        }
+                        IconButton(
+                            onClick = { showYearlySpecialDaysDialog = false },
+                            modifier = Modifier.size(30.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Close",
+                                tint = themeColors.displayText.copy(alpha = 0.6f),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+                },
+                text = {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 420.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = searchQuery,
+                            onValueChange = { searchQuery = it },
+                            placeholder = {
+                                Text(
+                                    text = if (isBn) "বিশেষ দিন বা দিবস খুঁজুন..." else "Search special day or event...",
+                                    fontSize = 12.5.sp,
+                                    color = themeColors.displayText.copy(alpha = 0.45f)
+                                )
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Search,
+                                    contentDescription = null,
+                                    tint = themeColors.buttonEqualBg,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            },
+                            trailingIcon = {
+                                if (searchQuery.isNotEmpty()) {
+                                    IconButton(onClick = { searchQuery = "" }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Close,
+                                            contentDescription = "Clear",
+                                            tint = themeColors.displayText.copy(alpha = 0.5f),
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 10.dp),
+                            shape = RoundedCornerShape(14.dp),
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = themeColors.buttonEqualBg,
+                                unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.18f),
+                                focusedContainerColor = themeColors.cardBg,
+                                unfocusedContainerColor = themeColors.cardBg
+                            )
+                        )
+
+                        if (filteredEvents.isEmpty()) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 30.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = if (isBn) "কোনো বিশেষ দিবস পাওয়া যায়নি" else "No special events found",
+                                    fontSize = 13.sp,
+                                    color = themeColors.displayText.copy(alpha = 0.5f)
+                                )
+                            }
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                items(filteredEvents) { evt ->
+                                    val dateStr = if (isBn) {
+                                        "${evt.day}শে ${monthNamesBn.getOrElse(evt.month - 1) { "" }}"
+                                    } else {
+                                        "${monthNamesEn.getOrElse(evt.month - 1) { "" }} ${evt.day}"
+                                    }
+
+                                    Card(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                selectedSpecialEventDialog = evt
+                                                showYearlySpecialDaysDialog = false
+                                            },
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
+                                        border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.08f))
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(10.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(38.dp)
+                                                    .clip(CircleShape)
+                                                    .background(themeColors.buttonEqualBg.copy(alpha = 0.12f)),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Icon(
+                                                    imageVector = evt.icon,
+                                                    contentDescription = null,
+                                                    tint = themeColors.buttonEqualBg,
+                                                    modifier = Modifier.size(19.dp)
+                                                )
+                                            }
+
+                                            Spacer(modifier = Modifier.width(10.dp))
+
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    modifier = Modifier.fillMaxWidth()
+                                                ) {
+                                                    Text(
+                                                        text = if (isBn) evt.titleBn else evt.titleEn,
+                                                        fontSize = 13.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = themeColors.displayText,
+                                                        maxLines = 1,
+                                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                                                        modifier = Modifier.weight(1f)
+                                                    )
+                                                    Spacer(modifier = Modifier.width(4.dp))
+                                                    Surface(
+                                                        shape = RoundedCornerShape(8.dp),
+                                                        color = themeColors.buttonEqualBg.copy(alpha = 0.12f)
+                                                    ) {
+                                                        Text(
+                                                            text = dateStr,
+                                                            fontSize = 10.5.sp,
+                                                            fontWeight = FontWeight.Bold,
+                                                            color = themeColors.buttonEqualBg,
+                                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                        )
+                                                    }
+                                                }
+
+                                                Spacer(modifier = Modifier.height(2.dp))
+
+                                                Text(
+                                                    text = if (isBn) evt.descriptionBn else evt.descriptionEn,
+                                                    fontSize = 11.5.sp,
+                                                    color = themeColors.displayText.copy(alpha = 0.65f),
+                                                    maxLines = 2,
+                                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                                                    lineHeight = 15.sp
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = { showYearlySpecialDaysDialog = false },
+                        colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = if (isBn) "বন্ধ করুন" else "Close",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.5.sp
+                        )
+                    }
+                },
+                containerColor = themeColors.background,
+                shape = RoundedCornerShape(20.dp)
             )
         }
 
@@ -2448,7 +2961,7 @@ fun DashboardCategoriesView(
                                 colors = CardDefaults.cardColors(
                                     containerColor = if (themeColors.isDark) themeColors.cardBg.copy(alpha = 0.55f) else themeColors.buttonEqualBg.copy(alpha = 0.08f)
                                 ),
-                                border = BorderStroke(1.5.dp, themeColors.buttonEqualBg.copy(alpha = 0.45f))
+                                border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.18f))
                             ) {
                                 Column(
                                     modifier = Modifier
@@ -2868,14 +3381,7 @@ fun ToolGridCardItem(
                 }
             }
 
-            if (categoryRank in 1..3) {
-                CategoryRankBadge(
-                    rank = categoryRank,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(top = 11.dp, end = if (showFavoriteIcon) 38.dp else 10.dp)
-                )
-            }
+            /* CategoryRankBadge removed per user request */
         }
     }
 }
