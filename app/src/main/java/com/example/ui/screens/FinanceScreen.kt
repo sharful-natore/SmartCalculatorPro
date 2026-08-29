@@ -4,6 +4,7 @@ import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -23,7 +24,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -36,6 +36,7 @@ import com.example.data.model.FinanceTransaction
 import com.example.ui.theme.CalculatorThemeColors
 import com.example.ui.viewmodel.CalculatorViewModel
 import com.example.util.AppLanguage
+import com.example.util.bounceOverscroll
 import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.*
@@ -56,6 +57,7 @@ fun FinanceScreen(
     var editingTransaction by remember { mutableStateOf<FinanceTransaction?>(null) }
     var showDeleteConfirmDialog by remember { mutableStateOf<FinanceTransaction?>(null) }
     var showClearAllConfirm by remember { mutableStateOf(false) }
+    var selectedTransactionDetails by remember { mutableStateOf<FinanceTransaction?>(null) }
 
     // Summary calculations
     val totalIncome = remember(transactions) {
@@ -79,7 +81,7 @@ fun FinanceScreen(
         (totalIncome + debtTaken) - (totalExpense + loanGiven)
     }
 
-    val currencySymbol = if (isBn) "৳" else "৳"
+    val currencySymbol = "৳"
     val df = remember { DecimalFormat("#,##0.00") }
 
     fun formatAmount(amount: Double): String {
@@ -111,6 +113,25 @@ fun FinanceScreen(
         }.sortedByDescending { it.timestamp }
     }
 
+    // Soft Blurred Gradients - delicate pastel colors
+    val incExpBg = if (themeColors.isDark) {
+        Brush.linearGradient(listOf(Color(0xFF1B5E20).copy(alpha = 0.15f), Color(0xFFB71C1C).copy(alpha = 0.15f)))
+    } else {
+        Brush.linearGradient(listOf(Color(0xFFE8F5E9).copy(alpha = 0.90f), Color(0xFFFFEBEE).copy(alpha = 0.90f)))
+    }
+
+    val debtLoanBg = if (themeColors.isDark) {
+        Brush.linearGradient(listOf(Color(0xFFE65100).copy(alpha = 0.15f), Color(0xFF4A148C).copy(alpha = 0.15f)))
+    } else {
+        Brush.linearGradient(listOf(Color(0xFFFFF3E0).copy(alpha = 0.90f), Color(0xFFF3E5F5).copy(alpha = 0.90f)))
+    }
+
+    val savingsBg = if (themeColors.isDark) {
+        Brush.linearGradient(listOf(Color(0xFF0D47A1).copy(alpha = 0.15f), Color(0xFF006064).copy(alpha = 0.15f)))
+    } else {
+        Brush.linearGradient(listOf(Color(0xFFE3F2FD).copy(alpha = 0.90f), Color(0xFFE0F7FA).copy(alpha = 0.90f)))
+    }
+
     Scaffold(
         containerColor = themeColors.background,
         floatingActionButton = {
@@ -133,168 +154,359 @@ fun FinanceScreen(
             )
         }
     ) { padding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 14.dp, vertical = 8.dp)
+                .padding(horizontal = 14.dp)
+                .bounceOverscroll(), // Bouncing overscroll behavior
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(top = 10.dp, bottom = 80.dp)
         ) {
-            // Header Bar
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.AccountBalance,
-                            contentDescription = null,
-                            tint = themeColors.buttonEqualBg,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Column {
-                        Text(
-                            text = if (isBn) "ব্যক্তিগত ফিন্যান্স ম্যানেজার" else "Personal Finance Tracker",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = themeColors.displayText
-                        )
-                        Text(
-                            text = if (isBn) "আয়, ব্যয়, দেনা, পাওনা ও সঞ্চয়ের হিসাব" else "Income, Expense, Debt & Savings",
-                            fontSize = 11.5.sp,
-                            color = themeColors.displayText.copy(alpha = 0.65f)
-                        )
-                    }
-                }
-
-                if (transactions.isNotEmpty()) {
-                    IconButton(onClick = { showClearAllConfirm = true }) {
-                        Icon(
-                            imageVector = Icons.Default.DeleteSweep,
-                            contentDescription = "Clear All",
-                            tint = themeColors.displayText.copy(alpha = 0.6f)
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // Main Net Balance Card
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
-                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
-            ) {
-                Box(
+            // 1. Beautiful Modern Title Header Bar
+            item {
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(
-                            Brush.linearGradient(
-                                colors = listOf(
-                                    themeColors.buttonEqualBg,
-                                    themeColors.buttonEqualBg.copy(alpha = 0.85f),
-                                    themeColors.cardBg
-                                )
-                            )
-                        )
-                        .padding(16.dp)
+                        .padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(42.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = if (isBn) "মোট নেট স্থিতি (Net Balance)" else "Total Net Balance",
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = Color.White.copy(alpha = 0.9f)
+                            Icon(
+                                imageVector = Icons.Default.AccountBalance,
+                                contentDescription = null,
+                                tint = themeColors.buttonEqualBg,
+                                modifier = Modifier.size(24.dp)
                             )
-                            Surface(
-                                color = Color.White.copy(alpha = 0.20f),
-                                shape = RoundedCornerShape(10.dp)
-                            ) {
-                                Text(
-                                    text = if (isBn) "${transactions.size} টি লেনদেন" else "${transactions.size} Transactions",
-                                    fontSize = 10.5.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text(
+                                text = if (isBn) "আর্থিক বিবরণী" else "Financial Statement",
+                                fontSize = 19.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.displayText
+                            )
+                            Text(
+                                text = if (isBn) "মোট নেট স্থিতি: ${formatAmount(netBalance)}" else "Net Balance: ${formatAmount(netBalance)}",
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = themeColors.displayText.copy(alpha = 0.65f)
+                            )
+                        }
+                    }
+
+                    if (transactions.isNotEmpty()) {
+                        IconButton(
+                            onClick = { showClearAllConfirm = true },
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(themeColors.displayText.copy(alpha = 0.05f))
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.DeleteSweep,
+                                contentDescription = "Clear All",
+                                tint = themeColors.displayText.copy(alpha = 0.6f),
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            // 2. Newly Designed 3 Cards with Soft Blurred Gradients
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    // Card 1: Income & Expense (Full Width)
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(18.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(incExpBg)
+                                .border(
+                                    width = 1.dp,
+                                    color = themeColors.displayText.copy(alpha = 0.08f),
+                                    shape = RoundedCornerShape(18.dp)
                                 )
+                                .padding(16.dp)
+                        ) {
+                            Column {
+                                Text(
+                                    text = if (isBn) "আয় ও ব্যয় বিবরণী" else "Income & Expense Ledger",
+                                    fontSize = 12.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.displayText.copy(alpha = 0.7f)
+                                )
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    // Income Column
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(36.dp)
+                                                .clip(CircleShape)
+                                                .background(Color(0xFF22C55E).copy(alpha = 0.15f)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.AutoMirrored.Filled.TrendingUp,
+                                                contentDescription = null,
+                                                tint = Color(0xFF16A34A),
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Column {
+                                            Text(
+                                                text = if (isBn) "মোট আয়" else "Total Income",
+                                                fontSize = 10.5.sp,
+                                                color = themeColors.displayText.copy(alpha = 0.6f)
+                                            )
+                                            Text(
+                                                text = formatAmount(totalIncome),
+                                                fontSize = 14.sp,
+                                                fontWeight = FontWeight.ExtraBold,
+                                                color = Color(0xFF16A34A)
+                                            )
+                                        }
+                                    }
+
+                                    // Divider Line
+                                    Box(
+                                        modifier = Modifier
+                                            .width(1.dp)
+                                            .height(30.dp)
+                                            .background(themeColors.displayText.copy(alpha = 0.12f))
+                                    )
+
+                                    Spacer(modifier = Modifier.width(12.dp))
+
+                                    // Expense Column
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.weight(1f),
+                                        horizontalArrangement = Arrangement.End
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(36.dp)
+                                                .clip(CircleShape)
+                                                .background(Color(0xFFEF4444).copy(alpha = 0.15f)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.AutoMirrored.Filled.TrendingDown,
+                                                contentDescription = null,
+                                                tint = Color(0xFFDC2626),
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Column {
+                                            Text(
+                                                text = if (isBn) "মোট ব্যয়" else "Total Expense",
+                                                fontSize = 10.5.sp,
+                                                color = themeColors.displayText.copy(alpha = 0.6f)
+                                            )
+                                            Text(
+                                                text = formatAmount(totalExpense),
+                                                fontSize = 14.sp,
+                                                fontWeight = FontWeight.ExtraBold,
+                                                color = Color(0xFFDC2626)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Card 2 & 3: Side-by-Side (Debt & Loan, Savings Balance)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        // Card 2: Debt & Loan
+                        Card(
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(debtLoanBg)
+                                    .border(
+                                        width = 1.dp,
+                                        color = themeColors.displayText.copy(alpha = 0.08f),
+                                        shape = RoundedCornerShape(16.dp)
+                                    )
+                                    .padding(12.dp)
+                            ) {
+                                Column {
+                                    Text(
+                                        text = if (isBn) "দেনা ও পাওনা হিসাব" else "Debt & Loan Status",
+                                        fontSize = 11.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = themeColors.displayText.copy(alpha = 0.7f),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        // Debt Rows
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(26.dp)
+                                                    .clip(CircleShape)
+                                                    .background(Color(0xFFF59E0B).copy(alpha = 0.15f)),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.CallReceived,
+                                                    contentDescription = null,
+                                                    tint = Color(0xFFD97706),
+                                                    modifier = Modifier.size(13.dp)
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Column {
+                                                Text(
+                                                    text = if (isBn) "দেনা (দেবেন)" else "Debt",
+                                                    fontSize = 9.sp,
+                                                    color = themeColors.displayText.copy(alpha = 0.55f),
+                                                    maxLines = 1
+                                                )
+                                                Text(
+                                                    text = formatAmount(debtTaken),
+                                                    fontSize = 11.5.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Color(0xFFD97706),
+                                                    maxLines = 1
+                                                )
+                                            }
+                                        }
+
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(26.dp)
+                                                    .clip(CircleShape)
+                                                    .background(Color(0xFF8B5CF6).copy(alpha = 0.15f)),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.CallMade,
+                                                    contentDescription = null,
+                                                    tint = Color(0xFF7C3AED),
+                                                    modifier = Modifier.size(13.dp)
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Column {
+                                                Text(
+                                                    text = if (isBn) "পাওনা (পাবেন)" else "Loan",
+                                                    fontSize = 9.sp,
+                                                    color = themeColors.displayText.copy(alpha = 0.55f),
+                                                    maxLines = 1
+                                                )
+                                                Text(
+                                                    text = formatAmount(loanGiven),
+                                                    fontSize = 11.5.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Color(0xFF7C3AED),
+                                                    maxLines = 1
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            text = formatAmount(netBalance),
-                            fontSize = 26.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = Color.White
-                        )
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        // Quick Financial Summary Bar
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                        // Card 3: Savings Balance with Bank Icon
+                        Card(
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.Transparent)
                         ) {
-                            // Income Pill
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.TrendingUp,
-                                    contentDescription = null,
-                                    tint = Color(0xFF4ADE80),
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(savingsBg)
+                                    .border(
+                                        width = 1.dp,
+                                        color = themeColors.displayText.copy(alpha = 0.08f),
+                                        shape = RoundedCornerShape(16.dp)
+                                    )
+                                    .padding(12.dp)
+                            ) {
                                 Column {
-                                    Text(if (isBn) "আয়" else "Income", fontSize = 10.sp, color = Color.White.copy(alpha = 0.75f))
-                                    Text(formatAmount(totalIncome), fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                                }
-                            }
-
-                            // Expense Pill
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.TrendingDown,
-                                    contentDescription = null,
-                                    tint = Color(0xFFF87171),
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Column {
-                                    Text(if (isBn) "ব্যয়" else "Expense", fontSize = 10.sp, color = Color.White.copy(alpha = 0.75f))
-                                    Text(formatAmount(totalExpense), fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                                }
-                            }
-
-                            // Savings Pill
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.Savings,
-                                    contentDescription = null,
-                                    tint = Color(0xFF60A5FA),
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Column {
-                                    Text(if (isBn) "সঞ্চয়" else "Savings", fontSize = 10.sp, color = Color.White.copy(alpha = 0.75f))
-                                    Text(formatAmount(totalSavings), fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                    Text(
+                                        text = if (isBn) "মোট সঞ্চয়" else "Total Savings",
+                                        fontSize = 11.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = themeColors.displayText.copy(alpha = 0.7f),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(34.dp)
+                                                .clip(CircleShape)
+                                                .background(Color(0xFF3B82F6).copy(alpha = 0.15f)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            // Replaced Piggy icon with Bank icon
+                                            Icon(
+                                                imageVector = Icons.Default.AccountBalance,
+                                                contentDescription = null,
+                                                tint = Color(0xFF2563EB),
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Column {
+                                            Text(
+                                                text = if (isBn) "সঞ্চয় ব্যালেন্স" else "Savings Balance",
+                                                fontSize = 9.sp,
+                                                color = themeColors.displayText.copy(alpha = 0.55f),
+                                                maxLines = 1
+                                            )
+                                            Text(
+                                                text = formatAmount(totalSavings),
+                                                fontSize = 13.sp,
+                                                fontWeight = FontWeight.ExtraBold,
+                                                color = Color(0xFF2563EB),
+                                                maxLines = 1
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -302,186 +514,131 @@ fun FinanceScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // 4 Detail Metrics Row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                MetricMiniCard(
-                    title = if (isBn) "আয়" else "Income",
-                    amountStr = formatAmount(totalIncome),
-                    icon = Icons.AutoMirrored.Filled.TrendingUp,
-                    accentColor = Color(0xFF22C55E),
-                    bgColor = themeColors.cardBg,
-                    modifier = Modifier.weight(1f),
-                    onClick = { selectedFilterTab = "INCOME" }
-                )
-                MetricMiniCard(
-                    title = if (isBn) "ব্যয়" else "Expense",
-                    amountStr = formatAmount(totalExpense),
-                    icon = Icons.AutoMirrored.Filled.TrendingDown,
-                    accentColor = Color(0xFFEF4444),
-                    bgColor = themeColors.cardBg,
-                    modifier = Modifier.weight(1f),
-                    onClick = { selectedFilterTab = "EXPENSE" }
-                )
-                MetricMiniCard(
-                    title = if (isBn) "দেনা (দেবেন)" else "Debt (Payable)",
-                    amountStr = formatAmount(debtTaken),
-                    icon = Icons.Default.CallReceived,
-                    accentColor = Color(0xFFF59E0B),
-                    bgColor = themeColors.cardBg,
-                    modifier = Modifier.weight(1f),
-                    onClick = { selectedFilterTab = "DEBT" }
-                )
-                MetricMiniCard(
-                    title = if (isBn) "পাওনা (পাবেন)" else "Loan (Receivable)",
-                    amountStr = formatAmount(loanGiven),
-                    icon = Icons.Default.CallMade,
-                    accentColor = Color(0xFF8B5CF6),
-                    bgColor = themeColors.cardBg,
-                    modifier = Modifier.weight(1f),
-                    onClick = { selectedFilterTab = "DEBT" }
-                )
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // Filter Tabs & Search Row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
+            // 3. Search Bar
+            item {
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    placeholder = { Text(if (isBn) "খুঁজুন (টাইটেল, ক্যাটাগরি)..." else "Search...", fontSize = 12.sp) },
+                    placeholder = { Text(if (isBn) "লেনদেন খুঁজুন (টাইটেল, ক্যাটাগরি, নোট)..." else "Search transactions...", fontSize = 13.sp) },
                     modifier = Modifier
-                        .weight(1f)
-                        .height(44.dp),
-                    textStyle = androidx.compose.ui.text.TextStyle(fontSize = 12.5.sp),
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    textStyle = androidx.compose.ui.text.TextStyle(fontSize = 13.5.sp),
                     singleLine = true,
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(16.dp)) },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(18.dp)) },
                     trailingIcon = {
                         if (searchQuery.isNotEmpty()) {
-                            IconButton(onClick = { searchQuery = "" }, modifier = Modifier.size(24.dp)) {
-                                Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(14.dp))
+                            IconButton(onClick = { searchQuery = "" }) {
+                                Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(16.dp))
                             }
                         }
                     },
-                    shape = RoundedCornerShape(14.dp),
-                    colors = TextFieldDefaults.colors(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = themeColors.cardBg,
                         unfocusedContainerColor = themeColors.cardBg,
-                        focusedIndicatorColor = themeColors.buttonEqualBg,
-                        unfocusedIndicatorColor = themeColors.displayText.copy(alpha = 0.25f)
+                        focusedBorderColor = themeColors.buttonEqualBg,
+                        unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.15f),
+                        focusedTextColor = themeColors.displayText,
+                        unfocusedTextColor = themeColors.displayText
                     )
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Category Filter Chips
-            androidx.compose.foundation.lazy.LazyRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                val filters = listOf(
-                    "ALL" to (if (isBn) "সব (${transactions.size})" else "All (${transactions.size})"),
-                    "INCOME" to (if (isBn) "আয় 📈" else "Income 📈"),
-                    "EXPENSE" to (if (isBn) "ব্যয় 📉" else "Expense 📉"),
-                    "DEBT" to (if (isBn) "দেনা/পাওনা 🤝" else "Loans 🤝"),
-                    "SAVINGS" to (if (isBn) "সঞ্চয় 💰" else "Savings 💰")
-                )
-                items(filters) { (key, label) ->
-                    val isSelected = selectedFilterTab == key
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = { selectedFilterTab = key },
-                        label = { Text(label, fontSize = 11.5.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = themeColors.buttonEqualBg,
-                            selectedLabelColor = Color.White,
-                            containerColor = themeColors.cardBg,
-                            labelColor = themeColors.displayText
-                        ),
-                        border = FilterChipDefaults.filterChipBorder(
-                            enabled = true,
-                            selected = isSelected,
-                            borderColor = if (isSelected) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.12f),
-                            selectedBorderColor = themeColors.buttonEqualBg,
-                            borderWidth = 1.dp
-                        ),
-                        shape = RoundedCornerShape(12.dp)
+            // 4. Horizontal Filter Chips
+            item {
+                androidx.compose.foundation.lazy.LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    val filters = listOf(
+                        "ALL" to (if (isBn) "সব (${transactions.size})" else "All (${transactions.size})"),
+                        "INCOME" to (if (isBn) "আয় 📈" else "Income 📈"),
+                        "EXPENSE" to (if (isBn) "ব্যয় 📉" else "Expense 📉"),
+                        "DEBT" to (if (isBn) "দেনা/পাওনা 🤝" else "Loans 🤝"),
+                        "SAVINGS" to (if (isBn) "সঞ্চয় 💰" else "Savings 💰")
                     )
+                    items(filters) { (key, label) ->
+                        val isSelected = selectedFilterTab == key
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = { selectedFilterTab = key },
+                            label = { Text(label, fontSize = 11.5.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = themeColors.buttonEqualBg,
+                                selectedLabelColor = Color.White,
+                                containerColor = themeColors.cardBg,
+                                labelColor = themeColors.displayText
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                enabled = true,
+                                selected = isSelected,
+                                borderColor = if (isSelected) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.12f),
+                                selectedBorderColor = themeColors.buttonEqualBg,
+                                borderWidth = 1.dp
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // Transactions List
+            // 5. Scrollable list of Transactions
             if (filteredList.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            imageVector = Icons.Default.ReceiptLong,
-                            contentDescription = null,
-                            tint = themeColors.displayText.copy(alpha = 0.35f),
-                            modifier = Modifier.size(56.dp)
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Text(
-                            text = if (isBn) "কোনো লেনদেনের হিসাব পাওয়া যায়নি" else "No financial transactions found",
-                            fontSize = 14.sp,
-                            color = themeColors.displayText.copy(alpha = 0.65f),
-                            fontWeight = FontWeight.Medium
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = if (isBn) "নিচের + বাটন চেপে নতুন আয়, ব্যয় বা দেনা-পাওনা যোগ করুন" else "Tap + button below to record income, expense, or loans",
-                            fontSize = 11.5.sp,
-                            color = themeColors.displayText.copy(alpha = 0.45f)
-                        )
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 50.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                imageVector = Icons.Default.ReceiptLong,
+                                contentDescription = null,
+                                tint = themeColors.displayText.copy(alpha = 0.35f),
+                                modifier = Modifier.size(56.dp)
+                            )
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Text(
+                                text = if (isBn) "কোনো লেনদেনের হিসাব পাওয়া যায়নি" else "No financial transactions found",
+                                fontSize = 14.sp,
+                                color = themeColors.displayText.copy(alpha = 0.65f),
+                                fontWeight = FontWeight.Medium
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = if (isBn) "নিচের + বাটন চেপে নতুন আদান-প্রদান যোগ করুন" else "Tap the + button below to record income, expense, or loans",
+                                fontSize = 11.5.sp,
+                                color = themeColors.displayText.copy(alpha = 0.45f),
+                                textAlign = TextAlign.Center
+                            )
+                        }
                     }
                 }
             } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxWidth().weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(bottom = 72.dp)
-                ) {
-                    items(filteredList, key = { it.id }) { item ->
-                        TransactionCard(
-                            item = item,
-                            isBn = isBn,
-                            themeColors = themeColors,
-                            formatAmount = { formatAmount(it) },
-                            onToggleSettled = {
-                                viewModel.updateFinanceTransaction(item.copy(isSettled = !item.isSettled))
-                            },
-                            onEdit = {
-                                editingTransaction = item
-                                showAddDialog = true
-                            },
-                            onDelete = {
-                                showDeleteConfirmDialog = item
-                            }
-                        )
-                    }
+                items(filteredList, key = { it.id }) { item ->
+                    TransactionCard(
+                        item = item,
+                        isBn = isBn,
+                        themeColors = themeColors,
+                        formatAmount = { formatAmount(it) },
+                        onToggleSettled = {
+                            viewModel.updateFinanceTransaction(item.copy(isSettled = !item.isSettled))
+                        },
+                        onClick = {
+                            selectedTransactionDetails = item
+                        },
+                        onDelete = {
+                            showDeleteConfirmDialog = item
+                        }
+                    )
                 }
             }
         }
     }
 
-    // Add / Edit Transaction Dialog Sheet
+    // Add / Edit Transaction Dialog
     if (showAddDialog) {
         AddEditTransactionDialog(
             initialTransaction = editingTransaction,
@@ -499,22 +656,205 @@ fun FinanceScreen(
         )
     }
 
-    // Delete confirmation dialog
+    // Modern Detail Dialog with details, share, edit, delete
+    if (selectedTransactionDetails != null) {
+        val item = selectedTransactionDetails!!
+        val (typeLabel, badgeBg, badgeTextColor, typeIcon) = remember(item) {
+            when (item.type) {
+                "INCOME" -> Quadruple(if (isBn) "আয়" else "Income", Color(0xFF22C55E).copy(alpha = 0.15f), Color(0xFF16A34A), Icons.AutoMirrored.Filled.TrendingUp)
+                "EXPENSE" -> Quadruple(if (isBn) "ব্যয়" else "Expense", Color(0xFFEF4444).copy(alpha = 0.15f), Color(0xFFDC2626), Icons.AutoMirrored.Filled.TrendingDown)
+                "SAVINGS" -> Quadruple(if (isBn) "সঞ্চয়" else "Savings", Color(0xFF3B82F6).copy(alpha = 0.15f), Color(0xFF2563EB), Icons.Default.AccountBalance) // Bank icon
+                else -> { // DEBT
+                    if (item.subType == "TAKEN") {
+                        Quadruple(if (isBn) "দেনা (দেবেন)" else "Debt", Color(0xFFF59E0B).copy(alpha = 0.15f), Color(0xFFD97706), Icons.Default.CallReceived)
+                    } else {
+                        Quadruple(if (isBn) "পাওনা (পাবেন)" else "Loan", Color(0xFF8B5CF6).copy(alpha = 0.15f), Color(0xFF7C3AED), Icons.Default.CallMade)
+                    }
+                }
+            }
+        }
+        val sdf = remember { SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault()) }
+        val formattedTime = sdf.format(Date(item.timestamp))
+
+        AlertDialog(
+            onDismissRequest = { selectedTransactionDetails = null },
+            icon = {
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(CircleShape)
+                        .background(badgeBg),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = typeIcon,
+                        contentDescription = null,
+                        tint = badgeTextColor,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+            },
+            title = {
+                Text(
+                    text = if (isBn) "লেনদেন বিবরণী" else "Transaction Details",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = themeColors.displayText,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    // Large Amount display
+                    Surface(
+                        color = badgeBg,
+                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(14.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = typeLabel,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = badgeTextColor
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = (if (item.type == "EXPENSE" || (item.type == "DEBT" && item.subType == "GIVEN")) "-" else "+") + formatAmount(item.amount),
+                                fontSize = 26.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = badgeTextColor
+                            )
+                        }
+                    }
+
+                    // Details Rows
+                    DetailItemRow(
+                        label = if (isBn) "বিবরণ:" else "Description:",
+                        value = item.title,
+                        themeColors = themeColors
+                    )
+
+                    if (item.category.isNotEmpty()) {
+                        DetailItemRow(
+                            label = if (isBn) "ক্যাটাগরি:" else "Category:",
+                            value = item.category,
+                            themeColors = themeColors
+                        )
+                    }
+
+                    DetailItemRow(
+                        label = if (isBn) "তারিখ ও সময়:" else "Date & Time:",
+                        value = formattedTime,
+                        themeColors = themeColors
+                    )
+
+                    if (item.note.isNotBlank()) {
+                        DetailItemRow(
+                            label = if (isBn) "অতিরিক্ত নোট:" else "Note:",
+                            value = item.note,
+                            themeColors = themeColors
+                        )
+                    }
+
+                    if (item.type == "DEBT") {
+                        DetailItemRow(
+                            label = if (isBn) "অবস্থা:" else "Status:",
+                            value = if (item.isSettled) (if (isBn) "পরিশোধিত" else "Settled") else (if (isBn) "বকেয়া (ক্লিক করে মেটান)" else "Pending"),
+                            themeColors = themeColors,
+                            valueColor = if (item.isSettled) Color(0xFF16A34A) else Color(0xFFD97706)
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Share Button
+                    Button(
+                        onClick = {
+                            try {
+                                val shareText = if (isBn) {
+                                    "📊 লেনদেন বিবরণী:\n📌 শিরোনাম: ${item.title}\n📈 ধরণ: $typeLabel\n🏷️ ক্যাটাগরি: ${item.category}\n💰 পরিমাণ: ${formatAmount(item.amount)}\n🗓️ সময়: $formattedTime\n📝 নোট: ${item.note}"
+                                } else {
+                                    "📊 Transaction Details:\n📌 Title: ${item.title}\n📈 Type: $typeLabel\n🏷️ Category: ${item.category}\n💰 Amount: ${formatAmount(item.amount)}\n🗓️ Time: $formattedTime\n📝 Note: ${item.note}"
+                                }
+                                val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(android.content.Intent.EXTRA_TEXT, shareText)
+                                }
+                                context.startActivity(android.content.Intent.createChooser(intent, if (isBn) "শেয়ার করুন" else "Share via"))
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(Icons.Default.Share, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(if (isBn) "শেয়ার" else "Share", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+
+                    // Edit Button
+                    Button(
+                        onClick = {
+                            editingTransaction = item
+                            showAddDialog = true
+                            selectedTransactionDetails = null
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg.copy(alpha = 0.15f)),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(Icons.Default.Edit, contentDescription = null, tint = themeColors.buttonEqualBg, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(if (isBn) "এডিট" else "Edit", color = themeColors.buttonEqualBg, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { selectedTransactionDetails = null }) {
+                    Text(if (isBn) "বন্ধ করুন" else "Close", color = themeColors.displayText.copy(alpha = 0.7f))
+                }
+            },
+            containerColor = themeColors.cardBg,
+            shape = RoundedCornerShape(24.dp)
+        )
+    }
+
+    // Delete Confirmation Dialog
     if (showDeleteConfirmDialog != null) {
         val target = showDeleteConfirmDialog!!
         AlertDialog(
             onDismissRequest = { showDeleteConfirmDialog = null },
-            title = { Text(if (isBn) "লেনদেন মুছে ফেলবেন?" else "Delete Transaction?", color = themeColors.displayText) },
+            title = { Text(if (isBn) "লেনদেন মুছে ফেলবেন?" else "Delete Transaction?", color = themeColors.displayText, fontWeight = FontWeight.Bold) },
             text = { Text(if (isBn) "\"${target.title}\" লেনদেনটি তালিকা থেকে স্থায়ীভাবে মুছে ফেলা হবে।" else "Are you sure you want to delete \"${target.title}\"?", color = themeColors.displayText) },
             confirmButton = {
                 Button(
                     onClick = {
                         viewModel.deleteFinanceTransaction(target.id)
+                        if (selectedTransactionDetails?.id == target.id) {
+                            selectedTransactionDetails = null
+                        }
                         showDeleteConfirmDialog = null
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444)),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text(if (isBn) "মুছে ফেলুন" else "Delete", color = Color.White)
+                    Text(if (isBn) "মুছে ফেলুন" else "Delete", color = Color.White, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -522,24 +862,28 @@ fun FinanceScreen(
                     Text(if (isBn) "বাতিল" else "Cancel", color = themeColors.displayText)
                 }
             },
-            containerColor = themeColors.cardBg
+            containerColor = themeColors.cardBg,
+            shape = RoundedCornerShape(20.dp)
         )
     }
 
+    // Clear All Confirmation Dialog
     if (showClearAllConfirm) {
         AlertDialog(
             onDismissRequest = { showClearAllConfirm = false },
-            title = { Text(if (isBn) "সব লেনদেন মুছে ফেলবেন?" else "Clear All Transactions?", color = themeColors.displayText) },
+            title = { Text(if (isBn) "সব লেনদেন মুছে ফেলবেন?" else "Clear All Transactions?", color = themeColors.displayText, fontWeight = FontWeight.Bold) },
             text = { Text(if (isBn) "আপনার সমস্ত ফিন্যান্সিয়াল লেনদেনের তথ্য ডিলিট হয়ে যাবে।" else "This will delete all saved income, expense, and loan records.", color = themeColors.displayText) },
             confirmButton = {
                 Button(
                     onClick = {
                         viewModel.clearAllFinanceTransactions()
+                        selectedTransactionDetails = null
                         showClearAllConfirm = false
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444)),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text(if (isBn) "সব মুছুন" else "Clear All", color = Color.White)
+                    Text(if (isBn) "সব মুছুন" else "Clear All", color = Color.White, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -547,61 +891,35 @@ fun FinanceScreen(
                     Text(if (isBn) "বাতিল" else "Cancel", color = themeColors.displayText)
                 }
             },
-            containerColor = themeColors.cardBg
+            containerColor = themeColors.cardBg,
+            shape = RoundedCornerShape(20.dp)
         )
     }
 }
 
 @Composable
-fun MetricMiniCard(
-    title: String,
-    amountStr: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    accentColor: Color,
-    bgColor: Color,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
+fun DetailItemRow(
+    label: String,
+    value: String,
+    themeColors: CalculatorThemeColors,
+    valueColor: Color = themeColors.displayText
 ) {
-    Card(
-        modifier = modifier.clickable { onClick() },
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = bgColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 8.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(20.dp)
-                        .clip(CircleShape)
-                        .background(accentColor.copy(alpha = 0.15f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(imageVector = icon, contentDescription = null, tint = accentColor, modifier = Modifier.size(12.dp))
-                }
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = title,
-                    fontSize = 10.sp,
-                    color = accentColor,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = amountStr,
-                fontSize = 11.5.sp,
-                fontWeight = FontWeight.ExtraBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = label,
+            fontSize = 11.sp,
+            color = themeColors.displayText.copy(alpha = 0.5f),
+            fontWeight = FontWeight.Medium
+        )
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = value,
+            fontSize = 13.5.sp,
+            color = valueColor,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(5.dp))
+        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(themeColors.displayText.copy(alpha = 0.05f)))
     }
 }
 
@@ -612,7 +930,7 @@ fun TransactionCard(
     themeColors: CalculatorThemeColors,
     formatAmount: (Double) -> String,
     onToggleSettled: () -> Unit,
-    onEdit: () -> Unit,
+    onClick: () -> Unit,
     onDelete: () -> Unit
 ) {
     val sdf = remember { SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault()) }
@@ -622,19 +940,22 @@ fun TransactionCard(
         when (item.type) {
             "INCOME" -> Quadruple(if (isBn) "আয়" else "Income", Color(0xFF22C55E).copy(alpha = 0.15f), Color(0xFF16A34A), Icons.AutoMirrored.Filled.TrendingUp)
             "EXPENSE" -> Quadruple(if (isBn) "ব্যয়" else "Expense", Color(0xFFEF4444).copy(alpha = 0.15f), Color(0xFFDC2626), Icons.AutoMirrored.Filled.TrendingDown)
-            "SAVINGS" -> Quadruple(if (isBn) "সঞ্চয়" else "Savings", Color(0xFF3B82F6).copy(alpha = 0.15f), Color(0xFF2563EB), Icons.Default.Savings)
+            "SAVINGS" -> Quadruple(if (isBn) "সঞ্চয়" else "Savings", Color(0xFF3B82F6).copy(alpha = 0.15f), Color(0xFF2563EB), Icons.Default.AccountBalance) // Bank icon
             else -> { // DEBT
                 if (item.subType == "TAKEN") {
-                    Quadruple(if (isBn) "দেনা (দেবেন)" else "Debt", Color(0xFFF59E0B).copy(alpha = 0.15f), Color(0xFFD97706), Icons.Default.CallReceived)
+                    Quadruple(if (isBn) "দেনা" else "Debt", Color(0xFFF59E0B).copy(alpha = 0.15f), Color(0xFFD97706), Icons.Default.CallReceived)
                 } else {
-                    Quadruple(if (isBn) "পাওনা (পাবেন)" else "Loan", Color(0xFF8B5CF6).copy(alpha = 0.15f), Color(0xFF7C3AED), Icons.Default.CallMade)
+                    Quadruple(if (isBn) "পাওনা" else "Loan", Color(0xFF8B5CF6).copy(alpha = 0.15f), Color(0xFF7C3AED), Icons.Default.CallMade)
                 }
             }
         }
     }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .clickable { onClick() },
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
@@ -707,7 +1028,7 @@ fun TransactionCard(
                     if (item.type == "DEBT") {
                         Spacer(modifier = Modifier.height(4.dp))
                         Surface(
-                            onClick = onToggleSettled,
+                            onClick = { onToggleSettled() },
                             color = if (item.isSettled) Color(0xFF22C55E).copy(alpha = 0.15f) else Color(0xFFF59E0B).copy(alpha = 0.15f),
                             shape = RoundedCornerShape(10.dp)
                         ) {
@@ -742,13 +1063,13 @@ fun TransactionCard(
                     color = badgeTextColor
                 )
 
-                Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                    IconButton(onClick = onEdit, modifier = Modifier.size(28.dp)) {
-                        Icon(Icons.Default.Edit, contentDescription = "Edit", tint = themeColors.displayText.copy(alpha = 0.5f), modifier = Modifier.size(16.dp))
-                    }
-                    IconButton(onClick = onDelete, modifier = Modifier.size(28.dp)) {
-                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color(0xFFEF4444).copy(alpha = 0.7f), modifier = Modifier.size(16.dp))
-                    }
+                IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
+                    Icon(
+                        imageVector = Icons.Default.DeleteOutline,
+                        contentDescription = "Delete",
+                        tint = Color(0xFFEF4444).copy(alpha = 0.8f),
+                        modifier = Modifier.size(18.dp)
+                    )
                 }
             }
         }
@@ -782,14 +1103,23 @@ fun AddEditTransactionDialog(
         }
     }
 
+    // Adjust category selection if type changes and current category is not in list
+    LaunchedEffect(type) {
+        if (!categories.contains(category)) {
+            category = categories.first()
+        }
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
                 text = if (initialTransaction == null) (if (isBn) "নতুন লেনদেন যুক্ত করুন" else "Add New Transaction") else (if (isBn) "লেনদেন এডিট করুন" else "Edit Transaction"),
                 fontWeight = FontWeight.Bold,
-                fontSize = 17.sp,
-                color = themeColors.displayText
+                fontSize = 18.sp,
+                color = themeColors.displayText,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
             )
         },
         text = {
@@ -799,9 +1129,12 @@ fun AddEditTransactionDialog(
                     .padding(vertical = 4.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                // Type Switcher
+                // Type Segment Control Capsule Switcher
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(themeColors.background, RoundedCornerShape(14.dp))
+                        .padding(4.dp),
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     val types = listOf(
@@ -812,23 +1145,29 @@ fun AddEditTransactionDialog(
                     )
                     types.forEach { (tKey, label) ->
                         val selected = type == tKey
-                        Surface(
-                            onClick = {
-                                type = tKey
-                                category = categories.first()
-                                if (tKey == "DEBT") subType = "TAKEN"
-                            },
-                            shape = RoundedCornerShape(10.dp),
-                            color = if (selected) themeColors.buttonEqualBg else themeColors.background,
-                            modifier = Modifier.weight(1f)
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(if (selected) themeColors.buttonEqualBg else Color.Transparent)
+                                .clickable {
+                                    type = tKey
+                                    if (tKey == "DEBT") {
+                                        subType = "TAKEN"
+                                    } else if (tKey == "SAVINGS") {
+                                        subType = "DEPOSIT"
+                                    } else {
+                                        subType = ""
+                                    }
+                                }
+                                .padding(vertical = 8.dp),
+                            contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = label,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (selected) Color.White else themeColors.displayText,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(vertical = 6.dp)
+                                fontSize = 11.5.sp,
+                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                                color = if (selected) Color.White else themeColors.displayText.copy(alpha = 0.8f)
                             )
                         }
                     }
@@ -841,32 +1180,70 @@ fun AddEditTransactionDialog(
                     ) {
                         Surface(
                             onClick = { subType = "TAKEN" },
-                            shape = RoundedCornerShape(8.dp),
+                            shape = RoundedCornerShape(10.dp),
                             color = if (subType == "TAKEN") Color(0xFFF59E0B) else themeColors.background,
                             modifier = Modifier.weight(1f)
                         ) {
                             Text(
-                                text = if (isBn) "দেনা (কারো থেকে নিয়েছি)" else "Debt (Taken)",
+                                text = if (isBn) "দেনা (নিয়েছি)" else "Debt (Taken)",
                                 fontSize = 10.5.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (subType == "TAKEN") Color.White else themeColors.displayText,
+                                color = if (subType == "TAKEN") Color.White else themeColors.displayText.copy(alpha = 0.8f),
                                 textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(vertical = 5.dp)
+                                modifier = Modifier.padding(vertical = 7.dp)
                             )
                         }
                         Surface(
                             onClick = { subType = "GIVEN" },
-                            shape = RoundedCornerShape(8.dp),
+                            shape = RoundedCornerShape(10.dp),
                             color = if (subType == "GIVEN") Color(0xFF8B5CF6) else themeColors.background,
                             modifier = Modifier.weight(1f)
                         ) {
                             Text(
-                                text = if (isBn) "পাওনা (কাউকে দিয়েছি)" else "Loan (Given)",
+                                text = if (isBn) "পাওনা (দিয়েছি)" else "Loan (Given)",
                                 fontSize = 10.5.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (subType == "GIVEN") Color.White else themeColors.displayText,
+                                color = if (subType == "GIVEN") Color.White else themeColors.displayText.copy(alpha = 0.8f),
                                 textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(vertical = 5.dp)
+                                modifier = Modifier.padding(vertical = 7.dp)
+                            )
+                        }
+                    }
+                }
+
+                if (type == "SAVINGS") {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Surface(
+                            onClick = { subType = "DEPOSIT" },
+                            shape = RoundedCornerShape(10.dp),
+                            color = if (subType == "DEPOSIT") Color(0xFF2563EB) else themeColors.background,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                text = if (isBn) "জমা করুন" else "Deposit",
+                                fontSize = 10.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (subType == "DEPOSIT") Color.White else themeColors.displayText.copy(alpha = 0.8f),
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(vertical = 7.dp)
+                            )
+                        }
+                        Surface(
+                            onClick = { subType = "WITHDRAWAL" },
+                            shape = RoundedCornerShape(10.dp),
+                            color = if (subType == "WITHDRAWAL") Color(0xFFEF4444) else themeColors.background,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                text = if (isBn) "উত্তোলন করুন" else "Withdrawal",
+                                fontSize = 10.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (subType == "WITHDRAWAL") Color.White else themeColors.displayText.copy(alpha = 0.8f),
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(vertical = 7.dp)
                             )
                         }
                     }
@@ -880,9 +1257,14 @@ fun AddEditTransactionDialog(
                     placeholder = { Text(if (isBn) "যেমন: মাসিক বেতন, বাজার খরচ..." else "e.g. Salary, Grocery...") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = themeColors.cardBg,
-                        unfocusedContainerColor = themeColors.cardBg
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = themeColors.background,
+                        unfocusedContainerColor = themeColors.background,
+                        focusedBorderColor = themeColors.buttonEqualBg,
+                        unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.15f),
+                        focusedLabelColor = themeColors.buttonEqualBg,
+                        unfocusedLabelColor = themeColors.displayText.copy(alpha = 0.6f)
                     )
                 )
 
@@ -894,30 +1276,48 @@ fun AddEditTransactionDialog(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = themeColors.cardBg,
-                        unfocusedContainerColor = themeColors.cardBg
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = themeColors.background,
+                        unfocusedContainerColor = themeColors.background,
+                        focusedBorderColor = themeColors.buttonEqualBg,
+                        unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.15f),
+                        focusedLabelColor = themeColors.buttonEqualBg,
+                        unfocusedLabelColor = themeColors.displayText.copy(alpha = 0.6f)
                     )
                 )
 
-                // Category Selection Chips
-                Text(if (isBn) "ক্যাটাগরি:" else "Category:", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 2.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                // Category Selection Chips Scrollable LazyRow
+                Text(
+                    text = if (isBn) "ক্যাটাগরি" else "Category",
+                    fontSize = 12.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = themeColors.displayText
+                )
+                androidx.compose.foundation.lazy.LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    categories.take(5).forEach { cat ->
+                    items(categories) { cat ->
                         val selected = category == cat
                         FilterChip(
                             selected = selected,
                             onClick = { category = cat },
-                            label = { Text(cat, fontSize = 10.5.sp) },
+                            label = { Text(cat, fontSize = 11.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal) },
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = themeColors.buttonEqualBg,
-                                selectedLabelColor = Color.White
-                            )
+                                selectedLabelColor = Color.White,
+                                containerColor = themeColors.background,
+                                labelColor = themeColors.displayText
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                enabled = true,
+                                selected = selected,
+                                borderColor = themeColors.displayText.copy(alpha = 0.12f),
+                                selectedBorderColor = themeColors.buttonEqualBg,
+                                borderWidth = 1.dp
+                            ),
+                            shape = RoundedCornerShape(10.dp)
                         )
                     }
                 }
@@ -929,9 +1329,14 @@ fun AddEditTransactionDialog(
                     label = { Text(if (isBn) "অতিরিক্ত নোট (ঐচ্ছিক)" else "Note (Optional)") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = themeColors.cardBg,
-                        unfocusedContainerColor = themeColors.cardBg
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = themeColors.background,
+                        unfocusedContainerColor = themeColors.background,
+                        focusedBorderColor = themeColors.buttonEqualBg,
+                        unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.15f),
+                        focusedLabelColor = themeColors.buttonEqualBg,
+                        unfocusedLabelColor = themeColors.displayText.copy(alpha = 0.6f)
                     )
                 )
             }
@@ -942,7 +1347,7 @@ fun AddEditTransactionDialog(
                     val amt = amountText.toDoubleOrNull() ?: 0.0
                     if (title.isBlank() || amt <= 0.0) return@Button
                     val t = FinanceTransaction(
-                        id = initialTransaction?.id ?: 0,
+                        id = initialTransaction?.id ?: 0L,
                         title = title.trim(),
                         amount = amt,
                         type = type,
@@ -954,7 +1359,8 @@ fun AddEditTransactionDialog(
                     )
                     onSave(t)
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg)
+                colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Text(if (isBn) "সংরক্ষণ করুন" else "Save", color = Color.White, fontWeight = FontWeight.Bold)
             }
@@ -964,6 +1370,7 @@ fun AddEditTransactionDialog(
                 Text(if (isBn) "বাতিল" else "Cancel", color = themeColors.displayText)
             }
         },
-        containerColor = themeColors.cardBg
+        containerColor = themeColors.cardBg,
+        shape = RoundedCornerShape(24.dp)
     )
 }

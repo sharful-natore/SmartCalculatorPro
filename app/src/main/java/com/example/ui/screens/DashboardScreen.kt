@@ -2290,7 +2290,7 @@ fun DashboardCategoriesView(
             ToolFilterChipItem(
                 label = LanguageManager.getString("all", viewModel.selectedLanguage),
                 isSelected = selectedFilter == null,
-                icon = Icons.Default.Apps,
+                icon = Icons.Default.GridView,
                 themeColors = themeColors,
                 count = allTools.size,
                 onClick = { viewModel.selectedToolCategoryFilter = null }
@@ -2408,7 +2408,7 @@ fun DashboardCategoriesView(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Icon(
-                                            imageVector = Icons.Default.Apps,
+                                            imageVector = Icons.Default.GridView,
                                             contentDescription = null,
                                             tint = themeColors.buttonEqualBg,
                                             modifier = Modifier.size(14.dp)
@@ -2452,7 +2452,7 @@ fun DashboardCategoriesView(
                                 colors = CardDefaults.cardColors(
                                     containerColor = if (themeColors.isDark) themeColors.cardBg.copy(alpha = 0.55f) else themeColors.buttonEqualBg.copy(alpha = 0.08f)
                                 ),
-                                border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.20f))
+                                border = BorderStroke(1.5.dp, themeColors.buttonEqualBg.copy(alpha = 0.45f))
                             ) {
                                 Column(
                                     modifier = Modifier
@@ -2473,16 +2473,17 @@ fun DashboardCategoriesView(
                                         ) {
                                             Box(
                                                 modifier = Modifier
-                                                    .size(30.dp)
+                                                    .size(32.dp)
                                                     .clip(CircleShape)
-                                                    .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
+                                                    .background(themeColors.buttonEqualBg.copy(alpha = 0.25f))
+                                                    .border(0.5.dp, themeColors.buttonEqualBg.copy(alpha = 0.40f), CircleShape),
                                                 contentAlignment = Alignment.Center
                                             ) {
                                                 Icon(
                                                     imageVector = category.icon,
                                                     contentDescription = category.titleEn,
                                                     tint = themeColors.buttonEqualBg,
-                                                    modifier = Modifier.size(17.dp)
+                                                    modifier = Modifier.size(18.dp)
                                                 )
                                             }
                                             Spacer(modifier = Modifier.width(8.dp))
@@ -2498,14 +2499,15 @@ fun DashboardCategoriesView(
                                                 modifier = Modifier
                                                     .defaultMinSize(minWidth = 22.dp, minHeight = 22.dp)
                                                     .clip(CircleShape)
-                                                    .background(themeColors.buttonEqualBg.copy(alpha = 0.15f))
+                                                    .background(themeColors.buttonEqualBg.copy(alpha = 0.26f))
+                                                    .border(0.5.dp, themeColors.buttonEqualBg.copy(alpha = 0.40f), CircleShape)
                                                     .padding(horizontal = 6.dp, vertical = 2.dp),
                                                 contentAlignment = Alignment.Center
                                             ) {
                                                 Text(
                                                     text = if (isBn) "${categoryTools.size}টি" else "${categoryTools.size}",
-                                                    fontSize = 10.5.sp,
-                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 11.sp,
+                                                    fontWeight = FontWeight.ExtraBold,
                                                     color = themeColors.buttonEqualBg
                                                 )
                                             }
@@ -2514,10 +2516,11 @@ fun DashboardCategoriesView(
                                         if (isOverviewMode && categoryTools.size > 2) {
                                             Row(
                                                 modifier = Modifier
-                                                    .clip(RoundedCornerShape(8.dp))
-                                                    .background(themeColors.buttonEqualBg.copy(alpha = 0.12f))
+                                                    .clip(RoundedCornerShape(10.dp))
+                                                    .background(themeColors.buttonEqualBg.copy(alpha = 0.22f))
+                                                    .border(0.5.dp, themeColors.buttonEqualBg.copy(alpha = 0.35f), RoundedCornerShape(10.dp))
                                                     .clickable { expandedCategories[category] = !isCategoryExpanded }
-                                                    .padding(horizontal = 8.dp, vertical = 5.dp),
+                                                    .padding(horizontal = 10.dp, vertical = 5.dp),
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
                                                 Text(
@@ -2525,17 +2528,17 @@ fun DashboardCategoriesView(
                                                         if (isBn) "সংকুচিত করুন" else "Collapse"
                                                     } else {
                                                         if (isBn) "সব দেখুন" else "See all"
-                                                    },
-                                                    fontSize = 11.sp,
-                                                    fontWeight = FontWeight.Bold,
+                                                     },
+                                                    fontSize = 11.5.sp,
+                                                    fontWeight = FontWeight.ExtraBold,
                                                     color = themeColors.buttonEqualBg
                                                 )
-                                                Spacer(modifier = Modifier.width(2.dp))
+                                                Spacer(modifier = Modifier.width(3.dp))
                                                 Icon(
                                                     imageVector = if (isCategoryExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                                                     contentDescription = null,
                                                     tint = themeColors.buttonEqualBg,
-                                                    modifier = Modifier.size(14.dp)
+                                                    modifier = Modifier.size(15.dp)
                                                 )
                                             }
                                         }
@@ -2706,6 +2709,15 @@ fun ToolFilterChipItem(
         modifier = Modifier
             .clip(RoundedCornerShape(12.dp))
             .background(if (isSelected) themeColors.buttonEqualBg else themeColors.cardBg)
+            .then(
+                if (!isSelected) {
+                    Modifier.border(
+                        width = 1.dp,
+                        color = themeColors.displayText.copy(alpha = 0.14f),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                } else Modifier
+            )
             .scaleOnPress(interactionSource)
             .clickable(
                 interactionSource = interactionSource,
