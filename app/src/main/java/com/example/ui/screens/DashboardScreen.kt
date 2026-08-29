@@ -932,7 +932,7 @@ fun DashboardCategoriesView(
             singleLine = true,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 12.dp)
+                .padding(bottom = 4.dp)
                 .testTag("tool_search_input")
         )
 
@@ -1085,12 +1085,10 @@ fun DashboardCategoriesView(
             val currentDisplayList = if (activeDashboardTab == "FEATURED") topFeaturedList else topFavoritesList
             val combinedList = currentDisplayList
 
-            Spacer(modifier = Modifier.height(4.dp))
-
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 4.dp, bottom = 10.dp),
+                    .padding(top = 0.dp, bottom = 4.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -1834,8 +1832,6 @@ fun DashboardCategoriesView(
             }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
-
         // View All / সব দেখুন Dialog
         if (showAllFeaturedDialog) {
             androidx.compose.ui.window.Dialog(
@@ -2274,7 +2270,7 @@ fun DashboardCategoriesView(
             )
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
         // Category Filter Chips
         val allTools = ToolType.values().toList()
@@ -2283,7 +2279,7 @@ fun DashboardCategoriesView(
                 .fillMaxWidth()
                 .horizontalBounceOverscroll()
                 .horizontalScroll(filterScrollState)
-                .padding(bottom = 16.dp),
+                .padding(bottom = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             // "All" Chip

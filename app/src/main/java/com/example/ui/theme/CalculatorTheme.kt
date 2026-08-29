@@ -157,7 +157,8 @@ enum class CalculatorThemeType {
     ROYAL_GOLD,
     OCEAN_BLUE,
     INDIGO_CYAN,
-    CHARCOAL_DARK;
+    CHARCOAL_DARK,
+    IRIS_GLOW;
 
     fun getColors(): CalculatorThemeColors {
         return when (this) {
@@ -402,6 +403,28 @@ enum class CalculatorThemeType {
                 isDark = true,
                 themeName = "Charcoal Dark",
                 themeNameBn = "চারকোল ডার্ক"
+            )
+            IRIS_GLOW -> CalculatorThemeColors(
+                background = Color(0xFFF7F8FE),
+                displayBackground = Color(0xFFEFF1FE),
+                displayText = Color(0xFF1E2156),
+                displayExpressionText = Color(0xFF53589B),
+                buttonNormalBg = Color(0xFFFFFFFF),
+                buttonNormalText = Color(0xFF1E2156),
+                buttonOperatorBg = Color(0xFFEBEDFE),
+                buttonOperatorText = Color(0xFF767FF6),
+                buttonFunctionBg = Color(0xFFF3F4FE),
+                buttonFunctionText = Color(0xFF5A63EA),
+                buttonEqualBg = Color(0xFF767FF6),
+                buttonEqualText = Color(0xFFFFFFFF),
+                cardBg = Color(0xFFFFFFFF),
+                unselectedItemText = Color(0xFF53589B),
+                navBarBg = Color(0xFF767FF6),
+                titleBarBg = Color(0xFF767FF6),
+                chipBg = Color(0xFFEBEDFE),
+                isDark = false,
+                themeName = "Iris Glow",
+                themeNameBn = "আইরিস গ্লো"
             )
         }
     }

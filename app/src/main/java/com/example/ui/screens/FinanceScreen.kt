@@ -146,6 +146,8 @@ fun FinanceScreen(
     var showAddDialog by remember { mutableStateOf(false) }
     var editingTransaction by remember { mutableStateOf<FinanceTransaction?>(null) }
     var showDeleteConfirmDialog by remember { mutableStateOf<FinanceTransaction?>(null) }
+    var deleteContactTarget by remember { mutableStateOf<ContactPerson?>(null) }
+    var showMultiDeleteConfirmDialog by remember { mutableStateOf(false) }
     var showClearAllConfirm by remember { mutableStateOf(false) }
     var selectedTransactionDetails by remember { mutableStateOf<FinanceTransaction?>(null) }
     var showTargetEditDialog by remember { mutableStateOf(false) }
@@ -418,11 +420,9 @@ fun FinanceScreen(
                             // Delete Button
                             IconButton(
                                 onClick = {
-                                    selectedIds.forEach { id ->
-                                        viewModel.deleteFinanceTransaction(id)
+                                    if (selectedIds.isNotEmpty()) {
+                                        showMultiDeleteConfirmDialog = true
                                     }
-                                    selectedIds = emptySet()
-                                    Toast.makeText(context, if (isBn) "নির্বাচিত লেনদেনগুলো মুছে ফেলা হয়েছে" else "Selected transactions deleted", Toast.LENGTH_SHORT).show()
                                 }
                             ) {
                                 Icon(
@@ -543,13 +543,13 @@ fun FinanceScreen(
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Column(verticalArrangement = Arrangement.spacedBy((-3).dp)) {
+                                    Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
                                         Text(
                                             text = if (isBn) "আয়ঃ" else "Income:",
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = Color.White.copy(alpha = 0.85f),
-                                            lineHeight = 12.sp
+                                            lineHeight = 13.sp
                                         )
                                         Text(
                                             text = formatAmount(totalIncome),
@@ -573,13 +573,13 @@ fun FinanceScreen(
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Column(verticalArrangement = Arrangement.spacedBy((-3).dp)) {
+                                    Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
                                         Text(
                                             text = if (isBn) "ব্যয়ঃ" else "Expense:",
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = Color.White.copy(alpha = 0.85f),
-                                            lineHeight = 12.sp
+                                            lineHeight = 13.sp
                                         )
                                         Text(
                                             text = formatAmount(totalExpense),
@@ -624,13 +624,13 @@ fun FinanceScreen(
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Column(verticalArrangement = Arrangement.spacedBy((-3).dp)) {
+                                    Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
                                         Text(
                                             text = if (isBn) "দেনাঃ" else "Debt:",
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = Color.White.copy(alpha = 0.85f),
-                                            lineHeight = 12.sp
+                                            lineHeight = 13.sp
                                         )
                                         Text(
                                             text = formatAmount(debtTaken),
@@ -654,13 +654,13 @@ fun FinanceScreen(
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Column(verticalArrangement = Arrangement.spacedBy((-3).dp)) {
+                                    Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
                                         Text(
                                             text = if (isBn) "পাওনাঃ" else "Loan:",
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = Color.White.copy(alpha = 0.85f),
-                                            lineHeight = 12.sp
+                                            lineHeight = 13.sp
                                         )
                                         Text(
                                             text = formatAmount(loanGiven),
@@ -716,20 +716,20 @@ fun FinanceScreen(
                                     tint = Color.White,
                                     modifier = Modifier.size(19.dp)
                                 )
-                                Column(verticalArrangement = Arrangement.spacedBy((-3).dp)) {
+                                Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
                                     Text(
                                         text = if (isBn) "ব্যালেন্সঃ" else "Balance:",
                                         fontSize = 10.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color.White.copy(alpha = 0.85f),
-                                        lineHeight = 11.sp
+                                        lineHeight = 12.sp
                                     )
                                     Text(
                                         text = formatAmount(netBalance),
                                         fontSize = 13.5.sp,
                                         fontWeight = FontWeight.ExtraBold,
                                         color = Color.White,
-                                        lineHeight = 15.sp
+                                        lineHeight = 16.sp
                                     )
                                 }
                             }
@@ -756,20 +756,20 @@ fun FinanceScreen(
                                     tint = Color.White,
                                     modifier = Modifier.size(19.dp)
                                 )
-                                Column(verticalArrangement = Arrangement.spacedBy((-3).dp)) {
+                                Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
                                     Text(
                                         text = if (isBn) "সঞ্চয়ঃ" else "Savings:",
                                         fontSize = 10.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color.White.copy(alpha = 0.85f),
-                                        lineHeight = 11.sp
+                                        lineHeight = 12.sp
                                     )
                                     Text(
                                         text = formatAmount(totalSavings),
                                         fontSize = 13.5.sp,
                                         fontWeight = FontWeight.ExtraBold,
                                         color = Color.White,
-                                        lineHeight = 15.sp
+                                        lineHeight = 16.sp
                                     )
                                 }
                             }
@@ -1709,9 +1709,7 @@ fun FinanceScreen(
 
                                             IconButton(
                                                 onClick = {
-                                                    val newList = contactsList.filter { it.id != contact.id }
-                                                    saveContacts(context, newList)
-                                                    contactsList = newList
+                                                    deleteContactTarget = contact
                                                 },
                                                 modifier = Modifier.size(32.dp)
                                             ) {
@@ -1912,11 +1910,12 @@ fun FinanceScreen(
                         },
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 10.dp)
                     ) {
-                        Icon(Icons.Default.Share, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(if (isBn) "শেয়ার" else "Share", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Icon(Icons.Default.Share, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(if (isBn) "শেয়ার" else "Share", color = Color.White, fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
                     }
 
                     // Edit button
@@ -1928,11 +1927,27 @@ fun FinanceScreen(
                         },
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg.copy(alpha = 0.15f)),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 10.dp)
                     ) {
-                        Icon(Icons.Default.Edit, contentDescription = null, tint = themeColors.buttonEqualBg, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(if (isBn) "এডিট" else "Edit", color = themeColors.buttonEqualBg, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Icon(Icons.Default.Edit, contentDescription = null, tint = themeColors.buttonEqualBg, modifier = Modifier.size(15.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(if (isBn) "এডিট" else "Edit", color = themeColors.buttonEqualBg, fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
+                    }
+
+                    // Delete button
+                    Button(
+                        onClick = {
+                            showDeleteConfirmDialog = item
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444).copy(alpha = 0.15f)),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 10.dp)
+                    ) {
+                        Icon(Icons.Default.Delete, contentDescription = null, tint = Color(0xFFDC2626), modifier = Modifier.size(15.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(if (isBn) "মুছুন" else "Delete", color = Color(0xFFDC2626), fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             },
@@ -1946,64 +1961,82 @@ fun FinanceScreen(
         )
     }
 
-    // Delete confirmation
+    // 1. Delete single transaction with Numeric Captcha Confirmation
     if (showDeleteConfirmDialog != null) {
         val target = showDeleteConfirmDialog!!
-        AlertDialog(
-            onDismissRequest = { showDeleteConfirmDialog = null },
-            title = { Text(if (isBn) "লেনদেন মুছে ফেলবেন?" else "Delete Transaction?", color = themeColors.displayText, fontWeight = FontWeight.Bold) },
-            text = { Text(if (isBn) "\"${target.title}\" লেনদেনটি তালিকা থেকে স্থায়ীভাবে মুছে ফেলা হবে।" else "Are you sure you want to delete \"${target.title}\"?", color = themeColors.displayText) },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        viewModel.deleteFinanceTransaction(target.id)
-                        if (selectedTransactionDetails?.id == target.id) {
-                            selectedTransactionDetails = null
-                        }
-                        showDeleteConfirmDialog = null
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444)),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text(if (isBn) "মুছে ফেলুন" else "Delete", color = Color.White, fontWeight = FontWeight.Bold)
+        NumericCaptchaDeleteDialog(
+            title = if (isBn) "লেনদেন মুছে ফেলবেন?" else "Delete Transaction?",
+            message = if (isBn) "\"${target.title}\" (${formatAmount(target.amount)}) লেনদেনটি স্থায়ীভাবে মুছে ফেলতে নিচের সংখ্যা ক্যাপচা কোডটি পূরণ করুন।" else "Enter the numeric security captcha below to delete transaction \"${target.title}\" (${formatAmount(target.amount)}).",
+            isBn = isBn,
+            themeColors = themeColors,
+            onDismiss = { showDeleteConfirmDialog = null },
+            onConfirmDelete = {
+                viewModel.deleteFinanceTransaction(target.id)
+                if (selectedTransactionDetails?.id == target.id) {
+                    selectedTransactionDetails = null
                 }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteConfirmDialog = null }) {
-                    Text(if (isBn) "বাতিল" else "Cancel", color = themeColors.displayText)
-                }
-            },
-            containerColor = themeColors.cardBg,
-            shape = RoundedCornerShape(20.dp)
+                showDeleteConfirmDialog = null
+                Toast.makeText(context, if (isBn) "লেনদেনটি সফলভাবে মুছে ফেলা হয়েছে" else "Transaction deleted successfully", Toast.LENGTH_SHORT).show()
+            }
         )
     }
 
-    // Clear All Confirmation Dialog
+    // 2. Delete contact person with Numeric Captcha Confirmation
+    if (deleteContactTarget != null) {
+        val target = deleteContactTarget!!
+        NumericCaptchaDeleteDialog(
+            title = if (isBn) "ব্যক্তি মুছে ফেলবেন?" else "Delete Contact Person?",
+            message = if (isBn) "\"${target.name}\" কে তালিকা থেকে স্থায়ীভাবে মুছে ফেলতে নিচের সংখ্যা ক্যাপচা কোডটি পূরণ করুন।" else "Enter the numeric security captcha below to delete contact \"${target.name}\".",
+            isBn = isBn,
+            themeColors = themeColors,
+            onDismiss = { deleteContactTarget = null },
+            onConfirmDelete = {
+                val newList = contactsList.filter { it.id != target.id }
+                saveContacts(context, newList)
+                contactsList = newList
+                deleteContactTarget = null
+                Toast.makeText(context, if (isBn) "ব্যক্তি সফলভাবে মুছে ফেলা হয়েছে" else "Contact deleted successfully", Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
+
+    // 3. Multi-select Delete with Numeric Captcha Confirmation
+    if (showMultiDeleteConfirmDialog) {
+        NumericCaptchaDeleteDialog(
+            title = if (isBn) "নির্বাচিত লেনদেন মুছে ফেলবেন?" else "Delete Selected Transactions?",
+            message = if (isBn) "নির্বাচিত ${if (isBn) toBanglaDigits(selectedIds.size.toString()) else selectedIds.size.toString()} টি লেনদেন মুছে ফেলতে নিচের সংখ্যা ক্যাপচা কোডটি পূরণ করুন।" else "Enter the numeric security captcha below to delete ${selectedIds.size} selected transactions.",
+            isBn = isBn,
+            themeColors = themeColors,
+            onDismiss = { showMultiDeleteConfirmDialog = false },
+            onConfirmDelete = {
+                selectedIds.forEach { id ->
+                    viewModel.deleteFinanceTransaction(id)
+                }
+                if (selectedTransactionDetails != null && selectedIds.contains(selectedTransactionDetails!!.id)) {
+                    selectedTransactionDetails = null
+                }
+                val count = selectedIds.size
+                selectedIds = emptySet()
+                showMultiDeleteConfirmDialog = false
+                Toast.makeText(context, if (isBn) "$count টি লেনদেন সফলভাবে মুছে ফেলা হয়েছে" else "Selected transactions deleted", Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
+
+    // 4. Clear All Confirmation Dialog with Numeric Captcha
     if (showClearAllConfirm) {
-        AlertDialog(
-            onDismissRequest = { showClearAllConfirm = false },
-            title = { Text(if (isBn) "সব লেনদেন মুছে ফেলবেন?" else "Clear All Transactions?", color = themeColors.displayText, fontWeight = FontWeight.Bold) },
-            text = { Text(if (isBn) "আপনার সমস্ত ফিন্যান্সিয়াল লেনদেনের তথ্য ডিলিট হয়ে যাবে।" else "This will delete all saved income, expense, and loan records.", color = themeColors.displayText) },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        viewModel.clearAllFinanceTransactions()
-                        selectedTransactionDetails = null
-                        showClearAllConfirm = false
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444)),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text(if (isBn) "সব মুছুন" else "Clear All", color = Color.White, fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showClearAllConfirm = false }) {
-                    Text(if (isBn) "বাতিল" else "Cancel", color = themeColors.displayText)
-                }
-            },
-            containerColor = themeColors.cardBg,
-            shape = RoundedCornerShape(20.dp)
+        NumericCaptchaDeleteDialog(
+            title = if (isBn) "সব লেনদেন মুছে ফেলবেন?" else "Clear All Transactions?",
+            message = if (isBn) "আপনার সমস্ত আয়, ব্যয়, দেনা ও পাওনার তথ্য মুছে ফেলার জন্য নিচের সংখ্যা ক্যাপচা কোডটি পূরণ করুন।" else "Enter the numeric security captcha below to permanently wipe all finance records.",
+            isBn = isBn,
+            themeColors = themeColors,
+            onDismiss = { showClearAllConfirm = false },
+            onConfirmDelete = {
+                viewModel.clearAllFinanceTransactions()
+                selectedTransactionDetails = null
+                showClearAllConfirm = false
+                Toast.makeText(context, if (isBn) "সমস্ত লেনদেন সফলভাবে মুছে ফেলা হয়েছে" else "All records cleared", Toast.LENGTH_SHORT).show()
+            }
         )
     }
 
@@ -2274,29 +2307,26 @@ fun TransactionCard(
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            // Text and Info Column
+            // Text and Info Column extending all the way to the right
             Column(
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.5.dp)
             ) {
-                // Title Line (extends full width to the right margin of the info area)
-                Text(
-                    text = item.title,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = titleTextColor,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                // Badges and Date Row
+                // Line 1: Title & Category / Subcategory Badges (extends full width to the right margin)
                 Row(
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    modifier = Modifier.fillMaxWidth()
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
+                    Text(
+                        text = item.title,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = titleTextColor,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+
                     // Type Badge
                     Box(
                         modifier = Modifier
@@ -2306,7 +2336,7 @@ fun TransactionCard(
                     ) {
                         Text(
                             text = typeBadgeText,
-                            fontSize = 8.sp,
+                            fontSize = 8.5.sp,
                             fontWeight = FontWeight.Bold,
                             color = typeBadgeTextCol
                         )
@@ -2321,7 +2351,7 @@ fun TransactionCard(
                     ) {
                         Text(
                             text = item.category,
-                            fontSize = 8.sp,
+                            fontSize = 8.5.sp,
                             fontWeight = FontWeight.Bold,
                             color = categoryTextCol
                         )
@@ -2341,34 +2371,37 @@ fun TransactionCard(
                         ) {
                             Text(
                                 text = if (item.isSettled) (if (isBn) "পরিশোধিত" else "Settled") else (if (isBn) "বকেয়া" else "Pending"),
-                                fontSize = 8.sp,
+                                fontSize = 8.5.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = if (item.isSettled) Color(0xFF2E7D32) else Color(0xFFF57F17)
                             )
                         }
                     }
+                }
 
-                    Spacer(modifier = Modifier.weight(1f))
-
+                // Line 2: Timestamp on left and Amount on right
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
                     // Timestamp
                     Text(
                         text = timeString,
-                        fontSize = 10.5.sp,
-                        color = themeColors.displayText.copy(alpha = 0.5f)
+                        fontSize = 11.sp,
+                        color = themeColors.displayText.copy(alpha = 0.55f)
+                    )
+
+                    // Amount
+                    Text(
+                        text = (if (isMinus) "-" else "+") + formatAmount(item.amount),
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = color,
+                        textAlign = TextAlign.End
                     )
                 }
             }
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            // Amount Column on the far right
-            Text(
-                text = (if (isMinus) "-" else "+") + formatAmount(item.amount),
-                fontSize = 15.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = color,
-                textAlign = TextAlign.End
-            )
         }
     }
 }
@@ -2917,3 +2950,241 @@ data class Quadruple<A, B, C, D>(
     val third: C,
     val fourth: D
 )
+
+fun toBanglaDigits(str: String): String {
+    return str.map { ch ->
+        when (ch) {
+            '0' -> '০'
+            '1' -> '১'
+            '2' -> '২'
+            '3' -> '৩'
+            '4' -> '৪'
+            '5' -> '৫'
+            '6' -> '৬'
+            '7' -> '৭'
+            '8' -> '৮'
+            '9' -> '৯'
+            else -> ch
+        }
+    }.joinToString("")
+}
+
+@Composable
+fun NumericCaptchaDeleteDialog(
+    title: String,
+    message: String,
+    isBn: Boolean,
+    themeColors: CalculatorThemeColors,
+    onDismiss: () -> Unit,
+    onConfirmDelete: () -> Unit
+) {
+    var captchaCode by remember { mutableStateOf((1000..9999).random().toString()) }
+    var inputCode by remember { mutableStateOf("") }
+    var hasError by remember { mutableStateOf(false) }
+
+    val normalizedInput = remember(inputCode) {
+        inputCode.map { ch ->
+            when (ch) {
+                '০' -> '0'; '১' -> '1'; '২' -> '2'; '৩' -> '3'; '৪' -> '4'
+                '৫' -> '5'; '৬' -> '6'; '৭' -> '7'; '৮' -> '8'; '৯' -> '9'
+                else -> ch
+            }
+        }.joinToString("").trim()
+    }
+    val isMatched = normalizedInput == captchaCode
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Box(
+                modifier = Modifier
+                    .size(52.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFFEF4444).copy(alpha = 0.15f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.DeleteForever,
+                    contentDescription = null,
+                    tint = Color(0xFFDC2626),
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+        },
+        title = {
+            Text(
+                text = title,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = themeColors.displayText,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = message,
+                    fontSize = 13.sp,
+                    color = themeColors.displayText.copy(alpha = 0.85f),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                    lineHeight = 18.sp
+                )
+
+                // Captcha display banner
+                Surface(
+                    color = themeColors.displayText.copy(alpha = 0.04f),
+                    shape = RoundedCornerShape(14.dp),
+                    border = BorderStroke(1.dp, Color(0xFFEF4444).copy(alpha = 0.35f)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Security,
+                                    contentDescription = null,
+                                    tint = Color(0xFFDC2626),
+                                    modifier = Modifier.size(13.dp)
+                                )
+                                Text(
+                                    text = if (isBn) "নিরাপত্তা কোড (ক্যাপচা):" else "Security Captcha Code:",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = themeColors.displayText.copy(alpha = 0.7f)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = if (isBn) toBanglaDigits(captchaCode) else captchaCode,
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                letterSpacing = 5.sp,
+                                color = Color(0xFFDC2626)
+                            )
+                        }
+
+                        IconButton(
+                            onClick = {
+                                captchaCode = (1000..9999).random().toString()
+                                inputCode = ""
+                                hasError = false
+                            },
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(themeColors.buttonEqualBg.copy(alpha = 0.1f))
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = "Refresh Captcha",
+                                tint = themeColors.buttonEqualBg,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+                }
+
+                // Captcha Input Field
+                OutlinedTextField(
+                    value = inputCode,
+                    onValueChange = {
+                        inputCode = it.filter { char -> char.isDigit() || (isBn && "০১২৩৪৫৬৭৮৯".contains(char)) }.take(6)
+                        hasError = false
+                    },
+                    label = {
+                        Text(
+                            text = if (isBn) "ক্যাপচা কোড লিখুন" else "Enter captcha code",
+                            fontSize = 12.sp
+                        )
+                    },
+                    placeholder = {
+                        Text(
+                            text = if (isBn) toBanglaDigits(captchaCode) else captchaCode,
+                            fontSize = 13.sp,
+                            color = themeColors.displayText.copy(alpha = 0.3f)
+                        )
+                    },
+                    singleLine = true,
+                    isError = hasError,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = if (isMatched) Color(0xFF16A34A) else Color(0xFFDC2626),
+                        unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f),
+                        errorBorderColor = Color(0xFFDC2626),
+                        focusedTextColor = themeColors.displayText,
+                        unfocusedTextColor = themeColors.displayText
+                    )
+                )
+
+                if (hasError) {
+                    Text(
+                        text = if (isBn) "❌ ক্যাপচা কোড মিলেনি! সঠিক কোডটি দিন।" else "❌ Captcha code does not match!",
+                        color = Color(0xFFDC2626),
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.Medium,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (isMatched) {
+                        onConfirmDelete()
+                    } else {
+                        hasError = true
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isMatched) Color(0xFFDC2626) else Color(0xFFDC2626).copy(alpha = 0.85f)
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = if (isBn) "মুছে ফেলুন" else "Delete",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(
+                    text = if (isBn) "বাতিল" else "Cancel",
+                    color = themeColors.displayText.copy(alpha = 0.75f),
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        },
+        containerColor = themeColors.cardBg,
+        shape = RoundedCornerShape(24.dp)
+    )
+}

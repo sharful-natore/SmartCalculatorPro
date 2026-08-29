@@ -301,7 +301,7 @@ fun SmartConverterCategoriesView(
             FilterChipItem(
                 label = LanguageManager.getString("all", viewModel.selectedLanguage),
                 isSelected = selectedFilter == null,
-                icon = Icons.Default.Apps,
+                icon = Icons.Default.GridView,
                 themeColors = themeColors,
                 count = allConverters.size,
                 onClick = { viewModel.selectedCategoryFilter = null }
@@ -432,7 +432,7 @@ fun SmartConverterCategoriesView(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Icon(
-                                            imageVector = Icons.Default.Apps,
+                                            imageVector = Icons.Default.GridView,
                                             contentDescription = null,
                                             tint = themeColors.buttonEqualBg,
                                             modifier = Modifier.size(14.dp)
