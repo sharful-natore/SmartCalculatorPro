@@ -41,14 +41,14 @@ object LanguageManager {
                 AppLanguage.CHINESE -> "单位转换器"
             }
             "title_history" -> when (language) {
-                AppLanguage.ENGLISH -> "Calculation History"
-                AppLanguage.BENGALI -> "হিসাবের ইতিহাস"
-                AppLanguage.HINDI -> "गणना इतिहास"
+                AppLanguage.ENGLISH -> "Financial Statement"
+                AppLanguage.BENGALI -> "আর্থিক বিবরণী"
+                AppLanguage.HINDI -> "खाता इतिहास"
                 AppLanguage.ARABIC -> "سجل الحسابات"
-                AppLanguage.FRENCH -> "Historique des calculs"
-                AppLanguage.SPANISH -> "Historial de cálculos"
-                AppLanguage.GERMAN -> "Berechnungsverlauf"
-                AppLanguage.CHINESE -> "计算历史"
+                AppLanguage.FRENCH -> "Historique des comptes"
+                AppLanguage.SPANISH -> "Historial de cuentas"
+                AppLanguage.GERMAN -> "Kontenverlauf"
+                AppLanguage.CHINESE -> "账户历史"
             }
             "title_dashboard" -> when (language) {
                 AppLanguage.ENGLISH -> "ToolsMate Dashboard"
