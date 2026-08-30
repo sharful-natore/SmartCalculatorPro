@@ -967,6 +967,20 @@ data class CvData(
     val bulletStyle: String = "BULLET" // "BULLET", "DASH", "SQUARE", "DIAMOND", "COMMA", "PIPE", "NONE"
 )
 
+private fun getFormattedDegreeText(edu: CvEducationItem): String {
+    val level = if (edu.examLevel.isNotBlank() && edu.examLevel != "Others") edu.examLevel else edu.degree
+    val major = if (edu.subjectMajor.isNotBlank() && edu.subjectMajor != "Others" && edu.subjectMajor != "General") edu.subjectMajor else ""
+    return if (level.isNotBlank()) {
+        if (major.isNotBlank()) {
+            "$level in $major"
+        } else {
+            level
+        }
+    } else {
+        major.ifBlank { "Degree" }
+    }
+}
+
 // ================= CLEAN ATS SYSTEM TYPEFACES (PREVENT SYSTEM FONT OVERRIDE) =================
 private object CleanPdfTypefaces {
     val sansRegular: Typeface by lazy {
@@ -2423,13 +2437,13 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
             isAntiAlias = true
             color = AndroidColor.WHITE
             textSize = 8.8f
-            typeface = Typeface.create("sans-serif", Typeface.NORMAL)
+            typeface = CleanPdfTypefaces.sansRegular
         }
         val sideTitlePaint = TextPaint().apply {
             isAntiAlias = true
             color = AndroidColor.WHITE
             textSize = 10.5f
-            typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+            typeface = CleanPdfTypefaces.sansMedium
         }
 
         var sideY = margin
@@ -2626,11 +2640,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                 if (idx == 0) {
                     drawMainSectionHeader("EDUCATION")
                 }
-                val degreePart = if (edu.examLevel.isNotBlank() && edu.examLevel != "Others") {
-                    if (edu.subjectMajor.isNotBlank() && edu.subjectMajor != "General" && edu.subjectMajor != "Others") {
-                        "${edu.examLevel} (${edu.subjectMajor})"
-                    } else edu.examLevel
-                } else edu.degree
+                val degreePart = getFormattedDegreeText(edu)
                 val eduTitle = if (degreePart.isNotBlank() && edu.institution.isNotBlank()) "$degreePart — ${edu.institution}" else degreePart.ifBlank { edu.institution }
                 
                 val resultText = if (edu.resultType.isNotBlank() && edu.result.isNotBlank()) "${edu.resultType}: ${edu.result}" else edu.result
@@ -2708,19 +2718,19 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
             isAntiAlias = true
             color = AndroidColor.WHITE
             textSize = 19f
-            typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+            typeface = CleanPdfTypefaces.sansMedium
         }
         val bannerSubPaint = TextPaint().apply {
             isAntiAlias = true
             color = AndroidColor.parseColor("#F1F5F9")
             textSize = 11f
-            typeface = Typeface.create("sans-serif", Typeface.NORMAL)
+            typeface = CleanPdfTypefaces.sansRegular
         }
         val bannerContactPaint = TextPaint().apply {
             isAntiAlias = true
             color = AndroidColor.parseColor("#CBD5E1")
             textSize = 8.8f
-            typeface = Typeface.create("sans-serif", Typeface.NORMAL)
+            typeface = CleanPdfTypefaces.sansRegular
         }
 
         if (data.fullName.isNotBlank()) {
@@ -2771,7 +2781,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                 isAntiAlias = true
                 color = AndroidColor.BLACK
                 textSize = 21f
-                typeface = Typeface.create("serif", Typeface.BOLD)
+                typeface = CleanPdfTypefaces.serifBold
                 textAlign = Paint.Align.CENTER
             }
             canvas.drawText(data.fullName.uppercase(), pageWidth / 2f, headY + 18f, hTitlePaint)
@@ -2782,7 +2792,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                 isAntiAlias = true
                 color = AndroidColor.parseColor("#374151")
                 textSize = 11f
-                typeface = Typeface.create("serif", Typeface.NORMAL)
+                typeface = CleanPdfTypefaces.serifRegular
                 textAlign = Paint.Align.CENTER
             }
             canvas.drawText(data.jobTitle, pageWidth / 2f, headY + 10f, hSubPaint)
@@ -2801,7 +2811,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                 isAntiAlias = true
                 color = AndroidColor.parseColor("#4B5563")
                 textSize = 9.2f
-                typeface = Typeface.create("serif", Typeface.NORMAL)
+                typeface = CleanPdfTypefaces.serifRegular
                 textAlign = Paint.Align.CENTER
             }
             canvas.drawText(contactLine, pageWidth / 2f, headY + 8f, hContactPaint)
@@ -2839,7 +2849,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
             isAntiAlias = true
             color = subTextColor
             textSize = 8.8f
-            typeface = Typeface.create("sans-serif", Typeface.NORMAL)
+            typeface = CleanPdfTypefaces.sansRegular
         }
         if (data.phone.isNotBlank()) {
             drawMaterialVectorIcon(canvas, "phone", margin + halfW + 12f, rby - 8f, 8.5f, primaryColor)
@@ -2905,7 +2915,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                 isAntiAlias = true
                 color = primaryColor
                 textSize = 21f
-                typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+                typeface = CleanPdfTypefaces.sansMedium
                 textAlign = Paint.Align.CENTER
             }
             canvas.drawText(data.fullName.uppercase(), pageWidth / 2f, headY + 16f, canvaTitlePaint)
@@ -2917,7 +2927,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                 isAntiAlias = true
                 color = subTextColor
                 textSize = 10.5f
-                typeface = Typeface.create("sans-serif", Typeface.NORMAL)
+                typeface = CleanPdfTypefaces.sansRegular
                 textAlign = Paint.Align.CENTER
             }
             canvas.drawText(data.jobTitle, pageWidth / 2f, headY + 10f, canvaSubPaint)
@@ -2936,7 +2946,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                 isAntiAlias = true
                 color = subTextColor
                 textSize = 8.8f
-                typeface = Typeface.create("sans-serif", Typeface.NORMAL)
+                typeface = CleanPdfTypefaces.sansRegular
                 textAlign = Paint.Align.CENTER
             }
             canvas.drawText(contactLine, pageWidth / 2f, headY + 8f, cPaint)
@@ -2962,7 +2972,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
             isAntiAlias = true
             color = AndroidColor.parseColor("#0F172A")
             textSize = 20f
-            typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+            typeface = CleanPdfTypefaces.sansMedium
         }
         if (data.fullName.isNotBlank()) {
             canvas.drawText(data.fullName.uppercase(), margin + 14f, ty + 15f, tTitlePaint)
@@ -2984,7 +2994,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                 isAntiAlias = true
                 color = AndroidColor.parseColor("#475569")
                 textSize = 8.6f
-                typeface = Typeface.create("monospace", Typeface.NORMAL)
+                typeface = Typeface.create(Typeface.MONOSPACE, Typeface.NORMAL)
             }
             canvas.drawText(contactLine, margin + 14f, ty + 8f, tcPaint)
         }
@@ -3004,7 +3014,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                 isAntiAlias = true
                 color = AndroidColor.BLACK
                 textSize = 22f
-                typeface = Typeface.create("serif", Typeface.BOLD)
+                typeface = CleanPdfTypefaces.serifBold
                 textAlign = Paint.Align.CENTER
             }
             canvas.drawText(data.fullName.uppercase(), pageWidth / 2f, ey + 18f, exeTitlePaint)
@@ -3015,7 +3025,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                 isAntiAlias = true
                 color = AndroidColor.parseColor("#262626")
                 textSize = 10.5f
-                typeface = Typeface.create("serif", Typeface.NORMAL)
+                typeface = CleanPdfTypefaces.serifRegular
                 textAlign = Paint.Align.CENTER
             }
             canvas.drawText(data.jobTitle, pageWidth / 2f, ey + 10f, exeSubPaint)
@@ -3033,7 +3043,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                 isAntiAlias = true
                 color = AndroidColor.parseColor("#404040")
                 textSize = 8.8f
-                typeface = Typeface.create("serif", Typeface.NORMAL)
+                typeface = CleanPdfTypefaces.serifRegular
                 textAlign = Paint.Align.CENTER
             }
             canvas.drawText(contactLine, pageWidth / 2f, ey + 8f, exeCPaint)
@@ -3356,7 +3366,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                     if (isAtsTextLayout) {
                         val sortedEdu = data.educations.sortedByDescending { it.passingYear.toIntOrNull() ?: 0 }
                         sortedEdu.forEach { edu ->
-                            val degreeText = edu.degree
+                            val degreeText = getFormattedDegreeText(edu)
                             val instText = "${edu.institution}${if (edu.result.isNotBlank()) "  •  ${edu.result}" else ""}"
                             val yearText = edu.passingYear
 
@@ -3431,24 +3441,33 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
 
                         val sortedEdu = data.educations.sortedByDescending { it.passingYear.toIntOrNull() ?: 0 }
                         sortedEdu.forEach { edu ->
-                            val examText = when {
-                                edu.degree.contains("MBA", ignoreCase = true) -> "MBA"
-                                edu.degree.contains("BBA", ignoreCase = true) -> "BBA"
-                                edu.degree.contains("HSC", ignoreCase = true) || edu.degree.contains("Higher Secondary", ignoreCase = true) -> "H.S.C"
-                                edu.degree.contains("SSC", ignoreCase = true) || edu.degree.contains("Secondary School", ignoreCase = true) -> "S.S.C"
-                                edu.degree.contains("B.Sc", ignoreCase = true) -> "B.Sc"
-                                edu.degree.contains("M.Sc", ignoreCase = true) -> "M.Sc"
-                                else -> edu.degree.take(15)
-                            }
-                            val subjectText = when {
-                                edu.degree.contains("Management", ignoreCase = true) -> "Management"
-                                edu.degree.contains("Business Studies", ignoreCase = true) -> "Business Studies"
-                                edu.degree.contains("Science", ignoreCase = true) -> "Science"
-                                edu.degree.contains("Commerce", ignoreCase = true) -> "Commerce"
-                                edu.degree.contains("Humanities", ignoreCase = true) || edu.degree.contains("Arts", ignoreCase = true) -> "Humanities"
-                                edu.degree.contains("in ", ignoreCase = true) -> edu.degree.substringAfter("in ").trim()
-                                else -> "General / " + edu.degree.take(12)
-                            }
+                            val examText = if (edu.examLevel.isNotBlank() && edu.examLevel != "Others") {
+                                edu.examLevel
+                            } else {
+                                when {
+                                    edu.degree.contains("MBA", ignoreCase = true) -> "MBA"
+                                    edu.degree.contains("BBA", ignoreCase = true) -> "BBA"
+                                    edu.degree.contains("HSC", ignoreCase = true) || edu.degree.contains("Higher Secondary", ignoreCase = true) -> "H.S.C"
+                                    edu.degree.contains("SSC", ignoreCase = true) || edu.degree.contains("Secondary School", ignoreCase = true) -> "S.S.C"
+                                    edu.degree.contains("B.Sc", ignoreCase = true) -> "B.Sc"
+                                    edu.degree.contains("M.Sc", ignoreCase = true) -> "M.Sc"
+                                    else -> edu.degree
+                                }
+                            }.take(20)
+
+                            val subjectText = if (edu.subjectMajor.isNotBlank() && edu.subjectMajor != "Others") {
+                                edu.subjectMajor
+                            } else {
+                                when {
+                                    edu.degree.contains("Management", ignoreCase = true) -> "Management"
+                                    edu.degree.contains("Business Studies", ignoreCase = true) -> "Business Studies"
+                                    edu.degree.contains("Science", ignoreCase = true) -> "Science"
+                                    edu.degree.contains("Commerce", ignoreCase = true) -> "Commerce"
+                                    edu.degree.contains("Humanities", ignoreCase = true) || edu.degree.contains("Arts", ignoreCase = true) -> "Humanities"
+                                    edu.degree.contains("in ", ignoreCase = true) -> edu.degree.substringAfter("in ").trim()
+                                    else -> "General"
+                                }
+                            }.take(30)
 
                             val examL = StaticLayout.Builder.obtain(examText, 0, examText.length, tableCellPaint, (colExamW - 6f).toInt()).build()
                             val instL = StaticLayout.Builder.obtain(edu.institution, 0, edu.institution.length, tableCellPaint, (colInstW - 6f).toInt()).build()
@@ -4191,6 +4210,8 @@ fun AtsCvBuilderTool(
     var aiPromptDefaultText by remember { mutableStateOf("") }
     var aiPromptTargetField by remember { mutableStateOf("") }
     var activeAiExperienceIndex by remember { mutableStateOf(-1) }
+    var activeCircularImageBytes by remember { mutableStateOf<ByteArray?>(null) }
+    var activeCircularImageMime by remember { mutableStateOf("") }
 
     val pdfImportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -4237,11 +4258,20 @@ fun AtsCvBuilderTool(
         }
     }
 
-    fun openAiPrompt(title: String, defaultPrompt: String, targetField: String, expIndex: Int = -1) {
+    fun openAiPrompt(
+        title: String,
+        defaultPrompt: String,
+        targetField: String,
+        expIndex: Int = -1,
+        imageBytes: ByteArray? = null,
+        imageMime: String = ""
+    ) {
         aiPromptTitle = title
         aiPromptDefaultText = defaultPrompt
         aiPromptTargetField = targetField
         activeAiExperienceIndex = expIndex
+        activeCircularImageBytes = imageBytes
+        activeCircularImageMime = imageMime
         showAiPromptDialog = true
     }
 
@@ -4262,6 +4292,10 @@ fun AtsCvBuilderTool(
 
     // Auto-render live PDF vector preview on changes or when switching tabs
     LaunchedEffect(cvData, previewRefreshKey, selectedTab) {
+        if (selectedTab != 5) {
+            return@LaunchedEffect
+        }
+        kotlinx.coroutines.delay(300)
         isPreviewRendering = true
         withContext(Dispatchers.IO) {
             try {
@@ -4394,8 +4428,17 @@ fun AtsCvBuilderTool(
 
                 scope.launch {
                     try {
-                        val sysPrompt = "You are an expert HR Manager and professional resume writer. Return formatted plain text or bullet points as appropriate for the requested section. Do not include markdown headers or unnecessary conversational filler."
-                        val resultText = callGeminiAiMultiModal(promptText, sysPrompt)
+                        val sysPrompt = when (aiPromptTargetField) {
+                            "CIRCULAR_MATCH" -> "You are a senior ATS Match consultant. Return ONLY valid JSON: {\"tailoredSummary\": \"...\", \"newSkills\": [\"Skill1\", \"Skill2\"]}"
+                            "FRESHER_COMPLETE" -> "You are a professional university career coach and top ATS resume consultant. Generate 4 high-impact resume sections for freshers. Output strictly valid JSON with keys: 'academicProjects', 'internshipsVolunteer', 'leadershipClubs', 'keyCoursework'."
+                            else -> "You are an expert HR Manager and professional resume writer. Return formatted plain text or bullet points as appropriate for the requested section. Do not include markdown headers or unnecessary conversational filler."
+                        }
+                        val resultText = callGeminiAiMultiModal(
+                            prompt = promptText,
+                            systemInstruction = sysPrompt,
+                            imageBytes = activeCircularImageBytes,
+                            mimeType = activeCircularImageMime
+                        )
 
                         withContext(Dispatchers.Main) {
                             when (aiPromptTargetField) {
@@ -4431,6 +4474,47 @@ fun AtsCvBuilderTool(
                                         fresherAcademicProjects = resultText.trim()
                                     ))
                                     showToast(if (isBn) "ফ্রেশার প্রজেক্ট সেকশন আপডেট হয়েছে!" else "Fresher section updated!")
+                                }
+                                "FRESHER_COMPLETE" -> {
+                                    try {
+                                        val cleanJson = resultText.substringAfter("{").substringBeforeLast("}").let { "{$it}" }
+                                        val obj = org.json.JSONObject(cleanJson)
+                                        updateCvDataState(cvData.copy(
+                                            isFresher = true,
+                                            fresherAcademicProjects = obj.optString("academicProjects", cvData.fresherAcademicProjects),
+                                            fresherInternshipsVolunteer = obj.optString("internshipsVolunteer", cvData.fresherInternshipsVolunteer),
+                                            fresherLeadershipClubs = obj.optString("leadershipClubs", cvData.fresherLeadershipClubs),
+                                            fresherKeyCoursework = obj.optString("keyCoursework", cvData.fresherKeyCoursework)
+                                        ))
+                                        showToast(if (isBn) "ফ্রেশার সেকশনগুলো সফলভাবে এআই দিয়ে প্রস্তুত হয়েছে!" else "Fresher sections generated successfully!")
+                                    } catch (e: Exception) {
+                                        showToast("Parsing Error: ${e.message}")
+                                    }
+                                }
+                                "CIRCULAR_MATCH" -> {
+                                    try {
+                                        val cleanJsonStr = resultText.substringAfter("{").substringBeforeLast("}").let { "{$it}" }
+                                        val jsonObj = org.json.JSONObject(cleanJsonStr)
+                                        val tailoredSummary = jsonObj.optString("tailoredSummary", cvData.summary)
+
+                                        val updatedSkills = cvData.skills.toMutableList()
+                                        jsonObj.optJSONArray("newSkills")?.let { arr ->
+                                            for (i in 0 until arr.length()) {
+                                                val skName = arr.getString(i)
+                                                if (updatedSkills.none { it.name.equals(skName, ignoreCase = true) }) {
+                                                    updatedSkills.add(CvSkillItem(name = skName, level = "Proficient"))
+                                                }
+                                            }
+                                        }
+
+                                        updateCvDataState(cvData.copy(
+                                            summary = tailoredSummary,
+                                            skills = updatedSkills
+                                        ))
+                                        showToast(if (isBn) "সার্কুলার অনুযায়ী প্রোফাইল সফলভাবে অটো-টিউন হয়েছে!" else "Profile auto-tailored to job circular successfully!")
+                                    } catch (e: Exception) {
+                                        showToast("Parsing Error: ${e.message}")
+                                    }
                                 }
                             }
                         }
@@ -4675,31 +4759,19 @@ fun AtsCvBuilderTool(
                         onGenerateSummaryAi = {
                             if (cvData.jobTitle.isBlank()) {
                                 showToast(if (isBn) "অনুগ্রহ করে পদবীটি টাইপ করুন" else "Please fill target designation first")
-                                return@ProfileAndPersonasTab
-                            }
-                            isAiLoading = true
-                            aiLoadingMessage = if (isBn) "✨ জেমিনি এআই আপনার ক্যারিয়ারের সারসংক্ষেপ ও অর্জনের ওপর ভিত্তি করে কন্টেন্ট রি-রাইট করছে..." else "✨ Gemini AI is designing an MBA specialized summary..."
-                            scope.launch {
-                                try {
-                                    // Take into account already entered information or brief description
-                                    val currentNotes = cvData.summary
-                                    val currentSkills = cvData.skills.joinToString { it.name }
-                                    val currentExperiences = cvData.experiences.joinToString { "${it.role} at ${it.company}" }
-
-                                    val prompt = "The candidate is Md. Shariful Islam, a Management/MBA Graduate. Target job title: '${cvData.jobTitle}'. " +
-                                            "Current partial profile summary is: '$currentNotes'. " +
-                                            "Key skills: '$currentSkills'. Work experiences: '$currentExperiences'. " +
-                                            "Task: Write a highly specialized, modern, professional, ATS-optimized executive summary of exactly 3 sentences. Enhance and expand any notes they have provided."
-                                    val sys = "You are an executive CV writer. Return ONLY the written professional summary text, with no preamble, quotes or markdown."
-
-                                    val aiResult = callGeminiAiMultiModal(prompt, sys)
-                                    updateCvDataState(cvData.copy(summary = aiResult.trim()))
-                                    showToast(if (isBn) "সফলভাবে কাস্টমাইজড সামারি জেনারেট হয়েছে!" else "Aesthetic summary tailored successfully!")
-                                } catch (e: Exception) {
-                                    showToast("AI Error: ${e.message}")
-                                } finally {
-                                    isAiLoading = false
-                                }
+                            } else {
+                                val currentNotes = cvData.summary
+                                val currentSkills = cvData.skills.joinToString { it.name }
+                                val currentExperiences = cvData.experiences.joinToString { "${it.role} at ${it.company}" }
+                                val defaultPrompt = "The candidate is ${cvData.fullName.ifBlank { "Md. Shariful Islam" }}, a Management/MBA Graduate. Target job title: '${cvData.jobTitle}'. " +
+                                        "Current partial profile summary is: '$currentNotes'. " +
+                                        "Key skills: '$currentSkills'. Work experiences: '$currentExperiences'. " +
+                                        "Task: Write a highly specialized, modern, professional, ATS-optimized executive summary of exactly 3 sentences. Enhance and expand any notes they have provided."
+                                openAiPrompt(
+                                    title = if (isBn) "ক্যারিয়ার সারসংক্ষেপ এআই প্রম্পট" else "AI Resume Summary Prompt",
+                                    defaultPrompt = defaultPrompt,
+                                    targetField = "SUMMARY"
+                                )
                             }
                         }
                     )
@@ -4711,57 +4783,32 @@ fun AtsCvBuilderTool(
                         themeColors = themeColors,
                         isBn = isBn,
                         onEnhanceBulletAi = { idx ->
-                            val exp = cvData.experiences.getOrNull(idx) ?: return@ExperienceTab
-                            if (exp.role.isBlank()) {
-                                showToast(if (isBn) "অনুগ্রহ করে পদবী উল্লেখ করুন" else "Please enter role title first")
-                                return@ExperienceTab
-                            }
-                            isAiLoading = true
-                            aiLoadingMessage = if (isBn) "✨ জেমিনি এআই আপনার কাজের বিবরণীটিকে আধুনিক ATS ও এক্সিকিউটিভ শব্দ দিয়ে সাজাচ্ছে..." else "✨ Gemini is phrasing ATS-driven professional action bullet points..."
-                            scope.launch {
-                                try {
-                                    val prompt = "Role: '${exp.role}' at '${exp.company}'. Current raw description/bullet points: '${exp.description}'. Rewrite into exactly 3 robust, results-focused executive action-verb bullets. Use metrics/percentages simulation if appropriate."
-                                    val sys = "You are an expert recruiter. Return ONLY 3 bullet lines starting with bullet symbol (•), no other conversation."
-                                    val aiResult = callGeminiAiMultiModal(prompt, sys)
-                                    val updatedExpList = cvData.experiences.toMutableList()
-                                    updatedExpList[idx] = exp.copy(description = aiResult.trim())
-                                    updateCvDataState(cvData.copy(experiences = updatedExpList))
-                                    showToast(if (isBn) "বুলেট পয়েন্ট নিখুঁতভাবে টিউন হয়েছে!" else "Bullet points tailored successfully!")
-                                } catch (e: Exception) {
-                                    showToast("AI Error: ${e.message}")
-                                } finally {
-                                    isAiLoading = false
+                            val exp = cvData.experiences.getOrNull(idx)
+                            if (exp != null) {
+                                if (exp.role.isBlank()) {
+                                    showToast(if (isBn) "অনুগ্রহ করে পদবী উল্লেখ করুন" else "Please enter role title first")
+                                } else {
+                                    val defaultPrompt = "Role: '${exp.role}' at '${exp.company}'. Current raw description/bullet points: '${exp.description}'. Rewrite into exactly 3 robust, results-focused executive action-verb bullets. Use metrics/percentages simulation if appropriate."
+                                    openAiPrompt(
+                                        title = if (isBn) "অভিজ্ঞতার বিবরণী এআই প্রম্পট" else "AI Experience Description Prompt",
+                                        defaultPrompt = defaultPrompt,
+                                        targetField = "EXPERIENCE",
+                                        expIndex = idx
+                                    )
                                 }
                             }
                         },
                         onGenerateFresherAi = {
-                            isAiLoading = true
-                            aiLoadingMessage = if (isBn) "✨ জেমিনি এআই ফ্রেশার সিভির জন্য প্রজেক্ট, ইন্টার্নশিপ, নেতৃত্ব ও কোর্সওয়ার্ক জেনারেট করছে..." else "✨ Gemini AI is generating high-impact fresher projects, leadership & coursework..."
-                            scope.launch {
-                                try {
-                                    val edu = cvData.educations.firstOrNull()?.degree ?: "BBA / B.Sc / H.S.C"
-                                    val inst = cvData.educations.firstOrNull()?.institution ?: "University / College"
-                                    val targetRole = if (cvData.jobTitle.isNotBlank()) cvData.jobTitle else "Management Trainee / Entry Level Executive"
-                                    val skills = cvData.skills.joinToString { it.name }
-                                    val sections = generateFresherCvSectionsWithGemini(edu, inst, targetRole, skills)
-                                    if (sections.isNotEmpty()) {
-                                        updateCvDataState(cvData.copy(
-                                            isFresher = true,
-                                            fresherAcademicProjects = sections["academicProjects"] ?: cvData.fresherAcademicProjects,
-                                            fresherInternshipsVolunteer = sections["internshipsVolunteer"] ?: cvData.fresherInternshipsVolunteer,
-                                            fresherLeadershipClubs = sections["leadershipClubs"] ?: cvData.fresherLeadershipClubs,
-                                            fresherKeyCoursework = sections["keyCoursework"] ?: cvData.fresherKeyCoursework
-                                        ))
-                                        showToast(if (isBn) "ফ্রেশার সেকশনগুলো সফলভাবে এআই দিয়ে প্রস্তুত হয়েছে!" else "Fresher sections generated successfully!")
-                                    } else {
-                                        showToast("Could not generate fresher sections, please check connection.")
-                                    }
-                                } catch (e: Exception) {
-                                    showToast("AI Error: ${e.message}")
-                                } finally {
-                                    isAiLoading = false
-                                }
-                            }
+                            val edu = cvData.educations.firstOrNull()?.degree ?: "BBA / B.Sc / H.S.C"
+                            val inst = cvData.educations.firstOrNull()?.institution ?: "University / College"
+                            val targetRole = if (cvData.jobTitle.isNotBlank()) cvData.jobTitle else "Management Trainee / Entry Level Executive"
+                            val skills = cvData.skills.joinToString { it.name }
+                            val defaultPrompt = "Degree: $edu\nInstitution: $inst\nTarget Role: $targetRole\nSkills: $skills"
+                            openAiPrompt(
+                                title = if (isBn) "ফ্রেশার এআই প্রম্পট" else "AI Fresher Customization Prompt",
+                                defaultPrompt = defaultPrompt,
+                                targetField = "FRESHER_COMPLETE"
+                            )
                         }
                     )
 
@@ -4792,63 +4839,32 @@ fun AtsCvBuilderTool(
                                 showToast(if (isBn) "অনুগ্রহ করে সার্কুলার টেক্সট দিন অথবা ছবি আপলোড করুন!" else "Please provide circular text or pick an image!")
                                 return@AiJobCircularMatchTab
                             }
-                            isAiLoading = true
-                            aiLoadingMessage = if (isBn) "✨ জেমিনি এআই সার্কুলারের টেক্সট ও ছবি বিশ্লেষণ করছে এবং আপনার সিভি অটো-টিউন করছে..." else "✨ Gemini AI is analyzing the circular image and text to tailor your resume..."
-                            scope.launch {
-                                try {
-                                    val promptBuilder = StringBuilder()
-                                    promptBuilder.append("Target job circular context:\n")
-                                    if (circularText.isNotBlank()) {
-                                        promptBuilder.append("Circular Text: $circularText\n")
-                                    }
-                                    if (imageBytes != null) {
-                                        promptBuilder.append("[An image of the job circular is also attached below for you to read details from]\n")
-                                    }
+                            updateCvDataState(cvData.copy(targetJobCircular = circularText))
 
-                                    promptBuilder.append("\nCandidate MBA Profile Summary: ${cvData.summary}\n")
-                                    promptBuilder.append("Skills: ${cvData.skills.joinToString { it.name }}\n")
-                                    promptBuilder.append("Current Experiences: ${cvData.experiences.joinToString { "${it.role} at ${it.company}" }}\n")
-                                    promptBuilder.append("\nTask:\n")
-                                    promptBuilder.append("1. Rewrite their summary to perfectly align with the circular, emphasizing skills they have that match the circular.\n")
-                                    promptBuilder.append("2. Suggest 5 additional key skills derived from the circular that match an MBA/Management candidate.\n")
-                                    promptBuilder.append("Return ONLY a JSON formatted block inside bracket structures, with keys 'tailoredSummary' (string) and 'newSkills' (array of strings).")
-
-                                    val sys = "You are a senior ATS Match consultant. Return ONLY valid JSON: {\"tailoredSummary\": \"...\", \"newSkills\": [\"Skill1\", \"Skill2\"]}"
-
-                                    val rawResult = callGeminiAiMultiModal(
-                                        prompt = promptBuilder.toString(),
-                                        systemInstruction = sys,
-                                        imageBytes = imageBytes,
-                                        mimeType = imageMime
-                                    )
-
-                                    val cleanJsonStr = rawResult.substringAfter("{").substringBeforeLast("}").let { "{$it}" }
-                                    val jsonObj = JSONObject(cleanJsonStr)
-                                    val tailoredSummary = jsonObj.optString("tailoredSummary", cvData.summary)
-
-                                    val updatedSkills = cvData.skills.toMutableList()
-                                    jsonObj.optJSONArray("newSkills")?.let { arr ->
-                                        for (i in 0 until arr.length()) {
-                                            val skName = arr.getString(i)
-                                            if (updatedSkills.none { it.name.equals(skName, ignoreCase = true) }) {
-                                                updatedSkills.add(CvSkillItem(name = skName, level = "Proficient"))
-                                            }
-                                        }
-                                    }
-
-                                    updateCvDataState(cvData.copy(
-                                        summary = tailoredSummary,
-                                        skills = updatedSkills,
-                                        targetJobCircular = circularText
-                                    ))
-                                    showToast(if (isBn) "অভিনন্দন! সার্কুলার অনুযায়ী আপনার সিভি টিউন সম্পন্ন হয়েছে।" else "CV tailored perfectly to circular!")
-                                    selectedTab = 5 // switch to preview
-                                } catch (e: Exception) {
-                                    showToast("AI Match Error: ${e.message}")
-                                } finally {
-                                    isAiLoading = false
-                                }
+                            val promptBuilder = StringBuilder()
+                            promptBuilder.append("Target job circular context:\n")
+                            if (circularText.isNotBlank()) {
+                                promptBuilder.append("Circular Text: $circularText\n")
                             }
+                            if (imageBytes != null) {
+                                promptBuilder.append("[An image of the job circular is also attached below for you to read details from]\n")
+                            }
+
+                            promptBuilder.append("\nCandidate MBA Profile Summary: ${cvData.summary}\n")
+                            promptBuilder.append("Skills: ${cvData.skills.joinToString { it.name }}\n")
+                            promptBuilder.append("Current Experiences: ${cvData.experiences.joinToString { "${it.role} at ${it.company}" }}\n")
+                            promptBuilder.append("\nTask:\n")
+                            promptBuilder.append("1. Rewrite their summary to perfectly align with the circular, emphasizing skills they have that match the circular.\n")
+                            promptBuilder.append("2. Suggest 5 additional key skills derived from the circular that match an MBA/Management candidate.\n")
+                            promptBuilder.append("Return ONLY a JSON formatted block inside bracket structures, with keys 'tailoredSummary' (string) and 'newSkills' (array of strings).")
+
+                            openAiPrompt(
+                                title = if (isBn) "সার্কুলার ম্যাচ এআই প্রম্পট" else "AI Job Circular Match Prompt",
+                                defaultPrompt = promptBuilder.toString(),
+                                targetField = "CIRCULAR_MATCH",
+                                imageBytes = imageBytes,
+                                imageMime = imageMime
+                            )
                         }
                     )
 
@@ -7104,7 +7120,7 @@ private fun PreviewAndExportTab(
             ) {
                 Icon(imageVector = Icons.Default.Download, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(6.dp))
-                Text(text = if (isBn) "HD PDF ডাউনলোড" else "Download PDF", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text(text = "PDF Download", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
 
             Spacer(modifier = Modifier.width(8.dp))
@@ -7137,7 +7153,7 @@ private fun PreviewAndExportTab(
             ) {
                 Icon(imageVector = Icons.Default.Description, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(6.dp))
-                Text(text = if (isBn) "HD DOCX ডাউনলোড" else "Download DOCX", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text(text = "Docx Download", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
 
             Spacer(modifier = Modifier.width(8.dp))
