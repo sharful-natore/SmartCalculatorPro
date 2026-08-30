@@ -75,99 +75,96 @@ enum class CvTemplateStyle(
     val isTwoColumn: Boolean = false
 ) {
     CLASSIC_CORPORATE(
-        "Classic Corporate",
-        "ক্লাসিক কর্পোরেট (ATS সেরা)",
-        "ব্যাংক, করপোরেট ও সরকারি চাকরির জন্য ১০০% টেক্সট-ফ্রেন্ডলি ঐতিহ্যবাহী লেআউট",
-        AndroidColor.parseColor("#1A365D")
+        "Classic Corporate (ATS BD)",
+        "ক্লাসিক কর্পোরেট (BD ATS Standard)",
+        "ব্যাংক, বিসিএস, মাল্টিন্যাশনাল ও করপোরেট চাকরির জন্য ১০০% নিখুঁত টেবিল-বেসড অফিশিয়াল ফরম্যাট",
+        AndroidColor.parseColor("#0F172A")
     ),
-    MODERN_MINIMALIST(
-        "Modern Minimalist",
-        "মডার্ন মিনিমালিস্ট",
-        "আইটি, সফটওয়্যার ও আধুনিক কোম্পানির জন্য পরিচ্ছন্ন ও নজরকাড়া ডিজাইন",
-        AndroidColor.parseColor("#0D9488")
+    CANVA_MINIMALIST_CLEAN(
+        "Canva Minimalist Clean (Modern)",
+        "ক্যানভা মিনিমালিস্ট ক্লিন (Modern ATS)",
+        "সেন্টার্ড হেডার, ফিল্ড আইকন কন্টাক্ট বার ও ডানপাশে এলাইন্ড তারিখসহ আধুনিক ক্লিন প্রফেশনাল ডিজাইন",
+        AndroidColor.parseColor("#1E293B")
     ),
-    FRESHER_ENTRY(
-        "Fresher & Academic",
-        "ফ্রেশার ও একাডেমিক",
-        "যাদের অভিজ্ঞতা কম, তাদের প্রজেক্ট, স্কিল ও শিক্ষা প্রদর্শনকারী ডিজাইন",
-        AndroidColor.parseColor("#4F46E5")
+    SINGLE_COLUMN_HIGH_IMPACT_ATS(
+        "Single-Column High Impact",
+        "হাই-ইমপ্যাক্ট সিঙ্গেল কলাম (US ATS)",
+        "বোল্ড হেডার, সুনির্দিষ্ট ডিভাইডার এবং ফাস্ট-স্ক্যানিং মেট্রিক বুলেট সংবলিত টপ-রেটেড এটিএস লেআউট",
+        AndroidColor.parseColor("#0F172A")
+    ),
+    NORDIC_SLATE_MODERN(
+        "Nordic Slate & Minimal",
+        "নরডিক স্লেট ও মিনিমাল",
+        "স্ক্যান্ডিনেভিয়ান স্লিম স্পেসিং, ডার্ক স্লেট টাইপোগ্রাফি ও মার্জিত সেকশন ডিভাইডার",
+        AndroidColor.parseColor("#334155")
+    ),
+    SILICON_VALLEY_TECH_LEAD(
+        "Silicon Valley Tech Lead",
+        "সিলিকন ভ্যালি টেক লিড",
+        "টেক লিড, ডেভেলপার ও প্রোডাক্ট ম্যানেজারদের জন্য কোবাল্ট ব্লু একসেন্ট ও কোয়ান্ট রেজাল্ট ডিজাইন",
+        AndroidColor.parseColor("#0284C7")
+    ),
+    EXECUTIVE_MONOCHROME_LUXE(
+        "Executive Monochrome Luxe",
+        "এক্সিকিউটিভ মনোক্রোম লাক্স",
+        "হাই-প্রোফাইল কর্পোরেট লিডারদের জন্য পিউর ব্ল্যাক & চারকোল লাক্সারি মিনিমালিস্ট সেরিফ স্টাইল",
+        AndroidColor.parseColor("#111827")
     ),
     EXECUTIVE_TWO_COLUMN(
-        "Executive Two-Column",
-        "এক্সিকিউティブ ২-কলাম",
-        "অভিজ্ঞ পেশাজীবীদের জন্য সাইডবারসহ স্টাইলিশ ও তথ্যবহুল লেআউট",
+        "Executive Two-Column Sidebar",
+        "এক্সিকিউটিভ সাইডবার (২-কলাম)",
+        "অভিজ্ঞ পেশাজীবীদের জন্য ডার্ক নেভি সাইডবার, ম্যাটেরিয়াল আইকন ও স্টাইলিশ লেআউট",
         AndroidColor.parseColor("#1E293B"),
         isTwoColumn = true
     ),
     CREATIVE_MARKETING(
-        "Creative Marketing",
-        "ক্রিয়েটিভ মার্কেটিং",
-        "মার্কেটিং, ব্র্যান্ডিং ও ক্রিয়েটিভ রোলের জন্য আকর্ষণীয় লাল ও ডার্ক অ্যাকসেন্ট",
-        AndroidColor.parseColor("#B91C1C")
+        "Modern Creative Banner",
+        "ক্রিয়েটিভ ব্যানার প্রো",
+        "মার্কেটিং ও ব্র্যান্ডিং প্রফেশনালদের জন্য আকর্ষণীয় টপ ব্যানার, প্রোফাইল ব্যাজ ও কার্ড স্টাইল",
+        AndroidColor.parseColor("#881337")
     ),
-    BUSINESS_ANALYST_MBA(
-        "MBA Strategic Analyst",
-        "এমবিএ স্ট্র্যাটেজিক অ্যানালিস্ট",
-        "ব্যবস্থাপনা, অ্যানালিটিক্স ও এক্সিকিউটিভ রোলের জন্য রয়্যাল ব্লু অ্যাকসেন্ট",
-        AndroidColor.parseColor("#0369A1")
+    MODERN_MINIMALIST(
+        "Nordic Minimalist Tech",
+        "মডার্ন মিনিমালিস্ট টেক",
+        "আইটি, সফটওয়্যার ইঞ্জিনিয়ার ও ডেকের জন্য ভার্টিক্যাল বার একসেন্ট, মডার্ন চিপস ও মার্জিত নকশা",
+        AndroidColor.parseColor("#0D9488")
     ),
-    CLEAN_TECH_STARTUP(
-        "Clean Tech Startup",
-        "ক্লিন টেক স্টার্টআপ",
-        "আধুনিক স্টার্টআপের জন্য গাঢ় সবুজ রঙ ও জ্যামিতিক নকশার প্রফেশনাল মিক্স",
-        AndroidColor.parseColor("#0F766E")
+    HARVARD_CLASSIC(
+        "Harvard Academic & Legal",
+        "হার্ভার্ড ক্লাসিক (Academic)",
+        "আইভি-লিগ স্ট্যান্ডার্ড ক্লাসিক সেরিফ টাইপোগ্রাফি, ডাবল-রুল ডিভাইডার ও সেন্টার্ড হেডার",
+        AndroidColor.parseColor("#18181B")
     ),
     ELEGANT_PREMIUM(
-        "Elegant Premium",
-        "এলিগেন্ট প্রিমিয়াম",
-        "উচ্চ পদের এক্সিকিউটিভ ও ম্যানেজমেন্ট রোলের জন্য প্রিমিয়াম ডিজাইন ও টাইপোগ্রাফি",
-        AndroidColor.parseColor("#6D28D9")
+        "Executive Serif & Ivory",
+        "এলিগেন্ট সেরিফ ও আইভরি",
+        "হাই-প্রোফাইল এক্সিকিউটিভ ও কনসালট্যান্টদের জন্য রয়্যাল মিডনাইট সেরিফ ও ডায়মন্ড বুলেট স্টাইল",
+        AndroidColor.parseColor("#312E81")
     ),
-    LITE_PROFESSIONAL(
-        "Lite Professional",
-        "লাইট প্রফেশনাল",
-        "অত্যন্ত সাধারণ এবং মার্জিত সিঙ্গেল-কলাম লেআউট",
-        AndroidColor.parseColor("#4B5563")
+    CLEAN_TECH_STARTUP(
+        "Emerald Tech & Startup",
+        "এমারেল্ড টেক স্টার্টআপ",
+        "ডাইনামিক স্টার্টআপ ও প্রজেক্ট ম্যানেজমেন্ট রোলের জন্য এমারেল্ড গ্রিন ও টাইমলাইন-ডট ডিজাইন",
+        AndroidColor.parseColor("#065F46")
     ),
-    STARTUP_LEADER(
-        "Startup Leader",
-        "স্টার্টআপ লিডার",
-        "টেক এবং ডাইনামিক স্টার্টআপে লিডারশিপ রোলের উপযোগী ডিজাইন",
-        AndroidColor.parseColor("#DC2626")
+    BANKING_FINANCE_SPECIALIST(
+        "Banking & Finance Specialist",
+        "ব্যাংক ও ফিন্যান্স স্পেশালিস্ট",
+        "বাণিজ্যিক ও ইনভেস্টমেন্ট ব্যাংকিংয়ের জন্য রয়্যাল ব্লু একসেন্ট, কোয়ান্ট মেট্রিক্স ও টেবুলার রেকর্ড",
+        AndroidColor.parseColor("#1E40AF")
     ),
-    SOPHISTICATED_CHIC(
-        "Sophisticated Chic",
-        "সোফিস্টিকেটেড শিক",
-        "ক্রিয়েটিভ ডিজাইন এবং আধুনিক টাইপোগ্রাফির মেলবন্ধন",
-        AndroidColor.parseColor("#DB2777")
+    NGO_DEVELOPMENT_HUMANITARIAN(
+        "NGO & Humanitarian Impact",
+        "এনজিও ও উন্নয়ন প্রকল্প",
+        "আন্তর্জাতিক এনজিও, ইউএন ও সমাজ উন্নয়ন প্রজেক্টের জন্য টেরাকোটা ও ফিল্ড-ইমপ্যাক্ট লেআউট",
+        AndroidColor.parseColor("#9A3412")
     ),
-    GLOBAL_ATS_STANDARD(
-        "Global ATS Standard",
-        "গ্লোবাল এআইএস স্ট্যান্ডার্ড",
-        "ইউরোপ এবং আমেরিকার বড় মাল্টিন্যাショナル জবের জন্য আদর্শ এআইএস টেমপ্লেট",
-        AndroidColor.parseColor("#0F172A")
+    EUROPASS_GLOBAL_STANDARD(
+        "Europass & Global MNC",
+        "ইউরোপাস গ্লোবাল ফরম্যাট",
+        "ইউরোপ ও আন্তর্জাতিক চাকরির জন্য ক্লাসিক লেফট-লেবেল বক্সড গ্রিড ও ফরমাল সেকশন",
+        AndroidColor.parseColor("#0369A1")
     )
-}
-
-val HexagonShape = object : androidx.compose.ui.graphics.Shape {
-    override fun createOutline(
-        size: androidx.compose.ui.geometry.Size,
-        layoutDirection: androidx.compose.ui.unit.LayoutDirection,
-        density: androidx.compose.ui.unit.Density
-    ): androidx.compose.ui.graphics.Outline {
-        val path = androidx.compose.ui.graphics.Path().apply {
-            val w = size.width
-            val h = size.height
-            moveTo(w * 0.5f, 0f)
-            lineTo(w, h * 0.25f)
-            lineTo(w, h * 0.75f)
-            lineTo(w * 0.5f, h)
-            lineTo(0f, h * 0.75f)
-            lineTo(0f, h * 0.25f)
-            close()
-        }
-        return androidx.compose.ui.graphics.Outline.Generic(path)
-    }
 }
 
 // ================= DELIVERABLE 1: ARCHITECT DATA CLASSES =================
@@ -257,7 +254,7 @@ data class CvProjectItem(
 
 data class CvData(
     val id: String = UUID.randomUUID().toString(),
-    val profileLabel: String = "New CV Draft",
+    val profileLabel: String = "Default",
     val fullName: String = "",
     val jobTitle: String = "",
     val email: String = "",
@@ -267,16 +264,16 @@ data class CvData(
     val githubOrPortfolio: String = "",
     val summary: String = "",
     val photoBase64: String = "",
-    val photoShape: String = "Circle", // Circle, Rounded, Square, Hexagon
+    val photoShape: String = "Circle", // Circle, Rounded, Square
     val photoScale: Float = 1.0f,
     val photoOffsetX: Float = 0f,
     val photoOffsetY: Float = 0f,
-    val fatherName: String = "Md. Nazrul Islam",
-    val motherName: String = "Mrs. Sufia Begum",
-    val religion: String = "Islam",
-    val bloodGroup: String = "B+",
-    val permanentAddress: String = "House 12, Road 4, Sector 1, Uttara, Dhaka",
-    val presentAddress: String = "House 12, Road 4, Sector 1, Uttara, Dhaka",
+    val fatherName: String = "",
+    val motherName: String = "",
+    val religion: String = "",
+    val bloodGroup: String = "",
+    val permanentAddress: String = "",
+    val presentAddress: String = "",
     val certifications: String = "",
     val references: String = "",
     val experiences: List<CvExperienceItem> = emptyList(),
@@ -285,18 +282,24 @@ data class CvData(
     val projects: List<CvProjectItem> = emptyList(),
     val languages: String = "",
     val templateStyle: CvTemplateStyle = CvTemplateStyle.CLASSIC_CORPORATE,
-    val targetJobCircular: String = ""
+    val targetJobCircular: String = "",
+    val isFresher: Boolean = false,
+    val fresherAcademicProjects: String = "",
+    val fresherInternshipsVolunteer: String = "",
+    val fresherLeadershipClubs: String = "",
+    val fresherKeyCoursework: String = "",
+    val showSignatureLine: Boolean = true
 )
 
 // SharedPreferences Multi-Profile Helpers
-private const val CV_PREFS_NAME = "ats_cv_builder_multi_prefs_v2"
+private const val CV_PREFS_NAME = "ats_cv_builder_multi_prefs_v5"
 private const val CV_PROFILES_LIST_KEY = "saved_cv_profiles_json_list"
 private const val ACTIVE_PROFILE_ID_KEY = "active_cv_profile_uuid"
 
 private fun getSeedProfilesList(): List<CvData> {
     val defaultMba = CvData(
         id = "profile_mba_shariful",
-        profileLabel = "Md. Shariful Islam (Primary MBA)",
+        profileLabel = "Default",
         fullName = "Md. Shariful Islam",
         jobTitle = "Management Graduate & Business Analyst",
         email = "shariful.mba@example.com",
@@ -305,6 +308,12 @@ private fun getSeedProfilesList(): List<CvData> {
         linkedin = "linkedin.com/in/shariful-mba",
         githubOrPortfolio = "portfolio.shariful.com",
         summary = "A highly analytical and result-oriented Management MBA Graduate with a strong foundation in business strategy, market research, and financial analysis. Proven expertise in leveraging data-driven insights to optimize business operations, increase project efficiency, and drive marketing campaigns. Excellent communication, team leadership, and strategic planning skills.",
+        isFresher = false,
+        fresherAcademicProjects = "• Final Year Capstone: Supply Chain Optimization & Demand Forecasting Model\n• Analyzed FMCG retail distribution networks using statistical forecasting, increasing warehouse inventory turnaround by 18%.\n• Business Analytics Seminar: Consumer Credit Risk Assessment with Regression Modeling",
+        fresherInternshipsVolunteer = "• Strategic Projects Intern — Bangladesh Business Leadership Forum (3 Months)\n• Coordinated digital communication, executive speaker sessions, and student registration for 1,200+ attendees.\n• Volunteer Community Lead — Youth Empowerment & Skills Initiative (2023)",
+        fresherLeadershipClubs = "• Vice President — University Management & Business Club (2022-2023)\n• Finalist — National Inter-University Business Case Competition 2023\n• Chief Organizer — DU National Business Fest 2022",
+        fresherKeyCoursework = "Strategic Management, Corporate Finance, Business Statistics, Marketing Analytics, Supply Chain Logistics, Financial Accounting, Econometrics",
+        showSignatureLine = true,
         experiences = listOf(
             CvExperienceItem(
                 company = "Apex Business Solutions",
@@ -355,59 +364,486 @@ private fun getSeedProfilesList(): List<CvData> {
         ),
         languages = "English (Professional), Bengali (Native)",
         certifications = "Project Management Professional (PMP) - PMI, 2024\nBusiness Intelligence Certification - Google / Coursera, 2023",
-        references = "Available upon request."
+        references = "Available upon request.",
+        templateStyle = CvTemplateStyle.CLASSIC_CORPORATE
     )
-    val marketingPersona = CvData(
-        id = "profile_marketing_specialist",
-        profileLabel = "Marketing Specialist Persona",
-        fullName = "Md. Shariful Islam",
-        jobTitle = "Brand & Strategic Marketing Manager",
-        email = "shariful.marketing@example.com",
-        summary = "Dynamic MBA Marketing Graduate with a passion for brand equity, tactical campaign planning, and consumer market intelligence. Experienced in drafting digital marketing roadmaps that successfully accelerated customer engagement metrics by 30%.",
+
+    val adminHrDraft = CvData(
+        id = "profile_admin_hr",
+        profileLabel = "HR & Admin Officer (এইচআর ও এডমিন)",
+        fullName = "Farhana Yasmin",
+        jobTitle = "Senior HR & Administrative Officer",
+        email = "farhana.hr@example.com",
+        phone = "+880 1819-556677",
+        address = "Gulshan, Dhaka, Bangladesh",
+        linkedin = "linkedin.com/in/farhana-hr",
+        summary = "Dedicated Human Resources and Administrative professional with 5+ years of experience in talent acquisition, employee relations, payroll administration, and office operations. Adept at implementing HR policies, organizing compliance audits, and driving employee engagement initiatives to foster workplace productivity.",
         experiences = listOf(
             CvExperienceItem(
-                company = "Global Consumer Brands Ltd",
-                role = "Strategic Brand Associate",
-                startDate = "Oct 2023",
+                company = "Beacon Corporate Group",
+                role = "Senior HR & Admin Executive",
+                startDate = "Feb 2022",
                 endDate = "Present",
                 isCurrent = true,
-                description = "• Guided tactical market research to redefine target consumer demographics.\n• Coordinated digital performance campaigns across social media channels, scaling reach by 45%.\n• Managed advertising agency partnerships to align with brand aesthetic standards."
+                description = "• Spearheaded end-to-end recruitment pipelines, onboarding 60+ skilled professionals across IT and Finance.\n• Supervised monthly payroll administration, provident fund deductions, and statutory compliance.\n• Formulated company-wide HR handbook and code of conduct policies reducing turnover by 15%."
+            ),
+            CvExperienceItem(
+                company = "Orion Technologies Ltd",
+                role = "HR Officer",
+                startDate = "Jul 2019",
+                endDate = "Jan 2022",
+                isCurrent = false,
+                description = "• Maintained confidential employee databases, leave records, and performance evaluation metrics.\n• Organized quarterly employee wellness workshops and cross-team team building events."
+            )
+        ),
+        educations = listOf(
+            CvEducationItem(
+                degree = "MBA in Human Resource Management (HRM)",
+                institution = "North South University",
+                passingYear = "2019",
+                result = "CGPA: 3.75 / 4.00"
+            ),
+            CvEducationItem(
+                degree = "BBA in Management Studies",
+                institution = "University of Dhaka",
+                passingYear = "2017",
+                result = "CGPA: 3.65 / 4.00"
+            )
+        ),
+        skills = listOf(
+            CvSkillItem(name = "Talent Acquisition & Headhunting", level = "Expert"),
+            CvSkillItem(name = "Bangladesh Labor Law & Compliance", level = "Expert"),
+            CvSkillItem(name = "Payroll & Compensation Management", level = "Expert"),
+            CvSkillItem(name = "Performance Appraisal (KPI & OKR)", level = "Proficient"),
+            CvSkillItem(name = "HRIS (Keka, BambooHR, Excel)", level = "Expert"),
+            CvSkillItem(name = "Conflict Resolution & Negotiation", level = "Expert")
+        ),
+        languages = "English (Fluent), Bengali (Native)",
+        certifications = "Certified Human Resource Professional (CHRP) - SHRM, 2021\nPost Graduate Diploma in Personnel Management (PGDPM) - BIM, 2018",
+        references = "Available upon request.",
+        templateStyle = CvTemplateStyle.EXECUTIVE_TWO_COLUMN
+    )
+
+    val bankFinanceDraft = CvData(
+        id = "profile_banking_finance",
+        profileLabel = "Banking & Financial Analyst (ব্যাংক ও ফিন্যান্স)",
+        fullName = "Tariqul Anam, CDCS",
+        jobTitle = "Principal Financial Analyst & Credit Risk Officer",
+        email = "tariqul.bank@example.com",
+        phone = "+880 1912-334455",
+        address = "Motijheel, Dhaka, Bangladesh",
+        linkedin = "linkedin.com/in/tariqul-finance",
+        summary = "Results-driven Banking and Financial Analyst with 6+ years of rigorous experience in corporate credit appraisal, risk assessment, syndicated loan structuring, and financial modeling. Demonstrated history of managing BDT 450+ Crore credit portfolio with zero default rate.",
+        experiences = listOf(
+            CvExperienceItem(
+                company = "Eastern Bank PLC",
+                role = "Senior Officer - Corporate Credit Division",
+                startDate = "Mar 2021",
+                endDate = "Present",
+                isCurrent = true,
+                description = "• Evaluated corporate loan proposals and conducted audited financial statement ratio analyses.\n• Prepared comprehensive Credit Appraisal Memorandums (CAM) aligned with Bangladesh Bank CRG guidelines.\n• Monitored portfolio asset quality and conducted regular stress testing on capital adequacy."
+            ),
+            CvExperienceItem(
+                company = "Standard Chartered Bank",
+                role = "Credit Analyst - SME Banking",
+                startDate = "Jan 2018",
+                endDate = "Feb 2021",
+                isCurrent = false,
+                description = "• Assessed creditworthiness for 120+ SME clients, disbursing BDT 80 Crore in structured facilities.\n• Optimized verification turn-around time (TAT) by 30% through automated scoring templates."
+            )
+        ),
+        educations = listOf(
+            CvEducationItem(
+                degree = "Master of Science (M.Sc.) in Finance & Banking",
+                institution = "University of Dhaka",
+                passingYear = "2017",
+                result = "CGPA: 3.88 / 4.00"
+            ),
+            CvEducationItem(
+                degree = "BBA in Banking and Insurance",
+                institution = "University of Dhaka",
+                passingYear = "2015",
+                result = "CGPA: 3.80 / 4.00"
+            )
+        ),
+        skills = listOf(
+            CvSkillItem(name = "Credit Risk Grading (CRG)", level = "Expert"),
+            CvSkillItem(name = "Financial Ratio & Cash Flow Analysis", level = "Expert"),
+            CvSkillItem(name = "Trade Finance (Letter of Credit & LC)", level = "Expert"),
+            CvSkillItem(name = "DCF & Valuation Modeling", level = "Proficient"),
+            CvSkillItem(name = "Bangladesh Bank Regulatory Compliance", level = "Expert"),
+            CvSkillItem(name = "Advanced Excel VBA & FinTech", level = "Expert")
+        ),
+        languages = "English (Professional Working), Bengali (Native)",
+        certifications = "Banking Professional Examination (DAIBB) - IBB, 2020\nCertified Documentary Credit Specialist (CDCS) - London Institute of Banking & Finance, 2022",
+        references = "Prof. Dr. M. A. Baqui, Department of Finance, University of Dhaka",
+        templateStyle = CvTemplateStyle.BANKING_FINANCE_SPECIALIST
+    )
+
+    val marketingDraft = CvData(
+        id = "profile_marketing_specialist",
+        profileLabel = "Brand & Marketing Manager (মার্কেটিং)",
+        fullName = "Nafis Imtiaz",
+        jobTitle = "Brand & Strategic Marketing Lead",
+        email = "nafis.marketing@example.com",
+        phone = "+880 1713-998877",
+        address = "Banani, Dhaka, Bangladesh",
+        linkedin = "linkedin.com/in/nafis-marketing",
+        githubOrPortfolio = "nafismarketing.com",
+        summary = "Creative and analytical Brand Marketing Specialist with 5+ years of experience leading multi-channel promotional campaigns, digital performance growth, and product launch roadmaps. Successfully grew customer acquisition by 45% and oversaw BDT 2 Crore annual advertising budgets.",
+        experiences = listOf(
+            CvExperienceItem(
+                company = "Pran-RFL Group",
+                role = "Brand Manager - Beverage Category",
+                startDate = "Oct 2021",
+                endDate = "Present",
+                isCurrent = true,
+                description = "• Managed 3 flagship national FMCG brands with full P&L accountability.\n• Directed 360-degree ATL/BTL marketing campaigns achieving a 22% uplift in market share.\n• Led social media influencer programs that generated over 15 Million organic digital impressions."
+            ),
+            CvExperienceItem(
+                company = "Mindshare Bangladesh",
+                role = "Digital Media Planner",
+                startDate = "Jan 2019",
+                endDate = "Sep 2021",
+                isCurrent = false,
+                description = "• Executed programmatic PPC and Meta ad campaigns with an average ROAS of 4.2x.\n• Formulated consumer behavior insights using Google Analytics 4 and Semrush."
+            )
+        ),
+        educations = listOf(
+            CvEducationItem(
+                degree = "MBA in Marketing",
+                institution = "Institute of Business Administration (IBA), University of Dhaka",
+                passingYear = "2018",
+                result = "CGPA: 3.70 / 4.00"
+            ),
+            CvEducationItem(
+                degree = "BBA in Marketing",
+                institution = "BRAC University",
+                passingYear = "2016",
+                result = "CGPA: 3.65 / 4.00"
             )
         ),
         skills = listOf(
             CvSkillItem(name = "Brand Identity & Positioning", level = "Expert"),
-            CvSkillItem(name = "Digital Campaign Planning", level = "Expert"),
-            CvSkillItem(name = "Market Research & Analysis", level = "Expert"),
-            CvSkillItem(name = "Content Strategy", level = "Proficient")
+            CvSkillItem(name = "Digital Performance Marketing (Meta & Google)", level = "Expert"),
+            CvSkillItem(name = "Consumer Market Research & Insights", level = "Expert"),
+            CvSkillItem(name = "Content Strategy & Copywriting", level = "Proficient"),
+            CvSkillItem(name = "P&L Budget Allocation", level = "Proficient"),
+            CvSkillItem(name = "SEO/SEM & Data Analytics", level = "Proficient")
         ),
+        languages = "English (Fluent), Bengali (Native)",
+        certifications = "Google Ads & Analytics Certified Professional, 2023\nHubSpot Inbound Marketing Master, 2022",
+        references = "Available upon request.",
         templateStyle = CvTemplateStyle.CREATIVE_MARKETING
     )
-    val techProjectPersona = CvData(
-        id = "profile_tech_pm",
-        profileLabel = "Strategic Project Manager Persona",
-        fullName = "Md. Shariful Islam",
-        jobTitle = "Strategic Project Manager (MBA)",
-        email = "shariful.pm@example.com",
-        summary = "Analytical MBA Graduate specialized in Operations and Tech Management. Proven capability to streamline product life-cycles, implement agile frameworks, and structure quantitative feasibility dashboards.",
+
+    val ngoProjectDraft = CvData(
+        id = "profile_ngo_project",
+        profileLabel = "NGO & Humanitarian Officer (এনজিও ও উন্নয়ন)",
+        fullName = "Khadija Sultana",
+        jobTitle = "Humanitarian Project Coordinator & MEAL Specialist",
+        email = "khadija.ngo@example.com",
+        phone = "+880 1814-112233",
+        address = "Cox's Bazar / Dhaka, Bangladesh",
+        linkedin = "linkedin.com/in/khadija-humanitarian",
+        summary = "Dedicated Humanitarian Development Practitioner with 6+ years of field experience in monitoring, evaluation, accountability, and learning (MEAL) across international NGOs and UN partner projects. Proven record in managing USAID and FCDO funded emergency response programs.",
         experiences = listOf(
             CvExperienceItem(
-                company = "NextGen Tech Solutions",
-                role = "Agile Project Coordinator",
-                startDate = "Nov 2023",
+                company = "BRAC International",
+                role = "Project Manager - Ultra-Poor Graduation Program",
+                startDate = "Apr 2021",
                 endDate = "Present",
                 isCurrent = true,
-                description = "• Formulated agile project delivery frameworks, boosting operational sprint efficiency by 18%.\n• Designed and synchronized dynamic client progress dashboards using Jira and PowerBI."
+                description = "• Supervised field execution of livelihood enhancement interventions supporting 12,000+ vulnerable households.\n• Coordinated baseline, midline, and endline surveys utilizing KoboToolbox and ODK mobile data tools.\n• Liaised with local government authorities, UNO, and community leaders for seamless project facilitation."
+            ),
+            CvExperienceItem(
+                company = "Save the Children International",
+                role = "MEAL Officer - Emergency Response",
+                startDate = "Jan 2018",
+                endDate = "Mar 2021",
+                isCurrent = false,
+                description = "• Established community feedback and complaint response mechanisms (CRM) ensuring 100% accountability.\n• Drafted monthly donor progress reports adhering to USAID and ECHO grant specifications."
+            )
+        ),
+        educations = listOf(
+            CvEducationItem(
+                degree = "Master of Social Science (MSS) in Development Studies",
+                institution = "University of Dhaka",
+                passingYear = "2017",
+                result = "First Class (CGPA: 3.80)"
+            ),
+            CvEducationItem(
+                degree = "Bachelor of Social Science (BSS) in Sociology",
+                institution = "University of Dhaka",
+                passingYear = "2015",
+                result = "First Class (CGPA: 3.72)"
             )
         ),
         skills = listOf(
-            CvSkillItem(name = "Agile / Scrum Methodologies", level = "Expert"),
-            CvSkillItem(name = "Operations Planning", level = "Expert"),
-            CvSkillItem(name = "Jira & PowerBI", level = "Expert"),
-            CvSkillItem(name = "Risk Mitigation", level = "Proficient")
+            CvSkillItem(name = "Project Cycle Management (PCM)", level = "Expert"),
+            CvSkillItem(name = "MEAL & Qualitative/Quantitative Research", level = "Expert"),
+            CvSkillItem(name = "KoboToolbox, ODK & SPSS", level = "Expert"),
+            CvSkillItem(name = "Donor Reporting (USAID, FCDO, UN)", level = "Expert"),
+            CvSkillItem(name = "Community Mobilization & Safeguarding", level = "Expert"),
+            CvSkillItem(name = "Disaster Risk Reduction (DRR)", level = "Proficient")
         ),
-        templateStyle = CvTemplateStyle.CLEAN_TECH_STARTUP
+        languages = "English (Fluent), Bengali (Native), Chittagonian / Rohingya (Working)",
+        certifications = "Project DPro (PMD Pro) - APMG International, 2020\nHumanitarian Logistics & Sphere Standards Certification, 2019",
+        references = "Country Representative, Save the Children Bangladesh",
+        templateStyle = CvTemplateStyle.NGO_DEVELOPMENT_HUMANITARIAN
     )
-    return listOf(defaultMba, marketingPersona, techProjectPersona)
+
+    val softwareDevDraft = CvData(
+        id = "profile_software_engineer",
+        profileLabel = "Software Engineer (সফটওয়্যার ও আইটি)",
+        fullName = "Tanvir Ahmed",
+        jobTitle = "Senior Full Stack Software Engineer",
+        email = "tanvir.dev@example.com",
+        phone = "+880 1715-443322",
+        address = "Mirpur, Dhaka, Bangladesh",
+        linkedin = "linkedin.com/in/tanvir-codes",
+        githubOrPortfolio = "github.com/tanvir-dev",
+        summary = "Passionate and architecture-driven Senior Software Engineer with 5+ years of production experience building high-throughput microservices, scalable web APIs, and responsive mobile interfaces. Specialized in Kotlin, TypeScript, Node.js, Next.js, and AWS cloud deployment.",
+        experiences = listOf(
+            CvExperienceItem(
+                company = "Brain Station 23 PLC",
+                role = "Senior Software Engineer",
+                startDate = "Jul 2022",
+                endDate = "Present",
+                isCurrent = true,
+                description = "• Engineered cloud microservices processing 2.5M daily fintech transactions with 99.99% uptime.\n• Spearheaded the migration from monolithic architecture to Dockerized Kubernetes clusters on AWS.\n• Mentored 8 junior and mid-level engineers in TDD, CI/CD automation, and clean code standards."
+            ),
+            CvExperienceItem(
+                company = "Dynamic Solution Innovators (DSi)",
+                role = "Software Engineer",
+                startDate = "Oct 2019",
+                endDate = "Jun 2022",
+                isCurrent = false,
+                description = "• Developed RESTful and GraphQL backend endpoints using Node.js, NestJS, and PostgreSQL.\n• Reduced database query latency by 40% through indexing optimization and Redis distributed caching."
+            )
+        ),
+        educations = listOf(
+            CvEducationItem(
+                degree = "B.Sc. in Computer Science and Engineering (CSE)",
+                institution = "Bangladesh University of Engineering and Technology (BUET)",
+                passingYear = "2019",
+                result = "CGPA: 3.85 / 4.00"
+            )
+        ),
+        skills = listOf(
+            CvSkillItem(name = "Kotlin, Java & Android", level = "Expert"),
+            CvSkillItem(name = "TypeScript, React & Next.js", level = "Expert"),
+            CvSkillItem(name = "Node.js, Express & NestJS", level = "Expert"),
+            CvSkillItem(name = "PostgreSQL, MongoDB & Redis", level = "Expert"),
+            CvSkillItem(name = "Docker, Kubernetes & AWS", level = "Proficient"),
+            CvSkillItem(name = "System Design & Microservices", level = "Expert")
+        ),
+        projects = listOf(
+            CvProjectItem(
+                title = "FinTech Instant Settlement Engine",
+                description = "Developed an open-source high-speed payment gateway reconciliation microservice handling 500+ rps with sub-50ms latency.",
+                link = "github.com/tanvir-dev/fintech-engine"
+            )
+        ),
+        languages = "English (Professional Working), Bengali (Native)",
+        certifications = "AWS Certified Solutions Architect – Associate (2023)\nOracle Certified Professional: Java SE 11 Developer (2021)",
+        references = "Available upon request.",
+        templateStyle = CvTemplateStyle.MODERN_MINIMALIST
+    )
+
+    val supplyChainDraft = CvData(
+        id = "profile_supply_chain",
+        profileLabel = "Supply Chain & Procurement (সাপ্লাই চেইন)",
+        fullName = "Mahmudur Rahman, CSCP",
+        jobTitle = "Supply Chain & Strategic Sourcing Specialist",
+        email = "mahmud.scm@example.com",
+        phone = "+880 1718-778899",
+        address = "Agrabad, Chattogram, Bangladesh",
+        linkedin = "linkedin.com/in/mahmud-scm",
+        summary = "Seasoned Supply Chain & Procurement professional with 6+ years of expertise in strategic vendor negotiation, customs clearance (Chittagong Port), inventory replenishment, and SAP MM module execution. Achieved annual cost reductions of BDT 3.5 Crore through competitive vendor contracting.",
+        experiences = listOf(
+            CvExperienceItem(
+                company = "BSRM Group of Companies",
+                role = "Assistant Manager - Supply Chain & Logistics",
+                startDate = "May 2021",
+                endDate = "Present",
+                isCurrent = true,
+                description = "• Directed domestic and overseas raw material procurement with annual spend exceeding BDT 120 Crore.\n• Negotiated freight forwarding tariffs, saving 12% in international ocean transit expenses.\n• Supervised SAP ERP Materials Management (MM) workflows and warehouse cycle counting."
+            ),
+            CvExperienceItem(
+                company = "Abul Khair Steel Products Ltd",
+                role = "Procurement Executive",
+                startDate = "Aug 2018",
+                endDate = "Apr 2021",
+                isCurrent = false,
+                description = "• Processed commercial letters of credit (LC), HS code assessments, and customs duty assessments.\n• Monitored supplier OTIF (On-Time In-Full) performance benchmarks across 85 active vendors."
+            )
+        ),
+        educations = listOf(
+            CvEducationItem(
+                degree = "MBA in Supply Chain & Operations Management",
+                institution = "University of Chittagong",
+                passingYear = "2018",
+                result = "CGPA: 3.76 / 4.00"
+            ),
+            CvEducationItem(
+                degree = "BBA in Management",
+                institution = "University of Chittagong",
+                passingYear = "2016",
+                result = "CGPA: 3.68 / 4.00"
+            )
+        ),
+        skills = listOf(
+            CvSkillItem(name = "Strategic Sourcing & Vendor Management", level = "Expert"),
+            CvSkillItem(name = "SAP ERP (MM / SD Modules)", level = "Expert"),
+            CvSkillItem(name = "Customs Regulations & Chittagong Port Clearance", level = "Expert"),
+            CvSkillItem(name = "Incoterms 2020 & International Shipping", level = "Expert"),
+            CvSkillItem(name = "Inventory Optimization (EOQ & JIT)", level = "Proficient"),
+            CvSkillItem(name = "Contract Negotiation & Cost Analysis", level = "Expert")
+        ),
+        languages = "English (Fluent), Bengali (Native)",
+        certifications = "Certified Supply Chain Professional (CSCP) - APICS / ASCM, 2022\nDiploma in International Trade & Commercial Law, 2019",
+        references = "Available upon request.",
+        templateStyle = CvTemplateStyle.EUROPASS_GLOBAL_STANDARD
+    )
+
+    val academicDraft = CvData(
+        id = "profile_academic_lecturer",
+        profileLabel = "Academic Lecturer & Researcher (শিক্ষকতা)",
+        fullName = "Dr. S. M. Ashraful Alam",
+        jobTitle = "Assistant Professor & Academic Researcher",
+        email = "ashraful.alam@univ.edu",
+        phone = "+880 1716-114422",
+        address = "Dhaka, Bangladesh",
+        linkedin = "linkedin.com/in/dr-ashraful-alam",
+        githubOrPortfolio = "researchgate.net/profile/Ashraful-Alam",
+        summary = "Dedicated academician and scholar with 7+ years of higher education teaching and research expertise in Economics and Quantitative Methods. Published 9 peer-reviewed papers in Scopus-indexed journals and mentored over 40 undergraduate and postgraduate research dissertations.",
+        experiences = listOf(
+            CvExperienceItem(
+                company = "Department of Economics, Premier University",
+                role = "Assistant Professor",
+                startDate = "Jan 2021",
+                endDate = "Present",
+                isCurrent = true,
+                description = "• Delivered core undergraduate and graduate lectures on Econometrics, Macroeconomics, and Game Theory.\n• Supervised 25+ student thesis projects and managed departmental curriculum development committees.\n• Secured research grant of BDT 15 Lakh for urban socio-economic mobility assessment."
+            ),
+            CvExperienceItem(
+                company = "University of Liberal Arts Bangladesh (ULAB)",
+                role = "Lecturer in Economics",
+                startDate = "Sep 2017",
+                endDate = "Dec 2020",
+                isCurrent = false,
+                description = "• Conducted weekly tutorial sections and lab exercises utilizing Stata, R, and Python.\n• Organized international economics symposiums and served as faculty advisor for debate club."
+            )
+        ),
+        educations = listOf(
+            CvEducationItem(
+                degree = "Ph.D. in Applied Economics",
+                institution = "University of Malaya, Malaysia",
+                passingYear = "2020",
+                result = "Awarded with High Distinction"
+            ),
+            CvEducationItem(
+                degree = "Master of Science in Economics",
+                institution = "University of Dhaka",
+                passingYear = "2016",
+                result = "First Class First (CGPA: 3.94)"
+            ),
+            CvEducationItem(
+                degree = "Bachelor of Science in Economics",
+                institution = "University of Dhaka",
+                passingYear = "2014",
+                result = "First Class First (CGPA: 3.91)"
+            )
+        ),
+        skills = listOf(
+            CvSkillItem(name = "Econometric Modeling (Stata, R, EViews)", level = "Expert"),
+            CvSkillItem(name = "Academic Curriculum Design & Pedagogy", level = "Expert"),
+            CvSkillItem(name = "Peer-Reviewed Journal Publishing", level = "Expert"),
+            CvSkillItem(name = "Grant Proposal Writing", level = "Expert"),
+            CvSkillItem(name = "Statistical Data Analysis & Python", level = "Proficient"),
+            CvSkillItem(name = "Public Speaking & Thesis Mentorship", level = "Expert")
+        ),
+        languages = "English (Native/Academic), Bengali (Native), Malay (Basic)",
+        certifications = "Higher Education Teaching Certification - Cambridge, 2019\nScopus Indexed Journal Reviewer Recognition - Elsevier, 2022",
+        references = "Prof. Dr. Wahiduddin Mahmud, Professor Emeritus, Department of Economics, DU",
+        templateStyle = CvTemplateStyle.HARVARD_CLASSIC
+    )
+
+    val customerOpsDraft = CvData(
+        id = "profile_customer_ops",
+        profileLabel = "Customer Success & Operations (কাস্টমার অপারেশনস)",
+        fullName = "Sadia Chowdhury",
+        jobTitle = "Customer Success & Digital Operations Lead",
+        email = "sadia.cs@example.com",
+        phone = "+880 1817-665544",
+        address = "Dhanmondi, Dhaka, Bangladesh",
+        linkedin = "linkedin.com/in/sadia-success",
+        summary = "Customer-centric Operations Manager with 4+ years of expertise in client retention, escalation workflows, CRM management (Zendesk, Salesforce), and service quality analytics. Proven track record of boosting CSAT score from 82% to 96% in a high-growth fintech environment.",
+        experiences = listOf(
+            CvExperienceItem(
+                company = "Pathao Limited",
+                role = "Customer Success Team Lead",
+                startDate = "Jun 2022",
+                endDate = "Present",
+                isCurrent = true,
+                description = "• Led a frontline tier-2 support team of 18 specialists delivering 24/7 client resolution.\n• Implemented AI-driven ticket triaging rules in Zendesk, lowering First Response Time (FRT) by 45%.\n• Collaborated with engineering teams to resolve recurring UX bugs affecting app user experience."
+            ),
+            CvExperienceItem(
+                company = "Daraz Bangladesh (Alibaba Group)",
+                role = "Senior Customer Experience Associate",
+                startDate = "Feb 2020",
+                endDate = "May 2022",
+                isCurrent = false,
+                description = "• Handled priority VIP merchant disputes, resolving 95% of cases within initial SLA.\n• Trained 40+ onboarding agents on soft skills, complaint de-escalation, and empathy guidelines."
+            )
+        ),
+        educations = listOf(
+            CvEducationItem(
+                degree = "BBA in Management Information Systems (MIS)",
+                institution = "East West University",
+                passingYear = "2019",
+                result = "CGPA: 3.72 / 4.00"
+            )
+        ),
+        skills = listOf(
+            CvSkillItem(name = "Customer Experience (CX) & CSAT Strategy", level = "Expert"),
+            CvSkillItem(name = "CRM Platforms (Zendesk, Salesforce, Freshdesk)", level = "Expert"),
+            CvSkillItem(name = "SLA Monitoring & Crisis De-escalation", level = "Expert"),
+            CvSkillItem(name = "Voice of Customer (VoC) Analytics", level = "Proficient"),
+            CvSkillItem(name = "Cross-functional Team Leadership", level = "Expert")
+        ),
+        languages = "English (Fluent), Bengali (Native)",
+        certifications = "Certified Customer Success Manager (CCSM) Level 1, 2023\nAgile Customer Service Specialist, 2021",
+        references = "Available upon request.",
+        templateStyle = CvTemplateStyle.ELEGANT_PREMIUM
+    )
+
+    val cleanBlankDraft = CvData(
+        id = "profile_clean_draft",
+        profileLabel = "New Clean Draft (নতুন ফ্রেশ ড্রাফট)",
+        fullName = "Your Full Name",
+        jobTitle = "Your Professional Job Title",
+        email = "your.email@example.com",
+        phone = "+880 1700-000000",
+        address = "Dhaka, Bangladesh",
+        linkedin = "linkedin.com/in/yourprofile",
+        summary = "Write a clear, concise 3-4 line career summary highlighting your core strengths, years of relevant experience, and key professional achievements tailored to your target industry.",
+        templateStyle = CvTemplateStyle.CLASSIC_CORPORATE
+    )
+
+    return listOf(
+        defaultMba,
+        adminHrDraft,
+        bankFinanceDraft,
+        marketingDraft,
+        ngoProjectDraft,
+        softwareDevDraft,
+        supplyChainDraft,
+        academicDraft,
+        customerOpsDraft,
+        cleanBlankDraft
+    )
 }
 
 private fun saveAllCvProfiles(context: Context, profiles: List<CvData>) {
@@ -444,6 +880,14 @@ private fun saveAllCvProfiles(context: Context, profiles: List<CvData>) {
                 put("presentAddress", profile.presentAddress)
                 put("certifications", profile.certifications)
                 put("references", profile.references)
+
+                // Fresher & Signature configurations
+                put("isFresher", profile.isFresher)
+                put("fresherAcademicProjects", profile.fresherAcademicProjects)
+                put("fresherInternshipsVolunteer", profile.fresherInternshipsVolunteer)
+                put("fresherLeadershipClubs", profile.fresherLeadershipClubs)
+                put("fresherKeyCoursework", profile.fresherKeyCoursework)
+                put("showSignatureLine", profile.showSignatureLine)
 
                 val expArr = JSONArray()
                 profile.experiences.forEach { exp ->
@@ -614,7 +1058,13 @@ private fun loadAllCvProfiles(context: Context): List<CvData> {
                     permanentAddress = obj.optString("permanentAddress", "House 12, Road 4, Sector 1, Uttara, Dhaka"),
                     presentAddress = obj.optString("presentAddress", "House 12, Road 4, Sector 1, Uttara, Dhaka"),
                     certifications = obj.optString("certifications", "Project Management Professional (PMP) - PMI, 2024\nBusiness Intelligence Certification - Google / Coursera, 2023"),
-                    references = obj.optString("references", "Available upon request.")
+                    references = obj.optString("references", "Available upon request."),
+                    isFresher = obj.optBoolean("isFresher", false),
+                    fresherAcademicProjects = obj.optString("fresherAcademicProjects", ""),
+                    fresherInternshipsVolunteer = obj.optString("fresherInternshipsVolunteer", ""),
+                    fresherLeadershipClubs = obj.optString("fresherLeadershipClubs", ""),
+                    fresherKeyCoursework = obj.optString("fresherKeyCoursework", ""),
+                    showSignatureLine = obj.optBoolean("showSignatureLine", true)
                 )
             )
         }
@@ -782,7 +1232,223 @@ private suspend fun tailorCvWithGemini(cvJsonStr: String, jobDescription: String
     }
 }
 
+private suspend fun generateFresherCvSectionsWithGemini(
+    degree: String,
+    institution: String,
+    targetRole: String,
+    skills: String
+): Map<String, String> = withContext(Dispatchers.IO) {
+    val systemPrompt = "You are a professional university career coach and top ATS resume consultant. " +
+            "Given a fresh graduate's degree, target job role, institution, and core skills, generate 4 high-impact resume sections for freshers: " +
+            "1. academicProjects (2-3 bulleted projects with technologies, methodology, and quantifiable outcome), " +
+            "2. internshipsVolunteer (1-2 bulleted entries showing initiative, leadership, event management or volunteerism), " +
+            "3. leadershipClubs (active club roles, case competitions, debate, or campus organizing), " +
+            "4. keyCoursework (concise list of high-value courses/core subjects related to the degree and target role). " +
+            "Output strictly valid JSON with keys: 'academicProjects', 'internshipsVolunteer', 'leadershipClubs', 'keyCoursework'."
+
+    val prompt = "Degree: $degree\nInstitution: $institution\nTarget Role: $targetRole\nSkills: $skills"
+    try {
+        val jsonStr = callGeminiAiMultiModal(prompt, systemPrompt)
+        val cleanJson = jsonStr.substringAfter("{").substringBeforeLast("}").let { "{$it}" }
+        val obj = JSONObject(cleanJson)
+        mapOf(
+            "academicProjects" to obj.optString("academicProjects", ""),
+            "internshipsVolunteer" to obj.optString("internshipsVolunteer", ""),
+            "leadershipClubs" to obj.optString("leadershipClubs", ""),
+            "keyCoursework" to obj.optString("keyCoursework", "")
+        )
+    } catch (e: Exception) {
+        e.printStackTrace()
+        emptyMap()
+    }
+}
+
 // ================= DYNAMIC HIGH-QUALITY PDF GENERATOR =================
+
+// Helper to draw authentic Material Design filled vector icons onto Canvas
+private fun drawMaterialVectorIcon(
+    canvas: Canvas,
+    iconType: String,
+    x: Float,
+    y: Float,
+    size: Float,
+    color: Int
+) {
+    val paintFill = Paint().apply {
+        this.color = color
+        this.style = Paint.Style.FILL
+        this.isAntiAlias = true
+    }
+    val paintWhiteStroke = Paint().apply {
+        this.color = AndroidColor.WHITE
+        this.strokeWidth = maxOf(1f, size * 0.1f)
+        this.style = Paint.Style.STROKE
+        this.isAntiAlias = true
+    }
+    val paintWhiteFill = Paint().apply {
+        this.color = AndroidColor.WHITE
+        this.style = Paint.Style.FILL
+        this.isAntiAlias = true
+    }
+
+    when (iconType.lowercase()) {
+        "phone" -> {
+            // Filled Material Phone
+            val path = android.graphics.Path().apply {
+                moveTo(x + size * 0.22f, y + size * 0.15f)
+                cubicTo(x + size * 0.35f, y + size * 0.1f, x + size * 0.5f, y + size * 0.25f, x + size * 0.45f, y + size * 0.4f)
+                lineTo(x + size * 0.38f, y + size * 0.47f)
+                cubicTo(x + size * 0.45f, y + size * 0.6f, x + size * 0.6f, y + size * 0.75f, x + size * 0.73f, y + size * 0.82f)
+                lineTo(x + size * 0.8f, y + size * 0.75f)
+                cubicTo(x + size * 0.95f, y + size * 0.7f, x + size * 1.1f, y + size * 0.85f, x + size * 1.05f, y + size * 1.0f)
+                cubicTo(x + size * 1.0f, y + size * 1.15f, x + size * 0.7f, y + size * 1.15f, x + size * 0.55f, y + size * 1.05f)
+                cubicTo(x + size * 0.3f, y + size * 0.85f, x + size * 0.15f, y + size * 0.7f, x + size * 0.05f, y + size * 0.45f)
+                cubicTo(x - size * 0.05f, y + size * 0.3f, x + size * 0.05f, y + size * 0.05f, x + size * 0.22f, y + size * 0.15f)
+                close()
+            }
+            canvas.drawPath(path, paintFill)
+        }
+        "email" -> {
+            // Filled Envelope with crisp white flap indicator
+            val rect = android.graphics.RectF(x, y + size * 0.18f, x + size, y + size * 0.82f)
+            canvas.drawRoundRect(rect, 2f, 2f, paintFill)
+            val flap = android.graphics.Path().apply {
+                moveTo(x + 1f, y + size * 0.22f)
+                lineTo(x + size / 2f, y + size * 0.54f)
+                lineTo(x + size - 1f, y + size * 0.22f)
+            }
+            canvas.drawPath(flap, paintWhiteStroke)
+        }
+        "location" -> {
+            // Filled Map Pin with white center dot
+            val pinHeadRadius = size * 0.32f
+            val cx = x + size / 2f
+            val cy = y + size * 0.35f
+            val path = android.graphics.Path().apply {
+                arcTo(android.graphics.RectF(cx - pinHeadRadius, cy - pinHeadRadius, cx + pinHeadRadius, cy + pinHeadRadius), 180f, 180f, false)
+                cubicTo(cx + pinHeadRadius, cy + size * 0.3f, cx + size * 0.15f, cy + size * 0.55f, cx, y + size * 0.95f)
+                cubicTo(cx - size * 0.15f, cy + size * 0.55f, cx - pinHeadRadius, cy + size * 0.3f, cx - pinHeadRadius, cy)
+                close()
+            }
+            canvas.drawPath(path, paintFill)
+            canvas.drawCircle(cx, cy, pinHeadRadius * 0.42f, paintWhiteFill)
+        }
+        "linkedin" -> {
+            // Filled LinkedIn Rounded Badge with 'in'
+            val rect = android.graphics.RectF(x, y + size * 0.05f, x + size, y + size * 0.95f)
+            canvas.drawRoundRect(rect, 2f, 2f, paintFill)
+            val textPaintIn = Paint().apply {
+                this.color = AndroidColor.WHITE
+                this.textSize = size * 0.62f
+                this.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+                this.isAntiAlias = true
+            }
+            canvas.drawText("in", x + size * 0.2f, y + size * 0.72f, textPaintIn)
+        }
+        "portfolio", "globe" -> {
+            // Filled Globe Badge with white lat/long lines
+            val cx = x + size / 2f
+            val cy = y + size / 2f
+            val r = size * 0.46f
+            canvas.drawCircle(cx, cy, r, paintFill)
+            canvas.drawLine(x + size * 0.12f, cy, x + size * 0.88f, cy, paintWhiteStroke)
+            canvas.drawLine(cx, y + size * 0.12f, cx, y + size * 0.88f, paintWhiteStroke)
+            val oval = android.graphics.RectF(cx - r * 0.5f, y + size * 0.12f, cx + r * 0.5f, y + size * 0.88f)
+            canvas.drawOval(oval, paintWhiteStroke)
+        }
+        "github" -> {
+            // Filled Circle with white code brackets < / >
+            val cx = x + size / 2f
+            val cy = y + size / 2f
+            val r = size * 0.46f
+            canvas.drawCircle(cx, cy, r, paintFill)
+            val path = android.graphics.Path().apply {
+                moveTo(cx - size * 0.16f, cy - size * 0.2f)
+                lineTo(cx - size * 0.32f, cy)
+                lineTo(cx - size * 0.16f, cy + size * 0.2f)
+                moveTo(cx + size * 0.16f, cy - size * 0.2f)
+                lineTo(cx + size * 0.32f, cy)
+                lineTo(cx + size * 0.16f, cy + size * 0.2f)
+            }
+            canvas.drawPath(path, paintWhiteStroke)
+        }
+        "calendar" -> {
+            // Filled Calendar
+            val rect = android.graphics.RectF(x, y + size * 0.2f, x + size, y + size * 0.9f)
+            canvas.drawRoundRect(rect, 2f, 2f, paintFill)
+            canvas.drawLine(x + 1f, y + size * 0.42f, x + size - 1f, y + size * 0.42f, paintWhiteStroke)
+            val hangerPaint = Paint().apply {
+                this.color = color
+                this.style = Paint.Style.FILL
+                this.isAntiAlias = true
+            }
+            canvas.drawRoundRect(android.graphics.RectF(x + size * 0.22f, y + size * 0.08f, x + size * 0.34f, y + size * 0.28f), 1f, 1f, hangerPaint)
+            canvas.drawRoundRect(android.graphics.RectF(x + size * 0.66f, y + size * 0.08f, x + size * 0.78f, y + size * 0.28f), 1f, 1f, hangerPaint)
+        }
+        "education", "graduation" -> {
+            // Filled Graduation Cap
+            val cx = x + size / 2f
+            val capPath = android.graphics.Path().apply {
+                moveTo(cx, y + size * 0.15f)
+                lineTo(x + size * 0.96f, y + size * 0.42f)
+                lineTo(cx, y + size * 0.65f)
+                lineTo(x + size * 0.04f, y + size * 0.42f)
+                close()
+            }
+            canvas.drawPath(capPath, paintFill)
+            val capBase = android.graphics.Path().apply {
+                moveTo(x + size * 0.25f, y + size * 0.55f)
+                quadTo(cx, y + size * 0.88f, x + size * 0.75f, y + size * 0.55f)
+                lineTo(x + size * 0.75f, y + size * 0.68f)
+                quadTo(cx, y + size * 0.98f, x + size * 0.25f, y + size * 0.68f)
+                close()
+            }
+            canvas.drawPath(capBase, paintFill)
+        }
+        "work", "briefcase" -> {
+            // Filled Briefcase
+            val rect = android.graphics.RectF(x + size * 0.05f, y + size * 0.3f, x + size * 0.95f, y + size * 0.88f)
+            canvas.drawRoundRect(rect, 2.5f, 2.5f, paintFill)
+            val handle = android.graphics.Path().apply {
+                moveTo(x + size * 0.32f, y + size * 0.3f)
+                lineTo(x + size * 0.32f, y + size * 0.15f)
+                lineTo(x + size * 0.68f, y + size * 0.15f)
+                lineTo(x + size * 0.68f, y + size * 0.3f)
+            }
+            val handlePaint = Paint().apply {
+                this.color = color
+                this.strokeWidth = 1.6f
+                this.style = Paint.Style.STROKE
+                this.isAntiAlias = true
+            }
+            canvas.drawPath(handle, handlePaint)
+            canvas.drawLine(x + size * 0.05f, y + size * 0.54f, x + size * 0.95f, y + size * 0.54f, paintWhiteStroke)
+        }
+        "skill", "star" -> {
+            // Filled 5-point Star
+            val cx = x + size / 2f
+            val cy = y + size / 2f
+            val rOuter = size * 0.48f
+            val rInner = size * 0.21f
+            val path = android.graphics.Path()
+            for (i in 0 until 5) {
+                val angleOuter = (Math.PI / 2.5 * i - Math.PI / 2).toFloat()
+                val angleInner = (angleOuter + Math.PI / 5).toFloat()
+                val ox = cx + rOuter * Math.cos(angleOuter.toDouble()).toFloat()
+                val oy = cy + rOuter * Math.sin(angleOuter.toDouble()).toFloat()
+                val ix = cx + rInner * Math.cos(angleInner.toDouble()).toFloat()
+                val iy = cy + rInner * Math.sin(angleInner.toDouble()).toFloat()
+                if (i == 0) path.moveTo(ox, oy) else path.lineTo(ox, oy)
+                path.lineTo(ix, iy)
+            }
+            path.close()
+            canvas.drawPath(path, paintFill)
+        }
+        else -> {
+            canvas.drawCircle(x + size / 2f, y + size / 2f, size * 0.4f, paintFill)
+        }
+    }
+}
 
 private fun generateCvPdfFile(context: Context, data: CvData): File {
     val pdfDocument = PdfDocument()
@@ -802,65 +1468,54 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
 
     val pdfStyle = data.templateStyle
     val primaryColor = pdfStyle.primaryColorHex
-    val textColor = AndroidColor.parseColor("#1E293B")
-    val subTextColor = AndroidColor.parseColor("#475569")
-    val mutedLineColor = AndroidColor.parseColor("#E2E8F0")
+    val textColor = AndroidColor.parseColor("#0F172A")
+    val subTextColor = AndroidColor.parseColor("#334155")
+    val mutedLineColor = AndroidColor.parseColor("#CBD5E1")
 
-    // Determine the most elegant typeface style for the selected CV template
-    val isSerifStyle = pdfStyle == CvTemplateStyle.CLASSIC_CORPORATE || 
-                       pdfStyle == CvTemplateStyle.BUSINESS_ANALYST_MBA || 
-                       pdfStyle == CvTemplateStyle.GLOBAL_ATS_STANDARD || 
-                       pdfStyle == CvTemplateStyle.ELEGANT_PREMIUM
-
-    val mainFontFamily = if (isSerifStyle) "serif" else "sans-serif"
-    val titleFontFamily = if (isSerifStyle) "serif" else "sans-serif-medium"
+    val isSerif = pdfStyle == CvTemplateStyle.ELEGANT_PREMIUM || pdfStyle == CvTemplateStyle.HARVARD_CLASSIC
+    val mainFontFamily = if (isSerif) "serif" else "sans-serif"
+    val titleFontFamily = if (isSerif) "serif" else "sans-serif-medium"
 
     val titlePaint = TextPaint().apply {
         isAntiAlias = true
-        color = if (pdfStyle == CvTemplateStyle.CREATIVE_MARKETING) AndroidColor.WHITE else primaryColor
-        textSize = 21f
+        color = primaryColor
+        textSize = 19f
         typeface = Typeface.create(titleFontFamily, Typeface.BOLD)
     }
 
     val subtitlePaint = TextPaint().apply {
         isAntiAlias = true
-        color = if (pdfStyle == CvTemplateStyle.CREATIVE_MARKETING) AndroidColor.WHITE else primaryColor
-        textSize = 12.5f
-        typeface = Typeface.create(titleFontFamily, Typeface.BOLD)
+        color = subTextColor
+        textSize = 11f
+        typeface = Typeface.create(titleFontFamily, Typeface.NORMAL)
     }
 
     val contactPaint = TextPaint().apply {
         isAntiAlias = true
-        color = if (pdfStyle == CvTemplateStyle.CREATIVE_MARKETING) AndroidColor.WHITE else subTextColor
-        textSize = 9.5f
+        color = subTextColor
+        textSize = 9.2f
         typeface = Typeface.create(mainFontFamily, Typeface.NORMAL)
     }
 
     val sectionHeaderPaint = TextPaint().apply {
         isAntiAlias = true
         color = primaryColor
-        textSize = 12f
+        textSize = 11.5f
         typeface = Typeface.create(titleFontFamily, Typeface.BOLD)
     }
 
     val bodyPaint = TextPaint().apply {
         isAntiAlias = true
         color = textColor
-        textSize = 10f
+        textSize = 9.2f
         typeface = Typeface.create(mainFontFamily, Typeface.NORMAL)
     }
 
     val bodyBoldPaint = TextPaint().apply {
         isAntiAlias = true
         color = textColor
-        textSize = 10f
+        textSize = 9.2f
         typeface = Typeface.create(mainFontFamily, Typeface.BOLD)
-    }
-
-    val linePaint = Paint().apply {
-        color = primaryColor
-        strokeWidth = 2f
-        style = Paint.Style.STROKE
     }
 
     fun checkAndAddNewPage(neededHeight: Float) {
@@ -874,26 +1529,8 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
         }
     }
 
-    // --- Template Specific Drawing Helper ---
-    if (pdfStyle == CvTemplateStyle.CREATIVE_MARKETING) {
-        // Draw Solid Banner Background
-        val bannerPaint = Paint().apply {
-            color = AndroidColor.parseColor("#1E293B")
-            style = Paint.Style.FILL
-        }
-        canvas.drawRect(0f, 0f, pageWidth.toFloat(), 135f, bannerPaint)
-
-        val accentBarPaint = Paint().apply {
-            color = primaryColor
-            style = Paint.Style.FILL
-        }
-        canvas.drawRect(0f, 135f, pageWidth.toFloat(), 140f, accentBarPaint)
-
-        currentY = 24f
-    }
-
-    // Profile Photo Decode (Only rendered if present and not in Classic Corporate standard template to adhere to strict ATS standard)
-    val photoBitmap = if (data.photoBase64.isNotBlank() && pdfStyle != CvTemplateStyle.CLASSIC_CORPORATE) {
+    // Profile Photo Decode
+    val photoBitmap = if (data.photoBase64.isNotBlank()) {
         try {
             val decodedBytes = Base64.decode(data.photoBase64, Base64.DEFAULT)
             BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
@@ -903,40 +1540,23 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
     } else {
         null
     }
-    val hasPhoto = photoBitmap != null
-    val photoSize = 65f
-    val photoMargin = 12f
-    val textWidth = if (hasPhoto) (contentWidth - photoSize - photoMargin) else contentWidth
 
-    // Draw Profile Photo on PDF if it exists and is permitted
-    if (photoBitmap != null) {
-        val px = pageWidth - margin - photoSize
-        val py = if (pdfStyle == CvTemplateStyle.CREATIVE_MARKETING) 25f else currentY
-
+    fun drawPhotoAt(px: Float, py: Float, size: Float, shape: String, borderColor: Int = primaryColor) {
+        if (photoBitmap == null) return
         canvas.save()
         val path = android.graphics.Path()
-        when (data.photoShape) {
+        when (shape) {
             "Circle" -> {
-                path.addCircle(px + photoSize / 2f, py + photoSize / 2f, photoSize / 2f, android.graphics.Path.Direction.CW)
+                path.addCircle(px + size / 2f, py + size / 2f, size / 2f, android.graphics.Path.Direction.CW)
                 canvas.clipPath(path)
             }
             "Rounded" -> {
-                val rect = android.graphics.RectF(px, py, px + photoSize, py + photoSize)
-                path.addRoundRect(rect, 8f, 8f, android.graphics.Path.Direction.CW)
-                canvas.clipPath(path)
-            }
-            "Hexagon" -> {
-                path.moveTo(px + photoSize * 0.5f, py)
-                path.lineTo(px + photoSize, py + photoSize * 0.25f)
-                path.lineTo(px + photoSize, py + photoSize * 0.75f)
-                path.lineTo(px + photoSize * 0.5f, py + photoSize)
-                path.lineTo(px, py + photoSize * 0.75f)
-                path.lineTo(px, py + photoSize * 0.25f)
-                path.close()
+                val rect = android.graphics.RectF(px, py, px + size, py + size)
+                path.addRoundRect(rect, 6f, 6f, android.graphics.Path.Direction.CW)
                 canvas.clipPath(path)
             }
             else -> {
-                val rect = android.graphics.RectF(px, py, px + photoSize, py + photoSize)
+                val rect = android.graphics.RectF(px, py, px + size, py + size)
                 path.addRect(rect, android.graphics.Path.Direction.CW)
                 canvas.clipPath(path)
             }
@@ -944,370 +1564,1299 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
 
         canvas.save()
         val clipBox = android.graphics.Path()
-        clipBox.addRect(android.graphics.RectF(px, py, px + photoSize, py + photoSize), android.graphics.Path.Direction.CW)
+        clipBox.addRect(android.graphics.RectF(px, py, px + size, py + size), android.graphics.Path.Direction.CW)
         canvas.clipPath(clipBox)
 
-        val cx = px + photoSize / 2f
-        val cy = py + photoSize / 2f
+        val cx = px + size / 2f
+        val cy = py + size / 2f
         canvas.translate(cx, cy)
         canvas.scale(data.photoScale, data.photoScale)
         canvas.translate(data.photoOffsetX / 3.2f, data.photoOffsetY / 3.2f)
         canvas.translate(-cx, -cy)
 
-        val dstRect = android.graphics.RectF(px, py, px + photoSize, py + photoSize)
+        val dstRect = android.graphics.RectF(px, py, px + size, py + size)
         canvas.drawBitmap(photoBitmap, null, dstRect, Paint(Paint.FILTER_BITMAP_FLAG))
         canvas.restore()
         canvas.restore()
 
         val borderPaint = Paint().apply {
-            color = if (pdfStyle == CvTemplateStyle.CREATIVE_MARKETING) AndroidColor.WHITE else primaryColor
-            style = Paint.Style.STROKE
-            strokeWidth = 1.2f
-            isAntiAlias = true
-        }
-        when (data.photoShape) {
-            "Circle" -> canvas.drawCircle(px + photoSize / 2f, py + photoSize / 2f, photoSize / 2f, borderPaint)
-            "Rounded" -> canvas.drawRoundRect(android.graphics.RectF(px, py, px + photoSize, py + photoSize), 8f, 8f, borderPaint)
-            "Hexagon" -> {
-                val bPath = android.graphics.Path().apply {
-                    moveTo(px + photoSize * 0.5f, py)
-                    lineTo(px + photoSize, py + photoSize * 0.25f)
-                    lineTo(px + photoSize, py + photoSize * 0.75f)
-                    lineTo(px + photoSize * 0.5f, py + photoSize)
-                    lineTo(px, py + photoSize * 0.75f)
-                    lineTo(px, py + photoSize * 0.25f)
-                    close()
-                }
-                canvas.drawPath(bPath, borderPaint)
-            }
-            else -> canvas.drawRect(android.graphics.RectF(px, py, px + photoSize, py + photoSize), borderPaint)
-        }
-    }
-
-    // 1. HEADER SECTION (Full Name, Designation, Contact Block with strict rules)
-    if (data.fullName.isNotBlank()) {
-        val nameLayout = StaticLayout.Builder.obtain(data.fullName, 0, data.fullName.length, titlePaint, textWidth.toInt()).build()
-        checkAndAddNewPage(nameLayout.height.toFloat() + 5f)
-        canvas.save()
-        canvas.translate(margin, currentY)
-        nameLayout.draw(canvas)
-        canvas.restore()
-        currentY += nameLayout.height + 4
-    }
-
-    if (data.jobTitle.isNotBlank()) {
-        val designationLayout = StaticLayout.Builder.obtain(data.jobTitle, 0, data.jobTitle.length, subtitlePaint, textWidth.toInt()).build()
-        checkAndAddNewPage(designationLayout.height.toFloat() + 5f)
-        canvas.save()
-        canvas.translate(margin, currentY)
-        designationLayout.draw(canvas)
-        canvas.restore()
-        currentY += designationLayout.height + 6
-    }
-
-    fun String.sanitizeEmoji(): String {
-        return this.replace(Regex("[\\uD83C-\\uDBFF\\uDC00-\\uDFFF📞✉📍🔗🌐]"), "").trim()
-    }
-
-    data class PdfContactItem(val text: String, val iconType: String)
-    val contactItems = mutableListOf<PdfContactItem>()
-    if (data.phone.isNotBlank()) contactItems.add(PdfContactItem(data.phone.sanitizeEmoji(), "phone"))
-    if (data.email.isNotBlank()) contactItems.add(PdfContactItem(data.email.sanitizeEmoji(), "email"))
-    if (data.address.isNotBlank()) {
-        val cleanAddr = if (data.address.contains(",")) {
-            val parts = data.address.split(",")
-            if (parts.size >= 2) "${parts[parts.size - 2].trim()}, ${parts[parts.size - 1].trim()}" else data.address
-        } else {
-            data.address
-        }
-        contactItems.add(PdfContactItem(cleanAddr.sanitizeEmoji(), "location"))
-    }
-    if (data.linkedin.isNotBlank()) {
-        val cleanLn = data.linkedin.removePrefix("https://").removePrefix("www.").sanitizeEmoji()
-        contactItems.add(PdfContactItem(cleanLn, "linkedin"))
-    }
-    if (data.githubOrPortfolio.isNotBlank()) {
-        val cleanPortfolio = data.githubOrPortfolio.removePrefix("https://").removePrefix("www.").sanitizeEmoji()
-        contactItems.add(PdfContactItem(cleanPortfolio, "portfolio"))
-    }
-
-    if (contactItems.isNotEmpty()) {
-        val iconSize = 8f
-        val iconSpacing = 3f
-        val itemSpacing = 14f
-        
-        val itemWidths = contactItems.map { item ->
-            val tWidth = contactPaint.measureText(item.text)
-            iconSize + iconSpacing + tWidth
-        }
-        val totalWidth = itemWidths.sum() + (contactItems.size - 1) * itemSpacing
-        
-        checkAndAddNewPage(16f)
-        var cx = margin + (contentWidth - totalWidth) / 2f
-        if (cx < margin) cx = margin
-        
-        val iconPaint = Paint().apply {
-            color = if (pdfStyle == CvTemplateStyle.CREATIVE_MARKETING) AndroidColor.WHITE else primaryColor
+            color = borderColor
             style = Paint.Style.STROKE
             strokeWidth = 1f
             isAntiAlias = true
         }
-        val fillPaint = Paint().apply {
-            color = if (pdfStyle == CvTemplateStyle.CREATIVE_MARKETING) AndroidColor.WHITE else primaryColor
+        when (shape) {
+            "Circle" -> canvas.drawCircle(px + size / 2f, py + size / 2f, size / 2f, borderPaint)
+            "Rounded" -> canvas.drawRoundRect(android.graphics.RectF(px, py, px + size, py + size), 6f, 6f, borderPaint)
+            else -> canvas.drawRect(android.graphics.RectF(px, py, px + size, py + size), borderPaint)
+        }
+    }
+
+    // ================= BRANCH 1: EXECUTIVE TWO-COLUMN SIDEBAR =================
+    if (pdfStyle == CvTemplateStyle.EXECUTIVE_TWO_COLUMN) {
+        val sidebarWidth = 185f
+        val rightMargin = 20f
+        val mainColX = sidebarWidth + rightMargin
+        val mainColWidth = pageWidth - mainColX - margin
+
+        // Draw Left Sidebar Background
+        val sideBgPaint = Paint().apply {
+            color = primaryColor
             style = Paint.Style.FILL
+        }
+        canvas.drawRect(0f, 0f, sidebarWidth, pageHeight.toFloat(), sideBgPaint)
+
+        val sideTextPaint = TextPaint().apply {
             isAntiAlias = true
+            color = AndroidColor.WHITE
+            textSize = 8.8f
+            typeface = Typeface.create("sans-serif", Typeface.NORMAL)
         }
-        
-        contactItems.forEachIndexed { idx, item ->
-            val iy = currentY + 1f
-            when (item.iconType) {
-                "phone" -> {
-                    canvas.drawRoundRect(cx, iy, cx + iconSize, iy + iconSize - 2f, 1f, 1f, iconPaint)
-                    canvas.drawRect(cx + 2f, iy + 2f, cx + iconSize - 2f, iy + iconSize - 4f, fillPaint)
-                }
-                "email" -> {
-                    canvas.drawRect(cx, iy + 1f, cx + iconSize, iy + iconSize - 1f, iconPaint)
-                    canvas.drawLine(cx, iy + 1f, cx + iconSize / 2f, iy + iconSize / 2f + 1f, iconPaint)
-                    canvas.drawLine(cx + iconSize, iy + 1f, cx + iconSize / 2f, iy + iconSize / 2f + 1f, iconPaint)
-                }
-                "location" -> {
-                    val px = cx + iconSize / 2f
-                    val py = iy + iconSize / 3f
-                    canvas.drawCircle(px, py, iconSize / 4f, iconPaint)
-                    val path = android.graphics.Path().apply {
-                        moveTo(px - iconSize / 3f, py)
-                        lineTo(px, iy + iconSize - 1f)
-                        lineTo(px + iconSize / 3f, py)
-                        close()
-                    }
-                    canvas.drawPath(path, iconPaint)
-                }
-                "linkedin" -> {
-                    canvas.drawRoundRect(cx, iy, cx + iconSize, iy + iconSize, 1f, 1f, fillPaint)
-                    val textPaintIn = Paint().apply {
-                        color = if (pdfStyle == CvTemplateStyle.CREATIVE_MARKETING) primaryColor else AndroidColor.WHITE
-                        textSize = 5f
-                        typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-                    }
-                    canvas.drawText("in", cx + 1.5f, iy + iconSize - 2.5f, textPaintIn)
-                }
-                "portfolio" -> {
-                    val px = cx + iconSize / 2f
-                    val py = iy + iconSize / 2f
-                    canvas.drawCircle(px, py, iconSize / 2f, iconPaint)
-                    canvas.drawLine(cx, py, cx + iconSize, py, iconPaint)
-                    canvas.drawLine(px, iy, px, iy + iconSize, iconPaint)
-                }
-            }
-            
-            canvas.drawText(item.text, cx + iconSize + iconSpacing, currentY + 8f, contactPaint)
-            cx += itemWidths[idx] + itemSpacing
+        val sideTitlePaint = TextPaint().apply {
+            isAntiAlias = true
+            color = AndroidColor.WHITE
+            textSize = 10.5f
+            typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
         }
-        currentY += 15f
-    }
 
-    if (pdfStyle == CvTemplateStyle.CREATIVE_MARKETING) {
-        currentY = 155f
-    } else {
-        checkAndAddNewPage(10f)
-        canvas.drawLine(margin, currentY, pageWidth - margin, currentY, linePaint)
-        currentY += 12f
-    }
-
-    fun drawSectionHeader(title: String) {
-        checkAndAddNewPage(32f)
-        canvas.drawText(title.uppercase(), margin, currentY + 12f, sectionHeaderPaint)
-        currentY += 16f
-
-        val headerBarPaint = Paint().apply {
-            color = if (pdfStyle == CvTemplateStyle.CLASSIC_CORPORATE || pdfStyle == CvTemplateStyle.BUSINESS_ANALYST_MBA) primaryColor else mutedLineColor
-            strokeWidth = if (pdfStyle == CvTemplateStyle.BUSINESS_ANALYST_MBA) 2.5f else 1f
+        var sideY = margin
+        if (photoBitmap != null) {
+            val pSize = 75f
+            val px = (sidebarWidth - pSize) / 2f
+            drawPhotoAt(px, sideY, pSize, data.photoShape, AndroidColor.WHITE)
+            sideY += pSize + 16f
         }
-        canvas.drawLine(margin, currentY, pageWidth - margin, currentY, headerBarPaint)
 
-        if (pdfStyle == CvTemplateStyle.BUSINESS_ANALYST_MBA) {
-            canvas.drawLine(margin, currentY + 3f, pageWidth - margin, currentY + 3f, Paint().apply {
-                color = AndroidColor.parseColor("#93C5FD")
+        fun drawSideHeader(title: String) {
+            canvas.drawText(title.uppercase(), margin / 2f + 4f, sideY + 10f, sideTitlePaint)
+            sideY += 14f
+            canvas.drawLine(margin / 2f + 4f, sideY, sidebarWidth - 16f, sideY, Paint().apply {
+                color = AndroidColor.parseColor("#64748B")
                 strokeWidth = 1f
             })
-            currentY += 8f
-        } else {
-            currentY += 8f
+            sideY += 8f
+        }
+
+        // CONTACT
+        drawSideHeader("CONTACT")
+        val iconSize = 9f
+        fun drawSideContactItem(text: String, iconType: String) {
+            if (text.isBlank()) return
+            val iy = sideY + 1f
+            drawMaterialVectorIcon(canvas, iconType, margin / 2f + 4f, iy, iconSize, AndroidColor.parseColor("#94A3B8"))
+            val layout = StaticLayout.Builder.obtain(text, 0, text.length, sideTextPaint, (sidebarWidth - margin - 20f).toInt()).build()
+            canvas.save()
+            canvas.translate(margin / 2f + 4f + iconSize + 6f, sideY)
+            layout.draw(canvas)
+            canvas.restore()
+            sideY += layout.height + 6f
+        }
+
+        drawSideContactItem(data.phone, "phone")
+        drawSideContactItem(data.email, "email")
+        drawSideContactItem(data.address, "location")
+        if (data.linkedin.isNotBlank()) drawSideContactItem(data.linkedin.removePrefix("https://").removePrefix("www."), "linkedin")
+        if (data.githubOrPortfolio.isNotBlank()) drawSideContactItem(data.githubOrPortfolio.removePrefix("https://").removePrefix("www."), "portfolio")
+
+        // SKILLS in Sidebar
+        if (data.skills.isNotEmpty()) {
+            sideY += 8f
+            drawSideHeader("KEY SKILLS")
+            data.skills.take(8).forEach { sk ->
+                val sLine = "• ${sk.name}"
+                val sLayout = StaticLayout.Builder.obtain(sLine, 0, sLine.length, sideTextPaint, (sidebarWidth - margin - 10f).toInt()).build()
+                canvas.save()
+                canvas.translate(margin / 2f + 4f, sideY)
+                sLayout.draw(canvas)
+                canvas.restore()
+                sideY += sLayout.height + 4f
+            }
+        }
+
+        // LANGUAGES in Sidebar
+        if (data.languages.isNotBlank()) {
+            sideY += 8f
+            drawSideHeader("LANGUAGES")
+            val lLayout = StaticLayout.Builder.obtain(data.languages, 0, data.languages.length, sideTextPaint, (sidebarWidth - margin - 10f).toInt()).build()
+            canvas.save()
+            canvas.translate(margin / 2f + 4f, sideY)
+            lLayout.draw(canvas)
+            canvas.restore()
+            sideY += lLayout.height + 6f
+        }
+
+        // PERSONAL DETAILS in Sidebar
+        val sidePersonal = mutableListOf<String>()
+        if (data.bloodGroup.isNotBlank()) sidePersonal.add("Blood Group: ${data.bloodGroup}")
+        if (data.religion.isNotBlank()) sidePersonal.add("Religion: ${data.religion}")
+        if (data.fatherName.isNotBlank()) sidePersonal.add("Father: ${data.fatherName}")
+        if (data.motherName.isNotBlank()) sidePersonal.add("Mother: ${data.motherName}")
+        if (sidePersonal.isNotEmpty()) {
+            sideY += 8f
+            drawSideHeader("PERSONAL")
+            sidePersonal.forEach { p ->
+                val pLayout = StaticLayout.Builder.obtain(p, 0, p.length, sideTextPaint, (sidebarWidth - margin - 10f).toInt()).build()
+                canvas.save()
+                canvas.translate(margin / 2f + 4f, sideY)
+                pLayout.draw(canvas)
+                canvas.restore()
+                sideY += pLayout.height + 4f
+            }
+        }
+
+        // RIGHT COLUMN: Main Content
+        var rightY = margin
+        if (data.fullName.isNotBlank()) {
+            val nameLayout = StaticLayout.Builder.obtain(data.fullName.uppercase(), 0, data.fullName.length, titlePaint, mainColWidth.toInt()).build()
+            canvas.save()
+            canvas.translate(mainColX, rightY)
+            nameLayout.draw(canvas)
+            canvas.restore()
+            rightY += nameLayout.height + 2f
+        }
+        if (data.jobTitle.isNotBlank()) {
+            val titleLayout = StaticLayout.Builder.obtain(data.jobTitle, 0, data.jobTitle.length, subtitlePaint, mainColWidth.toInt()).build()
+            canvas.save()
+            canvas.translate(mainColX, rightY)
+            titleLayout.draw(canvas)
+            canvas.restore()
+            rightY += titleLayout.height + 10f
+        }
+
+        fun drawMainSectionHeader(title: String) {
+            canvas.drawText(title.uppercase(), mainColX, rightY + 10f, sectionHeaderPaint)
+            rightY += 14f
+            canvas.drawLine(mainColX, rightY, pageWidth - margin, rightY, Paint().apply {
+                color = mutedLineColor
+                strokeWidth = 1.2f
+            })
+            rightY += 8f
+        }
+
+        if (data.summary.isNotBlank()) {
+            drawMainSectionHeader("EXECUTIVE SUMMARY")
+            val sumLayout = StaticLayout.Builder.obtain(data.summary, 0, data.summary.length, bodyPaint, mainColWidth.toInt()).build()
+            canvas.save()
+            canvas.translate(mainColX, rightY)
+            sumLayout.draw(canvas)
+            canvas.restore()
+            rightY += sumLayout.height + 12f
+        }
+
+        if (data.experiences.isNotEmpty()) {
+            drawMainSectionHeader("EXPERIENCE")
+            data.experiences.forEach { exp ->
+                if (exp.role.isNotBlank() || exp.company.isNotBlank()) {
+                    val head = "${exp.role} — ${exp.company}"
+                    val date = "${exp.startDate}${if (exp.startDate.isNotBlank() && exp.endDate.isNotBlank()) " – " else ""}${if (exp.isCurrent) "Present" else exp.endDate}"
+                    val headLayout = StaticLayout.Builder.obtain(head, 0, head.length, bodyBoldPaint, (mainColWidth * 0.72f).toInt()).build()
+                    val dateLayout = StaticLayout.Builder.obtain(date, 0, date.length, contactPaint, (mainColWidth * 0.28f).toInt()).setAlignment(Layout.Alignment.ALIGN_OPPOSITE).build()
+
+                    val h = maxOf(headLayout.height, dateLayout.height).toFloat()
+                    canvas.save()
+                    canvas.translate(mainColX, rightY)
+                    headLayout.draw(canvas)
+                    canvas.restore()
+                    canvas.save()
+                    canvas.translate(mainColX + mainColWidth * 0.72f, rightY)
+                    dateLayout.draw(canvas)
+                    canvas.restore()
+                    rightY += h + 2f
+
+                    if (exp.description.isNotBlank()) {
+                        val dLayout = StaticLayout.Builder.obtain(exp.description, 0, exp.description.length, bodyPaint, mainColWidth.toInt()).build()
+                        canvas.save()
+                        canvas.translate(mainColX, rightY)
+                        dLayout.draw(canvas)
+                        canvas.restore()
+                        rightY += dLayout.height + 8f
+                    } else {
+                        rightY += 6f
+                    }
+                }
+            }
+        }
+
+        if (data.educations.isNotEmpty()) {
+            drawMainSectionHeader("EDUCATION")
+            data.educations.forEach { edu ->
+                val eduTitle = "${edu.degree}${if (edu.degree.isNotBlank() && edu.institution.isNotBlank()) " — " else ""}${edu.institution}"
+                val eduSub = "Year: ${edu.passingYear}${if (edu.passingYear.isNotBlank() && edu.result.isNotBlank()) "  |  " else ""}${edu.result}"
+                val tLayout = StaticLayout.Builder.obtain(eduTitle, 0, eduTitle.length, bodyBoldPaint, mainColWidth.toInt()).build()
+                canvas.save()
+                canvas.translate(mainColX, rightY)
+                tLayout.draw(canvas)
+                canvas.restore()
+                rightY += tLayout.height + 2f
+
+                val sLayout = StaticLayout.Builder.obtain(eduSub, 0, eduSub.length, contactPaint, mainColWidth.toInt()).build()
+                canvas.save()
+                canvas.translate(mainColX, rightY)
+                sLayout.draw(canvas)
+                canvas.restore()
+                rightY += sLayout.height + 6f
+            }
+        }
+
+        if (data.certifications.isNotBlank()) {
+            drawMainSectionHeader("CERTIFICATIONS")
+            val cLayout = StaticLayout.Builder.obtain(data.certifications, 0, data.certifications.length, bodyPaint, mainColWidth.toInt()).build()
+            canvas.save()
+            canvas.translate(mainColX, rightY)
+            cLayout.draw(canvas)
+            canvas.restore()
+            rightY += cLayout.height + 10f
+        }
+
+        if (data.references.isNotBlank()) {
+            drawMainSectionHeader("REFERENCES")
+            val rLayout = StaticLayout.Builder.obtain(data.references, 0, data.references.length, bodyPaint, mainColWidth.toInt()).build()
+            canvas.save()
+            canvas.translate(mainColX, rightY)
+            rLayout.draw(canvas)
+            canvas.restore()
+        }
+
+        pdfDocument.finishPage(page)
+        val passingYearStr = if (data.educations.isNotEmpty()) data.educations.first().passingYear else "2026"
+        val pdfFileName = CvFileNameUtility.generateFileName(data.fullName, passingYearStr)
+        val file = File(context.cacheDir, pdfFileName)
+        val fos = FileOutputStream(file)
+        pdfDocument.writeTo(fos)
+        pdfDocument.close()
+        fos.close()
+        return file
+    }
+
+    // ================= BRANCH 2: CREATIVE MARKETING BANNER =================
+    if (pdfStyle == CvTemplateStyle.CREATIVE_MARKETING) {
+        val bannerHeight = 120f
+        val bannerPaint = Paint().apply {
+            color = AndroidColor.parseColor("#0F172A")
+            style = Paint.Style.FILL
+        }
+        canvas.drawRect(0f, 0f, pageWidth.toFloat(), bannerHeight, bannerPaint)
+
+        val accentPaint = Paint().apply {
+            color = primaryColor
+            style = Paint.Style.FILL
+        }
+        canvas.drawRect(0f, bannerHeight, pageWidth.toFloat(), bannerHeight + 4f, accentPaint)
+
+        var bannerY = 22f
+        val bannerTextWidth = if (photoBitmap != null) contentWidth - 75f else contentWidth
+
+        val bannerTitlePaint = TextPaint().apply {
+            isAntiAlias = true
+            color = AndroidColor.WHITE
+            textSize = 19f
+            typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+        }
+        val bannerSubPaint = TextPaint().apply {
+            isAntiAlias = true
+            color = AndroidColor.parseColor("#F1F5F9")
+            textSize = 11f
+            typeface = Typeface.create("sans-serif", Typeface.NORMAL)
+        }
+        val bannerContactPaint = TextPaint().apply {
+            isAntiAlias = true
+            color = AndroidColor.parseColor("#CBD5E1")
+            textSize = 8.8f
+            typeface = Typeface.create("sans-serif", Typeface.NORMAL)
+        }
+
+        if (data.fullName.isNotBlank()) {
+            val nameLayout = StaticLayout.Builder.obtain(data.fullName.uppercase(), 0, data.fullName.length, bannerTitlePaint, bannerTextWidth.toInt()).build()
+            canvas.save()
+            canvas.translate(margin, bannerY)
+            nameLayout.draw(canvas)
+            canvas.restore()
+            bannerY += nameLayout.height + 2f
+        }
+        if (data.jobTitle.isNotBlank()) {
+            val subLayout = StaticLayout.Builder.obtain(data.jobTitle, 0, data.jobTitle.length, bannerSubPaint, bannerTextWidth.toInt()).build()
+            canvas.save()
+            canvas.translate(margin, bannerY)
+            subLayout.draw(canvas)
+            canvas.restore()
+            bannerY += subLayout.height + 4f
+        }
+
+        val contactLine = listOfNotNull(
+            data.phone.takeIf { it.isNotBlank() },
+            data.email.takeIf { it.isNotBlank() },
+            data.address.takeIf { it.isNotBlank() },
+            data.linkedin.takeIf { it.isNotBlank() }
+        ).joinToString("  •  ")
+        if (contactLine.isNotBlank()) {
+            val cLayout = StaticLayout.Builder.obtain(contactLine, 0, contactLine.length, bannerContactPaint, bannerTextWidth.toInt()).build()
+            canvas.save()
+            canvas.translate(margin, bannerY)
+            cLayout.draw(canvas)
+            canvas.restore()
+        }
+
+        if (photoBitmap != null) {
+            val pSize = 68f
+            val px = pageWidth - margin - pSize
+            drawPhotoAt(px, 24f, pSize, "Circle", AndroidColor.WHITE)
+        }
+
+        currentY = bannerHeight + 18f
+    }
+
+    // ================= BRANCH 3: HARVARD CLASSIC ACADEMIC =================
+    if (pdfStyle == CvTemplateStyle.HARVARD_CLASSIC) {
+        var headY = margin
+        if (data.fullName.isNotBlank()) {
+            val hTitlePaint = TextPaint().apply {
+                isAntiAlias = true
+                color = AndroidColor.BLACK
+                textSize = 21f
+                typeface = Typeface.create("serif", Typeface.BOLD)
+                textAlign = Paint.Align.CENTER
+            }
+            canvas.drawText(data.fullName.uppercase(), pageWidth / 2f, headY + 18f, hTitlePaint)
+            headY += 24f
+        }
+        if (data.jobTitle.isNotBlank()) {
+            val hSubPaint = TextPaint().apply {
+                isAntiAlias = true
+                color = AndroidColor.parseColor("#374151")
+                textSize = 11f
+                typeface = Typeface.create("serif", Typeface.NORMAL)
+                textAlign = Paint.Align.CENTER
+            }
+            canvas.drawText(data.jobTitle, pageWidth / 2f, headY + 10f, hSubPaint)
+            headY += 16f
+        }
+
+        val contactLine = listOfNotNull(
+            data.address.takeIf { it.isNotBlank() },
+            data.phone.takeIf { it.isNotBlank() },
+            data.email.takeIf { it.isNotBlank() },
+            data.linkedin.takeIf { it.isNotBlank() }?.removePrefix("https://")?.removePrefix("www.")
+        ).joinToString("  •  ")
+
+        if (contactLine.isNotBlank()) {
+            val hContactPaint = TextPaint().apply {
+                isAntiAlias = true
+                color = AndroidColor.parseColor("#4B5563")
+                textSize = 9.2f
+                typeface = Typeface.create("serif", Typeface.NORMAL)
+                textAlign = Paint.Align.CENTER
+            }
+            canvas.drawText(contactLine, pageWidth / 2f, headY + 8f, hContactPaint)
+            headY += 18f
+        }
+        currentY = headY + 6f
+    } else if (pdfStyle == CvTemplateStyle.BANKING_FINANCE_SPECIALIST) {
+        // ================= BRANCH 4: BANKING & FINANCE SPECIALIST =================
+        val boxHeight = 72f
+        val boxRect = android.graphics.RectF(margin, currentY, pageWidth - margin, currentY + boxHeight)
+        val boxFillPaint = Paint().apply {
+            color = AndroidColor.parseColor("#F8FAFC")
+            style = Paint.Style.FILL
+        }
+        val boxStrokePaint = Paint().apply {
+            color = primaryColor
+            style = Paint.Style.STROKE
+            strokeWidth = 1.2f
+        }
+        canvas.drawRoundRect(boxRect, 4f, 4f, boxFillPaint)
+        canvas.drawRoundRect(boxRect, 4f, 4f, boxStrokePaint)
+
+        val halfW = (contentWidth - 24f) / 2f
+        var by = currentY + 16f
+        if (data.fullName.isNotBlank()) {
+            canvas.drawText(data.fullName.uppercase(), margin + 12f, by + 4f, titlePaint)
+            by += 16f
+        }
+        if (data.jobTitle.isNotBlank()) {
+            canvas.drawText(data.jobTitle, margin + 12f, by + 4f, subtitlePaint)
+        }
+
+        var rby = currentY + 14f
+        val rPaint = TextPaint().apply {
+            isAntiAlias = true
+            color = subTextColor
+            textSize = 8.8f
+            typeface = Typeface.create("sans-serif", Typeface.NORMAL)
+        }
+        if (data.phone.isNotBlank()) {
+            drawMaterialVectorIcon(canvas, "phone", margin + halfW + 12f, rby - 8f, 8.5f, primaryColor)
+            canvas.drawText(data.phone, margin + halfW + 24f, rby, rPaint)
+            rby += 13f
+        }
+        if (data.email.isNotBlank()) {
+            drawMaterialVectorIcon(canvas, "email", margin + halfW + 12f, rby - 8f, 8.5f, primaryColor)
+            canvas.drawText(data.email, margin + halfW + 24f, rby, rPaint)
+            rby += 13f
+        }
+        if (data.address.isNotBlank()) {
+            drawMaterialVectorIcon(canvas, "location", margin + halfW + 12f, rby - 8f, 8.5f, primaryColor)
+            canvas.drawText(data.address, margin + halfW + 24f, rby, rPaint)
+        }
+
+        currentY += boxHeight + 14f
+    } else if (pdfStyle == CvTemplateStyle.NGO_DEVELOPMENT_HUMANITARIAN) {
+        // ================= BRANCH 5: NGO & HUMANITARIAN =================
+        val barPaint = Paint().apply {
+            color = primaryColor
+            style = Paint.Style.FILL
+        }
+        canvas.drawRect(margin, currentY, margin + 4f, currentY + 54f, barPaint)
+
+        var hy = currentY + 4f
+        if (data.fullName.isNotBlank()) {
+            canvas.drawText(data.fullName.uppercase(), margin + 14f, hy + 14f, titlePaint)
+            hy += 20f
+        }
+        if (data.jobTitle.isNotBlank()) {
+            canvas.drawText(data.jobTitle, margin + 14f, hy + 10f, subtitlePaint)
+            hy += 16f
+        }
+
+        val contactLine = listOfNotNull(
+            data.phone.takeIf { it.isNotBlank() }?.let { "Tel: $it" },
+            data.email.takeIf { it.isNotBlank() }?.let { "Email: $it" },
+            data.address.takeIf { it.isNotBlank() }?.let { "Base: $it" }
+        ).joinToString("  |  ")
+        if (contactLine.isNotBlank()) {
+            canvas.drawText(contactLine, margin + 14f, hy + 8f, contactPaint)
+        }
+
+        if (photoBitmap != null) {
+            val pSize = 60f
+            val px = pageWidth - margin - pSize
+            drawPhotoAt(px, currentY, pSize, "Rounded", primaryColor)
+        }
+
+        currentY += 66f
+    } else if (pdfStyle == CvTemplateStyle.CANVA_MINIMALIST_CLEAN) {
+        // ================= BRANCH 6: CANVA MINIMALIST CLEAN (CENTERED MODERN) =================
+        var headY = currentY
+        if (photoBitmap != null) {
+            val pSize = 58f
+            drawPhotoAt((pageWidth - pSize) / 2f, headY, pSize, "Circle", primaryColor)
+            headY += pSize + 10f
+        }
+
+        if (data.fullName.isNotBlank()) {
+            val canvaTitlePaint = TextPaint().apply {
+                isAntiAlias = true
+                color = primaryColor
+                textSize = 21f
+                typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+                textAlign = Paint.Align.CENTER
+            }
+            canvas.drawText(data.fullName.uppercase(), pageWidth / 2f, headY + 16f, canvaTitlePaint)
+            headY += 22f
+        }
+
+        if (data.jobTitle.isNotBlank()) {
+            val canvaSubPaint = TextPaint().apply {
+                isAntiAlias = true
+                color = subTextColor
+                textSize = 10.5f
+                typeface = Typeface.create("sans-serif", Typeface.NORMAL)
+                textAlign = Paint.Align.CENTER
+            }
+            canvas.drawText(data.jobTitle, pageWidth / 2f, headY + 10f, canvaSubPaint)
+            headY += 16f
+        }
+
+        val contactLine = listOfNotNull(
+            data.phone.takeIf { it.isNotBlank() },
+            data.email.takeIf { it.isNotBlank() },
+            data.address.takeIf { it.isNotBlank() },
+            data.linkedin.takeIf { it.isNotBlank() }?.removePrefix("https://")?.removePrefix("www.")
+        ).joinToString("   •   ")
+
+        if (contactLine.isNotBlank()) {
+            val cPaint = TextPaint().apply {
+                isAntiAlias = true
+                color = subTextColor
+                textSize = 8.8f
+                typeface = Typeface.create("sans-serif", Typeface.NORMAL)
+                textAlign = Paint.Align.CENTER
+            }
+            canvas.drawText(contactLine, pageWidth / 2f, headY + 8f, cPaint)
+            headY += 16f
+        }
+
+        val dividerPaint = Paint().apply {
+            color = AndroidColor.parseColor("#E2E8F0")
+            strokeWidth = 1.2f
+        }
+        canvas.drawLine(margin + 20f, headY + 4f, pageWidth - margin - 20f, headY + 4f, dividerPaint)
+        currentY = headY + 14f
+    } else if (pdfStyle == CvTemplateStyle.SILICON_VALLEY_TECH_LEAD) {
+        // ================= BRANCH 7: SILICON VALLEY TECH LEAD =================
+        val techAccentPaint = Paint().apply {
+            color = primaryColor
+            style = Paint.Style.FILL
+        }
+        canvas.drawRect(margin, currentY, margin + 4.5f, currentY + 54f, techAccentPaint)
+
+        var ty = currentY + 4f
+        val tTitlePaint = TextPaint().apply {
+            isAntiAlias = true
+            color = AndroidColor.parseColor("#0F172A")
+            textSize = 20f
+            typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+        }
+        if (data.fullName.isNotBlank()) {
+            canvas.drawText(data.fullName.uppercase(), margin + 14f, ty + 15f, tTitlePaint)
+            ty += 21f
+        }
+        if (data.jobTitle.isNotBlank()) {
+            canvas.drawText(data.jobTitle, margin + 14f, ty + 10f, subtitlePaint)
+            ty += 15f
+        }
+
+        val contactLine = listOfNotNull(
+            data.email.takeIf { it.isNotBlank() },
+            data.phone.takeIf { it.isNotBlank() },
+            data.githubOrPortfolio.takeIf { it.isNotBlank() }?.let { "gh: ${it.removePrefix("https://").removePrefix("www.")}" },
+            data.linkedin.takeIf { it.isNotBlank() }?.let { "in: ${it.removePrefix("https://").removePrefix("www.")}" }
+        ).joinToString("  |  ")
+        if (contactLine.isNotBlank()) {
+            val tcPaint = TextPaint().apply {
+                isAntiAlias = true
+                color = AndroidColor.parseColor("#475569")
+                textSize = 8.6f
+                typeface = Typeface.create("monospace", Typeface.NORMAL)
+            }
+            canvas.drawText(contactLine, margin + 14f, ty + 8f, tcPaint)
+        }
+
+        if (photoBitmap != null) {
+            val pSize = 56f
+            val px = pageWidth - margin - pSize
+            drawPhotoAt(px, currentY, pSize, "Rounded", primaryColor)
+        }
+
+        currentY += 66f
+    } else if (pdfStyle == CvTemplateStyle.EXECUTIVE_MONOCHROME_LUXE) {
+        // ================= BRANCH 8: EXECUTIVE MONOCHROME LUXE =================
+        var ey = currentY
+        if (data.fullName.isNotBlank()) {
+            val exeTitlePaint = TextPaint().apply {
+                isAntiAlias = true
+                color = AndroidColor.BLACK
+                textSize = 22f
+                typeface = Typeface.create("serif", Typeface.BOLD)
+                textAlign = Paint.Align.CENTER
+            }
+            canvas.drawText(data.fullName.uppercase(), pageWidth / 2f, ey + 18f, exeTitlePaint)
+            ey += 24f
+        }
+        if (data.jobTitle.isNotBlank()) {
+            val exeSubPaint = TextPaint().apply {
+                isAntiAlias = true
+                color = AndroidColor.parseColor("#262626")
+                textSize = 10.5f
+                typeface = Typeface.create("serif", Typeface.NORMAL)
+                textAlign = Paint.Align.CENTER
+            }
+            canvas.drawText(data.jobTitle, pageWidth / 2f, ey + 10f, exeSubPaint)
+            ey += 16f
+        }
+
+        val contactLine = listOfNotNull(
+            data.address.takeIf { it.isNotBlank() },
+            data.phone.takeIf { it.isNotBlank() },
+            data.email.takeIf { it.isNotBlank() },
+            data.linkedin.takeIf { it.isNotBlank() }?.removePrefix("https://")?.removePrefix("www.")
+        ).joinToString("  ❖  ")
+        if (contactLine.isNotBlank()) {
+            val exeCPaint = TextPaint().apply {
+                isAntiAlias = true
+                color = AndroidColor.parseColor("#404040")
+                textSize = 8.8f
+                typeface = Typeface.create("serif", Typeface.NORMAL)
+                textAlign = Paint.Align.CENTER
+            }
+            canvas.drawText(contactLine, pageWidth / 2f, ey + 8f, exeCPaint)
+            ey += 16f
+        }
+
+        val rulePaint = Paint().apply {
+            color = AndroidColor.BLACK
+            strokeWidth = 1.4f
+        }
+        canvas.drawLine(margin, ey + 2f, pageWidth - margin, ey + 2f, rulePaint)
+        currentY = ey + 12f
+    } else if (pdfStyle != CvTemplateStyle.CREATIVE_MARKETING) {
+        // ================= BRANCH 9: STANDARD HEADER (CLASSIC_CORPORATE, SINGLE_COLUMN_HIGH_IMPACT_ATS, NORDIC_SLATE_MODERN, CLEAN_TECH_STARTUP, MODERN_MINIMALIST, ELEGANT_PREMIUM) =================
+        val photoSize = 65f
+        val photoMargin = 14f
+        val hasTopPhoto = photoBitmap != null
+        val headerTextWidth = if (hasTopPhoto) (contentWidth - photoSize - photoMargin) else contentWidth
+
+        // Draw Profile Photo on Top Right
+        if (hasTopPhoto) {
+            val px = pageWidth - margin - photoSize
+            drawPhotoAt(px, currentY, photoSize, data.photoShape, primaryColor)
+        }
+
+        // Full Name (Bold Uppercase)
+        if (data.fullName.isNotBlank()) {
+            val nameLayout = StaticLayout.Builder.obtain(data.fullName.uppercase(), 0, data.fullName.length, titlePaint, headerTextWidth.toInt()).build()
+            canvas.save()
+            canvas.translate(margin, currentY)
+            nameLayout.draw(canvas)
+            canvas.restore()
+            currentY += nameLayout.height + 2f
+        }
+
+        // Designation / Job Title
+        if (data.jobTitle.isNotBlank()) {
+            val subLayout = StaticLayout.Builder.obtain(data.jobTitle, 0, data.jobTitle.length, subtitlePaint, headerTextWidth.toInt()).build()
+            canvas.save()
+            canvas.translate(margin, currentY)
+            subLayout.draw(canvas)
+            canvas.restore()
+            currentY += subLayout.height + 6f
+        }
+
+        // Contact Lines formatted cleanly with pipes (|) as requested
+        val contactLines = mutableListOf<String>()
+        val phoneEmailLine = listOfNotNull(
+            data.phone.takeIf { it.isNotBlank() }?.let { "Phone: $it" },
+            data.email.takeIf { it.isNotBlank() }?.let { "Email: $it" }
+        ).joinToString(" | ")
+        if (phoneEmailLine.isNotBlank()) contactLines.add(phoneEmailLine)
+
+        val locLnPortLine = mutableListOf<String>()
+        if (data.address.isNotBlank()) locLnPortLine.add("Location: ${data.address}")
+        if (data.linkedin.isNotBlank()) {
+            val cleanLn = data.linkedin.removePrefix("https://").removePrefix("www.")
+            locLnPortLine.add("Linkedin: $cleanLn")
+        }
+        if (data.githubOrPortfolio.isNotBlank()) {
+            val cleanPort = data.githubOrPortfolio.removePrefix("https://").removePrefix("www.")
+            locLnPortLine.add("Portfolio: $cleanPort")
+        }
+        if (locLnPortLine.isNotEmpty()) {
+            val secondLine = locLnPortLine.joinToString(" | ")
+            contactLines.add(secondLine)
+        }
+
+        contactLines.forEach { line ->
+            val cLayout = StaticLayout.Builder.obtain(line, 0, line.length, contactPaint, headerTextWidth.toInt()).build()
+            canvas.save()
+            canvas.translate(margin, currentY)
+            cLayout.draw(canvas)
+            canvas.restore()
+            currentY += cLayout.height + 3f
+        }
+
+        currentY = maxOf(currentY + 4f, if (hasTopPhoto) margin + photoSize + 10f else currentY)
+    }
+
+    // --- Section Header Renderer Custom to Template Style ---
+    fun drawSectionHeader(title: String) {
+        checkAndAddNewPage(28f)
+        when (pdfStyle) {
+            CvTemplateStyle.HARVARD_CLASSIC -> {
+                val hPaint = TextPaint().apply {
+                    isAntiAlias = true
+                    color = AndroidColor.BLACK
+                    textSize = 11.5f
+                    typeface = Typeface.create("serif", Typeface.BOLD)
+                }
+                canvas.drawText(title.uppercase(), margin, currentY + 11f, hPaint)
+                currentY += 15f
+                val rulePaint = Paint().apply {
+                    color = AndroidColor.BLACK
+                    strokeWidth = 1f
+                }
+                canvas.drawLine(margin, currentY, pageWidth - margin, currentY, rulePaint)
+                currentY += 8f
+            }
+            CvTemplateStyle.EXECUTIVE_MONOCHROME_LUXE -> {
+                val exePaint = TextPaint().apply {
+                    isAntiAlias = true
+                    color = AndroidColor.BLACK
+                    textSize = 11.5f
+                    typeface = Typeface.create("serif", Typeface.BOLD)
+                }
+                canvas.drawText("❖  ${title.uppercase()}", margin, currentY + 11f, exePaint)
+                currentY += 15f
+                val rulePaint = Paint().apply {
+                    color = AndroidColor.BLACK
+                    strokeWidth = 1f
+                }
+                canvas.drawLine(margin, currentY, pageWidth - margin, currentY, rulePaint)
+                currentY += 8f
+            }
+            CvTemplateStyle.CANVA_MINIMALIST_CLEAN -> {
+                val cPaint = TextPaint().apply {
+                    isAntiAlias = true
+                    color = primaryColor
+                    textSize = 11.5f
+                    typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+                }
+                canvas.drawText(title.uppercase(), margin, currentY + 11f, cPaint)
+                currentY += 15f
+                val rulePaint = Paint().apply {
+                    color = AndroidColor.parseColor("#E2E8F0")
+                    strokeWidth = 1f
+                }
+                canvas.drawLine(margin, currentY, pageWidth - margin, currentY, rulePaint)
+                currentY += 8f
+            }
+            CvTemplateStyle.SINGLE_COLUMN_HIGH_IMPACT_ATS -> {
+                val atsPaint = TextPaint().apply {
+                    isAntiAlias = true
+                    color = primaryColor
+                    textSize = 11.5f
+                    typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+                }
+                canvas.drawText(title.uppercase(), margin, currentY + 11f, atsPaint)
+                currentY += 15f
+                val rulePaint = Paint().apply {
+                    color = primaryColor
+                    strokeWidth = 1.4f
+                }
+                canvas.drawLine(margin, currentY, pageWidth - margin, currentY, rulePaint)
+                currentY += 8f
+            }
+            CvTemplateStyle.NORDIC_SLATE_MODERN -> {
+                val slatePaint = TextPaint().apply {
+                    isAntiAlias = true
+                    color = primaryColor
+                    textSize = 11.5f
+                    typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+                }
+                canvas.drawText(title.uppercase(), margin, currentY + 11f, slatePaint)
+                currentY += 15f
+                val rulePaint = Paint().apply {
+                    color = AndroidColor.parseColor("#94A3B8")
+                    strokeWidth = 0.9f
+                }
+                canvas.drawLine(margin, currentY, pageWidth - margin, currentY, rulePaint)
+                currentY += 8f
+            }
+            CvTemplateStyle.MODERN_MINIMALIST -> {
+                val barPaint = Paint().apply {
+                    color = primaryColor
+                    style = Paint.Style.FILL
+                }
+                canvas.drawRoundRect(android.graphics.RectF(margin, currentY + 1f, margin + 3.5f, currentY + 13f), 2f, 2f, barPaint)
+                canvas.drawText(title.uppercase(), margin + 9f, currentY + 11f, sectionHeaderPaint)
+                currentY += 15f
+                val rulePaint = Paint().apply {
+                    color = AndroidColor.parseColor("#E2E8F0")
+                    strokeWidth = 0.8f
+                }
+                canvas.drawLine(margin, currentY, pageWidth - margin, currentY, rulePaint)
+                currentY += 8f
+            }
+            CvTemplateStyle.ELEGANT_PREMIUM -> {
+                val dPaint = TextPaint().apply {
+                    isAntiAlias = true
+                    color = primaryColor
+                    textSize = 11.5f
+                    typeface = Typeface.create("serif", Typeface.BOLD)
+                }
+                canvas.drawText("◆  ${title.uppercase()}", margin, currentY + 11f, dPaint)
+                currentY += 15f
+                val rulePaint = Paint().apply {
+                    color = primaryColor
+                    strokeWidth = 1.2f
+                }
+                canvas.drawLine(margin, currentY, pageWidth - margin, currentY, rulePaint)
+                currentY += 8f
+            }
+            CvTemplateStyle.CREATIVE_MARKETING -> {
+                val pillRect = android.graphics.RectF(margin, currentY, margin + 6f, currentY + 14f)
+                val pillPaint = Paint().apply {
+                    color = primaryColor
+                    style = Paint.Style.FILL
+                }
+                canvas.drawRoundRect(pillRect, 3f, 3f, pillPaint)
+                canvas.drawText(title.uppercase(), margin + 12f, currentY + 11f, sectionHeaderPaint)
+                currentY += 16f
+                val rulePaint = Paint().apply {
+                    color = AndroidColor.parseColor("#FECDD3")
+                    strokeWidth = 1f
+                }
+                canvas.drawLine(margin, currentY, pageWidth - margin, currentY, rulePaint)
+                currentY += 8f
+            }
+            CvTemplateStyle.CLEAN_TECH_STARTUP, CvTemplateStyle.SILICON_VALLEY_TECH_LEAD -> {
+                val codePrefixPaint = TextPaint().apply {
+                    isAntiAlias = true
+                    color = primaryColor
+                    textSize = 11.5f
+                    typeface = Typeface.create("monospace", Typeface.BOLD)
+                }
+                canvas.drawText("// ${title.uppercase()}", margin, currentY + 11f, codePrefixPaint)
+                currentY += 15f
+                val rulePaint = Paint().apply {
+                    color = primaryColor
+                    strokeWidth = 1f
+                }
+                canvas.drawLine(margin, currentY, pageWidth - margin, currentY, rulePaint)
+                currentY += 8f
+            }
+            else -> {
+                val headerTitle = if (title.endsWith(":")) title else "$title:"
+                canvas.drawText(headerTitle.uppercase(), margin, currentY + 11f, sectionHeaderPaint)
+                currentY += 15f
+                val rulePaint = Paint().apply {
+                    color = if (pdfStyle == CvTemplateStyle.CLASSIC_CORPORATE) AndroidColor.BLACK else primaryColor
+                    strokeWidth = 1f
+                }
+                canvas.drawLine(margin, currentY, pageWidth - margin, currentY, rulePaint)
+                currentY += 8f
+            }
         }
     }
 
-    // 2. CAREER OBJECTIVE / EXECUTIVE SUMMARY
+    // 1. CAREER OBJECTIVE / SUMMARY
     if (data.summary.isNotBlank()) {
-        drawSectionHeader("CAREER OBJECTIVE / EXECUTIVE SUMMARY")
-        val summaryLayout = StaticLayout.Builder.obtain(data.summary, 0, data.summary.length, bodyPaint, contentWidth.toInt()).build()
-        checkAndAddNewPage(summaryLayout.height.toFloat() + 10)
-        canvas.save()
-        canvas.translate(margin, currentY)
-        summaryLayout.draw(canvas)
-        canvas.restore()
-        currentY += summaryLayout.height + 14
+        val objTitle = if (pdfStyle == CvTemplateStyle.NGO_DEVELOPMENT_HUMANITARIAN) "MISSION & SOCIAL IMPACT OBJECTIVE" else if (pdfStyle == CvTemplateStyle.HARVARD_CLASSIC) "PROFESSIONAL SUMMARY" else "CAREER OBJECTIVE"
+        drawSectionHeader(objTitle)
+
+        if (pdfStyle == CvTemplateStyle.NGO_DEVELOPMENT_HUMANITARIAN) {
+            val sumLayout = StaticLayout.Builder.obtain(data.summary, 0, data.summary.length, bodyPaint, (contentWidth - 20f).toInt()).build()
+            val boxH = sumLayout.height + 14f
+            checkAndAddNewPage(boxH + 6f)
+            val bgPaint = Paint().apply {
+                color = AndroidColor.parseColor("#FFF7ED")
+                style = Paint.Style.FILL
+            }
+            val borderP = Paint().apply {
+                color = AndroidColor.parseColor("#FED7AA")
+                style = Paint.Style.STROKE
+                strokeWidth = 1f
+            }
+            val r = android.graphics.RectF(margin, currentY, margin + contentWidth, currentY + boxH)
+            canvas.drawRoundRect(r, 4f, 4f, bgPaint)
+            canvas.drawRoundRect(r, 4f, 4f, borderP)
+            canvas.save()
+            canvas.translate(margin + 10f, currentY + 7f)
+            sumLayout.draw(canvas)
+            canvas.restore()
+            currentY += boxH + 10f
+        } else {
+            val sumLayout = StaticLayout.Builder.obtain(data.summary, 0, data.summary.length, bodyPaint, contentWidth.toInt()).build()
+            checkAndAddNewPage(sumLayout.height.toFloat() + 8f)
+            canvas.save()
+            canvas.translate(margin, currentY)
+            sumLayout.draw(canvas)
+            canvas.restore()
+            currentY += sumLayout.height + 12f
+        }
     }
 
-    // 3. EDUCATION (Reverse Chronological Sorting)
+    // 2. EDUCATION
     if (data.educations.isNotEmpty()) {
         drawSectionHeader("EDUCATION")
-        val sortedEducations = data.educations.sortedByDescending { it.passingYear.toIntOrNull() ?: 0 }
-        sortedEducations.forEach { edu ->
-            if (edu.degree.isNotBlank() || edu.institution.isNotBlank()) {
-                val titleLine = "${edu.degree}${if (edu.degree.isNotBlank() && edu.institution.isNotBlank()) " — " else ""}${edu.institution}"
-                val detailsLine = "Passing Year: ${edu.passingYear}${if (edu.passingYear.isNotBlank() && edu.result.isNotBlank()) "  |  " else ""}${edu.result}"
 
-                val titleLayout = StaticLayout.Builder.obtain(titleLine, 0, titleLine.length, bodyBoldPaint, contentWidth.toInt()).build()
-                checkAndAddNewPage(titleLayout.height.toFloat() + 2)
-                canvas.save()
-                canvas.translate(margin, currentY)
-                titleLayout.draw(canvas)
-                canvas.restore()
-                currentY += titleLayout.height + 2
+        if (pdfStyle == CvTemplateStyle.HARVARD_CLASSIC) {
+            val sortedEdu = data.educations.sortedByDescending { it.passingYear.toIntOrNull() ?: 0 }
+            sortedEdu.forEach { edu ->
+                val degreeText = edu.degree
+                val instText = "${edu.institution}${if (edu.result.isNotBlank()) " — Result: ${edu.result}" else ""}"
+                val yearText = edu.passingYear
 
-                if (detailsLine.isNotBlank()) {
-                    val detailsLayout = StaticLayout.Builder.obtain(detailsLine, 0, detailsLine.length, contactPaint, contentWidth.toInt()).build()
-                    checkAndAddNewPage(detailsLayout.height.toFloat() + 6)
+                val degLayout = StaticLayout.Builder.obtain(degreeText, 0, degreeText.length, bodyBoldPaint, (contentWidth * 0.75f).toInt()).build()
+                val yearLayout = StaticLayout.Builder.obtain(yearText, 0, yearText.length, bodyBoldPaint, (contentWidth * 0.25f).toInt()).setAlignment(Layout.Alignment.ALIGN_OPPOSITE).build()
+
+                val h = maxOf(degLayout.height, yearLayout.height).toFloat()
+                checkAndAddNewPage(h + 16f)
+
+                canvas.save(); canvas.translate(margin, currentY); degLayout.draw(canvas); canvas.restore()
+                canvas.save(); canvas.translate(margin + contentWidth * 0.75f, currentY); yearLayout.draw(canvas); canvas.restore()
+                currentY += h + 2f
+
+                val instLayout = StaticLayout.Builder.obtain(instText, 0, instText.length, bodyPaint, contentWidth.toInt()).build()
+                canvas.save(); canvas.translate(margin, currentY); instLayout.draw(canvas); canvas.restore()
+                currentY += instLayout.height + 6f
+            }
+            currentY += 6f
+        } else {
+            val colExamW = 60f
+            val colInstW = 185f
+            val colSubW = 110f
+            val colResW = 110f
+            val colYearW = contentWidth - (colExamW + colInstW + colSubW + colResW)
+
+            val tableHeaderPaint = TextPaint().apply {
+                isAntiAlias = true
+                color = AndroidColor.parseColor("#0F172A")
+                textSize = 8.5f
+                typeface = Typeface.create(mainFontFamily, Typeface.BOLD)
+            }
+            val tableCellPaint = TextPaint().apply {
+                isAntiAlias = true
+                color = textColor
+                textSize = 8.2f
+                typeface = Typeface.create(mainFontFamily, Typeface.NORMAL)
+            }
+            val tableBorderPaint = Paint().apply {
+                color = mutedLineColor
+                style = Paint.Style.STROKE
+                strokeWidth = 0.8f
+            }
+            val headerBgColor = when (pdfStyle) {
+                CvTemplateStyle.BANKING_FINANCE_SPECIALIST -> AndroidColor.parseColor("#DBEAFE")
+                CvTemplateStyle.CLEAN_TECH_STARTUP -> AndroidColor.parseColor("#D1FAE5")
+                CvTemplateStyle.MODERN_MINIMALIST -> AndroidColor.parseColor("#CCFBF1")
+                CvTemplateStyle.NGO_DEVELOPMENT_HUMANITARIAN -> AndroidColor.parseColor("#FFEDD5")
+                else -> AndroidColor.parseColor("#E2EEF9")
+            }
+            val tableHeaderBgPaint = Paint().apply {
+                color = headerBgColor
+                style = Paint.Style.FILL
+            }
+
+            val headerRowH = 18f
+            checkAndAddNewPage(headerRowH + 20f)
+            canvas.drawRect(margin, currentY, margin + contentWidth, currentY + headerRowH, tableHeaderBgPaint)
+            canvas.drawRect(margin, currentY, margin + contentWidth, currentY + headerRowH, tableBorderPaint)
+
+            var hx = margin
+            canvas.drawText("Exam", hx + 4f, currentY + 12f, tableHeaderPaint); hx += colExamW
+            canvas.drawLine(hx, currentY, hx, currentY + headerRowH, tableBorderPaint)
+            canvas.drawText("Institute / Board / University", hx + 4f, currentY + 12f, tableHeaderPaint); hx += colInstW
+            canvas.drawLine(hx, currentY, hx, currentY + headerRowH, tableBorderPaint)
+            canvas.drawText("Group / Subject", hx + 4f, currentY + 12f, tableHeaderPaint); hx += colSubW
+            canvas.drawLine(hx, currentY, hx, currentY + headerRowH, tableBorderPaint)
+            canvas.drawText("Result", hx + 4f, currentY + 12f, tableHeaderPaint); hx += colResW
+            canvas.drawLine(hx, currentY, hx, currentY + headerRowH, tableBorderPaint)
+            canvas.drawText("Year", hx + 4f, currentY + 12f, tableHeaderPaint)
+
+            currentY += headerRowH
+
+            val sortedEdu = data.educations.sortedByDescending { it.passingYear.toIntOrNull() ?: 0 }
+            sortedEdu.forEach { edu ->
+                val examText = when {
+                    edu.degree.contains("MBA", ignoreCase = true) -> "MBA"
+                    edu.degree.contains("BBA", ignoreCase = true) -> "BBA"
+                    edu.degree.contains("HSC", ignoreCase = true) || edu.degree.contains("Higher Secondary", ignoreCase = true) -> "H.S.C"
+                    edu.degree.contains("SSC", ignoreCase = true) || edu.degree.contains("Secondary School", ignoreCase = true) -> "S.S.C"
+                    edu.degree.contains("B.Sc", ignoreCase = true) -> "B.Sc"
+                    edu.degree.contains("M.Sc", ignoreCase = true) -> "M.Sc"
+                    else -> edu.degree.take(15)
+                }
+                val subjectText = when {
+                    edu.degree.contains("Management", ignoreCase = true) -> "Management"
+                    edu.degree.contains("Business Studies", ignoreCase = true) -> "Business Studies"
+                    edu.degree.contains("Science", ignoreCase = true) -> "Science"
+                    edu.degree.contains("Commerce", ignoreCase = true) -> "Commerce"
+                    edu.degree.contains("Humanities", ignoreCase = true) || edu.degree.contains("Arts", ignoreCase = true) -> "Humanities"
+                    edu.degree.contains("in ", ignoreCase = true) -> edu.degree.substringAfter("in ").trim()
+                    else -> "General / " + edu.degree.take(12)
+                }
+
+                val examL = StaticLayout.Builder.obtain(examText, 0, examText.length, tableCellPaint, (colExamW - 6f).toInt()).build()
+                val instL = StaticLayout.Builder.obtain(edu.institution, 0, edu.institution.length, tableCellPaint, (colInstW - 6f).toInt()).build()
+                val subL = StaticLayout.Builder.obtain(subjectText, 0, subjectText.length, tableCellPaint, (colSubW - 6f).toInt()).build()
+                val resL = StaticLayout.Builder.obtain(edu.result, 0, edu.result.length, tableCellPaint, (colResW - 6f).toInt()).build()
+                val yearL = StaticLayout.Builder.obtain(edu.passingYear, 0, edu.passingYear.length, tableCellPaint, (colYearW - 6f).toInt()).build()
+
+                val rowH = maxOf(examL.height, instL.height, subL.height, resL.height, yearL.height).toFloat() + 8f
+                checkAndAddNewPage(rowH)
+
+                canvas.drawRect(margin, currentY, margin + contentWidth, currentY + rowH, tableBorderPaint)
+
+                var cx = margin
+                canvas.save(); canvas.translate(cx + 4f, currentY + 4f); examL.draw(canvas); canvas.restore()
+                cx += colExamW; canvas.drawLine(cx, currentY, cx, currentY + rowH, tableBorderPaint)
+
+                canvas.save(); canvas.translate(cx + 4f, currentY + 4f); instL.draw(canvas); canvas.restore()
+                cx += colInstW; canvas.drawLine(cx, currentY, cx, currentY + rowH, tableBorderPaint)
+
+                canvas.save(); canvas.translate(cx + 4f, currentY + 4f); subL.draw(canvas); canvas.restore()
+                cx += colSubW; canvas.drawLine(cx, currentY, cx, currentY + rowH, tableBorderPaint)
+
+                canvas.save(); canvas.translate(cx + 4f, currentY + 4f); resL.draw(canvas); canvas.restore()
+                cx += colResW; canvas.drawLine(cx, currentY, cx, currentY + rowH, tableBorderPaint)
+
+                canvas.save(); canvas.translate(cx + 4f, currentY + 4f); yearL.draw(canvas); canvas.restore()
+
+                currentY += rowH
+            }
+            currentY += 10f
+        }
+    }
+
+    // 3. WORK EXPERIENCES / FRESHER ACADEMIC & PRACTICUM SECTIONS
+    if (data.isFresher) {
+        // Fresher Section 1: Academic & Capstone Projects
+        if (data.fresherAcademicProjects.isNotBlank()) {
+            drawSectionHeader("ACADEMIC PROJECTS & CAPSTONE THESIS")
+            val pLayout = StaticLayout.Builder.obtain(data.fresherAcademicProjects, 0, data.fresherAcademicProjects.length, bodyPaint, contentWidth.toInt()).build()
+            checkAndAddNewPage(pLayout.height.toFloat() + 6f)
+            canvas.save()
+            canvas.translate(margin, currentY)
+            pLayout.draw(canvas)
+            canvas.restore()
+            currentY += pLayout.height + 8f
+        }
+
+        // Fresher Section 2: Internships & Volunteer Experience
+        if (data.fresherInternshipsVolunteer.isNotBlank()) {
+            drawSectionHeader("INTERNSHIPS & VOLUNTEER WORK")
+            val vLayout = StaticLayout.Builder.obtain(data.fresherInternshipsVolunteer, 0, data.fresherInternshipsVolunteer.length, bodyPaint, contentWidth.toInt()).build()
+            checkAndAddNewPage(vLayout.height.toFloat() + 6f)
+            canvas.save()
+            canvas.translate(margin, currentY)
+            vLayout.draw(canvas)
+            canvas.restore()
+            currentY += vLayout.height + 8f
+        }
+
+        // Fresher Section 3: Campus Leadership & Extracurricular
+        if (data.fresherLeadershipClubs.isNotBlank()) {
+            drawSectionHeader("CAMPUS LEADERSHIP & EXTRACURRICULAR")
+            val lLayout = StaticLayout.Builder.obtain(data.fresherLeadershipClubs, 0, data.fresherLeadershipClubs.length, bodyPaint, contentWidth.toInt()).build()
+            checkAndAddNewPage(lLayout.height.toFloat() + 6f)
+            canvas.save()
+            canvas.translate(margin, currentY)
+            lLayout.draw(canvas)
+            canvas.restore()
+            currentY += lLayout.height + 8f
+        }
+
+        // Fresher Section 4: Relevant Coursework
+        if (data.fresherKeyCoursework.isNotBlank()) {
+            drawSectionHeader("RELEVANT COURSEWORK & ACADEMIC CORE")
+            val cLayout = StaticLayout.Builder.obtain(data.fresherKeyCoursework, 0, data.fresherKeyCoursework.length, bodyPaint, contentWidth.toInt()).build()
+            checkAndAddNewPage(cLayout.height.toFloat() + 6f)
+            canvas.save()
+            canvas.translate(margin, currentY)
+            cLayout.draw(canvas)
+            canvas.restore()
+            currentY += cLayout.height + 8f
+        }
+
+        // Optional additional experiences if populated
+        if (data.experiences.isNotEmpty()) {
+            drawSectionHeader("ADDITIONAL PRACTICUM & WORK EXPERIENCE")
+            data.experiences.forEach { exp ->
+                if (exp.role.isNotBlank() || exp.company.isNotBlank()) {
+                    val bulletChar = if (pdfStyle == CvTemplateStyle.ELEGANT_PREMIUM) "◆" else "•"
+                    val expTitle = "$bulletChar ${exp.role} – ${exp.company} (${exp.location})${if (exp.startDate.isNotBlank()) " [${exp.startDate} - ${if (exp.isCurrent) "Present" else exp.endDate}]" else ""}"
+                    val titleLayout = StaticLayout.Builder.obtain(expTitle, 0, expTitle.length, bodyBoldPaint, contentWidth.toInt()).build()
+                    checkAndAddNewPage(titleLayout.height.toFloat() + 4f)
                     canvas.save()
                     canvas.translate(margin, currentY)
-                    detailsLayout.draw(canvas)
+                    titleLayout.draw(canvas)
                     canvas.restore()
-                    currentY += detailsLayout.height + 8
+                    currentY += titleLayout.height + 2f
+
+                    if (exp.description.isNotBlank()) {
+                        val descLayout = StaticLayout.Builder.obtain(exp.description, 0, exp.description.length, bodyPaint, (contentWidth - 12f).toInt()).build()
+                        checkAndAddNewPage(descLayout.height.toFloat() + 6f)
+                        canvas.save()
+                        canvas.translate(margin + 12f, currentY)
+                        descLayout.draw(canvas)
+                        canvas.restore()
+                        currentY += descLayout.height + 8f
+                    } else {
+                        currentY += 6f
+                    }
+                }
+            }
+        }
+    } else {
+        // Standard Work Experiences for experienced professionals
+        if (data.experiences.isNotEmpty()) {
+            val expSectionTitle = if (pdfStyle == CvTemplateStyle.HARVARD_CLASSIC) "PROFESSIONAL EXPERIENCE" else "WORK EXPERIENCES"
+            drawSectionHeader(expSectionTitle)
+
+            data.experiences.forEach { exp ->
+                if (exp.role.isNotBlank() || exp.company.isNotBlank()) {
+                    val bulletChar = if (pdfStyle == CvTemplateStyle.ELEGANT_PREMIUM) "◆" else "•"
+                    val expTitle = "$bulletChar ${exp.role} – ${exp.company} (${exp.location})${if (exp.startDate.isNotBlank()) " [${exp.startDate} - ${if (exp.isCurrent) "Present" else exp.endDate}]" else ""}"
+                    val titleLayout = StaticLayout.Builder.obtain(expTitle, 0, expTitle.length, bodyBoldPaint, contentWidth.toInt()).build()
+                    checkAndAddNewPage(titleLayout.height.toFloat() + 4f)
+                    canvas.save()
+                    canvas.translate(margin, currentY)
+                    titleLayout.draw(canvas)
+                    canvas.restore()
+                    currentY += titleLayout.height + 2f
+
+                    if (exp.description.isNotBlank()) {
+                        val descLayout = StaticLayout.Builder.obtain(exp.description, 0, exp.description.length, bodyPaint, (contentWidth - 12f).toInt()).build()
+                        checkAndAddNewPage(descLayout.height.toFloat() + 6f)
+                        canvas.save()
+                        canvas.translate(margin + 12f, currentY)
+                        descLayout.draw(canvas)
+                        canvas.restore()
+                        currentY += descLayout.height + 8f
+                    } else {
+                        currentY += 6f
+                    }
                 }
             }
         }
     }
 
-    // 4. WORK EXPERIENCE / PRACTICAL PROJECTS (Reverse Chronological Sorting)
-    val sortedExperiences = data.experiences.sortedByDescending { exp ->
-        val yearPart = exp.startDate.trim().takeLast(4).toIntOrNull() ?: exp.endDate.trim().takeLast(4).toIntOrNull() ?: 0
-        yearPart
-    }
-    if (sortedExperiences.isNotEmpty()) {
-        drawSectionHeader("WORK EXPERIENCE & PRACTICAL PROJECTS")
-        sortedExperiences.forEach { exp ->
-            if (exp.role.isNotBlank() || exp.company.isNotBlank()) {
-                val titleLine = "${exp.role} at ${exp.company} (${exp.location})"
-                val dateLine = "${exp.startDate}${if (exp.startDate.isNotBlank() && exp.endDate.isNotBlank()) " – " else ""}${if (exp.isCurrent) "Present" else exp.endDate}"
-
-                val titleLayout = StaticLayout.Builder.obtain(titleLine, 0, titleLine.length, bodyBoldPaint, (contentWidth * 0.7f).toInt()).build()
-                val dateLayout = StaticLayout.Builder.obtain(dateLine, 0, dateLine.length, contactPaint, (contentWidth * 0.3f).toInt()).setAlignment(Layout.Alignment.ALIGN_OPPOSITE).build()
-
-                val itemHeight = maxOf(titleLayout.height, dateLayout.height).toFloat() + 4f
-                checkAndAddNewPage(itemHeight)
-
-                canvas.save()
-                canvas.translate(margin, currentY)
-                titleLayout.draw(canvas)
-                canvas.restore()
-
-                canvas.save()
-                canvas.translate(margin + contentWidth * 0.7f, currentY)
-                dateLayout.draw(canvas)
-                canvas.restore()
-
-                currentY += itemHeight
-
-                if (exp.description.isNotBlank()) {
-                    val descLayout = StaticLayout.Builder.obtain(exp.description, 0, exp.description.length, bodyPaint, contentWidth.toInt()).build()
-                    checkAndAddNewPage(descLayout.height.toFloat() + 6)
-                    canvas.save()
-                    canvas.translate(margin, currentY)
-                    descLayout.draw(canvas)
-                    canvas.restore()
-                    currentY += descLayout.height + 10
-                } else {
-                    currentY += 6
-                }
-            }
-        }
-    }
-
-    // 5. KEY SKILLS & COMPETENCIES (Categorized & bulleted)
+    // 4. KEY SKILLS & COMPETENCIES
     if (data.skills.isNotEmpty()) {
         drawSectionHeader("KEY SKILLS & COMPETENCIES")
-        
-        // Group skills by category
         val functional = data.skills.filter { it.category.contains("Functional", ignoreCase = true) || it.category.contains("Core", ignoreCase = true) }
         val technical = data.skills.filter { it.category.contains("Technical", ignoreCase = true) || it.category.contains("Digital", ignoreCase = true) }
         val soft = data.skills.filter { it.category.contains("Soft", ignoreCase = true) || it.category.contains("Leadership", ignoreCase = true) }
-        val other = data.skills.filter { 
-            !functional.contains(it) && !technical.contains(it) && !soft.contains(it)
-        }
+        val other = data.skills.filter { !functional.contains(it) && !technical.contains(it) && !soft.contains(it) }
 
-        fun drawSkillGroup(groupName: String, list: List<CvSkillItem>) {
+        val bulletChar = if (pdfStyle == CvTemplateStyle.ELEGANT_PREMIUM) "◆" else "•"
+        fun drawCategoryBullet(catName: String, list: List<CvSkillItem>) {
             if (list.isEmpty()) return
-            val groupTitle = "• $groupName: "
-            val groupBody = list.joinToString(", ") { it.name }
-            val fullSkillLine = groupTitle + groupBody
-
-            val skillLayout = StaticLayout.Builder.obtain(fullSkillLine, 0, fullSkillLine.length, bodyPaint, contentWidth.toInt()).build()
-            checkAndAddNewPage(skillLayout.height.toFloat() + 5)
+            val line = "$bulletChar $catName: ${list.joinToString(", ") { it.name }}"
+            val layout = StaticLayout.Builder.obtain(line, 0, line.length, bodyPaint, contentWidth.toInt()).build()
+            checkAndAddNewPage(layout.height.toFloat() + 4f)
             canvas.save()
             canvas.translate(margin, currentY)
-            skillLayout.draw(canvas)
+            layout.draw(canvas)
             canvas.restore()
-            currentY += skillLayout.height + 6
+            currentY += layout.height + 4f
         }
 
-        drawSkillGroup("Functional / Core Skills", functional)
-        drawSkillGroup("Technical / Digital Proficiency", technical)
-        drawSkillGroup("Soft Skills & Leadership", soft)
-        if (other.isNotEmpty()) {
-            drawSkillGroup("Professional Competencies", other)
+        drawCategoryBullet("Functional & Domain Competencies", functional)
+        drawCategoryBullet("Technical / Digital Proficiency", technical)
+        drawCategoryBullet("Leadership & Soft Skills", soft)
+        if (other.isNotEmpty()) drawCategoryBullet("Additional Professional Skills", other)
+        currentY += 6f
+    }
+
+    // 5. PROJECTS / PORTFOLIO HIGHLIGHTS
+    if (data.projects.isNotEmpty()) {
+        drawSectionHeader("FEATURED PROJECTS & INITIATIVES")
+        data.projects.forEach { pr ->
+            val pHead = "• ${pr.title}${if (pr.link.isNotBlank()) " (${pr.link})" else ""}"
+            val pHeadLayout = StaticLayout.Builder.obtain(pHead, 0, pHead.length, bodyBoldPaint, contentWidth.toInt()).build()
+            checkAndAddNewPage(pHeadLayout.height.toFloat() + 4f)
+            canvas.save()
+            canvas.translate(margin, currentY)
+            pHeadLayout.draw(canvas)
+            canvas.restore()
+            currentY += pHeadLayout.height + 2f
+
+            if (pr.description.isNotBlank()) {
+                val pDescLayout = StaticLayout.Builder.obtain(pr.description, 0, pr.description.length, bodyPaint, (contentWidth - 12f).toInt()).build()
+                checkAndAddNewPage(pDescLayout.height.toFloat() + 4f)
+                canvas.save()
+                canvas.translate(margin + 12f, currentY)
+                pDescLayout.draw(canvas)
+                canvas.restore()
+                currentY += pDescLayout.height + 6f
+            }
+        }
+        currentY += 4f
+    }
+
+    // 6. TRAINING & CERTIFICATION
+    if (data.certifications.isNotBlank()) {
+        drawSectionHeader("TRAINING & CERTIFICATION")
+        val certLayout = StaticLayout.Builder.obtain(data.certifications, 0, data.certifications.length, bodyPaint, contentWidth.toInt()).build()
+        checkAndAddNewPage(certLayout.height.toFloat() + 6f)
+        canvas.save()
+        canvas.translate(margin, currentY)
+        certLayout.draw(canvas)
+        canvas.restore()
+        currentY += certLayout.height + 10f
+    }
+
+    // 7. PERSONAL INFORMATION (2-COLUMN TABLE FORMAT MATCHING SAMPLE)
+    val leftColList = mutableListOf<Pair<String, String>>()
+    if (data.fatherName.isNotBlank()) leftColList.add("Father's Name" to data.fatherName)
+    if (data.motherName.isNotBlank()) leftColList.add("Mother's Name" to data.motherName)
+    if (data.bloodGroup.isNotBlank()) leftColList.add("Blood Group" to data.bloodGroup)
+
+    val rightColList = mutableListOf<Pair<String, String>>()
+    if (data.religion.isNotBlank()) rightColList.add("Religion" to data.religion)
+    if (data.presentAddress.isNotBlank()) rightColList.add("Present Address" to data.presentAddress)
+    if (data.permanentAddress.isNotBlank()) rightColList.add("Permanent Address" to data.permanentAddress)
+
+    if (leftColList.isNotEmpty() || rightColList.isNotEmpty()) {
+        drawSectionHeader("PERSONAL INFORMATION")
+        val halfW = contentWidth / 2f - 10f
+        val maxRows = maxOf(leftColList.size, rightColList.size)
+
+        for (i in 0 until maxRows) {
+            val leftItem = leftColList.getOrNull(i)
+            val rightItem = rightColList.getOrNull(i)
+
+            val leftStr = if (leftItem != null) "${leftItem.first} : ${leftItem.second}" else ""
+            val rightStr = if (rightItem != null) "${rightItem.first} : ${rightItem.second}" else ""
+
+            val lLayout = StaticLayout.Builder.obtain(leftStr, 0, leftStr.length, bodyPaint, halfW.toInt()).build()
+            val rLayout = StaticLayout.Builder.obtain(rightStr, 0, rightStr.length, bodyPaint, halfW.toInt()).build()
+            val rowH = maxOf(lLayout.height, rLayout.height).toFloat() + 3f
+
+            checkAndAddNewPage(rowH)
+            if (leftStr.isNotBlank()) {
+                canvas.save(); canvas.translate(margin, currentY); lLayout.draw(canvas); canvas.restore()
+            }
+            if (rightStr.isNotBlank()) {
+                canvas.save(); canvas.translate(margin + halfW + 20f, currentY); rLayout.draw(canvas); canvas.restore()
+            }
+            currentY += rowH
         }
         currentY += 8f
-    }
-
-    // 6. TRAINING & CERTIFICATIONS
-    if (data.certifications.isNotBlank()) {
-        drawSectionHeader("TRAINING & CERTIFICATIONS")
-        val certsLayout = StaticLayout.Builder.obtain(data.certifications, 0, data.certifications.length, bodyPaint, contentWidth.toInt()).build()
-        checkAndAddNewPage(certsLayout.height.toFloat() + 10)
-        canvas.save()
-        canvas.translate(margin, currentY)
-        certsLayout.draw(canvas)
-        canvas.restore()
-        currentY += certsLayout.height + 14
-    }
-
-    // 7. PERSONAL DETAILS (Corporate Standard: essential fields only)
-    val personalRows = mutableListOf<String>()
-    if (data.fatherName.isNotBlank()) personalRows.add("• Father's Name: ${data.fatherName}")
-    if (data.motherName.isNotBlank()) personalRows.add("• Mother's Name: ${data.motherName}")
-    if (data.religion.isNotBlank()) personalRows.add("• Religion: ${data.religion}")
-    if (data.bloodGroup.isNotBlank()) personalRows.add("• Blood Group: ${data.bloodGroup}")
-    if (data.permanentAddress.isNotBlank()) personalRows.add("• Permanent Address: ${data.permanentAddress}")
-    if (data.presentAddress.isNotBlank()) personalRows.add("• Present Address: ${data.presentAddress}")
-
-    if (personalRows.isNotEmpty()) {
-        drawSectionHeader("PERSONAL DETAILS")
-        val personalDetailsStr = personalRows.joinToString("\n")
-        val personalLayout = StaticLayout.Builder.obtain(personalDetailsStr, 0, personalDetailsStr.length, bodyPaint, contentWidth.toInt()).build()
-        checkAndAddNewPage(personalLayout.height.toFloat() + 10)
-        canvas.save()
-        canvas.translate(margin, currentY)
-        personalLayout.draw(canvas)
-        canvas.restore()
-        currentY += personalLayout.height + 14
     }
 
     // 8. REFERENCES
     if (data.references.isNotBlank()) {
         drawSectionHeader("REFERENCES")
-        val refText = data.references
-        val refLayout = StaticLayout.Builder.obtain(refText, 0, refText.length, bodyPaint, contentWidth.toInt()).build()
-        checkAndAddNewPage(refLayout.height.toFloat() + 10)
+        val refLayout = StaticLayout.Builder.obtain(data.references, 0, data.references.length, bodyPaint, contentWidth.toInt()).build()
+        checkAndAddNewPage(refLayout.height.toFloat() + 6f)
         canvas.save()
         canvas.translate(margin, currentY)
         refLayout.draw(canvas)
         canvas.restore()
-        currentY += refLayout.height + 10
+        currentY += refLayout.height + 8f
+    }
+
+    // 9. SIGNATURE & DATE (OPTIONAL APPLICANT SIGNATURE PLACEHOLDER)
+    if (data.showSignatureLine) {
+        checkAndAddNewPage(75f)
+        currentY += 24f
+        val sigLineW = 165f
+        val sigStartX = pageWidth - margin - sigLineW
+        val sigLinePaint = Paint().apply {
+            color = AndroidColor.parseColor("#334155")
+            strokeWidth = 1f
+        }
+        canvas.drawLine(sigStartX, currentY, pageWidth - margin, currentY, sigLinePaint)
+        currentY += 12f
+        val sigTitlePaint = TextPaint().apply {
+            isAntiAlias = true
+            color = AndroidColor.parseColor("#0F172A")
+            textSize = 9.2f
+            typeface = Typeface.create(mainFontFamily, Typeface.BOLD)
+            textAlign = Paint.Align.CENTER
+        }
+        val sigSubPaint = TextPaint().apply {
+            isAntiAlias = true
+            color = AndroidColor.parseColor("#475569")
+            textSize = 8.5f
+            typeface = Typeface.create(mainFontFamily, Typeface.NORMAL)
+            textAlign = Paint.Align.CENTER
+        }
+        val cx = sigStartX + (sigLineW / 2f)
+        canvas.drawText("Applicant's Signature", cx, currentY, sigTitlePaint)
+        currentY += 12f
+        if (data.fullName.isNotBlank()) {
+            canvas.drawText("(${data.fullName})", cx, currentY, sigSubPaint)
+            currentY += 12f
+        }
+        canvas.drawText("Date: ____________________", cx, currentY, sigSubPaint)
+        currentY += 10f
     }
 
     pdfDocument.finishPage(page)
 
-    // Dynamic and sanitized file naming
+    // Dynamic sanitized file naming
     val passingYearStr = if (data.educations.isNotEmpty()) {
         data.educations.sortedByDescending { it.passingYear.toIntOrNull() ?: 0 }.first().passingYear
     } else {
@@ -1619,6 +3168,35 @@ fun AtsCvBuilderTool(
                                     isAiLoading = false
                                 }
                             }
+                        },
+                        onGenerateFresherAi = {
+                            isAiLoading = true
+                            aiLoadingMessage = if (isBn) "✨ জেমিনি এআই ফ্রেশার সিভির জন্য প্রজেক্ট, ইন্টার্নশিপ, নেতৃত্ব ও কোর্সওয়ার্ক জেনারেট করছে..." else "✨ Gemini AI is generating high-impact fresher projects, leadership & coursework..."
+                            scope.launch {
+                                try {
+                                    val edu = cvData.educations.firstOrNull()?.degree ?: "BBA / B.Sc / H.S.C"
+                                    val inst = cvData.educations.firstOrNull()?.institution ?: "University / College"
+                                    val targetRole = if (cvData.jobTitle.isNotBlank()) cvData.jobTitle else "Management Trainee / Entry Level Executive"
+                                    val skills = cvData.skills.joinToString { it.name }
+                                    val sections = generateFresherCvSectionsWithGemini(edu, inst, targetRole, skills)
+                                    if (sections.isNotEmpty()) {
+                                        updateCvDataState(cvData.copy(
+                                            isFresher = true,
+                                            fresherAcademicProjects = sections["academicProjects"] ?: cvData.fresherAcademicProjects,
+                                            fresherInternshipsVolunteer = sections["internshipsVolunteer"] ?: cvData.fresherInternshipsVolunteer,
+                                            fresherLeadershipClubs = sections["leadershipClubs"] ?: cvData.fresherLeadershipClubs,
+                                            fresherKeyCoursework = sections["keyCoursework"] ?: cvData.fresherKeyCoursework
+                                        ))
+                                        showToast(if (isBn) "ফ্রেশার সেকশনগুলো সফলভাবে এআই দিয়ে প্রস্তুত হয়েছে!" else "Fresher sections generated successfully!")
+                                    } else {
+                                        showToast("Could not generate fresher sections, please check connection.")
+                                    }
+                                } catch (e: Exception) {
+                                    showToast("AI Error: ${e.message}")
+                                } finally {
+                                    isAiLoading = false
+                                }
+                            }
                         }
                     )
 
@@ -1701,6 +3279,7 @@ fun AtsCvBuilderTool(
 
                     4 -> PreviewAndExportTab(
                         cvData = cvData,
+                        onCvDataChange = { updateCvDataState(it) },
                         pdfFile = generatedPdfFile,
                         pdfBitmap = pdfPreviewBitmap,
                         themeColors = themeColors,
@@ -2002,19 +3581,16 @@ private fun ProfileAndPersonasTab(
                             .background(Color.Gray.copy(alpha = 0.1f), shape = when (cvData.photoShape) {
                                 "Circle" -> CircleShape
                                 "Rounded" -> RoundedCornerShape(12.dp)
-                                "Hexagon" -> HexagonShape
                                 else -> androidx.compose.ui.graphics.RectangleShape
                             })
                             .border(1.5.dp, themeColors.buttonEqualBg, shape = when (cvData.photoShape) {
                                 "Circle" -> CircleShape
                                 "Rounded" -> RoundedCornerShape(12.dp)
-                                "Hexagon" -> HexagonShape
                                 else -> androidx.compose.ui.graphics.RectangleShape
                             })
                             .clip(shape = when (cvData.photoShape) {
                                 "Circle" -> CircleShape
                                 "Rounded" -> RoundedCornerShape(12.dp)
-                                "Hexagon" -> HexagonShape
                                 else -> androidx.compose.ui.graphics.RectangleShape
                             })
                             .pointerInput(cvData.photoScale) {
@@ -2118,13 +3694,12 @@ private fun ProfileAndPersonasTab(
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
                             modifier = Modifier.padding(vertical = 4.dp)
                         ) {
-                            val shapes = listOf("Circle", "Rounded", "Hexagon", "Square")
+                            val shapes = listOf("Circle", "Rounded", "Square")
                             shapes.forEach { shapeName ->
                                 val isSelected = cvData.photoShape == shapeName
                                 val label = when (shapeName) {
                                     "Circle" -> if (isBn) "বৃত্তাকার" else "Circle"
                                     "Rounded" -> if (isBn) "কোণ গোল" else "Rounded"
-                                    "Hexagon" -> if (isBn) "ষড়ভুজ" else "Hexagon"
                                     else -> if (isBn) "চারকোণা" else "Square"
                                 }
                                 Surface(
@@ -2403,9 +3978,9 @@ private fun ProfileAndPersonasTab(
         OutlinedTextField(
             value = cvData.summary,
             onValueChange = { onCvDataChange(cvData.copy(summary = it)) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(120.dp),
+            modifier = Modifier.fillMaxWidth(),
+            minLines = 4,
+            maxLines = 15,
             placeholder = { Text(text = if (isBn) "আপনার ক্যারিয়ারের সামারি লিখুন অথবা এআই দিয়ে রি-রাইট করুন..." else "Write notes here & use Gemini AI to weave them into a professional corporate summary...", fontSize = 12.5.sp) },
             shape = RoundedCornerShape(12.dp),
             colors = OutlinedTextFieldDefaults.colors(
@@ -2462,7 +4037,8 @@ private fun ExperienceTab(
     onCvDataChange: (CvData) -> Unit,
     themeColors: CalculatorThemeColors,
     isBn: Boolean,
-    onEnhanceBulletAi: (Int) -> Unit
+    onEnhanceBulletAi: (Int) -> Unit,
+    onGenerateFresherAi: () -> Unit
 ) {
     val scrollState = rememberScrollState()
 
@@ -2472,13 +4048,269 @@ private fun ExperienceTab(
             .verticalScroll(scrollState)
             .padding(14.dp)
     ) {
+        // --- CANDIDATE TYPE SELECTOR: EXPERIENCED VS FRESHER ---
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = themeColors.cardBg,
+            border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.1f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(12.dp)) {
+                Text(
+                    text = if (isBn) "প্রার্থী ধরণ (অভিজ্ঞ vs ফ্রেশার)" else "Applicant Career Stage",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp,
+                    color = themeColors.buttonEqualBg
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    Surface(
+                        onClick = { onCvDataChange(cvData.copy(isFresher = false)) },
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (!cvData.isFresher) themeColors.buttonEqualBg else themeColors.background,
+                        border = BorderStroke(1.dp, if (!cvData.isFresher) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.15f)),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(40.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(
+                                text = if (isBn) "অভিজ্ঞ পেশাজীবী" else "Experienced",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 11.5.sp,
+                                color = if (!cvData.isFresher) Color.White else themeColors.displayText
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Surface(
+                        onClick = { onCvDataChange(cvData.copy(isFresher = true)) },
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (cvData.isFresher) themeColors.buttonEqualBg else themeColors.background,
+                        border = BorderStroke(1.dp, if (cvData.isFresher) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.15f)),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(40.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(
+                                text = if (isBn) "🎓 ফ্রেশার / নতুন গ্র্যাজুয়েট" else "🎓 Fresher / Graduate",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 11.5.sp,
+                                color = if (cvData.isFresher) Color.White else themeColors.displayText
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        if (cvData.isFresher) {
+            // ================= FRESHER SPECIFIC CV SECTIONS =================
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = themeColors.buttonEqualBg.copy(alpha = 0.08f),
+                border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.3f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(imageVector = Icons.Default.Lightbulb, contentDescription = null, tint = themeColors.buttonEqualBg, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = if (isBn) "ফ্রেশারদের সিভিতে কি থাকা উচিত?" else "What a Fresher CV Needs Most",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp,
+                            color = themeColors.displayText
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = if (isBn)
+                            "ফ্রেশারদের কাজের অভিজ্ঞতা না থাকলেও একাডেমিক প্রজেক্ট, থিসিস, ইন্টার্নশিপ, ভলান্টিয়ারিং, ক্লাব এক্টিভিটি ও প্রাসঙ্গিক কোর্সওয়ার্ক সিভির মূল আকর্ষণ হিসেবে কাজ করে।"
+                        else
+                            "For freshers, recruiters evaluate Capstone Projects, Internships, Extracurricular Leadership, and Relevant Core Coursework instead of corporate experience.",
+                        fontSize = 10.5.sp,
+                        color = themeColors.displayText.copy(alpha = 0.75f),
+                        lineHeight = 14.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Button(
+                        onClick = onGenerateFresherAi,
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = if (isBn) "✨ এআই দিয়ে ফ্রেশার সেকশন লিখুন" else "✨ Generate Fresher Sections with AI",
+                            color = Color.White,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // 1. Academic & Capstone Projects
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = themeColors.cardBg,
+                border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.12f)),
+                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(
+                        text = if (isBn) "১. একাডেমিক প্রজেক্ট ও ক্যাপস্টোন থিসিস" else "1. Academic Projects & Capstone Thesis",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp,
+                        color = themeColors.buttonEqualBg
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    OutlinedTextField(
+                        value = cvData.fresherAcademicProjects,
+                        onValueChange = { onCvDataChange(cvData.copy(fresherAcademicProjects = it)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 3,
+                        maxLines = 10,
+                        placeholder = { Text(text = "• Automated Sales Pipeline Analysis using Python & PowerBI...\n• FinTech Microfinance Mobile App Case Study...", fontSize = 11.sp) },
+                        shape = RoundedCornerShape(10.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = themeColors.buttonEqualBg,
+                            unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f),
+                            focusedContainerColor = themeColors.cardBg,
+                            unfocusedContainerColor = themeColors.cardBg,
+                            focusedTextColor = themeColors.displayText,
+                            unfocusedTextColor = themeColors.displayText
+                        )
+                    )
+                }
+            }
+
+            // 2. Internships & Volunteer Work
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = themeColors.cardBg,
+                border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.12f)),
+                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(
+                        text = if (isBn) "২. ইন্টার্নশিপ ও সমাজসেবা / ভলান্টিয়ারিং" else "2. Internships & Volunteer Work",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp,
+                        color = themeColors.buttonEqualBg
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    OutlinedTextField(
+                        value = cvData.fresherInternshipsVolunteer,
+                        onValueChange = { onCvDataChange(cvData.copy(fresherInternshipsVolunteer = it)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 3,
+                        maxLines = 10,
+                        placeholder = { Text(text = "• Summer Intern at Apex Logistics (Data Reconciliation)\n• Volunteer Organizer for National Blood Donation Camp...", fontSize = 11.sp) },
+                        shape = RoundedCornerShape(10.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = themeColors.buttonEqualBg,
+                            unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f),
+                            focusedContainerColor = themeColors.cardBg,
+                            unfocusedContainerColor = themeColors.cardBg,
+                            focusedTextColor = themeColors.displayText,
+                            unfocusedTextColor = themeColors.displayText
+                        )
+                    )
+                }
+            }
+
+            // 3. Campus Leadership & Extracurricular
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = themeColors.cardBg,
+                border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.12f)),
+                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(
+                        text = if (isBn) "৩. ক্যাম্পাস নেতৃত্ব ও ক্লাব এক্টিভিটি" else "3. Campus Leadership & Extracurricular",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp,
+                        color = themeColors.buttonEqualBg
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    OutlinedTextField(
+                        value = cvData.fresherLeadershipClubs,
+                        onValueChange = { onCvDataChange(cvData.copy(fresherLeadershipClubs = it)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 3,
+                        maxLines = 10,
+                        placeholder = { Text(text = "• President / General Secretary at University Business Club\n• Finalist, National Inter-University Case Competition...", fontSize = 11.sp) },
+                        shape = RoundedCornerShape(10.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = themeColors.buttonEqualBg,
+                            unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f),
+                            focusedContainerColor = themeColors.cardBg,
+                            unfocusedContainerColor = themeColors.cardBg,
+                            focusedTextColor = themeColors.displayText,
+                            unfocusedTextColor = themeColors.displayText
+                        )
+                    )
+                }
+            }
+
+            // 4. Relevant Coursework
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = themeColors.cardBg,
+                border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.12f)),
+                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(
+                        text = if (isBn) "৪. প্রাসঙ্গিক কোর্সওয়ার্ক ও কোর বিষয়সমূহ" else "4. Relevant Coursework & Academic Core",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp,
+                        color = themeColors.buttonEqualBg
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    OutlinedTextField(
+                        value = cvData.fresherKeyCoursework,
+                        onValueChange = { onCvDataChange(cvData.copy(fresherKeyCoursework = it)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 2,
+                        maxLines = 6,
+                        placeholder = { Text(text = "Financial Modeling, Strategic Management, Business Analytics, Consumer Behavior, Corporate Finance", fontSize = 11.sp) },
+                        shape = RoundedCornerShape(10.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = themeColors.buttonEqualBg,
+                            unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f),
+                            focusedContainerColor = themeColors.cardBg,
+                            unfocusedContainerColor = themeColors.cardBg,
+                            focusedTextColor = themeColors.displayText,
+                            unfocusedTextColor = themeColors.displayText
+                        )
+                    )
+                }
+            }
+        }
+
+        // ================= WORK EXPERIENCES LIST =================
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             SectionCardHeader(
-                title = if (isBn) "কাজের অভিজ্ঞতা (${cvData.experiences.size})" else "Work Experience (${cvData.experiences.size})",
+                title = if (cvData.isFresher)
+                    (if (isBn) "অতিরিক্ত কাজের অভিজ্ঞতা (${cvData.experiences.size})" else "Optional Practicum / Work (${cvData.experiences.size})")
+                else
+                    (if (isBn) "কাজের অভিজ্ঞতা (${cvData.experiences.size})" else "Work Experience (${cvData.experiences.size})"),
                 icon = Icons.Default.Work,
                 themeColors = themeColors
             )
@@ -2636,9 +4468,9 @@ private fun ExperienceTab(
                             newList[index] = exp.copy(description = d)
                             onCvDataChange(cvData.copy(experiences = newList))
                         },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(100.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 3,
+                        maxLines = 15,
                         placeholder = { Text(text = "• Conducted business evaluations...\n• Tailored campaign KPIs...\n• Coordinated teams...", fontSize = 11.5.sp) },
                         shape = RoundedCornerShape(10.dp),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -2898,9 +4730,9 @@ private fun EducationAndSkillsTab(
         OutlinedTextField(
             value = cvData.certifications,
             onValueChange = { onCvDataChange(cvData.copy(certifications = it)) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(100.dp),
+            modifier = Modifier.fillMaxWidth(),
+            minLines = 3,
+            maxLines = 15,
             placeholder = { Text(text = "• Project Management Professional (PMP) - PMI, 2024\n• Business Intelligence - Coursera, 2023", fontSize = 11.5.sp) },
             shape = RoundedCornerShape(10.dp),
             colors = OutlinedTextFieldDefaults.colors(
@@ -2926,9 +4758,9 @@ private fun EducationAndSkillsTab(
         OutlinedTextField(
             value = cvData.references,
             onValueChange = { onCvDataChange(cvData.copy(references = it)) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(80.dp),
+            modifier = Modifier.fillMaxWidth(),
+            minLines = 2,
+            maxLines = 10,
             placeholder = { Text(text = "Available upon request.", fontSize = 11.5.sp) },
             shape = RoundedCornerShape(10.dp),
             colors = OutlinedTextFieldDefaults.colors(
@@ -3014,9 +4846,9 @@ private fun AiJobCircularMatchTab(
         OutlinedTextField(
             value = circularInputText,
             onValueChange = { circularInputText = it },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(130.dp),
+            modifier = Modifier.fillMaxWidth(),
+            minLines = 4,
+            maxLines = 15,
             placeholder = { Text(text = if (isBn) "জব ডেসক্রিপশন পেস্ট করুন..." else "Paste Job circular / description requirements text here...", fontSize = 12.5.sp) },
             shape = RoundedCornerShape(12.dp),
             colors = OutlinedTextFieldDefaults.colors(
@@ -3133,6 +4965,7 @@ private fun AiJobCircularMatchTab(
 @Composable
 private fun PreviewAndExportTab(
     cvData: CvData,
+    onCvDataChange: (CvData) -> Unit,
     pdfFile: File?,
     pdfBitmap: Bitmap?,
     themeColors: CalculatorThemeColors,
@@ -3159,7 +4992,7 @@ private fun PreviewAndExportTab(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // Horizontal elegant picker for 7 templates
+        // Horizontal elegant picker for all 10 templates
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             modifier = Modifier.fillMaxWidth()
@@ -3174,26 +5007,36 @@ private fun PreviewAndExportTab(
                         if (isSelected) 2.dp else 1.dp,
                         if (isSelected) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.2f)
                     ),
-                    modifier = Modifier.width(190.dp)
+                    modifier = Modifier.width(205.dp)
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            RadioButton(
-                                selected = isSelected,
-                                onClick = { onTemplateChange(style) },
-                                colors = RadioButtonDefaults.colors(selectedColor = themeColors.buttonEqualBg)
+                            Box(
+                                modifier = Modifier
+                                    .size(14.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(style.primaryColorHex))
                             )
-                            Spacer(modifier = Modifier.width(4.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = if (isBn) style.titleBn else style.titleEn,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 11.5.sp,
                                 color = themeColors.displayText,
                                 maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f)
                             )
+                            if (isSelected) {
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircle,
+                                    contentDescription = null,
+                                    tint = themeColors.buttonEqualBg,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
                         }
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(6.dp))
                         Text(
                             text = style.description,
                             fontSize = 9.5.sp,
@@ -3207,7 +5050,63 @@ private fun PreviewAndExportTab(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(14.dp))
+
+        // --- SIGNATURE LINE OPTION CARD ---
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = themeColors.cardBg,
+            border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.1f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Draw,
+                        contentDescription = null,
+                        tint = themeColors.buttonEqualBg,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column {
+                        Text(
+                            text = if (isBn) "আবেদনকারীর স্বাক্ষর লাইন যোগ করুন" else "Include Signature Placeholder",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = themeColors.displayText
+                        )
+                        Text(
+                            text = if (isBn) "প্রিন্ট করার পর হাতে স্বাক্ষর করার জন্য নিচে স্বাক্ষর ও তারিখের ফাঁকা লাইন যুক্ত রাখবে" else "Adds official physical signature line & date at the bottom for printing",
+                            fontSize = 10.sp,
+                            color = themeColors.displayText.copy(alpha = 0.65f),
+                            lineHeight = 13.sp
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Switch(
+                    checked = cvData.showSignatureLine,
+                    onCheckedChange = { checked ->
+                        onCvDataChange(cvData.copy(showSignatureLine = checked))
+                    },
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = Color.White,
+                        checkedTrackColor = themeColors.buttonEqualBg
+                    )
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(14.dp))
 
         // --- NEW ACTION: OPEN IN NATIVE APP PDF READER ---
         Button(
