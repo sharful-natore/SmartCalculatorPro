@@ -40,6 +40,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -252,6 +253,13 @@ data class CvProjectItem(
     val link: String = ""
 )
 
+data class CvCustomSectionItem(
+    val id: String = UUID.randomUUID().toString(),
+    val title: String = "",
+    val content: String = "",
+    val sectionType: String = "EXPERIENCE" // "EXPERIENCE", "EDUCATION", "OTHER"
+)
+
 data class CvData(
     val id: String = UUID.randomUUID().toString(),
     val profileLabel: String = "Default",
@@ -288,11 +296,97 @@ data class CvData(
     val fresherInternshipsVolunteer: String = "",
     val fresherLeadershipClubs: String = "",
     val fresherKeyCoursework: String = "",
-    val showSignatureLine: Boolean = true
+    val showSignatureLine: Boolean = true,
+
+    // Advanced Customization & Dynamic Flexibility Options
+    val customSections: List<CvCustomSectionItem> = emptyList(),
+    val sectionOrder: List<String> = listOf("SUMMARY", "EXPERIENCE", "EDUCATION", "SKILLS", "PROJECTS", "CERTIFICATIONS", "LANGUAGES", "CUSTOM_SECTIONS", "PERSONAL_INFO", "REFERENCES"),
+    val hiddenSections: List<String> = emptyList(),
+    val showContactIcons: Boolean = true,
+    val showSectionIcons: Boolean = false,
+    val fontScale: String = "STANDARD", // "COMPACT", "STANDARD", "COMFORTABLE", "LARGE"
+    val bulletStyle: String = "BULLET" // "BULLET", "DASH", "SQUARE", "DIAMOND", "COMMA", "PIPE", "NONE"
 )
 
+// ================= CLEAN ATS SYSTEM TYPEFACES (PREVENT SYSTEM FONT OVERRIDE) =================
+private object CleanPdfTypefaces {
+    val sansRegular: Typeface by lazy {
+        loadSystemFont(
+            listOf(
+                "/system/fonts/Roboto-Regular.ttf",
+                "/system/fonts/NotoSans-Regular.ttf",
+                "/system/fonts/DroidSans.ttf"
+            ),
+            Typeface.SANS_SERIF,
+            Typeface.NORMAL
+        )
+    }
+
+    val sansBold: Typeface by lazy {
+        loadSystemFont(
+            listOf(
+                "/system/fonts/Roboto-Bold.ttf",
+                "/system/fonts/NotoSans-Bold.ttf",
+                "/system/fonts/DroidSans-Bold.ttf"
+            ),
+            Typeface.SANS_SERIF,
+            Typeface.BOLD
+        )
+    }
+
+    val sansMedium: Typeface by lazy {
+        loadSystemFont(
+            listOf(
+                "/system/fonts/Roboto-Medium.ttf",
+                "/system/fonts/Roboto-Bold.ttf",
+                "/system/fonts/NotoSans-Medium.ttf"
+            ),
+            Typeface.SANS_SERIF,
+            Typeface.BOLD
+        )
+    }
+
+    val serifRegular: Typeface by lazy {
+        loadSystemFont(
+            listOf(
+                "/system/fonts/NotoSerif-Regular.ttf",
+                "/system/fonts/DroidSerif-Regular.ttf",
+                "/system/fonts/TimesNewRoman.ttf"
+            ),
+            Typeface.SERIF,
+            Typeface.NORMAL
+        )
+    }
+
+    val serifBold: Typeface by lazy {
+        loadSystemFont(
+            listOf(
+                "/system/fonts/NotoSerif-Bold.ttf",
+                "/system/fonts/DroidSerif-Bold.ttf"
+            ),
+            Typeface.SERIF,
+            Typeface.BOLD
+        )
+    }
+
+    private fun loadSystemFont(paths: List<String>, fallbackTypeface: Typeface, style: Int): Typeface {
+        for (path in paths) {
+            try {
+                val f = File(path)
+                if (f.exists() && f.canRead()) {
+                    val tf = Typeface.createFromFile(f)
+                    if (tf != null) {
+                        return if (style == Typeface.BOLD) Typeface.create(tf, Typeface.BOLD) else tf
+                    }
+                }
+            } catch (_: Exception) {}
+        }
+        return Typeface.create(fallbackTypeface, style)
+    }
+}
+
 // SharedPreferences Multi-Profile Helpers
-private const val CV_PREFS_NAME = "ats_cv_builder_multi_prefs_v5"
+private const val CV_PREFS_NAME = "ats_cv_builder_multi_prefs_v6"
 private const val CV_PROFILES_LIST_KEY = "saved_cv_profiles_json_list"
 private const val ACTIVE_PROFILE_ID_KEY = "active_cv_profile_uuid"
 
@@ -355,13 +449,7 @@ private fun getSeedProfilesList(): List<CvData> {
             CvSkillItem(name = "ATS Resume Optimization", level = "Expert"),
             CvSkillItem(name = "Team Leadership & Collaboration", level = "Expert")
         ),
-        projects = listOf(
-            CvProjectItem(
-                title = "E-Commerce Market Feasibility study",
-                description = "Conducted an in-depth financial feasibility and customer acquisition study for a logistics startup.\nDesigned a forecasting model with 92% planning accuracy.",
-                link = "portfolio.shariful.com/projects/feasibility"
-            )
-        ),
+        projects = emptyList(),
         languages = "English (Professional), Bengali (Native)",
         certifications = "Project Management Professional (PMP) - PMI, 2024\nBusiness Intelligence Certification - Google / Coursera, 2023",
         references = "Available upon request.",
@@ -1098,7 +1186,7 @@ private suspend fun callGeminiAiMultiModal(
         throw IllegalStateException("API Key is missing or not configured in Secrets panel.")
     }
 
-    val url = URL("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$apiKey")
+    val url = URL("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$apiKey")
     val conn = url.openConnection() as HttpURLConnection
     conn.requestMethod = "POST"
     conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
@@ -1473,49 +1561,50 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
     val mutedLineColor = AndroidColor.parseColor("#CBD5E1")
 
     val isSerif = pdfStyle == CvTemplateStyle.ELEGANT_PREMIUM || pdfStyle == CvTemplateStyle.HARVARD_CLASSIC
-    val mainFontFamily = if (isSerif) "serif" else "sans-serif"
-    val titleFontFamily = if (isSerif) "serif" else "sans-serif-medium"
+    val tfTitle = if (isSerif) CleanPdfTypefaces.serifBold else CleanPdfTypefaces.sansMedium
+    val tfRegular = if (isSerif) CleanPdfTypefaces.serifRegular else CleanPdfTypefaces.sansRegular
+    val tfBold = if (isSerif) CleanPdfTypefaces.serifBold else CleanPdfTypefaces.sansBold
 
     val titlePaint = TextPaint().apply {
         isAntiAlias = true
         color = primaryColor
         textSize = 19f
-        typeface = Typeface.create(titleFontFamily, Typeface.BOLD)
+        typeface = tfTitle
     }
 
     val subtitlePaint = TextPaint().apply {
         isAntiAlias = true
         color = subTextColor
         textSize = 11f
-        typeface = Typeface.create(titleFontFamily, Typeface.NORMAL)
+        typeface = tfRegular
     }
 
     val contactPaint = TextPaint().apply {
         isAntiAlias = true
         color = subTextColor
         textSize = 9.2f
-        typeface = Typeface.create(mainFontFamily, Typeface.NORMAL)
+        typeface = tfRegular
     }
 
     val sectionHeaderPaint = TextPaint().apply {
         isAntiAlias = true
         color = primaryColor
         textSize = 11.5f
-        typeface = Typeface.create(titleFontFamily, Typeface.BOLD)
+        typeface = tfTitle
     }
 
     val bodyPaint = TextPaint().apply {
         isAntiAlias = true
         color = textColor
         textSize = 9.2f
-        typeface = Typeface.create(mainFontFamily, Typeface.NORMAL)
+        typeface = tfRegular
     }
 
     val bodyBoldPaint = TextPaint().apply {
         isAntiAlias = true
         color = textColor
         textSize = 9.2f
-        typeface = Typeface.create(mainFontFamily, Typeface.BOLD)
+        typeface = tfBold
     }
 
     fun checkAndAddNewPage(neededHeight: Float) {
@@ -2256,18 +2345,26 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
         currentY = maxOf(currentY + 4f, if (hasTopPhoto) margin + photoSize + 10f else currentY)
     }
 
+    val fontScaleMultiplier = when (data.fontScale) {
+        "COMPACT" -> 0.88f
+        "COMFORTABLE" -> 1.12f
+        "LARGE" -> 1.25f
+        else -> 1.0f
+    }
+
     // --- Section Header Renderer Custom to Template Style ---
-    fun drawSectionHeader(title: String) {
+    fun drawSectionHeader(title: String, defaultIconKey: String = "") {
         checkAndAddNewPage(28f)
+        val headerText = if (data.showSectionIcons && defaultIconKey.isNotBlank()) "$defaultIconKey $title" else title
         when (pdfStyle) {
             CvTemplateStyle.HARVARD_CLASSIC -> {
                 val hPaint = TextPaint().apply {
                     isAntiAlias = true
                     color = AndroidColor.BLACK
-                    textSize = 11.5f
+                    textSize = 11.5f * fontScaleMultiplier
                     typeface = Typeface.create("serif", Typeface.BOLD)
                 }
-                canvas.drawText(title.uppercase(), margin, currentY + 11f, hPaint)
+                canvas.drawText(headerText.uppercase(), margin, currentY + 11f, hPaint)
                 currentY += 15f
                 val rulePaint = Paint().apply {
                     color = AndroidColor.BLACK
@@ -2280,10 +2377,10 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                 val exePaint = TextPaint().apply {
                     isAntiAlias = true
                     color = AndroidColor.BLACK
-                    textSize = 11.5f
+                    textSize = 11.5f * fontScaleMultiplier
                     typeface = Typeface.create("serif", Typeface.BOLD)
                 }
-                canvas.drawText("❖  ${title.uppercase()}", margin, currentY + 11f, exePaint)
+                canvas.drawText("❖  ${headerText.uppercase()}", margin, currentY + 11f, exePaint)
                 currentY += 15f
                 val rulePaint = Paint().apply {
                     color = AndroidColor.BLACK
@@ -2296,10 +2393,10 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                 val cPaint = TextPaint().apply {
                     isAntiAlias = true
                     color = primaryColor
-                    textSize = 11.5f
+                    textSize = 11.5f * fontScaleMultiplier
                     typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
                 }
-                canvas.drawText(title.uppercase(), margin, currentY + 11f, cPaint)
+                canvas.drawText(headerText.uppercase(), margin, currentY + 11f, cPaint)
                 currentY += 15f
                 val rulePaint = Paint().apply {
                     color = AndroidColor.parseColor("#E2E8F0")
@@ -2312,10 +2409,10 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                 val atsPaint = TextPaint().apply {
                     isAntiAlias = true
                     color = primaryColor
-                    textSize = 11.5f
+                    textSize = 11.5f * fontScaleMultiplier
                     typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
                 }
-                canvas.drawText(title.uppercase(), margin, currentY + 11f, atsPaint)
+                canvas.drawText(headerText.uppercase(), margin, currentY + 11f, atsPaint)
                 currentY += 15f
                 val rulePaint = Paint().apply {
                     color = primaryColor
@@ -2328,10 +2425,10 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                 val slatePaint = TextPaint().apply {
                     isAntiAlias = true
                     color = primaryColor
-                    textSize = 11.5f
+                    textSize = 11.5f * fontScaleMultiplier
                     typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
                 }
-                canvas.drawText(title.uppercase(), margin, currentY + 11f, slatePaint)
+                canvas.drawText(headerText.uppercase(), margin, currentY + 11f, slatePaint)
                 currentY += 15f
                 val rulePaint = Paint().apply {
                     color = AndroidColor.parseColor("#94A3B8")
@@ -2346,7 +2443,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                     style = Paint.Style.FILL
                 }
                 canvas.drawRoundRect(android.graphics.RectF(margin, currentY + 1f, margin + 3.5f, currentY + 13f), 2f, 2f, barPaint)
-                canvas.drawText(title.uppercase(), margin + 9f, currentY + 11f, sectionHeaderPaint)
+                canvas.drawText(headerText.uppercase(), margin + 9f, currentY + 11f, sectionHeaderPaint)
                 currentY += 15f
                 val rulePaint = Paint().apply {
                     color = AndroidColor.parseColor("#E2E8F0")
@@ -2359,10 +2456,10 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                 val dPaint = TextPaint().apply {
                     isAntiAlias = true
                     color = primaryColor
-                    textSize = 11.5f
+                    textSize = 11.5f * fontScaleMultiplier
                     typeface = Typeface.create("serif", Typeface.BOLD)
                 }
-                canvas.drawText("◆  ${title.uppercase()}", margin, currentY + 11f, dPaint)
+                canvas.drawText("◆  ${headerText.uppercase()}", margin, currentY + 11f, dPaint)
                 currentY += 15f
                 val rulePaint = Paint().apply {
                     color = primaryColor
@@ -2378,7 +2475,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                     style = Paint.Style.FILL
                 }
                 canvas.drawRoundRect(pillRect, 3f, 3f, pillPaint)
-                canvas.drawText(title.uppercase(), margin + 12f, currentY + 11f, sectionHeaderPaint)
+                canvas.drawText(headerText.uppercase(), margin + 12f, currentY + 11f, sectionHeaderPaint)
                 currentY += 16f
                 val rulePaint = Paint().apply {
                     color = AndroidColor.parseColor("#FECDD3")
@@ -2391,10 +2488,10 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                 val codePrefixPaint = TextPaint().apply {
                     isAntiAlias = true
                     color = primaryColor
-                    textSize = 11.5f
+                    textSize = 11.5f * fontScaleMultiplier
                     typeface = Typeface.create("monospace", Typeface.BOLD)
                 }
-                canvas.drawText("// ${title.uppercase()}", margin, currentY + 11f, codePrefixPaint)
+                canvas.drawText("// ${headerText.uppercase()}", margin, currentY + 11f, codePrefixPaint)
                 currentY += 15f
                 val rulePaint = Paint().apply {
                     color = primaryColor
@@ -2404,8 +2501,8 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                 currentY += 8f
             }
             else -> {
-                val headerTitle = if (title.endsWith(":")) title else "$title:"
-                canvas.drawText(headerTitle.uppercase(), margin, currentY + 11f, sectionHeaderPaint)
+                val formattedHeader = if (headerText.endsWith(":")) headerText else "$headerText:"
+                canvas.drawText(formattedHeader.uppercase(), margin, currentY + 11f, sectionHeaderPaint)
                 currentY += 15f
                 val rulePaint = Paint().apply {
                     color = if (pdfStyle == CvTemplateStyle.CLASSIC_CORPORATE) AndroidColor.BLACK else primaryColor
@@ -2417,404 +2514,435 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
         }
     }
 
-    // 1. CAREER OBJECTIVE / SUMMARY
-    if (data.summary.isNotBlank()) {
-        val objTitle = if (pdfStyle == CvTemplateStyle.NGO_DEVELOPMENT_HUMANITARIAN) "MISSION & SOCIAL IMPACT OBJECTIVE" else if (pdfStyle == CvTemplateStyle.HARVARD_CLASSIC) "PROFESSIONAL SUMMARY" else "CAREER OBJECTIVE"
-        drawSectionHeader(objTitle)
-
-        if (pdfStyle == CvTemplateStyle.NGO_DEVELOPMENT_HUMANITARIAN) {
-            val sumLayout = StaticLayout.Builder.obtain(data.summary, 0, data.summary.length, bodyPaint, (contentWidth - 20f).toInt()).build()
-            val boxH = sumLayout.height + 14f
-            checkAndAddNewPage(boxH + 6f)
-            val bgPaint = Paint().apply {
-                color = AndroidColor.parseColor("#FFF7ED")
-                style = Paint.Style.FILL
-            }
-            val borderP = Paint().apply {
-                color = AndroidColor.parseColor("#FED7AA")
-                style = Paint.Style.STROKE
-                strokeWidth = 1f
-            }
-            val r = android.graphics.RectF(margin, currentY, margin + contentWidth, currentY + boxH)
-            canvas.drawRoundRect(r, 4f, 4f, bgPaint)
-            canvas.drawRoundRect(r, 4f, 4f, borderP)
-            canvas.save()
-            canvas.translate(margin + 10f, currentY + 7f)
-            sumLayout.draw(canvas)
-            canvas.restore()
-            currentY += boxH + 10f
-        } else {
-            val sumLayout = StaticLayout.Builder.obtain(data.summary, 0, data.summary.length, bodyPaint, contentWidth.toInt()).build()
-            checkAndAddNewPage(sumLayout.height.toFloat() + 8f)
-            canvas.save()
-            canvas.translate(margin, currentY)
-            sumLayout.draw(canvas)
-            canvas.restore()
-            currentY += sumLayout.height + 12f
-        }
+    // --- DYNAMIC SECTION ORDERING & SHOW/HIDE RENDERER ---
+    val effectiveSectionOrder = data.sectionOrder.ifEmpty {
+        listOf("SUMMARY", "EXPERIENCE", "EDUCATION", "SKILLS", "PROJECTS", "CERTIFICATIONS", "LANGUAGES", "CUSTOM_SECTIONS", "PERSONAL_INFO", "REFERENCES")
     }
 
-    // 2. EDUCATION
-    if (data.educations.isNotEmpty()) {
-        drawSectionHeader("EDUCATION")
-
-        if (pdfStyle == CvTemplateStyle.HARVARD_CLASSIC) {
-            val sortedEdu = data.educations.sortedByDescending { it.passingYear.toIntOrNull() ?: 0 }
-            sortedEdu.forEach { edu ->
-                val degreeText = edu.degree
-                val instText = "${edu.institution}${if (edu.result.isNotBlank()) " — Result: ${edu.result}" else ""}"
-                val yearText = edu.passingYear
-
-                val degLayout = StaticLayout.Builder.obtain(degreeText, 0, degreeText.length, bodyBoldPaint, (contentWidth * 0.75f).toInt()).build()
-                val yearLayout = StaticLayout.Builder.obtain(yearText, 0, yearText.length, bodyBoldPaint, (contentWidth * 0.25f).toInt()).setAlignment(Layout.Alignment.ALIGN_OPPOSITE).build()
-
-                val h = maxOf(degLayout.height, yearLayout.height).toFloat()
-                checkAndAddNewPage(h + 16f)
-
-                canvas.save(); canvas.translate(margin, currentY); degLayout.draw(canvas); canvas.restore()
-                canvas.save(); canvas.translate(margin + contentWidth * 0.75f, currentY); yearLayout.draw(canvas); canvas.restore()
-                currentY += h + 2f
-
-                val instLayout = StaticLayout.Builder.obtain(instText, 0, instText.length, bodyPaint, contentWidth.toInt()).build()
-                canvas.save(); canvas.translate(margin, currentY); instLayout.draw(canvas); canvas.restore()
-                currentY += instLayout.height + 6f
-            }
-            currentY += 6f
-        } else {
-            val colExamW = 60f
-            val colInstW = 185f
-            val colSubW = 110f
-            val colResW = 110f
-            val colYearW = contentWidth - (colExamW + colInstW + colSubW + colResW)
-
-            val tableHeaderPaint = TextPaint().apply {
-                isAntiAlias = true
-                color = AndroidColor.parseColor("#0F172A")
-                textSize = 8.5f
-                typeface = Typeface.create(mainFontFamily, Typeface.BOLD)
-            }
-            val tableCellPaint = TextPaint().apply {
-                isAntiAlias = true
-                color = textColor
-                textSize = 8.2f
-                typeface = Typeface.create(mainFontFamily, Typeface.NORMAL)
-            }
-            val tableBorderPaint = Paint().apply {
-                color = mutedLineColor
-                style = Paint.Style.STROKE
-                strokeWidth = 0.8f
-            }
-            val headerBgColor = when (pdfStyle) {
-                CvTemplateStyle.BANKING_FINANCE_SPECIALIST -> AndroidColor.parseColor("#DBEAFE")
-                CvTemplateStyle.CLEAN_TECH_STARTUP -> AndroidColor.parseColor("#D1FAE5")
-                CvTemplateStyle.MODERN_MINIMALIST -> AndroidColor.parseColor("#CCFBF1")
-                CvTemplateStyle.NGO_DEVELOPMENT_HUMANITARIAN -> AndroidColor.parseColor("#FFEDD5")
-                else -> AndroidColor.parseColor("#E2EEF9")
-            }
-            val tableHeaderBgPaint = Paint().apply {
-                color = headerBgColor
-                style = Paint.Style.FILL
-            }
-
-            val headerRowH = 18f
-            checkAndAddNewPage(headerRowH + 20f)
-            canvas.drawRect(margin, currentY, margin + contentWidth, currentY + headerRowH, tableHeaderBgPaint)
-            canvas.drawRect(margin, currentY, margin + contentWidth, currentY + headerRowH, tableBorderPaint)
-
-            var hx = margin
-            canvas.drawText("Exam", hx + 4f, currentY + 12f, tableHeaderPaint); hx += colExamW
-            canvas.drawLine(hx, currentY, hx, currentY + headerRowH, tableBorderPaint)
-            canvas.drawText("Institute / Board / University", hx + 4f, currentY + 12f, tableHeaderPaint); hx += colInstW
-            canvas.drawLine(hx, currentY, hx, currentY + headerRowH, tableBorderPaint)
-            canvas.drawText("Group / Subject", hx + 4f, currentY + 12f, tableHeaderPaint); hx += colSubW
-            canvas.drawLine(hx, currentY, hx, currentY + headerRowH, tableBorderPaint)
-            canvas.drawText("Result", hx + 4f, currentY + 12f, tableHeaderPaint); hx += colResW
-            canvas.drawLine(hx, currentY, hx, currentY + headerRowH, tableBorderPaint)
-            canvas.drawText("Year", hx + 4f, currentY + 12f, tableHeaderPaint)
-
-            currentY += headerRowH
-
-            val sortedEdu = data.educations.sortedByDescending { it.passingYear.toIntOrNull() ?: 0 }
-            sortedEdu.forEach { edu ->
-                val examText = when {
-                    edu.degree.contains("MBA", ignoreCase = true) -> "MBA"
-                    edu.degree.contains("BBA", ignoreCase = true) -> "BBA"
-                    edu.degree.contains("HSC", ignoreCase = true) || edu.degree.contains("Higher Secondary", ignoreCase = true) -> "H.S.C"
-                    edu.degree.contains("SSC", ignoreCase = true) || edu.degree.contains("Secondary School", ignoreCase = true) -> "S.S.C"
-                    edu.degree.contains("B.Sc", ignoreCase = true) -> "B.Sc"
-                    edu.degree.contains("M.Sc", ignoreCase = true) -> "M.Sc"
-                    else -> edu.degree.take(15)
-                }
-                val subjectText = when {
-                    edu.degree.contains("Management", ignoreCase = true) -> "Management"
-                    edu.degree.contains("Business Studies", ignoreCase = true) -> "Business Studies"
-                    edu.degree.contains("Science", ignoreCase = true) -> "Science"
-                    edu.degree.contains("Commerce", ignoreCase = true) -> "Commerce"
-                    edu.degree.contains("Humanities", ignoreCase = true) || edu.degree.contains("Arts", ignoreCase = true) -> "Humanities"
-                    edu.degree.contains("in ", ignoreCase = true) -> edu.degree.substringAfter("in ").trim()
-                    else -> "General / " + edu.degree.take(12)
-                }
-
-                val examL = StaticLayout.Builder.obtain(examText, 0, examText.length, tableCellPaint, (colExamW - 6f).toInt()).build()
-                val instL = StaticLayout.Builder.obtain(edu.institution, 0, edu.institution.length, tableCellPaint, (colInstW - 6f).toInt()).build()
-                val subL = StaticLayout.Builder.obtain(subjectText, 0, subjectText.length, tableCellPaint, (colSubW - 6f).toInt()).build()
-                val resL = StaticLayout.Builder.obtain(edu.result, 0, edu.result.length, tableCellPaint, (colResW - 6f).toInt()).build()
-                val yearL = StaticLayout.Builder.obtain(edu.passingYear, 0, edu.passingYear.length, tableCellPaint, (colYearW - 6f).toInt()).build()
-
-                val rowH = maxOf(examL.height, instL.height, subL.height, resL.height, yearL.height).toFloat() + 8f
-                checkAndAddNewPage(rowH)
-
-                canvas.drawRect(margin, currentY, margin + contentWidth, currentY + rowH, tableBorderPaint)
-
-                var cx = margin
-                canvas.save(); canvas.translate(cx + 4f, currentY + 4f); examL.draw(canvas); canvas.restore()
-                cx += colExamW; canvas.drawLine(cx, currentY, cx, currentY + rowH, tableBorderPaint)
-
-                canvas.save(); canvas.translate(cx + 4f, currentY + 4f); instL.draw(canvas); canvas.restore()
-                cx += colInstW; canvas.drawLine(cx, currentY, cx, currentY + rowH, tableBorderPaint)
-
-                canvas.save(); canvas.translate(cx + 4f, currentY + 4f); subL.draw(canvas); canvas.restore()
-                cx += colSubW; canvas.drawLine(cx, currentY, cx, currentY + rowH, tableBorderPaint)
-
-                canvas.save(); canvas.translate(cx + 4f, currentY + 4f); resL.draw(canvas); canvas.restore()
-                cx += colResW; canvas.drawLine(cx, currentY, cx, currentY + rowH, tableBorderPaint)
-
-                canvas.save(); canvas.translate(cx + 4f, currentY + 4f); yearL.draw(canvas); canvas.restore()
-
-                currentY += rowH
-            }
-            currentY += 10f
-        }
+    val bulletPrefix = when (data.bulletStyle) {
+        "DASH" -> "- "
+        "SQUARE" -> "▪ "
+        "DIAMOND" -> "◆ "
+        "COMMA" -> ""
+        "PIPE" -> ""
+        "NONE" -> ""
+        else -> "• "
     }
 
-    // 3. WORK EXPERIENCES / FRESHER ACADEMIC & PRACTICUM SECTIONS
-    if (data.isFresher) {
-        // Fresher Section 1: Academic & Capstone Projects
-        if (data.fresherAcademicProjects.isNotBlank()) {
-            drawSectionHeader("ACADEMIC PROJECTS & CAPSTONE THESIS")
-            val pLayout = StaticLayout.Builder.obtain(data.fresherAcademicProjects, 0, data.fresherAcademicProjects.length, bodyPaint, contentWidth.toInt()).build()
-            checkAndAddNewPage(pLayout.height.toFloat() + 6f)
-            canvas.save()
-            canvas.translate(margin, currentY)
-            pLayout.draw(canvas)
-            canvas.restore()
-            currentY += pLayout.height + 8f
-        }
+    effectiveSectionOrder.forEach { secKey ->
+        if (data.hiddenSections.contains(secKey)) return@forEach
 
-        // Fresher Section 2: Internships & Volunteer Experience
-        if (data.fresherInternshipsVolunteer.isNotBlank()) {
-            drawSectionHeader("INTERNSHIPS & VOLUNTEER WORK")
-            val vLayout = StaticLayout.Builder.obtain(data.fresherInternshipsVolunteer, 0, data.fresherInternshipsVolunteer.length, bodyPaint, contentWidth.toInt()).build()
-            checkAndAddNewPage(vLayout.height.toFloat() + 6f)
-            canvas.save()
-            canvas.translate(margin, currentY)
-            vLayout.draw(canvas)
-            canvas.restore()
-            currentY += vLayout.height + 8f
-        }
+        when (secKey) {
+            "SUMMARY" -> {
+                if (data.summary.isNotBlank()) {
+                    val objTitle = if (pdfStyle == CvTemplateStyle.NGO_DEVELOPMENT_HUMANITARIAN) "MISSION & SOCIAL IMPACT OBJECTIVE" else if (pdfStyle == CvTemplateStyle.HARVARD_CLASSIC) "PROFESSIONAL SUMMARY" else "CAREER OBJECTIVE"
+                    drawSectionHeader(objTitle, "🎯")
 
-        // Fresher Section 3: Campus Leadership & Extracurricular
-        if (data.fresherLeadershipClubs.isNotBlank()) {
-            drawSectionHeader("CAMPUS LEADERSHIP & EXTRACURRICULAR")
-            val lLayout = StaticLayout.Builder.obtain(data.fresherLeadershipClubs, 0, data.fresherLeadershipClubs.length, bodyPaint, contentWidth.toInt()).build()
-            checkAndAddNewPage(lLayout.height.toFloat() + 6f)
-            canvas.save()
-            canvas.translate(margin, currentY)
-            lLayout.draw(canvas)
-            canvas.restore()
-            currentY += lLayout.height + 8f
-        }
-
-        // Fresher Section 4: Relevant Coursework
-        if (data.fresherKeyCoursework.isNotBlank()) {
-            drawSectionHeader("RELEVANT COURSEWORK & ACADEMIC CORE")
-            val cLayout = StaticLayout.Builder.obtain(data.fresherKeyCoursework, 0, data.fresherKeyCoursework.length, bodyPaint, contentWidth.toInt()).build()
-            checkAndAddNewPage(cLayout.height.toFloat() + 6f)
-            canvas.save()
-            canvas.translate(margin, currentY)
-            cLayout.draw(canvas)
-            canvas.restore()
-            currentY += cLayout.height + 8f
-        }
-
-        // Optional additional experiences if populated
-        if (data.experiences.isNotEmpty()) {
-            drawSectionHeader("ADDITIONAL PRACTICUM & WORK EXPERIENCE")
-            data.experiences.forEach { exp ->
-                if (exp.role.isNotBlank() || exp.company.isNotBlank()) {
-                    val bulletChar = if (pdfStyle == CvTemplateStyle.ELEGANT_PREMIUM) "◆" else "•"
-                    val expTitle = "$bulletChar ${exp.role} – ${exp.company} (${exp.location})${if (exp.startDate.isNotBlank()) " [${exp.startDate} - ${if (exp.isCurrent) "Present" else exp.endDate}]" else ""}"
-                    val titleLayout = StaticLayout.Builder.obtain(expTitle, 0, expTitle.length, bodyBoldPaint, contentWidth.toInt()).build()
-                    checkAndAddNewPage(titleLayout.height.toFloat() + 4f)
-                    canvas.save()
-                    canvas.translate(margin, currentY)
-                    titleLayout.draw(canvas)
-                    canvas.restore()
-                    currentY += titleLayout.height + 2f
-
-                    if (exp.description.isNotBlank()) {
-                        val descLayout = StaticLayout.Builder.obtain(exp.description, 0, exp.description.length, bodyPaint, (contentWidth - 12f).toInt()).build()
-                        checkAndAddNewPage(descLayout.height.toFloat() + 6f)
+                    if (pdfStyle == CvTemplateStyle.NGO_DEVELOPMENT_HUMANITARIAN) {
+                        val sumLayout = StaticLayout.Builder.obtain(data.summary, 0, data.summary.length, bodyPaint, (contentWidth - 20f).toInt()).build()
+                        val boxH = sumLayout.height + 14f
+                        checkAndAddNewPage(boxH + 6f)
+                        val bgPaint = Paint().apply {
+                            color = AndroidColor.parseColor("#FFF7ED")
+                            style = Paint.Style.FILL
+                        }
+                        val borderP = Paint().apply {
+                            color = AndroidColor.parseColor("#FED7AA")
+                            style = Paint.Style.STROKE
+                            strokeWidth = 1f
+                        }
+                        val r = android.graphics.RectF(margin, currentY, margin + contentWidth, currentY + boxH)
+                        canvas.drawRoundRect(r, 4f, 4f, bgPaint)
+                        canvas.drawRoundRect(r, 4f, 4f, borderP)
                         canvas.save()
-                        canvas.translate(margin + 12f, currentY)
-                        descLayout.draw(canvas)
+                        canvas.translate(margin + 10f, currentY + 7f)
+                        sumLayout.draw(canvas)
                         canvas.restore()
-                        currentY += descLayout.height + 8f
+                        currentY += boxH + 10f
                     } else {
-                        currentY += 6f
+                        val sumLayout = StaticLayout.Builder.obtain(data.summary, 0, data.summary.length, bodyPaint, contentWidth.toInt()).build()
+                        checkAndAddNewPage(sumLayout.height.toFloat() + 8f)
+                        canvas.save()
+                        canvas.translate(margin, currentY)
+                        sumLayout.draw(canvas)
+                        canvas.restore()
+                        currentY += sumLayout.height + 12f
                     }
                 }
             }
-        }
-    } else {
-        // Standard Work Experiences for experienced professionals
-        if (data.experiences.isNotEmpty()) {
-            val expSectionTitle = if (pdfStyle == CvTemplateStyle.HARVARD_CLASSIC) "PROFESSIONAL EXPERIENCE" else "WORK EXPERIENCES"
-            drawSectionHeader(expSectionTitle)
 
-            data.experiences.forEach { exp ->
-                if (exp.role.isNotBlank() || exp.company.isNotBlank()) {
-                    val bulletChar = if (pdfStyle == CvTemplateStyle.ELEGANT_PREMIUM) "◆" else "•"
-                    val expTitle = "$bulletChar ${exp.role} – ${exp.company} (${exp.location})${if (exp.startDate.isNotBlank()) " [${exp.startDate} - ${if (exp.isCurrent) "Present" else exp.endDate}]" else ""}"
-                    val titleLayout = StaticLayout.Builder.obtain(expTitle, 0, expTitle.length, bodyBoldPaint, contentWidth.toInt()).build()
-                    checkAndAddNewPage(titleLayout.height.toFloat() + 4f)
-                    canvas.save()
-                    canvas.translate(margin, currentY)
-                    titleLayout.draw(canvas)
-                    canvas.restore()
-                    currentY += titleLayout.height + 2f
+            "EDUCATION" -> {
+                if (data.educations.isNotEmpty()) {
+                    drawSectionHeader("EDUCATION", "🎓")
 
-                    if (exp.description.isNotBlank()) {
-                        val descLayout = StaticLayout.Builder.obtain(exp.description, 0, exp.description.length, bodyPaint, (contentWidth - 12f).toInt()).build()
-                        checkAndAddNewPage(descLayout.height.toFloat() + 6f)
-                        canvas.save()
-                        canvas.translate(margin + 12f, currentY)
-                        descLayout.draw(canvas)
-                        canvas.restore()
-                        currentY += descLayout.height + 8f
-                    } else {
+                    val isAtsTextLayout = pdfStyle == CvTemplateStyle.HARVARD_CLASSIC ||
+                                          pdfStyle == CvTemplateStyle.CANVA_MINIMALIST_CLEAN ||
+                                          pdfStyle == CvTemplateStyle.SINGLE_COLUMN_HIGH_IMPACT_ATS ||
+                                          pdfStyle == CvTemplateStyle.SILICON_VALLEY_TECH_LEAD ||
+                                          pdfStyle == CvTemplateStyle.NORDIC_SLATE_MODERN ||
+                                          pdfStyle == CvTemplateStyle.MODERN_MINIMALIST ||
+                                          pdfStyle == CvTemplateStyle.CLEAN_TECH_STARTUP ||
+                                          pdfStyle == CvTemplateStyle.ELEGANT_PREMIUM
+
+                    if (isAtsTextLayout) {
+                        val sortedEdu = data.educations.sortedByDescending { it.passingYear.toIntOrNull() ?: 0 }
+                        sortedEdu.forEach { edu ->
+                            val degreeText = edu.degree
+                            val instText = "${edu.institution}${if (edu.result.isNotBlank()) "  •  ${edu.result}" else ""}"
+                            val yearText = edu.passingYear
+
+                            val degLayout = StaticLayout.Builder.obtain(degreeText, 0, degreeText.length, bodyBoldPaint, (contentWidth * 0.75f).toInt()).build()
+                            val yearLayout = StaticLayout.Builder.obtain(yearText, 0, yearText.length, bodyBoldPaint, (contentWidth * 0.25f).toInt()).setAlignment(Layout.Alignment.ALIGN_OPPOSITE).build()
+
+                            val h = maxOf(degLayout.height, yearLayout.height).toFloat()
+                            checkAndAddNewPage(h + 16f)
+
+                            canvas.save(); canvas.translate(margin, currentY); degLayout.draw(canvas); canvas.restore()
+                            canvas.save(); canvas.translate(margin + contentWidth * 0.75f, currentY); yearLayout.draw(canvas); canvas.restore()
+                            currentY += h + 2f
+
+                            val instLayout = StaticLayout.Builder.obtain(instText, 0, instText.length, bodyPaint, contentWidth.toInt()).build()
+                            canvas.save(); canvas.translate(margin, currentY); instLayout.draw(canvas); canvas.restore()
+                            currentY += instLayout.height + 6f
+                        }
                         currentY += 6f
+                    } else {
+                        val colExamW = 60f
+                        val colInstW = 185f
+                        val colSubW = 110f
+                        val colResW = 110f
+                        val colYearW = contentWidth - (colExamW + colInstW + colSubW + colResW)
+
+                        val tableHeaderPaint = TextPaint().apply {
+                            isAntiAlias = true
+                            color = AndroidColor.parseColor("#0F172A")
+                            textSize = 8.5f * fontScaleMultiplier
+                            typeface = tfBold
+                        }
+                        val tableCellPaint = TextPaint().apply {
+                            isAntiAlias = true
+                            color = textColor
+                            textSize = 8.2f * fontScaleMultiplier
+                            typeface = tfRegular
+                        }
+                        val tableBorderPaint = Paint().apply {
+                            color = mutedLineColor
+                            style = Paint.Style.STROKE
+                            strokeWidth = 0.8f
+                        }
+                        val headerBgColor = when (pdfStyle) {
+                            CvTemplateStyle.BANKING_FINANCE_SPECIALIST -> AndroidColor.parseColor("#DBEAFE")
+                            CvTemplateStyle.CLEAN_TECH_STARTUP -> AndroidColor.parseColor("#D1FAE5")
+                            CvTemplateStyle.MODERN_MINIMALIST -> AndroidColor.parseColor("#CCFBF1")
+                            CvTemplateStyle.NGO_DEVELOPMENT_HUMANITARIAN -> AndroidColor.parseColor("#FFEDD5")
+                            else -> AndroidColor.parseColor("#E2EEF9")
+                        }
+                        val tableHeaderBgPaint = Paint().apply {
+                            color = headerBgColor
+                            style = Paint.Style.FILL
+                        }
+
+                        val headerRowH = 18f * fontScaleMultiplier
+                        checkAndAddNewPage(headerRowH + 20f)
+                        canvas.drawRect(margin, currentY, margin + contentWidth, currentY + headerRowH, tableHeaderBgPaint)
+                        canvas.drawRect(margin, currentY, margin + contentWidth, currentY + headerRowH, tableBorderPaint)
+
+                        var hx = margin
+                        canvas.drawText("Exam", hx + 4f, currentY + 12f * fontScaleMultiplier, tableHeaderPaint); hx += colExamW
+                        canvas.drawLine(hx, currentY, hx, currentY + headerRowH, tableBorderPaint)
+                        canvas.drawText("Institute / Board / University", hx + 4f, currentY + 12f * fontScaleMultiplier, tableHeaderPaint); hx += colInstW
+                        canvas.drawLine(hx, currentY, hx, currentY + headerRowH, tableBorderPaint)
+                        canvas.drawText("Group / Subject", hx + 4f, currentY + 12f * fontScaleMultiplier, tableHeaderPaint); hx += colSubW
+                        canvas.drawLine(hx, currentY, hx, currentY + headerRowH, tableBorderPaint)
+                        canvas.drawText("Result", hx + 4f, currentY + 12f * fontScaleMultiplier, tableHeaderPaint); hx += colResW
+                        canvas.drawLine(hx, currentY, hx, currentY + headerRowH, tableBorderPaint)
+                        canvas.drawText("Year", hx + 4f, currentY + 12f * fontScaleMultiplier, tableHeaderPaint)
+
+                        currentY += headerRowH
+
+                        val sortedEdu = data.educations.sortedByDescending { it.passingYear.toIntOrNull() ?: 0 }
+                        sortedEdu.forEach { edu ->
+                            val examText = when {
+                                edu.degree.contains("MBA", ignoreCase = true) -> "MBA"
+                                edu.degree.contains("BBA", ignoreCase = true) -> "BBA"
+                                edu.degree.contains("HSC", ignoreCase = true) || edu.degree.contains("Higher Secondary", ignoreCase = true) -> "H.S.C"
+                                edu.degree.contains("SSC", ignoreCase = true) || edu.degree.contains("Secondary School", ignoreCase = true) -> "S.S.C"
+                                edu.degree.contains("B.Sc", ignoreCase = true) -> "B.Sc"
+                                edu.degree.contains("M.Sc", ignoreCase = true) -> "M.Sc"
+                                else -> edu.degree.take(15)
+                            }
+                            val subjectText = when {
+                                edu.degree.contains("Management", ignoreCase = true) -> "Management"
+                                edu.degree.contains("Business Studies", ignoreCase = true) -> "Business Studies"
+                                edu.degree.contains("Science", ignoreCase = true) -> "Science"
+                                edu.degree.contains("Commerce", ignoreCase = true) -> "Commerce"
+                                edu.degree.contains("Humanities", ignoreCase = true) || edu.degree.contains("Arts", ignoreCase = true) -> "Humanities"
+                                edu.degree.contains("in ", ignoreCase = true) -> edu.degree.substringAfter("in ").trim()
+                                else -> "General / " + edu.degree.take(12)
+                            }
+
+                            val examL = StaticLayout.Builder.obtain(examText, 0, examText.length, tableCellPaint, (colExamW - 6f).toInt()).build()
+                            val instL = StaticLayout.Builder.obtain(edu.institution, 0, edu.institution.length, tableCellPaint, (colInstW - 6f).toInt()).build()
+                            val subL = StaticLayout.Builder.obtain(subjectText, 0, subjectText.length, tableCellPaint, (colSubW - 6f).toInt()).build()
+                            val resL = StaticLayout.Builder.obtain(edu.result, 0, edu.result.length, tableCellPaint, (colResW - 6f).toInt()).build()
+                            val yearL = StaticLayout.Builder.obtain(edu.passingYear, 0, edu.passingYear.length, tableCellPaint, (colYearW - 6f).toInt()).build()
+
+                            val rowH = maxOf(examL.height, instL.height, subL.height, resL.height, yearL.height).toFloat() + 8f
+                            checkAndAddNewPage(rowH)
+
+                            canvas.drawRect(margin, currentY, margin + contentWidth, currentY + rowH, tableBorderPaint)
+
+                            var cx = margin
+                            canvas.save(); canvas.translate(cx + 4f, currentY + 4f); examL.draw(canvas); canvas.restore()
+                            cx += colExamW; canvas.drawLine(cx, currentY, cx, currentY + rowH, tableBorderPaint)
+
+                            canvas.save(); canvas.translate(cx + 4f, currentY + 4f); instL.draw(canvas); canvas.restore()
+                            cx += colInstW; canvas.drawLine(cx, currentY, cx, currentY + rowH, tableBorderPaint)
+
+                            canvas.save(); canvas.translate(cx + 4f, currentY + 4f); subL.draw(canvas); canvas.restore()
+                            cx += colSubW; canvas.drawLine(cx, currentY, cx, currentY + rowH, tableBorderPaint)
+
+                            canvas.save(); canvas.translate(cx + 4f, currentY + 4f); resL.draw(canvas); canvas.restore()
+                            cx += colResW; canvas.drawLine(cx, currentY, cx, currentY + rowH, tableBorderPaint)
+
+                            canvas.save(); canvas.translate(cx + 4f, currentY + 4f); yearL.draw(canvas); canvas.restore()
+
+                            currentY += rowH
+                        }
+                        currentY += 10f
                     }
                 }
             }
-        }
-    }
 
-    // 4. KEY SKILLS & COMPETENCIES
-    if (data.skills.isNotEmpty()) {
-        drawSectionHeader("KEY SKILLS & COMPETENCIES")
-        val functional = data.skills.filter { it.category.contains("Functional", ignoreCase = true) || it.category.contains("Core", ignoreCase = true) }
-        val technical = data.skills.filter { it.category.contains("Technical", ignoreCase = true) || it.category.contains("Digital", ignoreCase = true) }
-        val soft = data.skills.filter { it.category.contains("Soft", ignoreCase = true) || it.category.contains("Leadership", ignoreCase = true) }
-        val other = data.skills.filter { !functional.contains(it) && !technical.contains(it) && !soft.contains(it) }
+            "EXPERIENCE" -> {
+                if (data.isFresher) {
+                    if (data.fresherAcademicProjects.isNotBlank()) {
+                        drawSectionHeader("ACADEMIC PROJECTS & CAPSTONE THESIS", "🚀")
+                        val pLayout = StaticLayout.Builder.obtain(data.fresherAcademicProjects, 0, data.fresherAcademicProjects.length, bodyPaint, contentWidth.toInt()).build()
+                        checkAndAddNewPage(pLayout.height.toFloat() + 6f)
+                        canvas.save(); canvas.translate(margin, currentY); pLayout.draw(canvas); canvas.restore()
+                        currentY += pLayout.height + 8f
+                    }
 
-        val bulletChar = if (pdfStyle == CvTemplateStyle.ELEGANT_PREMIUM) "◆" else "•"
-        fun drawCategoryBullet(catName: String, list: List<CvSkillItem>) {
-            if (list.isEmpty()) return
-            val line = "$bulletChar $catName: ${list.joinToString(", ") { it.name }}"
-            val layout = StaticLayout.Builder.obtain(line, 0, line.length, bodyPaint, contentWidth.toInt()).build()
-            checkAndAddNewPage(layout.height.toFloat() + 4f)
-            canvas.save()
-            canvas.translate(margin, currentY)
-            layout.draw(canvas)
-            canvas.restore()
-            currentY += layout.height + 4f
-        }
+                    if (data.fresherInternshipsVolunteer.isNotBlank()) {
+                        drawSectionHeader("INTERNSHIPS & VOLUNTEER WORK", "🤝")
+                        val vLayout = StaticLayout.Builder.obtain(data.fresherInternshipsVolunteer, 0, data.fresherInternshipsVolunteer.length, bodyPaint, contentWidth.toInt()).build()
+                        checkAndAddNewPage(vLayout.height.toFloat() + 6f)
+                        canvas.save(); canvas.translate(margin, currentY); vLayout.draw(canvas); canvas.restore()
+                        currentY += vLayout.height + 8f
+                    }
 
-        drawCategoryBullet("Functional & Domain Competencies", functional)
-        drawCategoryBullet("Technical / Digital Proficiency", technical)
-        drawCategoryBullet("Leadership & Soft Skills", soft)
-        if (other.isNotEmpty()) drawCategoryBullet("Additional Professional Skills", other)
-        currentY += 6f
-    }
+                    if (data.fresherLeadershipClubs.isNotBlank()) {
+                        drawSectionHeader("CAMPUS LEADERSHIP & EXTRACURRICULAR", "🏆")
+                        val lLayout = StaticLayout.Builder.obtain(data.fresherLeadershipClubs, 0, data.fresherLeadershipClubs.length, bodyPaint, contentWidth.toInt()).build()
+                        checkAndAddNewPage(lLayout.height.toFloat() + 6f)
+                        canvas.save(); canvas.translate(margin, currentY); lLayout.draw(canvas); canvas.restore()
+                        currentY += lLayout.height + 8f
+                    }
 
-    // 5. PROJECTS / PORTFOLIO HIGHLIGHTS
-    if (data.projects.isNotEmpty()) {
-        drawSectionHeader("FEATURED PROJECTS & INITIATIVES")
-        data.projects.forEach { pr ->
-            val pHead = "• ${pr.title}${if (pr.link.isNotBlank()) " (${pr.link})" else ""}"
-            val pHeadLayout = StaticLayout.Builder.obtain(pHead, 0, pHead.length, bodyBoldPaint, contentWidth.toInt()).build()
-            checkAndAddNewPage(pHeadLayout.height.toFloat() + 4f)
-            canvas.save()
-            canvas.translate(margin, currentY)
-            pHeadLayout.draw(canvas)
-            canvas.restore()
-            currentY += pHeadLayout.height + 2f
+                    if (data.fresherKeyCoursework.isNotBlank()) {
+                        drawSectionHeader("RELEVANT COURSEWORK & ACADEMIC CORE", "📚")
+                        val cLayout = StaticLayout.Builder.obtain(data.fresherKeyCoursework, 0, data.fresherKeyCoursework.length, bodyPaint, contentWidth.toInt()).build()
+                        checkAndAddNewPage(cLayout.height.toFloat() + 6f)
+                        canvas.save(); canvas.translate(margin, currentY); cLayout.draw(canvas); canvas.restore()
+                        currentY += cLayout.height + 8f
+                    }
 
-            if (pr.description.isNotBlank()) {
-                val pDescLayout = StaticLayout.Builder.obtain(pr.description, 0, pr.description.length, bodyPaint, (contentWidth - 12f).toInt()).build()
-                checkAndAddNewPage(pDescLayout.height.toFloat() + 4f)
-                canvas.save()
-                canvas.translate(margin + 12f, currentY)
-                pDescLayout.draw(canvas)
-                canvas.restore()
-                currentY += pDescLayout.height + 6f
+                    if (data.experiences.isNotEmpty()) {
+                        drawSectionHeader("ADDITIONAL PRACTICUM & WORK EXPERIENCE", "💼")
+                        data.experiences.forEach { exp ->
+                            if (exp.role.isNotBlank() || exp.company.isNotBlank()) {
+                                val expTitle = "$bulletPrefix${exp.role} – ${exp.company} (${exp.location})${if (exp.startDate.isNotBlank()) " [${exp.startDate} - ${if (exp.isCurrent) "Present" else exp.endDate}]" else ""}"
+                                val titleLayout = StaticLayout.Builder.obtain(expTitle, 0, expTitle.length, bodyBoldPaint, contentWidth.toInt()).build()
+                                checkAndAddNewPage(titleLayout.height.toFloat() + 4f)
+                                canvas.save(); canvas.translate(margin, currentY); titleLayout.draw(canvas); canvas.restore()
+                                currentY += titleLayout.height + 2f
+
+                                if (exp.description.isNotBlank()) {
+                                    val descLayout = StaticLayout.Builder.obtain(exp.description, 0, exp.description.length, bodyPaint, (contentWidth - 12f).toInt()).build()
+                                    checkAndAddNewPage(descLayout.height.toFloat() + 6f)
+                                    canvas.save(); canvas.translate(margin + 12f, currentY); descLayout.draw(canvas); canvas.restore()
+                                    currentY += descLayout.height + 8f
+                                } else {
+                                    currentY += 6f
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    if (data.experiences.isNotEmpty()) {
+                        val expSectionTitle = if (pdfStyle == CvTemplateStyle.HARVARD_CLASSIC) "PROFESSIONAL EXPERIENCE" else "WORK EXPERIENCES"
+                        drawSectionHeader(expSectionTitle, "💼")
+
+                        data.experiences.forEach { exp ->
+                            if (exp.role.isNotBlank() || exp.company.isNotBlank()) {
+                                val expTitle = "$bulletPrefix${exp.role} – ${exp.company} (${exp.location})${if (exp.startDate.isNotBlank()) " [${exp.startDate} - ${if (exp.isCurrent) "Present" else exp.endDate}]" else ""}"
+                                val titleLayout = StaticLayout.Builder.obtain(expTitle, 0, expTitle.length, bodyBoldPaint, contentWidth.toInt()).build()
+                                checkAndAddNewPage(titleLayout.height.toFloat() + 4f)
+                                canvas.save(); canvas.translate(margin, currentY); titleLayout.draw(canvas); canvas.restore()
+                                currentY += titleLayout.height + 2f
+
+                                if (exp.description.isNotBlank()) {
+                                    val descLayout = StaticLayout.Builder.obtain(exp.description, 0, exp.description.length, bodyPaint, (contentWidth - 12f).toInt()).build()
+                                    checkAndAddNewPage(descLayout.height.toFloat() + 6f)
+                                    canvas.save(); canvas.translate(margin + 12f, currentY); descLayout.draw(canvas); canvas.restore()
+                                    currentY += descLayout.height + 8f
+                                } else {
+                                    currentY += 6f
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            "SKILLS" -> {
+                if (data.skills.isNotEmpty()) {
+                    drawSectionHeader("KEY SKILLS & COMPETENCIES", "⚡")
+                    val functional = data.skills.filter { it.category.contains("Functional", ignoreCase = true) || it.category.contains("Core", ignoreCase = true) }
+                    val technical = data.skills.filter { it.category.contains("Technical", ignoreCase = true) || it.category.contains("Digital", ignoreCase = true) }
+                    val soft = data.skills.filter { it.category.contains("Soft", ignoreCase = true) || it.category.contains("Leadership", ignoreCase = true) }
+                    val other = data.skills.filter { !functional.contains(it) && !technical.contains(it) && !soft.contains(it) }
+
+                    val delimiter = when (data.bulletStyle) {
+                        "COMMA" -> ", "
+                        "PIPE" -> " | "
+                        else -> ", "
+                    }
+
+                    fun drawCategoryBullet(catName: String, list: List<CvSkillItem>) {
+                        if (list.isEmpty()) return
+                        val line = "$bulletPrefix$catName: ${list.joinToString(delimiter) { it.name }}"
+                        val layout = StaticLayout.Builder.obtain(line, 0, line.length, bodyPaint, contentWidth.toInt()).build()
+                        checkAndAddNewPage(layout.height.toFloat() + 4f)
+                        canvas.save(); canvas.translate(margin, currentY); layout.draw(canvas); canvas.restore()
+                        currentY += layout.height + 4f
+                    }
+
+                    if (functional.isNotEmpty() || technical.isNotEmpty() || soft.isNotEmpty()) {
+                        drawCategoryBullet("Functional & Domain Competencies", functional)
+                        drawCategoryBullet("Technical / Digital Proficiency", technical)
+                        drawCategoryBullet("Leadership & Soft Skills", soft)
+                        if (other.isNotEmpty()) drawCategoryBullet("Additional Professional Skills", other)
+                    } else {
+                        val chunks = data.skills.chunked(3)
+                        chunks.forEach { chunk ->
+                            val line = "$bulletPrefix${chunk.joinToString("  •  ") { it.name }}"
+                            val layout = StaticLayout.Builder.obtain(line, 0, line.length, bodyPaint, contentWidth.toInt()).build()
+                            checkAndAddNewPage(layout.height.toFloat() + 4f)
+                            canvas.save(); canvas.translate(margin, currentY); layout.draw(canvas); canvas.restore()
+                            currentY += layout.height + 4f
+                        }
+                    }
+                    currentY += 6f
+                }
+            }
+
+            "PROJECTS" -> {
+                if (data.projects.isNotEmpty() && data.projects.any { it.title.isNotBlank() }) {
+                    drawSectionHeader("FEATURED PROJECTS & INITIATIVES", "🚀")
+                    data.projects.filter { it.title.isNotBlank() }.forEach { pr ->
+                        val pHead = "$bulletPrefix${pr.title}${if (pr.link.isNotBlank()) " (${pr.link})" else ""}"
+                        val pHeadLayout = StaticLayout.Builder.obtain(pHead, 0, pHead.length, bodyBoldPaint, contentWidth.toInt()).build()
+                        checkAndAddNewPage(pHeadLayout.height.toFloat() + 4f)
+                        canvas.save(); canvas.translate(margin, currentY); pHeadLayout.draw(canvas); canvas.restore()
+                        currentY += pHeadLayout.height + 2f
+
+                        if (pr.description.isNotBlank()) {
+                            val pDescLayout = StaticLayout.Builder.obtain(pr.description, 0, pr.description.length, bodyPaint, (contentWidth - 12f).toInt()).build()
+                            checkAndAddNewPage(pDescLayout.height.toFloat() + 4f)
+                            canvas.save(); canvas.translate(margin + 12f, currentY); pDescLayout.draw(canvas); canvas.restore()
+                            currentY += pDescLayout.height + 6f
+                        }
+                    }
+                    currentY += 4f
+                }
+            }
+
+            "CERTIFICATIONS" -> {
+                if (data.certifications.isNotBlank()) {
+                    drawSectionHeader("TRAINING & CERTIFICATION", "📜")
+                    val certLayout = StaticLayout.Builder.obtain(data.certifications, 0, data.certifications.length, bodyPaint, contentWidth.toInt()).build()
+                    checkAndAddNewPage(certLayout.height.toFloat() + 6f)
+                    canvas.save(); canvas.translate(margin, currentY); certLayout.draw(canvas); canvas.restore()
+                    currentY += certLayout.height + 10f
+                }
+            }
+
+            "LANGUAGES" -> {
+                if (data.languages.isNotBlank()) {
+                    drawSectionHeader("LANGUAGE FLUENCY", "🌐")
+                    val langLayout = StaticLayout.Builder.obtain(data.languages, 0, data.languages.length, bodyPaint, contentWidth.toInt()).build()
+                    checkAndAddNewPage(langLayout.height.toFloat() + 6f)
+                    canvas.save(); canvas.translate(margin, currentY); langLayout.draw(canvas); canvas.restore()
+                    currentY += langLayout.height + 10f
+                }
+            }
+
+            "CUSTOM_SECTIONS" -> {
+                if (data.customSections.isNotEmpty()) {
+                    data.customSections.forEach { item ->
+                        if (item.title.isNotBlank() && item.content.isNotBlank()) {
+                            drawSectionHeader(item.title.uppercase(), "📌")
+                            val itemLayout = StaticLayout.Builder.obtain(item.content, 0, item.content.length, bodyPaint, contentWidth.toInt()).build()
+                            checkAndAddNewPage(itemLayout.height.toFloat() + 6f)
+                            canvas.save(); canvas.translate(margin, currentY); itemLayout.draw(canvas); canvas.restore()
+                            currentY += itemLayout.height + 10f
+                        }
+                    }
+                }
+            }
+
+            "PERSONAL_INFO" -> {
+                val leftColList = mutableListOf<Pair<String, String>>()
+                if (data.fatherName.isNotBlank()) leftColList.add("Father's Name" to data.fatherName)
+                if (data.motherName.isNotBlank()) leftColList.add("Mother's Name" to data.motherName)
+                if (data.bloodGroup.isNotBlank()) leftColList.add("Blood Group" to data.bloodGroup)
+
+                val rightColList = mutableListOf<Pair<String, String>>()
+                if (data.religion.isNotBlank()) rightColList.add("Religion" to data.religion)
+                if (data.presentAddress.isNotBlank()) rightColList.add("Present Address" to data.presentAddress)
+                if (data.permanentAddress.isNotBlank()) rightColList.add("Permanent Address" to data.permanentAddress)
+
+                if (leftColList.isNotEmpty() || rightColList.isNotEmpty()) {
+                    drawSectionHeader("PERSONAL INFORMATION", "👤")
+                    val halfW = contentWidth / 2f - 10f
+                    val maxRows = maxOf(leftColList.size, rightColList.size)
+
+                    for (i in 0 until maxRows) {
+                        val leftItem = leftColList.getOrNull(i)
+                        val rightItem = rightColList.getOrNull(i)
+
+                        val leftStr = if (leftItem != null) "${leftItem.first} : ${leftItem.second}" else ""
+                        val rightStr = if (rightItem != null) "${rightItem.first} : ${rightItem.second}" else ""
+
+                        val lLayout = StaticLayout.Builder.obtain(leftStr, 0, leftStr.length, bodyPaint, halfW.toInt()).build()
+                        val rLayout = StaticLayout.Builder.obtain(rightStr, 0, rightStr.length, bodyPaint, halfW.toInt()).build()
+                        val rowH = maxOf(lLayout.height, rLayout.height).toFloat() + 3f
+
+                        checkAndAddNewPage(rowH)
+                        if (leftStr.isNotBlank()) {
+                            canvas.save(); canvas.translate(margin, currentY); lLayout.draw(canvas); canvas.restore()
+                        }
+                        if (rightStr.isNotBlank()) {
+                            canvas.save(); canvas.translate(margin + halfW + 20f, currentY); rLayout.draw(canvas); canvas.restore()
+                        }
+                        currentY += rowH
+                    }
+                    currentY += 8f
+                }
+            }
+
+            "REFERENCES" -> {
+                if (data.references.isNotBlank()) {
+                    drawSectionHeader("REFERENCES", "🤝")
+                    val refLayout = StaticLayout.Builder.obtain(data.references, 0, data.references.length, bodyPaint, contentWidth.toInt()).build()
+                    checkAndAddNewPage(refLayout.height.toFloat() + 6f)
+                    canvas.save(); canvas.translate(margin, currentY); refLayout.draw(canvas); canvas.restore()
+                    currentY += refLayout.height + 8f
+                }
             }
         }
-        currentY += 4f
-    }
-
-    // 6. TRAINING & CERTIFICATION
-    if (data.certifications.isNotBlank()) {
-        drawSectionHeader("TRAINING & CERTIFICATION")
-        val certLayout = StaticLayout.Builder.obtain(data.certifications, 0, data.certifications.length, bodyPaint, contentWidth.toInt()).build()
-        checkAndAddNewPage(certLayout.height.toFloat() + 6f)
-        canvas.save()
-        canvas.translate(margin, currentY)
-        certLayout.draw(canvas)
-        canvas.restore()
-        currentY += certLayout.height + 10f
-    }
-
-    // 7. PERSONAL INFORMATION (2-COLUMN TABLE FORMAT MATCHING SAMPLE)
-    val leftColList = mutableListOf<Pair<String, String>>()
-    if (data.fatherName.isNotBlank()) leftColList.add("Father's Name" to data.fatherName)
-    if (data.motherName.isNotBlank()) leftColList.add("Mother's Name" to data.motherName)
-    if (data.bloodGroup.isNotBlank()) leftColList.add("Blood Group" to data.bloodGroup)
-
-    val rightColList = mutableListOf<Pair<String, String>>()
-    if (data.religion.isNotBlank()) rightColList.add("Religion" to data.religion)
-    if (data.presentAddress.isNotBlank()) rightColList.add("Present Address" to data.presentAddress)
-    if (data.permanentAddress.isNotBlank()) rightColList.add("Permanent Address" to data.permanentAddress)
-
-    if (leftColList.isNotEmpty() || rightColList.isNotEmpty()) {
-        drawSectionHeader("PERSONAL INFORMATION")
-        val halfW = contentWidth / 2f - 10f
-        val maxRows = maxOf(leftColList.size, rightColList.size)
-
-        for (i in 0 until maxRows) {
-            val leftItem = leftColList.getOrNull(i)
-            val rightItem = rightColList.getOrNull(i)
-
-            val leftStr = if (leftItem != null) "${leftItem.first} : ${leftItem.second}" else ""
-            val rightStr = if (rightItem != null) "${rightItem.first} : ${rightItem.second}" else ""
-
-            val lLayout = StaticLayout.Builder.obtain(leftStr, 0, leftStr.length, bodyPaint, halfW.toInt()).build()
-            val rLayout = StaticLayout.Builder.obtain(rightStr, 0, rightStr.length, bodyPaint, halfW.toInt()).build()
-            val rowH = maxOf(lLayout.height, rLayout.height).toFloat() + 3f
-
-            checkAndAddNewPage(rowH)
-            if (leftStr.isNotBlank()) {
-                canvas.save(); canvas.translate(margin, currentY); lLayout.draw(canvas); canvas.restore()
-            }
-            if (rightStr.isNotBlank()) {
-                canvas.save(); canvas.translate(margin + halfW + 20f, currentY); rLayout.draw(canvas); canvas.restore()
-            }
-            currentY += rowH
-        }
-        currentY += 8f
-    }
-
-    // 8. REFERENCES
-    if (data.references.isNotBlank()) {
-        drawSectionHeader("REFERENCES")
-        val refLayout = StaticLayout.Builder.obtain(data.references, 0, data.references.length, bodyPaint, contentWidth.toInt()).build()
-        checkAndAddNewPage(refLayout.height.toFloat() + 6f)
-        canvas.save()
-        canvas.translate(margin, currentY)
-        refLayout.draw(canvas)
-        canvas.restore()
-        currentY += refLayout.height + 8f
     }
 
     // 9. SIGNATURE & DATE (OPTIONAL APPLICANT SIGNATURE PLACEHOLDER)
@@ -2833,14 +2961,14 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
             isAntiAlias = true
             color = AndroidColor.parseColor("#0F172A")
             textSize = 9.2f
-            typeface = Typeface.create(mainFontFamily, Typeface.BOLD)
+            typeface = tfBold
             textAlign = Paint.Align.CENTER
         }
         val sigSubPaint = TextPaint().apply {
             isAntiAlias = true
             color = AndroidColor.parseColor("#475569")
             textSize = 8.5f
-            typeface = Typeface.create(mainFontFamily, Typeface.NORMAL)
+            typeface = tfRegular
             textAlign = Paint.Align.CENTER
         }
         val cx = sigStartX + (sigLineW / 2f)
@@ -2865,17 +2993,23 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
     val pdfFileName = CvFileNameUtility.generateFileName(data.fullName, passingYearStr)
     val file = File(context.cacheDir, pdfFileName)
     val fos = FileOutputStream(file)
-    pdfDocument.writeTo(fos)
-    pdfDocument.close()
-    fos.close()
+    try {
+        pdfDocument.writeTo(fos)
+    } finally {
+        pdfDocument.close()
+        fos.close()
+    }
 
     return file
 }
 
 private fun renderPdfPageToBitmap(pdfFile: File, pageIndex: Int = 0): Bitmap? {
+    if (!pdfFile.exists() || pdfFile.length() == 0L) return null
+    var pfd: ParcelFileDescriptor? = null
+    var renderer: PdfRenderer? = null
     return try {
-        val pfd = ParcelFileDescriptor.open(pdfFile, ParcelFileDescriptor.MODE_READ_ONLY)
-        val renderer = PdfRenderer(pfd)
+        pfd = ParcelFileDescriptor.open(pdfFile, ParcelFileDescriptor.MODE_READ_ONLY)
+        renderer = PdfRenderer(pfd)
         if (renderer.pageCount > pageIndex) {
             val page = renderer.openPage(pageIndex)
             val bitmap = Bitmap.createBitmap(page.width * 2, page.height * 2, Bitmap.Config.ARGB_8888)
@@ -2883,17 +3017,16 @@ private fun renderPdfPageToBitmap(pdfFile: File, pageIndex: Int = 0): Bitmap? {
             canvas.drawColor(AndroidColor.WHITE)
             page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
             page.close()
-            renderer.close()
-            pfd.close()
             bitmap
         } else {
-            renderer.close()
-            pfd.close()
             null
         }
     } catch (e: Exception) {
         e.printStackTrace()
         null
+    } finally {
+        try { renderer?.close() } catch (_: Exception) {}
+        try { pfd?.close() } catch (_: Exception) {}
     }
 }
 
@@ -2920,12 +3053,14 @@ fun AtsCvBuilderTool(
     }
 
     val activeCvDataIndex = profilesList.indexOfFirst { it.id == activeProfileId }.let { if (it == -1) 0 else it }
-    var cvData by remember(activeProfileId, profilesList) {
+    var cvData by remember(activeProfileId) {
         mutableStateOf(profilesList.getOrNull(activeCvDataIndex) ?: CvData())
     }
 
     // States for screens
     var selectedTab by remember { mutableStateOf(0) } // 0: Profile/Personas, 1: Experience, 2: Education, 3: Job Match, 4: Preview
+    var previewRefreshKey by remember { mutableStateOf(0) }
+    var isPreviewRendering by remember { mutableStateOf(false) }
 
     var isAiLoading by remember { mutableStateOf(false) }
     var aiLoadingMessage by remember { mutableStateOf("") }
@@ -2945,16 +3080,28 @@ fun AtsCvBuilderTool(
         }
         profilesList = updatedList
         saveAllCvProfiles(context, updatedList)
+        previewRefreshKey++
     }
 
-    // Auto-render live PDF vector preview on changes
-    LaunchedEffect(cvData) {
+    // Auto-render live PDF vector preview on changes or when switching tabs
+    LaunchedEffect(cvData, previewRefreshKey, selectedTab) {
+        isPreviewRendering = true
         withContext(Dispatchers.IO) {
-            val file = generateCvPdfFile(context, cvData)
-            val bitmap = renderPdfPageToBitmap(file, 0)
-            withContext(Dispatchers.Main) {
-                generatedPdfFile = file
-                pdfPreviewBitmap = bitmap
+            try {
+                val file = generateCvPdfFile(context, cvData)
+                val bitmap = renderPdfPageToBitmap(file, 0)
+                withContext(Dispatchers.Main) {
+                    generatedPdfFile = file
+                    if (bitmap != null) {
+                        pdfPreviewBitmap = bitmap
+                    }
+                    isPreviewRendering = false
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                withContext(Dispatchers.Main) {
+                    isPreviewRendering = false
+                }
             }
         }
     }
@@ -3005,15 +3152,16 @@ fun AtsCvBuilderTool(
 
             // Beautiful tab controls (Removal of double clipart/emojis, using proper Icons)
             val tabs = if (isBn) {
-                listOf("প্রোফাইল", "অভিজ্ঞতা", "শিক্ষা ও স্কিল", "জব ম্যাচ", "প্রিভিউ")
+                listOf("প্রোফাইল", "অভিজ্ঞতা", "শিক্ষা ও স্কিল", "কাস্টমাইজেশন", "জব ম্যাচ", "প্রিভিউ")
             } else {
-                listOf("Profile", "Experience", "Education", "Job Match", "Preview")
+                listOf("Profile", "Experience", "Education", "Customization", "Job Match", "Preview")
             }
 
             val tabIcons = listOf(
                 Icons.Default.Person,
                 Icons.Default.Work,
                 Icons.Default.School,
+                Icons.Default.Tune,
                 Icons.Default.AutoAwesome,
                 Icons.Default.Visibility
             )
@@ -3207,7 +3355,14 @@ fun AtsCvBuilderTool(
                         isBn = isBn
                     )
 
-                    3 -> AiJobCircularMatchTab(
+                    3 -> CustomizationTab(
+                        cvData = cvData,
+                        onCvDataChange = { updateCvDataState(it) },
+                        themeColors = themeColors,
+                        isBn = isBn
+                    )
+
+                    4 -> AiJobCircularMatchTab(
                         cvData = cvData,
                         onCvDataChange = { updateCvDataState(it) },
                         themeColors = themeColors,
@@ -3267,7 +3422,7 @@ fun AtsCvBuilderTool(
                                         targetJobCircular = circularText
                                     ))
                                     showToast(if (isBn) "অভিনন্দন! সার্কুলার অনুযায়ী আপনার সিভি টিউন সম্পন্ন হয়েছে।" else "CV tailored perfectly to circular!")
-                                    selectedTab = 4 // switch to preview
+                                    selectedTab = 5 // switch to preview
                                 } catch (e: Exception) {
                                     showToast("AI Match Error: ${e.message}")
                                 } finally {
@@ -3277,15 +3432,19 @@ fun AtsCvBuilderTool(
                         }
                     )
 
-                    4 -> PreviewAndExportTab(
+                    5 -> PreviewAndExportTab(
                         cvData = cvData,
                         onCvDataChange = { updateCvDataState(it) },
                         pdfFile = generatedPdfFile,
                         pdfBitmap = pdfPreviewBitmap,
+                        isPreviewRendering = isPreviewRendering,
                         themeColors = themeColors,
                         isBn = isBn,
                         onTemplateChange = { newStyle ->
                             updateCvDataState(cvData.copy(templateStyle = newStyle))
+                        },
+                        onRefreshPreview = {
+                            previewRefreshKey++
                         },
                         onDownloadPdf = {
                             val file = generatedPdfFile ?: return@PreviewAndExportTab
@@ -4968,9 +5127,11 @@ private fun PreviewAndExportTab(
     onCvDataChange: (CvData) -> Unit,
     pdfFile: File?,
     pdfBitmap: Bitmap?,
+    isPreviewRendering: Boolean,
     themeColors: CalculatorThemeColors,
     isBn: Boolean,
     onTemplateChange: (CvTemplateStyle) -> Unit,
+    onRefreshPreview: () -> Unit,
     onDownloadPdf: () -> Unit,
     onSharePdf: () -> Unit,
     onOpenPdfInAppViewer: () -> Unit
@@ -5165,11 +5326,40 @@ private fun PreviewAndExportTab(
         Spacer(modifier = Modifier.height(20.dp))
 
         // Vector PDF Live Canvas Screen
-        SectionCardHeader(
-            title = if (isBn) "লাইভ ভেক্টর প্রিভিউ (A4 Page 1)" else "Live Vector Preview (A4 Page 1)",
-            icon = Icons.Default.Visibility,
-            themeColors = themeColors
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            SectionCardHeader(
+                title = if (isBn) "লাইভ ভেক্টর প্রিভিউ (A4 Page 1)" else "Live Vector Preview (A4 Page 1)",
+                icon = Icons.Default.Visibility,
+                themeColors = themeColors
+            )
+            OutlinedButton(
+                onClick = onRefreshPreview,
+                shape = RoundedCornerShape(20.dp),
+                border = BorderStroke(1.dp, themeColors.buttonEqualBg),
+                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+            ) {
+                if (isPreviewRendering) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(12.dp),
+                        strokeWidth = 1.5.dp,
+                        color = themeColors.buttonEqualBg
+                    )
+                } else {
+                    Icon(imageVector = Icons.Default.Refresh, contentDescription = "Refresh", tint = themeColors.buttonEqualBg, modifier = Modifier.size(14.dp))
+                }
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = if (isBn) (if (isPreviewRendering) "আপডেট হচ্ছে..." else "রিফ্রেশ") else (if (isPreviewRendering) "Updating..." else "Refresh"),
+                    color = themeColors.buttonEqualBg,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(10.dp))
 
@@ -5183,19 +5373,64 @@ private fun PreviewAndExportTab(
                 .wrapContentHeight()
         ) {
             if (pdfBitmap != null) {
-                Image(
-                    bitmap = pdfBitmap.asImageBitmap(),
-                    contentDescription = "A4 Page Vector Preview",
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    Image(
+                        bitmap = pdfBitmap.asImageBitmap(),
+                        contentDescription = "A4 Page Vector Preview",
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    if (isPreviewRendering) {
+                        Surface(
+                            color = Color.Black.copy(alpha = 0.25f),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(10.dp),
+                                    strokeWidth = 1.2.dp,
+                                    color = Color.White
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = if (isBn) "লাইভ আপডেট হচ্ছে" else "Updating preview...",
+                                    color = Color.White,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
+                }
             } else {
-                Box(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(280.dp),
-                    contentAlignment = Alignment.Center
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
                     CircularProgressIndicator(color = themeColors.buttonEqualBg)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = if (isBn) "প্রিভিউ তৈরি হচ্ছে..." else "Rendering vector preview...",
+                        fontSize = 12.sp,
+                        color = Color.DarkGray
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    TextButton(onClick = onRefreshPreview) {
+                        Text(
+                            text = if (isBn) "পুনরায় চেষ্টা করুন" else "Tap to Reload",
+                            color = themeColors.buttonEqualBg,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
         }
@@ -5261,3 +5496,468 @@ private fun CvCustomTextField(
         )
     }
 }
+
+// ================= TAB 3: CUSTOMIZATION & FLEXIBILITY =================
+
+@Composable
+private fun CustomizationTab(
+    cvData: CvData,
+    onCvDataChange: (CvData) -> Unit,
+    themeColors: CalculatorThemeColors,
+    isBn: Boolean
+) {
+    val scrollState = rememberScrollState()
+
+    val defaultSectionList = listOf(
+        "SUMMARY" to if (isBn) "ক্যারিয়ার অবজেক্টিভ / সামারি" else "Summary / Objective",
+        "EXPERIENCE" to if (isBn) "কাজের অভিজ্ঞতা" else "Work Experience",
+        "EDUCATION" to if (isBn) "শিক্ষাগত যোগ্যতা" else "Education Details",
+        "SKILLS" to if (isBn) "প্রফেশনাল স্কিলস" else "Skills & Competencies",
+        "PROJECTS" to if (isBn) "প্রজেক্টসমূহ" else "Projects & Initiatives",
+        "CERTIFICATIONS" to if (isBn) "প্রশিক্ষণ ও সার্টিফিকেট" else "Training & Certifications",
+        "LANGUAGES" to if (isBn) "ভাষাগত দক্ষতা" else "Language Fluency",
+        "CUSTOM_SECTIONS" to if (isBn) "কাস্টম সেকশনসমূহ" else "Custom Sections",
+        "PERSONAL_INFO" to if (isBn) "ব্যক্তিগত তথ্যাবলী" else "Personal Information",
+        "REFERENCES" to if (isBn) "রেফারেন্স" else "References"
+    )
+
+    val currentOrder = if (cvData.sectionOrder.isNotEmpty()) {
+        cvData.sectionOrder
+    } else {
+        defaultSectionList.map { it.first }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(scrollState)
+            .padding(14.dp)
+    ) {
+        // --- 1. SECTION ORDER & VISIBILITY ---
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = themeColors.cardBg,
+            border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.12f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(14.dp)) {
+                SectionCardHeader(
+                    title = if (isBn) "সেকশন পজিশন ও হাইড/শো কন্ট্রোল" else "Section Ordering & Visibility",
+                    icon = Icons.Default.Tune,
+                    themeColors = themeColors
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = if (isBn) "উপরে/নিচে অ্যারো বাটন দিয়ে যে কোন সেকশন সিভিতে কোন পজিশনে থাকবে তা ঠিক করুন এবং হাইড/শো সুইচ অন-অফ করুন।"
+                    else "Use up/down arrows to reorder CV sections and toggle switches to show or hide any section.",
+                    fontSize = 11.sp,
+                    color = themeColors.displayText.copy(alpha = 0.7f)
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                currentOrder.forEachIndexed { index, secKey ->
+                    val secLabel = defaultSectionList.find { it.first == secKey }?.second ?: secKey
+                    val isHidden = cvData.hiddenSections.contains(secKey)
+
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (isHidden) themeColors.background.copy(alpha = 0.5f) else themeColors.background,
+                        border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.1f)),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 3.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                // Up button
+                                IconButton(
+                                    onClick = {
+                                        if (index > 0) {
+                                            val mutableOrder = currentOrder.toMutableList()
+                                            val temp = mutableOrder[index]
+                                            mutableOrder[index] = mutableOrder[index - 1]
+                                            mutableOrder[index - 1] = temp
+                                            onCvDataChange(cvData.copy(sectionOrder = mutableOrder))
+                                        }
+                                    },
+                                    enabled = index > 0,
+                                    modifier = Modifier.size(28.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.KeyboardArrowUp,
+                                        contentDescription = "Move Up",
+                                        tint = if (index > 0) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.2f),
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+
+                                // Down button
+                                IconButton(
+                                    onClick = {
+                                        if (index < currentOrder.size - 1) {
+                                            val mutableOrder = currentOrder.toMutableList()
+                                            val temp = mutableOrder[index]
+                                            mutableOrder[index] = mutableOrder[index + 1]
+                                            mutableOrder[index + 1] = temp
+                                            onCvDataChange(cvData.copy(sectionOrder = mutableOrder))
+                                        }
+                                    },
+                                    enabled = index < currentOrder.size - 1,
+                                    modifier = Modifier.size(28.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.KeyboardArrowDown,
+                                        contentDescription = "Move Down",
+                                        tint = if (index < currentOrder.size - 1) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.2f),
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.width(4.dp))
+
+                                Text(
+                                    text = secLabel,
+                                    fontSize = 11.5.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = if (isHidden) themeColors.displayText.copy(alpha = 0.4f) else themeColors.displayText
+                                )
+                            }
+
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Switch(
+                                    checked = !isHidden,
+                                    onCheckedChange = { checked ->
+                                        val mutableHidden = cvData.hiddenSections.toMutableSet()
+                                        if (checked) {
+                                            mutableHidden.remove(secKey)
+                                        } else {
+                                            mutableHidden.add(secKey)
+                                        }
+                                        onCvDataChange(cvData.copy(hiddenSections = mutableHidden.toList()))
+                                    },
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = Color.White,
+                                        checkedTrackColor = themeColors.buttonEqualBg,
+                                        uncheckedThumbColor = themeColors.displayText.copy(alpha = 0.5f),
+                                        uncheckedTrackColor = themeColors.background
+                                    ),
+                                    modifier = Modifier.scale(0.75f)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        // --- 2. FONT SIZE & BULLET FORMATTING CONTROL ---
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = themeColors.cardBg,
+            border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.12f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(14.dp)) {
+                SectionCardHeader(
+                    title = if (isBn) "ফন্ট সাইজ ও বুলেট পয়েন্ট স্টাইল" else "Font Scaling & Bullet Style",
+                    icon = Icons.Default.FormatSize,
+                    themeColors = themeColors
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Font Scale Selector
+                Text(
+                    text = if (isBn) "পিডিএফ ফন্ট স্কেলিং (অক্ষরের সাইজ)" else "PDF Font Scale",
+                    fontSize = 11.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = themeColors.displayText
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+
+                val fontScaleOptions = listOf(
+                    "COMPACT" to (if (isBn) "কমপ্যাক্ট (৮৮%)" else "Compact (88%)"),
+                    "STANDARD" to (if (isBn) "স্ট্যান্ডার্ড (১০০%)" else "Standard (100%)"),
+                    "COMFORTABLE" to (if (isBn) "আরামদায়ক (১১২%)" else "Comfortable (112%)"),
+                    "LARGE" to (if (isBn) "বড় ফন্ট (১২৫%)" else "Large (125%)")
+                )
+
+                fontScaleOptions.chunked(2).forEach { rowOpts ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        rowOpts.forEach { (key, label) ->
+                            val isSelected = cvData.fontScale == key
+                            Surface(
+                                onClick = { onCvDataChange(cvData.copy(fontScale = key)) },
+                                shape = RoundedCornerShape(8.dp),
+                                color = if (isSelected) themeColors.buttonEqualBg else themeColors.background,
+                                border = BorderStroke(1.dp, if (isSelected) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.15f)),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(vertical = 3.dp)
+                            ) {
+                                Box(modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp), contentAlignment = Alignment.Center) {
+                                    Text(
+                                        text = label,
+                                        fontSize = 10.5.sp,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                        color = if (isSelected) Color.White else themeColors.displayText
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Bullet Point Options
+                Text(
+                    text = if (isBn) "বুলেট পয়েন্ট স্টাইল (বুলেট vs কমা vs কাস্টম)" else "Bullet Point Style",
+                    fontSize = 11.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = themeColors.displayText
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+
+                val bulletOptions = listOf(
+                    "BULLET" to (if (isBn) "• স্ট্যান্ডার্ড বুলেট" else "• Standard Bullet"),
+                    "DASH" to (if (isBn) "- ড্যাশ" else "- Dash"),
+                    "SQUARE" to (if (isBn) "▪ স্কয়ার" else "▪ Square"),
+                    "DIAMOND" to (if (isBn) "◆ ডায়মন্ড" else "◆ Diamond"),
+                    "COMMA" to (if (isBn) "কমা সেপারেটেড (,)" else "Comma Separated (,)"),
+                    "PIPE" to (if (isBn) "পাইপ সেপারেটেড (|)" else "Pipe Separated (|)"),
+                    "NONE" to (if (isBn) "কোন চিহ্ন নেই" else "None")
+                )
+
+                bulletOptions.chunked(2).forEach { rowOpts ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        rowOpts.forEach { (key, label) ->
+                            val isSelected = cvData.bulletStyle == key
+                            Surface(
+                                onClick = { onCvDataChange(cvData.copy(bulletStyle = key)) },
+                                shape = RoundedCornerShape(8.dp),
+                                color = if (isSelected) themeColors.buttonEqualBg else themeColors.background,
+                                border = BorderStroke(1.dp, if (isSelected) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.15f)),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(vertical = 3.dp)
+                            ) {
+                                Box(modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp), contentAlignment = Alignment.Center) {
+                                    Text(
+                                        text = label,
+                                        fontSize = 10.5.sp,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                        color = if (isSelected) Color.White else themeColors.displayText
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        // --- 3. ICON CONTROLS ---
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = themeColors.cardBg,
+            border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.12f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(14.dp)) {
+                SectionCardHeader(
+                    title = if (isBn) "আইকন ব্যবহার কন্ট্রোল" else "Icon Usage Options",
+                    icon = Icons.Default.SmartButton,
+                    themeColors = themeColors
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = if (isBn) "যোগাযোগের তথ্যে আইকন দেখান (ফোন, ইমেইল, ইত্যাদি)" else "Show icons in contact details (Phone, Email, LinkedIn)",
+                        fontSize = 11.5.sp,
+                        color = themeColors.displayText,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Switch(
+                        checked = cvData.showContactIcons,
+                        onCheckedChange = { onCvDataChange(cvData.copy(showContactIcons = it)) },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = themeColors.buttonEqualBg
+                        ),
+                        modifier = Modifier.scale(0.8f)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = if (isBn) "সেকশন হেডার শিরোনামে আইকন দেখান" else "Show icons beside section headers",
+                        fontSize = 11.5.sp,
+                        color = themeColors.displayText,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Switch(
+                        checked = cvData.showSectionIcons,
+                        onCheckedChange = { onCvDataChange(cvData.copy(showSectionIcons = it)) },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = themeColors.buttonEqualBg
+                        ),
+                        modifier = Modifier.scale(0.8f)
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        // --- 4. CUSTOM SECTIONS ADDER ---
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = themeColors.cardBg,
+            border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.12f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(14.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    SectionCardHeader(
+                        title = if (isBn) "ইচ্ছামত কাস্টম সেকশন যোগ করুন (${cvData.customSections.size})" else "Custom Sections (${cvData.customSections.size})",
+                        icon = Icons.Default.AddCircle,
+                        themeColors = themeColors
+                    )
+                    OutlinedButton(
+                        onClick = {
+                            val newList = cvData.customSections.toMutableList()
+                            newList.add(CvCustomSectionItem(title = "অতিরিক্ত অর্জন / Awards", content = "• Won 1st place in National Competition..."))
+                            onCvDataChange(cvData.copy(customSections = newList))
+                        },
+                        shape = RoundedCornerShape(20.dp),
+                        border = BorderStroke(1.dp, themeColors.buttonEqualBg),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                    ) {
+                        Icon(imageVector = Icons.Default.Add, contentDescription = null, tint = themeColors.buttonEqualBg, modifier = Modifier.size(14.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(text = if (isBn) "সেকশন যোগ করুন" else "Add Section", color = themeColors.buttonEqualBg, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                cvData.customSections.forEachIndexed { index, cSec ->
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = themeColors.background,
+                        border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.1f)),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 10.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(10.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = if (isBn) "কাস্টম সেকশন #${index + 1}" else "Custom Section #${index + 1}",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 11.5.sp,
+                                    color = themeColors.buttonEqualBg
+                                )
+                                IconButton(
+                                    onClick = {
+                                        val newList = cvData.customSections.toMutableList()
+                                        newList.removeAt(index)
+                                        onCvDataChange(cvData.copy(customSections = newList))
+                                    },
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red.copy(alpha = 0.7f), modifier = Modifier.size(16.dp))
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            CvCustomTextField(
+                                label = if (isBn) "সেকশন শিরোনাম (Title)" else "Section Title",
+                                value = cSec.title,
+                                onValueChange = { t ->
+                                    val newList = cvData.customSections.toMutableList()
+                                    newList[index] = cSec.copy(title = t)
+                                    onCvDataChange(cvData.copy(customSections = newList))
+                                },
+                                themeColors = themeColors
+                            )
+
+                            Spacer(modifier = Modifier.height(6.dp))
+
+                            Text(
+                                text = if (isBn) "সেকশন কন্টেন্ট / বিবরণ" else "Section Details & Description",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = themeColors.displayText.copy(alpha = 0.8f)
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            OutlinedTextField(
+                                value = cSec.content,
+                                onValueChange = { c ->
+                                    val newList = cvData.customSections.toMutableList()
+                                    newList[index] = cSec.copy(content = c)
+                                    onCvDataChange(cvData.copy(customSections = newList))
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                minLines = 2,
+                                maxLines = 6,
+                                shape = RoundedCornerShape(10.dp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = themeColors.buttonEqualBg,
+                                    unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f),
+                                    focusedContainerColor = themeColors.cardBg,
+                                    unfocusedContainerColor = themeColors.cardBg,
+                                    focusedTextColor = themeColors.displayText,
+                                    unfocusedTextColor = themeColors.displayText
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+

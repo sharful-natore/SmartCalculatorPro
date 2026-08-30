@@ -603,7 +603,7 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
 
     private suspend fun callGeminiApiForQuran(prompt: String, apiKey: String): String {
         val client = OkHttpClient()
-        val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$apiKey"
+        val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$apiKey"
 
         val systemInstruction = """
             You are a helpful, respectful Islamic & Quranic Assistant integrated into ToolsMate app.
