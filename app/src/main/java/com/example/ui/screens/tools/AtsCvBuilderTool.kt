@@ -257,15 +257,15 @@ data class CvProjectItem(
 
 data class CvData(
     val id: String = UUID.randomUUID().toString(),
-    val profileLabel: String = "MBA Analyst Profile",
-    val fullName: String = "Md. Shariful Islam",
-    val jobTitle: String = "Management Graduate & Business Analyst",
-    val email: String = "shariful.mba@example.com",
-    val phone: String = "+880 1711-223344",
-    val address: String = "Dhaka, Bangladesh",
-    val linkedin: String = "linkedin.com/in/shariful-mba",
-    val githubOrPortfolio: String = "portfolio.shariful.com",
-    val summary: String = "A highly analytical and result-oriented Management MBA Graduate with a strong foundation in business strategy, market research, and financial analysis. Proven expertise in leveraging data-driven insights to optimize business operations, increase project efficiency, and drive marketing campaigns. Excellent communication, team leadership, and strategic planning skills,",
+    val profileLabel: String = "New CV Draft",
+    val fullName: String = "",
+    val jobTitle: String = "",
+    val email: String = "",
+    val phone: String = "",
+    val address: String = "",
+    val linkedin: String = "",
+    val githubOrPortfolio: String = "",
+    val summary: String = "",
     val photoBase64: String = "",
     val photoShape: String = "Circle", // Circle, Rounded, Square, Hexagon
     val photoScale: Float = 1.0f,
@@ -277,57 +277,13 @@ data class CvData(
     val bloodGroup: String = "B+",
     val permanentAddress: String = "House 12, Road 4, Sector 1, Uttara, Dhaka",
     val presentAddress: String = "House 12, Road 4, Sector 1, Uttara, Dhaka",
-    val certifications: String = "Project Management Professional (PMP) - PMI, 2024\nBusiness Intelligence Certification - Google / Coursera, 2023",
-    val references: String = "Available upon request.",
-    val experiences: List<CvExperienceItem> = listOf(
-        CvExperienceItem(
-            company = "Apex Business Solutions",
-            role = "Associate Business Analyst",
-            startDate = "Jan 2024",
-            endDate = "Present",
-            isCurrent = true,
-            description = "• Conducted market research and competitor analysis to assist in strategic decision-making.\n• Developed interactive business performance dashboards, increasing analytical clarity by 25%.\n• Managed cross-functional project coordination across marketing and product design teams."
-        ),
-        CvExperienceItem(
-            company = "Strategic Marketing Group",
-            role = "Management Trainee (Intern)",
-            startDate = "Jun 2023",
-            endDate = "Dec 2023",
-            isCurrent = false,
-            description = "• Collaborated on brand optimization and promotional campaigns for FMCG sector clients.\n• Assisted in preparation of financial models and feasibility reports for new product launches."
-        )
-    ),
-    val educations: List<CvEducationItem> = listOf(
-        CvEducationItem(
-            degree = "Master of Business Administration (MBA)",
-            institution = "Institute of Business Administration (IBA), University of Dhaka",
-            passingYear = "2023",
-            result = "CGPA: 3.82 / 4.00"
-        ),
-        CvEducationItem(
-            degree = "Bachelor of Business Administration (BBA) in Management",
-            institution = "University of Dhaka",
-            passingYear = "2021",
-            result = "CGPA: 3.78 / 4.00"
-        )
-    ),
-    val skills: List<CvSkillItem> = listOf(
-        CvSkillItem(name = "Business Strategy & Planning", level = "Expert"),
-        CvSkillItem(name = "Market Analysis", level = "Expert"),
-        CvSkillItem(name = "Financial Modeling", level = "Proficient"),
-        CvSkillItem(name = "Agile Project Management", level = "Proficient"),
-        CvSkillItem(name = "Data Visualization & PowerBI", level = "Proficient"),
-        CvSkillItem(name = "ATS Resume Optimization", level = "Expert"),
-        CvSkillItem(name = "Team Leadership & Collaboration", level = "Expert")
-    ),
-    val projects: List<CvProjectItem> = listOf(
-        CvProjectItem(
-            title = "E-Commerce Market Feasibility study",
-            description = "Conducted an in-depth financial feasibility and customer acquisition study for a logistics startup.\nDesigned a forecasting model with 92% planning accuracy.",
-            link = "portfolio.shariful.com/projects/feasibility"
-        )
-    ),
-    val languages: String = "English (Professional), Bengali (Native)",
+    val certifications: String = "",
+    val references: String = "",
+    val experiences: List<CvExperienceItem> = emptyList(),
+    val educations: List<CvEducationItem> = emptyList(),
+    val skills: List<CvSkillItem> = emptyList(),
+    val projects: List<CvProjectItem> = emptyList(),
+    val languages: String = "",
     val templateStyle: CvTemplateStyle = CvTemplateStyle.CLASSIC_CORPORATE,
     val targetJobCircular: String = ""
 )
@@ -342,7 +298,64 @@ private fun getSeedProfilesList(): List<CvData> {
         id = "profile_mba_shariful",
         profileLabel = "Md. Shariful Islam (Primary MBA)",
         fullName = "Md. Shariful Islam",
-        jobTitle = "Management Graduate & Business Analyst"
+        jobTitle = "Management Graduate & Business Analyst",
+        email = "shariful.mba@example.com",
+        phone = "+880 1711-223344",
+        address = "Dhaka, Bangladesh",
+        linkedin = "linkedin.com/in/shariful-mba",
+        githubOrPortfolio = "portfolio.shariful.com",
+        summary = "A highly analytical and result-oriented Management MBA Graduate with a strong foundation in business strategy, market research, and financial analysis. Proven expertise in leveraging data-driven insights to optimize business operations, increase project efficiency, and drive marketing campaigns. Excellent communication, team leadership, and strategic planning skills.",
+        experiences = listOf(
+            CvExperienceItem(
+                company = "Apex Business Solutions",
+                role = "Associate Business Analyst",
+                startDate = "Jan 2024",
+                endDate = "Present",
+                isCurrent = true,
+                description = "• Conducted market research and competitor analysis to assist in strategic decision-making.\n• Developed interactive business performance dashboards, increasing analytical clarity by 25%.\n• Managed cross-functional project coordination across marketing and product design teams."
+            ),
+            CvExperienceItem(
+                company = "Strategic Marketing Group",
+                role = "Management Trainee (Intern)",
+                startDate = "Jun 2023",
+                endDate = "Dec 2023",
+                isCurrent = false,
+                description = "• Collaborated on brand optimization and promotional campaigns for FMCG sector clients.\n• Assisted in preparation of financial models and feasibility reports for new product launches."
+            )
+        ),
+        educations = listOf(
+            CvEducationItem(
+                degree = "Master of Business Administration (MBA)",
+                institution = "Institute of Business Administration (IBA), University of Dhaka",
+                passingYear = "2023",
+                result = "CGPA: 3.82 / 4.00"
+            ),
+            CvEducationItem(
+                degree = "Bachelor of Business Administration (BBA) in Management",
+                institution = "University of Dhaka",
+                passingYear = "2021",
+                result = "CGPA: 3.78 / 4.00"
+            )
+        ),
+        skills = listOf(
+            CvSkillItem(name = "Business Strategy & Planning", level = "Expert"),
+            CvSkillItem(name = "Market Analysis", level = "Expert"),
+            CvSkillItem(name = "Financial Modeling", level = "Proficient"),
+            CvSkillItem(name = "Agile Project Management", level = "Proficient"),
+            CvSkillItem(name = "Data Visualization & PowerBI", level = "Proficient"),
+            CvSkillItem(name = "ATS Resume Optimization", level = "Expert"),
+            CvSkillItem(name = "Team Leadership & Collaboration", level = "Expert")
+        ),
+        projects = listOf(
+            CvProjectItem(
+                title = "E-Commerce Market Feasibility study",
+                description = "Conducted an in-depth financial feasibility and customer acquisition study for a logistics startup.\nDesigned a forecasting model with 92% planning accuracy.",
+                link = "portfolio.shariful.com/projects/feasibility"
+            )
+        ),
+        languages = "English (Professional), Bengali (Native)",
+        certifications = "Project Management Professional (PMP) - PMI, 2024\nBusiness Intelligence Certification - Google / Coursera, 2023",
+        references = "Available upon request."
     )
     val marketingPersona = CvData(
         id = "profile_marketing_specialist",
@@ -1013,6 +1026,10 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
         val cleanLn = data.linkedin.removePrefix("https://").removePrefix("www.").sanitizeEmoji()
         contactItems.add(PdfContactItem(cleanLn, "linkedin"))
     }
+    if (data.githubOrPortfolio.isNotBlank()) {
+        val cleanPortfolio = data.githubOrPortfolio.removePrefix("https://").removePrefix("www.").sanitizeEmoji()
+        contactItems.add(PdfContactItem(cleanPortfolio, "portfolio"))
+    }
 
     if (contactItems.isNotEmpty()) {
         val iconSize = 8f
@@ -1073,6 +1090,13 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                         typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
                     }
                     canvas.drawText("in", cx + 1.5f, iy + iconSize - 2.5f, textPaintIn)
+                }
+                "portfolio" -> {
+                    val px = cx + iconSize / 2f
+                    val py = iy + iconSize / 2f
+                    canvas.drawCircle(px, py, iconSize / 2f, iconPaint)
+                    canvas.drawLine(cx, py, cx + iconSize, py, iconPaint)
+                    canvas.drawLine(px, iy, px, iy + iconSize, iconPaint)
                 }
             }
             
@@ -1248,32 +1272,38 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
     }
 
     // 7. PERSONAL DETAILS (Corporate Standard: essential fields only)
-    drawSectionHeader("PERSONAL DETAILS")
-    val personalDetailsStr = "• Father's Name: ${data.fatherName}\n" +
-            "• Mother's Name: ${data.motherName}\n" +
-            "• Religion: ${data.religion}\n" +
-            "• Blood Group: ${data.bloodGroup}\n" +
-            "• Permanent Address: ${data.permanentAddress}\n" +
-            "• Present Address: ${data.presentAddress}"
+    val personalRows = mutableListOf<String>()
+    if (data.fatherName.isNotBlank()) personalRows.add("• Father's Name: ${data.fatherName}")
+    if (data.motherName.isNotBlank()) personalRows.add("• Mother's Name: ${data.motherName}")
+    if (data.religion.isNotBlank()) personalRows.add("• Religion: ${data.religion}")
+    if (data.bloodGroup.isNotBlank()) personalRows.add("• Blood Group: ${data.bloodGroup}")
+    if (data.permanentAddress.isNotBlank()) personalRows.add("• Permanent Address: ${data.permanentAddress}")
+    if (data.presentAddress.isNotBlank()) personalRows.add("• Present Address: ${data.presentAddress}")
 
-    val personalLayout = StaticLayout.Builder.obtain(personalDetailsStr, 0, personalDetailsStr.length, bodyPaint, contentWidth.toInt()).build()
-    checkAndAddNewPage(personalLayout.height.toFloat() + 10)
-    canvas.save()
-    canvas.translate(margin, currentY)
-    personalLayout.draw(canvas)
-    canvas.restore()
-    currentY += personalLayout.height + 14
+    if (personalRows.isNotEmpty()) {
+        drawSectionHeader("PERSONAL DETAILS")
+        val personalDetailsStr = personalRows.joinToString("\n")
+        val personalLayout = StaticLayout.Builder.obtain(personalDetailsStr, 0, personalDetailsStr.length, bodyPaint, contentWidth.toInt()).build()
+        checkAndAddNewPage(personalLayout.height.toFloat() + 10)
+        canvas.save()
+        canvas.translate(margin, currentY)
+        personalLayout.draw(canvas)
+        canvas.restore()
+        currentY += personalLayout.height + 14
+    }
 
     // 8. REFERENCES
-    drawSectionHeader("REFERENCES")
-    val refText = if (data.references.isNotBlank()) data.references else "Available upon request."
-    val refLayout = StaticLayout.Builder.obtain(refText, 0, refText.length, bodyPaint, contentWidth.toInt()).build()
-    checkAndAddNewPage(refLayout.height.toFloat() + 10)
-    canvas.save()
-    canvas.translate(margin, currentY)
-    refLayout.draw(canvas)
-    canvas.restore()
-    currentY += refLayout.height + 10
+    if (data.references.isNotBlank()) {
+        drawSectionHeader("REFERENCES")
+        val refText = data.references
+        val refLayout = StaticLayout.Builder.obtain(refText, 0, refText.length, bodyPaint, contentWidth.toInt()).build()
+        checkAndAddNewPage(refLayout.height.toFloat() + 10)
+        canvas.save()
+        canvas.translate(margin, currentY)
+        refLayout.draw(canvas)
+        canvas.restore()
+        currentY += refLayout.height + 10
+    }
 
     pdfDocument.finishPage(page)
 
@@ -1391,6 +1421,39 @@ fun AtsCvBuilderTool(
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
 
+            // Top Header Bar matching the PDF Reader visual motif (circulated in screenshot)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(
+                    onClick = onBackClick,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                        contentDescription = "Back",
+                        tint = themeColors.displayText
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = if (isBn) "এআইএস সিভি বিল্ডার" else "ATS CV Builder",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.displayText
+                    )
+                    Text(
+                        text = if (isBn) "স্মার্ট এআই এবং প্রফেশনাল টেমপ্লেট" else "Smart AI & Professional Templates",
+                        fontSize = 11.5.sp,
+                        color = themeColors.displayText.copy(alpha = 0.6f)
+                    )
+                }
+            }
+
             // Beautiful tab controls (Removal of double clipart/emojis, using proper Icons)
             val tabs = if (isBn) {
                 listOf("প্রোফাইল", "অভিজ্ঞতা", "শিক্ষা ও স্কিল", "জব ম্যাচ", "প্রিভিউ")
@@ -1491,6 +1554,7 @@ fun AtsCvBuilderTool(
                                 withContext(Dispatchers.Main) {
                                     viewModel.pdfReaderInitialUri = Uri.fromFile(file)
                                     viewModel.pdfReaderInitialName = "CV_${profileToOpen.fullName.replace(" ", "_")}.pdf"
+                                    viewModel.previousToolType = com.example.data.model.ToolType.ATS_CV_BUILDER
                                     viewModel.selectedToolType = com.example.data.model.ToolType.PDF_READER
                                 }
                             }
@@ -1673,6 +1737,7 @@ fun AtsCvBuilderTool(
                             val file = generatedPdfFile ?: return@PreviewAndExportTab
                             viewModel.pdfReaderInitialUri = Uri.fromFile(file)
                             viewModel.pdfReaderInitialName = "CV_${cvData.fullName.replace(" ", "_")}.pdf"
+                            viewModel.previousToolType = com.example.data.model.ToolType.ATS_CV_BUILDER
                             viewModel.selectedToolType = com.example.data.model.ToolType.PDF_READER
                         }
                     )
@@ -2154,7 +2219,8 @@ private fun ProfileAndPersonasTab(
             label = if (isBn) "ড্রাফটের নাম (লেবেল)" else "Draft Profile Label",
             value = cvData.profileLabel,
             onValueChange = { onCvDataChange(cvData.copy(profileLabel = it)) },
-            themeColors = themeColors
+            themeColors = themeColors,
+            placeholderText = if (isBn) "যেমন: সফটওয়্যার ইঞ্জিনিয়ার ড্রাফট" else "e.g., Software Engineer Draft"
         )
  
         Spacer(modifier = Modifier.height(8.dp))
@@ -2163,7 +2229,8 @@ private fun ProfileAndPersonasTab(
             label = if (isBn) "পূর্ণ নাম" else "Full Name",
             value = cvData.fullName,
             onValueChange = { onCvDataChange(cvData.copy(fullName = it)) },
-            themeColors = themeColors
+            themeColors = themeColors,
+            placeholderText = if (isBn) "যেমন: মোঃ শরিফুল ইসলাম" else "e.g., Md. Shariful Islam"
         )
  
         Spacer(modifier = Modifier.height(8.dp))
@@ -2172,7 +2239,8 @@ private fun ProfileAndPersonasTab(
             label = if (isBn) "কাঙ্ক্ষিত পদবী বা পেশা" else "Job Title / Target Designation",
             value = cvData.jobTitle,
             onValueChange = { onCvDataChange(cvData.copy(jobTitle = it)) },
-            themeColors = themeColors
+            themeColors = themeColors,
+            placeholderText = if (isBn) "যেমন: বিজনেস অ্যানালিস্ট ও ম্যানেজার" else "e.g., Business Analyst & Manager"
         )
  
         Spacer(modifier = Modifier.height(8.dp))
@@ -2183,7 +2251,8 @@ private fun ProfileAndPersonasTab(
                     label = if (isBn) "ইমেইল" else "Email Address",
                     value = cvData.email,
                     onValueChange = { onCvDataChange(cvData.copy(email = it)) },
-                    themeColors = themeColors
+                    themeColors = themeColors,
+                    placeholderText = if (isBn) "যেমন: shariful@example.com" else "e.g., shariful@example.com"
                 )
             }
             Spacer(modifier = Modifier.width(10.dp))
@@ -2192,7 +2261,8 @@ private fun ProfileAndPersonasTab(
                     label = if (isBn) "ফোন নম্বর" else "Phone Number",
                     value = cvData.phone,
                     onValueChange = { onCvDataChange(cvData.copy(phone = it)) },
-                    themeColors = themeColors
+                    themeColors = themeColors,
+                    placeholderText = if (isBn) "যেমন: +৮৮০ ১৭১১-২২৩৩৪৪" else "e.g., +880 1711-223344"
                 )
             }
         }
@@ -2203,7 +2273,8 @@ private fun ProfileAndPersonasTab(
             label = if (isBn) "ঠিকানা" else "City & Country / Address",
             value = cvData.address,
             onValueChange = { onCvDataChange(cvData.copy(address = it)) },
-            themeColors = themeColors
+            themeColors = themeColors,
+            placeholderText = if (isBn) "যেমন: উত্তরা, ঢাকা" else "e.g., Uttara, Dhaka, Bangladesh"
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -2214,7 +2285,8 @@ private fun ProfileAndPersonasTab(
                     label = if (isBn) "লিঙ্কডইন প্রোফাইল" else "LinkedIn Profile URL",
                     value = cvData.linkedin,
                     onValueChange = { onCvDataChange(cvData.copy(linkedin = it)) },
-                    themeColors = themeColors
+                    themeColors = themeColors,
+                    placeholderText = if (isBn) "যেমন: linkedin.com/in/shariful" else "e.g., linkedin.com/in/shariful"
                 )
             }
             Spacer(modifier = Modifier.width(10.dp))
@@ -2223,7 +2295,8 @@ private fun ProfileAndPersonasTab(
                     label = if (isBn) "গিথাব / পোর্টফোলিও" else "GitHub / Portfolio URL",
                     value = cvData.githubOrPortfolio,
                     onValueChange = { onCvDataChange(cvData.copy(githubOrPortfolio = it)) },
-                    themeColors = themeColors
+                    themeColors = themeColors,
+                    placeholderText = if (isBn) "যেমন: portfolio.shariful.com" else "e.g., portfolio.shariful.com"
                 )
             }
         }
@@ -3260,7 +3333,8 @@ private fun CvCustomTextField(
     label: String,
     value: String,
     onValueChange: (String) -> Unit,
-    themeColors: CalculatorThemeColors
+    themeColors: CalculatorThemeColors,
+    placeholderText: String? = null
 ) {
     Column {
         Text(
@@ -3275,6 +3349,7 @@ private fun CvCustomTextField(
             onValueChange = onValueChange,
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
+            placeholder = placeholderText?.let { { Text(it, color = themeColors.displayText.copy(alpha = 0.4f), fontSize = 12.sp) } },
             shape = RoundedCornerShape(10.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = themeColors.buttonEqualBg,
