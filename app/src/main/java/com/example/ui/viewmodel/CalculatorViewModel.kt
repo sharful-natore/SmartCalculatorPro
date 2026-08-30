@@ -2754,6 +2754,7 @@ How can I help you today?"""
 
     // --- Special Tools States ---
     var selectedToolType by mutableStateOf<com.example.data.model.ToolType?>(null)
+    var previousToolType by mutableStateOf<com.example.data.model.ToolType?>(null)
     var selectedToolCategoryFilter by mutableStateOf<com.example.data.model.ToolCategory?>(null)
     var toolSearchQuery by mutableStateOf("")
 
@@ -2763,13 +2764,19 @@ How can I help you today?"""
                 tabHistoryStack.add(activeTab)
             }
         }
+        previousToolType = null
         selectedToolType = type
         recordToolUsage("TOOL_${type.name}")
         activeTab = 0
     }
 
     fun closeToolDetail() {
-        selectedToolType = null
+        if (previousToolType != null) {
+            selectedToolType = previousToolType
+            previousToolType = null
+        } else {
+            selectedToolType = null
+        }
     }
 
     // Exit confirmation dialog state
