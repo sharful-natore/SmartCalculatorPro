@@ -136,6 +136,15 @@ fun PdfReaderTool(
     var fileLastModifiedMs by remember { mutableLongStateOf(0L) }
     var filePath by remember { mutableStateOf("") }
 
+    // React to initial PDF set from outside
+    LaunchedEffect(viewModel.pdfReaderInitialUri) {
+        viewModel.pdfReaderInitialUri?.let { uri ->
+            pdfUri = uri
+            fileName = viewModel.pdfReaderInitialName.ifBlank { "Document.pdf" }
+            viewModel.pdfReaderInitialUri = null
+        }
+    }
+
     // Fullscreen and Immersive UI visibility states
     var isFullscreen by remember { mutableStateOf(false) }
     var isControlsVisible by remember { mutableStateOf(true) }

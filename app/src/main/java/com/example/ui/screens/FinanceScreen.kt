@@ -2394,37 +2394,40 @@ fun TransactionCard(
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(3.dp)
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
                         text = item.title,
-                        fontSize = 14.sp,
+                        fontSize = 13.5.sp,
                         fontWeight = FontWeight.Bold,
                         color = titleTextColor,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.clickable {
-                            if (onPersonClick != null && item.title.isNotBlank()) {
-                                onPersonClick(item.title.trim())
-                            } else {
-                                onClick()
+                        modifier = Modifier
+                            .weight(1f, fill = false)
+                            .clickable {
+                                if (onPersonClick != null && item.title.isNotBlank()) {
+                                    onPersonClick(item.title.trim())
+                                } else {
+                                    onClick()
+                                }
                             }
-                        }
                     )
 
-                    // Type Badge (Soft rounded rectangle matching title text size)
-                    Surface(
-                        onClick = { onFilterClick?.invoke(filterKey) },
-                        shape = RoundedCornerShape(6.dp),
-                        color = typeBadgeBg,
-                        border = BorderStroke(0.6.dp, typeBadgeTextCol.copy(alpha = 0.35f))
+                    // Type Badge (Soft rounded rectangle matching title text height)
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(typeBadgeBg)
+                            .border(0.5.dp, typeBadgeTextCol.copy(alpha = 0.35f), RoundedCornerShape(4.dp))
+                            .clickable { onFilterClick?.invoke(filterKey) }
+                            .padding(horizontal = 4.dp, vertical = 1.dp)
                     ) {
                         Text(
                             text = typeBadgeText,
                             fontSize = 8.5.sp,
                             fontWeight = FontWeight.Bold,
                             color = typeBadgeTextCol,
-                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 0.5.dp),
                             maxLines = 1
                         )
                     }
@@ -2434,18 +2437,19 @@ fun TransactionCard(
                         val isSaleOrBuy = item.category.contains("বিক্রয়") || item.category.contains("ক্রয়")
                         val catBg = if (isSaleOrBuy) Color(0xFFFCE4EC) else themeColors.buttonEqualBg.copy(alpha = 0.12f)
                         val catTextCol = if (isSaleOrBuy) Color(0xFFC2185B) else themeColors.buttonEqualBg
-                        Surface(
-                            onClick = { onFilterClick?.invoke(filterKey) },
-                            shape = RoundedCornerShape(6.dp),
-                            color = catBg,
-                            border = BorderStroke(0.6.dp, catTextCol.copy(alpha = 0.35f))
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(catBg)
+                                .border(0.5.dp, catTextCol.copy(alpha = 0.35f), RoundedCornerShape(4.dp))
+                                .clickable { onFilterClick?.invoke(filterKey) }
+                                .padding(horizontal = 4.dp, vertical = 1.dp)
                         ) {
                             Text(
                                 text = item.category,
                                 fontSize = 8.5.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = catTextCol,
-                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 0.5.dp),
                                 maxLines = 1
                             )
                         }
@@ -2455,18 +2459,19 @@ fun TransactionCard(
                     if (item.type == "DEBT") {
                         val debtBg = if (item.isSettled) Color(0xFFE8F5E9) else Color(0xFFFFF8E1)
                         val debtCol = if (item.isSettled) Color(0xFF2E7D32) else Color(0xFFD97706)
-                        Surface(
-                            onClick = { onToggleSettled() },
-                            shape = RoundedCornerShape(6.dp),
-                            color = debtBg,
-                            border = BorderStroke(0.6.dp, debtCol.copy(alpha = 0.35f))
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(debtBg)
+                                .border(0.5.dp, debtCol.copy(alpha = 0.35f), RoundedCornerShape(4.dp))
+                                .clickable { onToggleSettled() }
+                                .padding(horizontal = 4.dp, vertical = 1.dp)
                         ) {
                             Text(
                                 text = if (item.isSettled) (if (isBn) "পরিশোধিত" else "Settled") else (if (isBn) "বকেয়া" else "Pending"),
                                 fontSize = 8.5.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = debtCol,
-                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 0.5.dp),
                                 maxLines = 1
                             )
                         }

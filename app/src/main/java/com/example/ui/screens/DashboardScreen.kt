@@ -3463,7 +3463,8 @@ fun ToolDetailView(
                          toolType == com.example.data.model.ToolType.HADITH_LIBRARY ||
                          toolType == com.example.data.model.ToolType.QURAN_LEARNING ||
                          toolType == com.example.data.model.ToolType.PDF_READER ||
-                         toolType == com.example.data.model.ToolType.PDF_MAKER
+                         toolType == com.example.data.model.ToolType.PDF_MAKER ||
+                         toolType == com.example.data.model.ToolType.ATS_CV_BUILDER
 
     val isFullWidthTool = toolType == com.example.data.model.ToolType.MARKET_LIST || isQuranOrNamaz
 
@@ -3652,12 +3653,28 @@ fun ToolDetailView(
                 onBackClick = { viewModel.selectedToolType = null },
                 isBn = viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI
             )
+            ToolType.ATS_CV_BUILDER -> com.example.ui.screens.tools.AtsCvBuilderTool(
+                viewModel = viewModel,
+                themeColors = themeColors,
+                onBackClick = { viewModel.selectedToolType = null }
+            )
         }
     }
 }
 
 private fun getToolInfoItems(toolType: ToolType, isBn: Boolean): List<Pair<String, String>> {
     return when (toolType) {
+        ToolType.ATS_CV_BUILDER -> if (isBn) {
+            listOf(
+                "১. ATS (Applicant Tracking System) কী?" to "এটি আন্তর্জাতিক কোম্পানি ও করপোরেট প্রতিষ্ঠানসমূহে ব্যবহৃত সফটওয়্যার যা প্রার্থীর সিভি স্বয়ংক্রিয়ভাবে স্ক্যান করে ফিল্টার ও র‍্যাঙ্ক করে।",
+                "২. কীভাবে নিখুঁত সিভি তৈরি করবেন?" to "• জেমিনি এআই দিয়ে প্রফেশনাল সামারি ও ইমপ্যাক্টফুল বুলেট পয়েন্ট তৈরি করুন।\n• চাকরির সার্কুলার পেস্ট করে এআই দিয়ে সিভির কি-ওয়ার্ড টিউন করুন।\n• সরাসরি ক্লাসিক/মডার্ন টেমপ্লেটে HD Vector PDF ডাউনলোড করুন।"
+            )
+        } else {
+            listOf(
+                "1. What is ATS Optimization?" to "ATS (Applicant Tracking System) is software used by recruiters to automatically scan and rank resumes based on structural formatting and keywords.",
+                "2. Best Practices" to "• Use standard section headers and clear text fonts.\n• Use Gemini AI to tailor skills and experience for specific job circulars.\n• Download crisp A4 vector PDFs directly."
+            )
+        }
         ToolType.BMI -> if (isBn) {
             listOf(
                 "১. বিএমআই (BMI) কী?" to "বডি মাস ইনডেক্স বা বিএমআই হলো আপনার শরীরের চর্বির একটি সাধারণ অনুপাত, যা উচ্চতা ও ওজনের সাহায্যে নির্ণয় করা হয়। সূত্র: ওজন (কেজি) / উচ্চতা (মিটার) স্কয়ার।",

@@ -146,6 +146,8 @@ class CalculatorViewModel(
 
     // --- State Variables ---
     var isPdfReaderFullscreen by mutableStateOf(false)
+    var pdfReaderInitialUri by mutableStateOf<android.net.Uri?>(null)
+    var pdfReaderInitialName by mutableStateOf("")
 
     var expressionValue by mutableStateOf(TextFieldValue("0", selection = TextRange(1)))
         private set

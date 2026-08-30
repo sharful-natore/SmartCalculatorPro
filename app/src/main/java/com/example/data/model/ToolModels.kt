@@ -344,6 +344,11 @@ enum class ToolType(
         "ক্রেডিট ফি, ওয়েভার ও কিস্তি অনুযায়ী মোট সেমিস্টার ফি হিসাব",
         ToolCategory.EDUCATION, Icons.Default.Receipt
     ),
+    ATS_CV_BUILDER(
+        "ATS CV & Resume Builder", "এআই ও ATS সিভি বিল্ডার",
+        "জেমিনি এআই চালিত প্রফেশনাল ও ATS-ফ্রেন্ডলি সিভি তৈরি, চাকরির বিবরণ অনুযায়ী টিউন করা ও এইচডি পিডিএফ এক্সপোর্ট",
+        ToolCategory.EDUCATION, Icons.Default.Badge
+    ),
 
     PHONE_DIAGNOSTICS(
         "Phone Diagnostics", "ফোন ডায়াগনসিস",
@@ -478,6 +483,7 @@ enum class ToolType(
                 QURAN_LEARNING -> "Learn Quran recitation, Noorani Qaida, Makhraj, Harakat, Tajweed rules and word-by-word practice with audio"
                 PDF_READER -> "View, zoom and read PDF documents on your device using native renderer"
                 PDF_MAKER -> "Create custom A4 PDF documents from notes, text, and photos with zero app size impact"
+                ATS_CV_BUILDER -> "Build ATS-friendly professional resumes, tailor content with Gemini AI, and export HD PDFs"
             }
         }
     }
