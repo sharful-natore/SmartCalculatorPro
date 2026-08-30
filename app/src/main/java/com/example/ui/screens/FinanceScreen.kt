@@ -1242,7 +1242,7 @@ fun FinanceScreen(
                         },
                         onDelete = {
                             if (!isSelectionMode) {
-                                selectedIds = setOf(item.id)
+                                showDeleteConfirmDialog = item
                             }
                         },
                         onPersonClick = { personName ->
@@ -1975,6 +1975,10 @@ fun FinanceScreen(
                 selectedTransactionDetails = null
                 selectedPersonForLedger = personName
             },
+            onSearchQueryInput = { query ->
+                selectedTransactionDetails = null
+                searchQuery = query
+            },
             onToggleSettled = {
                 val updated = item.copy(isSettled = !item.isSettled)
                 viewModel.updateFinanceTransaction(updated)
@@ -2199,15 +2203,41 @@ fun DetailItemRow(
     label: String,
     value: String,
     themeColors: CalculatorThemeColors,
-    valueColor: Color = themeColors.displayText
+    valueColor: Color = themeColors.displayText,
+    onClick: (() -> Unit)? = null
 ) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = label,
-            fontSize = 11.sp,
-            color = themeColors.displayText.copy(alpha = 0.5f),
-            fontWeight = FontWeight.Medium
-        )
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(
+                if (onClick != null) {
+                    Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { onClick() }
+                        .padding(horizontal = 4.dp, vertical = 2.dp)
+                } else Modifier
+            )
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = label,
+                fontSize = 11.sp,
+                color = themeColors.displayText.copy(alpha = 0.5f),
+                fontWeight = FontWeight.Medium
+            )
+            if (onClick != null) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = null,
+                    tint = themeColors.buttonEqualBg.copy(alpha = 0.65f),
+                    modifier = Modifier.size(13.dp)
+                )
+            }
+        }
         Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = value,
@@ -2358,111 +2388,137 @@ fun TransactionCard(
             // Text and Info Column extending all the way to the right
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(3.dp)
+                verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
-                // Line 1: Title, Pill Badges (Type & Category & Debt), and Amount on right
+                // Line 1: Title and compact Pill Badges
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(3.dp)
+                ) {
+                    Text(
+                        text = item.title,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = titleTextColor,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.clickable {
+                            if (onPersonClick != null && item.title.isNotBlank()) {
+                                onPersonClick(item.title.trim())
+                            } else {
+                                onClick()
+                            }
+                        }
+                    )
+
+                    // Type Badge (Soft rounded rectangle matching title text size)
+                    Surface(
+                        onClick = { onFilterClick?.invoke(filterKey) },
+                        shape = RoundedCornerShape(6.dp),
+                        color = typeBadgeBg,
+                        border = BorderStroke(0.6.dp, typeBadgeTextCol.copy(alpha = 0.35f))
+                    ) {
+                        Text(
+                            text = typeBadgeText,
+                            fontSize = 8.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = typeBadgeTextCol,
+                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 0.5.dp),
+                            maxLines = 1
+                        )
+                    }
+
+                    // Category / Sub-category Badge
+                    if (item.category.isNotBlank()) {
+                        val isSaleOrBuy = item.category.contains("বিক্রয়") || item.category.contains("ক্রয়")
+                        val catBg = if (isSaleOrBuy) Color(0xFFFCE4EC) else themeColors.buttonEqualBg.copy(alpha = 0.12f)
+                        val catTextCol = if (isSaleOrBuy) Color(0xFFC2185B) else themeColors.buttonEqualBg
+                        Surface(
+                            onClick = { onFilterClick?.invoke(filterKey) },
+                            shape = RoundedCornerShape(6.dp),
+                            color = catBg,
+                            border = BorderStroke(0.6.dp, catTextCol.copy(alpha = 0.35f))
+                        ) {
+                            Text(
+                                text = item.category,
+                                fontSize = 8.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = catTextCol,
+                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 0.5.dp),
+                                maxLines = 1
+                            )
+                        }
+                    }
+
+                    // Debt status badge
+                    if (item.type == "DEBT") {
+                        val debtBg = if (item.isSettled) Color(0xFFE8F5E9) else Color(0xFFFFF8E1)
+                        val debtCol = if (item.isSettled) Color(0xFF2E7D32) else Color(0xFFD97706)
+                        Surface(
+                            onClick = { onToggleSettled() },
+                            shape = RoundedCornerShape(6.dp),
+                            color = debtBg,
+                            border = BorderStroke(0.6.dp, debtCol.copy(alpha = 0.35f))
+                        ) {
+                            Text(
+                                text = if (item.isSettled) (if (isBn) "পরিশোধিত" else "Settled") else (if (isBn) "বকেয়া" else "Pending"),
+                                fontSize = 8.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = debtCol,
+                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 0.5.dp),
+                                maxLines = 1
+                            )
+                        }
+                    }
+                }
+
+                // Line 2: Subtitle (Left) + Amount & Delete Icon (Right)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    // Left side: Title + Badges
-                    Row(
-                        modifier = Modifier.weight(1f, fill = false),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(5.dp)
-                    ) {
-                        Text(
-                            text = item.title,
-                            fontSize = 14.5.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = titleTextColor,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.clickable {
-                                if (onPersonClick != null && item.title.isNotBlank()) {
-                                    onPersonClick(item.title.trim())
-                                } else {
-                                    onClick()
-                                }
-                            }
-                        )
-
-                        // Type Badge (Pill design matching screenshot)
-                        Surface(
-                            onClick = { onFilterClick?.invoke(filterKey) },
-                            shape = RoundedCornerShape(50),
-                            color = typeBadgeBg,
-                            border = BorderStroke(0.8.dp, typeBadgeTextCol.copy(alpha = 0.40f))
-                        ) {
-                            Text(
-                                text = typeBadgeText,
-                                fontSize = 9.5.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = typeBadgeTextCol,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp),
-                                maxLines = 1
-                            )
-                        }
-
-                        // Category Badge (Pill design matching screenshot)
-                        if (item.category.isNotBlank()) {
-                            val isSaleOrBuy = item.category.contains("বিক্রয়") || item.category.contains("ক্রয়")
-                            val catBg = if (isSaleOrBuy) Color(0xFFFCE4EC) else themeColors.buttonEqualBg.copy(alpha = 0.12f)
-                            val catTextCol = if (isSaleOrBuy) Color(0xFFC2185B) else themeColors.buttonEqualBg
-                            Surface(
-                                onClick = { onFilterClick?.invoke(filterKey) },
-                                shape = RoundedCornerShape(50),
-                                color = catBg,
-                                border = BorderStroke(0.8.dp, catTextCol.copy(alpha = 0.40f))
-                            ) {
-                                Text(
-                                    text = item.category,
-                                    fontSize = 9.5.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = catTextCol,
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp),
-                                    maxLines = 1
-                                )
-                            }
-                        }
-
-                        // Debt status badge
-                        if (item.type == "DEBT") {
-                            val debtBg = if (item.isSettled) Color(0xFFE8F5E9) else Color(0xFFFFF8E1)
-                            val debtCol = if (item.isSettled) Color(0xFF2E7D32) else Color(0xFFD97706)
-                            Surface(
-                                onClick = { onToggleSettled() },
-                                shape = RoundedCornerShape(50),
-                                color = debtBg,
-                                border = BorderStroke(0.8.dp, debtCol.copy(alpha = 0.40f))
-                            ) {
-                                Text(
-                                    text = if (item.isSettled) (if (isBn) "পরিশোধিত" else "Settled") else (if (isBn) "বকেয়া" else "Pending"),
-                                    fontSize = 9.5.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = debtCol,
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp),
-                                    maxLines = 1
-                                )
-                            }
-                        }
+                    val subtitleText = when {
+                        item.note.isNotBlank() -> item.note
+                        item.type == "DEBT" && item.subType == "TAKEN" -> if (isBn) "গৃহীত দেনা" else "Debt Taken"
+                        item.type == "DEBT" -> if (isBn) "প্রদত্ত পাওনা" else "Loan Given"
+                        else -> if (isBn) "সাধারণ এন্ট্রি" else "Transaction"
                     }
+
+                    Text(
+                        text = subtitleText,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = themeColors.displayText.copy(alpha = 0.65f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
 
                     Spacer(modifier = Modifier.width(6.dp))
 
-                    // Right side: Amount and optional delete icon
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
+                        val formattedAmtStr = formatAmount(item.amount)
+                        val amountDisplay = if (formattedAmtStr.startsWith("৳")) {
+                            (if (isMinus) "-৳ " else "+৳ ") + formattedAmtStr.removePrefix("৳").trim()
+                        } else if (formattedAmtStr.contains("৳")) {
+                            (if (isMinus) "-" else "+") + formattedAmtStr
+                        } else {
+                            (if (isMinus) "-৳ " else "+৳ ") + formattedAmtStr
+                        }
+
                         Text(
-                            text = (if (isMinus) "-" else "+") + formatAmount(item.amount),
+                            text = amountDisplay,
                             fontSize = 15.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = color,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF0D9488),
                             textAlign = TextAlign.End
                         )
+
                         if (!isSelectionMode) {
                             IconButton(
                                 onClick = { onDelete() },
@@ -2479,26 +2535,16 @@ fun TransactionCard(
                     }
                 }
 
-                // Line 2: Note (if present) and Timestamp
+                // Line 3: Date and Time
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = if (item.note.isNotBlank()) item.note else timeString,
-                        fontSize = 11.sp,
-                        color = themeColors.displayText.copy(alpha = 0.55f),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        text = timeString,
+                        fontSize = 10.5.sp,
+                        color = themeColors.displayText.copy(alpha = 0.50f)
                     )
-                    if (item.note.isNotBlank()) {
-                        Text(
-                            text = timeString,
-                            fontSize = 10.5.sp,
-                            color = themeColors.displayText.copy(alpha = 0.45f)
-                        )
-                    }
                 }
             }
         }
@@ -3297,6 +3343,7 @@ fun TransactionMemoDialog(
     onDismiss: () -> Unit,
     onFilterClick: (String) -> Unit,
     onPersonClicked: (String) -> Unit,
+    onSearchQueryInput: ((String) -> Unit)? = null,
     onToggleSettled: () -> Unit,
     onShare: () -> Unit,
     onEdit: () -> Unit,
@@ -3386,7 +3433,10 @@ fun TransactionMemoDialog(
             ) {
                 // Hero Amount Card (Clicking switches filter chip in Finance view)
                 Surface(
-                    onClick = { onFilterClick(filterKey) },
+                    onClick = {
+                        onDismiss()
+                        onFilterClick(filterKey)
+                    },
                     color = badgeBg,
                     shape = RoundedCornerShape(16.dp),
                     border = BorderStroke(1.dp, badgeTextColor.copy(alpha = 0.25f)),
@@ -3418,78 +3468,32 @@ fun TransactionMemoDialog(
                     }
                 }
 
-                // Person / Contact Link Banner
-                if (item.title.isNotBlank()) {
-                    Surface(
-                        onClick = { onPersonClicked(item.title.trim()) },
-                        shape = RoundedCornerShape(12.dp),
-                        color = themeColors.buttonEqualBg.copy(alpha = 0.08f),
-                        border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.2f)),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(34.dp)
-                                        .clip(CircleShape)
-                                        .background(themeColors.buttonEqualBg),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = item.title.trim().take(1).uppercase(),
-                                        color = Color.White,
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Column {
-                                    Text(
-                                        text = item.title,
-                                        fontSize = 13.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = themeColors.displayText
-                                    )
-                                    Text(
-                                        text = if (isBn) "ব্যক্তির খতিয়ান ও লেনদেন তালিকা দেখুন →" else "View person's full ledger & history →",
-                                        fontSize = 10.5.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = themeColors.buttonEqualBg
-                                    )
-                                }
-                            }
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                                contentDescription = null,
-                                tint = themeColors.buttonEqualBg,
-                                modifier = Modifier.size(13.dp)
-                            )
+                // Details Rows (Clickable to navigate to person's ledger, activate category filter chip, or set search query)
+                val isPerson = item.type == "DEBT" || contactsList.any { it.name.trim().equals(item.title.trim(), ignoreCase = true) }
+                DetailItemRow(
+                    label = if (isBn) (if (isPerson) "ব্যক্তির নাম (খতিয়ানে যেতে ক্লিক করুন):" else "শিরোনাম / বিবরণ (সার্চ করতে ক্লিক করুন):") else (if (isPerson) "Person Name (Click for ledger):" else "Title (Click to search):"),
+                    value = item.title,
+                    themeColors = themeColors,
+                    onClick = {
+                        onDismiss()
+                        if (isPerson && item.title.isNotBlank()) {
+                            onPersonClicked(item.title.trim())
+                        } else if (item.title.isNotBlank()) {
+                            onSearchQueryInput?.invoke(item.title)
                         }
                     }
-                }
-
-                // Details Rows
-                DetailItemRow(
-                    label = if (isBn) "শিরোনাম / বিবরণ:" else "Title / Description:",
-                    value = item.title,
-                    themeColors = themeColors
                 )
 
                 if (item.category.isNotEmpty()) {
                     DetailItemRow(
-                        label = if (isBn) "ক্যাটাগরি:" else "Category:",
+                        label = if (isBn) "ক্যাটাগরি (সার্চ ও ফিল্টারে ক্লিক করুন):" else "Category (Click to filter & search):",
                         value = item.category,
-                        themeColors = themeColors
+                        themeColors = themeColors,
+                        onClick = {
+                            onDismiss()
+                            onFilterClick(filterKey)
+                            onSearchQueryInput?.invoke(item.category)
+                        }
                     )
                 }
 
@@ -3501,9 +3505,13 @@ fun TransactionMemoDialog(
 
                 if (item.note.isNotBlank()) {
                     DetailItemRow(
-                        label = if (isBn) "অতিরিক্ত নোট:" else "Note:",
+                        label = if (isBn) "অতিরিক্ত নোট (সার্চ করতে ক্লিক করুন):" else "Note (Click to search):",
                         value = item.note,
-                        themeColors = themeColors
+                        themeColors = themeColors,
+                        onClick = {
+                            onDismiss()
+                            onSearchQueryInput?.invoke(item.note)
+                        }
                     )
                 }
 

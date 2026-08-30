@@ -27,6 +27,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -37,6 +38,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -444,5 +446,139 @@ private fun InfoRow(
             color = themeColors.displayText,
             modifier = Modifier.weight(1f)
         )
+    }
+}
+
+@Composable
+fun QuranTextDownloadProgressDialog(
+    downloadState: QuranTextDownloadState,
+    themeColors: CalculatorThemeColors,
+    cyanPrimary: Color
+) {
+    if (!downloadState.isDownloading) return
+
+    val percentInt = (downloadState.progressPercent * 100).toInt().coerceIn(0, 100)
+
+    Dialog(onDismissRequest = { /* keep open during download */ }) {
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = themeColors.cardBg,
+            shadowElevation = 10.dp,
+            border = BorderStroke(1.dp, cyanPrimary.copy(alpha = 0.35f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(22.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(CircleShape)
+                        .background(
+                            Brush.linearGradient(
+                                colors = listOf(cyanPrimary, Color(0xFF059669))
+                            )
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.MenuBook,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Text(
+                    text = "পবিত্র কুরআন অফলাইন সেটআপ",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = themeColors.displayText
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = "১১৪টি সুরার টেক্সট ও অনুবাদ অফলাইনে সেভ করা হচ্ছে...",
+                    fontSize = 12.sp,
+                    color = themeColors.displayText.copy(alpha = 0.7f),
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Surface(
+                    shape = RoundedCornerShape(14.dp),
+                    color = themeColors.displayBackground,
+                    border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.08f)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(14.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = if (downloadState.currentSurahName.isNotBlank()) {
+                                    "সূরা ${downloadState.currentSurahNumber}: ${downloadState.currentSurahName}"
+                                } else "প্রসেসিং হচ্ছে...",
+                                fontSize = 13.5.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = themeColors.displayText,
+                                maxLines = 1,
+                                modifier = Modifier.weight(1f, fill = false)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "$percentInt%",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = cyanPrimary
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        LinearProgressIndicator(
+                            progress = downloadState.progressPercent,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(8.dp)
+                                .clip(RoundedCornerShape(4.dp)),
+                            color = cyanPrimary,
+                            trackColor = cyanPrimary.copy(alpha = 0.2f)
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = "অগ্রগতি: ${downloadState.completedSurahs} / ${downloadState.totalSurahs} টি সূরা",
+                            fontSize = 11.5.sp,
+                            color = themeColors.displayText.copy(alpha = 0.65f)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Text(
+                    text = "ডাউনলোড চলাকালীন ইন্টারনেট অফ বা অ্যাপ বন্ধ করবেন না",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFFD97706)
+                )
+            }
+        }
     }
 }

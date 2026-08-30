@@ -11,6 +11,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import com.example.data.database.CalculatorDatabase
 import com.example.data.repository.HistoryRepository
 import com.example.data.repository.ToolUsageRepository
@@ -42,9 +45,17 @@ class MainActivity : ComponentActivity() {
         val repository = HistoryRepository(database.historyDao())
         val usageRepository = ToolUsageRepository(database.toolUsageDao())
 
-        // Pre-initialize TTS engines asynchronously for instant 0ms audio playback
-        com.example.data.islamic.IslamicMaleTtsPlayer.getInstance(applicationContext)
-        com.example.data.quran.QuranAudioPlayer.getInstance(applicationContext)
+        // Offload heavy initializations asynchronously to background thread so main UI thread renders immediately (0ms lag)
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                com.example.util.SpecialDayManager.initialize(applicationContext)
+                com.example.data.islamic.IslamicMaleTtsPlayer.getInstance(applicationContext)
+                com.example.data.quran.QuranAudioPlayer.getInstance(applicationContext)
+                com.example.util.ShortcutUtils.updateDynamicShortcuts(this@MainActivity)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
 
         // Create ViewModel
         val viewModelFactory = CalculatorViewModelFactory(repository, usageRepository, this)
@@ -52,8 +63,6 @@ class MainActivity : ComponentActivity() {
 
         // Explicitly set default active tab to 0 (Dashboard) on activity creation
         viewModel.activeTab = 0
-
-        com.example.util.ShortcutUtils.updateDynamicShortcuts(this)
 
         android.util.Log.d("MainActivity", "Intent: ${intent.action}, data: ${intent.dataString}, extras: ${intent.extras}")
         if (savedInstanceState == null) {

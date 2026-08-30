@@ -37,18 +37,122 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
 
+data class QuranTextDownloadState(
+    val isDownloading: Boolean = false,
+    val currentSurahNumber: Int = 0,
+    val currentSurahName: String = "",
+    val completedSurahs: Int = 0,
+    val totalSurahs: Int = 114,
+    val progressPercent: Float = 0f
+)
+
 class QuranViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository: QuranRepository
     val audioPlayer: QuranAudioPlayer
+
+    private val _textDownloadState = MutableStateFlow(QuranTextDownloadState())
+    val textDownloadState: StateFlow<QuranTextDownloadState> = _textDownloadState.asStateFlow()
 
     init {
         val dao = QuranDatabase.getDatabase(application).quranDao()
         repository = QuranRepository(dao)
         audioPlayer = QuranAudioPlayer.getInstance(application)
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.refreshSurahs()
+            autoSyncAllSurahsTextQuietly()
+        }
+    }
+
+    private suspend fun autoSyncAllSurahsTextQuietly() {
+        if (!NetworkUtil.isOnline(getApplication())) return
+        val cachedCount = repository.getCachedSurahCount()
+        if (cachedCount >= 114) return
+
+        val cachedNumbers = repository.getCachedSurahNumbers().toSet()
+        val allSurahsList = repository.allSurahs.first().ifEmpty { QuranMetadata.defaultSurahList }
+        for (surah in allSurahsList) {
+            if (!cachedNumbers.contains(surah.number)) {
+                if (!NetworkUtil.isOnline(getApplication())) break
+                repository.fetchAndSaveAyahs(surah.number)
+            }
+        }
+    }
+
+    fun downloadFullQuranText(context: Context) {
+        if (_textDownloadState.value.isDownloading) return
+
+        if (!NetworkUtil.isOnline(context)) {
+            Toast.makeText(
+                context,
+                "ইন্টারনেট সংযোগ নেই! সুরার টেক্সট ও অনুবাদ অফলাইনে সেভ করতে ইন্টারনেট সংযোগ চালু করুন।",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
+
+        viewModelScope.launch(Dispatchers.IO) {
+            val allSurahsList = repository.allSurahs.first().ifEmpty { QuranMetadata.defaultSurahList }
+            val total = allSurahsList.size.coerceAtLeast(114)
+
+            val cachedNumbers = repository.getCachedSurahNumbers().toSet()
+            var completedCount = cachedNumbers.size
+
+            _textDownloadState.value = QuranTextDownloadState(
+                isDownloading = true,
+                totalSurahs = total,
+                completedSurahs = completedCount,
+                progressPercent = (completedCount.toFloat() / total.toFloat())
+            )
+
+            for ((idx, surah) in allSurahsList.withIndex()) {
+                val currentNum = surah.number
+                val currentName = surah.nameBangla
+
+                _textDownloadState.update {
+                    it.copy(
+                        currentSurahNumber = currentNum,
+                        currentSurahName = currentName,
+                        completedSurahs = completedCount,
+                        progressPercent = (completedCount.toFloat() / total.toFloat())
+                    )
+                }
+
+                if (!cachedNumbers.contains(currentNum)) {
+                    repository.fetchAndSaveAyahs(currentNum)
+                    completedCount++
+                } else {
+                    completedCount = completedCount.coerceAtLeast(idx + 1)
+                }
+
+                _textDownloadState.update {
+                    it.copy(
+                        completedSurahs = completedCount,
+                        progressPercent = (completedCount.toFloat() / total.toFloat())
+                    )
+                }
+            }
+
+            _textDownloadState.value = QuranTextDownloadState(
+                isDownloading = false,
+                progressPercent = 1f
+            )
+
+            // If user has a selected surah open, reload ayahs
+            val selected = _selectedSurah.value
+            if (selected != null) {
+                val freshAyahs = repository.ensureAyahsLoaded(selected.number)
+                _currentAyahs.value = freshAyahs
+            }
+
+            withContext(Dispatchers.Main) {
+                Toast.makeText(
+                    context,
+                    "আলহামদুলিল্লাহ! পবিত্র কুরআনের সকল সুরার টেক্সট ও অনুবাদ সফলভাবে অফলাইনে সেভ হয়েছে!",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
         }
     }
 

@@ -41,6 +41,19 @@ class QuranRepository(
         return quranDao.getAyahsForSurah(surahNumber)
     }
 
+    suspend fun getCachedSurahCount(): Int = quranDao.getCachedSurahCount()
+
+    suspend fun getCachedSurahNumbers(): List<Int> = quranDao.getCachedSurahNumbers()
+
+    suspend fun fetchAndSaveAyahs(surahNumber: Int): List<AyahEntity> {
+        val remoteAyahs = apiService.fetchSurahAyahs(surahNumber)
+        if (remoteAyahs.isNotEmpty()) {
+            quranDao.insertAyahs(remoteAyahs)
+            return remoteAyahs
+        }
+        return emptyList()
+    }
+
     suspend fun ensureAyahsLoaded(surahNumber: Int): List<AyahEntity> {
         val localAyahs = quranDao.getAyahsForSurahDirect(surahNumber)
         if (localAyahs.isNotEmpty()) {

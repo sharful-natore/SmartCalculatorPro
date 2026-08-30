@@ -14,6 +14,13 @@ fun HolyQuranModuleScreen(
     isBn: Boolean = true
 ) {
     val selectedSurah by quranViewModel.selectedSurah.collectAsStateWithLifecycle()
+    val textDownloadState by quranViewModel.textDownloadState.collectAsStateWithLifecycle()
+
+    QuranTextDownloadProgressDialog(
+        downloadState = textDownloadState,
+        themeColors = themeColors,
+        cyanPrimary = themeColors.buttonEqualBg
+    )
 
     if (selectedSurah != null) {
         SurahDetailScreen(

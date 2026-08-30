@@ -36,6 +36,12 @@ interface QuranDao {
     @Query("DELETE FROM ayahs WHERE surahNumber = :surahNumber")
     suspend fun deleteAyahsForSurah(surahNumber: Int)
 
+    @Query("SELECT COUNT(DISTINCT surahNumber) FROM ayahs")
+    suspend fun getCachedSurahCount(): Int
+
+    @Query("SELECT DISTINCT surahNumber FROM ayahs")
+    suspend fun getCachedSurahNumbers(): List<Int>
+
     @Query("SELECT * FROM ayahs WHERE textBangla LIKE '%' || :query || '%' OR textArabic LIKE '%' || :query || '%' LIMIT 100")
     fun searchAyahs(query: String): Flow<List<AyahEntity>>
 }

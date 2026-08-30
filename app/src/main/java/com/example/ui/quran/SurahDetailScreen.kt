@@ -381,6 +381,79 @@ fun SurahDetailScreen(
                         }
                     }
 
+                    // Empty state offline download prompt card
+                    if (ayahs.isEmpty()) {
+                        item {
+                            Card(
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
+                                border = BorderStroke(1.dp, emeraldPrimary.copy(alpha = 0.35f)),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 12.dp)
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(20.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(52.dp)
+                                            .clip(CircleShape)
+                                            .background(emeraldPrimary.copy(alpha = 0.12f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.CloudDownload,
+                                            contentDescription = null,
+                                            tint = emeraldPrimary,
+                                            modifier = Modifier.size(28.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    Text(
+                                        text = "সূরাটির বিবরণ অফলাইনে সেভ নেই",
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = themeColors.displayText,
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Text(
+                                        text = "ইন্টারনেট না থাকলেও যেন যেকোনো সময় কুরআন পড়া যায়, সেজন্য ১১৪টি সুরার আরবি ও অনুবাদ একসাথে অফলাইনে ডাউনলোড করে নিন।",
+                                        fontSize = 12.5.sp,
+                                        color = themeColors.displayText.copy(alpha = 0.75f),
+                                        textAlign = TextAlign.Center,
+                                        lineHeight = 18.sp
+                                    )
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Button(
+                                        onClick = { viewModel.downloadFullQuranText(context) },
+                                        colors = ButtonDefaults.buttonColors(containerColor = emeraldPrimary),
+                                        shape = RoundedCornerShape(12.dp),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.CloudDownload,
+                                            contentDescription = null,
+                                            tint = Color.White,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = "সব সূরা একসাথে ডাউনলোড ও সেটআপ করুন",
+                                            fontSize = 13.5.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     // 4. Ayah Cards
                     itemsIndexed(
                         items = ayahs,
