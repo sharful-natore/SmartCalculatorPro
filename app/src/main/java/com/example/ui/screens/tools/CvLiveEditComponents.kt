@@ -719,7 +719,9 @@ fun CvLiveEditPanel(
 
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        modifier = Modifier.padding(vertical = 4.dp)
+                        modifier = Modifier
+                            .horizontalScroll(rememberScrollState())
+                            .padding(vertical = 4.dp)
                     ) {
                         val shapes = listOf("Circle", "Rounded", "Square", "Rectangle")
                         shapes.forEach { shapeName ->
@@ -728,7 +730,7 @@ fun CvLiveEditPanel(
                                 "Circle" -> if (isBn) "বৃত্ত" else "Circle"
                                 "Rounded" -> if (isBn) "কোণ গোল" else "Rounded"
                                 "Square" -> if (isBn) "বর্গ" else "Square"
-                                else -> if (isBn) "আয়তাকার" else "Rect"
+                                else -> if (isBn) "আয়তাকার" else "Rectangle"
                             }
                             Surface(
                                 onClick = { localData = localData.copy(photoShape = shapeName) },
@@ -742,6 +744,8 @@ fun CvLiveEditPanel(
                                     fontSize = 9.sp,
                                     color = if (isSelected) Color.White else themeColors.displayText,
                                     fontWeight = FontWeight.Bold,
+                                    maxLines = 1,
+                                    softWrap = false,
                                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
                                 )
                             }
@@ -857,14 +861,14 @@ fun CvLiveEditPanel(
                                 -1
                             )
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg.copy(alpha = 0.15f)),
+                        colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
                         shape = RoundedCornerShape(16.dp),
                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                         modifier = Modifier.height(30.dp)
                     ) {
-                        Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = themeColors.buttonEqualBg, modifier = Modifier.size(13.dp))
+                        Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = Color.White, modifier = Modifier.size(13.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(if (isBn) "এআই সামারি" else "AI Summary", color = themeColors.buttonEqualBg, fontSize = 10.5.sp, fontWeight = FontWeight.Bold)
+                        Text(if (isBn) "এআই সামারি" else "AI Summary", color = Color.White, fontSize = 10.5.sp, fontWeight = FontWeight.Bold)
                     }
                 }
 
@@ -970,9 +974,9 @@ fun CvLiveEditPanel(
                                                 idx
                                             )
                                         },
-                                        modifier = Modifier.size(24.dp)
+                                        modifier = Modifier.size(28.dp).background(themeColors.buttonEqualBg, CircleShape)
                                     ) {
-                                        Icon(Icons.Default.AutoAwesome, contentDescription = "AI", tint = themeColors.buttonEqualBg, modifier = Modifier.size(14.dp))
+                                        Icon(Icons.Default.AutoAwesome, contentDescription = "AI", tint = Color.White, modifier = Modifier.size(13.dp))
                                     }
 
                                     IconButton(

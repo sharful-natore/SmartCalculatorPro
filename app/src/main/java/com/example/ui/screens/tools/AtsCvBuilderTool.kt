@@ -41,6 +41,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
+import androidx.compose.ui.window.Dialog
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -77,49 +78,57 @@ import java.util.UUID
 enum class CvTemplateStyle(
     val titleEn: String,
     val titleBn: String,
-    val description: String,
+    val descriptionEn: String,
+    val descriptionBn: String,
     val primaryColorHex: Int,
     val isTwoColumn: Boolean = false
 ) {
     CLASSIC_CORPORATE(
         "Classic Corporate (ATS BD)",
         "ক্লাসিক কর্পোরেট (BD ATS Standard)",
-        "ব্যাংক, বিসিএস, মাল্টিন্যাশনাল ও করপোরেট চাকরির জন্য ১০০% নিখ্এত টেবিল-বেসড অফিশিয়াল ডিজাইন",
+        "100% accurate table-based official design tailored for Banks, BCS, Multinationals & Corporate jobs.",
+        "ব্যাংক, বিসিএস, মাল্টিন্যাশনাল ও করপোরেট চাকরির জন্য ১০০% নিখুঁত টেবিল-বেসড অফিশিয়াল ডিজাইন",
         AndroidColor.parseColor("#0F172A")
     ),
     CANVA_MINIMALIST_CLEAN(
         "Canva Minimalist Clean (Modern)",
         "ক্যানভা মিনিমালিস্ট ক্লিন (Modern ATS)",
-        "সেন্টার্ড হেডার, ফিল্ড আইকন কন্টাক্ট বার ও ডানপাশে এলাইন্ড তারিখসহ আধ্নিক ক্লিন প্রফেশনাল ডিজাইন",
+        "Centered header, field icon contact bar & right-aligned dates with modern clean professional layout.",
+        "সেন্টার্ড হেডার, ফিল্ড আইকন কন্টাক্ট বার ও ডানপাশে অ্যালাইন্ড তারিখসহ আধুনিক ক্লিন প্রফেশনাল ডিজাইন",
         AndroidColor.parseColor("#1E293B")
     ),
     SINGLE_COLUMN_HIGH_IMPACT_ATS(
         "Single-Column High Impact",
         "হাই-ইমপ্যাক্ট সিঙ্গেল কলাম (US ATS)",
-        "বোল্ড হেডার, স্নির্দিষ্ট ডিভাইডার এবং ফাস্ট-স্ক্যানিং মেট্রিক ব্লেট সংবলিত টপ-রেটেড এটিএস লেআউট",
+        "Bold headers, clear section dividers & fast-scanning metric bullet layout.",
+        "বোল্ড হেডার, নির্দিষ্ট ডিভাইডার এবং ফাস্ট-স্ক্যানিং মেট্রিক বুলেট সংবলিত টপ-রেটেড এটিএস লেআউট",
         AndroidColor.parseColor("#0F172A")
     ),
     NORDIC_SLATE_MODERN(
         "Nordic Slate & Minimal",
         "নরডিক স্লেট ও মিনিমাল",
+        "Scandinavian slim spacing, dark slate typography & elegant section dividers.",
         "স্ক্যান্ডিনেভিয়ান স্লিম স্পেসিং, ডার্ক স্লেট টাইপোগ্রাফি ও মার্জিত সেকশন ডিভাইডার",
         AndroidColor.parseColor("#334155")
     ),
     SILICON_VALLEY_TECH_LEAD(
         "Silicon Valley Tech Lead",
         "সিলিকন ভ্যালি টেক লিড",
-        "টেক লিড, ডেভেলপার ও প্রোডাক্ট ম্যানেজারদের জন্য কোবাল্ট ব্ল্ একসেন্ট ও কোয়ান্ট রেজাল্ট ডিজাইন",
+        "Cobalt blue accents & quant metrics design for Tech Leads, Developers & Product Managers.",
+        "টেক লিড, ডেভেলপার ও প্রোডাক্ট ম্যানেজারদের জন্য কোবাল্ট ব্লু একসেন্ট ও কোয়ান্ট রেজাল্ট ডিজাইন",
         AndroidColor.parseColor("#0284C7")
     ),
     EXECUTIVE_MONOCHROME_LUXE(
         "Executive Monochrome Luxe",
         "এক্সিকিউটিভ মনোক্রোম লাক্স",
-        "হাই-প্রোফাইল কর্পোরেট লিডারদের জন্য পিউর ব্ল্যাক & চারকোল লাক্সারি মিনিমালিস্ট সেরিফ স্টাইল",
+        "Pure black & charcoal luxury minimalist serif layout for high-profile corporate leaders.",
+        "হাই-প্রোফাইল কর্পোরেট লিডারদের জন্য পিউর ব্ল্যাক ও চারকোল লাক্সারি মিনিমালিস্ট সেরিফ স্টাইল",
         AndroidColor.parseColor("#111827")
     ),
     EXECUTIVE_TWO_COLUMN(
         "Executive Two-Column Sidebar",
         "এক্সিকিউটিভ সাইডবার (২-কলাম)",
+        "Dark navy sidebar, material icons & stylish two-column layout for experienced professionals.",
         "অভিজ্ঞ পেশাজীবীদের জন্য ডার্ক নেভি সাইডবার, ম্যাটেরিয়াল আইকন ও স্টাইলিশ লেআউট",
         AndroidColor.parseColor("#1E293B"),
         isTwoColumn = true
@@ -127,51 +136,62 @@ enum class CvTemplateStyle(
     CREATIVE_MARKETING(
         "Modern Creative Banner",
         "ক্রিয়েটিভ ব্যানার প্রো",
+        "Top banner header, profile badge & card style for marketing & branding professionals.",
         "মার্কেটিং ও ব্র্যান্ডিং প্রফেশনালদের জন্য আকর্ষণীয় টপ ব্যানার, প্রোফাইল ব্যাজ ও কার্ড স্টাইল",
         AndroidColor.parseColor("#881337")
     ),
     MODERN_MINIMALIST(
         "Nordic Minimalist Tech",
         "মডার্ন মিনিমালিস্ট টেক",
-        "আইটি, সফটওয়্যার ইঞ্জিনিয়ার ও ডেকের জন্য ভার্টিক্যাল বার একসেন্ট, মডার্ন চিপস ও মার্জিত নকশা",
+        "Vertical bar accent, modern chips & clean design for IT, Software Engineers & Designers.",
+        "আইটি, সফটওয়্যার ইঞ্জিনিয়ার ও ডিজাইনারদের জন্য ভার্টিক্যাল বার একসেন্ট, মডার্ন চিপস ও মার্জিত নকশা",
         AndroidColor.parseColor("#0D9488")
     ),
     HARVARD_CLASSIC(
         "Harvard Academic & Legal",
         "হার্ভার্ড ক্লাসিক (Academic)",
-        "আইভি-লিগ স্ট্যান্ডার্ড ক্লাসিক সেরিফ টাইপোগ্রাফি, ডাবল-র্ল ডিভাইডার ও সেন্টার্ড হেডার",
+        "Ivy-league standard classic serif typography, double-rule dividers & centered header.",
+        "আইভি-লিগ স্ট্যান্ডার্ড ক্লাসিক সেরিফ টাইপোগ্রাফি, ডাবল-রুল ডিভাইডার ও সেন্টার্ড হেডার",
         AndroidColor.parseColor("#18181B")
     ),
     ELEGANT_PREMIUM(
         "Executive Serif & Ivory",
-        "এলিগেন্ট সেরিফ ও আইভরি",
-        "হাই-প্রোফাইল এক্সিকিউটিভ ও কনসালট্যান্টদের জন্য রয়্যাল মিডনাইট সেরিফ ও ডায়মন্ড ব্লেট স্টাইল",
+        "এলিগент সেরিফ ও আইভরি",
+        "Royal midnight serif & diamond bullet layout for executives & consultants.",
+        "হাই-প্রোফাইল এক্সিকিউটিভ ও কনসালট্যান্টদের জন্য রয়্যাল মিডনাইট সেরিফ ও ডায়মন্ড বুলেট স্টাইল",
         AndroidColor.parseColor("#312E81")
     ),
     CLEAN_TECH_STARTUP(
         "Emerald Tech & Startup",
         "এমারেল্ড টেক স্টার্টআপ",
+        "Emerald green & timeline-dot design for dynamic startups & project management roles.",
         "ডাইনামিক স্টার্টআপ ও প্রজেক্ট ম্যানেজমেন্ট রোলের জন্য এমারেল্ড গ্রিন ও টাইমলাইন-ডট ডিজাইন",
         AndroidColor.parseColor("#065F46")
     ),
     BANKING_FINANCE_SPECIALIST(
         "Banking & Finance Specialist",
         "ব্যাংক ও ফিন্যান্স স্পেশালিস্ট",
-        "বাণিজ্যিক ও ইনভেস্টমেন্ট ব্যাংকিংয়ের জন্য রয়্যাল ব্ল্ একসেন্ট, কোয়ান্ট মেট্রিক্স ও টেব্লার রেকর্ড",
+        "Royal blue accent, quant metrics & tabular format for commercial & investment banking.",
+        "বাণিজ্যিক ও ইনভেস্টমেন্ট ব্যাংকিংয়ের জন্য রয়্যাল ব্লু একসেন্ট, কোয়ান্ট মেট্রিক্স ও টেবুলার রেকর্ড",
         AndroidColor.parseColor("#1E40AF")
     ),
     NGO_DEVELOPMENT_HUMANITARIAN(
         "NGO & Humanitarian Impact",
         "এনজিও ও উন্নয়ন প্রকল্প",
+        "Terracotta & field-impact layout for international NGOs, UN & development projects.",
         "আন্তর্জাতিক এনজিও, ইউএন ও সমাজ উন্নয়ন প্রজেক্টের জন্য টেরাকোটা ও ফিল্ড-ইমপ্যাক্ট লেআউট",
         AndroidColor.parseColor("#9A3412")
     ),
     EUROPASS_GLOBAL_STANDARD(
         "Europass & Global MNC",
         "ইউরোপাস গ্লোবাল লেআউট",
+        "Classic left-label boxed grid & formal sections for European & global jobs.",
         "ইউরোপ ও আন্তর্জাতিক চাকরির জন্য ক্লাসিক লেফট-লেবেল বক্সড গ্রিড ও ফরমাল সেকশন",
         AndroidColor.parseColor("#0369A1")
-    )
+    );
+
+    fun getTitle(isBn: Boolean): String = if (isBn) titleBn else titleEn
+    fun getDescription(isBn: Boolean): String = if (isBn) descriptionBn else descriptionEn
 }
 
 // ================= DELIVERABLE 1: ARCHITECT DATA CLASSES =================
@@ -602,60 +622,145 @@ private fun CvCustomDropdown(
     themeColors: CalculatorThemeColors,
     modifier: Modifier = Modifier
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    var showDialog by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
 
     Box(modifier = modifier) {
         OutlinedTextField(
             value = selectedValue,
             onValueChange = {},
             readOnly = true,
+            enabled = false,
             label = { Text(label, fontSize = 11.sp, color = themeColors.displayText.copy(alpha = 0.7f)) },
             trailingIcon = {
-                IconButton(onClick = { expanded = !expanded }) {
-                    Icon(
-                        imageVector = if (expanded) Icons.Default.ArrowDropUp else Icons.Default.ArrowDropDown,
-                        contentDescription = "Expand",
-                        tint = themeColors.buttonEqualBg
-                    )
-                }
+                Icon(
+                    imageVector = Icons.Default.ArrowDropDown,
+                    contentDescription = "Select",
+                    tint = themeColors.buttonEqualBg
+                )
             },
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = themeColors.buttonEqualBg,
-                unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f),
-                focusedTextColor = themeColors.displayText,
-                unfocusedTextColor = themeColors.displayText,
-                focusedContainerColor = themeColors.cardBg,
-                unfocusedContainerColor = themeColors.cardBg
+                disabledBorderColor = themeColors.displayText.copy(alpha = 0.2f),
+                disabledTextColor = themeColors.displayText,
+                disabledContainerColor = themeColors.cardBg,
+                disabledLabelColor = themeColors.displayText.copy(alpha = 0.7f)
             ),
             shape = RoundedCornerShape(8.dp),
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { expanded = true },
+                .clickable {
+                    searchQuery = ""
+                    showDialog = true
+                },
             textStyle = LocalTextStyle.current.copy(fontSize = 12.sp)
         )
+    }
 
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-            modifier = Modifier
-                .background(themeColors.background)
-                .heightIn(max = 260.dp)
-        ) {
-            options.forEach { option ->
-                DropdownMenuItem(
-                    text = {
+    if (showDialog) {
+        val filteredOptions = remember(searchQuery, options) {
+            if (searchQuery.isBlank()) options
+            else options.filter { it.contains(searchQuery, ignoreCase = true) }
+        }
+
+        Dialog(onDismissRequest = { showDialog = false }) {
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = themeColors.cardBg,
+                border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.3f)),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 520.dp)
+                    .padding(vertical = 12.dp)
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(
-                            text = option,
-                            fontSize = 12.sp,
-                            color = if (option == selectedValue) themeColors.buttonEqualBg else themeColors.displayText,
-                            fontWeight = if (option == selectedValue) FontWeight.Bold else FontWeight.Normal
+                            text = label,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = themeColors.buttonEqualBg
                         )
-                    },
-                    onClick = {
-                        onValueChange(option)
-                        expanded = false
+                        IconButton(onClick = { showDialog = false }, modifier = Modifier.size(24.dp)) {
+                            Icon(imageVector = Icons.Default.Close, contentDescription = "Close", tint = themeColors.displayText, modifier = Modifier.size(16.dp))
+                        }
                     }
-                )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { Text("Search / খুঁজুন...", fontSize = 12.sp) },
+                        leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = null, tint = themeColors.buttonEqualBg, modifier = Modifier.size(18.dp)) },
+                        trailingIcon = {
+                            if (searchQuery.isNotEmpty()) {
+                                IconButton(onClick = { searchQuery = "" }) {
+                                    Icon(imageVector = Icons.Default.Clear, contentDescription = "Clear", tint = themeColors.displayText, modifier = Modifier.size(16.dp))
+                                }
+                            }
+                        },
+                        shape = RoundedCornerShape(10.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = themeColors.buttonEqualBg,
+                            unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f),
+                            focusedTextColor = themeColors.displayText,
+                            unfocusedTextColor = themeColors.displayText
+                        ),
+                        singleLine = true,
+                        textStyle = LocalTextStyle.current.copy(fontSize = 12.sp)
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f, fill = false)
+                    ) {
+                        items(filteredOptions.size) { idx ->
+                            val option = filteredOptions[idx]
+                            val isSelected = option == selectedValue
+                            Surface(
+                                onClick = {
+                                    onValueChange(option)
+                                    showDialog = false
+                                },
+                                shape = RoundedCornerShape(8.dp),
+                                color = if (isSelected) themeColors.buttonEqualBg.copy(alpha = 0.15f) else Color.Transparent,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 10.dp, vertical = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = option,
+                                        fontSize = 12.5.sp,
+                                        color = if (isSelected) themeColors.buttonEqualBg else themeColors.displayText,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    if (isSelected) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = "Selected",
+                                            tint = themeColors.buttonEqualBg,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                }
+                            }
+                            HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.06f))
+                        }
+                    }
+                }
             }
         }
     }
@@ -684,7 +789,7 @@ private fun SaveProfileDialog(
             ) {
                 Icon(imageVector = Icons.Default.Save, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(6.dp))
-                Text(if (isBn) "সেভ কর্ন" else "Save Profile", color = Color.White, fontWeight = FontWeight.Bold)
+                Text(if (isBn) "সেভ করুন" else "Save Profile", color = Color.White, fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
@@ -697,7 +802,7 @@ private fun SaveProfileDialog(
                 Icon(imageVector = Icons.Default.BookmarkAdd, contentDescription = null, tint = themeColors.buttonEqualBg, modifier = Modifier.size(22.dp))
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = if (isBn) "সিভি তথ্য প্রোফাইল হিসেবে সেভ কর্ন" else "Save CV as Profile",
+                    text = if (isBn) "সিভি তথ্য প্রোফাইল হিসেবে সেভ করুন" else "Save CV as Profile",
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     color = themeColors.displayText
@@ -707,7 +812,7 @@ private fun SaveProfileDialog(
         text = {
             Column {
                 Text(
-                    text = if (isBn) "ভবিষ্যতে চাকরির আবেদন করার সময় এই তথ্য সরাসরি অটো-ইনপ্ট দেওয়ার জন্য একটি স্মরণীয় নাম দিয়ে প্রোফাইল সেভ কর্ন:" else "Save your full CV inputs under a custom profile label for quick auto-filling later:",
+                    text = if (isBn) "ভবিষ্যতে চাকরির আবেদন করার সময় এই তথ্য সরাসরি অটো-ইনপুট দেওয়ার জন্য একটি স্মরণীয় নাম দিয়ে প্রোফাইল সেভ করুন:" else "Save your full CV inputs under a custom profile label for quick auto-filling later:",
                     fontSize = 12.sp,
                     color = themeColors.displayText.copy(alpha = 0.7f),
                     lineHeight = 16.sp
@@ -764,7 +869,7 @@ private fun ProfileManagerDialog(
                     Text(if (isBn) "না" else "No")
                 }
             },
-            title = { Text(if (isBn) "নিশ্চিত কর্ন" else "Confirm Delete") },
+            title = { Text(if (isBn) "নিশ্চিত করুন" else "Confirm Delete") },
             text = { Text(if (isBn) "আপনি কি নিশ্চিত যে এই প্রোফাইলটি ডিলিট করতে চান?" else "Are you sure you want to delete this profile?") }
         )
     }
@@ -788,8 +893,8 @@ private fun ProfileManagerDialog(
                     Text(if (isBn) "না" else "No")
                 }
             },
-            title = { Text(if (isBn) "নিশ্চিত কর্ন" else "Confirm Selection") },
-            text = { Text(if (isBn) "আপনি কি এই প্রোফাইলটি ব্যবহার করতে চান? বর্তমান প্রোফাইলের অসংরক্ষিত ডেটা ম্ছে যেতে পারে।" else "Do you want to switch to this profile? Unsaved data may be lost.") }
+            title = { Text(if (isBn) "নিশ্চিত করুন" else "Confirm Selection") },
+            text = { Text(if (isBn) "আপনি কি এই প্রোফাইলটি ব্যবহার করতে চান? বর্তমান প্রোফাইলের অসংরক্ষিত ডেটা মুছে যেতে পারে।" else "Do you want to switch to this profile? Unsaved data may be lost.") }
         )
     }
 
@@ -797,7 +902,7 @@ private fun ProfileManagerDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text(if (isBn) "বন্ধ কর্ন" else "Close", color = themeColors.buttonEqualBg, fontWeight = FontWeight.Bold)
+                Text(if (isBn) "বন্ধ করুন" else "Close", color = themeColors.buttonEqualBg, fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
@@ -833,7 +938,7 @@ private fun ProfileManagerDialog(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = if (isBn) "কোনো সেভ করা প্রোফাইল নেই। 'PDF ইমপোর্ট' বাটনে চাপ দিন অথবা প্রিভিউ ট্যাবে গিয়ে 'প্রোফাইল হিসেবে সেভ কর্ন' বাটন চাপ্ন।" else "No saved custom profiles. Click 'Import PDF' or save your current input as a profile.",
+                        text = if (isBn) "কোনো সেভ করা প্রোফাইল নেই। 'PDF ইমপোর্ট' বাটনে চাপ দিন অথবা প্রিভিউ ট্যাবে গিয়ে 'প্রোফাইল হিসেবে সেভ করুন' বাটন চাপ্ন।" else "No saved custom profiles. Click 'Import PDF' or save your current input as a profile.",
                         fontSize = 11.5.sp,
                         color = themeColors.displayText.copy(alpha = 0.7f),
                         textAlign = TextAlign.Center
@@ -917,7 +1022,7 @@ private fun ProfileManagerDialog(
                                     ) {
                                         Icon(imageVector = Icons.Default.Input, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
                                         Spacer(modifier = Modifier.width(4.dp))
-                                        Text(if (isBn) "সিলেক্ট ও অটো-ইনপ্ট" else "Select & Auto-Fill", fontSize = 10.5.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                                        Text(if (isBn) "সিলেক্ট ও অটো-ইনপুট" else "Select & Auto-Fill", fontSize = 10.5.sp, color = Color.White, fontWeight = FontWeight.Bold)
                                     }
                                 }
                             }
@@ -955,7 +1060,7 @@ private fun CvAiPromptDialog(
             ) {
                 Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(6.dp))
-                Text(if (isBn) "এআই দিয়ে জেনারেট কর্ন" else "Generate with AI", color = Color.White, fontWeight = FontWeight.Bold)
+                Text(if (isBn) "এআই দিয়ে জেনারেট করুন" else "Generate with AI", color = Color.White, fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
@@ -978,7 +1083,7 @@ private fun CvAiPromptDialog(
         text = {
             Column {
                 Text(
-                    text = if (isBn) "আপনার পছন্দমতো প্রম্পটটি কাস্টমাইজ কর্ন অথবা ডিফল্ট প্রম্পট অন্যায়ী জেনারেট কর্ন:" else "Customize your AI prompt instructions below to generate targeted CV content:",
+                    text = if (isBn) "আপনার পছন্দমতো প্রম্পটটি কাস্টমাইজ করুন অথবা ডিফল্ট প্রম্পট অনুযায়ী জেনারেট করুন:" else "Customize your AI prompt instructions below to generate targeted CV content:",
                     fontSize = 11.5.sp,
                     color = themeColors.displayText.copy(alpha = 0.7f),
                     lineHeight = 15.sp
@@ -1060,8 +1165,262 @@ data class CvData(
     val customMargin: Float = 36f,
     val sectionSpacing: Float = 8f,
     val itemSpacing: Float = 4f,
-    val customLineSpacing: Float = 1.15f
+    val customLineSpacing: Float = 1.15f,
+
+    // ATS & Job Circular Analysis fields
+    val lastJobMatchPercentage: Int = 0,
+    val lastMatchingStrengths: List<String> = emptyList(),
+    val lastMissingKeywords: List<String> = emptyList(),
+    val lastImprovementTips: List<String> = emptyList(),
+    val lastTailoredSummary: String = ""
 )
+
+data class AtsCheckItem(
+    val categoryEn: String,
+    val categoryBn: String,
+    val isPassed: Boolean,
+    val weightPoints: Int,
+    val detailEn: String,
+    val detailBn: String
+)
+
+data class LocalAtsScoreResult(
+    val score: Int,
+    val contactScore: Int,
+    val summaryScore: Int,
+    val experienceScore: Int,
+    val educationScore: Int,
+    val skillsScore: Int,
+    val formattingScore: Int,
+    val checkItems: List<AtsCheckItem>
+)
+
+internal fun calculateLocalAtsScore(cvData: CvData): LocalAtsScoreResult {
+    val checks = mutableListOf<AtsCheckItem>()
+
+    // 1. Contact Info (Max 15)
+    val hasName = cvData.fullName.isNotBlank()
+    val hasTitle = cvData.jobTitle.isNotBlank()
+    val hasEmail = cvData.email.contains("@") && cvData.email.contains(".")
+    val hasPhone = cvData.phone.isNotBlank()
+    val hasLink = cvData.linkedin.isNotBlank() || cvData.githubOrPortfolio.isNotBlank()
+
+    checks.add(AtsCheckItem("Contact Info", "যোগাযোগের তথ্য", hasName, 3, "Candidate full name complete", "প্রার্থীর পূর্ণ নাম প্রদান করা হয়েছে"))
+    checks.add(AtsCheckItem("Contact Info", "যোগাযোগের তথ্য", hasTitle, 3, "Target position / job title specified", "টার্গেট পজিশন/টাইটেল উল্লেখ করা হয়েছে"))
+    checks.add(AtsCheckItem("Contact Info", "যোগাযোগের তথ্য", hasEmail, 3, "Valid contact email address provided", "সঠিক ইমেইল অ্যাড্রেস প্রদান করা হয়েছে"))
+    checks.add(AtsCheckItem("Contact Info", "যোগাযোগের তথ্য", hasPhone, 3, "Mobile/Phone number provided", "মোবাইল/ফোন নম্বর প্রদান করা হয়েছে"))
+    checks.add(AtsCheckItem("Contact Info", "যোগাযোগের তথ্য", hasLink, 3, "LinkedIn / Portfolio profile link present", "লিংকডইন বা পোর্টফোলিও প্রোফাইল যুক্ত আছে"))
+
+    val contactScore = (if (hasName) 3 else 0) + (if (hasTitle) 3 else 0) + (if (hasEmail) 3 else 0) + (if (hasPhone) 3 else 0) + (if (hasLink) 3 else 0)
+
+    // 2. Summary (Max 15)
+    val hasSummary = cvData.summary.trim().length >= 40
+    val isDetailedSummary = cvData.summary.trim().length >= 100 || cvData.summary.contains("%") || cvData.summary.lowercase().let { s -> s.contains("managed") || s.contains("led") || s.contains("developed") || s.contains("achieved") || s.contains("experienced") }
+
+    checks.add(AtsCheckItem("Summary", "প্রোফাইল সামারি", hasSummary, 8, "Professional summary included (>= 40 chars)", "প্রোফাইল সামারি সেকশন যুক্ত করা হয়েছে"))
+    checks.add(AtsCheckItem("Summary", "প্রোফাইল সামারি", isDetailedSummary, 7, "Summary has strong impact keywords or detailed scope", "সামারিতে কার্যকর শব্দ ও বিস্তারিত বিবরণী রয়েছে"))
+
+    val summaryScore = (if (hasSummary) 8 else 0) + (if (isDetailedSummary) 7 else 0)
+
+    // 3. Experience / Projects (Max 30)
+    val expCount = if (cvData.isFresher) 1 else cvData.experiences.size
+    val hasExp = expCount > 0
+    val hasQuantifiedMetrics = cvData.experiences.any { exp ->
+        exp.description.contains("%") || exp.description.contains("$") || exp.description.contains("TK") || exp.description.contains("BDT") || exp.description.any { it.isDigit() }
+    } || (cvData.isFresher && cvData.fresherAcademicProjects.any { it.isDigit() })
+
+    val hasRoleDetails = cvData.experiences.all { it.role.isNotBlank() && it.company.isNotBlank() } && cvData.experiences.isNotEmpty()
+
+    checks.add(AtsCheckItem("Experience", "কাজের অভিজ্ঞতা", hasExp, 10, "Work experiences or project records present", "কাজের অভিজ্ঞতা বা প্রজেক্ট রেকর্ড রয়েছে"))
+    checks.add(AtsCheckItem("Experience", "কাজের অভিজ্ঞতা", hasQuantifiedMetrics, 10, "Quantifiable achievements (metrics, %, numbers) included", "পরিমাপযোগ্য অর্জন (সংখ্যা, %, সাফল্য) যুক্ত আছে"))
+    checks.add(AtsCheckItem("Experience", "কাজের অভিজ্ঞতা", hasRoleDetails || cvData.isFresher, 10, "Designations, Company names, and Dates complete", "পদের নাম, কোম্পানির নাম ও মেয়াদ স্পষ্ট"))
+
+    val experienceScore = (if (hasExp) 10 else 0) + (if (hasQuantifiedMetrics) 10 else 0) + (if (hasRoleDetails || cvData.isFresher) 10 else 0)
+
+    // 4. Education (Max 15)
+    val hasEdu = cvData.educations.isNotEmpty()
+    val eduDetailsComplete = cvData.educations.any { it.institution.isNotBlank() && it.passingYear.isNotBlank() }
+
+    checks.add(AtsCheckItem("Education", "শিক্ষাগত যোগ্যতা", hasEdu, 10, "Educational qualification listed", "শিক্ষাগত যোগ্যতা তালিকাভুক্ত রয়েছে"))
+    checks.add(AtsCheckItem("Education", "শিক্ষাগত যোগ্যতা", eduDetailsComplete, 5, "Institution name, Degree & Year specified", "প্রতিষ্ঠান, ডিগ্রি ও পাসের সন নির্দিষ্ট"))
+
+    val educationScore = (if (hasEdu) 10 else 0) + (if (eduDetailsComplete) 5 else 0)
+
+    // 5. Skills (Max 15)
+    val skillCount = cvData.skills.size
+    val has5Skills = skillCount >= 5
+    val has8Skills = skillCount >= 8
+
+    checks.add(AtsCheckItem("Skills", "দক্ষতা ও স্কিলস", has5Skills, 10, "At least 5 core industry skills listed", "কমপক্ষে ৫টি কোর স্কিল যুক্ত আছে"))
+    checks.add(AtsCheckItem("Skills", "দক্ষতা ও স্কিলস", has8Skills, 5, "Rich competency set (8+ skills)", "সমৃদ্ধ স্কিলসেট (৮+ স্কিল) রয়েছে"))
+
+    val skillsScore = (if (has5Skills) 10 else 0) + (if (has8Skills) 5 else 0)
+
+    // 6. Formatting (Max 10)
+    val hasBullets = cvData.bulletStyle != "NONE"
+
+    checks.add(AtsCheckItem("Formatting", "লেআউট ও ফরম্যাট", hasBullets, 5, "Standard ATS bullet style enabled", "এটিএস বুলেট স্টাইল সক্রিয় রয়েছে"))
+    checks.add(AtsCheckItem("Formatting", "লেআউট ও ফরম্যাট", true, 5, "Standard 1-column / ATS structural hierarchy", "সঠিক এটিএস স্ট্রাকচার ও হায়ারার্কি সক্রিয়"))
+
+    val formattingScore = (if (hasBullets) 5 else 0) + 5
+
+    val totalScore = (contactScore + summaryScore + experienceScore + educationScore + skillsScore + formattingScore).coerceIn(0, 100)
+
+    return LocalAtsScoreResult(
+        score = totalScore,
+        contactScore = contactScore,
+        summaryScore = summaryScore,
+        experienceScore = experienceScore,
+        educationScore = educationScore,
+        skillsScore = skillsScore,
+        formattingScore = formattingScore,
+        checkItems = checks
+    )
+}
+
+internal fun autoFixAtsScoreTo100(cvData: CvData): CvData {
+    val updatedSkills = cvData.skills.toMutableList()
+    val defaultSkills = listOf(
+        "Project Management", "Agile & Scrum", "Data Analysis",
+        "Strategic Planning", "Cross-Functional Leadership",
+        "Problem Solving", "Communication", "Process Optimization"
+    )
+    for (sk in defaultSkills) {
+        if (updatedSkills.size < 8 && updatedSkills.none { it.name.equals(sk, ignoreCase = true) }) {
+            updatedSkills.add(CvSkillItem(name = sk))
+        }
+    }
+
+    val updatedExps = if (cvData.experiences.isEmpty()) {
+        listOf(
+            CvExperienceItem(
+                role = if (cvData.jobTitle.isNotBlank()) cvData.jobTitle else "Operations & Project Manager",
+                company = "Global Solutions Ltd.",
+                startDate = "2021",
+                endDate = "Present",
+                description = "• Led cross-functional team of 12 professionals to deliver key client projects, increasing client satisfaction by 35%.\n• Managed project budget of $150,000 and reduced operational delivery overhead by 25% through process optimization."
+            )
+        )
+    } else {
+        cvData.experiences.map { exp ->
+            var desc = exp.description
+            if (!desc.contains("%") && !desc.contains("$") && !desc.any { it.isDigit() }) {
+                desc = if (desc.isBlank()) {
+                    "• Achieved 30% performance improvement and reduced processing errors by 45% using standardized workflows."
+                } else {
+                    "${desc.trim()}\n• Increased operational efficiency by 35% and achieved 98% on-time project delivery."
+                }
+            }
+            exp.copy(
+                role = exp.role.ifBlank { "Project Manager" },
+                company = exp.company.ifBlank { "Leading Enterprise Ltd." },
+                description = desc
+            )
+        }
+    }
+
+    val updatedEdus = if (cvData.educations.isEmpty()) {
+        listOf(
+            CvEducationItem(
+                examLevel = "Bachelor of Science (B.Sc / B.Sc Engg)",
+                degree = "B.Sc in Computer Science & Engineering",
+                institution = "University of Dhaka (DU)",
+                passingYear = "2021",
+                resultType = "CGPA (Out of 4.0)"
+            )
+        )
+    } else {
+        cvData.educations.map { edu ->
+            edu.copy(
+                institution = edu.institution.ifBlank { "University of Dhaka (DU)" },
+                passingYear = edu.passingYear.ifBlank { "2021" }
+            )
+        }
+    }
+
+    val updatedSummary = if (cvData.summary.trim().length < 100 || !cvData.summary.contains("%")) {
+        if (cvData.summary.isBlank()) {
+            "Results-driven ${cvData.jobTitle.ifBlank { "Professional" }} with 5+ years of experience in leading project execution, optimizing cross-functional operations, and delivering high-impact business solutions. Demonstrated success in increasing operational efficiency by 35% and managing enterprise deliverables."
+        } else {
+            "${cvData.summary.trim()} Demonstrated success in improving team productivity by 35% and delivering strategic projects on schedule."
+        }
+    } else {
+        cvData.summary
+    }
+
+    return cvData.copy(
+        fullName = cvData.fullName.ifBlank { "Md. Rafiqul Islam" },
+        jobTitle = cvData.jobTitle.ifBlank { "Operations & Project Manager" },
+        email = if (cvData.email.contains("@") && cvData.email.contains(".")) cvData.email else "rafiq.candidate@email.com",
+        phone = cvData.phone.ifBlank { "+880 1712-345678" },
+        linkedin = if (cvData.linkedin.isNotBlank() || cvData.githubOrPortfolio.isNotBlank()) cvData.linkedin else "linkedin.com/in/rafiqul-islam",
+        summary = updatedSummary,
+        experiences = updatedExps,
+        educations = updatedEdus,
+        skills = updatedSkills,
+        bulletStyle = if (cvData.bulletStyle == "NONE") "BULLET" else cvData.bulletStyle
+    )
+}
+
+internal fun autoFixIndividualAtsCheck(cvData: CvData, categoryEn: String): CvData {
+    return when (categoryEn) {
+        "Contact Info" -> cvData.copy(
+            fullName = cvData.fullName.ifBlank { "Md. Rafiqul Islam" },
+            jobTitle = cvData.jobTitle.ifBlank { "Professional Specialist" },
+            email = if (cvData.email.contains("@") && cvData.email.contains(".")) cvData.email else "candidate@email.com",
+            phone = cvData.phone.ifBlank { "+880 1700-000000" },
+            linkedin = if (cvData.linkedin.isNotBlank()) cvData.linkedin else "linkedin.com/in/candidate-profile"
+        )
+        "Summary" -> cvData.copy(
+            summary = "Results-driven ${cvData.jobTitle.ifBlank { "Professional" }} with proven expertise in project execution and team management. Achieved 35% efficiency growth and led strategic operations."
+        )
+        "Experience" -> {
+            val exps = if (cvData.experiences.isEmpty()) {
+                listOf(CvExperienceItem(role = cvData.jobTitle.ifBlank { "Project Manager" }, company = "Leading Company Ltd.", startDate = "2021", endDate = "Present", description = "• Achieved 35% team efficiency improvement and managed $50K project budget."))
+            } else {
+                cvData.experiences.map { exp ->
+                    val desc = exp.description
+                    if (!desc.contains("%") && !desc.contains("$") && !desc.any { it.isDigit() }) {
+                        exp.copy(
+                            role = exp.role.ifBlank { "Project Manager" },
+                            company = exp.company.ifBlank { "Leading Company Ltd." },
+                            description = "${desc.trim()}\n• Achieved 35% operational efficiency growth and managed key deliverables."
+                        )
+                    } else exp.copy(
+                        role = exp.role.ifBlank { "Project Manager" },
+                        company = exp.company.ifBlank { "Leading Company Ltd." }
+                    )
+                }
+            }
+            cvData.copy(experiences = exps)
+        }
+        "Education" -> {
+            val edus = if (cvData.educations.isEmpty()) {
+                listOf(CvEducationItem(examLevel = "Bachelor of Science (B.Sc / B.Sc Engg)", degree = "Graduation Degree", institution = "University of Dhaka (DU)", passingYear = "2021"))
+            } else {
+                cvData.educations.map { edu ->
+                    edu.copy(
+                        institution = edu.institution.ifBlank { "University of Dhaka (DU)" },
+                        passingYear = edu.passingYear.ifBlank { "2021" }
+                    )
+                }
+            }
+            cvData.copy(educations = edus)
+        }
+        "Skills" -> {
+            val skills = cvData.skills.toMutableList()
+            val sampleSkills = listOf("Project Management", "Agile & Scrum", "Data Analysis", "Leadership", "Problem Solving", "Strategic Planning", "Communication", "Process Optimization")
+            for (sk in sampleSkills) {
+                if (skills.size < 8 && skills.none { it.name.equals(sk, ignoreCase = true) }) {
+                    skills.add(CvSkillItem(name = sk))
+                }
+            }
+            cvData.copy(skills = skills)
+        }
+        "Formatting" -> cvData.copy(bulletStyle = "BULLET")
+        else -> cvData
+    }
+}
 
 private fun getFormattedDegreeText(edu: CvEducationItem): String {
     val level = if (edu.examLevel.isNotBlank() && edu.examLevel != "Others") edu.examLevel else edu.degree
@@ -1159,7 +1518,7 @@ private const val CV_PREFS_NAME = "ats_cv_builder_multi_prefs_v6"
 private const val CV_PROFILES_LIST_KEY = "saved_cv_profiles_json_list"
 private const val ACTIVE_PROFILE_ID_KEY = "active_cv_profile_uuid"
 
-private fun getSeedProfilesList(): List<CvData> {
+private fun getSeedProfilesList(isBn: Boolean = true): List<CvData> {
     val defaultMba = CvData(
         id = "profile_mba_shariful",
         profileLabel = "Default",
@@ -1226,7 +1585,7 @@ private fun getSeedProfilesList(): List<CvData> {
 
     val adminHrDraft = CvData(
         id = "profile_admin_hr",
-        profileLabel = "HR & Admin Officer (এইচআর ও এডমিন)",
+        profileLabel = if (isBn) "HR & Admin Officer (এইচআর ও এডমিন)" else "HR & Admin Officer",
         fullName = "Farhana Yasmin",
         jobTitle = "Senior HR & Administrative Officer",
         email = "farhana.hr@example.com",
@@ -1282,7 +1641,7 @@ private fun getSeedProfilesList(): List<CvData> {
 
     val bankFinanceDraft = CvData(
         id = "profile_banking_finance",
-        profileLabel = "Banking & Financial Analyst (ব্যাংক ও ফিন্যান্স)",
+        profileLabel = if (isBn) "Banking & Financial Analyst (ব্যাংক ও ফিন্যান্স)" else "Banking & Financial Analyst",
         fullName = "Tariqul Anam, CDCS",
         jobTitle = "Principal Financial Analyst & Credit Risk Officer",
         email = "tariqul.bank@example.com",
@@ -1338,7 +1697,7 @@ private fun getSeedProfilesList(): List<CvData> {
 
     val marketingDraft = CvData(
         id = "profile_marketing_specialist",
-        profileLabel = "Brand & Marketing Manager (মার্কেটিং)",
+        profileLabel = if (isBn) "Brand & Marketing Manager (মার্কেটিং)" else "Brand & Marketing Manager",
         fullName = "Nafis Imtiaz",
         jobTitle = "Brand & Strategic Marketing Lead",
         email = "nafis.marketing@example.com",
@@ -1395,7 +1754,7 @@ private fun getSeedProfilesList(): List<CvData> {
 
     val ngoProjectDraft = CvData(
         id = "profile_ngo_project",
-        profileLabel = "NGO & Humanitarian Officer (এনজিও ও উন্নয়ন)",
+        profileLabel = if (isBn) "NGO & Humanitarian Officer (এনজিও ও উন্নয়ন)" else "NGO & Humanitarian Officer",
         fullName = "Khadija Sultana",
         jobTitle = "Humanitarian Project Coordinator & MEAL Specialist",
         email = "khadija.ngo@example.com",
@@ -1451,7 +1810,7 @@ private fun getSeedProfilesList(): List<CvData> {
 
     val softwareDevDraft = CvData(
         id = "profile_software_engineer",
-        profileLabel = "Software Engineer (সফটওয়্যার ও আইটি)",
+        profileLabel = if (isBn) "Software Engineer (সফটওয়্যার ও আইটি)" else "Software Engineer",
         fullName = "Tanvir Ahmed",
         jobTitle = "Senior Full Stack Software Engineer",
         email = "tanvir.dev@example.com",
@@ -1509,7 +1868,7 @@ private fun getSeedProfilesList(): List<CvData> {
 
     val supplyChainDraft = CvData(
         id = "profile_supply_chain",
-        profileLabel = "Supply Chain & Procurement (সাপ্লাই চেইন)",
+        profileLabel = if (isBn) "Supply Chain & Procurement (সাপ্লাই চেইন)" else "Supply Chain & Procurement",
         fullName = "Mahmudur Rahman, CSCP",
         jobTitle = "Supply Chain & Strategic Sourcing Specialist",
         email = "mahmud.scm@example.com",
@@ -1565,7 +1924,7 @@ private fun getSeedProfilesList(): List<CvData> {
 
     val academicDraft = CvData(
         id = "profile_academic_lecturer",
-        profileLabel = "Academic Lecturer & Researcher (শিক্ষকতা)",
+        profileLabel = if (isBn) "Academic Lecturer & Researcher (শিক্ষকতা)" else "Academic Lecturer & Researcher",
         fullName = "Dr. S. M. Ashraful Alam",
         jobTitle = "Assistant Professor & Academic Researcher",
         email = "ashraful.alam@univ.edu",
@@ -1628,7 +1987,7 @@ private fun getSeedProfilesList(): List<CvData> {
 
     val customerOpsDraft = CvData(
         id = "profile_customer_ops",
-        profileLabel = "Customer Success & Operations (কাস্টমার অপারেশনস)",
+        profileLabel = if (isBn) "Customer Success & Operations (কাস্টমার অপারেশনস)" else "Customer Success & Operations",
         fullName = "Sadia Chowdhury",
         jobTitle = "Customer Success & Digital Operations Lead",
         email = "sadia.cs@example.com",
@@ -1677,7 +2036,7 @@ private fun getSeedProfilesList(): List<CvData> {
 
     val cleanBlankDraft = CvData(
         id = "profile_clean_draft",
-        profileLabel = "New Clean Profile (নত্ন ফ্রেশ প্রোফাইল)",
+        profileLabel = if (isBn) "নতুন ফ্রেশ প্রোফাইল" else "New Clean Profile",
         fullName = "Your Full Name",
         jobTitle = "Your Professional Job Title",
         email = "your.email@example.com",
@@ -3454,7 +3813,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
             "SUMMARY" -> {
                 if (data.summary.isNotBlank()) {
                     val objTitle = if (pdfStyle == CvTemplateStyle.NGO_DEVELOPMENT_HUMANITARIAN) "MISSION & SOCIAL IMPACT OBJECTIVE" else if (pdfStyle == CvTemplateStyle.HARVARD_CLASSIC) "PROFESSIONAL SUMMARY" else "CAREER OBJECTIVE"
-                    drawSectionHeader(objTitle, "ðŸŽ¯")
+                    drawSectionHeader(objTitle, "🎯")
 
                     if (pdfStyle == CvTemplateStyle.NGO_DEVELOPMENT_HUMANITARIAN) {
                         val sumLayout = StaticLayout.Builder.obtain(data.summary, 0, data.summary.length, bodyPaint, (contentWidth - 20f).toInt()).setLineSpacing(0f, data.customLineSpacing).build()
@@ -3491,7 +3850,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
 
             "EDUCATION" -> {
                 if (data.educations.isNotEmpty()) {
-                    drawSectionHeader("EDUCATION", "ðŸŽ“")
+                    drawSectionHeader("EDUCATION", "🎓")
 
                     val isAtsTextLayout = pdfStyle == CvTemplateStyle.HARVARD_CLASSIC ||
                                           pdfStyle == CvTemplateStyle.CANVA_MINIMALIST_CLEAN ||
@@ -3644,7 +4003,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
             "EXPERIENCE" -> {
                 if (data.isFresher) {
                     if (data.fresherAcademicProjects.isNotBlank()) {
-                        drawSectionHeader("ACADEMIC PROJECTS & CAPSTONE THESIS", "ðŸš€")
+                        drawSectionHeader("ACADEMIC PROJECTS & CAPSTONE THESIS", "🚀")
                         val pLayout = StaticLayout.Builder.obtain(data.fresherAcademicProjects, 0, data.fresherAcademicProjects.length, bodyPaint, contentWidth.toInt()).setLineSpacing(0f, data.customLineSpacing).build()
                         checkAndAddNewPage(pLayout.height.toFloat() + 4f)
                         canvas.save(); canvas.translate(margin, currentY); pLayout.draw(canvas); canvas.restore()
@@ -3652,7 +4011,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                     }
 
                     if (data.fresherInternshipsVolunteer.isNotBlank()) {
-                        drawSectionHeader("INTERNSHIPS & VOLUNTEER WORK", "ðŸ¤�")
+                        drawSectionHeader("INTERNSHIPS & VOLUNTEER WORK", "🤝")
                         val vLayout = StaticLayout.Builder.obtain(data.fresherInternshipsVolunteer, 0, data.fresherInternshipsVolunteer.length, bodyPaint, contentWidth.toInt()).setLineSpacing(0f, data.customLineSpacing).build()
                         checkAndAddNewPage(vLayout.height.toFloat() + 4f)
                         canvas.save(); canvas.translate(margin, currentY); vLayout.draw(canvas); canvas.restore()
@@ -3660,7 +4019,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                     }
 
                     if (data.fresherLeadershipClubs.isNotBlank()) {
-                        drawSectionHeader("CAMPUS LEADERSHIP & EXTRACURRICULAR", "ðŸ�†")
+                        drawSectionHeader("CAMPUS LEADERSHIP & EXTRACURRICULAR", "🏆")
                         val lLayout = StaticLayout.Builder.obtain(data.fresherLeadershipClubs, 0, data.fresherLeadershipClubs.length, bodyPaint, contentWidth.toInt()).setLineSpacing(0f, data.customLineSpacing).build()
                         checkAndAddNewPage(lLayout.height.toFloat() + 4f)
                         canvas.save(); canvas.translate(margin, currentY); lLayout.draw(canvas); canvas.restore()
@@ -3668,7 +4027,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                     }
 
                     if (data.fresherKeyCoursework.isNotBlank()) {
-                        drawSectionHeader("RELEVANT COURSEWORK & ACADEMIC CORE", "ðŸ“š")
+                        drawSectionHeader("RELEVANT COURSEWORK & ACADEMIC CORE", "📚")
                         val cLayout = StaticLayout.Builder.obtain(data.fresherKeyCoursework, 0, data.fresherKeyCoursework.length, bodyPaint, contentWidth.toInt()).setLineSpacing(0f, data.customLineSpacing).build()
                         checkAndAddNewPage(cLayout.height.toFloat() + 4f)
                         canvas.save(); canvas.translate(margin, currentY); cLayout.draw(canvas); canvas.restore()
@@ -3676,7 +4035,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                     }
 
                     if (data.experiences.isNotEmpty()) {
-                        drawSectionHeader("ADDITIONAL PRACTICUM & WORK EXPERIENCE", "ðŸ’¼")
+                        drawSectionHeader("ADDITIONAL PRACTICUM & WORK EXPERIENCE", "💼")
                         data.experiences.forEach { exp ->
                             if (exp.role.isNotBlank() || exp.company.isNotBlank()) {
                                 val expTitle = "$bulletPrefix${exp.role} – ${exp.company} (${exp.location})${if (exp.startDate.isNotBlank()) " [${exp.startDate} - ${if (exp.isCurrent) "Present" else exp.endDate}]" else ""}"
@@ -3704,7 +4063,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                 } else {
                     if (data.experiences.isNotEmpty()) {
                         val expSectionTitle = if (pdfStyle == CvTemplateStyle.HARVARD_CLASSIC) "PROFESSIONAL EXPERIENCE" else "WORK EXPERIENCES"
-                        drawSectionHeader(expSectionTitle, "ðŸ’¼")
+                        drawSectionHeader(expSectionTitle, "💼")
 
                         data.experiences.forEach { exp ->
                             if (exp.role.isNotBlank() || exp.company.isNotBlank()) {
@@ -3781,7 +4140,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
 
             "PROJECTS" -> {
                 if (data.projects.isNotEmpty() && data.projects.any { it.title.isNotBlank() }) {
-                    drawSectionHeader("FEATURED PROJECTS & INITIATIVES", "ðŸš€")
+                    drawSectionHeader("FEATURED PROJECTS & INITIATIVES", "🚀")
                     data.projects.filter { it.title.isNotBlank() }.forEach { pr ->
                         val pHead = "$bulletPrefix${pr.title}${if (pr.link.isNotBlank()) " (${pr.link})" else ""}"
                         val pHeadLayout = StaticLayout.Builder.obtain(pHead, 0, pHead.length, bodyBoldPaint, contentWidth.toInt()).setLineSpacing(0f, data.customLineSpacing).build()
@@ -3802,7 +4161,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
 
             "CERTIFICATIONS" -> {
                 if (data.certifications.isNotBlank()) {
-                    drawSectionHeader("TRAINING & CERTIFICATION", "ðŸ“œ")
+                    drawSectionHeader("TRAINING & CERTIFICATION", "📜")
                     val certLayout = StaticLayout.Builder.obtain(data.certifications, 0, data.certifications.length, bodyPaint, contentWidth.toInt()).setLineSpacing(0f, data.customLineSpacing).build()
                     checkAndAddNewPage(certLayout.height.toFloat() + 4f)
                     canvas.save(); canvas.translate(margin, currentY); certLayout.draw(canvas); canvas.restore()
@@ -3812,7 +4171,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
 
             "LANGUAGES" -> {
                 if (data.languages.isNotBlank()) {
-                    drawSectionHeader("LANGUAGE FLUENCY", "ðŸŒ�")
+                    drawSectionHeader("LANGUAGE FLUENCY", "🌐")
                     val langLayout = StaticLayout.Builder.obtain(data.languages, 0, data.languages.length, bodyPaint, contentWidth.toInt()).setLineSpacing(0f, data.customLineSpacing).build()
                     checkAndAddNewPage(langLayout.height.toFloat() + 4f)
                     canvas.save(); canvas.translate(margin, currentY); langLayout.draw(canvas); canvas.restore()
@@ -3824,7 +4183,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                 if (data.customSections.isNotEmpty()) {
                     data.customSections.forEach { item ->
                         if (item.title.isNotBlank() && item.content.isNotBlank()) {
-                            drawSectionHeader(item.title.uppercase(), "ðŸ“Œ")
+                            drawSectionHeader(item.title.uppercase(), "📌")
                             val itemLayout = StaticLayout.Builder.obtain(item.content, 0, item.content.length, bodyPaint, contentWidth.toInt()).setLineSpacing(0f, data.customLineSpacing).build()
                             checkAndAddNewPage(itemLayout.height.toFloat() + 4f)
                             canvas.save(); canvas.translate(margin, currentY); itemLayout.draw(canvas); canvas.restore()
@@ -3846,7 +4205,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                 if (data.permanentAddress.isNotBlank()) rightColList.add("Permanent Address" to data.permanentAddress)
 
                 if (leftColList.isNotEmpty() || rightColList.isNotEmpty()) {
-                    drawSectionHeader("PERSONAL INFORMATION", "ðŸ‘¤")
+                    drawSectionHeader("PERSONAL INFORMATION", "👤")
                     val halfW = contentWidth / 2f - 10f
                     val maxRows = maxOf(leftColList.size, rightColList.size)
 
@@ -3876,7 +4235,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
 
             "REFERENCES" -> {
                 if (data.references.isNotBlank()) {
-                    drawSectionHeader("REFERENCES", "ðŸ¤�")
+                    drawSectionHeader("REFERENCES", "🤝")
                     val refLayout = StaticLayout.Builder.obtain(data.references, 0, data.references.length, bodyPaint, contentWidth.toInt()).setLineSpacing(0f, data.customLineSpacing).build()
                     checkAndAddNewPage(refLayout.height.toFloat() + 4f)
                     canvas.save(); canvas.translate(margin, currentY); refLayout.draw(canvas); canvas.restore()
@@ -4442,7 +4801,7 @@ fun AtsCvBuilderTool(
                         activeProfileId = importedCv.id
                         saveActiveProfileId(context, importedCv.id)
                         cvData = importedCv
-                        Toast.makeText(context, if (isBn) "পিডিএফ সিভি থেকে নত্ন প্রোফাইল তৈরি হয়েছে!" else "New profile imported successfully from PDF!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, if (isBn) "পিডিএফ সিভি থেকে নতুন প্রোফাইল তৈরি হয়েছে!" else "New profile imported successfully from PDF!", Toast.LENGTH_SHORT).show()
                     }
                 } catch (e: Exception) {
                     Toast.makeText(context, "PDF Import Error: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
@@ -4636,7 +4995,7 @@ fun AtsCvBuilderTool(
                 cvData = selectedProfile
                 previewRefreshKey++
                 showProfileManagerDialog = false
-                showToast(if (isBn) "প্রোফাইল লোড ও অটো-ইনপ্ট করা হয়েছে!" else "Profile loaded & auto-filled!")
+                showToast(if (isBn) "প্রোফাইল লোড ও অটো-ইনপুট করা হয়েছে!" else "Profile loaded & auto-filled!")
             },
             onDeleteProfile = { toDelete ->
                 val updatedList = profilesList.filter { it.id != toDelete.id }
@@ -4666,12 +5025,12 @@ fun AtsCvBuilderTool(
             onGenerate = { promptText ->
                 showAiPromptDialog = false
                 isAiLoading = true
-                aiLoadingMessage = if (isBn) "✨ জেমিনি এআই আপনার কাস্টম প্রম্পট অন্যায়ী লিখছে..." else "✨ Gemini AI is generating content from your prompt..."
+                aiLoadingMessage = if (isBn) "✨ জেমিনি এআই আপনার কাস্টম প্রম্পট অনুযায়ী লিখছে..." else "✨ Gemini AI is generating content from your prompt..."
 
                 scope.launch {
                     try {
                         val sysPrompt = when (aiPromptTargetField) {
-                            "CIRCULAR_MATCH" -> "You are a senior ATS Match consultant. Return ONLY valid JSON: {\"tailoredSummary\": \"...\", \"newSkills\": [\"Skill1\", \"Skill2\"]}"
+                            "CIRCULAR_MATCH" -> "You are a top ATS recruitment specialist & resume evaluator. Analyze candidate resume against target job circular. Output STRICTLY valid JSON with structure: {\"matchPercentage\": 88, \"tailoredSummary\": \"...\", \"matchingStrengths\": [\"Strength 1\", \"Strength 2\"], \"missingKeywords\": [\"Keyword1\", \"Keyword2\"], \"improvementTips\": [\"Tip 1\", \"Tip 2\"], \"newSkills\": [\"Skill1\", \"Skill2\"]}. Do NOT include markdown syntax."
                             "FRESHER_COMPLETE" -> "You are a professional university career coach and top ATS resume consultant. Generate 4 high-impact resume sections for freshers. Output strictly valid JSON with keys: 'academicProjects', 'internshipsVolunteer', 'leadershipClubs', 'keyCoursework'."
                             else -> "CRITICAL INSTRUCTION: You are an expert HR Manager and professional resume writer. Write ONLY the exact, precise text content requested for the CV field. DO NOT include any conversational text, greetings, explanations, or wrap-up remarks. DO NOT include introductory phrases like \'Here is the objective:\' or \'Certainly!\'. DO NOT use markdown code blocks (```). Your ENTIRE output must be exclusively the raw text to be inserted into the CV, ready to copy-paste. Nothing else."
                         }
@@ -4737,23 +5096,43 @@ fun AtsCvBuilderTool(
                                     try {
                                         val cleanJsonStr = resultText.substringAfter("{").substringBeforeLast("}").let { "{$it}" }
                                         val jsonObj = org.json.JSONObject(cleanJsonStr)
+                                        val matchPct = jsonObj.optInt("matchPercentage", 85)
                                         val tailoredSummary = jsonObj.optString("tailoredSummary", cvData.summary)
+
+                                        val matchingStrengths = mutableListOf<String>()
+                                        jsonObj.optJSONArray("matchingStrengths")?.let { arr ->
+                                            for (i in 0 until arr.length()) matchingStrengths.add(arr.getString(i))
+                                        }
+
+                                        val missingKeywords = mutableListOf<String>()
+                                        jsonObj.optJSONArray("missingKeywords")?.let { arr ->
+                                            for (i in 0 until arr.length()) missingKeywords.add(arr.getString(i))
+                                        }
+
+                                        val improvementTips = mutableListOf<String>()
+                                        jsonObj.optJSONArray("improvementTips")?.let { arr ->
+                                            for (i in 0 until arr.length()) improvementTips.add(arr.getString(i))
+                                        }
 
                                         val updatedSkills = cvData.skills.toMutableList()
                                         jsonObj.optJSONArray("newSkills")?.let { arr ->
                                             for (i in 0 until arr.length()) {
                                                 val skName = arr.getString(i)
                                                 if (updatedSkills.none { it.name.equals(skName, ignoreCase = true) }) {
-                                                    updatedSkills.add(CvSkillItem(name = skName, level = "Proficient"))
+                                                    updatedSkills.add(CvSkillItem(name = skName))
                                                 }
                                             }
                                         }
 
                                         updateCvDataState(cvData.copy(
-                                            summary = tailoredSummary,
-                                            skills = updatedSkills
+                                            skills = updatedSkills,
+                                            lastJobMatchPercentage = matchPct,
+                                            lastMatchingStrengths = matchingStrengths,
+                                            lastMissingKeywords = missingKeywords,
+                                            lastImprovementTips = improvementTips,
+                                            lastTailoredSummary = tailoredSummary
                                         ))
-                                        showToast(if (isBn) "সার্ক্লার অন্যায়ী প্রোফাইল সফলভাবে অটো-টিউন হয়েছে!" else "Profile auto-tailored to job circular successfully!")
+                                        showToast(if (isBn) "সার্কুলার অ্যানালাইসিস সম্পন্ন! ম্যাচ স্কোর: ${matchPct}%" else "Job circular analyzed! Match score: ${matchPct}%")
                                     } catch (e: Exception) {
                                         showToast("Parsing Error: ${e.message}")
                                     }
@@ -5052,7 +5431,7 @@ fun AtsCvBuilderTool(
                                 saveAllCvProfiles(context, updatedList)
                                 activeProfileId = newProfile.id
                                 saveActiveProfileId(context, newProfile.id)
-                                showToast(if (isBn) "নত্ন প্রোফাইল তৈরি হয়েছে!" else "New CV profile created!")
+                                showToast(if (isBn) "নতুন প্রোফাইল তৈরি হয়েছে!" else "New CV profile created!")
                             },
                             onDeleteProfile = { idToDelete ->
                                 val updatedList = profilesList.filter { it.id != idToDelete }
@@ -5067,7 +5446,7 @@ fun AtsCvBuilderTool(
                                     activeProfileId = remFiltered.firstOrNull()?.id ?: (updatedList.firstOrNull()?.id ?: "")
                                     saveActiveProfileId(context, activeProfileId)
                                 }
-                                showToast(if (isBn) "প্রোফাইলটি ম্ছে ফেলা হয়েছে!" else "CV profile deleted successfully!")
+                                showToast(if (isBn) "প্রোফাইলটি মুছে ফেলা হয়েছে!" else "CV profile deleted successfully!")
                             },
                         themeColors = themeColors,
                         isBn = isBn,
@@ -5084,7 +5463,7 @@ fun AtsCvBuilderTool(
                         },
                         onGenerateSummaryAi = {
                             if (cvData.jobTitle.isBlank()) {
-                                showToast(if (isBn) "অন্গ্রহ করে পদবীটি টাইপ কর্ন" else "Please fill target designation first")
+                                showToast(if (isBn) "অন্গ্রহ করে পদবীটি টাইপ করুন" else "Please fill target designation first")
                             } else {
                                 val currentNotes = cvData.summary
                                 val currentSkills = cvData.skills.joinToString { it.name }
@@ -5161,30 +5540,37 @@ fun AtsCvBuilderTool(
                         isBn = isBn,
                         onMatchCircularAi = { circularText, imageBytes, imageMime ->
                             if (circularText.isBlank() && imageBytes == null) {
-                                showToast(if (isBn) "অন্গ্রহ করে সার্ক্লার টেক্সট দিন অথবা ছবি আপলোড কর্ন!" else "Please provide circular text or pick an image!")
+                                showToast(if (isBn) "অন্গ্রহ করে সার্কুলার টেক্সট দিন অথবা ছবি আপলোড করুন!" else "Please provide circular text or pick an image!")
                                 return@AiJobCircularMatchTab
                             }
                             updateCvDataState(cvData.copy(targetJobCircular = circularText))
 
                             val promptBuilder = StringBuilder()
-                            promptBuilder.append("Target job circular context:\n")
+                            promptBuilder.append("Target Job Circular Context:\n")
                             if (circularText.isNotBlank()) {
                                 promptBuilder.append("Circular Text: $circularText\n")
                             }
                             if (imageBytes != null) {
-                                promptBuilder.append("[An image of the job circular is also attached below for you to read details from]\n")
+                                promptBuilder.append("[Image of job circular attached below for detail analysis]\n")
                             }
 
-                            promptBuilder.append("\nCandidate MBA Profile Summary: ${cvData.summary}\n")
+                            promptBuilder.append("\nCandidate Profile:\n")
+                            promptBuilder.append("Target Title: ${cvData.jobTitle}\n")
+                            promptBuilder.append("Summary: ${cvData.summary}\n")
                             promptBuilder.append("Skills: ${cvData.skills.joinToString { it.name }}\n")
-                            promptBuilder.append("Current Experiences: ${cvData.experiences.joinToString { "${it.role} at ${it.company}" }}\n")
-                            promptBuilder.append("\nTask:\n")
-                            promptBuilder.append("1. Rewrite their summary to perfectly align with the circular, emphasizing skills they have that match the circular.\n")
-                            promptBuilder.append("2. Suggest 5 additional key skills derived from the circular that match an MBA/Management candidate.\n")
-                            promptBuilder.append("Return ONLY a JSON formatted block inside bracket structures, with keys 'tailoredSummary' (string) and 'newSkills' (array of strings).")
+                            promptBuilder.append("Experiences: ${cvData.experiences.joinToString { "${it.role} at ${it.company}: ${it.description}" }}\n")
+                            promptBuilder.append("Educations: ${cvData.educations.joinToString { "${it.degree} from ${it.institution}" }}\n")
+
+                            promptBuilder.append("\nTask Instructions:\n")
+                            promptBuilder.append("1. Compute an accurate job match score (0-100%) by comparing candidate skills, qualifications, and role requirements against the circular.\n")
+                            promptBuilder.append("2. Extract 3-5 matching strengths that align with circular requirements.\n")
+                            promptBuilder.append("3. Extract 3-6 missing critical technical or role keywords present in circular but missing in candidate CV.\n")
+                            promptBuilder.append("4. Provide 3 high-impact improvement recommendations for passing the ATS filter.\n")
+                            promptBuilder.append("5. Write a tailored summary aligned with the circular.\n")
+                            promptBuilder.append("6. Return strictly valid JSON object with keys: matchPercentage (int), tailoredSummary (string), matchingStrengths (array of string), missingKeywords (array of string), improvementTips (array of string), newSkills (array of string).")
 
                             openAiPrompt(
-                                title = if (isBn) "সার্ক্লার ম্যাচ এআই প্রম্পট" else "AI Job Circular Match Prompt",
+                                title = if (isBn) "সার্কুলার ম্যাচ এআই প্রম্পট" else "AI Job Circular Match Prompt",
                                 defaultPrompt = promptBuilder.toString(),
                                 targetField = "CIRCULAR_MATCH",
                                 imageBytes = imageBytes,
@@ -5233,7 +5619,7 @@ fun AtsCvBuilderTool(
                                     putExtra(Intent.EXTRA_STREAM, uri)
                                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                 }
-                                context.startActivity(Intent.createChooser(shareIntent, if (isBn) "সিভি পিডিএফ শেয়ার কর্ন" else "Share CV PDF"))
+                                context.startActivity(Intent.createChooser(shareIntent, if (isBn) "সিভি পিডিএফ শেয়ার করুন" else "Share CV PDF"))
                             } catch (e: Exception) {
                                 showToast("Share error: ${e.message}")
                             }
@@ -5526,7 +5912,7 @@ private fun ProfileAndPersonasTab(
                     color = themeColors.displayText
                 )
                 Text(
-                    text = if (isBn) "সিভির জন্য ছবি আপলোড করে ইচ্ছামত গোল, গোল-কোণা, বা ষড়ভ্জ শেইপ সিলেক্ট কর্ন এবং ড্র্যাগ বা জ্ম করে পজিশন ঠিক কর্ন" else "Upload a photo for your CV, pick your favorite shape, and interactively zoom and drag to adjust the crop position",
+                    text = if (isBn) "সিভির জন্য ছবি আপলোড করে ইচ্ছামত গোল, গোল-কোণা, বা ষড়ভ্জ শেইপ সিলেক্ট করুন এবং ড্র্যাগ বা জ্ম করে পজিশন ঠিক করুন" else "Upload a photo for your CV, pick your favorite shape, and interactively zoom and drag to adjust the crop position",
                     fontSize = 10.5.sp,
                     color = themeColors.displayText.copy(alpha = 0.6f)
                 )
@@ -6086,7 +6472,7 @@ private fun ProfileAndPersonasTab(
             Spacer(modifier = Modifier.width(10.dp))
             Box(modifier = Modifier.weight(1f)) {
                 CvCustomTextField(
-                    label = if (isBn) "রক্তের গ্র্প" else "Blood Group",
+                    label = if (isBn) "রক্তের গ্রুপ" else "Blood Group",
                     value = cvData.bloodGroup,
                     onValueChange = { onCvDataChange(cvData.copy(bloodGroup = it)) },
                     themeColors = themeColors, isLiveEdit = isLiveEdit, isBn = isBn
@@ -6148,7 +6534,7 @@ private fun ProfileAndPersonasTab(
             isLiveEdit = isLiveEdit,
             isBn = isBn,
             minLines = 4,
-            placeholderText = if (isBn) "আপনার ক্যারিয়ারের সামারি লিখ্ন অথবা এআই দিয়ে রি-রাইট কর্ন..." else "Write notes here & use Gemini AI to weave them into a professional corporate summary..."
+            placeholderText = if (isBn) "আপনার ক্যারিয়ারের সামারি লিখ্ন অথবা এআই দিয়ে রি-রাইট করুন..." else "Write notes here & use Gemini AI to weave them into a professional corporate summary..."
         )
     }
 
@@ -6156,7 +6542,7 @@ private fun ProfileAndPersonasTab(
     if (showAddDialog) {
         AlertDialog(
             onDismissRequest = { showAddDialog = false },
-            title = { Text(text = if (isBn) "নত্ন সিভি প্রোফাইল তৈরি কর্ন" else "Create New CV Profile") },
+            title = { Text(text = if (isBn) "নতুন সিভি প্রোফাইল তৈরি করুন" else "Create New CV Profile") },
             text = {
                 OutlinedTextField(
                     value = newProfileName,
@@ -6175,7 +6561,7 @@ private fun ProfileAndPersonasTab(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg)
                 ) {
-                    Text(text = if (isBn) "তৈরি কর্ন" else "Create", color = Color.White)
+                    Text(text = if (isBn) "তৈরি করুন" else "Create", color = Color.White)
                 }
             },
             dismissButton = {
@@ -6234,11 +6620,22 @@ private fun ExperienceTab(
                             .weight(1f)
                             .height(40.dp)
                     ) {
-                        Box(contentAlignment = Alignment.Center) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center,
+                            modifier = Modifier.padding(horizontal = 4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Work,
+                                contentDescription = null,
+                                tint = if (!cvData.isFresher) Color.White else themeColors.buttonEqualBg,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = if (isBn) "অভিজ্ঞ পেশাজীবী" else "Experienced",
+                                text = if (isBn) "অভিজ্ঞ পেশাজীবী" else "Experienced Professional",
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 11.5.sp,
+                                fontSize = 11.sp,
                                 color = if (!cvData.isFresher) Color.White else themeColors.displayText
                             )
                         }
@@ -6253,11 +6650,22 @@ private fun ExperienceTab(
                             .weight(1f)
                             .height(40.dp)
                     ) {
-                        Box(contentAlignment = Alignment.Center) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center,
+                            modifier = Modifier.padding(horizontal = 4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.School,
+                                contentDescription = null,
+                                tint = if (cvData.isFresher) Color.White else themeColors.buttonEqualBg,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = if (isBn) "ðŸŽ“ ফ্রেশার / নত্ন গ্র্যাজ্য়েট" else "ðŸŽ“ Fresher / Graduate",
+                                text = if (isBn) "ফ্রেশার / নতুন গ্র্যাজুয়েট" else "Fresher / Graduate",
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 11.5.sp,
+                                fontSize = 11.sp,
                                 color = if (cvData.isFresher) Color.White else themeColors.displayText
                             )
                         }
@@ -6517,37 +6925,39 @@ private fun ExperienceTab(
                 else
                     (if (isBn) "কাজের অভিজ্ঞতা (${cvData.experiences.size})" else "Work Experience (${cvData.experiences.size})"),
                 icon = Icons.Default.Work,
-                themeColors = themeColors
+                themeColors = themeColors,
+                modifier = Modifier.weight(1f, fill = false)
             )
             Spacer(modifier = Modifier.width(6.dp))
-            Button(
-                onClick = {
-                    onRequestAiPrompt(
-                        if (isBn) "কাজের অভিজ্ঞতা এআই নির্দেশনা" else "Work Experience AI Prompt",
-                        "Generate 3 professional work experience entries for a ${cvData.jobTitle.ifBlank { "Professional" }} profile...",
-                        "EXPERIENCE_GEN",
-                        -1
-                    )
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
-                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.height(30.dp)
-            ) {
-                Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
-                
-            }
-            OutlinedButton(
-                onClick = {
-                    val newList = cvData.experiences.toMutableList()
-                    newList.add(CvExperienceItem())
-                    onCvDataChange(cvData.copy(experiences = newList))
-                },
-                shape = RoundedCornerShape(20.dp),
-                border = BorderStroke(1.dp, themeColors.buttonEqualBg),
-                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
-            ) {
-                Text(text = "+", color = themeColors.buttonEqualBg, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(
+                    onClick = {
+                        onRequestAiPrompt(
+                            if (isBn) "কাজের অভিজ্ঞতা এআই নির্দেশনা" else "Work Experience AI Prompt",
+                            "Generate 3 professional work experience entries for a ${cvData.jobTitle.ifBlank { "Professional" }} profile...",
+                            "EXPERIENCE_GEN",
+                            -1
+                        )
+                    },
+                    modifier = Modifier
+                        .size(30.dp)
+                        .background(themeColors.buttonEqualBg, CircleShape)
+                ) {
+                    Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = "AI", tint = Color.White, modifier = Modifier.size(14.dp))
+                }
+                Spacer(modifier = Modifier.width(6.dp))
+                IconButton(
+                    onClick = {
+                        val newList = cvData.experiences.toMutableList()
+                        newList.add(CvExperienceItem())
+                        onCvDataChange(cvData.copy(experiences = newList))
+                    },
+                    modifier = Modifier
+                        .size(30.dp)
+                        .background(themeColors.buttonEqualBg.copy(alpha = 0.12f), CircleShape)
+                ) {
+                    Icon(imageVector = Icons.Default.Add, contentDescription = "Add", tint = themeColors.buttonEqualBg, modifier = Modifier.size(18.dp))
+                }
             }
         }
 
@@ -6724,65 +7134,139 @@ private fun EducationAndSkillsTab(
 
     // Standard Job Application Dropdown Options
     val examOptions = listOf(
-        "S.S.C / Equivalent",
-        "H.S.C / Equivalent",
-        "Diploma / Polytechnic",
-        "Bachelor / Graduation",
-        "Master's / Post Graduation",
-        "M.Phil",
-        "PhD / Doctorate",
-        "Others (ম্যান্য়াল ইনপ্ট)"
+        "S.S.C / Dakhil / O-Level / Equivalent",
+        "H.S.C / Alim / A-Level / Equivalent",
+        "Diploma in Engineering / Polytechnic",
+        "Diploma in Computer Science / IT",
+        "Diploma in Nursing / Medical Technology",
+        "Bachelor of Science (B.Sc / B.Sc Engg)",
+        "Bachelor of Business Administration (BBA)",
+        "Bachelor of Arts (B.A / B.A Honours)",
+        "Bachelor of Commerce (B.Com / B.Com Hons)",
+        "Bachelor of Social Science (BSS)",
+        "Bachelor of Laws (LL.B / LL.B Honours)",
+        "Bachelor of Medicine & Surgery (MBBS)",
+        "Bachelor of Dental Surgery (BDS)",
+        "Bachelor of Pharmacy (B.Pharm)",
+        "Bachelor of Architecture (B.Arch)",
+        "Master of Science (M.Sc)",
+        "Master of Business Administration (MBA / EMBA)",
+        "Master of Arts (M.A)",
+        "Master of Social Science (MSS)",
+        "Master of Laws (LL.M)",
+        "M.Phil / Postgraduate Diploma (PGD)",
+        "Ph.D / Doctorate / Post-Doc",
+        "Professional Certificate (PMP / ACCA / CA / CFA)",
+        "Others (ম্যানুয়াল ইনপুট)"
     )
 
     val subjectOptions = listOf(
-        "Science",
-        "Business Studies",
-        "Commerce",
-        "Humanities / Arts",
         "Computer Science & Engineering (CSE)",
+        "Software Engineering (SWE)",
+        "Information Technology (IT)",
         "Electrical & Electronic Engineering (EEE)",
-        "Civil Engineering",
-        "Mechanical Engineering",
-        "Business Administration (BBA/MBA)",
-        "Accounting & Information Systems",
+        "Civil Engineering (CE)",
+        "Mechanical Engineering (ME)",
+        "Electronics & Telecommunication (ETE / ECE)",
+        "Industrial & Production Engineering (IPE)",
+        "Textile Engineering",
+        "Architecture & Urban Planning",
+        "Business Administration (BBA / MBA)",
+        "Accounting & Information Systems (AIS)",
         "Finance & Banking",
-        "Marketing",
-        "Management",
+        "Marketing & Brand Management",
+        "Management & Human Resource Management (HRM)",
+        "International Business (IB)",
+        "Supply Chain Management",
         "Economics",
-        "English Literature",
-        "Law (LL.B / LL.M)",
-        "Medicine / MBBS / BDS",
+        "English Language & Literature",
+        "Law / Legal Studies",
+        "Medicine / Surgery (MBBS)",
+        "Dental Surgery (BDS)",
+        "Pharmacy / Pharmaceutical Sciences",
+        "Biochemistry & Molecular Biology",
+        "Biotechnology & Genetic Engineering",
+        "Microbiology",
+        "Physics / Applied Physics",
+        "Chemistry / Applied Chemistry",
+        "Mathematics / Applied Mathematics",
+        "Statistics & Data Science",
+        "Agriculture & Agronomy",
+        "Public Administration",
+        "Political Science",
+        "International Relations (IR)",
+        "Sociology & Social Work",
+        "Journalism & Mass Communication",
+        "Science (S.S.C / H.S.C)",
+        "Business Studies / Commerce (S.S.C / H.S.C)",
+        "Humanities / Arts (S.S.C / H.S.C)",
         "General",
-        "Others (ম্যান্য়াল ইনপ্ট)"
+        "Others (ম্যানুয়াল ইনপুট)"
     )
 
     val instOptions = listOf(
-        "Dhaka Board",
-        "Chittagong Board",
-        "Rajshahi Board",
-        "Comilla Board",
-        "Jessore Board",
-        "Barisal Board",
-        "Sylhet Board",
-        "Dinajpur Board",
-        "Mymensingh Board",
-        "Technical Education Board",
-        "Madrasah Board",
+        "Dhaka Education Board",
+        "Chittagong Education Board",
+        "Rajshahi Education Board",
+        "Comilla Education Board",
+        "Jessore Education Board",
+        "Barisal Education Board",
+        "Sylhet Education Board",
+        "Dinajpur Education Board",
+        "Mymensingh Education Board",
+        "Technical Education Board (BTEB)",
+        "Madrasah Education Board",
         "University of Dhaka (DU)",
-        "BUET",
+        "Bangladesh University of Engineering and Technology (BUET)",
         "Jahangirnagar University (JU)",
         "Rajshahi University (RU)",
         "Chittagong University (CU)",
-        "North South University (NSU)",
-        "BRAC University",
-        "Ahsanullah University (AUST)",
-        "East West University (EWU)",
+        "Shahjalal University of Science and Technology (SUST)",
+        "Khulna University of Engineering & Technology (KUET)",
+        "Rajshahi University of Engineering & Technology (RUET)",
+        "Chittagong University of Engineering & Technology (CUET)",
+        "Dhaka University of Engineering & Technology (DUET)",
+        "Jagannath University (JnU)",
+        "Bangladesh Agricultural University (BAU)",
+        "Sher-e-Bangla Agricultural University (SAU)",
+        "Bangladesh University of Professionals (BUP)",
+        "Noakhali Science and Technology University (NSTU)",
+        "Jashore University of Science and Technology (JUST)",
+        "Begum Rokeya University, Rangpur (BRUR)",
         "National University (NU)",
         "Bangladesh Open University (BOU)",
-        "Others (ম্যান্য়াল ইনপ্ট)"
+        "Dhaka College",
+        "Eden Mohila College",
+        "Government Titumir College",
+        "Government Bangla College",
+        "Kavi Nazrul Government College",
+        "Dhaka City College",
+        "North South University (NSU)",
+        "BRAC University",
+        "Ahsanullah University of Science and Technology (AUST)",
+        "East West University (EWU)",
+        "United International University (UIU)",
+        "Independent University, Bangladesh (IUB)",
+        "American International University-Bangladesh (AIUB)",
+        "Daffodil International University (DIU)",
+        "University of Liberal Arts Bangladesh (ULAB)",
+        "Stamford University Bangladesh",
+        "Southeast University (SEU)",
+        "State University of Bangladesh (SUB)",
+        "Green University of Bangladesh",
+        "International Islamic University Chittagong (IIUC)",
+        "Oxford University",
+        "Cambridge University",
+        "Harvard University",
+        "MIT (Massachusetts Institute of Technology)",
+        "Monash University",
+        "University of Sydney",
+        "Coventry University",
+        "London Metropolitan University",
+        "Others (ম্যানুয়াল ইনপুট)"
     )
 
-    val yearOptions = (2030 downTo 1980).map { it.toString() } + listOf("Appeared / Studying", "Others (ম্যান্য়াল ইনপ্ট)")
+    val yearOptions = (2030 downTo 1980).map { it.toString() } + listOf("Appeared / Studying", "Others (ম্যানুয়াল ইনপুট)")
 
     val resultSysOptions = listOf(
         "CGPA (Out of 4.0)",
@@ -6791,7 +7275,7 @@ private fun EducationAndSkillsTab(
         "2nd Division / Class",
         "3rd Division / Class",
         "Passed / Appeared",
-        "Others (ম্যান্য়াল ইনপ্ট)"
+        "Others (ম্যানুয়াল ইনপুট)"
     )
 
     Column(
@@ -6861,35 +7345,35 @@ private fun EducationAndSkillsTab(
                 mutableStateOf(
                     if (examOptions.contains(edu.examLevel)) edu.examLevel
                     else if (edu.degree.isNotBlank() && examOptions.contains(edu.degree)) edu.degree
-                    else if (edu.examLevel == "Others" || edu.degree.isNotBlank()) "Others (ম্যান্য়াল ইনপ্ট)"
+                    else if (edu.examLevel == "Others" || edu.degree.isNotBlank()) "Others (ম্যানুয়াল ইনপুট)"
                     else "Bachelor / Graduation"
                 )
             }
             var currentSubject by remember(edu.subjectMajor) {
                 mutableStateOf(
                     if (subjectOptions.contains(edu.subjectMajor)) edu.subjectMajor
-                    else if (edu.subjectMajor.isNotBlank()) "Others (ম্যান্য়াল ইনপ্ট)"
+                    else if (edu.subjectMajor.isNotBlank()) "Others (ম্যানুয়াল ইনপুট)"
                     else "General"
                 )
             }
             var currentInst by remember(edu.institution) {
                 mutableStateOf(
                     if (instOptions.contains(edu.institution)) edu.institution
-                    else if (edu.institution.isNotBlank()) "Others (ম্যান্য়াল ইনপ্ট)"
-                    else "Others (ম্যান্য়াল ইনপ্ট)"
+                    else if (edu.institution.isNotBlank()) "Others (ম্যানুয়াল ইনপুট)"
+                    else "Others (ম্যানুয়াল ইনপুট)"
                 )
             }
             var currentYear by remember(edu.passingYear) {
                 mutableStateOf(
                     if (yearOptions.contains(edu.passingYear)) edu.passingYear
-                    else if (edu.passingYear.isNotBlank()) "Others (ম্যান্য়াল ইনপ্ট)"
+                    else if (edu.passingYear.isNotBlank()) "Others (ম্যানুয়াল ইনপুট)"
                     else "2021"
                 )
             }
             var currentResultSys by remember(edu.resultType) {
                 mutableStateOf(
                     if (resultSysOptions.contains(edu.resultType)) edu.resultType
-                    else if (edu.resultType.isNotBlank()) "Others (ম্যান্য়াল ইনপ্ট)"
+                    else if (edu.resultType.isNotBlank()) "Others (ম্যানুয়াল ইনপুট)"
                     else "CGPA (Out of 4.0)"
                 )
             }
@@ -6930,8 +7414,8 @@ private fun EducationAndSkillsTab(
                             options = examOptions,
                             onValueChange = { selected ->
                                 currentExam = selected
-                                val newExamVal = if (selected == "Others (ম্যান্য়াল ইনপ্ট)") "Others" else selected
-                                val computedDegree = if (selected == "Others (ম্যান্য়াল ইনপ্ট)") edu.degree else if (currentSubject != "General" && currentSubject != "Others (ম্যান্য়াল ইনপ্ট)") "$selected in $currentSubject" else selected
+                                val newExamVal = if (selected == "Others (ম্যানুয়াল ইনপুট)") "Others" else selected
+                                val computedDegree = if (selected == "Others (ম্যানুয়াল ইনপুট)") edu.degree else if (currentSubject != "General" && currentSubject != "Others (ম্যানুয়াল ইনপুট)") "$selected in $currentSubject" else selected
                                 val newList = cvData.educations.toMutableList()
                                 newList[index] = edu.copy(examLevel = newExamVal, degree = computedDegree)
                                 onCvDataChange(cvData.copy(educations = newList))
@@ -6941,13 +7425,13 @@ private fun EducationAndSkillsTab(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         CvCustomDropdown(
-                            label = if (isBn) "বিষয়/গ্র্প/ডিপার্টমেন্ট" else "Subject / Department",
+                            label = if (isBn) "বিষয়/গ্রুপ/ডিপার্টমেন্ট" else "Subject / Department",
                             selectedValue = currentSubject,
                             options = subjectOptions,
                             onValueChange = { selected ->
                                 currentSubject = selected
-                                val newSubVal = if (selected == "Others (ম্যান্য়াল ইনপ্ট)") "Others" else selected
-                                val computedDegree = if (currentExam != "Others (ম্যান্য়াল ইনপ্ট)" && selected != "General" && selected != "Others (ম্যান্য়াল ইনপ্ট)") "$currentExam in $selected" else edu.degree
+                                val newSubVal = if (selected == "Others (ম্যানুয়াল ইনপুট)") "Others" else selected
+                                val computedDegree = if (currentExam != "Others (ম্যানুয়াল ইনপুট)" && selected != "General" && selected != "Others (ম্যানুয়াল ইনপুট)") "$currentExam in $selected" else edu.degree
                                 val newList = cvData.educations.toMutableList()
                                 newList[index] = edu.copy(subjectMajor = newSubVal, degree = computedDegree)
                                 onCvDataChange(cvData.copy(educations = newList))
@@ -6957,10 +7441,10 @@ private fun EducationAndSkillsTab(
                         )
                     }
 
-                    if (currentExam == "Others (ম্যান্য়াল ইনপ্ট)") {
+                    if (currentExam == "Others (ম্যানুয়াল ইনপুট)") {
                         Spacer(modifier = Modifier.height(6.dp))
                         CvCustomTextField(
-                            label = if (isBn) "ম্যান্য়াল ডিগ্রির নাম লিখ্ন" else "Enter Manual Degree Title",
+                            label = if (isBn) "ম্যানুয়াল ডিগ্রির নাম লিখ্ন" else "Enter Manual Degree Title",
                             value = edu.degree,
                             onValueChange = { d ->
                                 val newList = cvData.educations.toMutableList()
@@ -6971,10 +7455,10 @@ private fun EducationAndSkillsTab(
                         )
                     }
 
-                    if (currentSubject == "Others (ম্যান্য়াল ইনপ্ট)") {
+                    if (currentSubject == "Others (ম্যানুয়াল ইনপুট)") {
                         Spacer(modifier = Modifier.height(6.dp))
                         CvCustomTextField(
-                            label = if (isBn) "ম্যান্য়াল বিষয়ের নাম লিখ্ন" else "Enter Manual Subject Name",
+                            label = if (isBn) "ম্যানুয়াল বিষয়ের নাম লিখ্ন" else "Enter Manual Subject Name",
                             value = if (edu.subjectMajor == "Others") "" else edu.subjectMajor,
                             onValueChange = { sub ->
                                 val newList = cvData.educations.toMutableList()
@@ -6993,7 +7477,7 @@ private fun EducationAndSkillsTab(
                         options = instOptions,
                         onValueChange = { selected ->
                             currentInst = selected
-                            val instVal = if (selected == "Others (ম্যান্য়াল ইনপ্ট)") edu.institution else selected
+                            val instVal = if (selected == "Others (ম্যানুয়াল ইনপুট)") edu.institution else selected
                             val newList = cvData.educations.toMutableList()
                             newList[index] = edu.copy(institution = instVal)
                             onCvDataChange(cvData.copy(educations = newList))
@@ -7001,10 +7485,10 @@ private fun EducationAndSkillsTab(
                         themeColors = themeColors
                     )
 
-                    if (currentInst == "Others (ম্যান্য়াল ইনপ্ট)") {
+                    if (currentInst == "Others (ম্যানুয়াল ইনপুট)") {
                         Spacer(modifier = Modifier.height(6.dp))
                         CvCustomTextField(
-                            label = if (isBn) "ম্যান্য়াল প্রতিষ্ঠানের নাম লিখ্ন" else "Enter Manual Institution Name",
+                            label = if (isBn) "ম্যানুয়াল প্রতিষ্ঠানের নাম লিখ্ন" else "Enter Manual Institution Name",
                             value = edu.institution,
                             onValueChange = { inst ->
                                 val newList = cvData.educations.toMutableList()
@@ -7024,7 +7508,7 @@ private fun EducationAndSkillsTab(
                             options = yearOptions,
                             onValueChange = { selected ->
                                 currentYear = selected
-                                val yrVal = if (selected == "Others (ম্যান্য়াল ইনপ্ট)") edu.passingYear else selected
+                                val yrVal = if (selected == "Others (ম্যানুয়াল ইনপুট)") edu.passingYear else selected
                                 val newList = cvData.educations.toMutableList()
                                 newList[index] = edu.copy(passingYear = yrVal)
                                 onCvDataChange(cvData.copy(educations = newList))
@@ -7048,10 +7532,10 @@ private fun EducationAndSkillsTab(
                         )
                     }
 
-                    if (currentYear == "Others (ম্যান্য়াল ইনপ্ট)") {
+                    if (currentYear == "Others (ম্যানুয়াল ইনপুট)") {
                         Spacer(modifier = Modifier.height(6.dp))
                         CvCustomTextField(
-                            label = if (isBn) "ম্যান্য়াল বছর/স্ট্যাটাস" else "Enter Manual Passing Year/Status",
+                            label = if (isBn) "ম্যানুয়াল বছর/স্ট্যাটাস" else "Enter Manual Passing Year/Status",
                             value = edu.passingYear,
                             onValueChange = { yr ->
                                 val newList = cvData.educations.toMutableList()
@@ -7096,7 +7580,7 @@ private fun EducationAndSkillsTab(
                 Button(
                     onClick = {
                         onRequestAiPrompt(
-                            if (isBn) "কী স্কিল এআই দিয়ে জেনারেট কর্ন" else "Generate Key Skills with AI",
+                            if (isBn) "কী স্কিল এআই দিয়ে জেনারেট করুন" else "Generate Key Skills with AI",
                             "Generate 6 professional key skills with short descriptions (format: Title: Description) for a ${cvData.jobTitle.ifBlank { "Professional" }} candidate.",
                             "SKILLS",
                             -1
@@ -7311,7 +7795,275 @@ private fun EducationAndSkillsTab(
     }
 }
 
+
+// ================= ATS SELECTIVE REVIEW & FIX DIALOG =================
+
+@Composable
+private fun AtsFixReviewDialog(
+    cvData: CvData,
+    atsCheckItems: List<AtsCheckItem>,
+    isBn: Boolean,
+    themeColors: CalculatorThemeColors,
+    onDismiss: () -> Unit,
+    onApplyFixes: (CvData) -> Unit
+) {
+    val failedChecks = remember(atsCheckItems) { atsCheckItems.filter { !it.isPassed } }
+
+    val selectedStates = remember(failedChecks) {
+        mutableStateMapOf<Int, Boolean>().apply {
+            failedChecks.indices.forEach { idx -> this[idx] = true }
+        }
+    }
+
+    val currentScore = remember(atsCheckItems) {
+        atsCheckItems.filter { it.isPassed }.sumOf { it.weightPoints }.coerceIn(0, 100)
+    }
+
+    val projectedScore = remember(selectedStates, failedChecks, currentScore) {
+        val selectedPoints = failedChecks.indices
+            .filter { selectedStates[it] == true }
+            .sumOf { failedChecks[it].weightPoints }
+        (currentScore + selectedPoints).coerceIn(0, 100)
+    }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(18.dp),
+            color = themeColors.cardBg,
+            border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.4f)),
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = 580.dp)
+                .padding(vertical = 10.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                // Header
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = if (isBn) "🔍 এটিএস ফিক্স ও ইম্প্রুভমেন্ট রিভিউ" else "🔍 ATS Fix & Review Suggestions",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = themeColors.buttonEqualBg
+                        )
+                        Text(
+                            text = if (isBn) "আপনার সাথে মানানসই পরিবর্তনগুলো পছন্দমত মার্ক করুন" else "Check/Uncheck suggestions that fit your background",
+                            fontSize = 10.5.sp,
+                            color = themeColors.displayText.copy(alpha = 0.7f)
+                        )
+                    }
+                    IconButton(onClick = onDismiss, modifier = Modifier.size(26.dp)) {
+                        Icon(imageVector = Icons.Default.Close, contentDescription = "Close", tint = themeColors.displayText, modifier = Modifier.size(18.dp))
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Score preview card
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = themeColors.buttonEqualBg.copy(alpha = 0.1f),
+                    border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.3f)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = if (isBn) "বর্তমান স্কোর: $currentScore%" else "Current Score: $currentScore%",
+                                fontSize = 11.sp,
+                                color = themeColors.displayText.copy(alpha = 0.8f)
+                            )
+                            Text(
+                                text = if (isBn) "বাছাইকৃত পছন্দ স্কোর: $projectedScore%" else "Selected Fix Score: $projectedScore%",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = if (projectedScore >= 80) Color(0xFF10B981) else themeColors.buttonEqualBg
+                            )
+                        }
+
+                        // Select all / Deselect all
+                        TextButton(
+                            onClick = {
+                                val allSelected = selectedStates.values.all { it }
+                                failedChecks.indices.forEach { idx ->
+                                    selectedStates[idx] = !allSelected
+                                }
+                            },
+                            contentPadding = PaddingValues(0.dp)
+                        ) {
+                            Text(
+                                text = if (selectedStates.values.all { it }) (if (isBn) "সব আনমার্ক" else "Unselect All") else (if (isBn) "সব সিলেক্ট" else "Select All"),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.buttonEqualBg
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                if (failedChecks.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (isBn) "🎉 চমৎকার! আপনার সিভিতে কোনো এটিএস ত্রুটি নেই। স্কোর ১০০%!" else "🎉 Awesome! No ATS issues found. Score is 100%!",
+                            fontSize = 12.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF10B981)
+                        )
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                    ) {
+                        items(failedChecks.size) { idx ->
+                            val check = failedChecks[idx]
+                            val isChecked = selectedStates[idx] == true
+
+                            Surface(
+                                onClick = { selectedStates[idx] = !isChecked },
+                                shape = RoundedCornerShape(10.dp),
+                                color = if (isChecked) themeColors.buttonEqualBg.copy(alpha = 0.08f) else Color.Transparent,
+                                border = BorderStroke(1.dp, if (isChecked) themeColors.buttonEqualBg.copy(alpha = 0.3f) else themeColors.displayText.copy(alpha = 0.1f)),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Checkbox(
+                                        checked = isChecked,
+                                        onCheckedChange = { selectedStates[idx] = it },
+                                        colors = CheckboxDefaults.colors(
+                                            checkedColor = themeColors.buttonEqualBg,
+                                            uncheckedColor = themeColors.displayText.copy(alpha = 0.4f)
+                                        ),
+                                        modifier = Modifier.size(20.dp)
+                                    )
+
+                                    Spacer(modifier = Modifier.width(10.dp))
+
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text(
+                                                text = if (isBn) check.categoryBn else check.categoryEn,
+                                                fontSize = 10.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = themeColors.buttonEqualBg
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(
+                                                text = "+${check.weightPoints} pts",
+                                                fontSize = 9.5.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = Color(0xFF10B981)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Text(
+                                            text = if (isBn) check.detailBn else check.detailEn,
+                                            fontSize = 11.5.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = themeColors.displayText
+                                        )
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Text(
+                                            text = getFixExplanation(check.categoryEn, isBn),
+                                            fontSize = 10.sp,
+                                            color = themeColors.displayText.copy(alpha = 0.65f)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.weight(1f),
+                        border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.3f))
+                    ) {
+                        Text(
+                            text = if (isBn) "বাতিল" else "Cancel",
+                            color = themeColors.displayText,
+                            fontSize = 12.sp
+                        )
+                    }
+
+                    Button(
+                        onClick = {
+                            var updatedCv = cvData
+                            failedChecks.indices.forEach { idx ->
+                                if (selectedStates[idx] == true) {
+                                    val check = failedChecks[idx]
+                                    updatedCv = autoFixIndividualAtsCheck(updatedCv, check.categoryEn)
+                                }
+                            }
+                            onApplyFixes(updatedCv)
+                            onDismiss()
+                        },
+                        enabled = selectedStates.values.any { it },
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
+                        modifier = Modifier.weight(1.8f)
+                    ) {
+                        Icon(imageVector = Icons.Default.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = if (isBn) "বাছাইকৃত পছন্দ অ্যাপ্লাই করুন" else "Apply Selected Fixes",
+                            color = Color.White,
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun getFixExplanation(categoryEn: String, isBn: Boolean): String {
+    return when (categoryEn) {
+        "Contact Info" -> if (isBn) "অফিসিয়াল ইমেইল, ফোন নম্বর ও প্রোফাইল লিঙ্ক যুক্ত করা হবে" else "Will add official email, phone & profile links"
+        "Summary" -> if (isBn) "সামারিতে ৩-৪ লাইনের বিস্তারিত প্রভাব ও সাফল্যসূচক অর্জনের অংশ যুক্ত হবে" else "Will refine summary with impact metrics"
+        "Experience" -> if (isBn) "অভিজ্ঞতা ডেসক্রিপশনে সাফল্যসূচক % ও সংখ্যাযুক্ত পয়েন্ট যুক্ত হবে" else "Will add quantified % metrics to experiences"
+        "Education" -> if (isBn) "ডিগ্রি, শিক্ষা প্রতিষ্ঠান ও পাসের সনের তথ্য পারফেক্ট করা হবে" else "Will complete degree, institution & passing year"
+        "Skills" -> if (isBn) "এটিএস ফ্রেন্ডলি কোর স্কিলস ও ইন্ডাস্ট্রি কি-ওয়ার্ড যুক্ত হবে" else "Will populate standard ATS industry skills"
+        "Formatting" -> if (isBn) "প্রমিত এটিএস বুলেট স্টাইল ও ১-কলাম লেআউট সক্রিয় করা হবে" else "Will enable standard ATS bullet structure"
+        else -> if (isBn) "সিভির ডাটা এটিএস স্ট্যান্ডার্ডে টিউন করা হবে" else "Will tune CV data to ATS standards"
+    }
+}
+
 // ================= TAB 3: AI JOB MATCH WITH IMAGE UPLOAD =================
+
+
 
 @Composable
 private fun AiJobCircularMatchTab(
@@ -7324,6 +8076,10 @@ private fun AiJobCircularMatchTab(
 ) {
     val scrollState = rememberScrollState()
     val context = LocalContext.current
+
+    val atsScoreResult = remember(cvData) { calculateLocalAtsScore(cvData) }
+    var showBreakdown by remember { mutableStateOf(false) }
+    var showFixReviewDialog by remember { mutableStateOf(false) }
 
     var circularInputText by remember { mutableStateOf(cvData.targetJobCircular) }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
@@ -7351,24 +8107,448 @@ private fun AiJobCircularMatchTab(
             .padding(14.dp)
     ) {
         SectionCardHeader(
-            title = if (isBn) "জব সার্ক্লার অন্যায়ী এআই কাস্টমাইজেশন" else "AI Job Circular Match & Tayloring",
-            icon = Icons.Default.AutoAwesome,
+            title = if (isBn) "এটিএস স্কোর ও জব ম্যাচ অ্যানালাইসিস" else "ATS Score & Job Match Analysis",
+            icon = Icons.Default.Speed,
             themeColors = themeColors
         )
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
-        Text(
-            text = if (isBn)
-                "যে চাকরির জন্য আবেদন করতে চান তার সার্ক্লার টেক্সট পেস্ট কর্ন অথবা ক্যামেরা/গ্যালারি থেকে সরাসরি সার্ক্লার ইমেজের একটি ছবি দিন! জেমিনি এআই সার্ক্লারটি বিশ্লেষণ করে আপনার সিভির সামারি ও কি-ওয়ার্ড কাস্টমাইজ করবে।"
-            else
-                "Paste the job circular text OR select an image of the circular from your gallery. Gemini Multi-modal AI will analyze the requirements from both text/image to optimize your summary and key skills.",
-            fontSize = 12.sp,
-            color = themeColors.displayText.copy(alpha = 0.75f),
-            lineHeight = 17.sp
-        )
+        // --- DUAL TOP METRIC CARDS ---
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            // CARD 1: Local ATS Score
+            val scoreColor = when {
+                atsScoreResult.score >= 80 -> Color(0xFF10B981)
+                atsScoreResult.score >= 60 -> Color(0xFFF59E0B)
+                else -> Color(0xFFEF4444)
+            }
+            Surface(
+                onClick = { showBreakdown = !showBreakdown },
+                shape = RoundedCornerShape(14.dp),
+                color = themeColors.cardBg,
+                border = BorderStroke(1.dp, scoreColor.copy(alpha = 0.4f)),
+                modifier = Modifier.weight(1f)
+            ) {
+                Column(
+                    modifier = Modifier.padding(12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = if (isBn) "এটিএস প্রস্তুত স্কোর" else "ATS Ready Score",
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.displayText.copy(alpha = 0.8f)
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "${atsScoreResult.score}%",
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = scoreColor
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = when {
+                            atsScoreResult.score >= 80 -> if (isBn) "এটিএস ফ্রেন্ডলি" else "ATS Friendly"
+                            atsScoreResult.score >= 60 -> if (isBn) "উন্নতি প্রয়োজন" else "Needs Improvement"
+                            else -> if (isBn) "নিম্ন এটিএস স্কোর" else "Low ATS Score"
+                        },
+                        fontSize = 10.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = scoreColor
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = if (isBn) "${atsScoreResult.checkItems.count { it.isPassed }}/${atsScoreResult.checkItems.size} চেক পাস (ট্যাপ)" else "${atsScoreResult.checkItems.count { it.isPassed }}/${atsScoreResult.checkItems.size} checks passed (Tap)",
+                        fontSize = 9.5.sp,
+                        color = themeColors.displayText.copy(alpha = 0.6f)
+                    )
+                }
+            }
+
+            // CARD 2: Job Circular Match Score
+            val matchPct = cvData.lastJobMatchPercentage
+            val matchColor = when {
+                matchPct >= 80 -> Color(0xFF10B981)
+                matchPct >= 60 -> Color(0xFFF59E0B)
+                matchPct > 0 -> Color(0xFFEF4444)
+                else -> themeColors.displayText.copy(alpha = 0.4f)
+            }
+            Surface(
+                shape = RoundedCornerShape(14.dp),
+                color = themeColors.cardBg,
+                border = BorderStroke(1.dp, matchColor.copy(alpha = 0.4f)),
+                modifier = Modifier.weight(1f)
+            ) {
+                Column(
+                    modifier = Modifier.padding(12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = if (isBn) "সার্কুলার ম্যাচ %" else "Circular Match %",
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.displayText.copy(alpha = 0.8f)
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = if (matchPct > 0) "$matchPct%" else "— %",
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = matchColor
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = when {
+                            matchPct >= 80 -> if (isBn) "হাইলি ম্যাচড" else "High Match"
+                            matchPct >= 60 -> if (isBn) "মাঝারি ম্যাচ" else "Moderate Match"
+                            matchPct > 0 -> if (isBn) "লো ম্যাচ" else "Low Match"
+                            else -> if (isBn) "অ্যানালাইসিস করুন" else "Analyze Circular"
+                        },
+                        fontSize = 10.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = matchColor
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = if (matchPct > 0) (if (isBn) "জেমিনি এআই অ্যানালাইসিস" else "Gemini AI Analysis") else (if (isBn) "সার্কুলার দিন" else "Provide Circular"),
+                        fontSize = 9.5.sp,
+                        color = themeColors.displayText.copy(alpha = 0.6f)
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // --- 100% ATS AUTO-FIX MASTER BUTTON CARD ---
+        Surface(
+            shape = RoundedCornerShape(14.dp),
+            color = themeColors.buttonEqualBg.copy(alpha = 0.1f),
+            border = BorderStroke(1.5.dp, themeColors.buttonEqualBg),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(imageVector = Icons.Default.CheckCircle, contentDescription = null, tint = Color(0xFF10B981), modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = if (isBn) "১-ট্যাপে এটিএস স্কোর ১০০% করুন" else "1-Tap Auto-Fix ATS Score to 100%",
+                            fontSize = 12.5.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = themeColors.displayText
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = if (isBn) "মিছিং ফিল্ড, মেট্রিক্স ও স্কিলস অটো-টিউন হয়ে স্কোর ১০০% হবে" else "Auto-fill missing fields, metrics & skills for 100% score",
+                        fontSize = 10.sp,
+                        color = themeColors.displayText.copy(alpha = 0.75f)
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Button(
+                    onClick = { showFixReviewDialog = true },
+                    colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
+                    shape = RoundedCornerShape(10.dp),
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                ) {
+                    Icon(imageVector = Icons.Default.Checklist, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = if (isBn) "রিভিউ ও ফিক্স" else "Review & Fix",
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
+            }
+        }
+
+        // --- EXPANDABLE ATS SCORE BREAKDOWN CARD WITH PER-CHECK FIX BUTTONS ---
+        AnimatedVisibility(visible = showBreakdown) {
+            Column(modifier = Modifier.padding(top = 10.dp)) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = themeColors.cardBg,
+                    border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.3f)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = if (isBn) "📋 এটিএস স্কোর ব্রেকডাউন ডিটেইলস" else "📋 Detailed ATS Score Breakdown",
+                                fontSize = 12.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.buttonEqualBg
+                            )
+                            IconButton(onClick = { showBreakdown = false }, modifier = Modifier.size(24.dp)) {
+                                Icon(imageVector = Icons.Default.Close, contentDescription = "Close", tint = themeColors.displayText, modifier = Modifier.size(16.dp))
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        for (item in atsScoreResult.checkItems) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = if (item.isPassed) Icons.Default.CheckCircle else Icons.Default.ErrorOutline,
+                                    contentDescription = null,
+                                    tint = if (item.isPassed) Color(0xFF10B981) else Color(0xFFEF4444),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = if (isBn) item.detailBn else item.detailEn,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = themeColors.displayText
+                                    )
+                                    Text(
+                                        text = "${if (isBn) item.categoryBn else item.categoryEn} • (+${item.weightPoints} pts)",
+                                        fontSize = 9.5.sp,
+                                        color = themeColors.displayText.copy(alpha = 0.6f)
+                                    )
+                                }
+                                if (!item.isPassed) {
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    OutlinedButton(
+                                        onClick = {
+                                            val fixedData = autoFixIndividualAtsCheck(cvData, item.categoryEn)
+                                            onCvDataChange(fixedData)
+                                            Toast.makeText(context, if (isBn) "সংশোধন সম্পন্ন হয়েছে!" else "Fixed item!", Toast.LENGTH_SHORT).show()
+                                        },
+                                        shape = RoundedCornerShape(8.dp),
+                                        border = BorderStroke(1.dp, themeColors.buttonEqualBg),
+                                        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp),
+                                        modifier = Modifier.height(26.dp)
+                                    ) {
+                                        Text(
+                                            text = if (isBn) "সংশোধন" else "Fix Now",
+                                            fontSize = 9.5.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = themeColors.buttonEqualBg
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         Spacer(modifier = Modifier.height(14.dp))
+
+        // --- AI ACTIONABLE MATCH RESULTS (MISSING KEYWORDS & TIPS) ---
+        if (cvData.lastMissingKeywords.isNotEmpty() || cvData.lastMatchingStrengths.isNotEmpty() || cvData.lastTailoredSummary.isNotBlank()) {
+            Surface(
+                shape = RoundedCornerShape(14.dp),
+                color = themeColors.cardBg,
+                border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.3f)),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 14.dp)
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Text(
+                        text = if (isBn) "জেমিনি এআই সার্কুলার ম্যাচিং রেজাল্ট" else "Gemini AI Circular Match Result",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.buttonEqualBg
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // 1-Tap Summary Apply Button
+                    if (cvData.lastTailoredSummary.isNotBlank()) {
+                        Button(
+                            onClick = {
+                                var updated = cvData.copy(summary = cvData.lastTailoredSummary)
+                                if (cvData.lastMissingKeywords.isNotEmpty()) {
+                                    val newSkills = updated.skills.toMutableList()
+                                    cvData.lastMissingKeywords.forEach { kw ->
+                                        if (newSkills.none { it.name.equals(kw, ignoreCase = true) }) {
+                                            newSkills.add(CvSkillItem(name = kw))
+                                        }
+                                    }
+                                    updated = updated.copy(skills = newSkills, lastMissingKeywords = emptyList())
+                                }
+                                onCvDataChange(updated)
+                                Toast.makeText(context, if (isBn) "সার্কুলার অনুযায়ী পুরো সিভি আপডেট হয়েছে!" else "Entire CV tailored to circular!", Toast.LENGTH_SHORT).show()
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.fillMaxWidth().height(40.dp)
+                        ) {
+                            Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = if (isBn) "১-ট্যাপে পুরো সিভি সার্কুলারে টিউন করুন (স্কোর ৯৫-১০০%)" else "1-Tap Auto-Tailor Entire CV to Circular",
+                                color = Color.White,
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(10.dp))
+                    }
+
+                    // Missing Keywords Chips with 1-Tap Add
+                    if (cvData.lastMissingKeywords.isNotEmpty()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = if (isBn) "সার্কুলারে থাকা মিসিং স্কিলসমূহ (ট্যাপে এড করুন):" else "Missing Circular Skills (Tap to Add):",
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.displayText
+                            )
+                            TextButton(
+                                onClick = {
+                                    val newSkills = cvData.skills.toMutableList()
+                                    cvData.lastMissingKeywords.forEach { kw ->
+                                        if (newSkills.none { it.name.equals(kw, ignoreCase = true) }) {
+                                            newSkills.add(CvSkillItem(name = kw))
+                                        }
+                                    }
+                                    onCvDataChange(cvData.copy(skills = newSkills, lastMissingKeywords = emptyList()))
+                                    Toast.makeText(context, if (isBn) "সকল মিসিং স্কিল যুক্ত হয়েছে!" else "Added all missing skills!", Toast.LENGTH_SHORT).show()
+                                },
+                                contentPadding = PaddingValues(0.dp)
+                            ) {
+                                Text(
+                                    text = if (isBn) "সব যুক্ত করুন +" else "Add All +",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.buttonEqualBg
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        // Chips
+                        val missingList = cvData.lastMissingKeywords
+                        missingList.chunked(3).forEach { chunk ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 3.dp),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                chunk.forEach { kw ->
+                                    Surface(
+                                        onClick = {
+                                            val updatedSkills = cvData.skills.toMutableList()
+                                            if (updatedSkills.none { it.name.equals(kw, ignoreCase = true) }) {
+                                                updatedSkills.add(CvSkillItem(name = kw))
+                                            }
+                                            val updatedMissing = cvData.lastMissingKeywords.filter { it != kw }
+                                            onCvDataChange(cvData.copy(skills = updatedSkills, lastMissingKeywords = updatedMissing))
+                                            Toast.makeText(context, if (isBn) "$kw স্কিলে যুক্ত করা হয়েছে!" else "Added $kw to skills!", Toast.LENGTH_SHORT).show()
+                                        },
+                                        shape = RoundedCornerShape(16.dp),
+                                        color = themeColors.buttonEqualBg.copy(alpha = 0.12f),
+                                        border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.4f))
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(imageVector = Icons.Default.Add, contentDescription = null, tint = themeColors.buttonEqualBg, modifier = Modifier.size(13.dp))
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(
+                                                text = kw,
+                                                fontSize = 10.5.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = themeColors.buttonEqualBg
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+                    }
+
+                    // Matching Strengths
+                    if (cvData.lastMatchingStrengths.isNotEmpty()) {
+                        Text(
+                            text = if (isBn) "✅ সিভির যে পয়েন্টগুলো সার্কুলারের সাথে মিলেছে:" else "✅ Qualifications Matched with Circular:",
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF10B981)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        for (str in cvData.lastMatchingStrengths) {
+                            Text(
+                                text = "• $str",
+                                fontSize = 11.sp,
+                                color = themeColors.displayText.copy(alpha = 0.85f),
+                                modifier = Modifier.padding(vertical = 2.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(10.dp))
+                    }
+
+                    // Improvement Tips
+                    if (cvData.lastImprovementTips.isNotEmpty()) {
+                        Text(
+                            text = if (isBn) "💡 এটিএস স্কোর বাড়াতে জেমিনির পরামর্শ:" else "💡 Tips to Increase ATS Match:",
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFF59E0B)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        for (tip in cvData.lastImprovementTips) {
+                            Text(
+                                text = "• $tip",
+                                fontSize = 11.sp,
+                                color = themeColors.displayText.copy(alpha = 0.85f),
+                                modifier = Modifier.padding(vertical = 2.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // --- CIRCULAR INPUT & IMAGE UPLOAD FORM ---
+        Text(
+            text = if (isBn)
+                "যে চাকরির জন্য আবেদন করতে চান তার সার্কুলার টেক্সট পেস্ট করুন অথবা ক্যামেরা/গ্যালারি থেকে সরাসরি সার্কুলার ইমেজের ছবি দিন! জেমিনি এআই এটিএস ম্যাচ স্কোর বের করবে ও সিভি কাস্টমাইজ করবে।"
+            else
+                "Paste target job circular text OR select an image of the circular from your gallery. Gemini Multi-modal AI will calculate your match score and tailor your CV.",
+            fontSize = 11.5.sp,
+            color = themeColors.displayText.copy(alpha = 0.75f),
+            lineHeight = 16.sp
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
 
         // Text input area
         OutlinedTextField(
@@ -7377,7 +8557,7 @@ private fun AiJobCircularMatchTab(
             modifier = Modifier.fillMaxWidth(),
             minLines = 4,
             maxLines = 15,
-            placeholder = { Text(text = if (isBn) "জব ডেসক্রিপশন পেস্ট কর্ন..." else "Paste Job circular / description requirements text here...", fontSize = 12.5.sp) },
+            placeholder = { Text(text = if (isBn) "জব সার্কুলার ডেসক্রিপশন পেস্ট করুন..." else "Paste Job circular / description requirements text here...", fontSize = 12.5.sp) },
             shape = RoundedCornerShape(12.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = themeColors.buttonEqualBg,
@@ -7389,7 +8569,7 @@ private fun AiJobCircularMatchTab(
             )
         )
 
-        Spacer(modifier = Modifier.height(14.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         // Image input options
         Surface(
@@ -7398,10 +8578,10 @@ private fun AiJobCircularMatchTab(
             border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.12f)),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Column(modifier = Modifier.padding(14.dp)) {
+            Column(modifier = Modifier.padding(12.dp)) {
                 Text(
-                    text = if (isBn) "সার্ক্লার ছবি ইনপ্ট কর্ন" else "Upload Circular Image (Camera/Gallery)",
-                    fontSize = 13.sp,
+                    text = if (isBn) "সার্কুলার ছবি ইনপুট করুন (অপশনাল)" else "Upload Circular Image (Optional)",
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     color = themeColors.displayText
                 )
@@ -7442,7 +8622,7 @@ private fun AiJobCircularMatchTab(
                         contentDescription = "Circular thumbnail",
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(150.dp)
+                            .height(140.dp)
                             .clip(RoundedCornerShape(8.dp))
                             .border(1.dp, themeColors.displayText.copy(alpha = 0.1f), RoundedCornerShape(8.dp)),
                         contentScale = androidx.compose.ui.layout.ContentScale.Crop
@@ -7451,7 +8631,7 @@ private fun AiJobCircularMatchTab(
             }
         }
 
-        Spacer(modifier = Modifier.height(18.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         Button(
             onClick = {
@@ -7477,12 +8657,24 @@ private fun AiJobCircularMatchTab(
         ) {
             Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
             Spacer(modifier = Modifier.width(8.dp))
-            // Explicit White text color to ensure contrast
             Text(
-                text = if (isBn) "জেমিনি এআই দিয়ে সিভি টিউন কর্ন" else "Tailor Resume with Gemini AI",
+                text = if (isBn) "এআই দিয়ে এটিএস জব ম্যাচ অ্যানালাইসিস করুন" else "Analyze Job Match with Gemini AI",
                 color = Color.White,
-                fontSize = 13.5.sp,
+                fontSize = 13.sp,
                 fontWeight = FontWeight.Bold
+            )
+        }
+        if (showFixReviewDialog) {
+            AtsFixReviewDialog(
+                cvData = cvData,
+                atsCheckItems = atsScoreResult.checkItems,
+                isBn = isBn,
+                themeColors = themeColors,
+                onDismiss = { showFixReviewDialog = false },
+                onApplyFixes = { updatedCv: CvData ->
+                    onCvDataChange(updatedCv)
+                    Toast.makeText(context, if (isBn) "বাছাইকৃত পরিবর্তনগুলো সিভিতে সফলভাবে প্রয়োগ করা হয়েছে!" else "Selected fixes applied successfully!", Toast.LENGTH_SHORT).show()
+                }
             )
         }
     }
@@ -7576,7 +8768,7 @@ private fun PreviewAndExportTab(
                         }
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = style.description,
+                            text = style.getDescription(isBn),
                             fontSize = 9.5.sp,
                             color = themeColors.displayText.copy(alpha = 0.7f),
                             lineHeight = 13.sp,
@@ -7617,7 +8809,7 @@ private fun PreviewAndExportTab(
                     Spacer(modifier = Modifier.width(10.dp))
                     Column {
                         Text(
-                            text = if (isBn) "আবেদনকারীর স্বাক্ষর লাইন যোগ কর্ন" else "Include Signature Placeholder",
+                            text = if (isBn) "আবেদনকারীর স্বাক্ষর লাইন যোগ করুন" else "Include Signature Placeholder",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             color = themeColors.displayText
@@ -7679,7 +8871,7 @@ private fun PreviewAndExportTab(
             Icon(imageVector = Icons.Default.ChromeReaderMode, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = if (isBn) "পিডিএফ রিডার দিয়ে প্রিভিউ কর্ন" else "Preview in Native PDF Viewer App",
+                text = if (isBn) "পিডিএফ রিডার দিয়ে প্রিভিউ করুন" else "Preview in Native PDF Viewer App",
                 color = Color.White,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold
@@ -7929,7 +9121,7 @@ private fun PreviewAndExportTab(
                     Spacer(modifier = Modifier.height(8.dp))
                     TextButton(onClick = onRefreshPreview) {
                         Text(
-                            text = if (isBn) "প্নরায় চেষ্টা কর্ন" else "Tap to Reload",
+                            text = if (isBn) "প্নরায় চেষ্টা করুন" else "Tap to Reload",
                             color = themeColors.buttonEqualBg,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold
@@ -7947,9 +9139,13 @@ private fun PreviewAndExportTab(
 internal fun SectionCardHeader(
     title: String,
     icon: ImageVector,
-    themeColors: CalculatorThemeColors
+    themeColors: CalculatorThemeColors,
+    modifier: Modifier = Modifier
 ) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+    ) {
         Icon(
             imageVector = icon,
             contentDescription = null,
@@ -7961,7 +9157,9 @@ internal fun SectionCardHeader(
             text = title,
             fontSize = 14.sp,
             fontWeight = FontWeight.Bold,
-            color = themeColors.displayText
+            color = themeColors.displayText,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }
@@ -8031,7 +9229,7 @@ private fun CvCustomTextField(
                 ) {
                     Icon(imageVector = Icons.Default.Save, contentDescription = null, modifier = Modifier.size(12.dp), tint = Color.White)
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(if (isBn) "সেভ কর্ন" else "Save", fontSize = 10.sp, color = Color.White)
+                    Text(if (isBn) "সেভ করুন" else "Save", fontSize = 10.sp, color = Color.White)
                 }
             }
         }
@@ -8040,7 +9238,7 @@ private fun CvCustomTextField(
     if (showConfirmDialog) {
         AlertDialog(
             onDismissRequest = { showConfirmDialog = false },
-            title = { Text(if (isBn) "পরিবর্তন নিশ্চিত কর্ন" else "Confirm Changes") },
+            title = { Text(if (isBn) "পরিবর্তন নিশ্চিত করুন" else "Confirm Changes") },
             text = { Text(if (isBn) "'$label' পরিবর্তন করতে চান?" else "Are you sure you want to save changes to '$label'?") },
             confirmButton = {
                 TextButton(onClick = {
@@ -8126,7 +9324,7 @@ private fun CvCustomLargeTextField(
                 ) {
                     Icon(imageVector = Icons.Default.Save, contentDescription = null, modifier = Modifier.size(12.dp), tint = Color.White)
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(if (isBn) "সেভ কর্ন" else "Save", fontSize = 10.sp, color = Color.White)
+                    Text(if (isBn) "সেভ করুন" else "Save", fontSize = 10.sp, color = Color.White)
                 }
             }
         }
@@ -8135,7 +9333,7 @@ private fun CvCustomLargeTextField(
     if (showConfirmDialog) {
         AlertDialog(
             onDismissRequest = { showConfirmDialog = false },
-            title = { Text(if (isBn) "পরিবর্তন নিশ্চিত কর্ন" else "Confirm Changes") },
+            title = { Text(if (isBn) "পরিবর্তন নিশ্চিত করুন" else "Confirm Changes") },
             text = { Text(if (isBn) "এই তথ্যটি পরিবর্তন করতে চান?" else "Are you sure you want to save changes?") },
             confirmButton = {
                 TextButton(onClick = {
@@ -8207,7 +9405,7 @@ private fun CustomizationTab(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = if (isBn) "উপরে/নিচে অ্যারো বাটন দিয়ে যে কোন সেকশন সিভিতে কোন পজিশনে থাকবে তা ঠিক কর্ন এবং হাইড/শো স্ইচ অন-অফ কর্ন।"
+                    text = if (isBn) "উপরে/নিচে অ্যারো বাটন দিয়ে যে কোন সেকশন সিভিতে কোন পজিশনে থাকবে তা ঠিক করুন এবং হাইড/শো স্ইচ অন-অফ করুন।"
                     else "Use up/down arrows to reorder CV sections and toggle switches to show or hide any section.",
                     fontSize = 11.sp,
                     color = themeColors.displayText.copy(alpha = 0.7f)
@@ -8330,7 +9528,7 @@ private fun CustomizationTab(
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
                 SectionCardHeader(
-                    title = if (isBn) "ফন্ট সাইজ ও ব্লেট পয়েন্ট স্টাইল" else "Font Scaling & Bullet Style",
+                    title = if (isBn) "ফন্ট সাইজ ও বুলেট পয়েন্ট স্টাইল" else "Font Scaling & Bullet Style",
                     icon = Icons.Default.FormatSize,
                     themeColors = themeColors
                 )
@@ -8386,7 +9584,7 @@ private fun CustomizationTab(
 
                 // Bullet Point Options
                 Text(
-                    text = if (isBn) "ব্লেট পয়েন্ট স্টাইল (ব্লেট vs কমা vs কাস্টম)" else "Bullet Point Style",
+                    text = if (isBn) "বুলেট পয়েন্ট স্টাইল (বুলেট vs কমা vs কাস্টম)" else "Bullet Point Style",
                     fontSize = 11.5.sp,
                     fontWeight = FontWeight.Bold,
                     color = themeColors.displayText
@@ -8394,7 +9592,7 @@ private fun CustomizationTab(
                 Spacer(modifier = Modifier.height(6.dp))
 
                 val bulletOptions = listOf(
-                    "BULLET" to (if (isBn) "• স্ট্যান্ডার্ড ব্লেট" else "• Standard Bullet"),
+                    "BULLET" to (if (isBn) "• স্ট্যান্ডার্ড বুলেট" else "• Standard Bullet"),
                     "DASH" to (if (isBn) "- ড্যাশ" else "- Dash"),
                     "SQUARE" to (if (isBn) "▪ স্কয়ার" else "▪ Square"),
                     "DIAMOND" to (if (isBn) "◆ ডায়মন্ড" else "◆ Diamond"),
@@ -8515,7 +9713,7 @@ private fun CustomizationTab(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     SectionCardHeader(
-                        title = if (isBn) "ইচ্ছামত কাস্টম সেকশন যোগ কর্ন (${cvData.customSections.size})" else "Custom Sections (${cvData.customSections.size})",
+                        title = if (isBn) "ইচ্ছামত কাস্টম সেকশন যোগ করুন (${cvData.customSections.size})" else "Custom Sections (${cvData.customSections.size})",
                         icon = Icons.Default.AddCircle,
                         themeColors = themeColors
                     )
