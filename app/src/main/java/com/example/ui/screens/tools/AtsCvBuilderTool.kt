@@ -323,7 +323,11 @@ private fun loadCvHistory(context: Context): List<CvHistoryItem> {
     } catch (e: Exception) {
         e.printStackTrace()
     }
-    return list
+    val validList = list.filter { java.io.File(it.filePath).exists() }
+    if (validList.size != list.size) {
+        saveCvHistory(context, validList)
+    }
+    return validList
 }
 
 private fun addOrUpdateCvHistory(context: Context, file: File, cvData: CvData) {
@@ -405,6 +409,7 @@ private fun CvHistoryDialog(
     onOpenPdf: (CvHistoryItem) -> Unit,
     onSharePdf: (CvHistoryItem) -> Unit,
     onDeletePdf: (CvHistoryItem) -> Unit,
+    onEditProfile: (CvHistoryItem) -> Unit,
     onClearAllHistory: () -> Unit
 ) {
     AlertDialog(
@@ -705,6 +710,54 @@ private fun ProfileManagerDialog(
     onDeleteProfile: (CvData) -> Unit,
     onImportPdfResume: () -> Unit
 ) {
+    var profileToDelete by remember { mutableStateOf<CvData?>(null) }
+    var profileToSelect by remember { mutableStateOf<CvData?>(null) }
+    
+    if (profileToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { profileToDelete = null },
+            confirmButton = {
+                Button(onClick = {
+                    profileToDelete?.let { onDeleteProfile(it) }
+                    profileToDelete = null
+                }, colors = ButtonDefaults.buttonColors(containerColor = Color.Red)) {
+                    Text(if (isBn) "হ্যাঁ, মুছুন" else "Yes, Delete", color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { profileToDelete = null }) {
+                    Text(if (isBn) "না" else "No")
+                }
+            },
+            title = { Text(if (isBn) "নিশ্চিত করুন" else "Confirm Delete") },
+            text = { Text(if (isBn) "আপনি কি নিশ্চিত যে এই প্রোফাইলটি ডিলিট করতে চান?" else "Are you sure you want to delete this profile?") }
+        )
+    }
+
+    if (profileToSelect != null) {
+        AlertDialog(
+            onDismissRequest = { profileToSelect = null },
+            confirmButton = {
+                Button(onClick = {
+                    profileToSelect?.let {
+                        onSelectProfile(it)
+                        onDismiss()
+                    }
+                    profileToSelect = null
+                }, colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg)) {
+                    Text(if (isBn) "হ্যাঁ" else "Yes", color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { profileToSelect = null }) {
+                    Text(if (isBn) "না" else "No")
+                }
+            },
+            title = { Text(if (isBn) "নিশ্চিত করুন" else "Confirm Selection") },
+            text = { Text(if (isBn) "আপনি কি এই প্রোফাইলটি ব্যবহার করতে চান? বর্তমান প্রোফাইলের অসংরক্ষিত ডেটা মুছে যেতে পারে।" else "Do you want to switch to this profile? Unsaved data may be lost.") }
+        )
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
@@ -790,7 +843,7 @@ private fun ProfileManagerDialog(
                                         )
                                     }
                                     IconButton(
-                                        onClick = { onDeleteProfile(profile) },
+                                        onClick = { profileToDelete = profile },
                                         modifier = Modifier.size(24.dp)
                                     ) {
                                         Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red.copy(alpha = 0.7f), modifier = Modifier.size(16.dp))
@@ -822,7 +875,7 @@ private fun ProfileManagerDialog(
                                     }
 
                                     Button(
-                                        onClick = { onSelectProfile(profile) },
+                                        onClick = { profileToSelect = profile },
                                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
                                         modifier = Modifier.height(28.dp),
                                         colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg)
@@ -964,7 +1017,10 @@ data class CvData(
     val showContactIcons: Boolean = true,
     val showSectionIcons: Boolean = false,
     val fontScale: String = "STANDARD", // "COMPACT", "STANDARD", "COMFORTABLE", "LARGE"
-    val bulletStyle: String = "BULLET" // "BULLET", "DASH", "SQUARE", "DIAMOND", "COMMA", "PIPE", "NONE"
+    val bulletStyle: String = "BULLET", // "BULLET", "DASH", "SQUARE", "DIAMOND", "COMMA", "PIPE", "NONE"
+    val customMargin: Float = 36f,
+    val customPadding: Float = 15f,
+    val customLineSpacing: Float = 1.15f
 )
 
 private fun getFormattedDegreeText(edu: CvEducationItem): String {
@@ -1725,6 +1781,9 @@ private fun saveAllCvProfiles(context: Context, profiles: List<CvData>) {
                 put("showSectionIcons", profile.showSectionIcons)
                 put("fontScale", profile.fontScale)
                 put("bulletStyle", profile.bulletStyle)
+                put("customMargin", profile.customMargin.toDouble())
+                put("customPadding", profile.customPadding.toDouble())
+                put("customLineSpacing", profile.customLineSpacing.toDouble())
             }
             arr.put(obj)
         }
@@ -1890,7 +1949,10 @@ private fun loadAllCvProfiles(context: Context): List<CvData> {
                     showContactIcons = obj.optBoolean("showContactIcons", true),
                     showSectionIcons = obj.optBoolean("showSectionIcons", false),
                     fontScale = obj.optString("fontScale", "STANDARD"),
-                    bulletStyle = obj.optString("bulletStyle", "BULLET")
+                    bulletStyle = obj.optString("bulletStyle", "BULLET"),
+                    customMargin = obj.optDouble("customMargin", 36.0).toFloat(),
+                    customPadding = obj.optDouble("customPadding", 15.0).toFloat(),
+                    customLineSpacing = obj.optDouble("customLineSpacing", 1.15).toFloat()
                 )
             )
         }
@@ -2288,7 +2350,8 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
     var page = pdfDocument.startPage(pageInfo)
     var canvas = page.canvas
 
-    val margin = 36f
+    val margin = data.customMargin
+    val sectionGap = data.customPadding
     val contentWidth = pageWidth - (margin * 2)
     var currentY = margin
 
@@ -2409,7 +2472,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
         val borderPaint = Paint().apply {
             color = borderColor
             style = Paint.Style.STROKE
-            strokeWidth = 1f
+            strokeWidth = 3.5f
             isAntiAlias = true
         }
         when (shape) {
@@ -4202,6 +4265,45 @@ fun AtsCvBuilderTool(
     var historyList by remember { mutableStateOf(loadCvHistory(context)) }
     var showHistoryDialog by remember { mutableStateOf(false) }
 
+    var undoStack by remember { mutableStateOf(listOf<CvData>()) }
+    var redoStack by remember { mutableStateOf(listOf<CvData>()) }
+
+    fun performUndo() {
+        if (undoStack.isNotEmpty()) {
+            val prev = undoStack.last()
+            undoStack = undoStack.dropLast(1)
+            redoStack = redoStack + cvData
+            cvData = prev
+            
+            val updatedList = profilesList.toMutableList()
+            val idx = updatedList.indexOfFirst { it.id == prev.id }
+            if (idx != -1) {
+                updatedList[idx] = prev
+            }
+            profilesList = updatedList
+            saveAllCvProfiles(context, updatedList)
+            previewRefreshKey++
+        }
+    }
+
+    fun performRedo() {
+        if (redoStack.isNotEmpty()) {
+            val next = redoStack.last()
+            redoStack = redoStack.dropLast(1)
+            undoStack = undoStack + cvData
+            cvData = next
+            
+            val updatedList = profilesList.toMutableList()
+            val idx = updatedList.indexOfFirst { it.id == next.id }
+            if (idx != -1) {
+                updatedList[idx] = next
+            }
+            profilesList = updatedList
+            saveAllCvProfiles(context, updatedList)
+            previewRefreshKey++
+        }
+    }
+
     var showSaveProfileDialog by remember { mutableStateOf(false) }
     var showProfileManagerDialog by remember { mutableStateOf(false) }
 
@@ -4277,6 +4379,13 @@ fun AtsCvBuilderTool(
 
     // Save changes and update cache
     fun updateCvDataState(updated: CvData) {
+        if (updated != cvData) {
+            val currentUndo = undoStack.toMutableList()
+            currentUndo.add(cvData)
+            if (currentUndo.size > 30) currentUndo.removeAt(0)
+            undoStack = currentUndo
+            redoStack = emptyList()
+        }
         cvData = updated
         val updatedList = profilesList.toMutableList()
         val idx = updatedList.indexOfFirst { it.id == updated.id }
@@ -4346,6 +4455,17 @@ fun AtsCvBuilderTool(
                 historyList = loadCvHistory(context)
                 showToast(if (isBn) "হিস্টোরি আইটেম মোছা হয়েছে" else "History item deleted")
             },
+            onEditProfile = { item ->
+                val profile = profilesList.find { it.profileLabel == item.profileLabel }
+                if (profile != null) {
+                    updateCvDataState(profile)
+                    activeProfileId = profile.id
+                    saveActiveProfileId(context, profile.id)
+                    showToast(if (isBn) "প্রোফাইল লোড করা হয়েছে" else "Profile loaded")
+                } else {
+                    showToast(if (isBn) "প্রোফাইল ডেটা পাওয়া যায়নি" else "Profile data not found")
+                }
+            },
             onClearAllHistory = {
                 clearAllCvHistory(context)
                 historyList = emptyList()
@@ -4361,15 +4481,20 @@ fun AtsCvBuilderTool(
             themeColors = themeColors,
             onDismiss = { showSaveProfileDialog = false },
             onSaveProfile = { newLabel ->
-                val newId = if (cvData.id.startsWith("profile_") && !cvData.id.startsWith("profile_import_")) {
-                    "custom_profile_" + UUID.randomUUID().toString()
-                } else {
+                val existingProfile = profilesList.find { it.profileLabel.trim().equals(newLabel.trim(), ignoreCase = true) }
+                
+                val targetId = if (existingProfile != null && existingProfile.id.isNotBlank()) {
+                    existingProfile.id
+                } else if (newLabel.trim().equals(cvData.profileLabel.trim(), ignoreCase = true) && cvData.id.isNotBlank() && !cvData.id.startsWith("profile_")) {
                     cvData.id
+                } else {
+                    "custom_profile_" + java.util.UUID.randomUUID().toString()
                 }
-                val updated = cvData.copy(id = newId, profileLabel = newLabel)
+
+                val updated = cvData.copy(id = targetId, profileLabel = newLabel)
                 updateCvDataState(updated)
-                activeProfileId = newId
-                saveActiveProfileId(context, newId)
+                activeProfileId = targetId
+                saveActiveProfileId(context, targetId)
                 showSaveProfileDialog = false
                 showToast(if (isBn) "প্রোফাইল সফলভাবে সেভ হয়েছে!" else "Profile saved successfully!")
             }
@@ -4431,7 +4556,7 @@ fun AtsCvBuilderTool(
                         val sysPrompt = when (aiPromptTargetField) {
                             "CIRCULAR_MATCH" -> "You are a senior ATS Match consultant. Return ONLY valid JSON: {\"tailoredSummary\": \"...\", \"newSkills\": [\"Skill1\", \"Skill2\"]}"
                             "FRESHER_COMPLETE" -> "You are a professional university career coach and top ATS resume consultant. Generate 4 high-impact resume sections for freshers. Output strictly valid JSON with keys: 'academicProjects', 'internshipsVolunteer', 'leadershipClubs', 'keyCoursework'."
-                            else -> "You are an expert HR Manager and professional resume writer. Return formatted plain text or bullet points as appropriate for the requested section. Do not include markdown headers or unnecessary conversational filler."
+                            else -> "CRITICAL INSTRUCTION: You are an expert HR Manager and professional resume writer. Write ONLY the exact, precise text content requested for the CV field. DO NOT include any conversational text, greetings, explanations, or wrap-up remarks. DO NOT include introductory phrases like \'Here is the objective:\' or \'Certainly!\'. DO NOT use markdown code blocks (```). Your ENTIRE output must be exclusively the raw text to be inserted into the CV, ready to copy-paste. Nothing else."
                         }
                         val resultText = callGeminiAiMultiModal(
                             prompt = promptText,
@@ -4559,24 +4684,44 @@ fun AtsCvBuilderTool(
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = if (isBn) "এআইএস সিভি বিল্ডার" else "ATS CV Builder",
+                        text = if (isBn) "এটিএস সিভি বিল্ডার" else "ATS CV Builder",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = themeColors.displayText
                     )
                     Text(
-                        text = if (isBn) "স্মার্ট এআই এবং প্রফেশনাল টেমপ্লেট" else "Smart AI & Professional Templates",
+                        text = cvData.profileLabel.ifBlank { if (isBn) "স্মার্ট এআই এবং প্রফেশনাল টেমপ্লেট" else "Smart AI & Professional Templates" },
                         fontSize = 11.5.sp,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                         color = themeColors.displayText.copy(alpha = 0.6f)
                     )
                 }
+
+                // Undo Button
+                IconButton(
+                    onClick = { performUndo() },
+                    enabled = undoStack.isNotEmpty(),
+                    modifier = Modifier.size(38.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Undo,
+                        contentDescription = "Undo",
+                        tint = if (undoStack.isNotEmpty()) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.3f),
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+
+
+
+                Spacer(modifier = Modifier.width(4.dp))
 
                 // Header History Button with count badge
                 IconButton(
                     onClick = { showHistoryDialog = true },
                     modifier = Modifier.size(38.dp)
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
+                    Box(modifier = Modifier.size(38.dp), contentAlignment = Alignment.Center) {
                         Icon(
                             imageVector = Icons.Default.History,
                             contentDescription = "History",
@@ -4586,17 +4731,20 @@ fun AtsCvBuilderTool(
                         if (historyList.isNotEmpty()) {
                             Box(
                                 modifier = Modifier
-                                    .size(15.dp)
+                                    .size(20.dp)
+                                    .align(Alignment.TopEnd)
+                                    .offset(x = 2.dp, y = (-2).dp)
                                     .clip(CircleShape)
-                                    .background(Color.Red)
-                                    .align(Alignment.TopEnd),
+                                    .background(Color.Red),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
                                     text = if (historyList.size > 9) "9+" else historyList.size.toString(),
                                     color = Color.White,
-                                    fontSize = 8.5.sp,
-                                    fontWeight = FontWeight.Bold
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    textAlign = TextAlign.Center,
+                                    lineHeight = 10.sp
                                 )
                             }
                         }
@@ -4610,7 +4758,7 @@ fun AtsCvBuilderTool(
                     onClick = { showProfileManagerDialog = true },
                     modifier = Modifier.size(38.dp)
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
+                    Box(modifier = Modifier.size(38.dp), contentAlignment = Alignment.Center) {
                         Icon(
                             imageVector = Icons.Default.AccountCircle,
                             contentDescription = "Saved Profiles",
@@ -4625,17 +4773,20 @@ fun AtsCvBuilderTool(
                         if (customCount > 0) {
                             Box(
                                 modifier = Modifier
-                                    .size(15.dp)
+                                    .size(20.dp)
+                                    .align(Alignment.TopEnd)
+                                    .offset(x = 2.dp, y = (-2).dp)
                                     .clip(CircleShape)
-                                    .background(Color(0xFF059669))
-                                    .align(Alignment.TopEnd),
+                                    .background(Color(0xFF059669)),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
                                     text = if (customCount > 9) "9+" else customCount.toString(),
                                     color = Color.White,
-                                    fontSize = 8.5.sp,
-                                    fontWeight = FontWeight.Bold
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    textAlign = TextAlign.Center,
+                                    lineHeight = 10.sp
                                 )
                             }
                         }
@@ -4888,8 +5039,14 @@ fun AtsCvBuilderTool(
                                 val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
                                 val destFile = File(downloadsDir, "CV_${cvData.fullName.replace(" ", "_")}_ATS.pdf")
                                 file.copyTo(destFile, overwrite = true)
+                                addOrUpdateCvHistory(context, destFile, cvData)
+                                historyList = loadCvHistory(context)
                                 showToast(if (isBn) "পিডিএফ ডাউনলোড ফোল্ডারে সেভ হয়েছে!" else "PDF saved to Downloads folder!")
                             } catch (e: Exception) {
+                                try {
+                                    addOrUpdateCvHistory(context, file, cvData)
+                                    historyList = loadCvHistory(context)
+                                } catch (_: Exception) {}
                                 showToast("Saved to App Storage: ${file.name}")
                             }
                         },
@@ -5229,7 +5386,7 @@ private fun ProfileAndPersonasTab(
                                 "Rounded" -> RoundedCornerShape(12.dp)
                                 else -> androidx.compose.ui.graphics.RectangleShape
                             })
-                            .border(1.5.dp, themeColors.buttonEqualBg, shape = when (cvData.photoShape) {
+                            .border(3.5.dp, Color(cvData.templateStyle.primaryColorHex), shape = when (cvData.photoShape) {
                                 "Circle" -> CircleShape
                                 "Rounded" -> RoundedCornerShape(12.dp)
                                 else -> androidx.compose.ui.graphics.RectangleShape
@@ -5436,13 +5593,7 @@ private fun ProfileAndPersonasTab(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        CvCustomTextField(
-            label = if (isBn) "প্রোফাইলের নাম (লেবেল)" else "Profile Label",
-            value = cvData.profileLabel,
-            onValueChange = { onCvDataChange(cvData.copy(profileLabel = it)) },
-            themeColors = themeColors,
-            placeholderText = if (isBn) "যেমন: সফটওয়্যার ইঞ্জিনিয়ার প্রোফাইল" else "e.g., Software Engineer Profile"
-        )
+        
  
         Spacer(modifier = Modifier.height(8.dp))
  
@@ -5687,7 +5838,7 @@ private fun ExperienceTab(
     onGenerateFresherAi: () -> Unit
 ) {
     val scrollState = rememberScrollState()
-
+    
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -6222,7 +6373,8 @@ private fun EducationAndSkillsTab(
 
     val subjectOptions = listOf(
         "Science",
-        "Business Studies / Commerce",
+        "Business Studies",
+        "Commerce",
         "Humanities / Arts",
         "Computer Science & Engineering (CSE)",
         "Electrical & Electronic Engineering (EEE)",
@@ -6934,6 +7086,7 @@ private fun PreviewAndExportTab(
     onSaveProfile: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
+    var previewMode by remember { mutableStateOf("PREVIEW") } // "PREVIEW" or "LIVE_EDIT"
 
     Column(
         modifier = Modifier
@@ -7116,11 +7269,12 @@ private fun PreviewAndExportTab(
                     .weight(1f)
                     .height(46.dp),
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg)
+                colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
+                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
             ) {
-                Icon(imageVector = Icons.Default.Download, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(text = "PDF Download", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Icon(imageVector = Icons.Default.Download, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(text = "Download PDF", color = Color.White, fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
             }
 
             Spacer(modifier = Modifier.width(8.dp))
@@ -7131,11 +7285,12 @@ private fun PreviewAndExportTab(
                     .weight(1f)
                     .height(46.dp),
                 shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(1.dp, themeColors.buttonEqualBg)
+                border = BorderStroke(1.dp, themeColors.buttonEqualBg),
+                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
             ) {
-                Icon(imageVector = Icons.Default.Share, contentDescription = null, tint = themeColors.buttonEqualBg, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(text = if (isBn) "PDF শেয়ার" else "Share PDF", color = themeColors.buttonEqualBg, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Icon(imageVector = Icons.Default.Share, contentDescription = null, tint = themeColors.buttonEqualBg, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(text = if (isBn) "Share PDF" else "Share PDF", color = themeColors.buttonEqualBg, fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -7149,11 +7304,12 @@ private fun PreviewAndExportTab(
                     .weight(1f)
                     .height(46.dp),
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF16A34A))
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF16A34A)),
+                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
             ) {
-                Icon(imageVector = Icons.Default.Description, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(text = "Docx Download", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Icon(imageVector = Icons.Default.Description, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(text = "Download Docx", color = Color.White, fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
             }
 
             Spacer(modifier = Modifier.width(8.dp))
@@ -7164,15 +7320,84 @@ private fun PreviewAndExportTab(
                     .weight(1f)
                     .height(46.dp),
                 shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(1.dp, Color(0xFF16A34A))
+                border = BorderStroke(1.dp, Color(0xFF16A34A)),
+                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
             ) {
-                Icon(imageVector = Icons.Default.Share, contentDescription = null, tint = Color(0xFF16A34A), modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(text = if (isBn) "DOCX শেয়ার" else "Share DOCX", color = Color(0xFF16A34A), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Icon(imageVector = Icons.Default.Share, contentDescription = null, tint = Color(0xFF16A34A), modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(text = if (isBn) "Share DOCX" else "Share DOCX", color = Color(0xFF16A34A), fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
             }
         }
 
         Spacer(modifier = Modifier.height(20.dp))
+
+        // Mode Selector Chips
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Surface(
+                onClick = { previewMode = "PREVIEW" },
+                shape = RoundedCornerShape(topStart = 20.dp, bottomStart = 20.dp),
+                color = if (previewMode == "PREVIEW") themeColors.buttonEqualBg else themeColors.cardBg,
+                border = BorderStroke(1.dp, themeColors.buttonEqualBg),
+                modifier = Modifier.height(36.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 24.dp)) {
+                    Text(if (isBn) "প্রিভিউ" else "Preview", color = if (previewMode == "PREVIEW") Color.White else themeColors.buttonEqualBg, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                }
+            }
+            Surface(
+                onClick = { previewMode = "LIVE_EDIT" },
+                shape = RoundedCornerShape(topEnd = 20.dp, bottomEnd = 20.dp),
+                color = if (previewMode == "LIVE_EDIT") themeColors.buttonEqualBg else themeColors.cardBg,
+                border = BorderStroke(1.dp, themeColors.buttonEqualBg),
+                modifier = Modifier.height(36.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 24.dp)) {
+                    Text(if (isBn) "লাইভ এডিট" else "Live Edit", color = if (previewMode == "LIVE_EDIT") Color.White else themeColors.buttonEqualBg, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                }
+            }
+        }
+
+        if (previewMode == "LIVE_EDIT") {
+            // Live Edit Spacing & Padding Controls
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = themeColors.cardBg,
+                border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.12f)),
+                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Text(if (isBn) "মার্জিন (Margin): ${cvData.customMargin.toInt()}" else "Margin: ${cvData.customMargin.toInt()}", fontSize = 12.sp, color = themeColors.displayText, fontWeight = FontWeight.Bold)
+                    androidx.compose.material3.Slider(
+                        value = cvData.customMargin,
+                        onValueChange = { onCvDataChange(cvData.copy(customMargin = it)) },
+                        valueRange = 20f..80f,
+                        steps = 60,
+                        colors = androidx.compose.material3.SliderDefaults.colors(thumbColor = themeColors.buttonEqualBg, activeTrackColor = themeColors.buttonEqualBg)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(if (isBn) "প্যাডিং (Padding): ${cvData.customPadding.toInt()}" else "Padding: ${cvData.customPadding.toInt()}", fontSize = 12.sp, color = themeColors.displayText, fontWeight = FontWeight.Bold)
+                    androidx.compose.material3.Slider(
+                        value = cvData.customPadding,
+                        onValueChange = { onCvDataChange(cvData.copy(customPadding = it)) },
+                        valueRange = 5f..30f,
+                        steps = 25,
+                        colors = androidx.compose.material3.SliderDefaults.colors(thumbColor = themeColors.buttonEqualBg, activeTrackColor = themeColors.buttonEqualBg)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(if (isBn) "লাইন স্পেসিং (Line Spacing): ${String.format("%.2f", cvData.customLineSpacing)}" else "Line Spacing: ${String.format("%.2f", cvData.customLineSpacing)}", fontSize = 12.sp, color = themeColors.displayText, fontWeight = FontWeight.Bold)
+                    androidx.compose.material3.Slider(
+                        value = cvData.customLineSpacing,
+                        onValueChange = { onCvDataChange(cvData.copy(customLineSpacing = it)) },
+                        valueRange = 0.8f..2.0f,
+                        steps = 24,
+                        colors = androidx.compose.material3.SliderDefaults.colors(thumbColor = themeColors.buttonEqualBg, activeTrackColor = themeColors.buttonEqualBg)
+                    )
+                }
+            }
+        }
 
         // Vector PDF Live Canvas Screen
         Row(
