@@ -13,6 +13,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.draw.clip
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -589,63 +594,124 @@ fun CvLiveEditPanel(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Photo actions and shape controls in Live Edit
+                // Photo actions and preview in Live Edit
+                var isPhotoAdvancedExpanded by remember { mutableStateOf(false) }
+
+                val decodedLiveBmp = remember(localData.photoBase64) {
+                    if (localData.photoBase64.isNotBlank()) {
+                        try {
+                            val bytes = Base64.decode(localData.photoBase64, Base64.DEFAULT)
+                            BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                        } catch (_: Exception) { null }
+                    } else null
+                }
+
+                val previewShape = when (localData.photoShape) {
+                    "Circle" -> CircleShape
+                    "Rounded" -> RoundedCornerShape(localData.photoCornerRadius.dp)
+                    "Rectangle" -> RoundedCornerShape(4.dp)
+                    else -> CircleShape
+                }
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(
-                        text = if (localData.photoBase64.isNotBlank()) (if (isBn) "ছবি যুক্ত আছে" else "Photo Attached") else (if (isBn) "কোন ছবি নেই" else "No Photo"),
-                        fontSize = 11.sp,
-                        color = themeColors.displayText.copy(alpha = 0.7f)
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(width = 60.dp, height = 60.dp)
+                            .background(Color.Gray.copy(alpha = 0.08f), shape = previewShape)
+                            .then(
+                                if (localData.photoBorderWidth > 0f) {
+                                    Modifier.border(
+                                        width = localData.photoBorderWidth.dp,
+                                        color = themeColors.buttonEqualBg,
+                                        shape = previewShape
+                                    )
+                                } else Modifier
+                            )
+                            .clip(shape = previewShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (decodedLiveBmp != null) {
+                            Image(
+                                bitmap = decodedLiveBmp.asImageBitmap(),
+                                contentDescription = "Profile Photo",
+                                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.AddAPhoto,
+                                contentDescription = null,
+                                tint = themeColors.displayText.copy(alpha = 0.4f),
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
 
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        OutlinedButton(
+                        IconButton(
                             onClick = onPickImage,
-                            shape = RoundedCornerShape(8.dp),
-                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
-                            modifier = Modifier.height(30.dp)
+                            modifier = Modifier
+                                .size(34.dp)
+                                .background(themeColors.buttonEqualBg.copy(alpha = 0.12f), CircleShape)
                         ) {
-                            Icon(Icons.Default.PhotoLibrary, contentDescription = null, modifier = Modifier.size(12.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(if (isBn) "গ্যালারি" else "Gallery", fontSize = 10.5.sp)
+                            Icon(Icons.Default.PhotoLibrary, contentDescription = "Gallery", tint = themeColors.buttonEqualBg, modifier = Modifier.size(18.dp))
                         }
 
                         if (localData.photoBase64.isNotBlank()) {
-                            OutlinedButton(
+                            IconButton(
                                 onClick = onOpenCropExisting,
-                                shape = RoundedCornerShape(8.dp),
-                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
-                                modifier = Modifier.height(30.dp)
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .background(themeColors.buttonEqualBg.copy(alpha = 0.12f), CircleShape)
                             ) {
-                                Icon(Icons.Default.Crop, contentDescription = null, modifier = Modifier.size(12.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(if (isBn) "ক্রপ এডিট" else "Edit Crop", fontSize = 10.5.sp)
+                                Icon(Icons.Default.Crop, contentDescription = "Edit Crop", tint = themeColors.buttonEqualBg, modifier = Modifier.size(18.dp))
                             }
 
-                            OutlinedButton(
+                            IconButton(
                                 onClick = {
                                     localData = localData.copy(photoBase64 = "", photoScale = 1.0f, photoOffsetX = 0f, photoOffsetY = 0f)
                                 },
-                                shape = RoundedCornerShape(8.dp),
-                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
-                                modifier = Modifier.height(30.dp)
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .background(Color.Red.copy(alpha = 0.1f), CircleShape)
                             ) {
-                                Icon(Icons.Default.Delete, contentDescription = null, tint = Color.Red.copy(alpha = 0.7f), modifier = Modifier.size(12.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(if (isBn) "রিমুভ" else "Remove", color = Color.Red.copy(alpha = 0.7f), fontSize = 10.5.sp)
+                                Icon(Icons.Default.Delete, contentDescription = "Remove Photo", tint = Color.Red.copy(alpha = 0.8f), modifier = Modifier.size(18.dp))
                             }
                         }
                     }
                 }
 
-                if (localData.photoBase64.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { isPhotoAdvancedExpanded = !isPhotoAdvancedExpanded }
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
                     Text(
-                        text = if (isBn) "ছবির শেইপ ও ফ্রেম:" else "Photo Shape & Frame:",
+                        text = if (isBn) "এডভান্সড ফটো সেটিংস" else "Advanced Photo Options",
+                        fontSize = 10.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.buttonEqualBg
+                    )
+                    Icon(
+                        imageVector = if (isPhotoAdvancedExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                        contentDescription = "Toggle Advanced Photo Options",
+                        tint = themeColors.buttonEqualBg,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+
+                if (isPhotoAdvancedExpanded) {
+                    Text(
+                        text = if (isBn) "ছবির শেইপ:" else "Photo Shape:",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                         color = themeColors.displayText.copy(alpha = 0.7f)
@@ -655,14 +721,13 @@ fun CvLiveEditPanel(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                         modifier = Modifier.padding(vertical = 4.dp)
                     ) {
-                        val shapes = listOf("Circle", "Rounded", "Square", "Oval", "Rectangle")
+                        val shapes = listOf("Circle", "Rounded", "Square", "Rectangle")
                         shapes.forEach { shapeName ->
                             val isSelected = localData.photoShape == shapeName
                             val label = when (shapeName) {
                                 "Circle" -> if (isBn) "বৃত্ত" else "Circle"
                                 "Rounded" -> if (isBn) "কোণ গোল" else "Rounded"
                                 "Square" -> if (isBn) "বর্গ" else "Square"
-                                "Oval" -> if (isBn) "ওভাল" else "Oval"
                                 else -> if (isBn) "আয়তাকার" else "Rect"
                             }
                             Surface(
@@ -683,7 +748,6 @@ fun CvLiveEditPanel(
                         }
                     }
 
-                    // Border Width Slider
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth()
@@ -707,7 +771,6 @@ fun CvLiveEditPanel(
                         )
                     }
 
-                    // Width & Height sliders
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -1239,6 +1302,7 @@ fun CvLiveEditPanel(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 localData.skills.forEachIndexed { idx, sk ->
+                    val fullText = if (sk.description.isNotBlank()) "${sk.name}: ${sk.description}" else if (sk.name.contains(":")) sk.name else if (sk.level.isNotBlank() && sk.level != "Proficient" && sk.level != "Expert") "${sk.name}: ${sk.level}" else sk.name
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -1246,33 +1310,31 @@ fun CvLiveEditPanel(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Box(modifier = Modifier.weight(1.5f)) {
-                            OutlinedTextField(
-                                value = sk.name,
-                                onValueChange = {
-                                    val list = localData.skills.toMutableList()
-                                    list[idx] = sk.copy(name = it)
-                                    localData = localData.copy(skills = list)
-                                },
-                                label = { Text(if (isBn) "দক্ষতার নাম" else "Skill Name", fontSize = 10.sp) },
-                                singleLine = true,
-                                shape = RoundedCornerShape(8.dp)
-                            )
-                        }
-
-                        Box(modifier = Modifier.weight(1f)) {
-                            OutlinedTextField(
-                                value = sk.level,
-                                onValueChange = {
-                                    val list = localData.skills.toMutableList()
-                                    list[idx] = sk.copy(level = it)
-                                    localData = localData.copy(skills = list)
-                                },
-                                label = { Text(if (isBn) "দক্ষতার লেভেল" else "Level", fontSize = 10.sp) },
-                                singleLine = true,
-                                shape = RoundedCornerShape(8.dp)
-                            )
-                        }
+                        OutlinedTextField(
+                            value = fullText,
+                            onValueChange = { input ->
+                                val list = localData.skills.toMutableList()
+                                if (input.contains(":")) {
+                                    val parts = input.split(":", limit = 2)
+                                    list[idx] = sk.copy(
+                                        name = parts[0].trim(),
+                                        description = parts[1].trim(),
+                                        level = parts[1].trim()
+                                    )
+                                } else {
+                                    list[idx] = sk.copy(
+                                        name = input.trim(),
+                                        description = "",
+                                        level = ""
+                                    )
+                                }
+                                localData = localData.copy(skills = list)
+                            },
+                            label = { Text(if (isBn) "স্কিল ও বিবরণ #${idx + 1}" else "Skill & Detail #${idx + 1}", fontSize = 10.sp) },
+                            singleLine = true,
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.weight(1f)
+                        )
 
                         IconButton(
                             onClick = {
@@ -1280,9 +1342,9 @@ fun CvLiveEditPanel(
                                 list.removeAt(idx)
                                 localData = localData.copy(skills = list)
                             },
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(28.dp)
                         ) {
-                            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red.copy(alpha = 0.7f), modifier = Modifier.size(15.dp))
+                            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red.copy(alpha = 0.7f), modifier = Modifier.size(16.dp))
                         }
                     }
                 }
