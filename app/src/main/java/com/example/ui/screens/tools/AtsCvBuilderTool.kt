@@ -1019,7 +1019,8 @@ data class CvData(
     val fontScale: String = "STANDARD", // "COMPACT", "STANDARD", "COMFORTABLE", "LARGE"
     val bulletStyle: String = "BULLET", // "BULLET", "DASH", "SQUARE", "DIAMOND", "COMMA", "PIPE", "NONE"
     val customMargin: Float = 36f,
-    val customPadding: Float = 15f,
+    val sectionSpacing: Float = 8f,
+    val itemSpacing: Float = 4f,
     val customLineSpacing: Float = 1.15f
 )
 
@@ -1782,7 +1783,8 @@ private fun saveAllCvProfiles(context: Context, profiles: List<CvData>) {
                 put("fontScale", profile.fontScale)
                 put("bulletStyle", profile.bulletStyle)
                 put("customMargin", profile.customMargin.toDouble())
-                put("customPadding", profile.customPadding.toDouble())
+                put("sectionSpacing", profile.sectionSpacing.toDouble())
+                put("itemSpacing", profile.itemSpacing.toDouble())
                 put("customLineSpacing", profile.customLineSpacing.toDouble())
             }
             arr.put(obj)
@@ -1951,7 +1953,8 @@ private fun loadAllCvProfiles(context: Context): List<CvData> {
                     fontScale = obj.optString("fontScale", "STANDARD"),
                     bulletStyle = obj.optString("bulletStyle", "BULLET"),
                     customMargin = obj.optDouble("customMargin", 36.0).toFloat(),
-                    customPadding = obj.optDouble("customPadding", 15.0).toFloat(),
+                    sectionSpacing = obj.optDouble("sectionSpacing", 8.0).toFloat(),
+                    itemSpacing = obj.optDouble("itemSpacing", 4.0).toFloat(),
                     customLineSpacing = obj.optDouble("customLineSpacing", 1.15).toFloat()
                 )
             )
@@ -2351,7 +2354,8 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
     var canvas = page.canvas
 
     val margin = data.customMargin
-    val sectionGap = data.customPadding
+    val sectionGap = data.sectionSpacing
+    val entryGap = data.itemSpacing
     val contentWidth = pageWidth - (margin * 2)
     var currentY = margin
 
@@ -3403,15 +3407,15 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                         canvas.translate(margin + 10f, currentY + 7f)
                         sumLayout.draw(canvas)
                         canvas.restore()
-                        currentY += boxH + 10f
+                        currentY += boxH + entryGap
                     } else {
                         val sumLayout = StaticLayout.Builder.obtain(data.summary, 0, data.summary.length, bodyPaint, contentWidth.toInt()).setLineSpacing(0f, data.customLineSpacing).build()
-                        checkAndAddNewPage(sumLayout.height.toFloat() + 8f)
+                        checkAndAddNewPage(sumLayout.height.toFloat() + 4f)
                         canvas.save()
                         canvas.translate(margin, currentY)
                         sumLayout.draw(canvas)
                         canvas.restore()
-                        currentY += sumLayout.height + 12f
+                        currentY += sumLayout.height + entryGap
                     }
                 }
             }
@@ -3448,9 +3452,9 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
 
                             val instLayout = StaticLayout.Builder.obtain(instText, 0, instText.length, bodyPaint, contentWidth.toInt()).setLineSpacing(0f, data.customLineSpacing).build()
                             canvas.save(); canvas.translate(margin, currentY); instLayout.draw(canvas); canvas.restore()
-                            currentY += instLayout.height + 6f
+                            currentY += instLayout.height + entryGap
                         }
-                        currentY += 6f
+                        currentY += 2f
                     } else {
                         val colExamW = 60f
                         val colInstW = 185f
@@ -3573,33 +3577,33 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                     if (data.fresherAcademicProjects.isNotBlank()) {
                         drawSectionHeader("ACADEMIC PROJECTS & CAPSTONE THESIS", "🚀")
                         val pLayout = StaticLayout.Builder.obtain(data.fresherAcademicProjects, 0, data.fresherAcademicProjects.length, bodyPaint, contentWidth.toInt()).setLineSpacing(0f, data.customLineSpacing).build()
-                        checkAndAddNewPage(pLayout.height.toFloat() + 6f)
+                        checkAndAddNewPage(pLayout.height.toFloat() + 4f)
                         canvas.save(); canvas.translate(margin, currentY); pLayout.draw(canvas); canvas.restore()
-                        currentY += pLayout.height + 8f
+                        currentY += pLayout.height + entryGap
                     }
 
                     if (data.fresherInternshipsVolunteer.isNotBlank()) {
                         drawSectionHeader("INTERNSHIPS & VOLUNTEER WORK", "🤝")
                         val vLayout = StaticLayout.Builder.obtain(data.fresherInternshipsVolunteer, 0, data.fresherInternshipsVolunteer.length, bodyPaint, contentWidth.toInt()).setLineSpacing(0f, data.customLineSpacing).build()
-                        checkAndAddNewPage(vLayout.height.toFloat() + 6f)
+                        checkAndAddNewPage(vLayout.height.toFloat() + 4f)
                         canvas.save(); canvas.translate(margin, currentY); vLayout.draw(canvas); canvas.restore()
-                        currentY += vLayout.height + 8f
+                        currentY += vLayout.height + entryGap
                     }
 
                     if (data.fresherLeadershipClubs.isNotBlank()) {
                         drawSectionHeader("CAMPUS LEADERSHIP & EXTRACURRICULAR", "🏆")
                         val lLayout = StaticLayout.Builder.obtain(data.fresherLeadershipClubs, 0, data.fresherLeadershipClubs.length, bodyPaint, contentWidth.toInt()).setLineSpacing(0f, data.customLineSpacing).build()
-                        checkAndAddNewPage(lLayout.height.toFloat() + 6f)
+                        checkAndAddNewPage(lLayout.height.toFloat() + 4f)
                         canvas.save(); canvas.translate(margin, currentY); lLayout.draw(canvas); canvas.restore()
-                        currentY += lLayout.height + 8f
+                        currentY += lLayout.height + entryGap
                     }
 
                     if (data.fresherKeyCoursework.isNotBlank()) {
                         drawSectionHeader("RELEVANT COURSEWORK & ACADEMIC CORE", "📚")
                         val cLayout = StaticLayout.Builder.obtain(data.fresherKeyCoursework, 0, data.fresherKeyCoursework.length, bodyPaint, contentWidth.toInt()).setLineSpacing(0f, data.customLineSpacing).build()
-                        checkAndAddNewPage(cLayout.height.toFloat() + 6f)
+                        checkAndAddNewPage(cLayout.height.toFloat() + 4f)
                         canvas.save(); canvas.translate(margin, currentY); cLayout.draw(canvas); canvas.restore()
-                        currentY += cLayout.height + 8f
+                        currentY += cLayout.height + entryGap
                     }
 
                     if (data.experiences.isNotEmpty()) {
@@ -3617,13 +3621,13 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                                     lines.forEach { line ->
                                         val bulletLine = if (line.startsWith("•") || line.startsWith("-") || line.startsWith("▪") || line.startsWith("◆")) line else "$bulletPrefix$line"
                                         val descLayout = StaticLayout.Builder.obtain(bulletLine, 0, bulletLine.length, bodyPaint, (contentWidth - 12f).toInt()).setLineSpacing(0f, data.customLineSpacing).build()
-                                        checkAndAddNewPage(descLayout.height.toFloat() + 4f)
+                                        checkAndAddNewPage(descLayout.height.toFloat() + 2f)
                                         canvas.save(); canvas.translate(margin + 12f, currentY); descLayout.draw(canvas); canvas.restore()
-                                        currentY += descLayout.height + 3f
+                                        currentY += descLayout.height + 2f
                                     }
-                                    currentY += 4f
+                                    currentY += entryGap
                                 } else {
-                                    currentY += 6f
+                                    currentY += entryGap
                                 }
                             }
                         }
@@ -3646,13 +3650,13 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                                     lines.forEach { line ->
                                         val bulletLine = if (line.startsWith("•") || line.startsWith("-") || line.startsWith("▪") || line.startsWith("◆")) line else "$bulletPrefix$line"
                                         val descLayout = StaticLayout.Builder.obtain(bulletLine, 0, bulletLine.length, bodyPaint, (contentWidth - 12f).toInt()).setLineSpacing(0f, data.customLineSpacing).build()
-                                        checkAndAddNewPage(descLayout.height.toFloat() + 4f)
+                                        checkAndAddNewPage(descLayout.height.toFloat() + 2f)
                                         canvas.save(); canvas.translate(margin + 12f, currentY); descLayout.draw(canvas); canvas.restore()
-                                        currentY += descLayout.height + 3f
+                                        currentY += descLayout.height + 2f
                                     }
-                                    currentY += 4f
+                                    currentY += entryGap
                                 } else {
-                                    currentY += 6f
+                                    currentY += entryGap
                                 }
                             }
                         }
@@ -3699,10 +3703,10 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                             canvas.translate(margin, currentY)
                             layout.draw(canvas)
                             canvas.restore()
-                            currentY += layout.height + 4f
+                            currentY += layout.height + entryGap
                         }
                     }
-                    currentY += 6f
+                    currentY += 2f
                 }
             }
 
@@ -3718,12 +3722,12 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
 
                         if (pr.description.isNotBlank()) {
                             val pDescLayout = StaticLayout.Builder.obtain(pr.description, 0, pr.description.length, bodyPaint, (contentWidth - 12f).toInt()).setLineSpacing(0f, data.customLineSpacing).build()
-                            checkAndAddNewPage(pDescLayout.height.toFloat() + 4f)
+                            checkAndAddNewPage(pDescLayout.height.toFloat() + 2f)
                             canvas.save(); canvas.translate(margin + 12f, currentY); pDescLayout.draw(canvas); canvas.restore()
-                            currentY += pDescLayout.height + 6f
+                            currentY += pDescLayout.height + entryGap
                         }
                     }
-                    currentY += 4f
+                    currentY += 2f
                 }
             }
 
@@ -3731,9 +3735,9 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                 if (data.certifications.isNotBlank()) {
                     drawSectionHeader("TRAINING & CERTIFICATION", "📜")
                     val certLayout = StaticLayout.Builder.obtain(data.certifications, 0, data.certifications.length, bodyPaint, contentWidth.toInt()).setLineSpacing(0f, data.customLineSpacing).build()
-                    checkAndAddNewPage(certLayout.height.toFloat() + 6f)
+                    checkAndAddNewPage(certLayout.height.toFloat() + 4f)
                     canvas.save(); canvas.translate(margin, currentY); certLayout.draw(canvas); canvas.restore()
-                    currentY += certLayout.height + 10f
+                    currentY += certLayout.height + 4f
                 }
             }
 
@@ -3741,9 +3745,9 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                 if (data.languages.isNotBlank()) {
                     drawSectionHeader("LANGUAGE FLUENCY", "🌐")
                     val langLayout = StaticLayout.Builder.obtain(data.languages, 0, data.languages.length, bodyPaint, contentWidth.toInt()).setLineSpacing(0f, data.customLineSpacing).build()
-                    checkAndAddNewPage(langLayout.height.toFloat() + 6f)
+                    checkAndAddNewPage(langLayout.height.toFloat() + 4f)
                     canvas.save(); canvas.translate(margin, currentY); langLayout.draw(canvas); canvas.restore()
-                    currentY += langLayout.height + 10f
+                    currentY += langLayout.height + 4f
                 }
             }
 
@@ -3753,9 +3757,9 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                         if (item.title.isNotBlank() && item.content.isNotBlank()) {
                             drawSectionHeader(item.title.uppercase(), "📌")
                             val itemLayout = StaticLayout.Builder.obtain(item.content, 0, item.content.length, bodyPaint, contentWidth.toInt()).setLineSpacing(0f, data.customLineSpacing).build()
-                            checkAndAddNewPage(itemLayout.height.toFloat() + 6f)
+                            checkAndAddNewPage(itemLayout.height.toFloat() + 4f)
                             canvas.save(); canvas.translate(margin, currentY); itemLayout.draw(canvas); canvas.restore()
-                            currentY += itemLayout.height + 10f
+                            currentY += itemLayout.height + entryGap
                         }
                     }
                 }
@@ -3797,7 +3801,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                         }
                         currentY += rowH
                     }
-                    currentY += 8f
+                    currentY += 2f
                 }
             }
 
@@ -3805,9 +3809,9 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                 if (data.references.isNotBlank()) {
                     drawSectionHeader("REFERENCES", "🤝")
                     val refLayout = StaticLayout.Builder.obtain(data.references, 0, data.references.length, bodyPaint, contentWidth.toInt()).setLineSpacing(0f, data.customLineSpacing).build()
-                    checkAndAddNewPage(refLayout.height.toFloat() + 6f)
+                    checkAndAddNewPage(refLayout.height.toFloat() + 4f)
                     canvas.save(); canvas.translate(margin, currentY); refLayout.draw(canvas); canvas.restore()
-                    currentY += refLayout.height + 8f
+                    currentY += refLayout.height + 4f
                 }
             }
         }
@@ -7506,12 +7510,21 @@ private fun PreviewAndExportTab(
                         colors = androidx.compose.material3.SliderDefaults.colors(thumbColor = themeColors.buttonEqualBg, activeTrackColor = themeColors.buttonEqualBg)
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(if (isBn) "প্যাডিং (Padding): ${cvData.customPadding.toInt()}" else "Padding: ${cvData.customPadding.toInt()}", fontSize = 12.sp, color = themeColors.displayText, fontWeight = FontWeight.Bold)
+                    Text(if (isBn) "সেকশন স্পেসিং (Section Spacing): ${cvData.sectionSpacing.toInt()}" else "Section Spacing: ${cvData.sectionSpacing.toInt()}", fontSize = 12.sp, color = themeColors.displayText, fontWeight = FontWeight.Bold)
                     androidx.compose.material3.Slider(
-                        value = cvData.customPadding,
-                        onValueChange = { onCvDataChange(cvData.copy(customPadding = it)) },
-                        valueRange = 5f..30f,
-                        steps = 25,
+                        value = cvData.sectionSpacing,
+                        onValueChange = { onCvDataChange(cvData.copy(sectionSpacing = it)) },
+                        valueRange = 2f..24f,
+                        steps = 22,
+                        colors = androidx.compose.material3.SliderDefaults.colors(thumbColor = themeColors.buttonEqualBg, activeTrackColor = themeColors.buttonEqualBg)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(if (isBn) "আইটেম স্পেসিং (Item Spacing): ${cvData.itemSpacing.toInt()}" else "Item Spacing: ${cvData.itemSpacing.toInt()}", fontSize = 12.sp, color = themeColors.displayText, fontWeight = FontWeight.Bold)
+                    androidx.compose.material3.Slider(
+                        value = cvData.itemSpacing,
+                        onValueChange = { onCvDataChange(cvData.copy(itemSpacing = it)) },
+                        valueRange = 0f..16f,
+                        steps = 16,
                         colors = androidx.compose.material3.SliderDefaults.colors(thumbColor = themeColors.buttonEqualBg, activeTrackColor = themeColors.buttonEqualBg)
                     )
                     Spacer(modifier = Modifier.height(8.dp))
