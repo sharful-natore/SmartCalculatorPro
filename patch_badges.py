@@ -1,21 +1,21 @@
 import re
-
 with open("app/src/main/java/com/example/ui/screens/tools/AtsCvBuilderTool.kt", "r") as f:
     content = f.read()
 
-# Replace history badge
-content = re.sub(
-    r'\.size\(18\.dp\)\s*\.align\(Alignment\.TopEnd\)\s*\.offset\(x = 4\.dp, y = \(-4\)\.dp\)\s*\.clip\(CircleShape\)',
-    '.size(20.dp)\\n                                    .align(Alignment.TopEnd)\\n                                    .offset(x = 2.dp, y = (-2).dp)\\n                                    .clip(CircleShape)',
-    content
-)
+# We need to find the Box that has contentAlignment = Alignment.Center and contains Icons.Default.AccountCircle
+# And the Box inside it for the badge, which has .offset(x = 2.dp, y = (-2).dp)
+# We will change the parent Box to not clip, or change the IconButton size.
+# Actually, the parent IconButton has `modifier = Modifier.size(38.dp)`.
+# The Box inside it has `modifier = Modifier.size(38.dp)`.
+# The badge Box has `.offset(x = 2.dp, y = (-2).dp)` which might push it outside the 38.dp bounds.
+# We can change the IconButton to `Modifier.size(42.dp)` and the inner Box to `Modifier.size(42.dp)`.
 
-# Fix Line Height and sizing in badge Text to ensure centering
-content = re.sub(
-    r'fontSize = 10\.sp,\s*fontWeight = FontWeight\.Bold,\s*textAlign = TextAlign\.Center',
-    'fontSize = 10.sp,\\n                                    fontWeight = FontWeight.Bold,\\n                                    textAlign = TextAlign.Center,\\n                                    lineHeight = 10.sp',
-    content
-)
+new_content = content.replace('IconButton(\n                    onClick = { showProfileManagerDialog = true },\n                    modifier = Modifier.size(38.dp)\n                ) {\n                    Box(modifier = Modifier.size(38.dp), contentAlignment = Alignment.Center) {',
+'IconButton(\n                    onClick = { showProfileManagerDialog = true },\n                    modifier = Modifier.size(46.dp)\n                ) {\n                    Box(modifier = Modifier.size(46.dp), contentAlignment = Alignment.Center) {')
 
-with open("app/src/main/java/com/example/ui/screens/tools/AtsCvBuilderTool.kt", "w") as f:
-    f.write(content)
+if new_content != content:
+    with open("app/src/main/java/com/example/ui/screens/tools/AtsCvBuilderTool.kt", "w") as f:
+        f.write(new_content)
+    print("Fixed profile badge bounds")
+else:
+    print("Could not find profile badge bounds")
