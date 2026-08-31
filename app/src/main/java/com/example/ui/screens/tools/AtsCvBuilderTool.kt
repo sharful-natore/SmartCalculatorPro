@@ -52,6 +52,10 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -4230,6 +4234,361 @@ private fun downloadDocxFile(context: Context, docxFile: File) {
     }
 }
 
+// ================= COMPACT SMART EDIT COMPONENTS =================
+
+@Composable
+private fun CompactEditField(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    themeColors: CalculatorThemeColors,
+    placeholder: String = "",
+    singleLine: Boolean = true,
+    onAiPrompt: (() -> Unit)? = null
+) {
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = label.uppercase(),
+                fontSize = 10.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = themeColors.buttonEqualBg.copy(alpha = 0.9f),
+                letterSpacing = 0.8.sp
+            )
+            if (onAiPrompt != null) {
+                IconButton(onClick = onAiPrompt, modifier = Modifier.size(20.dp)) {
+                    Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = "AI", tint = themeColors.buttonEqualBg, modifier = Modifier.size(14.dp))
+                }
+            }
+        }
+        BasicTextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
+            textStyle = TextStyle(fontSize = 14.sp, color = themeColors.displayText, fontWeight = FontWeight.Medium),
+            singleLine = singleLine,
+            cursorBrush = SolidColor(themeColors.buttonEqualBg),
+            decorationBox = { innerTextField ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .drawBehind {
+                            val strokeWidth = 1.dp.toPx()
+                            val y = size.height - strokeWidth / 2
+                            drawLine(
+                                color = themeColors.displayText.copy(alpha = 0.12f),
+                                start = androidx.compose.ui.geometry.Offset(0f, y),
+                                end = androidx.compose.ui.geometry.Offset(size.width, y),
+                                strokeWidth = strokeWidth
+                            )
+                        }
+                        .padding(bottom = 6.dp)
+                ) {
+                    if (value.isEmpty()) {
+                        Text(text = placeholder, fontSize = 14.sp, color = themeColors.displayText.copy(alpha = 0.3f))
+                    }
+                    innerTextField()
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun CompactSectionHeader(
+    title: String,
+    icon: ImageVector,
+    themeColors: CalculatorThemeColors,
+    onAdd: (() -> Unit)? = null
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 18.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(imageVector = icon, contentDescription = null, tint = themeColors.buttonEqualBg, modifier = Modifier.size(18.dp))
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = title,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+                color = themeColors.displayText
+            )
+        }
+        if (onAdd != null) {
+            IconButton(onClick = onAdd, modifier = Modifier.size(28.dp)) {
+                Icon(imageVector = Icons.Default.AddCircle, contentDescription = "Add", tint = themeColors.buttonEqualBg)
+            }
+        }
+    }
+}
+
+@Composable
+private fun CompactLargeEditField(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    themeColors: CalculatorThemeColors,
+    placeholder: String = "",
+    onAiPrompt: (() -> Unit)? = null
+) {
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = label.uppercase(),
+                fontSize = 10.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = themeColors.buttonEqualBg.copy(alpha = 0.9f),
+                letterSpacing = 0.8.sp
+            )
+            if (onAiPrompt != null) {
+                IconButton(onClick = onAiPrompt, modifier = Modifier.size(20.dp)) {
+                    Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = "AI", tint = themeColors.buttonEqualBg, modifier = Modifier.size(14.dp))
+                }
+            }
+        }
+        BasicTextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
+            textStyle = TextStyle(fontSize = 13.5.sp, color = themeColors.displayText, fontWeight = FontWeight.Normal, lineHeight = 19.sp),
+            cursorBrush = SolidColor(themeColors.buttonEqualBg),
+            decorationBox = { innerTextField ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .drawBehind {
+                            val strokeWidth = 1.dp.toPx()
+                            val y = size.height - strokeWidth / 2
+                            drawLine(
+                                color = themeColors.displayText.copy(alpha = 0.12f),
+                                start = androidx.compose.ui.geometry.Offset(0f, y),
+                                end = androidx.compose.ui.geometry.Offset(size.width, y),
+                                strokeWidth = strokeWidth
+                            )
+                        }
+                        .padding(bottom = 6.dp)
+                ) {
+                    if (value.isEmpty()) {
+                        Text(text = placeholder, fontSize = 13.5.sp, color = themeColors.displayText.copy(alpha = 0.3f))
+                    }
+                    innerTextField()
+                }
+            }
+        )
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun SmartEditTab(
+    cvData: CvData,
+    onCvDataChange: (CvData) -> Unit,
+    themeColors: CalculatorThemeColors,
+    isBn: Boolean,
+    onRequestAiPrompt: (title: String, defaultPrompt: String, targetField: String, expIdx: Int) -> Unit
+) {
+    val scrollState = rememberScrollState()
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(scrollState)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        CompactSectionHeader(if (isBn) "ব্যক্তিগত ও যোগাযোগ তথ্য" else "Personal & Contact", Icons.Default.Person, themeColors)
+        CompactEditField(if (isBn) "পূর্ণ নাম" else "Full Name", cvData.fullName, { onCvDataChange(cvData.copy(fullName = it)) }, themeColors, "John Doe")
+        CompactEditField(if (isBn) "পদবী" else "Target Job Title", cvData.jobTitle, { onCvDataChange(cvData.copy(jobTitle = it)) }, themeColors, "Software Engineer")
+        
+        Row(modifier = Modifier.fillMaxWidth()) {
+            Box(modifier = Modifier.weight(1f)) {
+                CompactEditField(if (isBn) "ইমেইল" else "Email", cvData.email, { onCvDataChange(cvData.copy(email = it)) }, themeColors, "john@example.com")
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Box(modifier = Modifier.weight(1f)) {
+                CompactEditField(if (isBn) "ফোন" else "Phone", cvData.phone, { onCvDataChange(cvData.copy(phone = it)) }, themeColors, "+880...")
+            }
+        }
+        
+        CompactEditField(if (isBn) "ঠিকানা" else "Location Address", cvData.address, { onCvDataChange(cvData.copy(address = it)) }, themeColors, "Dhaka, Bangladesh")
+
+        CompactSectionHeader(if (isBn) "ক্যারিয়ার সারসংক্ষেপ" else "Professional Summary", Icons.Default.AutoStories, themeColors)
+        CompactLargeEditField(
+            label = "",
+            value = cvData.summary,
+            onValueChange = { onCvDataChange(cvData.copy(summary = it)) },
+            themeColors = themeColors,
+            placeholder = if (isBn) "আপনার সম্পর্কে ৩টি বাক্যে লিখুন..." else "Write 3 professional sentences about your expertise...",
+            onAiPrompt = {
+                onRequestAiPrompt(
+                    if (isBn) "সারসংক্ষেপ এআই" else "AI Summary",
+                    "Write a professional ATS summary for ${cvData.fullName} targeting ${cvData.jobTitle}.",
+                    "SUMMARY",
+                    -1
+                )
+            }
+        )
+
+        CompactSectionHeader(
+            if (isBn) "কাজের অভিজ্ঞতা" else "Work Experience", 
+            Icons.Default.Work, 
+            themeColors,
+            onAdd = {
+                val newList = cvData.experiences.toMutableList()
+                newList.add(0, CvExperienceItem())
+                onCvDataChange(cvData.copy(experiences = newList))
+            }
+        )
+        cvData.experiences.forEachIndexed { index, exp ->
+            Surface(
+                modifier = Modifier.padding(vertical = 4.dp).fillMaxWidth(),
+                color = Color.Transparent
+            ) {
+                Column {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Text(text = "${if (isBn) "অভিজ্ঞতা" else "Exp"} #${index + 1}", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = themeColors.buttonEqualBg)
+                        IconButton(onClick = {
+                            val newList = cvData.experiences.toMutableList()
+                            newList.removeAt(index)
+                            onCvDataChange(cvData.copy(experiences = newList))
+                        }, modifier = Modifier.size(20.dp)) {
+                            Icon(Icons.Default.Delete, null, tint = Color.Red.copy(alpha = 0.5f), modifier = Modifier.size(14.dp))
+                        }
+                    }
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        Box(modifier = Modifier.weight(1f)) {
+                            CompactEditField(if (isBn) "পদবী" else "Role", exp.role, { r ->
+                                val newList = cvData.experiences.toMutableList()
+                                newList[index] = exp.copy(role = r)
+                                onCvDataChange(cvData.copy(experiences = newList))
+                            }, themeColors)
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Box(modifier = Modifier.weight(1f)) {
+                            CompactEditField(if (isBn) "কোম্পানি" else "Company", exp.company, { c ->
+                                val newList = cvData.experiences.toMutableList()
+                                newList[index] = exp.copy(company = c)
+                                onCvDataChange(cvData.copy(experiences = newList))
+                            }, themeColors)
+                        }
+                    }
+                    CompactLargeEditField(
+                        label = if (isBn) "বিবরণ ও অর্জনসমূহ" else "Description & Achievements",
+                        value = exp.description,
+                        onValueChange = { d ->
+                            val newList = cvData.experiences.toMutableList()
+                            newList[index] = exp.copy(description = d)
+                            onCvDataChange(cvData.copy(experiences = newList))
+                        },
+                        themeColors = themeColors,
+                        onAiPrompt = {
+                            onRequestAiPrompt(
+                                if (isBn) "অভিজ্ঞতা এআই" else "AI Rewrite",
+                                "Enhance this work description: ${exp.description}",
+                                "EXPERIENCE",
+                                index
+                            )
+                        }
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+            }
+        }
+
+        CompactSectionHeader(
+            if (isBn) "শিক্ষা" else "Education", 
+            Icons.Default.School, 
+            themeColors,
+            onAdd = {
+                val newList = cvData.educations.toMutableList()
+                newList.add(0, CvEducationItem())
+                onCvDataChange(cvData.copy(educations = newList))
+            }
+        )
+        cvData.educations.forEachIndexed { index, edu ->
+            Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text(text = "${if (isBn) "শিক্ষা" else "Edu"} #${index + 1}", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = themeColors.buttonEqualBg)
+                    IconButton(onClick = {
+                        val newList = cvData.educations.toMutableList()
+                        newList.removeAt(index)
+                        onCvDataChange(cvData.copy(educations = newList))
+                    }, modifier = Modifier.size(20.dp)) {
+                        Icon(Icons.Default.Delete, null, tint = Color.Red.copy(alpha = 0.5f), modifier = Modifier.size(14.dp))
+                    }
+                }
+                CompactEditField(if (isBn) "ডিগ্রী/পরীক্ষা" else "Degree/Exam", edu.degree, { d ->
+                    val newList = cvData.educations.toMutableList()
+                    newList[index] = edu.copy(degree = d)
+                    onCvDataChange(cvData.copy(educations = newList))
+                }, themeColors)
+                CompactEditField(if (isBn) "প্রতিষ্ঠান" else "Institution", edu.institution, { i ->
+                    val newList = cvData.educations.toMutableList()
+                    newList[index] = edu.copy(institution = i)
+                    onCvDataChange(cvData.copy(educations = newList))
+                }, themeColors)
+            }
+        }
+
+        CompactSectionHeader(
+            if (isBn) "স্কিলস" else "Skills", 
+            Icons.Default.Bolt, 
+            themeColors,
+            onAdd = {
+                val newList = cvData.skills.toMutableList()
+                newList.add(CvSkillItem(name = "New Skill"))
+                onCvDataChange(cvData.copy(skills = newList))
+            }
+        )
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            cvData.skills.forEachIndexed { index, skill ->
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = themeColors.buttonEqualBg.copy(alpha = 0.1f),
+                    border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.2f))
+                ) {
+                    Row(modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                        BasicTextField(
+                            value = skill.name,
+                            onValueChange = { n ->
+                                val newList = cvData.skills.toMutableList()
+                                newList[index] = skill.copy(name = n)
+                                onCvDataChange(cvData.copy(skills = newList))
+                            },
+                            textStyle = TextStyle(fontSize = 12.sp, color = themeColors.displayText, fontWeight = FontWeight.Bold),
+                            singleLine = true,
+                            modifier = Modifier.widthIn(min = 40.dp, max = 120.dp)
+                        )
+                        IconButton(onClick = {
+                            val newList = cvData.skills.toMutableList()
+                            newList.removeAt(index)
+                            onCvDataChange(cvData.copy(skills = newList))
+                        }, modifier = Modifier.size(16.dp)) {
+                            Icon(Icons.Default.Close, null, tint = Color.Red.copy(alpha = 0.5f), modifier = Modifier.size(10.dp))
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(40.dp))
+    }
+}
+
 // ================= MAIN TOOL COMPOSABLE =================
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -4858,17 +5217,15 @@ fun AtsCvBuilderTool(
             }
             }
 
-            // Beautiful tab controls (Removal of double clipart/emojis, using proper Icons)
+            // Beautiful tab controls
             val tabs = if (isBn) {
-                listOf("প্রোফাইল", "অভিজ্ঞতা", "শিক্ষা ও স্কিল", "কাস্টমাইজেশন", "জব ম্যাচ", "প্রিভিউ")
+                listOf("স্মার্ট এডিট", "কাস্টমাইজেশন", "জব ম্যাচ", "প্রিভিউ")
             } else {
-                listOf("Profile", "Experience", "Education", "Customization", "Job Match", "Preview")
+                listOf("Smart Edit", "Customization", "Job Match", "Preview")
             }
 
             val tabIcons = listOf(
-                Icons.Default.Person,
-                Icons.Default.Work,
-                Icons.Default.School,
+                Icons.Default.Edit,
                 Icons.Default.Tune,
                 Icons.Default.AutoAwesome,
                 Icons.Default.Visibility
@@ -4913,137 +5270,22 @@ fun AtsCvBuilderTool(
                     .fillMaxWidth()
             ) {
                 when (selectedTab) {
-                    0 -> {
-                        val filteredProfiles = profilesList.filter {
-                            it.id.startsWith("custom_profile_") ||
-                            it.id.startsWith("profile_import_") ||
-                            (!it.id.startsWith("profile_") && it.id.isNotBlank())
-                        }
-                        ProfileAndPersonasTab(
-                            cvData = cvData,
-                            profilesList = filteredProfiles,
-                            onCvDataChange = { updateCvDataState(it) },
-                            onActiveProfileSelected = { id ->
-                                activeProfileId = id
-                                saveActiveProfileId(context, id)
-                            },
-                            onAddNewProfile = { name ->
-                                val label = if (name.isNotBlank()) name else "New Profile ${profilesList.size + 1}"
-                                val newProfile = CvData(
-                                    id = UUID.randomUUID().toString(),
-                                    profileLabel = label,
-                                    fullName = "Md. Shariful Islam",
-                                    jobTitle = "Management Graduate & Business Analyst"
-                                )
-                                val updatedList = profilesList.toMutableList()
-                                updatedList.add(newProfile)
-                                profilesList = updatedList
-                                saveAllCvProfiles(context, updatedList)
-                                activeProfileId = newProfile.id
-                                saveActiveProfileId(context, newProfile.id)
-                                showToast(if (isBn) "নতুন প্রোফাইল তৈরি হয়েছে!" else "New CV profile created!")
-                            },
-                            onDeleteProfile = { idToDelete ->
-                                val updatedList = profilesList.filter { it.id != idToDelete }
-                                profilesList = updatedList
-                                saveAllCvProfiles(context, updatedList)
-                                if (activeProfileId == idToDelete) {
-                                    val remFiltered = updatedList.filter {
-                                        it.id.startsWith("custom_profile_") ||
-                                        it.id.startsWith("profile_import_") ||
-                                        (!it.id.startsWith("profile_") && it.id.isNotBlank())
-                                    }
-                                    activeProfileId = remFiltered.firstOrNull()?.id ?: (updatedList.firstOrNull()?.id ?: "")
-                                    saveActiveProfileId(context, activeProfileId)
-                                }
-                                showToast(if (isBn) "প্রোফাইলটি মুছে ফেলা হয়েছে!" else "CV profile deleted successfully!")
-                            },
-                        themeColors = themeColors,
-                        isBn = isBn,
-                        onOpenPdfInViewer = { profileToOpen ->
-                            scope.launch {
-                                val file = generateCvPdfFile(context, profileToOpen)
-                                withContext(Dispatchers.Main) {
-                                    viewModel.pdfReaderInitialUri = Uri.fromFile(file)
-                                    viewModel.pdfReaderInitialName = "CV_${profileToOpen.fullName.replace(" ", "_")}.pdf"
-                                    viewModel.previousToolType = com.example.data.model.ToolType.ATS_CV_BUILDER
-                                    viewModel.selectedToolType = com.example.data.model.ToolType.PDF_READER
-                                }
-                            }
-                        },
-                        onGenerateSummaryAi = {
-                            if (cvData.jobTitle.isBlank()) {
-                                showToast(if (isBn) "অনুগ্রহ করে পদবীটি টাইপ করুন" else "Please fill target designation first")
-                            } else {
-                                val currentNotes = cvData.summary
-                                val currentSkills = cvData.skills.joinToString { it.name }
-                                val currentExperiences = cvData.experiences.joinToString { "${it.role} at ${it.company}" }
-                                val defaultPrompt = "The candidate is ${cvData.fullName.ifBlank { "Md. Shariful Islam" }}, a Management/MBA Graduate. Target job title: '${cvData.jobTitle}'. " +
-                                        "Current partial profile summary is: '$currentNotes'. " +
-                                        "Key skills: '$currentSkills'. Work experiences: '$currentExperiences'. " +
-                                        "Task: Write a highly specialized, modern, professional, ATS-optimized executive summary of exactly 3 sentences. Enhance and expand any notes they have provided."
-                                openAiPrompt(
-                                    title = if (isBn) "ক্যারিয়ার সারসংক্ষেপ এআই প্রম্পট" else "AI Resume Summary Prompt",
-                                    defaultPrompt = defaultPrompt,
-                                    targetField = "SUMMARY"
-                                )
-                            }
-                        }
-                    )
-                    }
-
-                    1 -> ExperienceTab(
+                    0 -> SmartEditTab(
                         cvData = cvData,
                         onCvDataChange = { updateCvDataState(it) },
                         themeColors = themeColors,
                         isBn = isBn,
-                        onRequestAiPrompt = { title, prompt, field, idx -> openAiPrompt(title, prompt, field, idx) },
-                        onEnhanceBulletAi = { idx ->
-                            val exp = cvData.experiences.getOrNull(idx)
-                            if (exp != null) {
-                                if (true) { // Removing strict role check as per user request for empty fields
-                                    val defaultPrompt = "Role: '${exp.role}' at '${exp.company}'. Current raw description/bullet points: '${exp.description}'. Rewrite into exactly 3 robust, results-focused executive action-verb bullets. Use metrics/percentages simulation if appropriate."
-                                    openAiPrompt(
-                                        title = if (isBn) "অভিজ্ঞতার বিবরণী এআই প্রম্পট" else "AI Experience Description Prompt",
-                                        defaultPrompt = defaultPrompt,
-                                        targetField = "EXPERIENCE",
-                                        expIndex = idx
-                                    )
-                                }
-                            }
-                        },
-                        onGenerateFresherAi = {
-                            val edu = cvData.educations.firstOrNull()?.degree ?: "BBA / B.Sc / H.S.C"
-                            val inst = cvData.educations.firstOrNull()?.institution ?: "University / College"
-                            val targetRole = if (cvData.jobTitle.isNotBlank()) cvData.jobTitle else "Management Trainee / Entry Level Executive"
-                            val skills = cvData.skills.joinToString { it.name }
-                            val defaultPrompt = "Degree: $edu\nInstitution: $inst\nTarget Role: $targetRole\nSkills: $skills"
-                            openAiPrompt(
-                                title = if (isBn) "ফ্রেশার এআই প্রম্পট" else "AI Fresher Customization Prompt",
-                                defaultPrompt = defaultPrompt,
-                                targetField = "FRESHER_COMPLETE"
-                            )
-                        }
+                        onRequestAiPrompt = { title, prompt, field, idx -> openAiPrompt(title, prompt, field, idx) }
                     )
 
-                    2 -> EducationAndSkillsTab(
-                        cvData = cvData,
-                        onCvDataChange = { updateCvDataState(it) },
-                        onRequestAiPrompt = { title, defaultPrompt, targetField, expIdx ->
-                            openAiPrompt(title, defaultPrompt, targetField, expIdx)
-                        },
-                        themeColors = themeColors,
-                        isBn = isBn
-                    )
-
-                    3 -> CustomizationTab(
+                    1 -> CustomizationTab(
                         cvData = cvData,
                         onCvDataChange = { updateCvDataState(it) },
                         themeColors = themeColors,
                         isBn = isBn
                     )
 
-                    4 -> AiJobCircularMatchTab(
+                    2 -> AiJobCircularMatchTab(
                         cvData = cvData,
                         onCvDataChange = { updateCvDataState(it) },
                         themeColors = themeColors,
@@ -5082,7 +5324,7 @@ fun AtsCvBuilderTool(
                         }
                     )
 
-                    5 -> PreviewAndExportTab(
+                    3 -> PreviewAndExportTab(
                         cvData = cvData,
                         onCvDataChange = { updateCvDataState(it) },
                         pdfFile = generatedPdfFile,
