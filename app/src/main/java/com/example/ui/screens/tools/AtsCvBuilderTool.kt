@@ -1168,14 +1168,14 @@ data class CvData(
     val customLineSpacing: Float = 1.15f,
 
     // ATS & Job Circular Analysis fields
-    val lastAtsScore: Int = 0,
-    val lastAtsSuggestions: List<String> = emptyList(),
-    val lastAtsRecommendedSkills: List<CvSkillItem> = emptyList(),
     val lastJobMatchPercentage: Int = 0,
     val lastMatchingStrengths: List<String> = emptyList(),
-    val lastMissingKeywords: List<CvSkillItem> = emptyList(),
+    val lastMissingKeywords: List<String> = emptyList(),
     val lastImprovementTips: List<String> = emptyList(),
-    val lastTailoredSummary: String = ""
+    val lastTailoredSummary: String = "",
+    val lastAtsScoreFromGemini: Int = 0,
+    val lastAtsSuggestionsJson: String = "",
+    val lastCircularSuggestionsJson: String = ""
 )
 
 data class AtsCheckItem(
@@ -1423,6 +1423,66 @@ internal fun autoFixIndividualAtsCheck(cvData: CvData, categoryEn: String): CvDa
         "Formatting" -> cvData.copy(bulletStyle = "BULLET")
         else -> cvData
     }
+}
+
+internal fun applyIndividualAtsImprovement(cv: CvData, category: String, value: String): CvData {
+    if (value.isBlank()) return cv
+    return when {
+        category.equals("summary", ignoreCase = true) -> cv.copy(summary = value)
+        category.equals("certifications", ignoreCase = true) -> cv.copy(certifications = value)
+        category.equals("references", ignoreCase = true) -> cv.copy(references = value)
+        category.equals("skills", ignoreCase = true) -> {
+            val updatedSkills = cv.skills.toMutableList()
+            // proposedValue can be comma separated skills or a list of "Skill: Description"
+            val rawSkills = value.split(",", "\n")
+            rawSkills.forEach { raw ->
+                val clean = raw.removePrefix("Ã¢â‚¬Â¢").removePrefix("-").removePrefix("*").trim()
+                if (clean.isNotBlank()) {
+                    val skillItem = if (clean.contains(":")) {
+                        val parts = clean.split(":", limit = 2)
+                        CvSkillItem(name = parts[0].trim(), description = parts[1].trim())
+                    } else {
+                        CvSkillItem(name = clean, description = "Experienced in applying $clean effectively in professional environments.")
+                    }
+                    if (updatedSkills.none { it.name.equals(skillItem.name, ignoreCase = true) || (clean.contains(":") && it.name.equals(clean.substringBefore(":").trim(), ignoreCase = true)) }) {
+                        updatedSkills.add(skillItem)
+                    }
+                }
+            }
+            cv.copy(skills = updatedSkills)
+        }
+        category.startsWith("experience_", ignoreCase = true) -> {
+            val idx = category.substringAfter("experience_").toIntOrNull() ?: -1
+            if (idx in cv.experiences.indices) {
+                val exps = cv.experiences.toMutableList()
+                exps[idx] = exps[idx].copy(description = value)
+                cv.copy(experiences = exps)
+            } else {
+                cv
+            }
+        }
+        else -> cv
+    }
+}
+
+internal fun applySelectedSuggestions(cv: CvData, selectedIds: List<String>, suggestionsJson: String): CvData {
+    var updated = cv
+    if (suggestionsJson.isBlank() || selectedIds.isEmpty()) return updated
+    try {
+        val arr = org.json.JSONArray(suggestionsJson)
+        for (i in 0 until arr.length()) {
+            val obj = arr.getJSONObject(i)
+            val id = obj.optString("id")
+            if (id in selectedIds) {
+                val category = obj.optString("category")
+                val proposedValue = obj.optString("proposedValue")
+                updated = applyIndividualAtsImprovement(updated, category, proposedValue)
+            }
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+    return updated
 }
 
 private fun getFormattedDegreeText(edu: CvEducationItem): String {
@@ -2191,48 +2251,11 @@ private fun saveAllCvProfiles(context: Context, profiles: List<CvData>) {
                 put("sectionSpacing", profile.sectionSpacing.toDouble())
                 put("itemSpacing", profile.itemSpacing.toDouble())
                 put("customLineSpacing", profile.customLineSpacing.toDouble())
-
-                // AI ATS and Circular Match fields
-                put("lastAtsScore", profile.lastAtsScore)
-                val atsSugArr = JSONArray()
-                profile.lastAtsSuggestions.forEach { atsSugArr.put(it) }
-                put("lastAtsSuggestions", atsSugArr)
-
-                val atsRecSkillArr = JSONArray()
-                profile.lastAtsRecommendedSkills.forEach { sk ->
-                    atsRecSkillArr.put(JSONObject().apply {
-                        put("id", sk.id)
-                        put("name", sk.name)
-                        put("level", sk.level)
-                        put("category", sk.category)
-                        put("description", sk.description)
-                    })
-                }
-                put("lastAtsRecommendedSkills", atsRecSkillArr)
-
-                put("lastJobMatchPercentage", profile.lastJobMatchPercentage)
-
-                val matchStrArr = JSONArray()
-                profile.lastMatchingStrengths.forEach { matchStrArr.put(it) }
-                put("lastMatchingStrengths", matchStrArr)
-
-                val missSkillArr = JSONArray()
-                profile.lastMissingKeywords.forEach { sk ->
-                    missSkillArr.put(JSONObject().apply {
-                        put("id", sk.id)
-                        put("name", sk.name)
-                        put("level", sk.level)
-                        put("category", sk.category)
-                        put("description", sk.description)
-                    })
-                }
-                put("lastMissingKeywords", missSkillArr)
-
-                val impTipArr = JSONArray()
-                profile.lastImprovementTips.forEach { impTipArr.put(it) }
-                put("lastImprovementTips", impTipArr)
-
-                put("lastTailoredSummary", profile.lastTailoredSummary)
+                
+                // Gemini AI fields
+                put("lastAtsScoreFromGemini", profile.lastAtsScoreFromGemini)
+                put("lastAtsSuggestionsJson", profile.lastAtsSuggestionsJson)
+                put("lastCircularSuggestionsJson", profile.lastCircularSuggestionsJson)
             }
             arr.put(obj)
         }
@@ -2351,52 +2374,6 @@ private fun loadAllCvProfiles(context: Context): List<CvData> {
                 }
             }
 
-            val lastAtsScoreVal = obj.optInt("lastAtsScore", 0)
-            val lastAtsSugList = mutableListOf<String>()
-            obj.optJSONArray("lastAtsSuggestions")?.let { arr ->
-                for (j in 0 until arr.length()) lastAtsSugList.add(arr.getString(j))
-            }
-            val lastAtsRecSkillList = mutableListOf<CvSkillItem>()
-            obj.optJSONArray("lastAtsRecommendedSkills")?.let { arr ->
-                for (j in 0 until arr.length()) {
-                    val skObj = arr.getJSONObject(j)
-                    lastAtsRecSkillList.add(
-                        CvSkillItem(
-                            id = skObj.optString("id", UUID.randomUUID().toString()),
-                            name = skObj.optString("name", ""),
-                            level = skObj.optString("level", "Proficient"),
-                            category = skObj.optString("category", "Functional/Core Skills"),
-                            description = skObj.optString("description", "")
-                        )
-                    )
-                }
-            }
-            val lastJobMatchPercentageVal = obj.optInt("lastJobMatchPercentage", 0)
-            val lastMatchingStrList = mutableListOf<String>()
-            obj.optJSONArray("lastMatchingStrengths")?.let { arr ->
-                for (j in 0 until arr.length()) lastMatchingStrList.add(arr.getString(j))
-            }
-            val lastMissingKeywordsList = mutableListOf<CvSkillItem>()
-            obj.optJSONArray("lastMissingKeywords")?.let { arr ->
-                for (j in 0 until arr.length()) {
-                    val skObj = arr.getJSONObject(j)
-                    lastMissingKeywordsList.add(
-                        CvSkillItem(
-                            id = skObj.optString("id", UUID.randomUUID().toString()),
-                            name = skObj.optString("name", ""),
-                            level = skObj.optString("level", "Proficient"),
-                            category = skObj.optString("category", "Functional/Core Skills"),
-                            description = skObj.optString("description", "")
-                        )
-                    )
-                }
-            }
-            val lastImprovementTipsList = mutableListOf<String>()
-            obj.optJSONArray("lastImprovementTips")?.let { arr ->
-                for (j in 0 until arr.length()) lastImprovementTipsList.add(arr.getString(j))
-            }
-            val lastTailoredSummaryVal = obj.optString("lastTailoredSummary", "")
-
             val styleStr = obj.optString("templateStyle", CvTemplateStyle.CLASSIC_CORPORATE.name)
             val style = try { CvTemplateStyle.valueOf(styleStr) } catch (_: Exception) { CvTemplateStyle.CLASSIC_CORPORATE }
 
@@ -2453,14 +2430,9 @@ private fun loadAllCvProfiles(context: Context): List<CvData> {
                     sectionSpacing = obj.optDouble("sectionSpacing", 8.0).toFloat(),
                     itemSpacing = obj.optDouble("itemSpacing", 4.0).toFloat(),
                     customLineSpacing = obj.optDouble("customLineSpacing", 1.15).toFloat(),
-                    lastAtsScore = lastAtsScoreVal,
-                    lastAtsSuggestions = lastAtsSugList,
-                    lastAtsRecommendedSkills = lastAtsRecSkillList,
-                    lastJobMatchPercentage = lastJobMatchPercentageVal,
-                    lastMatchingStrengths = lastMatchingStrList,
-                    lastMissingKeywords = lastMissingKeywordsList,
-                    lastImprovementTips = lastImprovementTipsList,
-                    lastTailoredSummary = lastTailoredSummaryVal
+                    lastAtsScoreFromGemini = obj.optInt("lastAtsScoreFromGemini", 0),
+                    lastAtsSuggestionsJson = obj.optString("lastAtsSuggestionsJson", ""),
+                    lastCircularSuggestionsJson = obj.optString("lastCircularSuggestionsJson", "")
                 )
             )
         }
@@ -4950,6 +4922,205 @@ fun AtsCvBuilderTool(
         previewRefreshKey++
     }
 
+    fun runDirectCircularMatchAi(circularText: String, imageBytes: ByteArray?, imageMime: String) {
+        if (circularText.isBlank() && imageBytes == null) {
+            Toast.makeText(context, if (isBn) "Ã Â¦â€¦Ã Â¦Â¨Ã Â§ï¿½Ã Â¦â€”Ã Â§ï¿½Ã Â¦Â°Ã Â¦Â¹ Ã Â¦â€¢Ã Â¦Â°Ã Â§â€¡ Ã Â¦Â¸Ã Â¦Â¾Ã Â¦Â°Ã Â§ï¿½Ã Â¦â€¢Ã Â§ï¿½Ã Â¦Â²Ã Â¦Â¾Ã Â¦Â° Ã Â¦Å¸Ã Â§â€¡Ã Â¦â€¢Ã Â§ï¿½Ã Â¦Â¸Ã Â¦Å¸ Ã Â¦Â¦Ã Â¦Â¿Ã Â¦Â¨ Ã Â¦â€¦Ã Â¦Â¥Ã Â¦Â¬Ã Â¦Â¾ Ã Â¦â€ºÃ Â¦Â¬Ã Â¦Â¿ Ã Â¦â€ Ã Â¦ÂªÃ Â¦Â²Ã Â§â€¹Ã Â¦Â¡ Ã Â¦â€¢Ã Â¦Â°Ã Â§ï¿½Ã Â¦Â¨!" else "Please provide circular text or pick an image!", Toast.LENGTH_SHORT).show()
+            return
+        }
+        
+        isAiLoading = true
+        aiLoadingMessage = if (isBn) "Ã¢Å“Â¨ Ã Â¦Å“Ã Â§â€¡Ã Â¦Â®Ã Â¦Â¿Ã Â¦Â¨Ã Â¦Â¿ Ã Â¦ï¿½Ã Â¦â€ Ã Â¦â€¡ Ã Â¦Â¸Ã Â¦Â¾Ã Â¦Â°Ã Â§ï¿½Ã Â¦â€¢Ã Â§ï¿½Ã Â¦Â²Ã Â¦Â¾Ã Â¦Â° Ã Â¦Â¬Ã Â¦Â¿Ã Â¦Â¶Ã Â§ï¿½Ã Â¦Â²Ã Â§â€¡Ã Â¦Â·Ã Â¦Â£ Ã Â¦â€¢Ã Â¦Â°Ã Â¦â€ºÃ Â§â€¡..." else "Ã¢Å“Â¨ Gemini AI is analyzing job circular..."
+        
+        scope.launch {
+            try {
+                val promptBuilder = StringBuilder()
+                promptBuilder.append("Target Job Circular Context:\n")
+                if (circularText.isNotBlank()) {
+                    promptBuilder.append("Circular Text: $circularText\n")
+                }
+                if (imageBytes != null) {
+                    promptBuilder.append("[Image of job circular attached]\n")
+                }
+
+                promptBuilder.append("\nCandidate Profile:\n")
+                promptBuilder.append("Target Title: ${cvData.jobTitle}\n")
+                promptBuilder.append("Summary: ${cvData.summary}\n")
+                
+                val skillsText = cvData.skills.joinToString { 
+                    if (it.description.isNotBlank()) "${it.name}: ${it.description}" else it.name 
+                }
+                promptBuilder.append("Skills: $skillsText\n")
+                promptBuilder.append("Experiences: ${cvData.experiences.joinToString { "${it.role} at ${it.company}: ${it.description}" }}\n")
+                promptBuilder.append("Educations: ${cvData.educations.joinToString { "${it.degree} from ${it.institution}" }}\n")
+
+                promptBuilder.append("\nTask Instructions:\n")
+                promptBuilder.append("1. Compute an accurate job match score (0-100%) by comparing candidate skills, qualifications, and role requirements against the circular.\n")
+                promptBuilder.append("2. Extract 3-5 matching strengths that align with circular requirements.\n")
+                promptBuilder.append("3. Extract 3-6 missing critical technical or role keywords present in circular but missing in candidate CV.\n")
+                promptBuilder.append("4. Provide 3 high-impact improvement recommendations for passing the ATS filter.\n")
+                promptBuilder.append("5. Write a tailored summary aligned with the circular.\n")
+                promptBuilder.append("6. Return a list of specific CV suggestions for improvement. Each suggestion MUST contain: id (e.g. 'cir_1'), titleEn, titleBn, descEn, descBn, category (e.g., 'summary', 'skills', 'experience_0'), proposedValue (the tailored text/skills/bullets to insert).\n")
+                promptBuilder.append("7. Return strictly valid JSON object with keys: matchPercentage (int), tailoredSummary (string), matchingStrengths (array of string), missingKeywords (array of string), improvementTips (array of string), newSkills (array of string), suggestions (array of objects with keys: id, titleEn, titleBn, descEn, descBn, category, proposedValue). Do NOT wrap in markdown syntax like ```json.")
+
+                val sysPrompt = "You are a top ATS recruitment specialist & resume evaluator. Analyze candidate resume against target job circular. Return strictly a valid JSON object. Do NOT include markdown code blocks or any comments before or after the JSON."
+                
+                val resultText = callGeminiAiMultiModal(
+                    prompt = promptBuilder.toString(),
+                    systemInstruction = sysPrompt,
+                    imageBytes = imageBytes,
+                    mimeType = imageMime
+                )
+
+                withContext(Dispatchers.Main) {
+                    try {
+                        val cleanJsonStr = resultText.substringAfter("{").substringBeforeLast("}").let { "{$it}" }
+                        val jsonObj = org.json.JSONObject(cleanJsonStr)
+                        val matchPct = jsonObj.optInt("matchPercentage", 85)
+                        val tailoredSummary = jsonObj.optString("tailoredSummary", cvData.summary)
+
+                        val matchingStrengths = mutableListOf<String>()
+                        jsonObj.optJSONArray("matchingStrengths")?.let { arr ->
+                            for (i in 0 until arr.length()) matchingStrengths.add(arr.getString(i))
+                        }
+
+                        val missingKeywords = mutableListOf<String>()
+                        jsonObj.optJSONArray("missingKeywords")?.let { arr ->
+                            for (i in 0 until arr.length()) missingKeywords.add(arr.getString(i))
+                        }
+
+                        val improvementTips = mutableListOf<String>()
+                        jsonObj.optJSONArray("improvementTips")?.let { arr ->
+                            for (i in 0 until arr.length()) improvementTips.add(arr.getString(i))
+                        }
+
+                        val suggestionsJson = jsonObj.optJSONArray("suggestions")?.toString() ?: "[]"
+
+                        val updatedSkills = cvData.skills.toMutableList()
+                        jsonObj.optJSONArray("newSkills")?.let { arr ->
+                            for (i in 0 until arr.length()) {
+                                val skName = arr.getString(i)
+                                val clean = skName.removePrefix("Ã¢â‚¬Â¢").removePrefix("-").removePrefix("*").trim()
+                                if (updatedSkills.none { it.name.equals(clean, ignoreCase = true) || (clean.contains(":") && it.name.equals(clean.substringBefore(":").trim(), ignoreCase = true)) }) {
+                                    val item = if (clean.contains(":")) {
+                                        val parts = clean.split(":", limit = 2)
+                                        CvSkillItem(name = parts[0].trim(), description = parts[1].trim())
+                                    } else {
+                                        CvSkillItem(name = clean, description = "Experienced in applying $clean effectively in professional environments.")
+                                    }
+                                    updatedSkills.add(item)
+                                }
+                            }
+                        }
+
+                        updateCvDataState(cvData.copy(
+                            skills = updatedSkills,
+                            lastJobMatchPercentage = matchPct,
+                            lastMatchingStrengths = matchingStrengths,
+                            lastMissingKeywords = missingKeywords,
+                            lastImprovementTips = improvementTips,
+                            lastTailoredSummary = tailoredSummary,
+                            lastCircularSuggestionsJson = suggestionsJson,
+                            targetJobCircular = circularText
+                        ))
+                        Toast.makeText(context, if (isBn) "Ã Â¦Â¸Ã Â¦Â¾Ã Â¦Â°Ã Â§ï¿½Ã Â¦â€¢Ã Â§ï¿½Ã Â¦Â²Ã Â¦Â¾Ã Â¦Â° Ã Â¦â€¦Ã Â§ï¿½Ã Â¦Â¯Ã Â¦Â¾Ã Â¦Â¨Ã Â¦Â¾Ã Â¦Â²Ã Â¦Â¾Ã Â¦â€¡Ã Â¦Â¸Ã Â¦Â¿Ã Â¦Â¸ Ã Â¦Â¸Ã Â¦Â®Ã Â§ï¿½Ã Â¦ÂªÃ Â¦Â¨Ã Â§ï¿½Ã Â¦Â¨! Ã Â¦Â®Ã Â§ï¿½Ã Â¦Â¯Ã Â¦Â¾Ã Â¦Å¡ Ã Â¦Â¸Ã Â§ï¿½Ã Â¦â€¢Ã Â§â€¹Ã Â¦Â°: ${matchPct}%" else "Job circular analyzed! Match score: ${matchPct}%", Toast.LENGTH_SHORT).show()
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        Toast.makeText(context, "Parsing Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                    } finally {
+                        isAiLoading = false
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "AI Error: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                    isAiLoading = false
+                }
+            }
+        }
+    }
+
+    fun runDirectAtsAnalysisAi() {
+        isAiLoading = true
+        aiLoadingMessage = if (isBn) "Ã¢Å“Â¨ Ã Â¦Å“Ã Â§â€¡Ã Â¦Â®Ã Â¦Â¿Ã Â¦Â¨Ã Â¦Â¿ Ã Â¦ï¿½Ã Â¦â€ Ã Â¦â€¡ Ã Â¦â€ Ã Â¦ÂªÃ Â¦Â¨Ã Â¦Â¾Ã Â¦Â° Ã Â¦Â¸Ã Â¦Â¿Ã Â¦Â­Ã Â¦Â¿Ã Â¦Â° Ã Â¦ï¿½Ã Â¦Å¸Ã Â¦Â¿Ã Â¦ï¿½Ã Â¦Â¸ Ã Â¦Â®Ã Â¦Â¾Ã Â¦Â¨ Ã Â¦Â¯Ã Â¦Â¾Ã Â¦Å¡Ã Â¦Â¾Ã Â¦â€¡ Ã Â¦â€¢Ã Â¦Â°Ã Â¦â€ºÃ Â§â€¡..." else "Ã¢Å“Â¨ Gemini AI is analyzing CV for ATS score..."
+        
+        scope.launch {
+            try {
+                val promptBuilder = StringBuilder()
+                promptBuilder.append("Analyze Candidate CV for General ATS Readiness:\n")
+                promptBuilder.append("Candidate Full Name: ${cvData.fullName}\n")
+                promptBuilder.append("Target Title: ${cvData.jobTitle}\n")
+                promptBuilder.append("Summary: ${cvData.summary}\n")
+                
+                val skillsText = cvData.skills.joinToString { 
+                    if (it.description.isNotBlank()) "${it.name}: ${it.description}" else it.name 
+                }
+                promptBuilder.append("Skills: $skillsText\n")
+                promptBuilder.append("Experiences: ${cvData.experiences.joinToString { "${it.role} at ${it.company}: ${it.description}" }}\n")
+                promptBuilder.append("Educations: ${cvData.educations.joinToString { "${it.degree} from ${it.institution}" }}\n")
+
+                promptBuilder.append("\nTask Instructions:\n")
+                promptBuilder.append("1. Compute an overall ATS readiness score (0-100%) reflecting content richness, metrics presence, clarity, and formatting compliance.\n")
+                promptBuilder.append("2. Generate a list of 4-6 specific actionable improvement suggestions. Each suggestion MUST contain:\n")
+                promptBuilder.append("   - id: Unique ID (e.g. 'ats_1')\n")
+                promptBuilder.append("   - titleEn: Clear title of the improvement in English\n")
+                promptBuilder.append("   - titleBn: Clear title of the improvement in Bengali\n")
+                promptBuilder.append("   - descEn: Detailed description in English\n")
+                promptBuilder.append("   - descBn: Detailed description in Bengali\n")
+                promptBuilder.append("   - category: Target section key in CV ('summary', 'skills', 'experience_0', 'experience_1', 'certifications', 'references')\n")
+                promptBuilder.append("   - proposedValue: The revised/optimal text content to be injected into that category/index. For skills, write it as a list of optimized comma-separated skills in 'Name: Description' format.\n")
+                promptBuilder.append("3. Return strictly valid JSON with structure:\n")
+                promptBuilder.append("{\n")
+                promptBuilder.append("  \"score\": 85,\n")
+                promptBuilder.append("  \"suggestions\": [\n")
+                promptBuilder.append("    {\n")
+                promptBuilder.append("      \"id\": \"ats_1\",\n")
+                promptBuilder.append("      \"titleEn\": \"...\",\n")
+                promptBuilder.append("      \"titleBn\": \"...\",\n")
+                promptBuilder.append("      \"descEn\": \"...\",\n")
+                promptBuilder.append("      \"descBn\": \"...\",\n")
+                promptBuilder.append("      \"category\": \"...\",\n")
+                promptBuilder.append("      \"proposedValue\": \"...\"\n")
+                promptBuilder.append("    }\n")
+                promptBuilder.append("  ]\n")
+                promptBuilder.append("}")
+
+                val sysPrompt = "You are a professional resume evaluation engine and top-tier corporate recruiter. Return strictly a valid JSON object representing the ATS analysis of the resume. Do NOT wrap in markdown code blocks or include other text."
+                
+                val resultText = callGeminiAiMultiModal(
+                    prompt = promptBuilder.toString(),
+                    systemInstruction = sysPrompt
+                )
+
+                withContext(Dispatchers.Main) {
+                    try {
+                        val cleanJsonStr = resultText.substringAfter("{").substringBeforeLast("}").let { "{$it}" }
+                        val jsonObj = org.json.JSONObject(cleanJsonStr)
+                        val score = jsonObj.optInt("score", 75)
+                        val suggestionsJson = jsonObj.optJSONArray("suggestions")?.toString() ?: "[]"
+
+                        updateCvDataState(cvData.copy(
+                            lastAtsScoreFromGemini = score,
+                            lastAtsSuggestionsJson = suggestionsJson
+                        ))
+                        Toast.makeText(context, if (isBn) "Ã Â¦ï¿½Ã Â¦Å¸Ã Â¦Â¿Ã Â¦ï¿½Ã Â¦Â¸ Ã Â¦â€¦Ã Â§ï¿½Ã Â¦Â¯Ã Â¦Â¾Ã Â¦Â¨Ã Â¦Â¾Ã Â¦Â²Ã Â¦Â¾Ã Â¦â€¡Ã Â¦Â¸Ã Â¦Â¿Ã Â¦Â¸ Ã Â¦Â¸Ã Â¦Â®Ã Â§ï¿½Ã Â¦ÂªÃ Â¦Â¨Ã Â§ï¿½Ã Â¦Â¨! Ã Â¦Â¸Ã Â§ï¿½Ã Â¦â€¢Ã Â§â€¹Ã Â¦Â°: ${score}%" else "ATS analysis completed! Score: ${score}%", Toast.LENGTH_SHORT).show()
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        Toast.makeText(context, "Parsing Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                    } finally {
+                        isAiLoading = false
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "AI Error: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                    isAiLoading = false
+                }
+            }
+        }
+    }
+
     // Auto-render live PDF vector preview on changes or when switching tabs
     LaunchedEffect(cvData, previewRefreshKey, selectedTab) {
         if (selectedTab != 5) {
@@ -5227,7 +5398,7 @@ fun AtsCvBuilderTool(
                                             skills = updatedSkills,
                                             lastJobMatchPercentage = matchPct,
                                             lastMatchingStrengths = matchingStrengths,
-                                            lastMissingKeywords = missingKeywords.map { CvSkillItem(name = it) },
+                                            lastMissingKeywords = missingKeywords,
                                             lastImprovementTips = improvementTips,
                                             lastTailoredSummary = tailoredSummary
                                         ))
@@ -5318,280 +5489,6 @@ fun AtsCvBuilderTool(
                 }
             }
         )
-    }
-
-    // Direct automated AI Audit and Match Runners
-    fun runGeneralAtsAuditWithAi() {
-        isAiLoading = true
-        aiLoadingMessage = if (isBn) "Ã¢Å“Â¨ Ã Â¦Å“Ã Â§â€¡Ã Â¦Â®Ã Â¦Â¿Ã Â¦Â¨Ã Â¦Â¿ Ã Â¦ï¿½Ã Â¦â€ Ã Â¦â€¡ Ã Â¦â€ Ã Â¦ÂªÃ Â¦Â¨Ã Â¦Â¾Ã Â¦Â° Ã Â¦Â¸Ã Â¦Â¿Ã Â¦Â­Ã Â¦Â¿Ã Â¦Â° Ã Â¦ï¿½Ã Â¦Å¸Ã Â¦Â¿Ã Â¦ï¿½Ã Â¦Â¸ Ã Â¦ï¿½Ã Â¦Â¡Ã Â¦Â¿Ã Â¦Å¸ Ã Â¦Â¶Ã Â§ï¿½Ã Â¦Â°Ã Â§ï¿½ Ã Â¦â€¢Ã Â¦Â°Ã Â§â€¡Ã Â¦â€ºÃ Â§â€¡..." else "Ã¢Å“Â¨ Gemini AI is running a deep ATS quality audit on your CV..."
-        scope.launch {
-            try {
-                val candidateSkills = cvData.skills.joinToString { it.name }
-                val candidateExps = cvData.experiences.joinToString { "${it.role} at ${it.company}: ${it.description}" }
-                val candidateEdus = cvData.educations.joinToString { "${it.degree} from ${it.institution}" }
-                
-                val promptText = """
-                    You are a top HR ATS Consultant and Resume Quality Auditor. Run a deep ATS readability and formatting audit on this candidate resume.
-                    
-                    Candidate Resume:
-                    Name: ${cvData.fullName}
-                    Job Title: ${cvData.jobTitle}
-                    Summary: ${cvData.summary}
-                    Skills: $candidateSkills
-                    Experiences: $candidateExps
-                    Educations: $candidateEdus
-                    
-                    Provide:
-                    1. A realistic ATS score between 0 and 100 based on standard HR screening.
-                    2. 3 to 6 high-impact actionable suggestions/recommendations to improve the CV formatting or text readability.
-                    3. A list of 3 to 5 highly recommended professional skills currently missing or weak, with their category and a professional 1-2 sentence description (so that added skills never have empty descriptions!).
-                    
-                    Output MUST be a single raw JSON object with keys:
-                    - "ats_score": Integer (0-100)
-                    - "suggestions": Array of String (e.g. ["Update summary with specific metric indicators", "Add Action verbs to Senior Analyst experience"])
-                    - "recommended_skills": Array of Objects, where each object has keys:
-                        - "name": String (the skill name, e.g. "Data Analytics")
-                        - "description": String (1-2 sentence professional description of this skill)
-                        - "category": String (exactly one of: "Functional/Core Skills", "Technical/Digital Proficiency", "Soft Skills/Leadership")
-                    
-                    Return ONLY raw JSON. No markdown code block wraps.
-                """.trimIndent()
-
-                val sysPrompt = "You are an expert HR ATS Resume Reviewer. Output strictly valid raw JSON only. Do not include markdown wraps."
-                val resultText = callGeminiAiMultiModal(
-                    prompt = promptText,
-                    systemInstruction = sysPrompt,
-                    imageBytes = null,
-                    mimeType = ""
-                )
-
-                val cleanJson = resultText.substringAfter("{").substringBeforeLast("}").let { "{$it}" }
-                val jsonObj = org.json.JSONObject(cleanJson)
-                val atsScore = jsonObj.optInt("ats_score", 75)
-                
-                val suggestions = mutableListOf<String>()
-                jsonObj.optJSONArray("suggestions")?.let { arr ->
-                    for (i in 0 until arr.length()) suggestions.add(arr.getString(i))
-                }
-
-                val recommendedSkills = mutableListOf<CvSkillItem>()
-                jsonObj.optJSONArray("recommended_skills")?.let { arr ->
-                    for (i in 0 until arr.length()) {
-                        val obj = arr.getJSONObject(i)
-                        recommendedSkills.add(
-                            CvSkillItem(
-                                id = UUID.randomUUID().toString(),
-                                name = obj.optString("name", ""),
-                                description = obj.optString("description", ""),
-                                category = obj.optString("category", "Functional/Core Skills"),
-                                level = "Proficient"
-                            )
-                        )
-                    }
-                }
-
-                withContext(Dispatchers.Main) {
-                    updateCvDataState(cvData.copy(
-                        lastAtsScore = atsScore,
-                        lastAtsSuggestions = suggestions,
-                        lastAtsRecommendedSkills = recommendedSkills
-                    ))
-                    showToast(if (isBn) "Ã Â¦ï¿½Ã Â¦Å¸Ã Â¦Â¿Ã Â¦ï¿½Ã Â¦Â¸ Ã Â¦ï¿½Ã Â¦Â¨Ã Â¦Â¾Ã Â¦Â²Ã Â¦Â¾Ã Â¦â€¡Ã Â¦Â¸Ã Â¦Â¿Ã Â¦Â¸ Ã Â¦Â¸Ã Â¦Â®Ã Â§ï¿½Ã Â¦ÂªÃ Â§â€šÃ Â¦Â°Ã Â§ï¿½Ã Â¦Â£! Ã Â¦Â¸Ã Â§ï¿½Ã Â¦â€¢Ã Â§â€¹Ã Â¦Â°: $atsScore%" else "ATS Audit complete! Score: $atsScore%")
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    showToast("ATS Audit AI Error: ${e.localizedMessage}")
-                }
-            } finally {
-                withContext(Dispatchers.Main) {
-                    isAiLoading = false
-                }
-            }
-        }
-    }
-
-    fun runJobCircularMatchWithAi(circularText: String, imageBytes: ByteArray?, mimeType: String) {
-        isAiLoading = true
-        aiLoadingMessage = if (isBn) "Ã¢Å“Â¨ Ã Â¦Å“Ã Â§â€¡Ã Â¦Â®Ã Â¦Â¿Ã Â¦Â¨Ã Â¦Â¿ Ã Â¦ï¿½Ã Â¦â€ Ã Â¦â€¡ Ã Â¦Â¸Ã Â¦Â¾Ã Â¦Â°Ã Â§ï¿½Ã Â¦â€¢Ã Â§ï¿½Ã Â¦Â²Ã Â¦Â¾Ã Â¦Â° Ã Â¦ï¿½Ã Â¦Â¬Ã Â¦â€š Ã Â¦Â¸Ã Â¦Â¿Ã Â¦Â­Ã Â¦Â¿ Ã Â¦Â®Ã Â§ï¿½Ã Â¦Â¯Ã Â¦Â¾Ã Â¦Å¡ Ã Â¦ï¿½Ã Â¦Â¨Ã Â¦Â¾Ã Â¦Â²Ã Â¦Â¾Ã Â¦â€¡Ã Â¦Â¸Ã Â¦Â¿Ã Â¦Â¸ Ã Â¦â€¢Ã Â¦Â°Ã Â¦â€ºÃ Â§â€¡..." else "Ã¢Å“Â¨ Gemini Multi-modal AI is matching your CV to the job circular..."
-        scope.launch {
-            try {
-                val candidateSkills = cvData.skills.joinToString { it.name }
-                val candidateExps = cvData.experiences.joinToString { "${it.role} at ${it.company}: ${it.description}" }
-                
-                val promptText = StringBuilder().apply {
-                    append("You are an expert recruitment manager. Evaluate the candidate resume against the provided Job Circular.\n\n")
-                    append("Job Circular Context:\n")
-                    if (circularText.isNotBlank()) {
-                        append("Circular Text: $circularText\n")
-                    }
-                    if (imageBytes != null) {
-                        append("[Image of the job circular is attached below for visual reading]\n")
-                    }
-                    append("\nCandidate Resume:\n")
-                    append("Target Job Title: ${cvData.jobTitle}\n")
-                    append("Summary: ${cvData.summary}\n")
-                    append("Skills: $candidateSkills\n")
-                    append("Experiences: $candidateExps\n\n")
-                    append("Provide:\n")
-                    append("1. A circular match percentage (relevance match score) from 0 to 100%.\n")
-                    append("2. 3 to 5 matching qualifications/strengths.\n")
-                    append("3. A list of 3 to 6 missing skills/keywords directly required in circular but weak/absent in the candidate's resume. IMPORTANT: Give a professional 1-2 sentence description for each skill so they never have empty descriptions in CV!\n")
-                    append("4. 3 target improvement tips for tailored customization.\n")
-                    append("5. A tailored summary (maximum 3 sentences) custom matching this specific circular.\n\n")
-                    append("Output MUST be a single raw JSON object with keys:\n")
-                    append("- \"match_percentage\": Integer (0-100)\n")
-                    append("- \"matching_strengths\": Array of String\n")
-                    append("- \"missing_skills\": Array of Objects, where each object has keys:\n")
-                    append("    - \"name\": String (skill name)\n")
-                    append("    - \"description\": String (1-2 sentence professional description of this skill)\n")
-                    append("    - \"category\": String (choose from: \"Functional/Core Skills\", \"Technical/Digital Proficiency\", \"Soft Skills/Leadership\")\n")
-                    append("- \"improvement_tips\": Array of String\n")
-                    append("- \"tailored_summary\": String\n\n")
-                    append("Return ONLY raw JSON.")
-                }.toString()
-
-                val sysPrompt = "You are an expert HR Recruitment Matcher. Output strictly valid raw JSON only. Do not wrap in markdown or include extra conversational text."
-                val resultText = callGeminiAiMultiModal(
-                    prompt = promptText,
-                    systemInstruction = sysPrompt,
-                    imageBytes = imageBytes,
-                    mimeType = mimeType
-                )
-
-                val cleanJson = resultText.substringAfter("{").substringBeforeLast("}").let { "{$it}" }
-                val jsonObj = org.json.JSONObject(cleanJson)
-                val matchPercentage = jsonObj.optInt("match_percentage", 60)
-                
-                val matchingStrengths = mutableListOf<String>()
-                jsonObj.optJSONArray("matching_strengths")?.let { arr ->
-                    for (i in 0 until arr.length()) matchingStrengths.add(arr.getString(i))
-                }
-
-                val missingSkillsList = mutableListOf<CvSkillItem>()
-                jsonObj.optJSONArray("missing_skills")?.let { arr ->
-                    for (i in 0 until arr.length()) {
-                        val obj = arr.getJSONObject(i)
-                        missingSkillsList.add(
-                            CvSkillItem(
-                                id = UUID.randomUUID().toString(),
-                                name = obj.optString("name", ""),
-                                description = obj.optString("description", ""),
-                                category = obj.optString("category", "Functional/Core Skills"),
-                                level = "Proficient"
-                            )
-                        )
-                    }
-                }
-
-                val improvementTips = mutableListOf<String>()
-                jsonObj.optJSONArray("improvement_tips")?.let { arr ->
-                    for (i in 0 until arr.length()) improvementTips.add(arr.getString(i))
-                }
-
-                val tailoredSummary = jsonObj.optString("tailored_summary", "")
-
-                withContext(Dispatchers.Main) {
-                    updateCvDataState(cvData.copy(
-                        lastJobMatchPercentage = matchPercentage,
-                        lastMatchingStrengths = matchingStrengths,
-                        lastMissingKeywords = missingSkillsList,
-                        lastImprovementTips = improvementTips,
-                        lastTailoredSummary = tailoredSummary
-                    ))
-                    showToast(if (isBn) "Ã Â¦Â¸Ã Â¦Â¾Ã Â¦Â°Ã Â§ï¿½Ã Â¦â€¢Ã Â§ï¿½Ã Â¦Â²Ã Â¦Â¾Ã Â¦Â° Ã Â¦Â®Ã Â§ï¿½Ã Â¦Â¯Ã Â¦Â¾Ã Â¦Å¡Ã Â¦Â¿Ã Â¦â€š Ã Â¦Â¸Ã Â¦Â®Ã Â§ï¿½Ã Â¦ÂªÃ Â¦Â¨Ã Â§ï¿½Ã Â¦Â¨! Ã Â¦Â¸Ã Â§ï¿½Ã Â¦â€¢Ã Â§â€¹Ã Â¦Â°: $matchPercentage%" else "Circular matching complete! Score: $matchPercentage%")
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    showToast("Circular Match AI Error: ${e.localizedMessage}")
-                }
-            } finally {
-                withContext(Dispatchers.Main) {
-                    isAiLoading = false
-                }
-            }
-        }
-    }
-
-    fun applySelectedAtsImprovementsWithAi(selectedSuggestions: List<String>) {
-        if (selectedSuggestions.isEmpty()) return
-        isAiLoading = true
-        aiLoadingMessage = if (isBn) "âœ¨ à¦à¦†à¦‡ à¦†à¦ªà¦¨à¦¾à¦° à¦¸à¦¿à¦²à§‡à¦•à§à¦Ÿà§‡à¦¡ à¦à¦Ÿà¦¿à¦à¦¸ à¦ªà¦¿à¦¸à¦—à§à¦²à§‹ à¦‡à¦®à¦ªà§à¦²à¦¿à¦®à§‡à¦¨à§à¦Ÿ à¦•à¦°à¦›à§‡..." else "âœ¨ AI is implementing your selected ATS suggestions into the resume text..."
-        scope.launch {
-            try {
-                val candidateSkills = cvData.skills.joinToString { it.name }
-                val candidateExps = cvData.experiences.joinToString { "${it.role} at ${it.company}: ${it.description}" }
-                
-                val promptText = """
-                    You are an expert HR resume writer. Polish and update the candidate's Resume Summary and Experience bullet points to incorporate the following selected suggestions:
-                    
-                    Selected Suggestions:
-                    ${selectedSuggestions.joinToString("\n") { "- $it" }}
-                    
-                    Current Resume Summary:
-                    ${cvData.summary}
-                    
-                    Current Experiences:
-                    ${cvData.experiences.joinToString("\n") { "Role: ${it.role} at ${it.company}\nDescription: ${it.description}" }}
-                    
-                    Task:
-                    1. Rewrite the summary to be highly professional, elegant, and directly address the suggestions if relevant.
-                    2. Polish the experience descriptions to incorporate metrics, achievements, or action words as suggested, keeping the same roles and companies.
-                    
-                    Output MUST be a single raw JSON object with keys:
-                    - "summary": String (new polished summary)
-                    - "experiences": Array of Objects, where each object has:
-                        - "role": String (must match original)
-                        - "company": String (must match original)
-                        - "description": String (new polished description/bullet points)
-                    
-                    Return ONLY raw JSON. No markdown code wraps.
-                """.trimIndent()
-
-                val sysPrompt = "You are an expert Resume Writer. Output strictly valid raw JSON only. Do not wrap in markdown."
-                val resultText = callGeminiAiMultiModal(
-                    prompt = promptText,
-                    systemInstruction = sysPrompt,
-                    imageBytes = null,
-                    mimeType = ""
-                )
-
-                val cleanJson = resultText.substringAfter("{").substringBeforeLast("}").let { "{$it}" }
-                val jsonObj = org.json.JSONObject(cleanJson)
-                
-                val polishedSummary = jsonObj.optString("summary", cvData.summary)
-                
-                val updatedExps = cvData.experiences.toMutableList()
-                jsonObj.optJSONArray("experiences")?.let { arr ->
-                    for (i in 0 until arr.length()) {
-                        val obj = arr.getJSONObject(i)
-                        val originalRole = obj.optString("role", "")
-                        val originalCompany = obj.optString("company", "")
-                        val newDesc = obj.optString("description", "")
-                        
-                        val idx = updatedExps.indexOfFirst { it.role == originalRole && it.company == originalCompany }
-                        if (idx != -1) {
-                            updatedExps[idx] = updatedExps[idx].copy(description = newDesc)
-                        }
-                    }
-                }
-
-                withContext(Dispatchers.Main) {
-                    updateCvDataState(cvData.copy(
-                        summary = polishedSummary,
-                        experiences = updatedExps
-                    ))
-                    showToast(if (isBn) "à¦¸à¦¿à¦­à¦¿ à¦¸à¦«à¦²à¦­à¦¾à¦¬à§‡ à¦†à¦ªà¦¡à§‡à¦Ÿ à¦¹à§Ÿà§‡à¦›à§‡!" else "Resume updated with selected ATS improvements!")
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    showToast("Update AI Error: ${e.localizedMessage}")
-                }
-            } finally {
-                withContext(Dispatchers.Main) {
-                    isAiLoading = false
-                }
-            }
-        }
     }
 
     Box(
@@ -5912,15 +5809,55 @@ fun AtsCvBuilderTool(
                         themeColors = themeColors,
                         isBn = isBn,
                         onMatchCircularAi = { circularText, imageBytes, imageMime ->
-                            runJobCircularMatchWithAi(circularText, imageBytes, imageMime)
+                            runDirectCircularMatchAi(circularText, imageBytes, imageMime)
                         },
-                        onAtsAuditAi = {
-                            runGeneralAtsAuditWithAi()
-                        },
-                        onApplySelectedAtsImprovements = { selectedTips ->
-                            applySelectedAtsImprovementsWithAi(selectedTips)
+                        onAnalyzeAtsAi = {
+                            runDirectAtsAnalysisAi()
                         }
                     )
+
+                    /*
+                    onMatchCircularAi = { circularText, imageBytes, imageMime ->
+                            if (circularText.isBlank() && imageBytes == null) {
+                                showToast(if (isBn) "Ã Â¦â€¦Ã Â¦Â¨Ã Â§ï¿½Ã Â¦â€”Ã Â§ï¿½Ã Â¦Â°Ã Â¦Â¹ Ã Â¦â€¢Ã Â¦Â°Ã Â§â€¡ Ã Â¦Â¸Ã Â¦Â¾Ã Â¦Â°Ã Â§ï¿½Ã Â¦â€¢Ã Â§ï¿½Ã Â¦Â²Ã Â¦Â¾Ã Â¦Â° Ã Â¦Å¸Ã Â§â€¡Ã Â¦â€¢Ã Â§ï¿½Ã Â¦Â¸Ã Â¦Å¸ Ã Â¦Â¦Ã Â¦Â¿Ã Â¦Â¨ Ã Â¦â€¦Ã Â¦Â¥Ã Â¦Â¬Ã Â¦Â¾ Ã Â¦â€ºÃ Â¦Â¬Ã Â¦Â¿ Ã Â¦â€ Ã Â¦ÂªÃ Â¦Â²Ã Â§â€¹Ã Â¦Â¡ Ã Â¦â€¢Ã Â¦Â°Ã Â§ï¿½Ã Â¦Â¨!" else "Please provide circular text or pick an image!")
+                                return@AiJobCircularMatchTab
+                            }
+                            updateCvDataState(cvData.copy(targetJobCircular = circularText))
+
+                            val promptBuilder = StringBuilder()
+                            promptBuilder.append("Target Job Circular Context:\n")
+                            if (circularText.isNotBlank()) {
+                                promptBuilder.append("Circular Text: $circularText\n")
+                            }
+                            if (imageBytes != null) {
+                                promptBuilder.append("[Image of job circular attached below for detail analysis]\n")
+                            }
+
+                            promptBuilder.append("\nCandidate Profile:\n")
+                            promptBuilder.append("Target Title: ${cvData.jobTitle}\n")
+                            promptBuilder.append("Summary: ${cvData.summary}\n")
+                            promptBuilder.append("Skills: ${cvData.skills.joinToString { it.name }}\n")
+                            promptBuilder.append("Experiences: ${cvData.experiences.joinToString { "${it.role} at ${it.company}: ${it.description}" }}\n")
+                            promptBuilder.append("Educations: ${cvData.educations.joinToString { "${it.degree} from ${it.institution}" }}\n")
+
+                            promptBuilder.append("\nTask Instructions:\n")
+                            promptBuilder.append("1. Compute an accurate job match score (0-100%) by comparing candidate skills, qualifications, and role requirements against the circular.\n")
+                            promptBuilder.append("2. Extract 3-5 matching strengths that align with circular requirements.\n")
+                            promptBuilder.append("3. Extract 3-6 missing critical technical or role keywords present in circular but missing in candidate CV.\n")
+                            promptBuilder.append("4. Provide 3 high-impact improvement recommendations for passing the ATS filter.\n")
+                            promptBuilder.append("5. Write a tailored summary aligned with the circular.\n")
+                            promptBuilder.append("6. Return strictly valid JSON object with keys: matchPercentage (int), tailoredSummary (string), matchingStrengths (array of string), missingKeywords (array of string), improvementTips (array of string), newSkills (array of string).")
+
+                            openAiPrompt(
+                                title = if (isBn) "Ã Â¦Â¸Ã Â¦Â¾Ã Â¦Â°Ã Â§ï¿½Ã Â¦â€¢Ã Â§ï¿½Ã Â¦Â²Ã Â¦Â¾Ã Â¦Â° Ã Â¦Â®Ã Â§ï¿½Ã Â¦Â¯Ã Â¦Â¾Ã Â¦Å¡ Ã Â¦ï¿½Ã Â¦â€ Ã Â¦â€¡ Ã Â¦ÂªÃ Â§ï¿½Ã Â¦Â°Ã Â¦Â®Ã Â§ï¿½Ã Â¦ÂªÃ Â¦Å¸" else "AI Job Circular Match Prompt",
+                                defaultPrompt = promptBuilder.toString(),
+                                targetField = "CIRCULAR_MATCH",
+                                imageBytes = imageBytes,
+                                imageMime = imageMime
+                            )
+                        }
+                    )
+                    */
 
                     5 -> PreviewAndExportTab(
                         cvData = cvData,
@@ -7476,78 +7413,158 @@ private fun EducationAndSkillsTab(
     val scrollState = rememberScrollState()
 
     // Standard Job Application Dropdown Options
-    val examOptions = listOf(
+        val examOptions = listOf(
         "S.S.C / Dakhil / O-Level / Equivalent",
+        "S.S.C (Vocational) / Equivalent",
         "H.S.C / Alim / A-Level / Equivalent",
+        "H.S.C (Vocational) / Equivalent",
         "Diploma in Engineering / Polytechnic",
         "Diploma in Computer Science / IT",
+        "Diploma in Textile Engineering",
         "Diploma in Nursing / Medical Technology",
+        "Diploma in Agriculture",
+        "Diploma in Forestry",
+        "Diploma in Commerce",
+        "Diploma in Pathology / Health Technology",
+        "Diploma in Education (D.Ed / B.Ed)",
         "Bachelor of Science (B.Sc / B.Sc Engg)",
+        "Bachelor of Science (B.Sc Pass Course)",
         "Bachelor of Business Administration (BBA)",
+        "Bachelor of Business Studies (BBS)",
+        "Bachelor of Business Studies (BBS Honours)",
         "Bachelor of Arts (B.A / B.A Honours)",
+        "Bachelor of Arts (B.A Pass Course)",
         "Bachelor of Commerce (B.Com / B.Com Hons)",
-        "Bachelor of Social Science (BSS)",
+        "Bachelor of Social Science (BSS / BSS Honours)",
+        "Bachelor of Social Science (B.S.S Pass Course)",
         "Bachelor of Laws (LL.B / LL.B Honours)",
         "Bachelor of Medicine & Surgery (MBBS)",
         "Bachelor of Dental Surgery (BDS)",
         "Bachelor of Pharmacy (B.Pharm)",
         "Bachelor of Architecture (B.Arch)",
+        "Bachelor of Fine Arts (BFA)",
+        "Bachelor of Music (BMus)",
+        "Bachelor of Physical Education (BPEd)",
+        "Bachelor of Science in Nursing (B.Sc Nursing)",
+        "Bachelor of Theology / Islamic Studies (B.Th)",
+        "Fazil (Madrasah Bachelor's Equivalent)",
         "Master of Science (M.Sc)",
+        "Master of Science (M.Sc Engg)",
         "Master of Business Administration (MBA / EMBA)",
         "Master of Arts (M.A)",
         "Master of Social Science (MSS)",
         "Master of Laws (LL.M)",
+        "Master of Commerce (M.Com)",
+        "Master of Business Studies (MBS)",
+        "Master of Education (M.Ed)",
+        "Master of Fine Arts (MFA)",
+        "Master of Public Health (MPH)",
+        "Kamil (Madrasah Master's Equivalent)",
         "M.Phil / Postgraduate Diploma (PGD)",
+        "Postgraduate Diploma (PGD) in Computer Science / IT",
+        "Postgraduate Diploma (PGD) in HRM (PGDHRM)",
+        "Chartered Accountant (CA) / Cost and Management Accountant (CMA)",
         "Ph.D / Doctorate / Post-Doc",
         "Professional Certificate (PMP / ACCA / CA / CFA)",
-        "Others (Ã Â¦Â®Ã Â§ï¿½Ã Â¦Â¯Ã Â¦Â¾Ã Â¦Â¨Ã Â§ï¿½Ã Â¦Â¯Ã Â¦Â¼Ã Â¦Â¾Ã Â¦Â² Ã Â¦â€¡Ã Â¦Â¨Ã Â¦ÂªÃ Â§ï¿½Ã Â¦Å¸)"
+        "Others (à¦®à§à¦¯à¦¾à¦¨à§à§Ÿà¦¾à¦² à¦‡à¦¨à¦ªà§à¦Ÿ)"
     )
 
     val subjectOptions = listOf(
-        "Computer Science & Engineering (CSE)",
-        "Software Engineering (SWE)",
-        "Information Technology (IT)",
-        "Electrical & Electronic Engineering (EEE)",
-        "Civil Engineering (CE)",
-        "Mechanical Engineering (ME)",
-        "Electronics & Telecommunication (ETE / ECE)",
-        "Industrial & Production Engineering (IPE)",
-        "Textile Engineering",
-        "Architecture & Urban Planning",
-        "Business Administration (BBA / MBA)",
+        "Accounting",
         "Accounting & Information Systems (AIS)",
-        "Finance & Banking",
-        "Marketing & Brand Management",
-        "Management & Human Resource Management (HRM)",
-        "International Business (IB)",
-        "Supply Chain Management",
-        "Economics",
-        "English Language & Literature",
-        "Law / Legal Studies",
-        "Medicine / Surgery (MBBS)",
-        "Dental Surgery (BDS)",
-        "Pharmacy / Pharmaceutical Sciences",
-        "Biochemistry & Molecular Biology",
-        "Biotechnology & Genetic Engineering",
-        "Microbiology",
-        "Physics / Applied Physics",
-        "Chemistry / Applied Chemistry",
-        "Mathematics / Applied Mathematics",
-        "Statistics & Data Science",
         "Agriculture & Agronomy",
-        "Public Administration",
-        "Political Science",
+        "Anthropology",
+        "Arabic",
+        "Architecture & Urban Planning",
+        "Bangla",
+        "Biochemistry & Molecular Biology",
+        "Biomedical Engineering",
+        "Biotechnology & Genetic Engineering",
+        "Botany",
+        "Business Administration (BBA / MBA)",
+        "Chemical Engineering",
+        "Chemistry",
+        "Chemistry / Applied Chemistry",
+        "Civil Engineering (CE)",
+        "Computer Science & Engineering (CSE)",
+        "Criminology",
+        "Dental Surgery (BDS)",
+        "Development Studies",
+        "Disaster Management",
+        "Drama & Dramatics",
+        "Economics",
+        "Electrical & Electronic Engineering (EEE)",
+        "Electronics & Telecommunication (ETE / ECE)",
+        "English",
+        "English Language & Literature",
+        "Finance",
+        "Finance & Banking",
+        "Fine Arts",
+        "Fisheries / Aquaculture",
+        "Food Engineering / Food Technology",
+        "Forestry & Environmental Science",
+        "Geography & Environment",
+        "Geology / Applied Geology",
+        "History",
+        "Home Economics",
+        "Industrial & Production Engineering (IPE)",
+        "Information Science & Library Management",
+        "Information Technology (IT)",
+        "International Business (IB)",
         "International Relations (IR)",
-        "Sociology & Social Work",
+        "Islamic History & Culture",
+        "Islamic Studies",
         "Journalism & Mass Communication",
+        "Law / Legal Studies",
+        "Leather Engineering",
+        "Library & Information Science",
+        "Management",
+        "Management & Human Resource Management (HRM)",
+        "Marine Science / Oceanography",
+        "Marketing",
+        "Marketing & Brand Management",
+        "Materials & Metallurgical Engineering",
+        "Mathematics",
+        "Mathematics / Applied Mathematics",
+        "Mechanical Engineering (ME)",
+        "Medicine / Surgery (MBBS)",
+        "Microbiology",
+        "Music",
+        "Pali",
+        "Persian Language & Literature",
+        "Petroleum & Mining Engineering",
+        "Pharmacy / Pharmaceutical Sciences",
+        "Philosophy",
+        "Physics",
+        "Physics / Applied Physics",
+        "Political Science",
+        "Population Sciences",
+        "Psychology",
+        "Public Administration",
+        "Sanskrit",
+        "Social Work",
+        "Sociology",
+        "Sociology & Social Work",
+        "Soil Science",
+        "Soil, Water & Environment",
+        "Statistics",
+        "Statistics (Honours)",
+        "Statistics & Data Science",
+        "Supply Chain Management",
+        "Textile Engineering",
+        "Tourism & Hospitality Management",
+        "Urdu",
+        "Veterinary Science & Animal Husbandry",
+        "Zoology",
         "Science (S.S.C / H.S.C)",
         "Business Studies / Commerce (S.S.C / H.S.C)",
         "Humanities / Arts (S.S.C / H.S.C)",
         "General",
-        "Others (Ã Â¦Â®Ã Â§ï¿½Ã Â¦Â¯Ã Â¦Â¾Ã Â¦Â¨Ã Â§ï¿½Ã Â¦Â¯Ã Â¦Â¼Ã Â¦Â¾Ã Â¦Â² Ã Â¦â€¡Ã Â¦Â¨Ã Â¦ÂªÃ Â§ï¿½Ã Â¦Å¸)"
+        "Others (à¦®à§à¦¯à¦¾à¦¨à§à§Ÿà¦¾à¦² à¦‡à¦¨à¦ªà§à¦Ÿ)"
     )
 
     val instOptions = listOf(
+        // Education Boards
         "Dhaka Education Board",
         "Chittagong Education Board",
         "Rajshahi Education Board",
@@ -7559,12 +7576,15 @@ private fun EducationAndSkillsTab(
         "Mymensingh Education Board",
         "Technical Education Board (BTEB)",
         "Madrasah Education Board",
+
+        // Public Universities
         "University of Dhaka (DU)",
         "Bangladesh University of Engineering and Technology (BUET)",
         "Jahangirnagar University (JU)",
         "Rajshahi University (RU)",
         "Chittagong University (CU)",
         "Shahjalal University of Science and Technology (SUST)",
+        "Khulna University (KU)",
         "Khulna University of Engineering & Technology (KUET)",
         "Rajshahi University of Engineering & Technology (RUET)",
         "Chittagong University of Engineering & Technology (CUET)",
@@ -7572,18 +7592,31 @@ private fun EducationAndSkillsTab(
         "Jagannath University (JnU)",
         "Bangladesh Agricultural University (BAU)",
         "Sher-e-Bangla Agricultural University (SAU)",
+        "Bangabandhu Sheikh Mujibur Rahman Agricultural University (BSMRAU)",
         "Bangladesh University of Professionals (BUP)",
         "Noakhali Science and Technology University (NSTU)",
         "Jashore University of Science and Technology (JUST)",
         "Begum Rokeya University, Rangpur (BRUR)",
+        "Islamic University, Bangladesh (IU)",
+        "Mawlana Bhashani Science and Technology University (MBSTU)",
+        "Hajee Mohammad Danesh Science & Technology University (HSTU)",
+        "Comilla University (CoU)",
+        "Jatiya Kabi Kazi Nazrul Islam University (JKKNIU)",
+        "Bangabandhu Sheikh Mujibur Rahman Science and Technology University (BSMRSTU)",
+        "Barisal University (BU)",
+        "Rangamati Science and Technology University (RMSTU)",
+        "Pabna University of Science and Technology (PUST)",
+        "Patuakhali Science and Technology University (PSTU)",
+        "Sylhet Agricultural University (SAU)",
+        "Chittagong Veterinary and Animal Sciences University (CVASU)",
+        "Bangabandhu Sheikh Mujibur Rahman Maritime University (BSMRMU)",
+        "Bangabandhu Sheikh Mujibur Rahman Aviation and Aerospace University (BSMRAAU)",
         "National University (NU)",
         "Bangladesh Open University (BOU)",
-        "Dhaka College",
-        "Eden Mohila College",
-        "Government Titumir College",
-        "Government Bangla College",
-        "Kavi Nazrul Government College",
-        "Dhaka City College",
+        "Islamic Arabic University (IAU)",
+        "Bangabandhu Sheikh Mujib Medical University (BSMMU)",
+
+        // Prominent Private Universities
         "North South University (NSU)",
         "BRAC University",
         "Ahsanullah University of Science and Technology (AUST)",
@@ -7598,6 +7631,90 @@ private fun EducationAndSkillsTab(
         "State University of Bangladesh (SUB)",
         "Green University of Bangladesh",
         "International Islamic University Chittagong (IIUC)",
+        "University of Asia Pacific (UAP)",
+        "International University of Business Agriculture and Technology (IUBAT)",
+        "Eastern University",
+        "Primeasia University",
+        "Northern University Bangladesh",
+        "Southern University Bangladesh",
+        "Metropolitan University, Sylhet",
+        "Leading University, Sylhet",
+        "Sylhet International University",
+        "Asian University of Bangladesh",
+        "City University",
+        "World University of Bangladesh",
+        "Shanto-Mariam University of Creative Technology",
+        "Uttara University",
+        "Britannia University, Comilla",
+        "University of Information Technology and Sciences (UITS)",
+        "Canadian University of Bangladesh (CUB)",
+        "European University of Bangladesh (EUB)",
+        "Sonargaon University (SU)",
+        "Bangladesh University (BU)",
+
+        // Prominent Government / National University Colleges
+        "Dhaka College",
+        "Eden Mohila College",
+        "Government Titumir College",
+        "Government Bangla College",
+        "Kavi Nazrul Government College",
+        "Government Shaheed Suhrawardy College",
+        "Begum Badrunnesa Government Girls' College",
+        "Tejgaon College",
+        "Dhaka City College",
+        "Lalmatia Mohila College",
+        "Rajshahi College",
+        "New Government Degree College, Rajshahi",
+        "Rajshahi Government City College",
+        "Chittagong College",
+        "Government Hazi Mohammad Mohsin College, Chittagong",
+        "Government City College, Chittagong",
+        "Chittagong Government Women's College",
+        "Ananda Mohan College, Mymensingh",
+        "Carmichael College, Rangpur",
+        "Edward College, Pabna",
+        "Government B. M. College, Barisal (Brajamohan College)",
+        "Government B. L. College, Khulna (Brajalal College)",
+        "Azam Khan Government Commerce College, Khulna",
+        "Government Majid Memorial City College, Khulna",
+        "MC College, Sylhet (Muria Chand College)",
+        "Sylhet Government Women's College",
+        "Government Gurudayal College, Kishoreganj",
+        "Government Tolaram College, Narayanganj",
+        "Government Haraganga College, Munshiganj",
+        "Government Devendra College, Manikganj",
+        "Government Rajendra College, Faridpur",
+        "Victoria College, Comilla",
+        "Feni College",
+        "Noakhali Government College",
+        "Chandpur Government College",
+        "Brahmanbaria Government College",
+        "Cantonment Public College",
+
+        // Polytechnic & Technical Institutes
+        "Dhaka Polytechnic Institute (DPI)",
+        "Chittagong Polytechnic Institute (CPI)",
+        "Mymensingh Polytechnic Institute",
+        "Rajshahi Polytechnic Institute",
+        "Khulna Polytechnic Institute",
+        "Barisal Polytechnic Institute",
+        "Sylhet Polytechnic Institute",
+        "Rangpur Polytechnic Institute",
+        "Comilla Polytechnic Institute",
+        "Bogra Polytechnic Institute",
+        "Jessore Polytechnic Institute",
+        "Dinajpur Polytechnic Institute",
+        "Pabna Polytechnic Institute",
+        "Faridpur Polytechnic Institute",
+        "Feni Polytechnic Institute",
+        "Kushtia Polytechnic Institute",
+        "Patuakhali Polytechnic Institute",
+        "Graphic Arts Institute, Dhaka",
+        "Bangladesh Survey Institute, Comilla",
+        "National Institute of Textile Engineering and Research (NITER)",
+        "Institute of Health Technology (IHT)",
+
+        // Top International Universities
         "Oxford University",
         "Cambridge University",
         "Harvard University",
@@ -7606,9 +7723,8 @@ private fun EducationAndSkillsTab(
         "University of Sydney",
         "Coventry University",
         "London Metropolitan University",
-        "Others (Ã Â¦Â®Ã Â§ï¿½Ã Â¦Â¯Ã Â¦Â¾Ã Â¦Â¨Ã Â§ï¿½Ã Â¦Â¯Ã Â¦Â¼Ã Â¦Â¾Ã Â¦Â² Ã Â¦â€¡Ã Â¦Â¨Ã Â¦ÂªÃ Â§ï¿½Ã Â¦Å¸)"
+        "Others (à¦®à§à¦¯à¦¾à¦¨à§à§Ÿà¦¾à¦² à¦‡à¦¨à¦ªà§à¦Ÿ)"
     )
-
     val yearOptions = (2030 downTo 1980).map { it.toString() } + listOf("Appeared / Studying", "Others (Ã Â¦Â®Ã Â§ï¿½Ã Â¦Â¯Ã Â¦Â¾Ã Â¦Â¨Ã Â§ï¿½Ã Â¦Â¯Ã Â¦Â¼Ã Â¦Â¾Ã Â¦Â² Ã Â¦â€¡Ã Â¦Â¨Ã Â¦ÂªÃ Â§ï¿½Ã Â¦Å¸)")
 
     val resultSysOptions = listOf(
@@ -8408,6 +8524,104 @@ private fun getFixExplanation(categoryEn: String, isBn: Boolean): String {
 
 
 
+data class AiSuggestionItem(
+    val id: String,
+    val titleEn: String,
+    val titleBn: String,
+    val descEn: String,
+    val descBn: String,
+    val category: String,
+    val proposedValue: String
+)
+
+private fun parseSuggestions(jsonStr: String): List<AiSuggestionItem> {
+    val list = mutableListOf<AiSuggestionItem>()
+    if (jsonStr.isBlank()) return list
+    try {
+        val arr = org.json.JSONArray(jsonStr)
+        for (i in 0 until arr.length()) {
+            val obj = arr.getJSONObject(i)
+            list.add(
+                AiSuggestionItem(
+                    id = obj.optString("id"),
+                    titleEn = obj.optString("titleEn"),
+                    titleBn = obj.optString("titleBn"),
+                    descEn = obj.optString("descEn"),
+                    descBn = obj.optString("descBn"),
+                    category = obj.optString("category"),
+                    proposedValue = obj.optString("proposedValue")
+                )
+            )
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+    return list
+}
+
+@Composable
+private fun AiSuggestionCard(
+    suggestion: AiSuggestionItem,
+    isSelected: Boolean,
+    onSelectionChange: (Boolean) -> Unit,
+    themeColors: CalculatorThemeColors,
+    isBn: Boolean
+) {
+    Surface(
+        onClick = { onSelectionChange(!isSelected) },
+        shape = RoundedCornerShape(12.dp),
+        color = if (isSelected) themeColors.buttonEqualBg.copy(alpha = 0.08f) else themeColors.cardBg,
+        border = BorderStroke(
+            1.dp,
+            if (isSelected) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.12f)
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Checkbox(
+                checked = isSelected,
+                onCheckedChange = { onSelectionChange(it ?: false) },
+                colors = CheckboxDefaults.colors(checkedColor = themeColors.buttonEqualBg)
+            )
+            Spacer(modifier = Modifier.width(10.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = if (isBn) suggestion.titleBn else suggestion.titleEn,
+                    fontSize = 12.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = themeColors.displayText
+                )
+                Spacer(modifier = Modifier.height(3.dp))
+                Text(
+                    text = if (isBn) suggestion.descBn else suggestion.descEn,
+                    fontSize = 11.sp,
+                    color = themeColors.displayText.copy(alpha = 0.75f),
+                    lineHeight = 15.sp
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Surface(
+                    shape = RoundedCornerShape(4.dp),
+                    color = themeColors.buttonEqualBg.copy(alpha = 0.1f),
+                    modifier = Modifier.wrapContentSize()
+                ) {
+                    Text(
+                        text = suggestion.category.uppercase(),
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.buttonEqualBg,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun AiJobCircularMatchTab(
     cvData: CvData,
@@ -8415,39 +8629,16 @@ private fun AiJobCircularMatchTab(
     themeColors: CalculatorThemeColors,
     isBn: Boolean,
     onMatchCircularAi: (String, ByteArray?, String) -> Unit,
-    onAtsAuditAi: () -> Unit,
-    onApplySelectedAtsImprovements: (List<String>) -> Unit,
+    onAnalyzeAtsAi: () -> Unit,
     isScrollable: Boolean = true
 ) {
     val scrollState = rememberScrollState()
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    
-    // Checkbox selections state (using Map of text to selected boolean)
-    val selectedAtsSuggestions = remember { mutableStateMapOf<String, Boolean>() }
-    val selectedAtsSkills = remember { mutableStateMapOf<String, Boolean>() }
-    
-    val selectedCircularKeywords = remember { mutableStateMapOf<String, Boolean>() }
-    var applyCircularSummary by remember { mutableStateOf(true) }
-    
-    // Initialize states when new AI analysis is loaded
-    LaunchedEffect(cvData.lastAtsSuggestions) {
-        selectedAtsSuggestions.clear()
-        cvData.lastAtsSuggestions.forEach { selectedAtsSuggestions[it] = true }
-    }
-    LaunchedEffect(cvData.lastAtsRecommendedSkills) {
-        selectedAtsSkills.clear()
-        cvData.lastAtsRecommendedSkills.forEach { selectedAtsSkills[it.name] = true }
-    }
-    LaunchedEffect(cvData.lastMissingKeywords) {
-        selectedCircularKeywords.clear()
-        cvData.lastMissingKeywords.forEach { selectedCircularKeywords[it.name] = true }
-    }
 
     var circularInputText by remember { mutableStateOf(cvData.targetJobCircular) }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var selectedImageBitmap by remember { mutableStateOf<Bitmap?>(null) }
-    
+
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -8463,6 +8654,14 @@ private fun AiJobCircularMatchTab(
         }
     }
 
+    // Parse ATS suggestions
+    val atsSuggestions = remember(cvData.lastAtsSuggestionsJson) { parseSuggestions(cvData.lastAtsSuggestionsJson) }
+    var selectedAtsIds by remember(cvData.lastAtsSuggestionsJson) { mutableStateOf(atsSuggestions.map { it.id }.toSet()) }
+
+    // Parse Circular suggestions
+    val circularSuggestions = remember(cvData.lastCircularSuggestionsJson) { parseSuggestions(cvData.lastCircularSuggestionsJson) }
+    var selectedCircularIds by remember(cvData.lastCircularSuggestionsJson) { mutableStateOf(circularSuggestions.map { it.id }.toSet()) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -8470,11 +8669,11 @@ private fun AiJobCircularMatchTab(
             .padding(14.dp)
     ) {
         SectionCardHeader(
-            title = if (isBn) "à¦à¦†à¦‡ à¦à¦Ÿà¦¿à¦à¦¸ à¦“ à¦œà¦¬ à¦®à§à¦¯à¦¾à¦šà¦¿à¦‚" else "AI ATS & Job Circular Match",
+            title = if (isBn) "à¦à¦†à¦‡ à¦à¦Ÿà¦¿à¦à¦¸ à¦“ à¦¸à¦¾à¦°à§à¦•à§à¦²à¦¾à¦° à¦®à§à¦¯à¦¾à¦šà¦¿à¦‚" else "AI ATS & Circular Matching",
             icon = Icons.Default.Speed,
             themeColors = themeColors
         )
-        
+
         Spacer(modifier = Modifier.height(12.dp))
 
         // --- DUAL TOP METRIC CARDS ---
@@ -8482,8 +8681,8 @@ private fun AiJobCircularMatchTab(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // CARD 1: Online Gemini ATS Score
-            val atsScore = cvData.lastAtsScore
+            // CARD 1: Gemini AI ATS Score
+            val atsScore = cvData.lastAtsScoreFromGemini
             val scoreColor = when {
                 atsScore >= 80 -> Color(0xFF10B981)
                 atsScore >= 60 -> Color(0xFFF59E0B)
@@ -8491,6 +8690,7 @@ private fun AiJobCircularMatchTab(
                 else -> themeColors.displayText.copy(alpha = 0.4f)
             }
             Surface(
+                onClick = { onAnalyzeAtsAi() },
                 shape = RoundedCornerShape(14.dp),
                 color = themeColors.cardBg,
                 border = BorderStroke(1.dp, scoreColor.copy(alpha = 0.4f)),
@@ -8501,7 +8701,7 @@ private fun AiJobCircularMatchTab(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = if (isBn) "à¦à¦Ÿà¦¿à¦à¦¸ à¦¸à§à¦•à§‹à¦° (à¦à¦†à¦‡)" else "AI ATS Score",
+                        text = if (isBn) "à¦à¦Ÿà¦¿à¦à¦¸ à¦¸à§à¦•à§‹à¦° (à¦à¦†à¦‡)" else "ATS Score (Gemini AI)",
                         fontSize = 11.5.sp,
                         fontWeight = FontWeight.Bold,
                         color = themeColors.displayText.copy(alpha = 0.8f)
@@ -8516,14 +8716,20 @@ private fun AiJobCircularMatchTab(
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = when {
-                            atsScore >= 80 -> if (isBn) "à¦à¦†à¦‡ à¦à¦ªà§à¦°à§à¦­à¦¡" else "ATS Approved"
-                            atsScore >= 60 -> if (isBn) "à¦‰à¦¨à§à¦¨à¦¤à¦¿ à¦ªà§à¦°à§Ÿà§‹à¦œà¦¨" else "Needs Core Polish"
-                            atsScore > 0 -> if (isBn) "à¦¦à§à¦°à§à¦¬à¦² à¦¸à§à¦•à§‹à¦°" else "Low AI ATS Score"
-                            else -> if (isBn) "à¦…à¦¡à¦¿à¦Ÿ à¦•à¦°à§à¦¨" else "Run AI Audit"
+                            atsScore >= 80 -> if (isBn) "à¦à¦Ÿà¦¿à¦à¦¸ à¦«à§à¦°à§‡à¦¨à§à¦¡à¦²à¦¿" else "ATS Friendly"
+                            atsScore >= 60 -> if (isBn) "à¦‰à¦¨à§à¦¨à¦¤à¦¿ à¦ªà§à¦°à§Ÿà§‹à¦œà¦¨" else "Needs Improvement"
+                            atsScore > 0 -> if (isBn) "à¦¨à¦¿à¦®à§à¦¨ à¦¸à§à¦•à§‹à¦°" else "Low Score"
+                            else -> if (isBn) "à¦…à§à¦¯à¦¾à¦¨à¦¾à¦²à¦¾à¦‡à¦¸à¦¿à¦¸ à¦•à¦°à§à¦¨" else "Run Analysis"
                         },
                         fontSize = 10.5.sp,
                         fontWeight = FontWeight.Bold,
                         color = scoreColor
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = if (atsScore > 0) (if (isBn) "à¦ªà§à¦¨à¦°à¦¾à§Ÿ à¦…à§à¦¯à¦¾à¦¨à¦¾à¦²à¦¾à¦‡à¦¸à¦¿à¦¸" else "Re-Analyze") else (if (isBn) "à¦Ÿà§à¦¯à¦¾à¦ª à¦•à¦°à§‡ à¦à¦†à¦‡ à¦¶à§à¦°à§" else "Tap to Run AI"),
+                        fontSize = 9.5.sp,
+                        color = themeColors.displayText.copy(alpha = 0.6f)
                     )
                 }
             }
@@ -8547,7 +8753,7 @@ private fun AiJobCircularMatchTab(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = if (isBn) "à¦¸à¦¾à¦°à§à¦•à§à¦²à¦¾à¦° à¦®à§à¦¯à¦¾à¦š %" else "Circular Match %",
+                        text = if (isBn) "à¦¸à¦¾à¦°à§à¦•à§à¦²à¦¾à¦° à¦®à§à¦¯à¦¾à¦š % (à¦à¦†à¦‡)" else "Circular Match % (AI)",
                         fontSize = 11.5.sp,
                         fontWeight = FontWeight.Bold,
                         color = themeColors.displayText.copy(alpha = 0.8f)
@@ -8565,483 +8771,487 @@ private fun AiJobCircularMatchTab(
                             matchPct >= 80 -> if (isBn) "à¦¹à¦¾à¦‡à¦²à¦¿ à¦®à§à¦¯à¦¾à¦šà¦¡" else "High Match"
                             matchPct >= 60 -> if (isBn) "à¦®à¦¾à¦à¦¾à¦°à¦¿ à¦®à§à¦¯à¦¾à¦š" else "Moderate Match"
                             matchPct > 0 -> if (isBn) "à¦²à§‹ à¦®à§à¦¯à¦¾à¦š" else "Low Match"
-                            else -> if (isBn) "à¦®à§à¦¯à¦¾à¦šà¦¿à¦‚ à¦•à¦°à§à¦¨" else "Check Matching"
+                            else -> if (isBn) "à¦¸à¦¾à¦°à§à¦•à§à¦²à¦¾à¦° à¦¦à¦¿à¦¨" else "Upload Circular"
                         },
                         fontSize = 10.5.sp,
                         fontWeight = FontWeight.Bold,
                         color = matchColor
                     )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = if (matchPct > 0) (if (isBn) "à¦œà§‡à¦®à¦¿à¦¨à¦¿ à¦à¦†à¦‡ à¦…à§à¦¯à¦¾à¦¨à¦¾à¦²à¦¾à¦‡à¦¸à¦¿à¦¸" else "Gemini AI Analysis") else (if (isBn) "à¦¨à¦¿à¦šà§‡ à¦¸à¦¾à¦°à§à¦•à§à¦²à¦¾à¦° à¦¦à¦¿à¦¨" else "Provide Circular Below"),
+                        fontSize = 9.5.sp,
+                        color = themeColors.displayText.copy(alpha = 0.6f)
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // ================= SECTION 1: AI ATS OPTIMIZATION CENTRE =================
+        SectionCardHeader(
+            title = if (isBn) "à§§. à¦à¦†à¦‡ à¦à¦Ÿà¦¿à¦à¦¸ à¦…à¦ªà§à¦Ÿà¦¿à¦®à¦¾à¦‡à¦œà§‡à¦¶à¦¨" else "1. AI ATS Optimization Suggestions",
+            icon = Icons.Default.AutoAwesome,
+            themeColors = themeColors
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        if (atsSuggestions.isNotEmpty()) {
+            Surface(
+                shape = RoundedCornerShape(14.dp),
+                color = themeColors.cardBg,
+                border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.2f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Text(
+                        text = if (isBn) "à¦ªà§à¦°à¦¸à§à¦¤à¦¾à¦¬à¦¿à¦¤ à¦ªà¦°à¦¿à¦¬à¦°à§à¦¤à¦¨à¦¸à¦®à§‚à¦¹ à¦°à¦¿à¦­à¦¿à¦‰ à¦•à¦°à§à¦¨:" else "Review Proposed Improvements:",
+                        fontSize = 12.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.displayText
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    atsSuggestions.forEach { suggestion ->
+                        val isSelected = suggestion.id in selectedAtsIds
+                        AiSuggestionCard(
+                            suggestion = suggestion,
+                            isSelected = isSelected,
+                            onSelectionChange = { selected ->
+                                selectedAtsIds = if (selected) {
+                                    selectedAtsIds + suggestion.id
+                                } else {
+                                    selectedAtsIds - suggestion.id
+                                }
+                            },
+                            themeColors = themeColors,
+                            isBn = isBn
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Button(
+                        onClick = {
+                            val updated = applySelectedSuggestions(cvData, selectedAtsIds.toList(), cvData.lastAtsSuggestionsJson)
+                            onCvDataChange(updated)
+                            Toast.makeText(context, if (isBn) "à¦¬à¦¾à¦›à¦¾à¦‡à¦•à§ƒà¦¤ à¦à¦Ÿà¦¿à¦à¦¸ à¦ªà¦°à¦¿à¦¬à¦°à§à¦¤à¦¨à¦—à§à¦²à§‹ à¦¸à¦«à¦²à¦­à¦¾à¦¬à§‡ à¦¸à¦¿à¦­à¦¿à¦¤à§‡ à¦ªà§à¦°à§Ÿà§‹à¦— à¦•à¦°à¦¾ à¦¹à§Ÿà§‡à¦›à§‡!" else "Selected ATS changes applied successfully!", Toast.LENGTH_SHORT).show()
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
+                        shape = RoundedCornerShape(10.dp),
+                        enabled = selectedAtsIds.isNotEmpty(),
+                        modifier = Modifier.fillMaxWidth().height(42.dp)
+                    ) {
+                        Icon(imageVector = Icons.Default.CheckCircle, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = if (isBn) "à¦¬à¦¾à¦›à¦¾à¦‡à¦•à§ƒà¦¤ à¦ªà¦°à¦¿à¦¬à¦°à§à¦¤à¦¨à¦—à§à¦²à§‹ à¦ªà§à¦°à§Ÿà§‹à¦— à¦•à¦°à§à¦¨ (${selectedAtsIds.size})" else "Apply Selected Improvements (${selectedAtsIds.size})",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+                }
+            }
+        } else {
+            // Empty State
+            Surface(
+                onClick = { onAnalyzeAtsAi() },
+                shape = RoundedCornerShape(14.dp),
+                color = themeColors.cardBg,
+                border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.08f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = null, tint = themeColors.buttonEqualBg.copy(alpha = 0.5f), modifier = Modifier.size(32.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = if (isBn) "à¦¸à¦¿à¦­à¦¿à¦¤à§‡ à¦•à§‹à¦¨ à¦à¦Ÿà¦¿à¦à¦¸ à¦ªà¦°à¦¾à¦®à¦°à§à¦¶ à¦¨à§‡à¦‡" else "No ATS Suggestions Yet",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.displayText
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = if (isBn) "à¦œà§‡à¦®à¦¿à¦¨à¦¿ à¦à¦†à¦‡ à¦¦à¦¿à§Ÿà§‡ à¦†à¦ªà¦¨à¦¾à¦° à¦¸à¦¿à¦­à¦¿à¦° à¦®à¦¾à¦¨ à¦“ à¦à¦Ÿà¦¿à¦à¦¸ à¦¸à§à¦•à§‹à¦° à¦¬à¦¿à¦¶à§à¦²à§‡à¦·à¦£ à¦•à¦°à¦¤à§‡ à¦à¦–à¦¾à¦¨à§‡ à¦Ÿà§à¦¯à¦¾à¦ª à¦•à¦°à§à¦¨!" else "Tap here to analyze your CV's professional quality & ATS compatibility with Gemini AI!",
+                        fontSize = 11.sp,
+                        color = themeColors.displayText.copy(alpha = 0.65f),
+                        textAlign = TextAlign.Center,
+                        lineHeight = 15.sp
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // ================= SECTION 2: JOB CIRCULAR MATCH & TAILORING =================
+        SectionCardHeader(
+            title = if (isBn) "à§¨. à¦¸à¦¾à¦°à§à¦•à§à¦²à¦¾à¦° à¦®à§à¦¯à¦¾à¦šà¦¿à¦‚ à¦“ à¦•à¦¾à¦¸à§à¦Ÿà¦®à¦¾à¦‡à¦œà§‡à¦¶à¦¨" else "2. Circular Match & AI Tailoring",
+            icon = Icons.Default.Checklist,
+            themeColors = themeColors
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = if (isBn)
+                "à¦¯à§‡ à¦šà¦¾à¦•à¦°à¦¿à¦° à¦œà¦¨à§à¦¯ à¦†à¦¬à§‡à¦¦à¦¨ à¦•à¦°à¦¤à§‡ à¦šà¦¾à¦¨ à¦¤à¦¾à¦° à¦¸à¦¾à¦°à§à¦•à§à¦²à¦¾à¦° à¦Ÿà§‡à¦•à§à¦¸à¦Ÿ à¦ªà§‡à¦¸à§à¦Ÿ à¦•à¦°à§à¦¨ à¦…à¦¥à¦¬à¦¾ à¦•à§à¦¯à¦¾à¦®à§‡à¦°à¦¾/à¦—à§à¦¯à¦¾à¦²à¦¾à¦°à¦¿ à¦¥à§‡à¦•à§‡ à¦¸à¦¾à¦°à§à¦•à§à¦²à¦¾à¦° à¦‡à¦®à§‡à¦œà§‡à¦° à¦›à¦¬à¦¿ à¦¦à¦¿à¦¨! à¦œà§‡à¦®à¦¿à¦¨à¦¿ à¦à¦†à¦‡ à¦à¦Ÿà¦¿à¦à¦¸ à¦®à§à¦¯à¦¾à¦š à¦¸à§à¦•à§‹à¦° à¦¬à§‡à¦° à¦•à¦°à¦¬à§‡ à¦“ à¦¸à¦¿à¦­à¦¿ à¦•à¦¾à¦¸à§à¦Ÿà¦®à¦¾à¦‡à¦œ à¦•à¦°à¦¤à§‡ à¦¸à¦¾à¦¹à¦¾à¦¯à§à¦¯ à¦•à¦°à¦¬à§‡à¥¤"
+            else
+                "Paste target job circular text OR select an image of the circular from your gallery. Gemini Multi-modal AI will calculate your match score and tailor your CV.",
+            fontSize = 11.5.sp,
+            color = themeColors.displayText.copy(alpha = 0.75f),
+            lineHeight = 16.sp
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Text input area
+        OutlinedTextField(
+            value = circularInputText,
+            onValueChange = { circularInputText = it },
+            modifier = Modifier.fillMaxWidth(),
+            minLines = 4,
+            maxLines = 15,
+            placeholder = { Text(text = if (isBn) "à¦œà¦¬ à¦¸à¦¾à¦°à§à¦•à§à¦²à¦¾à¦° à¦¡à§‡à¦¸à¦•à§à¦°à¦¿à¦ªà¦¶à¦¨ à¦ªà§‡à¦¸à§à¦Ÿ à¦•à¦°à§à¦¨..." else "Paste Job circular / description requirements text here...", fontSize = 12.5.sp) },
+            shape = RoundedCornerShape(12.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = themeColors.buttonEqualBg,
+                unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f),
+                focusedContainerColor = themeColors.cardBg,
+                unfocusedContainerColor = themeColors.cardBg,
+                focusedTextColor = themeColors.displayText,
+                unfocusedTextColor = themeColors.displayText
+            )
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Image input options
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = themeColors.cardBg,
+            border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.12f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(12.dp)) {
+                Text(
+                    text = if (isBn) "à¦¸à¦¾à¦°à§à¦•à§à¦²à¦¾à¦° à¦›à¦¬à¦¿ à¦‡à¦¨à¦ªà§à¦Ÿ à¦•à¦°à§à¦¨ (à¦…à¦ªà¦¶à¦¨à¦¾à¦²)" else "Upload Circular Image (Optional)",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = themeColors.displayText
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedButton(
+                        onClick = { imagePickerLauncher.launch("image/*") },
+                        border = BorderStroke(1.dp, themeColors.buttonEqualBg),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Icon(imageVector = Icons.Default.PhotoCamera, contentDescription = null, tint = themeColors.buttonEqualBg, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(text = if (isBn) "à¦—à§à¦¯à¦¾à¦²à¦¾à¦°à¦¿ à¦¥à§‡à¦•à§‡ à¦›à¦¬à¦¿ à¦¨à¦¿à¦¨" else "Choose Image", color = themeColors.buttonEqualBg, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+
+                    if (selectedImageUri != null) {
+                        Spacer(modifier = Modifier.width(12.dp))
+                        IconButton(
+                            onClick = {
+                                selectedImageUri = null
+                                selectedImageBitmap = null
+                            }
+                        ) {
+                            Icon(imageVector = Icons.Default.Cancel, contentDescription = "Clear image", tint = Color.Red.copy(alpha = 0.8f))
+                        }
+                    }
+                }
+
+                if (selectedImageBitmap != null) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Image(
+                        bitmap = selectedImageBitmap!!.asImageBitmap(),
+                        contentDescription = "Circular thumbnail",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(140.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .border(1.dp, themeColors.displayText.copy(alpha = 0.1f), RoundedCornerShape(8.dp)),
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                    )
                 }
             }
         }
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // ================= SECTION 1: GENERAL ATS RESUME QUALITY AUDIT =================
-        Surface(
-            shape = RoundedCornerShape(14.dp),
-            color = themeColors.cardBg,
-            border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.1f)),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(modifier = Modifier.padding(14.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = if (isBn) "ğŸ” à¦œà§‡à¦®à¦¿à¦¨à¦¿ à¦à¦†à¦‡ à¦à¦Ÿà¦¿à¦à¦¸ à¦…à¦¡à¦¿à¦Ÿ" else "ğŸ” Gemini AI ATS Resume Audit",
-                            fontSize = 13.5.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = themeColors.buttonEqualBg
-                        )
-                        Text(
-                            text = if (isBn) "à¦¸à¦¿à¦­à¦¿ à¦•à§‹à§Ÿà¦¾à¦²à¦¿à¦Ÿà¦¿ à¦“ à¦à¦Ÿà¦¿à¦à¦¸ à¦•à¦®à¦ªà§à¦²à¦¾à§Ÿà§‡à¦¨à§à¦¸ à¦¯à¦¾à¦šà¦¾à¦‡ à¦•à¦°à§à¦¨" else "Analyze compliance, structure, & core content",
-                            fontSize = 10.5.sp,
-                            color = themeColors.displayText.copy(alpha = 0.6f)
-                        )
+        Button(
+            onClick = {
+                var imageBytes: ByteArray? = null
+                var mimeType = "image/jpeg"
+                if (selectedImageUri != null) {
+                    try {
+                        context.contentResolver.openInputStream(selectedImageUri!!).use { stream ->
+                            imageBytes = stream?.readBytes()
+                        }
+                        mimeType = context.contentResolver.getType(selectedImageUri!!) ?: "image/jpeg"
+                    } catch (e: Exception) {
+                        e.printStackTrace()
                     }
                 }
+                onMatchCircularAi(circularInputText, imageBytes, mimeType)
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg)
+        ) {
+            Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = if (isBn) "à¦à¦†à¦‡ à¦¦à¦¿à§Ÿà§‡ à¦à¦Ÿà¦¿à¦à¦¸ à¦œà¦¬ à¦®à§à¦¯à¦¾à¦š à¦…à§à¦¯à¦¾à¦¨à¦¾à¦²à¦¾à¦‡à¦¸à¦¿à¦¸ à¦•à¦°à§à¦¨" else "Analyze Job Match with Gemini AI",
+                color = Color.White,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
 
-                Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-                Button(
-                    onClick = { onAtsAuditAi() },
-                    colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
-                    shape = RoundedCornerShape(10.dp),
-                    modifier = Modifier.fillMaxWidth().height(42.dp)
-                ) {
-                    Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
+        // --- AI ACTIONABLE MATCH RESULTS (MISSING KEYWORDS & TIPS) ---
+        if (cvData.lastMissingKeywords.isNotEmpty() || cvData.lastMatchingStrengths.isNotEmpty() || cvData.lastTailoredSummary.isNotBlank() || circularSuggestions.isNotEmpty()) {
+            Surface(
+                shape = RoundedCornerShape(14.dp),
+                color = themeColors.cardBg,
+                border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.3f)),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 14.dp)
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
                     Text(
-                        text = if (isBn) "à¦à¦†à¦‡ à¦à¦Ÿà¦¿à¦à¦¸ à¦…à¦¡à¦¿à¦Ÿ à¦°à¦¾à¦¨ à¦•à¦°à§à¦¨" else "Run AI ATS Audit",
-                        color = Color.White,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold
+                        text = if (isBn) "à¦œà§‡à¦®à¦¿à¦¨à¦¿ à¦à¦†à¦‡ à¦¸à¦¾à¦°à§à¦•à§à¦²à¦¾à¦° à¦®à§à¦¯à¦¾à¦šà¦¿à¦‚ à¦°à§‡à¦œà¦¾à¦²à§à¦Ÿ" else "Gemini AI Circular Match Result",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.buttonEqualBg
                     )
-                }
 
-                // ATS AUDIT RESULT CHIPS & CHECKBOXES
-                if (cvData.lastAtsScore > 0) {
-                    Spacer(modifier = Modifier.height(14.dp))
-                    Divider(color = themeColors.displayText.copy(alpha = 0.08f))
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    // Suggestions Checklist
-                    if (cvData.lastAtsSuggestions.isNotEmpty()) {
-                        Text(
-                            text = if (isBn) "ğŸ“‹ à¦à¦†à¦‡ à¦ªà¦°à¦¾à¦®à¦°à§à¦¶ à¦¤à¦¾à¦²à¦¿à¦•à¦¾ (à¦¯à§‡à¦—à§à¦²à§‹ à¦¸à¦®à¦¾à¦§à¦¾à¦¨ à¦•à¦°à¦¤à§‡ à¦šà¦¾à¦¨ à¦¸à¦¿à¦²à§‡à¦•à§à¦Ÿ à¦•à¦°à§à¦¨):" else "ğŸ“‹ AI Suggestions Checklist (Select to apply):",
-                            fontSize = 11.5.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = themeColors.displayText
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-
-                        cvData.lastAtsSuggestions.forEach { suggestion ->
-                            val isChecked = selectedAtsSuggestions[suggestion] ?: false
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Checkbox(
-                                    checked = isChecked,
-                                    onCheckedChange = { selectedAtsSuggestions[suggestion] = it },
-                                    colors = CheckboxDefaults.colors(checkedColor = themeColors.buttonEqualBg)
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = suggestion,
-                                    fontSize = 11.sp,
-                                    color = themeColors.displayText.copy(alpha = 0.85f),
-                                    modifier = Modifier.weight(1f)
-                                )
-                            }
+                    // 1-Tap Summary Apply Button
+                    if (cvData.lastTailoredSummary.isNotBlank()) {
+                        Button(
+                            onClick = {
+                                var updated = cvData.copy(summary = cvData.lastTailoredSummary)
+                                if (cvData.lastMissingKeywords.isNotEmpty()) {
+                                    val newSkills = updated.skills.toMutableList()
+                                    cvData.lastMissingKeywords.forEach { kw ->
+                                        if (newSkills.none { it.name.equals(kw, ignoreCase = true) }) {
+                                            val desc = "Proficient in $kw with hands-on experience applying it in real-world professional projects."
+                                            newSkills.add(CvSkillItem(name = kw, description = desc))
+                                        }
+                                    }
+                                    updated = updated.copy(skills = newSkills, lastMissingKeywords = emptyList())
+                                }
+                                onCvDataChange(updated)
+                                Toast.makeText(context, if (isBn) "à¦¸à¦¾à¦°à§à¦•à§à¦²à¦¾à¦° à¦…à¦¨à§à¦¯à¦¾à§Ÿà§€ à¦ªà§à¦°à§‹ à¦¸à¦¿à¦­à¦¿ à¦†à¦ªà¦¡à§‡à¦Ÿ à¦¹à§Ÿà§‡à¦›à§‡!" else "Entire CV tailored to circular!", Toast.LENGTH_SHORT).show()
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.fillMaxWidth().height(40.dp)
+                        ) {
+                            Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = if (isBn) "à§§-à¦Ÿà§à¦¯à¦¾à¦ªà§‡ à¦ªà§à¦°à§‹ à¦¸à¦¿à¦­à¦¿ à¦¸à¦¾à¦°à§à¦•à§à¦²à¦¾à¦°à§‡ à¦Ÿà¦¿à¦‰à¦¨ à¦•à¦°à§à¦¨" else "1-Tap Auto-Tailor Entire CV to Circular",
+                                color = Color.White,
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                         Spacer(modifier = Modifier.height(10.dp))
                     }
 
-                    // Recommended Skills Checklist (With descriptions!)
-                    if (cvData.lastAtsRecommendedSkills.isNotEmpty()) {
-                        Text(
-                            text = if (isBn) "ğŸ’¡ à¦°à¦¿à¦•à¦®à§‡à¦¨à§à¦¡à§‡à¦¡ à¦¸à§à¦•à¦¿à¦²à¦¸ (à¦¸à¦®à§à¦ªà§‚à¦°à§à¦£ à¦ªà§à¦°à¦«à§‡à¦¶à¦¨à¦¾à¦² à¦¡à§‡à¦¸à¦•à§à¦°à¦¿à¦ªà¦¶à¦¨ à¦¸à¦¹):" else "ğŸ’¡ Recommended Core Skills (With AI Descriptions):",
-                            fontSize = 11.5.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = themeColors.displayText
-                        )
+                    // Missing Keywords Chips with 1-Tap Add
+                    if (cvData.lastMissingKeywords.isNotEmpty()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = if (isBn) "à¦¸à¦¾à¦°à§à¦•à§à¦²à¦¾à¦°à§‡ à¦¥à¦¾à¦•à¦¾ à¦®à¦¿à¦¸à¦¿à¦‚ à¦¸à§à¦•à¦¿à¦²à¦¸à¦®à§‚à¦¹ (à¦Ÿà§à¦¯à¦¾à¦ªà§‡ à¦à¦¡ à¦•à¦°à§à¦¨):" else "Missing Circular Skills (Tap to Add):",
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.displayText
+                            )
+                            TextButton(
+                                onClick = {
+                                    val newSkills = cvData.skills.toMutableList()
+                                    cvData.lastMissingKeywords.forEach { kw ->
+                                        if (newSkills.none { it.name.equals(kw, ignoreCase = true) }) {
+                                            val desc = "Proficient in $kw with hands-on experience applying it in real-world professional projects."
+                                            newSkills.add(CvSkillItem(name = kw, description = desc))
+                                        }
+                                    }
+                                    onCvDataChange(cvData.copy(skills = newSkills, lastMissingKeywords = emptyList()))
+                                    Toast.makeText(context, if (isBn) "à¦¸à¦•à¦² à¦®à¦¿à¦¸à¦¿à¦‚ à¦¸à§à¦•à¦¿à¦² à¦¯à§à¦•à§à¦¤ à¦¹à§Ÿà§‡à¦›à§‡!" else "Added all missing skills!", Toast.LENGTH_SHORT).show()
+                                },
+                                contentPadding = PaddingValues(0.dp)
+                            ) {
+                                Text(
+                                    text = if (isBn) "à¦¸à¦¬ à¦¯à§à¦•à§à¦¤ à¦•à¦°à§à¦¨ +" else "Add All +",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.buttonEqualBg
+                                )
+                            }
+                        }
+
                         Spacer(modifier = Modifier.height(6.dp))
 
-                        cvData.lastAtsRecommendedSkills.forEach { skItem ->
-                            val isChecked = selectedAtsSkills[skItem.name] ?: false
+                        // Chips
+                        val missingList = cvData.lastMissingKeywords
+                        missingList.chunked(3).forEach { chunk ->
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(vertical = 6.dp),
-                                verticalAlignment = Alignment.Top
+                                    .padding(vertical = 3.dp),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-                                Checkbox(
-                                    checked = isChecked,
-                                    onCheckedChange = { selectedAtsSkills[skItem.name] = it },
-                                    colors = CheckboxDefaults.colors(checkedColor = themeColors.buttonEqualBg)
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = skItem.name,
-                                        fontSize = 11.5.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = themeColors.displayText
-                                    )
-                                    if (skItem.description.isNotBlank()) {
-                                        Text(
-                                            text = skItem.description,
-                                            fontSize = 10.sp,
-                                            color = themeColors.displayText.copy(alpha = 0.65f),
-                                            lineHeight = 13.sp
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // MASTER APPLY BUTTON FOR SELECTED UPGRADES
-                    val anySuggestionChecked = selectedAtsSuggestions.values.any { it }
-                    val anySkillChecked = selectedAtsSkills.values.any { it }
-                    if (anySuggestionChecked || anySkillChecked) {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Button(
-                            onClick = {
-                                var updated = cvData
-                                
-                                // 1. Add selected skills with descriptions!
-                                val newSkills = updated.skills.toMutableList()
-                                selectedAtsSkills.forEach { (skName, checked) ->
-                                    if (checked) {
-                                        val skObj = cvData.lastAtsRecommendedSkills.find { it.name == skName }
-                                        if (skObj != null && newSkills.none { it.name.equals(skName, ignoreCase = true) }) {
-                                            newSkills.add(skObj)
+                                chunk.forEach { kw ->
+                                    Surface(
+                                        onClick = {
+                                            val updatedSkills = cvData.skills.toMutableList()
+                                            if (updatedSkills.none { it.name.equals(kw, ignoreCase = true) }) {
+                                                val desc = "Experienced in applying $kw effectively to solve critical professional problems."
+                                                updatedSkills.add(CvSkillItem(name = kw, description = desc))
+                                            }
+                                            val updatedMissing = cvData.lastMissingKeywords.filter { it != kw }
+                                            onCvDataChange(cvData.copy(skills = updatedSkills, lastMissingKeywords = updatedMissing))
+                                            Toast.makeText(context, if (isBn) "$kw à¦¸à§à¦•à¦¿à¦²à§‡ à¦¯à§à¦•à§à¦¤ à¦•à¦°à¦¾ à¦¹à§Ÿà§‡à¦›à§‡!" else "Added $kw to skills!", Toast.LENGTH_SHORT).show()
+                                        },
+                                        shape = RoundedCornerShape(16.dp),
+                                        color = themeColors.buttonEqualBg.copy(alpha = 0.12f),
+                                        border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.4f))
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(imageVector = Icons.Default.Add, contentDescription = null, tint = themeColors.buttonEqualBg, modifier = Modifier.size(13.dp))
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(
+                                                text = kw,
+                                                fontSize = 10.5.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = themeColors.buttonEqualBg
+                                            )
                                         }
                                     }
                                 }
-                                updated = updated.copy(skills = newSkills)
-                                
-                                // Clear checked skills from list so they don't show as addable
-                                val remainingRecommended = cvData.lastAtsRecommendedSkills.filter { !selectedAtsSkills.getOrDefault(it.name, false) }
-                                updated = updated.copy(lastAtsRecommendedSkills = remainingRecommended)
-                                onCvDataChange(updated)
-
-                                // 2. Apply selected text suggestions with AI (remaking summary / experiences)
-                                val checkedSuggestions = selectedAtsSuggestions.filter { it.value }.keys.toList()
-                                if (checkedSuggestions.isNotEmpty()) {
-                                    onApplySelectedAtsImprovements(checkedSuggestions)
-                                } else {
-                                    Toast.makeText(context, if (isBn) "à¦¸à§à¦•à¦¿à¦²à¦¸à¦®à§‚à¦¹ à¦¯à§à¦•à§à¦¤ à¦¹à§Ÿà§‡à¦›à§‡!" else "Skills added successfully!", Toast.LENGTH_SHORT).show()
-                                }
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
-                            shape = RoundedCornerShape(10.dp),
-                            modifier = Modifier.fillMaxWidth().height(40.dp)
-                        ) {
-                            Icon(imageVector = Icons.Default.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = if (isBn) "à¦¬à¦¾à¦›à¦¾à¦‡à¦•à§ƒà¦¤ à¦ªà¦°à¦¿à¦¬à¦°à§à¦¤à¦¨à¦—à§à¦²à§‹ à¦à¦†à¦‡ à¦¦à¦¿à§Ÿà§‡ à¦‡à¦®à¦ªà§à¦²à¦¿à¦®à§‡à¦¨à§à¦Ÿ à¦•à¦°à§à¦¨" else "Apply Selected AI Upgrades",
-                                color = Color.White,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold
-                            )
+                            }
                         }
+
+                        Spacer(modifier = Modifier.height(10.dp))
                     }
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(14.dp))
-
-        // ================= SECTION 2: JOB CIRCULAR MATCH & TAILORING =================
-        Surface(
-            shape = RoundedCornerShape(14.dp),
-            color = themeColors.cardBg,
-            border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.1f)),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(modifier = Modifier.padding(14.dp)) {
-                Text(
-                    text = if (isBn) "ğŸ¯ à¦œà¦¬ à¦¸à¦¾à¦°à§à¦•à§à¦²à¦¾à¦° à¦®à§à¦¯à¦¾à¦šà¦¿à¦‚ à¦à¦¬à¦‚ à¦•à¦¾à¦¸à§à¦Ÿà¦®à¦¾à¦‡à¦œà¦¾à¦°" else "ğŸ¯ Job Circular Match & Customizer",
-                    fontSize = 13.5.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = themeColors.buttonEqualBg
-                )
-                Text(
-                    text = if (isBn) "à¦Ÿà¦¾à¦°à§à¦—à§‡à¦Ÿ à¦œà¦¬à§‡à¦° à¦¸à¦¾à¦¥à§‡ à¦¸à¦¿à¦­à¦¿ à¦®à§à¦¯à¦¾à¦šà¦¿à¦‚ à¦•à¦°à§à¦¨ à¦à¦¬à¦‚ à¦¸à¦°à¦¾à¦¸à¦°à¦¿ à¦à¦†à¦‡ à¦¦à¦¿à§Ÿà§‡ à¦¸à¦¿à¦­à¦¿ à¦Ÿà¦¿à¦‰à¦¨ à¦•à¦°à§à¦¨" else "Tailor resume profile and fill gaps for target opening",
-                    fontSize = 10.5.sp,
-                    color = themeColors.displayText.copy(alpha = 0.6f)
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Text input area
-                OutlinedTextField(
-                    value = circularInputText,
-                    onValueChange = { circularInputText = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    minLines = 4,
-                    maxLines = 10,
-                    placeholder = { Text(text = if (isBn) "à¦œà¦¬ à¦¸à¦¾à¦°à§à¦•à§à¦²à¦¾à¦° à¦Ÿà§‡à¦•à§à¦¸à¦Ÿ à¦à¦–à¦¾à¦¨à§‡ à¦ªà§‡à¦¸à§à¦Ÿ à¦•à¦°à§à¦¨..." else "Paste Job circular / description requirements here...", fontSize = 12.sp) },
-                    shape = RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = themeColors.buttonEqualBg,
-                        unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.15f),
-                        focusedContainerColor = themeColors.background,
-                        unfocusedContainerColor = themeColors.background,
-                        focusedTextColor = themeColors.displayText,
-                        unfocusedTextColor = themeColors.displayText
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // Image input options
-                Surface(
-                    shape = RoundedCornerShape(10.dp),
-                    color = themeColors.background,
-                    border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.08f)),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.padding(10.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            OutlinedButton(
-                                onClick = { imagePickerLauncher.launch("image/*") },
-                                border = BorderStroke(1.dp, themeColors.buttonEqualBg),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Icon(imageVector = Icons.Default.PhotoCamera, contentDescription = null, tint = themeColors.buttonEqualBg, modifier = Modifier.size(15.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(text = if (isBn) "à¦¸à¦¾à¦°à§à¦•à§à¦²à¦¾à¦° à¦›à¦¬à¦¿ à¦¤à§à¦²à§à¦¨/à¦¨à¦¿à¦¨" else "Upload Circular Photo", color = themeColors.buttonEqualBg, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                            }
-
-                            if (selectedImageUri != null) {
-                                Spacer(modifier = Modifier.width(12.dp))
-                                IconButton(
-                                    onClick = {
-                                        selectedImageUri = null
-                                        selectedImageBitmap = null
-                                    }
-                                ) {
-                                    Icon(imageVector = Icons.Default.Cancel, contentDescription = "Clear", tint = Color.Red.copy(alpha = 0.8f))
-                                }
-                            }
-                        }
-
-                        if (selectedImageBitmap != null) {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Image(
-                                bitmap = selectedImageBitmap!!.asImageBitmap(),
-                                contentDescription = "Thumbnail",
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(110.dp)
-                                    .clip(RoundedCornerShape(8.dp)),
-                                contentScale = androidx.compose.ui.layout.ContentScale.Crop
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Button(
-                    onClick = {
-                        var imageBytes: ByteArray? = null
-                        var mimeType = "image/jpeg"
-                        if (selectedImageUri != null) {
-                            try {
-                                context.contentResolver.openInputStream(selectedImageUri!!).use { stream ->
-                                    imageBytes = stream?.readBytes()
-                                }
-                                mimeType = context.contentResolver.getType(selectedImageUri!!) ?: "image/jpeg"
-                            } catch (e: Exception) {
-                                e.printStackTrace()
-                            }
-                        }
-                        onMatchCircularAi(circularInputText, imageBytes, mimeType)
-                    },
-                    modifier = Modifier.fillMaxWidth().height(42.dp),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg)
-                ) {
-                    Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = if (isBn) "à¦¸à¦¾à¦°à§à¦•à§à¦²à¦¾à¦° à¦®à§à¦¯à¦¾à¦šà¦¿à¦‚ à¦…à§à¦¯à¦¾à¦¨à¦¾à¦²à¦¾à¦‡à¦¸à¦¿à¦¸ à¦•à¦°à§à¦¨" else "Run Circular Job Match",
-                        color = Color.White,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                // MATCH RESULTS CHIPS & DYNAMIC ACTION CHECKBOXES
-                if (cvData.lastJobMatchPercentage > 0) {
-                    Spacer(modifier = Modifier.height(14.dp))
-                    Divider(color = themeColors.displayText.copy(alpha = 0.08f))
-                    Spacer(modifier = Modifier.height(10.dp))
 
                     // Matching Strengths
                     if (cvData.lastMatchingStrengths.isNotEmpty()) {
                         Text(
-                            text = if (isBn) "âœ… à¦†à¦ªà¦¨à¦¾à¦° à¦¸à¦¿à¦­à¦¿'à¦° à¦®à¦¿à¦² à¦¥à¦¾à¦•à¦¾ à¦¶à¦•à§à¦¤à¦¿à¦¶à¦¾à¦²à§€ à¦¦à¦¿à¦•à¦¸à¦®à§‚à¦¹:" else "âœ… Matching Strengths Identified in your CV:",
+                            text = if (isBn) "âœ… à¦¸à¦¿à¦­à¦¿à¦° à¦¯à§‡ à¦ªà§Ÿà§‡à¦¨à§à¦Ÿà¦—à§à¦²à§‹ à¦¸à¦¾à¦°à§à¦•à§à¦²à¦¾à¦°à§‡à¦° à¦¸à¦¾à¦¥à§‡ à¦®à¦¿à¦²à§‡à¦›à§‡:" else "âœ… Qualifications Matched with Circular:",
                             fontSize = 11.5.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF10B981)
                         )
                         Spacer(modifier = Modifier.height(4.dp))
-                        cvData.lastMatchingStrengths.forEach { str ->
+                        for (str in cvData.lastMatchingStrengths) {
                             Text(
                                 text = "â€¢ $str",
                                 fontSize = 11.sp,
                                 color = themeColors.displayText.copy(alpha = 0.85f),
-                                modifier = Modifier.padding(vertical = 1.5.dp)
+                                modifier = Modifier.padding(vertical = 2.dp)
                             )
                         }
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(10.dp))
                     }
 
-                    // Proposed Tailored Summary Checklist
-                    if (cvData.lastTailoredSummary.isNotBlank()) {
+                    // Circular Suggestions with checkboxes
+                    if (circularSuggestions.isNotEmpty()) {
                         Text(
-                            text = if (isBn) "âœï¸ à¦Ÿà¦¾à¦°à§à¦—à§‡à¦Ÿ à¦œà¦¬à§‡à¦° à¦œà¦¨à§à¦¯ à¦•à¦¾à¦¸à§à¦Ÿà¦®à¦¾à¦‡à¦œà¦¡ à¦ªà§à¦°à¦«à§‡à¦¶à¦¨à¦¾à¦² à¦¸à¦¾à¦®à¦¾à¦°à¦¿:" else "âœï¸ Tailored Professional Summary Proposed by AI:",
+                            text = if (isBn) "ğŸ¯ à¦¸à¦¾à¦°à§à¦•à§à¦²à¦¾à¦° à¦…à¦¨à§à¦¯à¦¾à§Ÿà§€ à¦¨à¦¿à¦°à§à¦¦à¦¿à¦·à§à¦Ÿ à¦ªà¦°à¦¿à¦¬à¦°à§à¦¤à¦¨à¦—à§à¦²à§‹ à¦°à¦¿à¦­à¦¿à¦‰ à¦•à¦°à§à¦¨:" else "ğŸ¯ Review Circular-specific Proposed Changes:",
                             fontSize = 11.5.sp,
                             fontWeight = FontWeight.Bold,
-                            color = themeColors.displayText
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Surface(
-                            shape = RoundedCornerShape(10.dp),
-                            color = themeColors.background,
-                            border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.08f)),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Column(modifier = Modifier.padding(10.dp)) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Checkbox(
-                                        checked = applyCircularSummary,
-                                        onCheckedChange = { applyCircularSummary = it },
-                                        colors = CheckboxDefaults.colors(checkedColor = themeColors.buttonEqualBg)
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(
-                                        text = if (isBn) "à¦¸à¦¿à¦­à¦¿à¦¤à§‡ à¦à¦‡ à¦¸à¦¾à¦®à¦¾à¦°à¦¿à¦Ÿà¦¿ à¦¦à¦¿à§Ÿà§‡ à¦†à¦ªà¦¡à§‡à¦Ÿ à¦•à¦°à§à¦¨" else "Apply this summary to my CV profile",
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = themeColors.buttonEqualBg
-                                    )
-                                }
-                                Spacer(modifier = Modifier.height(6.dp))
-                                Text(
-                                    text = cvData.lastTailoredSummary,
-                                    fontSize = 10.5.sp,
-                                    color = themeColors.displayText.copy(alpha = 0.75f),
-                                    lineHeight = 14.sp
-                                )
-                            }
-                        }
-                        Spacer(modifier = Modifier.height(12.dp))
-                    }
-
-                    // Missing Keywords Checklist (complete with name and description!)
-                    if (cvData.lastMissingKeywords.isNotEmpty()) {
-                        Text(
-                            text = if (isBn) "ğŸ“Œ à¦¸à¦¾à¦°à§à¦•à§à¦²à¦¾à¦°à§‡ à¦¥à¦¾à¦•à¦¾ à¦®à¦¿à¦¸à¦¿à¦‚ à¦¸à§à¦•à¦¿à¦²à¦¸à¦®à§‚à¦¹ (à¦¡à§‡à¦¸à¦•à§à¦°à¦¿à¦ªà¦¶à¦¨ à¦¸à¦¹):" else "ğŸ“Œ Missing Critical Skills Checklist (With descriptions):",
-                            fontSize = 11.5.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = themeColors.displayText
+                            color = themeColors.buttonEqualBg
                         )
                         Spacer(modifier = Modifier.height(6.dp))
 
-                        cvData.lastMissingKeywords.forEach { skItem ->
-                            val isChecked = selectedCircularKeywords[skItem.name] ?: false
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 5.dp),
-                                verticalAlignment = Alignment.Top
-                            ) {
-                                Checkbox(
-                                    checked = isChecked,
-                                    onCheckedChange = { selectedCircularKeywords[skItem.name] = it },
-                                    colors = CheckboxDefaults.colors(checkedColor = themeColors.buttonEqualBg)
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = skItem.name,
-                                        fontSize = 11.5.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = themeColors.displayText
-                                    )
-                                    if (skItem.description.isNotBlank()) {
-                                        Text(
-                                            text = skItem.description,
-                                            fontSize = 10.sp,
-                                            color = themeColors.displayText.copy(alpha = 0.65f),
-                                            lineHeight = 13.sp
-                                        )
+                        circularSuggestions.forEach { suggestion ->
+                            val isSelected = suggestion.id in selectedCircularIds
+                            AiSuggestionCard(
+                                suggestion = suggestion,
+                                isSelected = isSelected,
+                                onSelectionChange = { selected ->
+                                    selectedCircularIds = if (selected) {
+                                        selectedCircularIds + suggestion.id
+                                    } else {
+                                        selectedCircularIds - suggestion.id
                                     }
-                                }
-                            }
+                                },
+                                themeColors = themeColors,
+                                isBn = isBn
+                            )
                         }
-                    }
 
-                    // MASTER APPLY BUTTON FOR SELECTED MATCH CUSTOMIZATIONS
-                    val anyKeywordChecked = selectedCircularKeywords.values.any { it }
-                    if (applyCircularSummary || anyKeywordChecked) {
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(10.dp))
+
                         Button(
                             onClick = {
-                                var updated = cvData
-                                
-                                // 1. Apply Tailored Summary if checked
-                                if (applyCircularSummary && cvData.lastTailoredSummary.isNotBlank()) {
-                                    updated = updated.copy(summary = cvData.lastTailoredSummary)
-                                }
-                                
-                                // 2. Add Selected Keywords as Skills with descriptions!
-                                val newSkills = updated.skills.toMutableList()
-                                selectedCircularKeywords.forEach { (skName, checked) ->
-                                    if (checked) {
-                                        val skObj = cvData.lastMissingKeywords.find { it.name == skName }
-                                        if (skObj != null && newSkills.none { it.name.equals(skName, ignoreCase = true) }) {
-                                            newSkills.add(skObj)
-                                        }
-                                    }
-                                }
-                                updated = updated.copy(skills = newSkills)
-                                
-                                // Clear successfully added keywords from the view list
-                                val remainingKeywords = cvData.lastMissingKeywords.filter { !selectedCircularKeywords.getOrDefault(it.name, false) }
-                                updated = updated.copy(lastMissingKeywords = remainingKeywords)
-                                
+                                val updated = applySelectedSuggestions(cvData, selectedCircularIds.toList(), cvData.lastCircularSuggestionsJson)
                                 onCvDataChange(updated)
-                                Toast.makeText(context, if (isBn) "à¦¬à¦¾à¦›à¦¾à¦‡à¦•à§ƒà¦¤ à¦œà¦¬ à¦®à§à¦¯à¦¾à¦š à¦•à¦¾à¦¸à§à¦Ÿà¦®à¦¾à¦‡à¦œà§‡à¦¶à¦¨ à¦¸à¦¿à¦­à¦¿à¦¤à§‡ à¦¯à§à¦•à§à¦¤ à¦¹à§Ÿà§‡à¦›à§‡!" else "Selected circular tailoring applied successfully!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, if (isBn) "à¦¬à¦¾à¦›à¦¾à¦‡à¦•à§ƒà¦¤ à¦¸à¦¾à¦°à§à¦•à§à¦²à¦¾à¦° à¦ªà¦°à¦¿à¦¬à¦°à§à¦¤à¦¨à¦—à§à¦²à§‹ à¦¸à¦¿à¦­à¦¿à¦¤à§‡ à¦ªà§à¦°à§Ÿà§‹à¦— à¦•à¦°à¦¾ à¦¹à§Ÿà§‡à¦›à§‡!" else "Selected circular improvements applied successfully!", Toast.LENGTH_SHORT).show()
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
+                            colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
                             shape = RoundedCornerShape(10.dp),
+                            enabled = selectedCircularIds.isNotEmpty(),
                             modifier = Modifier.fillMaxWidth().height(40.dp)
                         ) {
-                            Icon(imageVector = Icons.Default.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
+                            Icon(imageVector = Icons.Default.CheckCircle, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = if (isBn) "à¦¬à¦¾à¦›à¦¾à¦‡à¦•à§ƒà¦¤ à¦…à¦ªà¦¶à¦¨à¦—à§à¦²à§‹ à¦¸à¦¿à¦­à¦¿à¦¤à§‡ à¦•à¦¾à¦¸à§à¦Ÿà¦®à¦¾à¦‡à¦œ à¦•à¦°à§à¦¨" else "Apply Selected Job Customizations",
-                                color = Color.White,
+                                text = if (isBn) "à¦¬à¦¾à¦›à¦¾à¦‡à¦•à§ƒà¦¤ à¦¸à¦¾à¦°à§à¦•à§à¦²à¦¾à¦° à¦•à¦¾à¦¸à§à¦Ÿà¦®à¦¾à¦‡à¦œà§‡à¦¶à¦¨ à¦ªà§à¦°à§Ÿà§‹à¦— à¦•à¦°à§à¦¨" else "Apply Selected Tailoring Improvements",
                                 fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+                    }
+
+                    // Improvement Tips
+                    if (cvData.lastImprovementTips.isNotEmpty()) {
+                        Text(
+                            text = if (isBn) "ğŸ’¡ à¦à¦Ÿà¦¿à¦à¦¸ à¦¸à§à¦•à§‹à¦° à¦¬à¦¾à§œà¦¾à¦¤à§‡ à¦œà§‡à¦®à¦¿à¦¨à¦¿à¦° à¦ªà¦°à¦¾à¦®à¦°à§à¦¶:" else "ğŸ’¡ Tips to Increase ATS Match:",
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFF59E0B)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        for (tip in cvData.lastImprovementTips) {
+                            Text(
+                                text = "â€¢ $tip",
+                                fontSize = 11.sp,
+                                color = themeColors.displayText.copy(alpha = 0.85f),
+                                modifier = Modifier.padding(vertical = 2.dp)
                             )
                         }
                     }
@@ -9050,6 +9260,8 @@ private fun AiJobCircularMatchTab(
         }
     }
 }
+
+// ================= TAB 4: PREVIEW & EXPORT =================
 
 @Composable
 private fun PreviewAndExportTab(
@@ -9331,242 +9543,26 @@ private fun PreviewAndExportTab(
                 border = BorderStroke(1.dp, themeColors.buttonEqualBg),
                 modifier = Modifier.height(36.dp)
             ) {
-                Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 24.dp)) {
-                    Text(if (isBn) "Ã Â¦ÂªÃ Â§ï¿½Ã Â¦Â°Ã Â¦Â¿Ã Â¦Â­Ã Â¦Â¿Ã Â¦â€°" else "Preview", color = if (previewMode == "PREVIEW") Color.White else themeColors.buttonEqualBg, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                }
-            }
-            Surface(
-                onClick = { previewMode = "LIVE_EDIT" },
-                shape = RoundedCornerShape(topEnd = 20.dp, bottomEnd = 20.dp),
-                color = if (previewMode == "LIVE_EDIT") themeColors.buttonEqualBg else themeColors.cardBg,
-                border = BorderStroke(1.dp, themeColors.buttonEqualBg),
-                modifier = Modifier.height(36.dp)
-            ) {
-                Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 24.dp)) {
-                    Text(if (isBn) "Ã Â¦Â²Ã Â¦Â¾Ã Â¦â€¡Ã Â¦Â­ Ã Â¦ï¿½Ã Â¦Â¡Ã Â¦Â¿Ã Â¦Å¸" else "Live Edit", color = if (previewMode == "LIVE_EDIT") Color.White else themeColors.buttonEqualBg, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                }
-            }
-        }
-
-        if (previewMode == "LIVE_EDIT") {
-            CvLiveEditPanel(
-                cvData = cvData,
-                onCvDataChange = onCvDataChange,
-                onRequestAiPrompt = onRequestAiPrompt,
-                onPickImage = onPickImage,
-                onOpenCropExisting = onOpenCropExisting,
-                themeColors = themeColors,
-                isBn = isBn,
-                onRefreshPreview = onRefreshPreview
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-        }
-
-        // Vector PDF Live Canvas Screen
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            SectionCardHeader(
-                title = if (isBn) "Ã Â¦Â²Ã Â¦Â¾Ã Â¦â€¡Ã Â¦Â­ Ã Â¦Â­Ã Â§â€¡Ã Â¦â€¢Ã Â§ï¿½Ã Â¦Å¸Ã Â¦Â° Ã Â¦ÂªÃ Â§ï¿½Ã Â¦Â°Ã Â¦Â¿Ã Â¦Â­Ã Â¦Â¿Ã Â¦â€° (${pdfBitmaps.size}Ã Â¦Å¸Ã Â¦Â¿ Ã Â¦ÂªÃ Â§â€¡Ã Â¦Å“)" else "Live Vector Preview (${pdfBitmaps.size} Page${if (pdfBitmaps.size > 1) "s" else ""})",
-                icon = Icons.Default.Visibility,
-                themeColors = themeColors
-            )
-            OutlinedButton(
-                onClick = onRefreshPreview,
-                shape = RoundedCornerShape(20.dp),
-                border = BorderStroke(1.dp, themeColors.buttonEqualBg),
-                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
-            ) {
-                if (isPreviewRendering) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(12.dp),
-                        strokeWidth = 1.5.dp,
-                        color = themeColors.buttonEqualBg
-                    )
-                } else {
-                    Icon(imageVector = Icons.Default.Refresh, contentDescription = "Refresh", tint = themeColors.buttonEqualBg, modifier = Modifier.size(14.dp))
-                }
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = if (isBn) (if (isPreviewRendering) "Ã Â¦â€ Ã Â¦ÂªÃ Â¦Â¡Ã Â§â€¡Ã Â¦Å¸ Ã Â¦Â¹Ã Â¦Å¡Ã Â§ï¿½Ã Â¦â€ºÃ Â§â€¡..." else "Ã Â¦Â°Ã Â¦Â¿Ã Â¦Â«Ã Â§ï¿½Ã Â¦Â°Ã Â§â€¡Ã Â¦Â¶") else (if (isPreviewRendering) "Updating..." else "Refresh"),
-                    color = themeColors.buttonEqualBg,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        if (pdfBitmaps.isNotEmpty()) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                pdfBitmaps.forEachIndexed { pageIdx, bmp ->
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = Color.White,
-                        border = BorderStroke(1.dp, Color.Gray.copy(alpha = 0.3f)),
-                        shadowElevation = 3.dp,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(Color(0xFFF3F4F6))
-                                    .padding(horizontal = 12.dp, vertical = 6.dp)
-                            ) {
-                                Text(
-                                    text = if (isBn) "Ã Â¦ÂªÃ Â§â€¡Ã Â¦Å“ ${pageIdx + 1} / ${pdfBitmaps.size}" else "Page ${pageIdx + 1} of ${pdfBitmaps.size}",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF374151)
-                                )
-                            }
-                            Box(modifier = Modifier.fillMaxWidth()) {
-                                Image(
-                                    bitmap = bmp.asImageBitmap(),
-                                    contentDescription = "A4 Page Vector Preview",
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                                if (isPreviewRendering && pageIdx == 0) {
-                                    Surface(
-                                        color = Color.Black.copy(alpha = 0.25f),
-                                        shape = RoundedCornerShape(8.dp),
-                                        modifier = Modifier
-                                            .align(Alignment.TopEnd)
-                                            .padding(8.dp)
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            CircularProgressIndicator(
-                                                modifier = Modifier.size(10.dp),
-                                                strokeWidth = 1.2.dp,
-                                                color = Color.White
-                                            )
-                                            Spacer(modifier = Modifier.width(6.dp))
-                                            Text(
-                                                text = if (isBn) "Ã Â¦Â²Ã Â¦Â¾Ã Â¦â€¡Ã Â¦Â­ Ã Â¦â€ Ã Â¦ÂªÃ Â¦Â¡Ã Â§â€¡Ã Â¦Å¸ Ã Â¦Â¹Ã Â¦Å¡Ã Â§ï¿½Ã Â¦â€ºÃ Â§â€¡" else "Updating preview...",
-                                                color = Color.White,
-                                                fontSize = 10.sp,
-                                                fontWeight = FontWeight.Medium
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = Color.White,
-                border = BorderStroke(1.dp, Color.Gray.copy(alpha = 0.3f)),
-                shadowElevation = 3.dp,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(280.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    CircularProgressIndicator(color = themeColors.buttonEqualBg)
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = if (isBn) "Ã Â¦ÂªÃ Â§ï¿½Ã Â¦Â°Ã Â¦Â¿Ã Â¦Â­Ã Â¦Â¿Ã Â¦â€° Ã Â¦Â¤Ã Â§Ë†Ã Â¦Â°Ã Â¦Â¿ Ã Â¦Â¹Ã Â¦Å¡Ã Â§ï¿½Ã Â¦â€ºÃ Â§â€¡..." else "Rendering vector preview...",
-                        fontSize = 12.sp,
-                        color = Color.DarkGray
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    TextButton(onClick = onRefreshPreview) {
-                        Text(
-                            text = if (isBn) "Ã Â¦ÂªÃ Â§ï¿½Ã Â¦Â¨Ã Â¦Â°Ã Â¦Â¾Ã Â§Å¸ Ã Â¦Å¡Ã Â§â€¡Ã Â¦Â·Ã Â§ï¿½Ã Â¦Å¸Ã Â¦Â¾ Ã Â¦â€¢Ã Â¦Â°Ã Â§ï¿½Ã Â¦Â¨" else "Tap to Reload",
-                            color = themeColors.buttonEqualBg,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-// ================= SHARABLE REUSABLE HELPER UI =================
-
-@Composable
-internal fun SectionCardHeader(
-    title: String,
-    icon: ImageVector,
-    themeColors: CalculatorThemeColors,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = themeColors.buttonEqualBg,
-            modifier = Modifier.size(20.dp)
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = title,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold,
-            color = themeColors.displayText,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-    }
-}
-
-@Composable
-private fun CvCustomTextField(
-    label: String,
-    value: String,
-    onValueChange: (String) -> Unit,
-    themeColors: CalculatorThemeColors,
-    placeholderText: String? = null,
-    isLiveEdit: Boolean = false,
-    isBn: Boolean = false,
-    onAiPrompt: (() -> Unit)? = null
-) {
-    var draftValue by remember(value) { mutableStateOf(value) }
-
-    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-        if (label.isNotBlank()) {
-            Text(
-                text = label,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                color = themeColors.displayText.copy(alpha = 0.7f),
-                modifier = Modifier.padding(bottom = 2.dp)
-            )
-        }
-        OutlinedTextFiexœì\[oÇ~×¯˜­°D•µ$_š
-pR’’b²¥Š²ı¼"‡äÖË]vw(›64-Ğ4(Š>¹Òm€€2£	òà¸/É_áOé9gö2{—ZÃvÌ	 ï\wæ\¾sÎÎa¬®¶Â”rjXcÎn²®kôÄ=¬¬Åú›[Ãîã¸'±^,ÑLè6Eªßì1ÍôöÍS¾Ó5E=c…Ô{4—uk9‹osètÍÉ]ØÂmÿQï™–uÛxtßìŠVYF‡«KS”Ú1$>Ò-.Øøkš€?t´5ÖslÑ6ãI76uo´Æ:åàbÀ‡¼…Oïš¬8ÁÉzÇM4Ã´®_ïÕëì,¹{Ï´ûß7m\X¸Ixc„=GÎØîònËqmî¶±Qû@ïG£y0ü`,,X²‹ûØ5¹Õİæ=cl	O—C´‰{NgìÉ	­âs­¥æíËÌöç6x5ûd,„cïünlXÍ~ÁÛóW(àÊf¯»¥°Ü 2­Ù4:ú.r§`gåŠ­“Øp8Ûßë8v¦J9µSî
-³cXËìÛCn£‡Ïzşp÷?Æšä©%*¯c7ÌC×{ï&³Ç–•7nªIÌ‚‰-Ëì<€GKM¦§3µ­¡Ñç÷xG!q§ûÒ­7ÆÂi<ä3äin$Ì@Šmîu\s$L"h­±ÇnqkT»x¾0‰°%$5Y²ËˆÑ6H·çç÷eöd·"ß‹š­®ª˜,'QšçO˜­	øêÅ 5à‹
-@Û8åósŸ¯ìrn¿éüNÑ°&W>[9[YùuôÔñŒ‹¯Œ\óÔœõÆ6k¶Æp†û†Ûç¡M‘L²Œnm±¶p–$HhâM1yØbšì«³÷?dwmÓ·
-Š*m±–auÆ–ü=šå¸„ÍŞ„Üó9‰ôk:ÅämÏ°<hÚ9]CÓFs[Ø#_Nàl_w^ÿˆI`\	äúÔpU%:™0ö?<á®h¹-€Â½ 8€ÀQÇC[»Ø¯ÑGF·†^CIRUUœx¤›ŞG4-Ã~ Õ“JHŞNJd|÷‡¦gYÉÈ#Ú@(sÄ}nö¸ÊnXÑ›À»ôè’şÔ/³,wÑ*8 SCèÙLi[T‹ô"åC-½giŒ‹Üë¸PÜÊœê¹}æõ¥ÓûÒifK§yé4¿6§¹p¿szÔ¹k,]í·ÏÕ&GÛ|l ‘ÉÎé¶!pŠéßÀ!•µĞ§–Õ}ê˜C4µ;®cY¸GÕW¾R¸ÙŠ;l1Ö!oúw¸µjõ˜ë,ƒ1Ò®
-úZœo:œÜÖ¤£‰C ø²SSöXgNL¬¸“7â¾Dh@\˜¨ş¸?İæÄŸJ3U½r…µAÍP;6¶È_f«ìx2rú®1LØ¡Ë=.¼p|ËpNiYo®ÈUÚ,p•ğÍ‘w)JZ§Èfã¸f?¢f
-â8Í³`Í'nì7À¥ÉÆ5a
-‹Üm’‹¦]gµÙôëÙôÙìü¯³é¿Ùlú·Ùôùlú†ÿœ2›~7;ÿTö¼˜ÿ™ê¿¯I©)¼YeM0ô\@,:±¸—k¦ô@âú›^ö$…†qŠ¦F§‘«"çfÒt@±˜Ïg_ÿÔÒH"8"©c·$‰S³cGÚ¹ÿù<›ØDØo°šMŸÎ¦?`E£WJA¯d¦¶6¨ù²/‡¾©x"wÔüa)–¢’J!E;Ó7ÍÜSY]ÊÀqÍÇ¨§ó U¶µÌó+ë¥¸ ¤Z¦'zZ­upû°Ñ:®­Å?nÜÙnmã34ï7šû;Xİo}¼SË¶½şšzÏqwŒÎ ¼!_(ßÿ0×Vã^ ùIjy¶#m¨N"²2rÓ_&w]Ó¯¿50GÅ^’½%ze±“wíTK®ù¥˜KÙ­¿Ùt¼›,ô¹&Š½å´µÔçš×	Ñ>"Cˆù½°©•çÑ¨0¬+kîã‰ƒõ¤Ÿx`
-¾ ›—İ“åæUŒ·¾	9èñzhH.	¶IöÕì\Ân‚¿¢ú·³é—`Ş ™˜³ÉğÄ±B(ö[i‡²OZ¼wXNˆ‡)¨kŞİßß!¤Ûn´oâıænãˆ n{¯qûàAßƒ;YP÷z¡şF)¨Q@f’ÚEpY.H²„Èœ-ıAyıÀÛ®Ümid¦Yq`^_s%Àœ]S [‰µ6·Ğ¹\e‡F"?Ãí›¶Ç$.#®ª#.07œM¿'£ópıcq××|"ƒ¨ÿë`·¦ÿÀºFòÚ¥}câŒ1\–¬cÇcºËDam.Lyãb0JòäqË{ZŒìße¥ù÷ÿg³éçÄ†ÏÑö#}é…}·XHa¥Zëì¬ös}³WCğ"DGyS£ƒ5.ãT`ç-3W6ƒ;¼¼­gï)u³Wd'RkÒ]_¾© -ù+¯ë¿êéú¦¾Ş+ 
-¤<ä…÷UAƒñğä0o€æŸòc×è<¸p•ÌE2üŒE|éòÕFÅñËªM­¤æüW>Q+@Ô U>8É×*º£´ªó³'1¡“ºpöl¡ÕÏºyw)o¬ÖÈT¦0>Œ—Ğ•uP•õ¥ª”V•ÀjWcd^’myŠßKA#(ù†Ìû9éèIâŠ®$zRúâÉ~¿û­Ô˜ø*Ğ™ø‚e´f”æêRgJëÌàÃªæ3´0¨S_;rtF}§¢0jsJ[ Ö¾Íª¢ì¿=QV+eZĞ	{'”D­]6_İb÷LÖg;}Jò°n˜–)&Ëˆ¹âˆ9$¦ä–¾ Bú£Ï‚0Îg
-;vú}‹{a¤´G¼
-†”‰–£ÙoZ¼,ÃÚfß6ÄØå@¿ŸZé`M.æ¦°”KB›ûcm¾AÂ’uqğ’¤ê9‰ÔSzş^F=Ñ')ğôw)x¡7p&È_ä£Úœ«¹6KY»CÉlm?4EgO&5©ß¦=8Rx"<Pş.A½åì9=·äÊØ¥dqès[åhÇ—4>êRsY Œ¼İ’_y³òš«õé|ä ïà!o	%ã›Ùù_ä—Úğ™%bBx–I²©HBnØ=G²ä§ &ş©è<•b‰ºğJ^7”®òJôAb’şGõ/Â°s"HÀérÿt0Ä?Wõ¢.¼Ä’]Ë¯m±Ã#vˆ¿‰"5[eÁd8õÁgÏG7ß¸VøK¾tÀeH)xc©6ø&:gÀÉ¥‚p,sâX2ƒñRhô#òV_úÙT~ş)^!½P°Hr[ŞK‡Œ.À¡Ì°›ÉŸ3ÔM¤Í¦ÍâÑ7q’™mã¸ŸäJÂ0~üøšâ–/÷
-RÒ°Ì÷¥3Y.5K…¦aÑ45,ôÛ$H,×t;HVó›ÒÔ ]j<€IÔ	Ü3ğÿM’““›ë½`YÔƒÁRAÒ‘³à·O’&jÖÚ (e- eVÚÁ²:ÌZ.2oÚí±|ê–9Ó×ÔmÃ®/N]Ã’L_,»†¥Úü5•XUæ°©ë.”Ç†¥ê_š½"Ènt;öóäo,®à/åÇmíàöé5Ìê¦æJHG™"¨H]i‘èR×ÙèQ%_!ZÜlaIÜnEGÑ…³k9†(ÆRW]ÑÒäÂ—kŒ:n-ê)†€Ø}ØuJµ¸w#’t[1,—½ÃréÛ1,yÿ‚J˜÷½ &ÿÓ/ñ¥Ğ¿å{d+}©àKJ÷¯~H)¢º«(ío£ª—Hü“
-§Ñ’ü¶¨¦rš*ÕRYvø:šwı]Õ»dK~Ä-ÿ­ü  ÿÿ —8ßì
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 24.dp)) {xœì=]sÛÆvïúNšKNdÚ’ìÄ£©ãRe³—U’rnn§“PD¼ (YñÕLš‡ö¡Ó§Ü¾¤wæÆ®#ybÇñä!q:­3£;~êŸğøô/t?]`XJâ\ó<H°XìÇÙó½g€zÖí°l@ÙÖÜ
+(ıùó³“³/áßÓÿûáğÅü÷ü÷«ø÷ËŸ”€å(mûÖm–Aßs<\¨Â1¹»é™¸v–ê4n5ï—* JUßÚ¡Ej‡ÖÈÂwƒêî$=·ñ»‰á¬í-‚ç†ï[öŞ0„ÕnDÕ5Ï1ÉÓ®ıü XZ©ãÊB²Çê«îÄ}«œzÉsëİß‡µŞB7@©Õ¼Õø°±Şì•ÀñbêÅ`hŒQ±7qMË¬{¾kù]t³zã†kÂgË—ªæxìz°Ÿ#îV%]]ÖpÆ©¨Ç/=¼}Ã7á¸¦>µëù¦…¾µ†tCßÛ·ÊK¸©Êê%My¦=°qM›ôguˆ§¬¼òê¥ğFÜIÕ°æİ.÷á¼ZnXsì=wÀÚ¢ßÕ:ücù‹ÒOÓ´İ½òĞóí`%†ƒ†÷2ú°ì[¤+àü÷Aô»÷úÇVÅİx%<ÊBË>°@Ã´Ãœ¥ÀÏİ«°¢ŸyÍÇ°~€ºŒz¼m¸–“^Iıƒu#4`‹È4¾À¥†ŸÔ‡†»‡š.Ş½Ğ±~7±‚°foûŞhâw÷d¯mÃİô#Ñ•¬h{l¹u.ØÛvBtÂo$o¦_äf¾Á]¥‹"\CÈÿÉ»8ğ­`H	+í!K\E"UCšæ—3âÒ2^²é¿xÜ²ú!ÄÜíõ€ñ¹n¸F º}ß²Ü¨`Ç;g[ö½í8›Æí÷m3–Ä"^¡5ßGSÍÖy|UÅ]Y³ÂCøeñíËí>|7ƒBÜ¢eœ£èÕ$şva_mˆq(Ş´H÷ÒÚ¡cÑu¬E!0“<¥÷^~|ã¥ÏŸ
+ŠpYP~óÎØ¬ÙáÈÕ ®ğc®²¸ÊèGŸZ(›QŠM’úÀ6\	oŞÁ‹_|ŞK°Ë«°t\)IĞl8FMø/¨®[câ„Õ[v`ïÚX*ˆİ„íZæ&ŠY\;¹Z
+1j3>/IyÛ6áT°>úë–á@&r®%"+0l‡w.kñP‚¬´÷vÑ‡_PqÀºí÷'áCÚ¹G-hº&üD™ô3­v„.”¶¤{<6LPÿªWP•¥U¯ôM	ã#Ø+ï>ÂÚ²x](ID¦È´È¦nİ
+ú¾=F”‰„ô1äù-„Y­•Ë,dÜ.‹49jyêN}?Ä„VQ–s¤Â'…+«ğ§DhÒçÉ!‚PDxbô=¾¸ËÑ·—ÿ-W­V-I¾‡IŠÈ*>ûŠø%uÓvÆ¦ø2÷63
+|ÌÅ.ùk¼œµå,u)•¬–zAœ-©`¦ÁÖ/‘‰e¹˜œÛÁ–6 ttTN	Ã°÷“‘„¦åê"Ş¬äëê‹¹vT^ÒS	¸N<¿aô‡DY·-égpİ6ÍÛP¡Á…÷¤s¡Tôd°ƒ<‚Æˆ“ãÕ…³x©à†oUûŞø¨l8ã!’œ/UW•,Š:4Lï°áX¥H+™45JåDUA=ìÉ(€ éu™Ë}NRïìıı=My~ùÒí•ËïHè§´
+©¾‰QFàÚi4OBÖğ2PSğ$¤(zI"$(’ÅŞKÇà"H†‘‰éM‰òŞ@ö‚ñxĞ£¡²·”ú¯VÂjÅó½òîå¥+KùÓ]"Í¦y@¨Ÿ¿ìtP «¬z8°‹§~Æªà7ÉTÉˆ¶äâNí2ÖZ…æ¼OI|xÈ/!À[o1f¬—t†A.óH‚ÈÖHe’}ùÊ@sdp§«ÙÌ)	Ó’WUéØåXÓîa«¦±Œ*aDój.Ud ;WR–‰<Ğ¶#^•*cú£`JÃE S¨|*P«4
+E:’*âr¦8£‰\V¨b8«”½#WÊ²@Ÿİó `ıJsÕlÚ“˜òÅÜ%H	;—9+^	/Z\Ò-’5ÈÄŒMË´'£	‹²%ıRÙ%ÔOåOÒw•>™‰EÉ;§P¸´ã<,]Åª L##Õ*õ[Q½rue)f2X¾šA£9}³º•r$v^ùö RSÚ*RØ^™kÑ‘Iq—	Ùt:KÓ0şã«û¨ğÿş3_¶¡-–ˆĞ®E¥yBºœIHÅ¥¹nøûh•iÚfõ&àjöøSŸ€Ú% å3ZI|ÀMâ³§”>çyêÙwiwĞ3{Š¨Ù3ª“Í`jr¡:–ãfgÒ¬É@ÚYim3'ù<à5äïñÂÂÅ‹P™K èŞ¬ujk­è4vºøÇÍFk»Ñ;Íté……¿©{£±»µ`#JäBé~0qUîAì\¹Dn`ä [%Ú9Ñ‹Émn
+VAİpÙ‚{I×0CüÕïyjÏpWĞlŠ)ñ$rklÄ³~`ˆ0ö¢{õVD©©À8X,×A"”VjÄE•åŠá	2’^ùt¥ã)[Ã¯‹Ë©u¡oš’-OÓÆq„š“ãvËv-ä$]Ÿx‡‚ĞkmzYm8=ì 1:x±ğˆ>öm(×XÏëõIz#TÑ†m9&ÇØµÏ“R¼å¹ØsIâ5VA™<«€ï×‹-8
+}kÇÌòQcØ—®Ød,êdÊycÛ¤”¬Àš«xä¹,F6µµ²Â¾-¶Ã¦oBÜ;°{|ØÖÑ.D/<°MB4–İd{ÀîGïCï°î¹Û­Û†ãíñÕ¤ßÇÍ¬0§OÊ¨–¿†?¦xdEAZ’d¥ˆ+bT!¦5Çp÷åÖÌ\$®æÇğºÕMßÈ-È¤²puf_*ÿëÀÏdÃƒÈ®D‰‚šò¢JÆÉup×&¡W;´od©œÜµ&¸i9ãŸÂÉäóòÄDÕ,X$AÒà¥
+k‰Wx‚ºòD 8ĞT£9â 9b˜zæı˜T©&GøR–Ë|™å  5u,ÄSĞúÉ~sô>OPãëUÇ
+áPÜ¡1“ábÑµsyPYL	˜â%{•eh¬}H”šuŠáA•IŸ×Ÿ–IÌõâ’óÄÍ­!c<–en Za‘pØiª0Ş¨9S½MßE-ÍéHÆ—5Şí!œ¤ı$š[;ÈuÃ-7HB­M¹DBb…=O®Š\!²ˆfEÀ>Ô<-.%*‹4G¡=ù@„ëeÉ°ãPj%"äÅª!ÈŠèÎ°
+sK9Ì3*Îó†i›‘rÙb×8PñC,ŒæFÁ1^É™,Û?2cºHã×Ÿò6‡¯4¨¯¥Å´ñ\fv-ÊÀ©@‹Ú˜Bq~rjD r[\,·í`dóV®,A'—‹à½£Şì"šà¥Çé>-ÀYzHÙoy{·)àì¾Æ ÓæÂüƒR%Õt"§[ş«7±¨ü+0]øfQó"DÀuâ)}5µæ[àÈ›€`BµCq@Ÿt ]³–]O÷¦OºK¨ê–TAHIÀ:rSÌä‹D‰,iT.´Oä{~„¿GŞb#÷šØbBI°½ğ@e­‰Bİ"şŒuaËËïÁ4ö†–áïY		=OA_ü‹5MŒlÛzVAs•¹-bn‹øÚ"–¶EDÆÜñ“Ù"ÁC®úSmı¾27TÌ‰/ÏsCEsCÅÜP17T¼b†
+ªÓ¸SÀµñ‹”êœŞÑü*5æ†Œ¹!CeÔ«­•UPßéöÚ›ÍßÖzÍöxl´¿i®5[ÍŞyÁF‚M[Dìp¬iÏØ%„…¤Í€áÒgˆ2VA™\NiÖìV·ï{ƒÚÈÛ*bwa†™ƒ3Z8„%aÊĞò ¿¬“ËjâûSEÅü9lz€E™Q¢ß-S‰6	Ó£±Y-SYşkbb\êîlnÖ:”ĞjN …˜“GvÚœ²à<rŸ˜“˜=ÿ”ã\Ò44\§cõ=N3âo“ÑÈğà[íİD}Dì.îWã7ÛN³±Uo¨»FkZ˜èeJŠ±¦?ãÈj´lŞ÷ü}Ğ¸=¶|Ûrûb{ÖwêóeÍÁL'
+fFı»¸/?şÇˆğ|ÀV?JLU¢qsÒ'Úë €o^÷×ÍV«+m›$÷!?`ßòÿı&È8Üö7×d“E”¨»Eó ’´ä-(›õmKhİv§ı·zO·}ù(÷4Â.Xì3BØã,]Â'Ô&¤¶PKhN½Ñé57šd>µ-oÿ“"ŞÓËàIºq" ±ÎhOJëCeoëu$l‚BZµ­;µyg¾âš¢ÆÇeÏˆØ‚äx‚vFn@îíö„¡ÅLâÃ.œmÕØ
+kW@2:49ô@ÄÕ, L†ÅµŠ¸ØètÛ[µÖ‡Í­¶t¸¥–bbTîó³&Œ¡Jâ£}­Ó—Ÿ<ŠÖò…â6¡Æîğìò-î46D	å³+äx˜Ä:öàß¦§\âËG¤.(-Q fi„wµé>ôUÂ¤«UüD™lAR–ˆÉí3i6WEÛyï ;„*¿¹ ³$wäíaf¤C%6ŠT¡èàRI**±¦ÇÔ_ò°Ìqoš¤ƒ•LÔË6U.ÅIlø¡BÖ…ÀRĞeÚõF.ğ[Í.“¨`‰Ø+Û]Tpg‘Ì.(³:éfÿÉ°¡--§¶Ø:¤ÈØ‘µyuI™÷N#ïUî«Äén˜]ñêg¬¨ı‘Û¾"nJ¼{1*„ A±ã×ês@²%Mêû&â¿¤— ¯2Â*âœTŠMÒLV½‰«Øˆ¨—Ç
+Ï_zŠúÈäC9Ë“xV"òw‘ãDdU8IQ)%G“C‰÷3Q=à''LGU3ï.7»Ñì=Èår¼‘Ú3%êıòº•Ø)4ò9ïÅ0aÆ »wÎ>çyß½“ŠEò)÷Y¡å@‰\tWï\à¯f4şıâì~IŠMtk/ü3_4½C¾ïâ0ß"±~P^ Ã5á£½=H3‚C;ìIDÒå$²CÛ´`™#ö‚jï™wµ Cç]©§tŠ5Év¦^åƒtš"ıZD]ÿµu¤ÊS„ua«ßBgäL‹ X/\»Æª<¾„
+>¾¾Jï)¿a7mÓ´¡£òÈ_3¹°JmñA™T$é-¬Ò*å$®à³§²Ö&òÜFÉ{’S}eP‘dRŠO—I—Çg¦j*š~£Hj”ˆësÎ‰e‚¬í¹	4¦É"R4ËËùeà˜v£œŠ†³(+ËË×¡•Ää<{†@êÕ¡TOB>‹ô”ïwÆ€xòrsñ'¹eäYÙe€‰¢Ëà=ıt@¥1SL8@èm’§ˆnkf$ãë­JŞÄâïqcÿ¡PU’÷¥µ¨xÍZ3®±dØôBU‰m¦OcÒÊ+Ê‰†H§¢™\C/Uˆå¢& ¼íòLŸüŠ„LéeBÒEÑôöİ,Èr,CŞ¿ëA%±†ä¾©Tä[›Şi@Ì0Ô/X©òİiQÚƒ^ ‹Un©c¹ Å¤¢ëH%éè_‹4'¾€H¿Ş´õís ­o¿–´UP¯½EËü\(.ªhš«\Õ¯3Ö„Ê­¨pVWf!Ğ4Ñšreæ\«YÑëIÈ×â³Cp3Ñ(ùf–È™b¤€Í¶A]lÓ›íşĞêïcRø;½Q‡Ÿ¼ÊEŒ³Ê†'pL8ÇZ±ã®U„c×iWQAhWÕ·FÌE¶*İJ2Ğû²ašÅ?«]2ƒu‹33oÚ®Ğ#’‘&×dÎQ/AãÜue=dÒ{ÃÉh·Ú,ÀóhE¾ÑßŸ"$^WÖBM²U(³oü%e"»¥k›A2‚TÌ*_ª¾{%ÇÖƒ¿“C[‹=)’ù+öşæ›ê“,˜z˜—«`£½Õİæoà-°¶Ój5zğVg³Öë5·n€:|Úi·æÎf?§³ù¡Ä÷›
+%Š“Úf!dåÎ¥ÈªøRğNf~)™µwÓE.g$(.\IÄİ¼6qĞN¤nxäXEÎ8Ş‰m³»§ñq%Oa PÔCN¬ƒÕ˜™ÔÔ3M|±\l:›9âÀÌÁ1$/šÎoxÇìg Ì9F¥A]BtĞ5¢EGl¡ƒÒâAÑòiª¥ğâ'äøAÏ%á: ÷õ¼=f²H2—‡R½½¹]«÷pÈV2\›¹¨ÇkSŒ|ÄszJ"ŞÎÿU%Ş´0‚=AùêUxSÁKİ^mk½ÖY—6(½ğ¥B¿Õ@ğµß¥=ÅOÈß¸¹İĞpMH#\~—2²ªJk©ÄÏ£o‹ñÆ'ÑİŒ"ø6‘¿„!x>–,a³––3šÕªunÈD¨0%ÍòEÌ7?:{7g	€Ÿ_¾‚>¯Cá’8Yí'.”²ÊËæ™‡:‘ïÂçJ'ÊtÁMs.'btB’Úª‘¥3Ñ®q-ï[G‹dO{%O$!„ºc”jÑ°¢°ƒ}E|íc3øm÷qôíJjSf?9C4a°1)dúÒ	=`%ùÍĞ„,AñJfÈƒ©fÒt Gå…10Ğ±¨áÑ4 èÂ¬¬Y!][F±ãò“RÈ@Ü%©oücïF¢H÷¢	Á8îæ`4TµÌ8³ÀlÆ@:vßéê«µç,ScÛC6{ÊífÇ2µ‰ˆã™ß;„èEºs*y[½i"#„¡ÊÒÈşreõ]<š‚:1‹¤%º{/?ytvO1Á3‰Çy¸J›IÌdj•¢éz­{3Õ j´Ñß²¯] ë†úÑR÷ïvj‰à{ïåÇŸ}©TOÅí…\Ïğ[]ÈÈ}Kİ¡fm³½%QYàë€ò?H4éÙsKHœ¾¸†uÛy®™¥…lÖ4”¸gépnªí§7ãˆªK‹¼"22@×¾dRôHÕ´íæ¶Bá>µe–öı>6Øc‹oŞïÕÍÛjo©7I°º°U_Ø¤ÍíñåïÆ;]KOYˆÂ\S:M‰Œ)f2?‡®$|~®-Íµ%æÚ’æÚ¯‚¶$¿:'àJ4ëí-æëëÎ}~Fgµ]'öı=h_G·„}sQš‹évŒ"/Ø	Ğ&~*ñÚuG†O“Ùü»E¯*4?¥x6­hvûNfŞI“™HIztÎ^qJd#I8¹¸=¨8}"HïŸòJ3µ<t‚EÀ+/EÙŸà²Xä¾J¿¥»sc÷Ú¥‰Ğ: ¶‹97ò™$¥
+(o¡B±#x¹Z6RšnEóøÀ¼ÀÃBgbñ0Å–%Eb»œÈ¼8ep ªĞ(a* n£,/+*;Q1B×0[€Ÿ%0k¦`¬BXÊšŠí˜Œ•dÉquçcvUÒæä49Íİ¼ÿ½`HI±o>§È©ùtLŒúÍDe%äo×
+ĞNuº;±£¼”ŠuçOéøŠç”î(üj*•‰½A5¦ËUšëåçé‚Ú:JĞ3×œ(Ì¤9ñÒ½8ù÷'Ï^œ<}qúo/Nşôâä1Àÿ‚|ûâä¼şúÅé?¡kTä>ÀOà[Ñ«™&Í;	:V0Y²Ì`<ˆÑi®1æHM¾)ñ•ù ONDÅzjæI¥REb»ˆ«¨#Ø´•ÔºÓ;ç5¤İ»ÙèH+JİÈ9’ n 9R€ùô¥Ï(àÇÑuUwh²“têà4FÃ?`$şWxÀãd®'üÁ’4w¿~Öp©m:cù 0˜õ  ³°”¹Ïa–üü©öÍÓÏ ïhS<?Õ¢¤ Øbôã¼Ñ#¼ˆ¾{qú'ü›°û1$—ığO±˜¸“@VæËíu^n*­y4…²{x³aÌ’„ã¡Ğ©ÂZË=<Šäv-¦È ‚nÆT›Ğå{®˜A<—ÓòĞHƒ}áê¶X¦¸&ˆ™¯f»„24½>? A¬Z&î¿ÍdÎÖEQ¼(ÉØ‰…cBšS¼ç8Ûê>>›®L“˜/Î,€h.*òğï‰œ¼ÌÜ õË|]ÒŠVcëFïæ‡İ›íN¯‚UñŒ¶
+ÇZmüQe™nĞÁd°d”zD±±¤}¾Hê—!XDwe`ô*;_Àz‡%‚'T"8yŒQüÈGvt	‹Ÿ~‘|5Flœ4$’N¯j[Ò²ìhÅ5L“FêÛ]LuªSÔ2)†ÄQI<d#½Z9ûŠ%è+|Fd6;.dMW[êr¸~†©'¶Êê·ğô	Nr‹2›r6Îçávşô%[B¥‹¬³–ô“¯.
+‡ùM»}A‘ŒVE³YÍ,Â %bãŒ¥H ‡†ş:ÖÈÅİqlÊ=*lÊz¡òdMò´”8¬c¥r¬^Å3ZôlM½¾ÎDş/ü?   ÿÿ èŒ6D
