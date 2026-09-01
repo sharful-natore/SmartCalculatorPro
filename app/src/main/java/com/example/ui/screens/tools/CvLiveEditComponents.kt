@@ -1798,3 +1798,111 @@ fun CvLiveEditPanel(
         }
     }
 }
+
+@Composable
+fun SectionCardHeader(
+    title: String,
+    icon: ImageVector,
+    themeColors: CalculatorThemeColors,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = themeColors.buttonEqualBg,
+            modifier = Modifier.size(20.dp)
+        )
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = themeColors.displayText
+        )
+    }
+}
+
+@Composable
+fun CvCustomTextField(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    themeColors: CalculatorThemeColors,
+    isLiveEdit: Boolean = false,
+    isBn: Boolean = false,
+    placeholderText: String? = null,
+    minLines: Int = 1,
+    onAiPrompt: (() -> Unit)? = null
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label, fontSize = 12.sp) },
+        placeholder = placeholderText?.let { { Text(it, fontSize = 12.sp) } },
+        modifier = Modifier.fillMaxWidth(),
+        minLines = minLines,
+        singleLine = minLines == 1,
+        shape = RoundedCornerShape(8.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = themeColors.buttonEqualBg,
+            unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f),
+            focusedLabelColor = themeColors.buttonEqualBg,
+            cursorColor = themeColors.buttonEqualBg
+        ),
+        trailingIcon = onAiPrompt?.let {
+            {
+                IconButton(onClick = it) {
+                    Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = themeColors.buttonEqualBg)
+                }
+            }
+        }
+    )
+}
+
+@Composable
+fun CvCustomLargeTextField(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    themeColors: CalculatorThemeColors,
+    isLiveEdit: Boolean = false,
+    isBn: Boolean = false,
+    placeholderText: String? = null,
+    minLines: Int = 3,
+    onAiPrompt: (() -> Unit)? = null
+) {
+    CvCustomTextField(
+        label = label,
+        value = value,
+        onValueChange = onValueChange,
+        themeColors = themeColors,
+        isLiveEdit = isLiveEdit,
+        isBn = isBn,
+        placeholderText = placeholderText,
+        minLines = minLines,
+        onAiPrompt = onAiPrompt
+    )
+}
+
+@Composable
+fun CustomizationTab(
+    cvData: CvData,
+    onCvDataChange: (CvData) -> Unit,
+    themeColors: CalculatorThemeColors,
+    isBn: Boolean
+) {
+    CvLiveEditPanel(
+        cvData = cvData,
+        onCvDataChange = onCvDataChange,
+        onRequestAiPrompt = { _, _, _, _ -> },
+        onPickImage = {},
+        onOpenCropExisting = {},
+        themeColors = themeColors,
+        isBn = isBn,
+        onRefreshPreview = {}
+    )
+}
