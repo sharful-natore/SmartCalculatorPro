@@ -702,7 +702,7 @@ private fun CvCustomDropdown(
                         value = searchQuery,
                         onValueChange = { searchQuery = it },
                         modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("Search / খ্এজ্ন...", fontSize = 12.sp) },
+                        placeholder = { Text("Search / খুঁজুন...", fontSize = 12.sp) },
                         leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = null, tint = themeColors.buttonEqualBg, modifier = Modifier.size(18.dp)) },
                         trailingIcon = {
                             if (searchQuery.isNotEmpty()) {
@@ -5080,8 +5080,24 @@ fun AtsCvBuilderTool(
                 promptBuilder.append("Experiences: ${cvData.experiences.joinToString { "${it.role} at ${it.company}: ${it.description}" }}\n")
                 promptBuilder.append("Educations: ${cvData.educations.joinToString { "${it.degree} from ${it.institution}" }}\n")
 
+                // Inject local structural checklist evaluation info
+                val hasSummary = cvData.summary.isNotBlank() && cvData.summary.length >= 35
+                val hasQuantifiedExp = cvData.experiences.any { exp -> exp.description.contains("%") || exp.description.contains("$") || exp.description.contains(Regex("\\d+")) }
+                val hasSkills = cvData.skills.size >= 5
+                val hasContact = cvData.email.isNotBlank() && cvData.phone.isNotBlank() && cvData.linkedin.isNotBlank()
+                val hasProjects = cvData.projects.isNotEmpty() || cvData.customSections.isNotEmpty()
+                val hasEducation = cvData.educations.isNotEmpty()
+
+                promptBuilder.append("\nLocal CV Structural Checklist Evaluation:\n")
+                promptBuilder.append("- Professional ATS Summary: ${if (hasSummary) "Present" else "Missing (Add targeted summary >= 35 chars)"}\n")
+                promptBuilder.append("- Quantified Achievements in Experience: ${if (hasQuantifiedExp) "Present" else "Missing (Include impact metrics %, $ or numbers)"}\n")
+                promptBuilder.append("- Categorized Skills: ${if (hasSkills) "Present" else "Missing (List 5+ technical/domain skills)"}\n")
+                promptBuilder.append("- Contact Info with LinkedIn: ${if (hasContact) "Present" else "Missing (Add email, phone, and LinkedIn)"}\n")
+                promptBuilder.append("- Portfolio Projects: ${if (hasProjects) "Present" else "Missing (Add projects/accomplishments)"}\n")
+                promptBuilder.append("- Education Records: ${if (hasEducation) "Present" else "Missing (Add education history)"}\n")
+
                 promptBuilder.append("\nTask Instructions:\n")
-                promptBuilder.append("1. Compute an overall ATS readiness score (0-100%) reflecting content richness, metrics presence, clarity, and formatting compliance.\n")
+                promptBuilder.append("1. Compute an overall ATS readiness score (0-100%) reflecting content richness, metrics presence, clarity, and formatting compliance. This score MUST strictly align with the local structural checklist above (each missing item should negatively impact the score by at least 10-15%). If multiple major sections are missing, the score should reflect that and be lower.\n")
                 promptBuilder.append("2. Generate a list of 4-6 specific actionable improvement suggestions. Each suggestion MUST contain:\n")
                 promptBuilder.append("   - id: Unique ID (e.g. 'ats_1')\n")
                 promptBuilder.append("   - titleEn: Clear title of the improvement in English\n")
@@ -5144,7 +5160,7 @@ fun AtsCvBuilderTool(
 
     // Auto-render live PDF vector preview on changes or when switching tabs
     LaunchedEffect(cvData, previewRefreshKey, selectedTab) {
-        if (selectedTab != 5) {
+        if (selectedTab != 4) {
             return@LaunchedEffect
         }
         kotlinx.coroutines.delay(300)
@@ -7716,7 +7732,10 @@ private fun EducationAndSkillsTab(
         "Chittagong Government Women's College",
         "Ananda Mohan College, Mymensingh",
         "Carmichael College, Rangpur",
-        "Edward College, Pabna",
+        "Govt. Edward College, Pabna",
+        "Parkol Bi-Lateral High School",
+        "Baraigram College, Natore",
+        "Baraigram Govt. College, Natore",
         "Government B. M. College, Barisal (Brajamohan College)",
         "Government B. L. College, Khulna (Brajalal College)",
         "Azam Khan Government Commerce College, Khulna",
@@ -8681,6 +8700,324 @@ private fun AiSuggestionCard(
 }
 
 @Composable
+private fun IndividualAiSuggestionCard(
+    suggestion: AiSuggestionItem,
+    themeColors: CalculatorThemeColors,
+    isBn: Boolean,
+    onApplyFix: () -> Unit,
+    onNavigate: () -> Unit
+) {
+    val context = LocalContext.current
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = themeColors.cardBg,
+        border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.12f)),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp)
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            // Header with Suggestion Title and Category Tag
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = if (isBn) suggestion.titleBn else suggestion.titleEn,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = themeColors.displayText,
+                    modifier = Modifier.weight(1f)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Surface(
+                    shape = RoundedCornerShape(4.dp),
+                    color = themeColors.buttonEqualBg.copy(alpha = 0.1f),
+                    modifier = Modifier.wrapContentSize()
+                ) {
+                    Text(
+                        text = suggestion.category.uppercase(),
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.buttonEqualBg,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            // Explanation Description
+            Text(
+                text = if (isBn) suggestion.descBn else suggestion.descEn,
+                fontSize = 11.5.sp,
+                color = themeColors.displayText.copy(alpha = 0.75f),
+                lineHeight = 16.sp
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Proposed Text in a beautifully styled subtle card
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = themeColors.cardBg.copy(alpha = 0.4f),
+                border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.08f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(10.dp)) {
+                    Text(
+                        text = if (isBn) "প্রস্তাবিত সংস্করণ:" else "Proposed Content:",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.buttonEqualBg
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = suggestion.proposedValue,
+                        fontSize = 11.sp,
+                        color = themeColors.displayText,
+                        lineHeight = 15.sp
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Action Buttons
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Button 1: Edit Manually (Go to Section)
+                OutlinedButton(
+                    onClick = onNavigate,
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = themeColors.displayText),
+                    border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.2f)),
+                    modifier = Modifier.weight(1f).height(36.dp)
+                ) {
+                    Icon(imageVector = Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(14.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = if (isBn) "ম্যানুয়ালি ঠিক করুন" else "Fix Manually",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+
+                // Button 2: Auto Apply with AI
+                Button(
+                    onClick = {
+                        onApplyFix()
+                    },
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
+                    modifier = Modifier.weight(1.2f).height(36.dp)
+                ) {
+                    Icon(imageVector = Icons.Default.CheckCircle, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = if (isBn) "এআই দিয়ে আপডেট" else "Update with AI",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
+            }
+        }
+    }
+}
+
+
+data class SavedCircularItem(
+    val id: String = java.util.UUID.randomUUID().toString(),
+    val title: String,
+    val text: String,
+    val matchPct: Int,
+    val matchingStrengths: List<String>,
+    val missingKeywords: List<String>,
+    val tailoredSummary: String,
+    val suggestionsJson: String,
+    val date: String = "Just now"
+)
+
+private fun getCurrentCategoryValue(cv: CvData, category: String): String {
+    return when {
+        category.equals("summary", ignoreCase = true) -> cv.summary
+        category.equals("contact_info", ignoreCase = true) -> {
+            "Email: ${cv.email}\nPhone: ${cv.phone}\nLinkedIn: ${cv.linkedin}"
+        }
+        category.startsWith("experience_", ignoreCase = true) -> {
+            val idx = category.substringAfter("experience_").toIntOrNull() ?: 0
+            cv.experiences.getOrNull(idx)?.description ?: ""
+        }
+        category.equals("skills", ignoreCase = true) -> {
+            cv.skills.joinToString { it.name }
+        }
+        category.equals("educations", ignoreCase = true) || category.equals("education", ignoreCase = true) -> {
+            cv.educations.joinToString { "${it.degree} from ${it.institution}" }
+        }
+        else -> ""
+    }
+}
+
+@Composable
+private fun KeywordAnalysisCard(
+    matchedKeywords: List<String>,
+    missingKeywords: List<String>,
+    themeColors: CalculatorThemeColors,
+    isBn: Boolean,
+    onAddKeyword: (String) -> Unit,
+    onAddAllKeywords: () -> Unit
+) {
+    Surface(
+        shape = RoundedCornerShape(14.dp),
+        color = themeColors.cardBg,
+        border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.12f)),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = if (isBn) "📊 কি-ওয়ার্ড ম্যাচ বিশ্লেষণ (সার্কুলার বনাম সিভি)" else "📊 Keyword Match Analysis (Circular vs CV)",
+                    fontSize = 12.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = themeColors.buttonEqualBg
+                )
+                if (missingKeywords.isNotEmpty()) {
+                    TextButton(
+                        onClick = onAddAllKeywords,
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                        modifier = Modifier.height(28.dp)
+                    ) {
+                        Text(
+                            text = if (isBn) "সব স্কিল এড করুন +" else "Add All +",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF10B981)
+                        )
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(10.dp))
+            
+            // Matched/Strengths keywords
+            Text(
+                text = if (isBn) "✅ সিভিতে থাকা ম্যাচিং কি-ওয়ার্ডসমূহ:" else "✅ Matched Keywords found in CV:",
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF10B981)
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            if (matchedKeywords.isEmpty()) {
+                Text(
+                    text = if (isBn) "কোন নির্দিষ্ট ম্যাচিং কি-ওয়ার্ড পাওয়া যায়নি। নিচে মিসিং স্কিলগুলো এড করুন।" else "No direct matching keywords detected. Try adding the missing skills below.",
+                    fontSize = 11.sp,
+                    color = themeColors.displayText.copy(alpha = 0.6f),
+                    modifier = Modifier.padding(start = 4.dp)
+                )
+            } else {
+                val chunkedMatched = matchedKeywords.chunked(3)
+                chunkedMatched.forEach { chunk ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        chunk.forEach { kw ->
+                            Surface(
+                                shape = RoundedCornerShape(16.dp),
+                                color = Color(0xFF10B981).copy(alpha = 0.08f),
+                                border = BorderStroke(1.dp, Color(0xFF10B981).copy(alpha = 0.3f))
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = null,
+                                        tint = Color(0xFF10B981),
+                                        modifier = Modifier.size(12.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = kw,
+                                        fontSize = 10.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF10B981)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(14.dp))
+            
+            // Missing requirements keywords
+            Text(
+                text = if (isBn) "❌ সিভিতে নেই এমন মিসিং কি-ওয়ার্ডসমূহ (ট্যাপ করে এড করুন):" else "❌ Missing Requirements Keywords (Tap to add):",
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFFEF4444)
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            if (missingKeywords.isEmpty()) {
+                Text(
+                    text = if (isBn) "সব কি-ওয়ার্ড মিলে গেছে! কোনো মিসিং স্কিল নেই।" else "100% keyword match! No missing skills found.",
+                    fontSize = 11.sp,
+                    color = themeColors.displayText.copy(alpha = 0.6f),
+                    modifier = Modifier.padding(start = 4.dp)
+                )
+            } else {
+                val chunkedMissing = missingKeywords.chunked(3)
+                chunkedMissing.forEach { chunk ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        chunk.forEach { kw ->
+                            Surface(
+                                onClick = { onAddKeyword(kw) },
+                                shape = RoundedCornerShape(16.dp),
+                                color = Color(0xFFEF4444).copy(alpha = 0.06f),
+                                border = BorderStroke(1.dp, Color(0xFFEF4444).copy(alpha = 0.25f))
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Add,
+                                        contentDescription = null,
+                                        tint = Color(0xFFEF4444),
+                                        modifier = Modifier.size(12.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = kw,
+                                        fontSize = 10.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFFEF4444)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun AiJobCircularMatchTab(
     cvData: CvData,
     onCvDataChange: (CvData) -> Unit,
@@ -8700,6 +9037,30 @@ private fun AiJobCircularMatchTab(
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var selectedImageBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var activeFixItem by remember { mutableStateOf<AtsChecklistItem?>(null) }
+
+    var savedCirculars by remember { mutableStateOf(listOf<SavedCircularItem>()) }
+    var beforeAfterSuggestionToApply by remember { mutableStateOf<AiSuggestionItem?>(null) }
+
+    LaunchedEffect(cvData.lastJobMatchPercentage, cvData.lastCircularSuggestionsJson) {
+        if (cvData.lastJobMatchPercentage > 0 && cvData.targetJobCircular.isNotBlank()) {
+            val titleText = if (cvData.targetJobCircular.length > 35) {
+                cvData.targetJobCircular.take(35).replace("\n", " ").trim() + "..."
+            } else {
+                cvData.targetJobCircular.replace("\n", " ").trim()
+            }
+            if (savedCirculars.none { it.text == cvData.targetJobCircular }) {
+                savedCirculars = savedCirculars + SavedCircularItem(
+                    title = titleText,
+                    text = cvData.targetJobCircular,
+                    matchPct = cvData.lastJobMatchPercentage,
+                    matchingStrengths = cvData.lastMatchingStrengths,
+                    missingKeywords = cvData.lastMissingKeywords,
+                    tailoredSummary = cvData.lastTailoredSummary,
+                    suggestionsJson = cvData.lastCircularSuggestionsJson
+                )
+            }
+        }
+    }
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -8785,8 +9146,14 @@ private fun AiJobCircularMatchTab(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // CARD 1: Gemini AI ATS Score
-            val atsScore = cvData.lastAtsScoreFromGemini
+            // CARD 1: CV Completeness or Gemini AI ATS Score
+            val hasScanBeenRun = cvData.lastAtsScoreFromGemini > 0
+            val localScore = currentChecklist.count { it.status == ChecklistStatus.PRESENT } * 100 / currentChecklist.size
+            val atsScore = if (hasScanBeenRun) {
+                cvData.lastAtsScoreFromGemini
+            } else {
+                localScore
+            }
             val scoreColor = when {
                 atsScore >= 80 -> Color(0xFF10B981)
                 atsScore >= 60 -> Color(0xFFF59E0B)
@@ -8805,25 +9172,32 @@ private fun AiJobCircularMatchTab(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = if (isBn) "এটিএস স্ক্যান ও স্কোর" else "ATS Scan & Score",
+                        text = if (hasScanBeenRun) {
+                            if (isBn) "এআই এটিএস স্কোর" else "AI ATS Score"
+                        } else {
+                            if (isBn) "সিভি সম্পূর্ণতা" else "CV Completeness"
+                        },
                         fontSize = 11.5.sp,
                         fontWeight = FontWeight.Bold,
                         color = themeColors.displayText.copy(alpha = 0.8f)
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = if (atsScore > 0) "$atsScore%" else "— %",
+                        text = "$atsScore%",
                         fontSize = 28.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = scoreColor
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = when {
-                            atsScore >= 80 -> if (isBn) "এটিএস ফ্রেন্ডলি" else "ATS Friendly"
-                            atsScore >= 60 -> if (isBn) "উন্নতি প্রয়োজন" else "Needs Improvement"
-                            atsScore > 0 -> if (isBn) "নিম্ন স্কোর" else "Low Score"
-                            else -> if (isBn) "অ্যানালাইসিস করুন" else "Run Analysis"
+                        text = if (hasScanBeenRun) {
+                            when {
+                                atsScore >= 80 -> if (isBn) "এটিএস ফ্রেন্ডলি" else "ATS Friendly"
+                                atsScore >= 60 -> if (isBn) "উন্নতি প্রয়োজন" else "Needs Improvement"
+                                else -> if (isBn) "নিম্ন স্কোর" else "Low Score"
+                            }
+                        } else {
+                            if (isBn) "স্ক্যান প্রয়োজন" else "Scan Required"
                         },
                         fontSize = 10.5.sp,
                         fontWeight = FontWeight.Bold,
@@ -8995,70 +9369,116 @@ private fun AiJobCircularMatchTab(
                 }
             )
 
-            // AI Proposed Suggestions (if generated)
+            // Display AI Proposed suggestions if generated
             if (atsSuggestions.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(16.dp))
-                Surface(
-                    shape = RoundedCornerShape(14.dp),
-                    color = themeColors.cardBg,
-                    border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.2f)),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.padding(14.dp)) {
-                        Text(
-                            text = if (isBn) "প্রস্তাবিত এটিএস পরিবর্তনগুলো ফিক্স করুন:" else "Review & Apply Proposed ATS Improvements:",
-                            fontSize = 12.5.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = themeColors.displayText
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(20.dp))
+                Text(
+                    text = if (isBn) "এআই প্রস্তাবিত এটিএস সমাধানসমূহ" else "AI Proposed ATS Enhancements",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = themeColors.displayText
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = if (isBn) "নিচের যেকোনো সাজেশন এআই দিয়ে অটো-আপডেট করতে পারেন অথবা নিজে ম্যানুয়ালি ফিক্স করতে পারেন:" else "Apply recommendations automatically using AI, or click to edit manually in that section:",
+                    fontSize = 11.sp,
+                    color = themeColors.displayText.copy(alpha = 0.6f)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
 
-                        atsSuggestions.forEach { suggestion ->
-                            val isSelected = suggestion.id in selectedAtsIds
-                            AiSuggestionCard(
-                                suggestion = suggestion,
-                                isSelected = isSelected,
-                                onSelectionChange = { selected ->
-                                    selectedAtsIds = if (selected) {
-                                        selectedAtsIds + suggestion.id
-                                    } else {
-                                        selectedAtsIds - suggestion.id
-                                    }
-                                },
-                                themeColors = themeColors,
-                                isBn = isBn
-                            )
+                atsSuggestions.forEach { suggestion ->
+                    IndividualAiSuggestionCard(
+                        suggestion = suggestion,
+                        themeColors = themeColors,
+                        isBn = isBn,
+                        onApplyFix = {
+                            beforeAfterSuggestionToApply = suggestion
+                        },
+                        onNavigate = {
+                            val tabIdx = when {
+                                suggestion.category.equals("summary", ignoreCase = true) || suggestion.category.equals("contact_info", ignoreCase = true) -> 0
+                                suggestion.category.startsWith("experience_", ignoreCase = true) -> 1
+                                suggestion.category.equals("skills", ignoreCase = true) -> 2
+                                suggestion.category.equals("educations", ignoreCase = true) || suggestion.category.equals("education", ignoreCase = true) -> 2
+                                else -> 0
+                            }
+                            onNavigateToTab(tabIdx)
                         }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Button(
-                            onClick = {
-                                val updated = applySelectedSuggestions(cvData, selectedAtsIds.toList(), cvData.lastAtsSuggestionsJson)
-                                onCvDataChange(updated)
-                                Toast.makeText(context, if (isBn) "বাছাইকৃত এটিএস পরিবর্তনগুলো সিভিতে প্রয়োগ করা হয়েছে!" else "Selected ATS changes applied to CV!", Toast.LENGTH_SHORT).show()
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
-                            shape = RoundedCornerShape(10.dp),
-                            enabled = selectedAtsIds.isNotEmpty(),
-                            modifier = Modifier.fillMaxWidth().height(42.dp)
-                        ) {
-                            Icon(imageVector = Icons.Default.CheckCircle, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = if (isBn) "বাছাইকৃত পরিবর্তনগুলো প্রয়োগ করুন (${selectedAtsIds.size})" else "Apply Selected Improvements (${selectedAtsIds.size})",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                        }
-                    }
+                    )
                 }
             }
+
         }
     } else {
         Column {
-                    // ================= MODE 1: JOB CIRCULAR MATCHING =================
+            // ================= MODE 1: JOB CIRCULAR MATCHING =================
+            // --- Multi-Circular History ---
+            if (savedCirculars.isNotEmpty()) {
+                Text(
+                    text = if (isBn) "📋 পূর্ববর্তী সার্কুলার বিশ্লেষণসমূহ:" else "📋 Past Analyzed Circulars:",
+                    fontSize = 11.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF10B981)
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(bottom = 12.dp)
+                ) {
+                    items(savedCirculars) { item ->
+                        Surface(
+                            onClick = {
+                                circularInputText = item.text
+                                onCvDataChange(cvData.copy(
+                                    targetJobCircular = item.text,
+                                    lastJobMatchPercentage = item.matchPct,
+                                    lastMatchingStrengths = item.matchingStrengths,
+                                    lastMissingKeywords = item.missingKeywords,
+                                    lastTailoredSummary = item.tailoredSummary,
+                                    lastCircularSuggestionsJson = item.suggestionsJson
+                                ))
+                            },
+                            shape = RoundedCornerShape(10.dp),
+                            color = themeColors.cardBg,
+                            border = BorderStroke(1.dp, if (cvData.targetJobCircular == item.text) Color(0xFF10B981) else themeColors.displayText.copy(alpha = 0.12f))
+                        ) {
+                            Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                                Text(
+                                    text = item.title,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.displayText,
+                                    maxLines = 1
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Surface(
+                                        shape = RoundedCornerShape(4.dp),
+                                        color = Color(0xFF10B981).copy(alpha = 0.12f)
+                                    ) {
+                                        Text(
+                                            text = "${item.matchPct}% Match",
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFF10B981),
+                                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = item.date,
+                                        fontSize = 9.sp,
+                                        color = themeColors.displayText.copy(alpha = 0.5f)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+            }
+
             Text(
                 text = if (isBn)
                     "যে চাকরির জন্য আবেদন করতে চান তার সার্কুলার টেক্সট পেস্ট করুন অথবা গ্যালারি থেকে সার্কুলারের ছবি দিন!"
@@ -9245,108 +9665,38 @@ private fun AiJobCircularMatchTab(
                             Spacer(modifier = Modifier.height(10.dp))
                         }
 
-                        // Missing Keywords Chips
-                        if (cvData.lastMissingKeywords.isNotEmpty()) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = if (isBn) "সার্কুলারে থাকা মিসিং স্কিলসমূহ (ট্যাপে এড করুন):" else "Missing Circular Skills (Tap to Add):",
-                                    fontSize = 11.5.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = themeColors.displayText
-                                )
-                                TextButton(
-                                    onClick = {
-                                        val newSkills = cvData.skills.toMutableList()
-                                        cvData.lastMissingKeywords.forEach { kw ->
-                                            if (newSkills.none { it.name.equals(kw, ignoreCase = true) }) {
-                                                val desc = "Proficient in $kw with hands-on experience applying it in real-world professional projects."
-                                                newSkills.add(CvSkillItem(name = kw, description = desc))
-                                            }
-                                        }
-                                        onCvDataChange(cvData.copy(skills = newSkills, lastMissingKeywords = emptyList()))
-                                        Toast.makeText(context, if (isBn) "সকল মিসিং স্কিল যুক্ত হয়েছে!" else "Added all missing skills!", Toast.LENGTH_SHORT).show()
-                                    },
-                                    contentPadding = PaddingValues(0.dp)
-                                ) {
-                                    Text(
-                                        text = if (isBn) "সব যুক্ত করুন +" else "Add All +",
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF10B981)
-                                    )
+                        // Keyword Match Analysis (Suggestion 1)
+                        KeywordAnalysisCard(
+                            matchedKeywords = cvData.lastMatchingStrengths,
+                            missingKeywords = cvData.lastMissingKeywords,
+                            themeColors = themeColors,
+                            isBn = isBn,
+                            onAddKeyword = { kw ->
+                                val updatedSkills = cvData.skills.toMutableList()
+                                if (updatedSkills.none { it.name.equals(kw, ignoreCase = true) }) {
+                                    val desc = "Experienced in applying $kw effectively to solve critical professional problems."
+                                    updatedSkills.add(CvSkillItem(name = kw, description = desc))
                                 }
-                            }
-
-                            Spacer(modifier = Modifier.height(6.dp))
-
-                            val missingList = cvData.lastMissingKeywords
-                            missingList.chunked(3).forEach { chunk ->
-                                Row(
-                                    modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    chunk.forEach { kw ->
-                                        Surface(
-                                            onClick = {
-                                                val updatedSkills = cvData.skills.toMutableList()
-                                                if (updatedSkills.none { it.name.equals(kw, ignoreCase = true) }) {
-                                                    val desc = "Experienced in applying $kw effectively to solve critical professional problems."
-                                                    updatedSkills.add(CvSkillItem(name = kw, description = desc))
-                                                }
-                                                val updatedMissing = cvData.lastMissingKeywords.filter { it != kw }
-                                                onCvDataChange(cvData.copy(skills = updatedSkills, lastMissingKeywords = updatedMissing))
-                                                Toast.makeText(context, if (isBn) "$kw স্কিলে যুক্ত করা হয়েছে!" else "Added $kw to skills!", Toast.LENGTH_SHORT).show()
-                                            },
-                                            shape = RoundedCornerShape(16.dp),
-                                            color = Color(0xFF10B981).copy(alpha = 0.12f),
-                                            border = BorderStroke(1.dp, Color(0xFF10B981).copy(alpha = 0.4f))
-                                        ) {
-                                            Row(
-                                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                Icon(imageVector = Icons.Default.Add, contentDescription = null, tint = Color(0xFF10B981), modifier = Modifier.size(13.dp))
-                                                Spacer(modifier = Modifier.width(4.dp))
-                                                Text(
-                                                    text = kw,
-                                                    fontSize = 10.5.sp,
-                                                    fontWeight = FontWeight.Bold,
-                                                    color = Color(0xFF10B981)
-                                                )
-                                            }
-                                        }
+                                val updatedMissing = cvData.lastMissingKeywords.filter { it != kw }
+                                onCvDataChange(cvData.copy(skills = updatedSkills, lastMissingKeywords = updatedMissing))
+                                Toast.makeText(context, if (isBn) "$kw স্কিলে যুক্ত করা হয়েছে!" else "Added $kw to skills!", Toast.LENGTH_SHORT).show()
+                            },
+                            onAddAllKeywords = {
+                                val newSkills = cvData.skills.toMutableList()
+                                cvData.lastMissingKeywords.forEach { kw ->
+                                    if (newSkills.none { it.name.equals(kw, ignoreCase = true) }) {
+                                        val desc = "Proficient in $kw with hands-on experience applying it in real-world professional projects."
+                                        newSkills.add(CvSkillItem(name = kw, description = desc))
                                     }
                                 }
+                                onCvDataChange(cvData.copy(skills = newSkills, lastMissingKeywords = emptyList()))
+                                Toast.makeText(context, if (isBn) "সকল মিসিং স্কিল যুক্ত হয়েছে!" else "Added all missing skills!", Toast.LENGTH_SHORT).show()
                             }
+                        )
 
-                            Spacer(modifier = Modifier.height(10.dp))
-                        }
+                        Spacer(modifier = Modifier.height(14.dp))
 
-                        // Matching Strengths
-                        if (cvData.lastMatchingStrengths.isNotEmpty()) {
-                            Text(
-                                text = if (isBn) "✅ সিভির যে পয়েন্টগুলো সার্কুলারের সাথে মিলেছে:" else "✅ Qualifications Matched with Circular:",
-                                fontSize = 11.5.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF10B981)
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            for (str in cvData.lastMatchingStrengths) {
-                                Text(
-                                    text = "• $str",
-                                    fontSize = 11.sp,
-                                    color = themeColors.displayText.copy(alpha = 0.85f),
-                                    modifier = Modifier.padding(vertical = 2.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.height(10.dp))
-                        }
-
-                        // Circular Suggestions
+                        // Circular Suggestions (Suggestion 2)
                         if (circularSuggestions.isNotEmpty()) {
                             Text(
                                 text = if (isBn) "🎯 সার্কুলার অনুযায়ী নির্দিষ্ট পরিবর্তনগুলো রিভিউ করুন:" else "🎯 Review Circular-specific Proposed Changes:",
@@ -9357,42 +9707,23 @@ private fun AiJobCircularMatchTab(
                             Spacer(modifier = Modifier.height(6.dp))
 
                             circularSuggestions.forEach { suggestion ->
-                                val isSelected = suggestion.id in selectedCircularIds
-                                AiSuggestionCard(
+                                IndividualAiSuggestionCard(
                                     suggestion = suggestion,
-                                    isSelected = isSelected,
-                                    onSelectionChange = { selected ->
-                                        selectedCircularIds = if (selected) {
-                                            selectedCircularIds + suggestion.id
-                                        } else {
-                                            selectedCircularIds - suggestion.id
-                                        }
-                                    },
                                     themeColors = themeColors,
-                                    isBn = isBn
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(10.dp))
-
-                            Button(
-                                onClick = {
-                                    val updated = applySelectedSuggestions(cvData, selectedCircularIds.toList(), cvData.lastCircularSuggestionsJson)
-                                    onCvDataChange(updated)
-                                    Toast.makeText(context, if (isBn) "বাছাইকৃত সার্কুলার পরিবর্তনগুলো সিভিতে প্রয়োগ করা হয়েছে!" else "Selected circular improvements applied successfully!", Toast.LENGTH_SHORT).show()
-                                },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
-                                shape = RoundedCornerShape(10.dp),
-                                enabled = selectedCircularIds.isNotEmpty(),
-                                modifier = Modifier.fillMaxWidth().height(40.dp)
-                            ) {
-                                Icon(imageVector = Icons.Default.CheckCircle, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = if (isBn) "বাছাইকৃত সার্কুলার কাস্টমাইজেশন প্রয়োগ করুন" else "Apply Selected Tailoring Improvements",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White
+                                    isBn = isBn,
+                                    onApplyFix = {
+                                        beforeAfterSuggestionToApply = suggestion
+                                    },
+                                    onNavigate = {
+                                        val tabIdx = when {
+                                            suggestion.category.equals("summary", ignoreCase = true) || suggestion.category.equals("contact_info", ignoreCase = true) -> 0
+                                            suggestion.category.startsWith("experience_", ignoreCase = true) -> 1
+                                            suggestion.category.equals("skills", ignoreCase = true) -> 2
+                                            suggestion.category.equals("educations", ignoreCase = true) || suggestion.category.equals("education", ignoreCase = true) -> 2
+                                            else -> 0
+                                        }
+                                        onNavigateToTab(tabIdx)
+                                    }
                                 )
                             }
 

@@ -1472,82 +1472,77 @@ fun DashboardCategoriesView(
                                     val event = item.specialEvent!!
                                     when {
                                         event.isFestival -> Triple(
-                                            listOf(Color(0xFF3B0764), Color(0xFF581C87), Color(0xFF7E22CE), Color(0xFFA855F7), Color(0xFFC026D3)),
+                                            listOf(Color(0xFF2E1065), Color(0xFF4C1D95), Color(0xFF6D28D9), Color(0xFF8B5CF6), Color(0xFFA78BFA)),
                                             Color(0xFFE879F9),
                                             Color(0xFFF472B6)
                                         )
                                         event.isBirthday -> Triple(
-                                            listOf(Color(0xFF1E1B4B), Color(0xFF312E81), Color(0xFF3730A3), Color(0xFF4F46E5)),
-                                            Color(0xFF818CF8),
-                                            Color(0xFF38BDF8)
+                                            listOf(Color(0xFF1E1B4B), Color(0xFF3B0764), Color(0xFF581C87), Color(0xFF7E22CE), Color(0xFFA855F7)),
+                                            Color(0xFFC084FC),
+                                            Color(0xFFF472B6)
                                         )
                                         else -> Triple(
-                                            listOf(Color(0xFF064E3B), Color(0xFF047857), Color(0xFF059669), Color(0xFF10B981)),
-                                            Color(0xFF34D399),
-                                            Color(0xFF6EE7B7)
+                                            listOf(Color(0xFF3B0764), Color(0xFF581C87), Color(0xFF7E22CE), Color(0xFFA855F7), Color(0xFFD8B4FE)),
+                                            Color(0xFFE9D5FF),
+                                            Color(0xFFF5D0FE)
                                         )
                                     }
                                 } else {
-                                    when (page % 10) {
+                                    when (page % 11) {
                                         0 -> Triple(
-                                            // 1st Banner (Slide 0): Rich Purple Gradient matching screenshot
-                                            listOf(Color(0xFF3B0764), Color(0xFF581C87), Color(0xFF7E22CE), Color(0xFFA855F7), Color(0xFFC026D3)),
+                                            listOf(Color(0xFF2E1065), Color(0xFF4C1D95), Color(0xFF6D28D9), Color(0xFF8B5CF6), Color(0xFFA78BFA)),
                                             Color(0xFFE879F9),
                                             Color(0xFFF472B6)
                                         )
                                         1 -> Triple(
-                                            // Slide 1: Emerald / Teal Gradient
-                                            listOf(Color(0xFF064E3B), Color(0xFF047857), Color(0xFF059669), Color(0xFF10B981), Color(0xFF34D399)),
-                                            Color(0xFF34D399),
-                                            Color(0xFF6EE7B7)
+                                            listOf(Color(0xFF022C22), Color(0xFF064E3B), Color(0xFF0F766E), Color(0xFF0D9488), Color(0xFF2DD4BF)),
+                                            Color(0xFF5EEAD4),
+                                            Color(0xFF99F6E4)
                                         )
                                         2 -> Triple(
-                                            // Slide 2: Deep Sapphire / Ocean Cyan Gradient
-                                            listOf(Color(0xFF0F172A), Color(0xFF1E3A8A), Color(0xFF1D4ED8), Color(0xFF2563EB), Color(0xFF38BDF8)),
-                                            Color(0xFF60A5FA),
-                                            Color(0xFF93C5FD)
+                                            listOf(Color(0xFF0B132B), Color(0xFF1C2541), Color(0xFF3A506B), Color(0xFF5BC0BE), Color(0xFF6FFFE9)),
+                                            Color(0xFF93C5FD),
+                                            Color(0xFFE0F2FE)
                                         )
                                         3 -> Triple(
-                                            // Slide 3: Rich Amber / Sunset Orange Gradient
-                                            listOf(Color(0xFF451A03), Color(0xFF78350F), Color(0xFFC2410C), Color(0xFFEA580C), Color(0xFFF97316)),
-                                            Color(0xFFFB923C),
-                                            Color(0xFFFBBF24)
+                                            listOf(Color(0xFF450A0A), Color(0xFF7F1D1D), Color(0xFF991B1B), Color(0xFFDC2626), Color(0xFFF87171)),
+                                            Color(0xFFFCA5A5),
+                                            Color(0xFFFECDD3)
                                         )
                                         4 -> Triple(
-                                            // Slide 4: Crimson / Rose Pink Gradient
-                                            listOf(Color(0xFF4C0519), Color(0xFF881337), Color(0xFFBE123C), Color(0xFFE11D48), Color(0xFFF43F5E)),
-                                            Color(0xFFFB7185),
-                                            Color(0xFFFDA4AF)
+                                            listOf(Color(0xFF431407), Color(0xFF7C2D12), Color(0xFF9A3412), Color(0xFFEA580C), Color(0xFFFB923C)),
+                                            Color(0xFFFDBA74),
+                                            Color(0xFFFED7AA)
                                         )
                                         5 -> Triple(
-                                            // Slide 5: Deep Electric Indigo Gradient
-                                            listOf(Color(0xFF1E1B4B), Color(0xFF312E81), Color(0xFF3730A3), Color(0xFF4F46E5), Color(0xFF6366F1)),
-                                            Color(0xFF818CF8),
-                                            Color(0xFFA5B4FC)
+                                            listOf(Color(0xFF1E1B4B), Color(0xFF311042), Color(0xFF4A154B), Color(0xFF911E73), Color(0xFFC026D3)),
+                                            Color(0xFFF472B6),
+                                            Color(0xFFFBCFE8)
                                         )
                                         6 -> Triple(
-                                            // Slide 6: Dark Cyan / Neon Turquoise Gradient
-                                            listOf(Color(0xFF083344), Color(0xFF164E63), Color(0xFF0E7490), Color(0xFF0284C7), Color(0xFF06B6D4)),
-                                            Color(0xFF22D3EE),
-                                            Color(0xFF67E8F9)
+                                            listOf(Color(0xFF041E42), Color(0xFF003B46), Color(0xFF07575B), Color(0xFF66A5AD), Color(0xFFC4DFE6)),
+                                            Color(0xFF8FF7FF),
+                                            Color(0xFFE0F2FE)
                                         )
                                         7 -> Triple(
-                                            // Slide 7: Luxury Gold Wine / Ruby Amber Gradient
-                                            listOf(Color(0xFF450A0A), Color(0xFF7F1D1D), Color(0xFF991B1B), Color(0xFFB45309), Color(0xFFD97706)),
-                                            Color(0xFFFBBF24),
-                                            Color(0xFFFDE047)
+                                            listOf(Color(0xFF2D0B1E), Color(0xFF50072E), Color(0xFF701A75), Color(0xFFBE185D), Color(0xFFF472B6)),
+                                            Color(0xFFFBCFE8),
+                                            Color(0xFFFCE7F3)
                                         )
                                         8 -> Triple(
-                                            // Slide 8: Dark Violet Night to Neon Pink Gradient
-                                            listOf(Color(0xFF2E1065), Color(0xFF5B21B6), Color(0xFF701A75), Color(0xFFBE185D), Color(0xFFDB2777)),
-                                            Color(0xFFF472B6),
-                                            Color(0xFFF9A8D4)
+                                            listOf(Color(0xFF311502), Color(0xFF5C2504), Color(0xFF873E0C), Color(0xFFD97706), Color(0xFFFBBF24)),
+                                            Color(0xFFFDE047),
+                                            Color(0xFFFEF08A)
+                                        )
+                                        9 -> Triple(
+                                            listOf(Color(0xFF08071A), Color(0xFF0D1B2A), Color(0xFF1B4965), Color(0xFF62B6CB), Color(0xFFBEE9E8)),
+                                            Color(0xFFA5F3FC),
+                                            Color(0xFFCFFAFE)
                                         )
                                         else -> Triple(
-                                            // Slide 9: Midnight Obsidian to Electric Ultramarine Gradient
-                                            listOf(Color(0xFF09090B), Color(0xFF18181B), Color(0xFF1E293B), Color(0xFF1E40AF), Color(0xFF3B82F6)),
-                                            Color(0xFF60A5FA),
-                                            Color(0xFF93C5FD)
+                                            listOf(Color(0xFF0F0C20), Color(0xFF301934), Color(0xFF501B42), Color(0xFFB01B73), Color(0xFFE02E8E)),
+                                            Color(0xFFF472B6),
+                                            Color(0xFFFCE7F3)
                                         )
                                     }
                                 }
