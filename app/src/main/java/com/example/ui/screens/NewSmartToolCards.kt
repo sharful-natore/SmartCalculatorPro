@@ -4186,7 +4186,7 @@ private fun InteractiveCropDialog(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Text(if (isBn) "ম্যানুয়াল সাইজ:" else "Manual Size:", color = Color.White, fontSize = 12.sp)
+                            Text(if (isBn) "ম্যানুয়াল সাইজ:" else "Manual Size:", color = Color.White, fontSize = 12.sp)
                             
                             OutlinedTextField(
                                 value = customRatioW,

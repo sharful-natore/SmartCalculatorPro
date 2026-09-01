@@ -717,7 +717,7 @@ fun QiblaCompassCard(
                     // Manual Adjustment Slider
                     Text(
                         text = if (isBn)
-                            "ম্যানুয়াল অফসেট অ্যাডজাস্টমেন্ট: ${if (calibrationOffset > 0) "+${calibrationOffset.toInt()}" else "${calibrationOffset.toInt()}"}°"
+                            "ম্যানুয়াল অফসেট অ্যাডজাস্টমেন্ট: ${if (calibrationOffset > 0) "+${calibrationOffset.toInt()}" else "${calibrationOffset.toInt()}"}°"
                         else
                             "Manual Offset Adjustment: ${if (calibrationOffset > 0) "+${calibrationOffset.toInt()}" else "${calibrationOffset.toInt()}"}°",
                         fontSize = 12.sp,

@@ -243,7 +243,7 @@ fun PhoneDiagnosticsTool(
 
         // --- Category Tabs Navigation (Horizontal Scroll) ---
         val diagnosticTabs = listOf(
-            Pair(if (isBn) "ম্যানুয়াল সেন্সর টেস্ট" else "Sensor Tests", Icons.Default.Sensors),
+            Pair(if (isBn) "ম্যানুয়াল সেন্সর টেস্ট" else "Sensor Tests", Icons.Default.Sensors),
             Pair(if (isBn) "হার্ডওয়্যার ও ডিসপ্লে" else "Hardware & Display", Icons.Default.Build),
             Pair(if (isBn) "অডিও ও মাইক টেস্ট" else "Audio & Mic", Icons.Default.Mic)
         )
@@ -296,7 +296,7 @@ fun PhoneDiagnosticsTool(
                     isAvailable = hasAccel,
                     isPassed = passedTests["accel"] == true,
                     liveValue = String.format(Locale.US, "X: %.1f  Y: %.1f  Z: %.1f m/s²", accelX, accelY, accelZ),
-                    actionText = if (isBn) "ম্যানুয়াল টেস্ট" else "Test Tilt",
+                    actionText = if (isBn) "ম্যানুয়াল টেস্ট" else "Test Tilt",
                     themeColors = themeColors,
                     isBn = isBn,
                     onTestClick = { activeInteractiveTest = "ACCEL" }
@@ -309,7 +309,7 @@ fun PhoneDiagnosticsTool(
                     isAvailable = hasGyro,
                     isPassed = passedTests["gyro"] == true,
                     liveValue = String.format(Locale.US, "X: %.2f  Y: %.2f  Z: %.2f rad/s", gyroX, gyroY, gyroZ),
-                    actionText = if (isBn) "ম্যানুয়াল টেস্ট" else "Test Gyro",
+                    actionText = if (isBn) "ম্যানুয়াল টেস্ট" else "Test Gyro",
                     themeColors = themeColors,
                     isBn = isBn,
                     onTestClick = { activeInteractiveTest = "GYRO" }
