@@ -23,6 +23,10 @@ object CvSectionKey {
     const val CUSTOM_SECTIONS = "CUSTOM_SECTIONS"
 }
 
+/**
+ * AtsChecklistItem for ATS and Job Circular requirements
+ * Parameters: title, status ("PRESENT"/"MISSING"), sectionKey (e.g., "SKILLS", "EXPERIENCE", "SUMMARY")
+ */
 data class AtsChecklistItem(
     val title: String,
     val status: String = ChecklistStatus.MISSING, // "PRESENT" or "MISSING"
@@ -94,3 +98,5 @@ data class ResumeProject(
     val description: String = "",
     val link: String = ""
 )
+
+

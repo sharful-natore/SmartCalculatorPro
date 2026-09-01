@@ -59,6 +59,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
+import com.example.data.model.AtsChecklistItem
+import com.example.data.model.ChecklistStatus
+import com.example.data.model.CvSectionKey
+import com.example.ui.components.JobMatchChecklistComponent
+import com.example.ui.components.FixNowBottomSheet
 import com.example.ui.theme.CalculatorThemeColors
 import com.example.ui.viewmodel.CalculatorViewModel
 import com.example.util.AppLanguage
@@ -1325,8 +1330,8 @@ internal fun autoFixAtsScoreTo100(cvData: CvData): CvData {
     val updatedEdus = if (cvData.educations.isEmpty()) {
         listOf(
             CvEducationItem(
-                examLevel = "Bachelor of Science (B.Sc / B.Sc Engg)",
-                degree = "B.Sc in Computer Science & Engineering",
+                examLevel = "B.Sc.",
+                degree = "B.Sc. in Computer Science & Engineering",
                 institution = "University of Dhaka (DU)",
                 passingYear = "2021",
                 resultType = "CGPA (Out of 4.0)"
@@ -1399,7 +1404,7 @@ internal fun autoFixIndividualAtsCheck(cvData: CvData, categoryEn: String): CvDa
         }
         "Education" -> {
             val edus = if (cvData.educations.isEmpty()) {
-                listOf(CvEducationItem(examLevel = "Bachelor of Science (B.Sc / B.Sc Engg)", degree = "Graduation Degree", institution = "University of Dhaka (DU)", passingYear = "2021"))
+                listOf(CvEducationItem(examLevel = "B.Sc.", degree = "B.Sc. in Computer Science & Engineering", institution = "University of Dhaka (DU)", passingYear = "2021"))
             } else {
                 cvData.educations.map { edu ->
                     edu.copy(
@@ -5813,6 +5818,12 @@ fun AtsCvBuilderTool(
                         },
                         onAnalyzeAtsAi = {
                             runDirectAtsAnalysisAi()
+                        },
+                        onNavigateToTab = { tabIndex ->
+                            selectedTab = tabIndex
+                        },
+                        callGeminiAiApi = { prompt, sysPrompt ->
+                            callGeminiAiMultiModal(prompt = prompt, systemInstruction = sysPrompt)
                         }
                     )
 
@@ -7371,151 +7382,193 @@ private fun EducationAndSkillsTab(
 
     // Standard Job Application Dropdown Options
         val examOptions = listOf(
-        "S.S.C / Dakhil / O-Level / Equivalent",
-        "S.S.C (Vocational) / Equivalent",
-        "H.S.C / Alim / A-Level / Equivalent",
-        "H.S.C (Vocational) / Equivalent",
-        "Diploma in Engineering / Polytechnic",
-        "Diploma in Computer Science / IT",
+        // Secondary & Higher Secondary (Individual degrees)
+        "S.S.C",
+        "H.S.C",
+        "Dakhil",
+        "Alim",
+        "O-Level",
+        "A-Level",
+        "S.S.C (Vocational)",
+        "H.S.C (Vocational)",
+        "S.S.C (Business Management)",
+        "H.S.C (BM / BMT)",
+
+        // Diploma Programs
+        "Diploma in Engineering",
+        "Diploma in Computer Science & Technology",
+        "Diploma in Electrical Engineering",
+        "Diploma in Civil Engineering",
+        "Diploma in Mechanical Engineering",
         "Diploma in Textile Engineering",
-        "Diploma in Nursing / Medical Technology",
+        "Diploma in Architecture",
+        "Diploma in Nursing & Midwifery",
+        "Diploma in Medical Technology",
+        "Diploma in Pharmacy",
         "Diploma in Agriculture",
         "Diploma in Forestry",
         "Diploma in Commerce",
-        "Diploma in Pathology / Health Technology",
-        "Diploma in Education (D.Ed / B.Ed)",
-        "Bachelor of Science (B.Sc / B.Sc Engg)",
-        "Bachelor of Science (B.Sc Pass Course)",
-        "Bachelor of Business Administration (BBA)",
-        "Bachelor of Business Studies (BBS)",
-        "Bachelor of Business Studies (BBS Honours)",
-        "Bachelor of Arts (B.A / B.A Honours)",
-        "Bachelor of Arts (B.A Pass Course)",
-        "Bachelor of Commerce (B.Com / B.Com Hons)",
-        "Bachelor of Social Science (BSS / BSS Honours)",
-        "Bachelor of Social Science (B.S.S Pass Course)",
-        "Bachelor of Laws (LL.B / LL.B Honours)",
-        "Bachelor of Medicine & Surgery (MBBS)",
-        "Bachelor of Dental Surgery (BDS)",
-        "Bachelor of Pharmacy (B.Pharm)",
-        "Bachelor of Architecture (B.Arch)",
-        "Bachelor of Fine Arts (BFA)",
-        "Bachelor of Music (BMus)",
-        "Bachelor of Physical Education (BPEd)",
-        "Bachelor of Science in Nursing (B.Sc Nursing)",
-        "Bachelor of Theology / Islamic Studies (B.Th)",
-        "Fazil (Madrasah Bachelor's Equivalent)",
-        "Master of Science (M.Sc)",
-        "Master of Science (M.Sc Engg)",
-        "Master of Business Administration (MBA / EMBA)",
-        "Master of Arts (M.A)",
-        "Master of Social Science (MSS)",
-        "Master of Laws (LL.M)",
-        "Master of Commerce (M.Com)",
-        "Master of Business Studies (MBS)",
-        "Master of Education (M.Ed)",
-        "Master of Fine Arts (MFA)",
-        "Master of Public Health (MPH)",
-        "Kamil (Madrasah Master's Equivalent)",
-        "M.Phil / Postgraduate Diploma (PGD)",
-        "Postgraduate Diploma (PGD) in Computer Science / IT",
-        "Postgraduate Diploma (PGD) in HRM (PGDHRM)",
-        "Chartered Accountant (CA) / Cost and Management Accountant (CMA)",
-        "Ph.D / Doctorate / Post-Doc",
-        "Professional Certificate (PMP / ACCA / CA / CFA)",
+        "Diploma in Education (D.Ed)",
+
+        // Bachelor / Graduation Degrees
+        "B.B.A",
+        "M.B.A",
+        "B.Sc.",
+        "B.Sc. Engg.",
+        "B.A.",
+        "B.S.S.",
+        "B.Com.",
+        "B.B.S.",
+        "LL.B",
+        "M.B.B.S.",
+        "B.D.S.",
+        "B.Pharm",
+        "B.Arch",
+        "BFA",
+        "BMus",
+        "B.Sc. Nursing",
+        "Fazil",
+        "B.Ed",
+        "B.P.Ed",
+
+        // Master / Postgraduate Degrees
+        "M.Sc.",
+        "M.Sc. Engg.",
+        "E.M.B.A",
+        "M.A.",
+        "M.S.S.",
+        "M.Com.",
+        "M.B.S.",
+        "LL.M",
+        "M.Pharm",
+        "MFA",
+        "MPH (Master of Public Health)",
+        "M.Ed",
+        "Kamil",
+
+        // Higher Postgraduate & Doctoral Level
+        "Ph.D",
+        "M.Phil",
+        "Postgraduate Diploma (PGD)",
+        "PGDHRM",
+        "PGDIT",
+
+        // Professional Certifications
+        "CA (Chartered Accountant)",
+        "CMA (Cost & Management Accountant)",
+        "ACCA",
+        "CFA",
+        "PMP",
         "Others (ম্যানুয়াল ইনপুট)"
     )
 
     val subjectOptions = listOf(
-        "Accounting",
-        "Accounting & Information Systems (AIS)",
-        "Agriculture & Agronomy",
-        "Anthropology",
-        "Arabic",
-        "Architecture & Urban Planning",
-        "Bangla",
-        "Biochemistry & Molecular Biology",
-        "Biomedical Engineering",
-        "Biotechnology & Genetic Engineering",
-        "Botany",
-        "Business Administration (BBA / MBA)",
-        "Chemical Engineering",
-        "Chemistry",
-        "Chemistry / Applied Chemistry",
-        "Civil Engineering (CE)",
-        "Computer Science & Engineering (CSE)",
-        "Criminology",
-        "Dental Surgery (BDS)",
-        "Development Studies",
-        "Disaster Management",
-        "Drama & Dramatics",
-        "Economics",
-        "Electrical & Electronic Engineering (EEE)",
-        "Electronics & Telecommunication (ETE / ECE)",
-        "English",
-        "English Language & Literature",
-        "Finance",
-        "Finance & Banking",
-        "Fine Arts",
-        "Fisheries / Aquaculture",
-        "Food Engineering / Food Technology",
-        "Forestry & Environmental Science",
-        "Geography & Environment",
-        "Geology / Applied Geology",
-        "History",
-        "Home Economics",
-        "Industrial & Production Engineering (IPE)",
-        "Information Science & Library Management",
-        "Information Technology (IT)",
-        "International Business (IB)",
-        "International Relations (IR)",
-        "Islamic History & Culture",
-        "Islamic Studies",
-        "Journalism & Mass Communication",
-        "Law / Legal Studies",
-        "Leather Engineering",
-        "Library & Information Science",
+        // Business & Commerce
         "Management",
-        "Management & Human Resource Management (HRM)",
-        "Marine Science / Oceanography",
+        "Accounting",
+        "Finance",
         "Marketing",
-        "Marketing & Brand Management",
-        "Materials & Metallurgical Engineering",
-        "Mathematics",
-        "Mathematics / Applied Mathematics",
-        "Mechanical Engineering (ME)",
-        "Medicine / Surgery (MBBS)",
-        "Microbiology",
-        "Music",
+        "Accounting & Information Systems (AIS)",
+        "Finance & Banking",
+        "Human Resource Management (HRM)",
+        "Banking & Insurance",
+        "International Business",
+        "Supply Chain Management",
+        "Tourism & Hospitality Management",
+        "Business Administration",
+        "Entrepreneurship",
+        "Real Estate",
+
+        // Arts, Humanities & Social Sciences
+        "Bangla",
+        "Political Science",
+        "English",
+        "Economics",
+        "Sociology",
+        "Social Work",
+        "History",
+        "Islamic History & Culture",
+        "Philosophy",
+        "International Relations",
+        "Public Administration",
+        "Psychology",
+        "Law / Legal Studies",
+        "Criminology",
+        "Islamic Studies",
+        "Arabic",
+        "Sanskrit",
         "Pali",
         "Persian Language & Literature",
-        "Petroleum & Mining Engineering",
-        "Pharmacy / Pharmaceutical Sciences",
-        "Philosophy",
-        "Physics",
-        "Physics / Applied Physics",
-        "Political Science",
-        "Population Sciences",
-        "Psychology",
-        "Public Administration",
-        "Sanskrit",
-        "Social Work",
-        "Sociology",
-        "Sociology & Social Work",
-        "Soil Science",
-        "Soil, Water & Environment",
-        "Statistics",
-        "Statistics (Honours)",
-        "Statistics & Data Science",
-        "Supply Chain Management",
-        "Textile Engineering",
-        "Tourism & Hospitality Management",
         "Urdu",
-        "Veterinary Science & Animal Husbandry",
+        "Anthropology",
+        "Development Studies",
+        "Population Sciences",
+        "Disaster Management",
+        "Information Science & Library Management",
+        "Journalism & Mass Communication",
+        "Fine Arts",
+        "Drama & Dramatics",
+        "Music",
+        "Home Economics",
+
+        // Science, Engineering & Technology
+        "Computer Science & Engineering (CSE)",
+        "Electrical & Electronic Engineering (EEE)",
+        "Civil Engineering",
+        "Mechanical Engineering",
+        "Software Engineering",
+        "Information Technology (IT)",
+        "Chemical Engineering",
+        "Industrial & Production Engineering (IPE)",
+        "Textile Engineering",
+        "Leather Engineering",
+        "Materials & Metallurgical Engineering",
+        "Biomedical Engineering",
+        "Mechatronics Engineering",
+        "Petroleum & Mining Engineering",
+        "Architecture & Urban Planning",
+        "Physics",
+        "Applied Physics",
+        "Chemistry",
+        "Applied Chemistry",
+        "Mathematics",
+        "Applied Mathematics",
+        "Statistics",
+        "Statistics & Data Science",
+        "Biochemistry & Molecular Biology",
+        "Biotechnology & Genetic Engineering",
+        "Microbiology",
+        "Pharmacy",
+        "Botany",
         "Zoology",
+        "Soil, Water & Environment",
+        "Soil Science",
+        "Geography & Environment",
+        "Geology",
+        "Oceanography / Marine Science",
+        "Environmental Science",
+
+        // Medical & Health Sciences
+        "Medicine & Surgery (MBBS)",
+        "Dental Surgery (BDS)",
+        "Nursing",
+        "Physiotherapy",
+        "Medical Laboratory Technology",
+        "Public Health",
+        "Nutrition & Food Science",
+
+        // Agriculture & Veterinary Sciences
+        "Agriculture / Agronomy",
+        "Horticulture",
+        "Fisheries / Aquaculture",
+        "Veterinary Science & Animal Husbandry",
+        "Food Engineering & Technology",
+        "Forestry",
+
+        // School & College Groups
         "Science (S.S.C / H.S.C)",
-        "Business Studies / Commerce (S.S.C / H.S.C)",
-        "Humanities / Arts (S.S.C / H.S.C)",
+        "Business Studies / Commerce",
+        "Humanities / Arts",
         "General",
         "Others (ম্যানুয়াল ইনপুট)"
     )
@@ -7523,10 +7576,10 @@ private fun EducationAndSkillsTab(
     val instOptions = listOf(
         // Education Boards
         "Dhaka Education Board",
-        "Chittagong Education Board",
         "Rajshahi Education Board",
         "Comilla Education Board",
         "Jessore Education Board",
+        "Chittagong Education Board",
         "Barisal Education Board",
         "Sylhet Education Board",
         "Dinajpur Education Board",
@@ -7572,6 +7625,22 @@ private fun EducationAndSkillsTab(
         "Bangladesh Open University (BOU)",
         "Islamic Arabic University (IAU)",
         "Bangabandhu Sheikh Mujib Medical University (BSMMU)",
+        "Chittagong Medical University",
+        "Rajshahi Medical University",
+        "Sylhet Medical University",
+
+        // Top Medical Colleges
+        "Dhaka Medical College (DMC)",
+        "Sir Salimullah Medical College (SSMC)",
+        "Shaheed Suhrawardy Medical College",
+        "Mymensingh Medical College",
+        "Chittagong Medical College",
+        "Rajshahi Medical College",
+        "MAG Osmani Medical College, Sylhet",
+        "Sher-e-Bangla Medical College, Barisal",
+        "Rangpur Medical College",
+        "Comilla Medical College",
+        "Khulna Medical College",
 
         // Prominent Private Universities
         "North South University (NSU)",
@@ -7608,6 +7677,11 @@ private fun EducationAndSkillsTab(
         "European University of Bangladesh (EUB)",
         "Sonargaon University (SU)",
         "Bangladesh University (BU)",
+        "BGMEA University of Fashion & Technology (BUFT)",
+        "University of Development Alternative (UODA)",
+        "Premier University, Chittagong",
+        "Port City International University (PCIU)",
+        "Varendra University, Rajshahi",
 
         // Prominent Government / National University Colleges
         "Dhaka College",
@@ -7647,6 +7721,9 @@ private fun EducationAndSkillsTab(
         "Chandpur Government College",
         "Brahmanbaria Government College",
         "Cantonment Public College",
+        "Dinajpur Government College",
+        "Bogra Government College",
+        "Sirajganj Government College",
 
         // Polytechnic & Technical Institutes
         "Dhaka Polytechnic Institute (DPI)",
@@ -7676,10 +7753,13 @@ private fun EducationAndSkillsTab(
         "Cambridge University",
         "Harvard University",
         "MIT (Massachusetts Institute of Technology)",
+        "Stanford University",
         "Monash University",
         "University of Sydney",
         "Coventry University",
         "London Metropolitan University",
+        "University of London",
+        "National University of Singapore (NUS)",
         "Others (ম্যানুয়াল ইনপুট)"
     )
     val yearOptions = (2030 downTo 1980).map { it.toString() } + listOf("Appeared / Studying", "Others (ম্যান্য়াল ইনপ্ট)")
@@ -7736,8 +7816,9 @@ private fun EducationAndSkillsTab(
                     onClick = {
                         val newList = cvData.educations.toMutableList()
                         newList.add(CvEducationItem(
-                            examLevel = "Bachelor / Graduation",
-                            subjectMajor = "General",
+                            examLevel = "B.Sc.",
+                            degree = "B.Sc. in Computer Science & Engineering",
+                            subjectMajor = "Computer Science & Engineering (CSE)",
                             institution = "University of Dhaka (DU)",
                             passingYear = "2022",
                             resultType = "CGPA (Out of 4.0)"
@@ -7762,7 +7843,7 @@ private fun EducationAndSkillsTab(
                     if (examOptions.contains(edu.examLevel)) edu.examLevel
                     else if (edu.degree.isNotBlank() && examOptions.contains(edu.degree)) edu.degree
                     else if (edu.examLevel == "Others" || edu.degree.isNotBlank()) "Others (ম্যান্য়াল ইনপ্ট)"
-                    else "Bachelor / Graduation"
+                    else "B.Sc."
                 )
             }
             var currentSubject by remember(edu.subjectMajor) {
@@ -7831,7 +7912,11 @@ private fun EducationAndSkillsTab(
                             onValueChange = { selected ->
                                 currentExam = selected
                                 val newExamVal = if (selected == "Others (ম্যান্য়াল ইনপ্ট)") "Others" else selected
-                                val computedDegree = if (selected == "Others (ম্যান্য়াল ইনপ্ট)") edu.degree else if (currentSubject != "General" && currentSubject != "Others (ম্যান্য়াল ইনপ্ট)") "$selected in $currentSubject" else selected
+                                val isSecondaryLevel = selected in listOf("S.S.C", "H.S.C", "Dakhil", "Alim", "O-Level", "A-Level", "S.S.C (Vocational)", "H.S.C (Vocational)", "S.S.C (Business Management)", "H.S.C (BM / BMT)")
+                                val computedDegree = if (selected == "Others (ম্যান্য়াল ইনপ্ট)") edu.degree
+                                                     else if (isSecondaryLevel) selected
+                                                     else if (currentSubject != "General" && currentSubject != "Others (ম্যান্য়াল ইনপ্ট)") "$selected in $currentSubject"
+                                                     else selected
                                 val newList = cvData.educations.toMutableList()
                                 newList[index] = edu.copy(examLevel = newExamVal, degree = computedDegree)
                                 onCvDataChange(cvData.copy(educations = newList))
@@ -7841,13 +7926,16 @@ private fun EducationAndSkillsTab(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         CvCustomDropdown(
-                            label = if (isBn) "বিষয়/গ্র্প/ডিপার্টমেন্ট" else "Subject / Department",
+                            label = if (isBn) "বিষয়/গ্রুপ/ডিপার্টমেন্ট" else "Subject / Department",
                             selectedValue = currentSubject,
                             options = subjectOptions,
                             onValueChange = { selected ->
                                 currentSubject = selected
                                 val newSubVal = if (selected == "Others (ম্যান্য়াল ইনপ্ট)") "Others" else selected
-                                val computedDegree = if (currentExam != "Others (ম্যান্য়াল ইনপ্ট)" && selected != "General" && selected != "Others (ম্যান্য়াল ইনপ্ট)") "$currentExam in $selected" else edu.degree
+                                val isSecondaryLevel = currentExam in listOf("S.S.C", "H.S.C", "Dakhil", "Alim", "O-Level", "A-Level", "S.S.C (Vocational)", "H.S.C (Vocational)", "S.S.C (Business Management)", "H.S.C (BM / BMT)")
+                                val computedDegree = if (currentExam != "Others (ম্যান্য়াল ইনপ্ট)" && selected != "General" && selected != "Others (ম্যান্য়াল ইনপ্ট)") {
+                                    if (isSecondaryLevel) currentExam else "$currentExam in $selected"
+                                } else edu.degree
                                 val newList = cvData.educations.toMutableList()
                                 newList[index] = edu.copy(subjectMajor = newSubVal, degree = computedDegree)
                                 onCvDataChange(cvData.copy(educations = newList))
@@ -8587,6 +8675,8 @@ private fun AiJobCircularMatchTab(
     isBn: Boolean,
     onMatchCircularAi: (String, ByteArray?, String) -> Unit,
     onAnalyzeAtsAi: () -> Unit,
+    onNavigateToTab: (Int) -> Unit = {},
+    callGeminiAiApi: suspend (String, String) -> String = { _, _ -> "" },
     isScrollable: Boolean = true
 ) {
     val scrollState = rememberScrollState()
@@ -8595,6 +8685,7 @@ private fun AiJobCircularMatchTab(
     var circularInputText by remember { mutableStateOf(cvData.targetJobCircular) }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var selectedImageBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var activeFixItem by remember { mutableStateOf<AtsChecklistItem?>(null) }
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -8619,6 +8710,48 @@ private fun AiJobCircularMatchTab(
     val circularSuggestions = remember(cvData.lastCircularSuggestionsJson) { parseSuggestions(cvData.lastCircularSuggestionsJson) }
     var selectedCircularIds by remember(cvData.lastCircularSuggestionsJson) { mutableStateOf(circularSuggestions.map { it.id }.toSet()) }
 
+    // Dynamic Checklist evaluation items
+    val currentChecklist = remember(cvData) {
+        listOf(
+            AtsChecklistItem(
+                title = if (isBn) "প্রফেশনাল এটিএস সামারি ডেসক্রিপশন" else "Targeted Executive Professional Summary",
+                status = if (cvData.summary.isNotBlank() && cvData.summary.length >= 35) ChecklistStatus.PRESENT else ChecklistStatus.MISSING,
+                sectionKey = CvSectionKey.SUMMARY,
+                detail = if (cvData.summary.isNotBlank()) "Summary text present (${cvData.summary.length} characters)" else "Add a strong targeted executive summary"
+            ),
+            AtsChecklistItem(
+                title = if (isBn) "কাজের অভিজ্ঞতায় পরিমাপযোগ্য মেট্রিক্স (%, $)" else "Quantified achievements (%, $) in Experience",
+                status = if (cvData.experiences.any { exp -> exp.description.contains("%") || exp.description.contains("$") || exp.description.contains(Regex("\\d+")) }) ChecklistStatus.PRESENT else ChecklistStatus.MISSING,
+                sectionKey = CvSectionKey.EXPERIENCE,
+                detail = if (cvData.experiences.isNotEmpty()) "Include numerical impact metrics in role descriptions" else "Add work experience with measurable achievements"
+            ),
+            AtsChecklistItem(
+                title = if (isBn) "টেকনিক্যাল ও ডোমেইন স্কিল কভারেজ (৫+)" else "Categorized Technical & Domain Skills (5+ skills)",
+                status = if (cvData.skills.size >= 5) ChecklistStatus.PRESENT else ChecklistStatus.MISSING,
+                sectionKey = CvSectionKey.SKILLS,
+                detail = "Current skills count: ${cvData.skills.size}"
+            ),
+            AtsChecklistItem(
+                title = if (isBn) "যোগাযোগ তথ্য ও লিংকডইন ইউআরএল" else "Standard Contact Info with LinkedIn URL",
+                status = if (cvData.email.isNotBlank() && cvData.phone.isNotBlank() && cvData.linkedin.isNotBlank()) ChecklistStatus.PRESENT else ChecklistStatus.MISSING,
+                sectionKey = CvSectionKey.CONTACT_INFO,
+                detail = if (cvData.linkedin.isNotBlank()) "Contact details and LinkedIn link verified" else "Add your LinkedIn profile URL"
+            ),
+            AtsChecklistItem(
+                title = if (isBn) "পোর্টফোলিও ও হাই-ইমপ্যাক্ট প্রজেক্ট" else "Featured Projects & Accomplishments",
+                status = if (cvData.projects.isNotEmpty() || cvData.customSections.isNotEmpty()) ChecklistStatus.PRESENT else ChecklistStatus.MISSING,
+                sectionKey = CvSectionKey.PROJECTS,
+                detail = if (cvData.projects.isNotEmpty()) "${cvData.projects.size} projects listed" else "Add portfolio projects to boost ATS score"
+            ),
+            AtsChecklistItem(
+                title = if (isBn) "টার্গেট জব সার্কুলার কীওয়ার্ড সারফেস ইনপুট" else "Target Job Circular Requirements & Alignment",
+                status = if (cvData.targetJobCircular.isNotBlank() && cvData.lastJobMatchPercentage >= 70) ChecklistStatus.PRESENT else ChecklistStatus.MISSING,
+                sectionKey = CvSectionKey.SKILLS,
+                detail = if (cvData.lastJobMatchPercentage > 0) "Current Circular Match Score: ${cvData.lastJobMatchPercentage}%" else "Paste job circular below to analyze keyword matching"
+            )
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -8633,7 +8766,7 @@ private fun AiJobCircularMatchTab(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // --- DUAL TOP METRIC CARDS ---
+        // --- 1. DUAL TOP METRIC SCORE CARDS ---
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -8743,6 +8876,105 @@ private fun AiJobCircularMatchTab(
                 }
             }
         }
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        // --- 2. CHIP GROUP ---
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // Chip 1: "Analyze ATS Score with AI"
+            FilterChip(
+                selected = false,
+                onClick = { onAnalyzeAtsAi() },
+                label = {
+                    Text(
+                        text = if (isBn) "এটিএস স্কোর বিশ্লেষণ" else "Analyze ATS Score with AI",
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.AutoAwesome,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = themeColors.buttonEqualBg
+                    )
+                },
+                colors = FilterChipDefaults.filterChipColors(
+                    containerColor = themeColors.cardBg,
+                    labelColor = themeColors.displayText
+                ),
+                border = FilterChipDefaults.filterChipBorder(
+                    enabled = true,
+                    selected = false,
+                    borderColor = themeColors.buttonEqualBg.copy(alpha = 0.4f)
+                ),
+                modifier = Modifier.weight(1f)
+            )
+
+            // Chip 2: "Analyze Circular Matching with AI"
+            FilterChip(
+                selected = false,
+                onClick = {
+                    if (circularInputText.isNotBlank() || selectedImageBitmap != null) {
+                        var imageBytes: ByteArray? = null
+                        var mimeType = "image/jpeg"
+                        if (selectedImageUri != null) {
+                            try {
+                                context.contentResolver.openInputStream(selectedImageUri!!).use { stream ->
+                                    imageBytes = stream?.readBytes()
+                                }
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
+                        }
+                        onMatchCircularAi(circularInputText, imageBytes, mimeType)
+                    } else {
+                        Toast.makeText(context, if (isBn) "নিচে সার্কুলার টেক্সট দিন" else "Please enter circular text below first", Toast.LENGTH_SHORT).show()
+                    }
+                },
+                label = {
+                    Text(
+                        text = if (isBn) "সার্কুলার ম্যাচিং" else "Analyze Circular Matching with AI",
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Checklist,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = Color(0xFF10B981)
+                    )
+                },
+                colors = FilterChipDefaults.filterChipColors(
+                    containerColor = themeColors.cardBg,
+                    labelColor = themeColors.displayText
+                ),
+                border = FilterChipDefaults.filterChipBorder(
+                    enabled = true,
+                    selected = false,
+                    borderColor = Color(0xFF10B981).copy(alpha = 0.4f)
+                ),
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // --- 3. INTERACTIVE CHECKLIST COMPONENT ---
+        JobMatchChecklistComponent(
+            checklist = currentChecklist,
+            themeColors = themeColors,
+            isBn = isBn,
+            onFixNowClick = { fixItem ->
+                activeFixItem = fixItem
+            }
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -9215,6 +9447,26 @@ private fun AiJobCircularMatchTab(
                 }
             }
         }
+    }
+
+    if (activeFixItem != null) {
+        FixNowBottomSheet(
+            item = activeFixItem!!,
+            cvData = cvData,
+            themeColors = themeColors,
+            isBn = isBn,
+            onDismiss = { activeFixItem = null },
+            onNavigateToSection = { sectionKey, targetTabIndex ->
+                onNavigateToTab(targetTabIndex)
+                activeFixItem = null
+            },
+            onApplyAiFix = { updatedCv ->
+                onCvDataChange(updatedCv)
+                Toast.makeText(context, if (isBn) "সিভিতে এআই তথ্য যুক্ত করা হয়েছে!" else "AI generated content applied to CV!", Toast.LENGTH_SHORT).show()
+                activeFixItem = null
+            },
+            callGeminiAiApi = callGeminiAiApi
+        )
     }
 }
 
