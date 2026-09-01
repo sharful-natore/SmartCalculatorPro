@@ -10042,5 +10042,16 @@ private fun CustomizationTab(
                                         onCvDataChange(cvData.copy(hiddenSections = mutableHidden.toList()))
                                     },
                                     colors = SwitchDefaults.colors(
-                            xœRP@€äŒÔäìÔ”ŒÒÜ$çüœü"[0­‘Y’ªÃ¥@$€T”˜œ3¨$#57Ì)ÖK*-)ÉÏs-,MÌqJ'ŞØÒ<l.D68%³¸ '±2$µ¢D/9¿ R#1§ #¨È@Ï4M“›pz(^”_š—B”¡DÚ›Ÿ’™–™
-²ÌÊÔ+NNÌIÕ0Ğ3ú€ !øUÔâ”Å.ƒ)Š*‚àAXµ\µ\    ÿÿ ­Á€d
+                                        checkedThumbColor = Color.White,
+                                        checkedTrackColor = themeColors.buttonEqualBg
+                                    ),
+                                    modifier = Modifier.scale(0.75f)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
