@@ -44,6 +44,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.window.Dialog
 import androidx.compose.material3.*
@@ -57,6 +58,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.material.icons.filled.PictureAsPdf
@@ -5384,6 +5387,7 @@ fun AtsCvBuilderTool(
                         val sysPrompt = when (aiPromptTargetField) {
                             "CIRCULAR_MATCH" -> "You are a top ATS recruitment specialist & resume evaluator. Analyze candidate resume against target job circular. Output STRICTLY valid JSON with structure: {\"matchPercentage\": 88, \"tailoredSummary\": \"...\", \"matchingStrengths\": [\"Strength 1\", \"Strength 2\"], \"missingKeywords\": [\"Keyword1\", \"Keyword2\"], \"improvementTips\": [\"Tip 1\", \"Tip 2\"], \"newSkills\": [\"Skill1\", \"Skill2\"]}. Do NOT include markdown syntax."
                             "FRESHER_COMPLETE" -> "You are a professional university career coach and top ATS resume consultant. Generate 4 high-impact resume sections for freshers. Output strictly valid JSON with keys: 'academicProjects', 'internshipsVolunteer', 'leadershipClubs', 'keyCoursework'."
+                            "SKILLS" -> "You are an expert HR Manager & Technical Recruiter. Generate a list of top relevant skills with concise title and action-oriented description for each skill. Output each skill strictly on a new line in format: 'Skill Title: Detailed description of proficiency or application'. Example:\nFinancial Management: Skilled in budget forecasting, cost control, and financial reporting.\nOutput ONLY the skills list line by line. Do NOT include markdown code blocks, numbers, or greetings."
                             else -> "CRITICAL INSTRUCTION: You are an expert HR Manager and professional resume writer. Write ONLY the exact, precise text content requested for the CV field. DO NOT include any conversational text, greetings, explanations, or wrap-up remarks. DO NOT include introductory phrases like \'Here is the objective:\' or \'Certainly!\'. DO NOT use markdown code blocks (```). Your ENTIRE output must be exclusively the raw text to be inserted into the CV, ready to copy-paste. Nothing else."
                         }
                         val resultText = callGeminiAiMultiModal(
@@ -5654,6 +5658,24 @@ fun AtsCvBuilderTool(
                             imageVector = Icons.Default.Undo,
                             contentDescription = "Undo",
                             tint = if (undoStack.isNotEmpty()) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.3f),
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(2.dp))
+
+                    // Quick Preview Button (Right of Undo)
+                    IconButton(
+                        onClick = {
+                            selectedTab = 5
+                            previewRefreshKey++
+                        },
+                        modifier = Modifier.size(38.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Visibility,
+                            contentDescription = "Quick Preview",
+                            tint = themeColors.buttonEqualBg,
                             modifier = Modifier.size(22.dp)
                         )
                     }
@@ -6341,14 +6363,13 @@ private fun ProfileAndPersonasTab(
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    // Larger Photo Preview (74.dp)
                     Box(
                         modifier = Modifier
-                            .size(
-                                width = (cvData.photoWidth * 1.15f).coerceIn(60f, 130f).dp,
-                                height = (cvData.photoHeight * 1.15f).coerceIn(60f, 140f).dp
-                            )
+                            .size(74.dp)
                             .background(Color.Gray.copy(alpha = 0.08f), shape = previewShape)
                             .then(
                                 if (cvData.photoBorderWidth > 0f) {
@@ -6360,15 +6381,7 @@ private fun ProfileAndPersonasTab(
                                 } else Modifier
                             )
                             .clip(shape = previewShape)
-                            .pointerInput(cvData.photoScale) {
-                                detectDragGestures { change, dragAmount ->
-                                    change.consume()
-                                    val bound = 150f * cvData.photoScale
-                                    val newX = (cvData.photoOffsetX + dragAmount.x).coerceIn(-bound, bound)
-                                    val newY = (cvData.photoOffsetY + dragAmount.y).coerceIn(-bound, bound)
-                                    onCvDataChange(cvData.copy(photoOffsetX = newX, photoOffsetY = newY))
-                                }
-                            },
+                            .clickable { imagePickerLauncher.launch("image/*") },
                         contentAlignment = Alignment.Center
                     ) {
                         if (decodedBmp != null) {
@@ -6394,9 +6407,9 @@ private fun ProfileAndPersonasTab(
                                     imageVector = Icons.Default.AddAPhoto,
                                     contentDescription = null,
                                     tint = themeColors.displayText.copy(alpha = 0.4f),
-                                    modifier = Modifier.size(24.dp)
+                                    modifier = Modifier.size(26.dp)
                                 )
-                                Spacer(modifier = Modifier.height(4.dp))
+                                Spacer(modifier = Modifier.height(2.dp))
                                 Text(
                                     text = if (isBn) "ছবি দিন" else "No Photo",
                                     fontSize = 10.sp,
@@ -6406,94 +6419,50 @@ private fun ProfileAndPersonasTab(
                         }
                     }
 
-                    Spacer(modifier = Modifier.width(14.dp))
-
-                    // Action buttons & configurations
-                    Column(modifier = Modifier.weight(1f)) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
+                    // Gallery & Photo Action Buttons on Far Right
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (cvData.photoBase64.isNotBlank()) {
                             IconButton(
-                                onClick = { imagePickerLauncher.launch("image/*") },
+                                onClick = {
+                                    try {
+                                        val bytes = Base64.decode(cvData.photoBase64, Base64.DEFAULT)
+                                        pendingCropBitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                                    } catch (_: Exception) {}
+                                },
                                 modifier = Modifier
-                                    .size(34.dp)
-                                    .background(themeColors.buttonEqualBg, CircleShape)
+                                    .size(38.dp)
+                                    .background(themeColors.buttonEqualBg.copy(alpha = 0.15f), CircleShape)
                             ) {
-                                Icon(Icons.Default.PhotoLibrary, contentDescription = "Gallery", tint = Color.White, modifier = Modifier.size(16.dp))
+                                Icon(Icons.Default.Crop, contentDescription = "Crop", tint = themeColors.buttonEqualBg, modifier = Modifier.size(18.dp))
                             }
 
-                            if (cvData.photoBase64.isNotBlank()) {
-                                IconButton(
-                                    onClick = {
-                                        try {
-                                            val bytes = Base64.decode(cvData.photoBase64, Base64.DEFAULT)
-                                            pendingCropBitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                                        } catch (_: Exception) {}
-                                    },
-                                    modifier = Modifier
-                                        .size(34.dp)
-                                        .background(themeColors.buttonEqualBg.copy(alpha = 0.15f), CircleShape)
-                                ) {
-                                    Icon(Icons.Default.Crop, contentDescription = "Crop", tint = themeColors.buttonEqualBg, modifier = Modifier.size(16.dp))
-                                }
-
-                                IconButton(
-                                    onClick = {
-                                        onCvDataChange(cvData.copy(
-                                            photoBase64 = "",
-                                            photoScale = 1.0f,
-                                            photoOffsetX = 0f,
-                                            photoOffsetY = 0f
-                                        ))
-                                    },
-                                    modifier = Modifier
-                                        .size(34.dp)
-                                        .background(Color.Red.copy(alpha = 0.12f), CircleShape)
-                                ) {
-                                    Icon(Icons.Default.Delete, contentDescription = "Remove", tint = Color.Red.copy(alpha = 0.8f), modifier = Modifier.size(16.dp))
-                                }
+                            IconButton(
+                                onClick = {
+                                    onCvDataChange(cvData.copy(
+                                        photoBase64 = "",
+                                        photoScale = 1.0f,
+                                        photoOffsetX = 0f,
+                                        photoOffsetY = 0f
+                                    ))
+                                },
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .background(Color.Red.copy(alpha = 0.12f), CircleShape)
+                            ) {
+                                Icon(Icons.Default.Delete, contentDescription = "Remove", tint = Color.Red.copy(alpha = 0.8f), modifier = Modifier.size(18.dp))
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        // Shape Chips Selection (Circle, Rounded, Square, Oval, Rectangle)
-                        Text(
-                            text = if (isBn) "ছবির শেইপ নির্বাচন করুন:" else "Select Photo Shape:",
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = themeColors.displayText.copy(alpha = 0.7f)
-                        )
-
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            modifier = Modifier.padding(vertical = 4.dp)
+                        IconButton(
+                            onClick = { imagePickerLauncher.launch("image/*") },
+                            modifier = Modifier
+                                .size(42.dp)
+                                .background(themeColors.buttonEqualBg.copy(alpha = 0.18f), CircleShape)
                         ) {
-                            val shapes = listOf("Circle", "Rounded", "Square")
-                            shapes.forEach { shapeName ->
-                                val isSelected = cvData.photoShape == shapeName
-                                val label = when (shapeName) {
-                                    "Circle" -> if (isBn) "বৃত্ত" else "Circle"
-                                    "Rounded" -> if (isBn) "কোণ গোল" else "Rounded"
-                                    "Square" -> if (isBn) "বর্গ" else "Square"
-                                    else -> shapeName
-                                }
-                                Surface(
-                                    onClick = { onCvDataChange(cvData.copy(photoShape = shapeName)) },
-                                    shape = RoundedCornerShape(14.dp),
-                                    color = if (isSelected) themeColors.buttonEqualBg else themeColors.background,
-                                    border = BorderStroke(1.dp, if (isSelected) Color.Transparent else themeColors.displayText.copy(alpha = 0.15f)),
-                                    modifier = Modifier.padding(1.dp)
-                                ) {
-                                    Text(
-                                        text = label,
-                                        fontSize = 9.sp,
-                                        color = if (isSelected) Color.White else themeColors.displayText,
-                                        fontWeight = FontWeight.Bold,
-                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
-                                    )
-                                }
-                            }
+                            Icon(Icons.Default.PhotoLibrary, contentDescription = "Gallery", tint = themeColors.buttonEqualBg, modifier = Modifier.size(20.dp))
                         }
                     }
                 }
@@ -6502,13 +6471,13 @@ private fun ProfileAndPersonasTab(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { isPhotoAdvancedExpanded = !isPhotoAdvancedExpanded }
-                        .padding(top = 8.dp, bottom = 4.dp),
+                        .padding(top = 10.dp, bottom = 4.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
                         text = if (isBn) "এডভান্সড ফটো সেটিংস" else "Advanced Photo Options",
-                        fontSize = 11.sp,
+                        fontSize = 11.5.sp,
                         fontWeight = FontWeight.Bold,
                         color = themeColors.buttonEqualBg
                     )
@@ -6521,7 +6490,48 @@ private fun ProfileAndPersonasTab(
                 }
 
                 if (isPhotoAdvancedExpanded) {
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    // Shape Chips Selection inside Advanced Settings
+                    Text(
+                        text = if (isBn) "ছবির শেইপ নির্বাচন করুন:" else "Select Photo Shape:",
+                        fontSize = 10.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.displayText.copy(alpha = 0.8f)
+                    )
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.padding(vertical = 6.dp)
+                    ) {
+                        val shapes = listOf("Circle", "Rounded", "Square")
+                        shapes.forEach { shapeName ->
+                            val isSelected = cvData.photoShape == shapeName
+                            val label = when (shapeName) {
+                                "Circle" -> if (isBn) "বৃত্ত" else "Circle"
+                                "Rounded" -> if (isBn) "কোণ গোল" else "Rounded"
+                                "Square" -> if (isBn) "বর্গ" else "Square"
+                                else -> shapeName
+                            }
+                            Surface(
+                                onClick = { onCvDataChange(cvData.copy(photoShape = shapeName)) },
+                                shape = RoundedCornerShape(14.dp),
+                                color = if (isSelected) themeColors.buttonEqualBg else themeColors.background,
+                                border = BorderStroke(1.dp, if (isSelected) Color.Transparent else themeColors.displayText.copy(alpha = 0.15f)),
+                                modifier = Modifier.padding(1.dp)
+                            ) {
+                                Text(
+                                    text = label,
+                                    fontSize = 10.sp,
+                                    color = if (isSelected) Color.White else themeColors.displayText,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
 
                     // Border Width Slider (default 1.5dp, allows 0 to 4dp)
                     Row(
@@ -7118,7 +7128,7 @@ private fun ExperienceTab(
                     }
                     Spacer(modifier = Modifier.height(6.dp))
                     CvCustomLargeTextField(
-                        label = "",
+                        label = if (isBn) "প্রজেক্ট বিবরণী" else "Project Details",
                         value = cvData.fresherAcademicProjects,
                         onValueChange = { onCvDataChange(cvData.copy(fresherAcademicProjects = it)) },
                         themeColors = themeColors,
@@ -7163,13 +7173,14 @@ private fun ExperienceTab(
                     }
                     Spacer(modifier = Modifier.height(6.dp))
                     CvCustomLargeTextField(
-                        label = "",
+                        label = if (isBn) "ইন্টার্নশিপ বিবরণী" else "Internship Details",
                         value = cvData.fresherInternshipsVolunteer,
                         onValueChange = { onCvDataChange(cvData.copy(fresherInternshipsVolunteer = it)) },
                         themeColors = themeColors,
                         isLiveEdit = isLiveEdit,
                         isBn = isBn,
                         minLines = 3,
+                        onAiPrompt = { onRequestAiPrompt("Internships AI", "Generate internship and volunteer descriptions for a ${cvData.jobTitle}...", "FRESHER", -1) },
                         placeholderText = "• Summer Intern at Apex Logistics (Data Reconciliation)\n• Volunteer Organizer for National Blood Donation Camp..."
                     )
                 }
@@ -7207,13 +7218,14 @@ private fun ExperienceTab(
                     }
                     Spacer(modifier = Modifier.height(6.dp))
                     CvCustomLargeTextField(
-                        label = "",
+                        label = if (isBn) "নেতৃত্ব ও এক্টিভিটি" else "Leadership & Activity",
                         value = cvData.fresherLeadershipClubs,
                         onValueChange = { onCvDataChange(cvData.copy(fresherLeadershipClubs = it)) },
                         themeColors = themeColors,
                         isLiveEdit = isLiveEdit,
                         isBn = isBn,
                         minLines = 3,
+                        onAiPrompt = { onRequestAiPrompt("Campus Leadership AI", "Generate campus leadership and extracurricular descriptions for a ${cvData.jobTitle}...", "FRESHER", -1) },
                         placeholderText = "• President / General Secretary at University Business Club\n• Finalist, National Inter-University Case Competition..."
                     )
                 }
@@ -7287,8 +7299,11 @@ private fun ExperienceTab(
                 modifier = Modifier.weight(1f, fill = false)
             )
             Spacer(modifier = Modifier.width(6.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Surface(
                     onClick = {
                         onRequestAiPrompt(
                             if (isBn) "কাজের অভিজ্ঞতা এআই নির্দেশনা" else "Work Experience AI Prompt",
@@ -7297,24 +7312,37 @@ private fun ExperienceTab(
                             -1
                         )
                     },
-                    modifier = Modifier
-                        .size(30.dp)
-                        .background(themeColors.buttonEqualBg, CircleShape)
+                    shape = RoundedCornerShape(12.dp),
+                    color = themeColors.buttonEqualBg
                 ) {
-                    Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = "AI", tint = Color.White, modifier = Modifier.size(14.dp))
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = "AI", tint = Color.White, modifier = Modifier.size(13.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(text = if (isBn) "এআই জেনারেট" else "AI Generate", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    }
                 }
-                Spacer(modifier = Modifier.width(6.dp))
-                IconButton(
+
+                Surface(
                     onClick = {
                         val newList = cvData.experiences.toMutableList()
                         newList.add(CvExperienceItem())
                         onCvDataChange(cvData.copy(experiences = newList))
                     },
-                    modifier = Modifier
-                        .size(30.dp)
-                        .background(themeColors.buttonEqualBg.copy(alpha = 0.12f), CircleShape)
+                    shape = RoundedCornerShape(12.dp),
+                    color = themeColors.buttonEqualBg.copy(alpha = 0.12f),
+                    border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.3f))
                 ) {
-                    Icon(imageVector = Icons.Default.Add, contentDescription = "Add", tint = themeColors.buttonEqualBg, modifier = Modifier.size(18.dp))
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(imageVector = Icons.Default.Add, contentDescription = "Add", tint = themeColors.buttonEqualBg, modifier = Modifier.size(14.dp))
+                        Spacer(modifier = Modifier.width(3.dp))
+                        Text(text = if (isBn) "যুক্ত করুন" else "Add", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = themeColors.buttonEqualBg)
+                    }
                 }
             }
         }
@@ -7909,8 +7937,11 @@ private fun EducationAndSkillsTab(
                 themeColors = themeColors,
                 modifier = Modifier.weight(1f, fill = false)
             )
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Button(
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Surface(
                     onClick = {
                         onRequestAiPrompt(
                             if (isBn) "শিক্ষাগত যোগ্যতা এআই নির্দেশনা" else "Education Details AI Prompt",
@@ -7919,18 +7950,20 @@ private fun EducationAndSkillsTab(
                             -1
                         )
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.height(30.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    color = themeColors.buttonEqualBg
                 ) {
-                    Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
-                    
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(text = if (isBn) "এআই জেনারেট" else "AI Generate", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    }
                 }
 
-                Spacer(modifier = Modifier.width(6.dp))
-
-                OutlinedButton(
+                Surface(
                     onClick = {
                         val newList = cvData.educations.toMutableList()
                         newList.add(CvEducationItem(
@@ -7943,12 +7976,18 @@ private fun EducationAndSkillsTab(
                         ))
                         onCvDataChange(cvData.copy(educations = newList))
                     },
-                    shape = RoundedCornerShape(16.dp),
-                    border = BorderStroke(1.dp, themeColors.buttonEqualBg),
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-                    modifier = Modifier.height(30.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    color = themeColors.buttonEqualBg.copy(alpha = 0.12f),
+                    border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.3f))
                 ) {
-                    Text(text = "+", color = themeColors.buttonEqualBg, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(imageVector = Icons.Default.Add, contentDescription = null, tint = themeColors.buttonEqualBg, modifier = Modifier.size(14.dp))
+                        Spacer(modifier = Modifier.width(3.dp))
+                        Text(text = if (isBn) "যুক্ত করুন" else "Add", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = themeColors.buttonEqualBg)
+                    }
                 }
             }
         }
@@ -8199,8 +8238,11 @@ private fun EducationAndSkillsTab(
                 themeColors = themeColors,
                 modifier = Modifier.weight(1f, fill = false)
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Button(
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Surface(
                     onClick = {
                         onRequestAiPrompt(
                             if (isBn) "কী স্কিল এআই দিয়ে জেনারেট করুন" else "Generate Key Skills with AI",
@@ -8209,27 +8251,37 @@ private fun EducationAndSkillsTab(
                             -1
                         )
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.height(30.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    color = themeColors.buttonEqualBg
                 ) {
-                    Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
-                    
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(text = if (isBn) "এআই জেনারেট" else "AI Generate", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    }
                 }
 
-                OutlinedButton(
+                Surface(
                     onClick = {
                         val newList = cvData.skills.toMutableList()
                         newList.add(CvSkillItem(name = "Skill Title: Description of proficiency..."))
                         onCvDataChange(cvData.copy(skills = newList))
                     },
-                    shape = RoundedCornerShape(16.dp),
-                    border = BorderStroke(1.dp, themeColors.buttonEqualBg),
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-                    modifier = Modifier.height(30.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    color = themeColors.buttonEqualBg.copy(alpha = 0.12f),
+                    border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.3f))
                 ) {
-                    Text(text = "+", color = themeColors.buttonEqualBg, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(imageVector = Icons.Default.Add, contentDescription = null, tint = themeColors.buttonEqualBg, modifier = Modifier.size(14.dp))
+                        Spacer(modifier = Modifier.width(3.dp))
+                        Text(text = if (isBn) "যুক্ত করুন" else "Add", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = themeColors.buttonEqualBg)
+                    }
                 }
             }
         }
@@ -8300,7 +8352,7 @@ private fun EducationAndSkillsTab(
                 themeColors = themeColors,
                 modifier = Modifier.weight(1f, fill = false)
             )
-            Button(
+            Surface(
                 onClick = {
                     onRequestAiPrompt(
                         if (isBn) "ট্রেনিং ও সার্টিফিকেট এআই নির্দেশনা" else "Training & Certifications AI Prompt",
@@ -8309,13 +8361,17 @@ private fun EducationAndSkillsTab(
                         -1
                     )
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
-                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.height(30.dp)
+                shape = RoundedCornerShape(12.dp),
+                color = themeColors.buttonEqualBg
             ) {
-                Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
-                
+                Row(
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(text = if (isBn) "এআই জেনারেট" else "AI Generate", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                }
             }
         }
 
@@ -8348,7 +8404,7 @@ private fun EducationAndSkillsTab(
                 themeColors = themeColors,
                 modifier = Modifier.weight(1f, fill = false)
             )
-            Button(
+            Surface(
                 onClick = {
                     onRequestAiPrompt(
                         if (isBn) "রেফারেন্স এআই নির্দেশনা" else "References AI Prompt",
@@ -8357,13 +8413,17 @@ private fun EducationAndSkillsTab(
                         -1
                     )
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
-                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.height(30.dp)
+                shape = RoundedCornerShape(12.dp),
+                color = themeColors.buttonEqualBg
             ) {
-                Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
-                
+                Row(
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(text = if (isBn) "এআই জেনারেট" else "AI Generate", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                }
             }
         }
 
@@ -9472,7 +9532,8 @@ data class CvFixActionDialogData(
     val whatToChangeEn: String,
     val proposedContent: String = "",
     val targetTab: Int,
-    val onAutoFix: () -> Unit
+    val onAutoFix: () -> Unit,
+    val onCustomFix: ((String) -> Unit)? = null
 )
 
 @Composable
@@ -9481,10 +9542,11 @@ private fun CvFixActionDialog(
     themeColors: CalculatorThemeColors,
     isBn: Boolean,
     onNavigateToTab: (Int) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onRequestAiCustomPrompt: ((title: String, prompt: String, targetTab: Int) -> Unit)? = null
 ) {
     val context = LocalContext.current
-    val clipboardManager = LocalClipboardManager.current
+    var userCustomInput by remember { mutableStateOf("") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -9530,7 +9592,7 @@ private fun CvFixActionDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                // 1. Circular Requirement
+                // 1. Requirement
                 Surface(
                     shape = RoundedCornerShape(10.dp),
                     color = themeColors.background,
@@ -9538,12 +9600,16 @@ private fun CvFixActionDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(10.dp)) {
-                        Text(
-                            text = if (isBn) "📌 সার্কুলারের চাহিদা:" else "📌 Requirement:",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = themeColors.displayText
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Info, contentDescription = null, tint = themeColors.buttonEqualBg, modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = if (isBn) "সার্কুলার/এটিএস চাহিদা:" else "Requirement Details:",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.displayText
+                            )
+                        }
                         Spacer(modifier = Modifier.height(3.dp))
                         Text(
                             text = if (isBn) data.requirementBn else data.requirementEn,
@@ -9562,12 +9628,16 @@ private fun CvFixActionDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(10.dp)) {
-                        Text(
-                            text = if (isBn) "🛠️ যা যা পরিবর্তন করতে হবে:" else "🛠️ Required CV Changes:",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFFEF4444)
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Build, contentDescription = null, tint = Color(0xFFEF4444), modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = if (isBn) "যা যা পরিবর্তন করতে হবে:" else "Required CV Changes:",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFEF4444)
+                            )
+                        }
                         Spacer(modifier = Modifier.height(3.dp))
                         Text(
                             text = if (isBn) data.whatToChangeBn else data.whatToChangeEn,
@@ -9578,50 +9648,54 @@ private fun CvFixActionDialog(
                     }
                 }
 
-                // 3. Proposed Content Preview with Copy Button
-                if (data.proposedContent.isNotBlank()) {
-                    Surface(
-                        shape = RoundedCornerShape(10.dp),
-                        color = themeColors.cardBg,
-                        border = BorderStroke(1.dp, Color(0xFF10B981).copy(alpha = 0.35f)),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(modifier = Modifier.padding(10.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = if (isBn) "✨ প্রস্তাবিত কনটেন্ট (প্রিভিউ):" else "✨ Proposed Content (Preview):",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF10B981)
-                                )
-                                IconButton(
-                                    onClick = {
-                                        clipboardManager.setText(AnnotatedString(data.proposedContent))
-                                        Toast.makeText(context, if (isBn) "কনটেন্ট কপি করা হয়েছে!" else "Content copied!", Toast.LENGTH_SHORT).show()
-                                    },
-                                    modifier = Modifier.size(24.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.ContentCopy,
-                                        contentDescription = "Copy Content",
-                                        tint = themeColors.displayText.copy(alpha = 0.7f),
-                                        modifier = Modifier.size(13.dp)
-                                    )
+                // 3. Custom Input Box with "পূরণ করুন" Button directly underneath
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    CvCustomLargeTextField(
+                        label = if (isBn) "সরাসরি নিজস্ব তথ্য দিয়ে পূরণ করুন:" else "Fill directly with custom details:",
+                        value = userCustomInput,
+                        onValueChange = { userCustomInput = it },
+                        themeColors = themeColors,
+                        placeholderText = if (isBn) "যেমন: ৩ বছরের কাজের অভিজ্ঞতা আছে, অ্যান্ড্রয়েড ও কোটলিনে পারদর্শী..." else "e.g., 3 years experience, skilled in Android & Kotlin...",
+                        minLines = 3,
+                        isBn = isBn
+                    )
+
+                    Button(
+                        onClick = {
+                            if (userCustomInput.isNotBlank()) {
+                                if (data.onCustomFix != null) {
+                                    data.onCustomFix.invoke(userCustomInput)
+                                } else {
+                                    data.onAutoFix()
                                 }
+                                onDismiss()
+                                Toast.makeText(
+                                    context,
+                                    if (isBn) "সিভি ডেটায় তথ্য যুক্ত করা হয়েছে!" else "Custom information added to CV!",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            } else {
+                                Toast.makeText(
+                                    context,
+                                    if (isBn) "অনুগ্ৰহ করে কিছু তথ্য লিখুন!" else "Please write some details first!",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             }
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = data.proposedContent,
-                                fontSize = 10.sp,
-                                color = themeColors.displayText.copy(alpha = 0.8f),
-                                lineHeight = 13.5.sp,
-                                maxLines = 6
-                            )
-                        }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(36.dp)
+                    ) {
+                        Icon(imageVector = Icons.Default.CheckCircle, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = if (isBn) "পূরণ করুন" else "Apply & Fill In",
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
                     }
                 }
             }
@@ -9631,11 +9705,12 @@ private fun CvFixActionDialog(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
+                // Option A: Fill Demo Data
                 Button(
                     onClick = {
                         data.onAutoFix()
                         onDismiss()
-                        Toast.makeText(context, if (isBn) "এআই দিয়ে সমাধান সম্পন্ন হয়েছে!" else "Fixed with AI successfully!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, if (isBn) "ডেমো ডেটা দিয়ে পূরণ করা হয়েছে!" else "Filled with demo data!", Toast.LENGTH_SHORT).show()
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
                     shape = RoundedCornerShape(10.dp),
@@ -9644,13 +9719,14 @@ private fun CvFixActionDialog(
                     Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = if (isBn) "✨ এআই দিয়ে অটো-পূরণ করুন" else "✨ Auto-Fix with AI",
-                        fontSize = 11.sp,
+                        text = if (isBn) "ফিল ডেমো ডেটা" else "Fill Demo Data",
+                        fontSize = 11.5.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
                 }
 
+                // Option B: Go to relevant section tab with Arrow Right
                 OutlinedButton(
                     onClick = {
                         onNavigateToTab(data.targetTab)
@@ -9660,29 +9736,35 @@ private fun CvFixActionDialog(
                     border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.25f)),
                     modifier = Modifier.fillMaxWidth().height(36.dp)
                 ) {
-                    Icon(imageVector = Icons.Default.Edit, contentDescription = null, tint = themeColors.displayText, modifier = Modifier.size(13.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = if (isBn) "✏️ নিজে পূরণ করতে যান" else "✏️ Go to Tab & Fill Manually",
-                        fontSize = 10.5.sp,
+                        text = if (isBn) "${data.sectionNameBn} এ যান" else "Go to ${data.sectionNameEn}",
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = themeColors.displayText
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = null,
+                        tint = themeColors.displayText,
+                        modifier = Modifier.size(14.dp)
+                    )
+                }
+
+                // Option C: Cancel button
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.fillMaxWidth().height(32.dp)
+                ) {
+                    Text(
+                        text = if (isBn) "বাতিল করুন" else "Cancel",
+                        fontSize = 11.sp,
+                        color = themeColors.displayText.copy(alpha = 0.6f)
                     )
                 }
             }
         },
-        dismissButton = {
-            TextButton(
-                onClick = onDismiss,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = if (isBn) "বাতিল করুন" else "Cancel",
-                    fontSize = 11.sp,
-                    color = themeColors.displayText.copy(alpha = 0.6f)
-                )
-            }
-        },
+        dismissButton = null,
         containerColor = themeColors.cardBg,
         shape = RoundedCornerShape(16.dp)
     )
@@ -10023,20 +10105,21 @@ private fun AiJobCircularMatchTab(
         )
     )
 
-    // Calculate score out of 100
+    // Calculate score out of 100 so complete section entries reach 100%
     var calculatedScore = 0
-    if (hasName) calculatedScore += 10
-    if (hasContact) calculatedScore += 10
-    if (hasAddress) calculatedScore += 5
-    if (hasLinkedin) calculatedScore += 5
+    if (hasName) calculatedScore += 15
+    if (hasContact) calculatedScore += 15
     if (hasSummary) calculatedScore += 15
-    if (expCount >= 2) calculatedScore += 20 else if (expCount == 1) calculatedScore += 12
-    if (eduCount >= 1) calculatedScore += 10
-    if (skillCount >= 5) calculatedScore += 10 else if (skillCount >= 3) calculatedScore += 6
-    if (projCount >= 1) calculatedScore += 5
-    if (hasCerts) calculatedScore += 5
-    if (hasLangs) calculatedScore += 3
-    if (hasRefs) calculatedScore += 2
+    if (expCount >= 1 || projCount >= 1) calculatedScore += 20
+    if (eduCount >= 1) calculatedScore += 15
+    if (skillCount >= 3) calculatedScore += 15
+
+    var bonusPoints = 0
+    if (hasAddress || hasLinkedin) bonusPoints += 2
+    if (hasCerts) bonusPoints += 1
+    if (hasLangs) bonusPoints += 1
+    if (hasRefs) bonusPoints += 1
+    calculatedScore += bonusPoints
     val offlineAtsScore = calculatedScore.coerceIn(0, 100)
 
     val scoreColor = when {
@@ -10521,6 +10604,25 @@ private fun AiJobCircularMatchTab(
                             if (circularTextInput.isBlank() && circularImageBitmap == null) {
                                 Toast.makeText(context, if (isBn) "সার্কুলার টেক্সট বা ছবি দিন" else "Provide circular text or image", Toast.LENGTH_SHORT).show()
                             } else {
+                                // Auto-save circular text if not already saved
+                                if (circularTextInput.isNotBlank() && savedCirculars.none { it.text.trim() == circularTextInput.trim() }) {
+                                    val autoTitle = circularTextInput.trim().lines().firstOrNull()?.take(28) ?: (if (isBn) "সার্কুলার #${savedCirculars.size + 1}" else "Circular #${savedCirculars.size + 1}")
+                                    val newItem = SavedCircularItem(
+                                        id = System.currentTimeMillis().toString(),
+                                        title = autoTitle,
+                                        text = circularTextInput,
+                                        matchPct = 0,
+                                        matchingStrengths = emptyList(),
+                                        missingKeywords = emptyList(),
+                                        tailoredSummary = "",
+                                        suggestionsJson = "",
+                                        date = "Saved"
+                                    )
+                                    val updated = listOf(newItem) + savedCirculars
+                                    savedCirculars = updated
+                                    saveSavedCirculars(context, updated)
+                                }
+
                                 val bmp = circularImageBitmap
                                 if (bmp != null) {
                                     val stream = ByteArrayOutputStream()
@@ -10560,7 +10662,7 @@ private fun AiJobCircularMatchTab(
                     }
                 }
 
-                // Saved Circulars Quick Selector
+                // Saved Circulars Quick Selector Chips
                 if (savedCirculars.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
@@ -10591,6 +10693,17 @@ private fun AiJobCircularMatchTab(
                                     Icon(imageVector = Icons.Default.Description, contentDescription = null, tint = themeColors.buttonEqualBg, modifier = Modifier.size(14.dp))
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(text = circularItem.title, fontSize = 11.sp, color = themeColors.displayText, fontWeight = FontWeight.Medium)
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    IconButton(
+                                        onClick = {
+                                            val updated = savedCirculars.filter { it.id != circularItem.id }
+                                            savedCirculars = updated
+                                            saveSavedCirculars(context, updated)
+                                        },
+                                        modifier = Modifier.size(18.dp)
+                                    ) {
+                                        Icon(imageVector = Icons.Default.Close, contentDescription = "Remove", tint = themeColors.displayText.copy(alpha = 0.5f), modifier = Modifier.size(12.dp))
+                                    }
                                 }
                             }
                         }
@@ -11087,6 +11200,103 @@ private fun AiJobCircularMatchTab(
         }
     }
 
+        fun runCoPilotAiChat(
+            query: String,
+            attachmentName: String?,
+            attachmentBytes: ByteArray?,
+            mimeType: String?
+        ) {
+            val displayPrompt = if (!attachmentName.isNullOrBlank()) {
+                if (query.isNotBlank()) "[Attached File: $attachmentName]\n$query" else "[Attached File: $attachmentName]"
+            } else {
+                query
+            }
+
+            val userMsg = CoPilotMessage(sender = "user", text = displayPrompt)
+            coPilotMessages = coPilotMessages + userMsg
+            userMessageText = ""
+            isChatLoading = true
+
+            coroutineScope.launch {
+                try {
+                    val cvSkillsText = cvData.skills.joinToString { if (it.description.isNotBlank()) "${it.name}: ${it.description}" else it.name }
+                    val cvExpText = cvData.experiences.joinToString("; ") { "${it.role} at ${it.company} (${it.startDate} - ${if (it.isCurrent) "Present" else it.endDate}): ${it.description}" }
+                    val cvEduText = cvData.educations.joinToString("; ") { "${it.degree} from ${it.institution} (${it.passingYear}, Result: ${it.result})" }
+
+                    val sysPrompt = """
+                        You are an expert AI CV Co-Pilot & ATS recruitment specialist.
+                        You have complete real-time visibility into the candidate's active CV and target job circular details.
+                        Answer the candidate's query with actionable advice, edits, bullet revisions, or explanations in ${if (isBn) "Bengali" else "English"}.
+
+                        Candidate Active CV Data:
+                        - Full Name: ${cvData.fullName}
+                        - Target Role/Title: ${cvData.jobTitle}
+                        - Contact: Email: ${cvData.email}, Phone: ${cvData.phone}, Address: ${cvData.address}
+                        - Executive Summary: ${cvData.summary}
+                        - Key Skills: $cvSkillsText
+                        - Work Experiences: $cvExpText
+                        - Educations: $cvEduText
+                        - Projects: ${cvData.projects.joinToString("; ") { "${it.title}: ${it.description}" }}
+                        - Certifications: ${cvData.certifications}
+
+                        Target Job Circular Context:
+                        - Circular Details: ${circularTextInput.ifBlank { "No explicit circular provided yet." }}
+                        - Last ATS Match Score: ${cvData.lastAtsScoreFromGemini}%
+
+                        If you suggest a modified summary or modified role, wrap a JSON block in ```json ... ``` with key 'summary' or 'jobTitle' so the candidate can click 'Apply' to update their master CV data.
+                    """.trimIndent()
+
+                    val aiResponseText = callGeminiAiMultiModal(
+                        prompt = displayPrompt,
+                        systemInstruction = sysPrompt,
+                        imageBytes = attachmentBytes,
+                        mimeType = mimeType ?: "image/jpeg"
+                    )
+
+                    var proposedCvData: CvData? = null
+                    var cleanResponse = aiResponseText
+
+                    if (aiResponseText.contains("```json")) {
+                        try {
+                            val jsonStart = aiResponseText.indexOf("```json") + 7
+                            val jsonEnd = aiResponseText.indexOf("```", jsonStart)
+                            if (jsonEnd > jsonStart) {
+                                val jsonContent = aiResponseText.substring(jsonStart, jsonEnd).trim()
+                                val jsonObj = org.json.JSONObject(jsonContent)
+                                var updatedSummary = cvData.summary
+                                if (jsonObj.has("summary")) {
+                                    updatedSummary = jsonObj.optString("summary", cvData.summary)
+                                }
+                                var updatedTitle = cvData.jobTitle
+                                if (jsonObj.has("jobTitle")) {
+                                    updatedTitle = jsonObj.optString("jobTitle", cvData.jobTitle)
+                                }
+                                proposedCvData = cvData.copy(summary = updatedSummary, jobTitle = updatedTitle)
+                                cleanResponse = (aiResponseText.substring(0, aiResponseText.indexOf("```json")).trim() + "\n\n" + aiResponseText.substring(jsonEnd + 3).trim()).trim()
+                            }
+                        } catch (e: Exception) {
+                            // ignore JSON parse errors
+                        }
+                    }
+
+                    val aiMsg = CoPilotMessage(
+                        sender = "ai",
+                        text = cleanResponse.ifBlank { aiResponseText },
+                        proposedCvData = proposedCvData
+                    )
+                    coPilotMessages = coPilotMessages + aiMsg
+                } catch (e: Exception) {
+                    val errorMsg = CoPilotMessage(
+                        sender = "ai",
+                        text = if (isBn) "দুঃখিত, কো-পাইলট রেসপন্স পেতে সমস্যা হয়েছে: ${e.message}" else "Sorry, failed to get response from Co-Pilot: ${e.message}"
+                    )
+                    coPilotMessages = coPilotMessages + errorMsg
+                } finally {
+                    isChatLoading = false
+                }
+            }
+        }
+
         Spacer(modifier = Modifier.height(18.dp))
 
         // --- 3. CV COPILOT CHATBOT (BOTTOM) ---
@@ -11097,22 +11307,8 @@ private fun AiJobCircularMatchTab(
             userMessageText = userMessageText,
             onUserMessageTextChange = { userMessageText = it },
             isChatLoading = isChatLoading,
-            onSendMessage = { query ->
-                if (query.isNotBlank()) {
-                    val userMsg = CoPilotMessage(sender = "user", text = query)
-                    coPilotMessages = coPilotMessages + userMsg
-                    userMessageText = ""
-                    isChatLoading = true
-                    
-                    // Call AI service for CoPilot response
-                    onRequestAiPrompt(
-                        if (isBn) "এআই সিভি কো-পাইলট" else "AI CV Co-Pilot",
-                        "Candidate asks: $query\n\nCurrent CV Summary: ${cvData.summary}\nJob Title: ${cvData.jobTitle}\nExperiences: ${cvData.experiences.joinToString { it.role + " at " + it.company }}\nSkills: ${cvData.skills.joinToString { it.name }}\nJob Circular Context: $circularTextInput",
-                        "COPILOT_CHAT",
-                        -1
-                    )
-                    isChatLoading = false
-                }
+            onSendMessage = { query, attachmentUri, attachmentName, attachmentBytes, mimeType ->
+                runCoPilotAiChat(query, attachmentName, attachmentBytes, mimeType)
             },
             onCvDataChange = onCvDataChange,
             onCompareClick = { suggestionItem ->
@@ -11371,6 +11567,90 @@ private fun PreviewAndExportTab(
 
         Spacer(modifier = Modifier.height(14.dp))
 
+        // --- COMPACT TEMPLATE STYLE SELECTOR (BEFORE PREVIEW PANEL) ---
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = themeColors.cardBg,
+            border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.12f)),
+            modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
+        ) {
+            Column(modifier = Modifier.padding(10.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Palette,
+                            contentDescription = null,
+                            tint = themeColors.buttonEqualBg,
+                            modifier = Modifier.size(15.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = if (isBn) "সিভি টেমপ্লেট স্টাইল" else "CV Template Style",
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = themeColors.displayText
+                        )
+                    }
+                    Text(
+                        text = if (isBn) cvData.templateStyle.titleBn else cvData.templateStyle.titleEn,
+                        fontSize = 10.5.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = themeColors.buttonEqualBg
+                    )
+                }
+
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    contentPadding = PaddingValues(vertical = 2.dp)
+                ) {
+                    items(CvTemplateStyle.values()) { style ->
+                        val isSelected = cvData.templateStyle == style
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = if (isSelected) themeColors.buttonEqualBg else themeColors.background,
+                            border = BorderStroke(
+                                1.dp,
+                                if (isSelected) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.15f)
+                            ),
+                            onClick = { onTemplateChange(style) },
+                            modifier = Modifier.height(32.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(8.dp)
+                                        .background(Color(style.primaryColorHex), CircleShape)
+                                )
+                                Spacer(modifier = Modifier.width(5.dp))
+                                Text(
+                                    text = if (isBn) style.titleBn else style.titleEn,
+                                    fontSize = 10.5.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (isSelected) Color.White else themeColors.displayText
+                                )
+                                if (isSelected) {
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(11.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         // --- 3. ACTIVE VIEW CONTAINER ---
         if (previewMode == "LIVE_EDIT") {
             // Live Interactive In-Place Editor Panel
@@ -11578,21 +11858,36 @@ fun CvCustomTextField(
                     text = label,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Medium,
-                    color = themeColors.displayText.copy(alpha = 0.8f)
+                    color = themeColors.displayText.copy(alpha = 0.8f),
+                    modifier = Modifier.weight(1f, fill = false)
                 )
+            } else {
+                Spacer(modifier = Modifier.width(1.dp))
             }
             if (onAiPrompt != null) {
-                IconButton(
+                Surface(
                     onClick = onAiPrompt,
-                    modifier = Modifier
-                        .size(24.dp)
-                        .background(themeColors.buttonEqualBg, CircleShape)
+                    shape = RoundedCornerShape(12.dp),
+                    color = themeColors.buttonEqualBg,
+                    modifier = Modifier.padding(bottom = 2.dp)
                 ) {
-                    Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = "AI Help", tint = Color.White, modifier = Modifier.size(13.dp))
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = "AI Help", tint = Color.White, modifier = Modifier.size(12.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(text = if (isBn) "এআই রাইটার" else "AI Writer", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    }
                 }
             }
         }
         Spacer(modifier = Modifier.height(4.dp))
+        val isLightBg = themeColors.cardBg.luminance() > 0.5f
+        val textColor = if (isLightBg) Color(0xFF0F172A) else Color(0xFFF8FAFC)
+        val placeholderColor = if (isLightBg) Color(0xFF64748B) else Color(0xFF94A3B8)
+        val borderColor = if (isLightBg) Color(0xFFCBD5E1) else Color(0xFF475569)
+
         OutlinedTextField(
             value = draftValue,
             onValueChange = { 
@@ -11603,15 +11898,21 @@ fun CvCustomTextField(
             },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
-            placeholder = placeholderText?.let { { Text(it, color = themeColors.displayText.copy(alpha = 0.4f), fontSize = 12.sp) } },
+            textStyle = TextStyle(
+                fontSize = 12.5.sp,
+                color = textColor,
+                fontWeight = FontWeight.Medium
+            ),
+            placeholder = placeholderText?.let { { Text(it, color = placeholderColor, fontSize = 11.5.sp) } },
             shape = RoundedCornerShape(10.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = themeColors.buttonEqualBg,
-                unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f),
+                unfocusedBorderColor = borderColor,
                 focusedContainerColor = themeColors.cardBg,
                 unfocusedContainerColor = themeColors.cardBg,
-                focusedTextColor = themeColors.displayText,
-                unfocusedTextColor = themeColors.displayText
+                focusedTextColor = textColor,
+                unfocusedTextColor = textColor,
+                cursorColor = themeColors.buttonEqualBg
             )
         )
 
@@ -11670,24 +11971,39 @@ fun CvCustomLargeTextField(
     var draftValue by remember(value) { mutableStateOf(value) }
     var showConfirmDialog by remember { mutableStateOf(false) }
 
+    val isLightBg = themeColors.cardBg.luminance() > 0.5f
+    val textColor = if (isLightBg) Color(0xFF0F172A) else Color(0xFFF8FAFC)
+    val placeholderColor = if (isLightBg) Color(0xFF64748B) else Color(0xFF94A3B8)
+    val borderColor = if (isLightBg) Color(0xFFCBD5E1) else Color(0xFF475569)
+
     Column {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             if (label.isNotBlank()) {
                 Text(
                     text = label,
                     fontSize = 11.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = themeColors.displayText.copy(alpha = 0.8f)
+                    fontWeight = FontWeight.Bold,
+                    color = textColor.copy(alpha = 0.9f),
+                    modifier = Modifier.weight(1f, fill = false)
                 )
+            } else {
+                Spacer(modifier = Modifier.width(1.dp))
             }
             if (onAiPrompt != null) {
-                IconButton(
+                Surface(
                     onClick = onAiPrompt,
-                    modifier = Modifier
-                        .size(24.dp)
-                        .background(themeColors.buttonEqualBg, CircleShape)
+                    shape = RoundedCornerShape(12.dp),
+                    color = themeColors.buttonEqualBg,
+                    modifier = Modifier.padding(bottom = 2.dp)
                 ) {
-                    Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = "AI Help", tint = Color.White, modifier = Modifier.size(13.dp))
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = "AI Help", tint = Color.White, modifier = Modifier.size(12.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(text = if (isBn) "এআই রাইটার" else "AI Writer", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    }
                 }
             }
         }
@@ -11703,15 +12019,21 @@ fun CvCustomLargeTextField(
             modifier = Modifier.fillMaxWidth(),
             minLines = minLines,
             maxLines = 15,
-            placeholder = placeholderText?.let { { Text(it, color = themeColors.displayText.copy(alpha = 0.4f), fontSize = 12.sp) } },
+            textStyle = TextStyle(
+                fontSize = 12.5.sp,
+                color = textColor,
+                fontWeight = FontWeight.Normal
+            ),
+            placeholder = placeholderText?.let { { Text(it, color = placeholderColor, fontSize = 11.5.sp) } },
             shape = RoundedCornerShape(10.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = themeColors.buttonEqualBg,
-                unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f),
+                unfocusedBorderColor = borderColor,
                 focusedContainerColor = themeColors.cardBg,
                 unfocusedContainerColor = themeColors.cardBg,
-                focusedTextColor = themeColors.displayText,
-                unfocusedTextColor = themeColors.displayText
+                focusedTextColor = textColor,
+                unfocusedTextColor = textColor,
+                cursorColor = themeColors.buttonEqualBg
             )
         )
 
