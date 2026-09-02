@@ -301,9 +301,145 @@ data class CvSkillItem(
     val id: String = UUID.randomUUID().toString(),
     val name: String = "",
     val level: String = "Proficient",
-    val category: String = "Functional/Core Skills", // Functional/Core Skills, Technical/Digital Proficiency, Soft Skills/Leadership
+    val category: String = "Technical & Software Engineering", // Technical & Software Engineering, Tools & Platforms, Functional Competencies, Soft Skills & Leadership, Management & Business, Finance & Accounting, Marketing & Sales, Design & UI/UX, Engineering & Technical, Languages
     val description: String = ""
 )
+
+data class SavedCircularAnalysis(
+    val id: String = UUID.randomUUID().toString(),
+    val title: String = "",
+    val text: String = "",
+    val initialScore: Int = 0,
+    val initialMissingKeywords: List<String> = emptyList(),
+    val initialMatchingStrengths: List<String> = emptyList(),
+    val timestamp: Long = System.currentTimeMillis()
+)
+
+data class RealtimeMatchResult(
+    val score: Int,
+    val matchingStrengths: List<String>,
+    val remainingMissingKeywords: List<String>,
+    val newlyResolvedKeywords: List<String>
+)
+
+val SKILL_CATEGORY_LIBRARY = mapOf(
+    "Technical & Software Engineering" to listOf(
+        "Kotlin", "Java", "Android SDK", "Jetpack Compose", "Coroutines & Flow", "Room Database",
+        "Retrofit & REST APIs", "Python", "C++", "React.js", "Node.js", "Flutter & Dart",
+        "SQL & PostgreSQL", "GraphQL", "Git & GitHub", "Docker & Containers", "Kubernetes",
+        "CI/CD Pipelines", "Microservices Architecture", "System Design & Architecture"
+    ),
+    "Tools, Cloud & Platforms" to listOf(
+        "AWS (Amazon Web Services)", "Google Cloud Platform (GCP)", "Microsoft Azure", "Firebase",
+        "JIRA & Confluence", "Postman & API Testing", "Figma & Wireframing", "Linux & Shell Scripting",
+        "SAP ERP", "Salesforce CRM", "Microsoft Excel (VLOOKUP, Pivot)", "Power BI & Analytics",
+        "Tableau Data Viz", "Git, GitLab & Bitbucket"
+    ),
+    "Functional & Core Competencies" to listOf(
+        "Data Analysis & Visualization", "Agile & Scrum Project Management", "Quality Assurance & Testing",
+        "Strategic Planning & Execution", "Business Analysis & Requirement Gathering", "Process Optimization",
+        "Operations & Workflow Management", "Risk Assessment & Management", "Client Relationship Management"
+    ),
+    "Management, Business & Strategy" to listOf(
+        "Team Leadership & Mentorship", "Stakeholder Management", "Budgeting & Financial Forecasting",
+        "Resource Allocation", "Cross-functional Coordination", "Vendor & Contract Negotiation",
+        "Change Management", "Strategic Growth & Scaling"
+    ),
+    "Finance, Accounting & Banking" to listOf(
+        "Financial Analysis & Reporting", "Auditing & Internal Control", "Taxation & Compliance",
+        "Bookkeeping & General Ledger", "Credit Risk Analysis", "QuickBooks & Tally Prime",
+        "Treasury Management", "Cost Accounting"
+    ),
+    "Marketing, Sales & Growth" to listOf(
+        "Digital Marketing Strategy", "SEO & SEM Optimization", "Content Creation & Copywriting",
+        "Social Media Campaign Management", "Brand Building & Positioning", "Lead Generation & Sales Funnels",
+        "CRM & Customer Retention", "Performance Marketing"
+    ),
+    "Design, UI/UX & Creative" to listOf(
+        "UI/UX Design & Prototyping", "User Research & Usability Testing", "Figma & Adobe XD",
+        "Adobe Photoshop & Illustrator", "Graphic & Visual Design", "Design Systems & Pattern Libraries"
+    ),
+    "Engineering & Technical Domain" to listOf(
+        "AutoCAD & 3D Modeling", "Quality Control & Quality Assurance", "Structural Engineering & Analysis",
+        "Electrical Circuit Design", "PLC & Industrial Automation", "HVAC Systems & Maintenance"
+    ),
+    "Soft Skills & Professional Excellence" to listOf(
+        "Effective Business Communication", "Critical Thinking & Decision Making", "Complex Problem Solving",
+        "Time Management & Prioritization", "Adaptability & Resilience", "Negotiation & Conflict Resolution",
+        "Public Speaking & Presentation Skills"
+    ),
+    "Languages & Global Communication" to listOf(
+        "Bengali (Native)", "English (Full Professional Proficiency)", "Business Communication",
+        "Technical Writing & Documentation"
+    )
+)
+
+fun calculateRealtimeCircularMatch(
+    cvData: CvData,
+    initialMissing: List<String>,
+    initialMatching: List<String>,
+    initialScore: Int
+): RealtimeMatchResult {
+    val cvFullText = buildString {
+        append(cvData.summary).append(" ")
+        append(cvData.jobTitle).append(" ")
+        cvData.skills.forEach { append(it.name).append(" ").append(it.description).append(" ").append(it.category).append(" ") }
+        cvData.experiences.forEach { append(it.role).append(" ").append(it.company).append(" ").append(it.description).append(" ") }
+        cvData.educations.forEach { append(it.degree).append(" ").append(it.institution).append(" ").append(it.subjectMajor).append(" ").append(it.examLevel).append(" ") }
+        cvData.projects.forEach { append(it.title).append(" ").append(it.description).append(" ") }
+        append(cvData.certifications)
+    }.lowercase()
+
+    val newlyResolved = mutableListOf<String>()
+    val remainingMissing = mutableListOf<String>()
+
+    initialMissing.forEach { kw ->
+        val cleanKw = kw.trim().lowercase()
+        if (cleanKw.isNotBlank() && cvFullText.contains(cleanKw)) {
+            newlyResolved.add(kw)
+        } else {
+            remainingMissing.add(kw)
+        }
+    }
+
+    val updatedMatching = (initialMatching + newlyResolved).distinct()
+    val totalKw = (initialMatching.size + initialMissing.size).coerceAtLeast(1)
+    val resolvedCount = updatedMatching.size
+
+    val dynamicScore = if (totalKw > 0 && (initialMissing.isNotEmpty() || initialMatching.isNotEmpty())) {
+        ((resolvedCount.toFloat() / totalKw.toFloat()) * 100).toInt().coerceIn(0, 100)
+    } else {
+        initialScore
+    }
+
+    return RealtimeMatchResult(
+        score = dynamicScore,
+        matchingStrengths = updatedMatching,
+        remainingMissingKeywords = remainingMissing,
+        newlyResolvedKeywords = newlyResolved
+    )
+}
+
+fun findBestCategoryForSkill(skillName: String): String {
+    val lower = skillName.lowercase()
+    for ((cat, skills) in SKILL_CATEGORY_LIBRARY) {
+        if (skills.any { it.lowercase() == lower || lower.contains(it.lowercase()) }) {
+            return cat
+        }
+    }
+    return when {
+        lower.contains("kotlin") || lower.contains("java") || lower.contains("python") || lower.contains("react") || lower.contains("node") || lower.contains("git") || lower.contains("sql") || lower.contains("programming") || lower.contains("developer") || lower.contains("software") || lower.contains("api") || lower.contains("rest") -> "Technical & Software Engineering"
+        lower.contains("cloud") || lower.contains("aws") || lower.contains("gcp") || lower.contains("firebase") || lower.contains("figma") || lower.contains("excel") || lower.contains("analytics") || lower.contains("crm") -> "Tools, Cloud & Platforms"
+        lower.contains("management") || lower.contains("agile") || lower.contains("scrum") || lower.contains("project") || lower.contains("business") || lower.contains("qa") || lower.contains("quality") || lower.contains("client") -> "Functional & Core Competencies"
+        lower.contains("lead") || lower.contains("team") || lower.contains("stakeholder") || lower.contains("budget") || lower.contains("mentor") || lower.contains("strategy") || lower.contains("negotiate") -> "Management, Business & Strategy"
+        lower.contains("finance") || lower.contains("audit") || lower.contains("tax") || lower.contains("accounting") || lower.contains("bank") || lower.contains("bookkeeper") || lower.contains("tally") -> "Finance, Accounting & Banking"
+        lower.contains("marketing") || lower.contains("sales") || lower.contains("seo") || lower.contains("sem") || lower.contains("social") || lower.contains("content") || lower.contains("brand") || lower.contains("lead generation") -> "Marketing, Sales & Growth"
+        lower.contains("design") || lower.contains("ui") || lower.contains("ux") || lower.contains("graphic") || lower.contains("adobe") || lower.contains("photoshop") || lower.contains("illustrator") -> "Design, UI/UX & Creative"
+        lower.contains("cad") || lower.contains("civil") || lower.contains("mechanical") || lower.contains("plc") || lower.contains("electrical") || lower.contains("engineering") -> "Engineering & Technical Domain"
+        lower.contains("english") || lower.contains("bengali") || lower.contains("bangla") || lower.contains("language") || lower.contains("german") || lower.contains("spanish") -> "Languages & Global Communication"
+        else -> "Soft Skills & Professional Excellence"
+    }
+}
 
 data class CvProjectItem(
     val id: String = UUID.randomUUID().toString(),
@@ -1208,6 +1344,7 @@ data class CvData(
     val sectionSpacing: Float = 8f,
     val itemSpacing: Float = 4f,
     val customLineSpacing: Float = 1.15f,
+    val skillDisplayStyle: String = "GROUPED_COMMA", // "GROUPED_COMMA", "INLINE_COMMA", "BULLET_WITH_DESC"
 
     // ATS & Job Circular Analysis fields
     val lastJobMatchPercentage: Int = 0,
@@ -1218,6 +1355,8 @@ data class CvData(
     val lastAtsScoreFromGemini: Int = 0,
     val lastAtsSuggestionsJson: String = "",
     val lastCircularSuggestionsJson: String = "",
+    val savedCirculars: List<SavedCircularAnalysis> = emptyList(),
+    val activeCircularId: String = "",
     val generatedEmailSubject: String = "",
     val generatedCoverLetter: String = "",
     val generatedFollowUpEmail: String = ""
@@ -2301,11 +2440,31 @@ private fun saveAllCvProfiles(context: Context, profiles: List<CvData>) {
                 put("sectionSpacing", profile.sectionSpacing.toDouble())
                 put("itemSpacing", profile.itemSpacing.toDouble())
                 put("customLineSpacing", profile.customLineSpacing.toDouble())
+                put("skillDisplayStyle", profile.skillDisplayStyle)
                 
-                // Gemini AI fields
+                // Gemini AI & Circular fields
                 put("lastAtsScoreFromGemini", profile.lastAtsScoreFromGemini)
                 put("lastAtsSuggestionsJson", profile.lastAtsSuggestionsJson)
                 put("lastCircularSuggestionsJson", profile.lastCircularSuggestionsJson)
+                
+                val sCircArr = JSONArray()
+                profile.savedCirculars.forEach { sc ->
+                    sCircArr.put(JSONObject().apply {
+                        put("id", sc.id)
+                        put("title", sc.title)
+                        put("text", sc.text)
+                        put("initialScore", sc.initialScore)
+                        val missingArr = JSONArray()
+                        sc.initialMissingKeywords.forEach { missingArr.put(it) }
+                        put("initialMissingKeywords", missingArr)
+                        val matchArr = JSONArray()
+                        sc.initialMatchingStrengths.forEach { matchArr.put(it) }
+                        put("initialMatchingStrengths", matchArr)
+                        put("timestamp", sc.timestamp)
+                    })
+                }
+                put("savedCirculars", sCircArr)
+                put("activeCircularId", profile.activeCircularId)
                 put("generatedEmailSubject", profile.generatedEmailSubject)
                 put("generatedCoverLetter", profile.generatedCoverLetter)
                 put("generatedFollowUpEmail", profile.generatedFollowUpEmail)
@@ -2488,9 +2647,36 @@ private fun loadAllCvProfiles(context: Context): List<CvData> {
                     sectionSpacing = obj.optDouble("sectionSpacing", 8.0).toFloat(),
                     itemSpacing = obj.optDouble("itemSpacing", 4.0).toFloat(),
                     customLineSpacing = obj.optDouble("customLineSpacing", 1.15).toFloat(),
+                    skillDisplayStyle = obj.optString("skillDisplayStyle", "GROUPED_COMMA"),
                     lastAtsScoreFromGemini = obj.optInt("lastAtsScoreFromGemini", 0),
                     lastAtsSuggestionsJson = obj.optString("lastAtsSuggestionsJson", ""),
                     lastCircularSuggestionsJson = obj.optString("lastCircularSuggestionsJson", ""),
+                    savedCirculars = run {
+                        val sArr = obj.optJSONArray("savedCirculars") ?: JSONArray()
+                        val list = mutableListOf<SavedCircularAnalysis>()
+                        for (i in 0 until sArr.length()) {
+                            val cObj = sArr.getJSONObject(i)
+                            val mArr = cObj.optJSONArray("initialMissingKeywords") ?: JSONArray()
+                            val mList = mutableListOf<String>()
+                            for (j in 0 until mArr.length()) mList.add(mArr.getString(j))
+
+                            val matchArr = cObj.optJSONArray("initialMatchingStrengths") ?: JSONArray()
+                            val matchList = mutableListOf<String>()
+                            for (k in 0 until matchArr.length()) matchList.add(matchArr.getString(k))
+
+                            list.add(SavedCircularAnalysis(
+                                id = cObj.optString("id", UUID.randomUUID().toString()),
+                                title = cObj.optString("title", ""),
+                                text = cObj.optString("text", ""),
+                                initialScore = cObj.optInt("initialScore", 0),
+                                initialMissingKeywords = mList,
+                                initialMatchingStrengths = matchList,
+                                timestamp = cObj.optLong("timestamp", System.currentTimeMillis())
+                            ))
+                        }
+                        list
+                    },
+                    activeCircularId = obj.optString("activeCircularId", ""),
                     generatedEmailSubject = obj.optString("generatedEmailSubject", ""),
                     generatedCoverLetter = obj.optString("generatedCoverLetter", ""),
                     generatedFollowUpEmail = obj.optString("generatedFollowUpEmail", "")
@@ -4253,36 +4439,36 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
             "SKILLS" -> {
                 if (data.skills.isNotEmpty()) {
                     drawSectionHeader("KEY SKILLS & COMPETENCIES", "⚡")
-                    data.skills.forEach { sk ->
-                        if (sk.name.isNotBlank()) {
+                    when (data.skillDisplayStyle) {
+                        "GROUPED_COMMA" -> {
+                            val grouped = data.skills.groupBy { it.category.ifBlank { "Functional & Core Competencies" } }
+                            grouped.forEach { (cat, skills) ->
+                                val sb = SpannableStringBuilder()
+                                sb.append(bulletPrefix)
+                                val titleText = "$cat: "
+                                val titleStart = sb.length
+                                sb.append(titleText)
+                                val titleEnd = sb.length
+                                sb.setSpan(StyleSpan(Typeface.BOLD), titleStart, titleEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                                
+                                val skillNamesText = skills.mapNotNull { if (it.name.isNotBlank()) it.name else null }.joinToString(", ")
+                                sb.append(skillNamesText)
+                                
+                                val layout = StaticLayout.Builder.obtain(sb, 0, sb.length, bodyPaint, contentWidth.toInt()).setLineSpacing(0f, data.customLineSpacing).build()
+                                checkAndAddNewPage(layout.height.toFloat() + 4f)
+                                canvas.save()
+                                canvas.translate(margin, currentY)
+                                layout.draw(canvas)
+                                canvas.restore()
+                                currentY += layout.height + entryGap
+                            }
+                        }
+                        "INLINE_COMMA" -> {
                             val sb = SpannableStringBuilder()
                             sb.append(bulletPrefix)
-
-                            val titleText = if (sk.description.isNotBlank()) {
-                                "${sk.name}: "
-                            } else if (sk.name.contains(":")) {
-                                "${sk.name.substringBefore(":")}: "
-                            } else {
-                                "${sk.name} "
-                            }
-
-                            val descText = if (sk.description.isNotBlank()) {
-                                sk.description
-                            } else if (sk.name.contains(":")) {
-                                sk.name.substringAfter(":").trim()
-                            } else {
-                                if (sk.level.isNotBlank() && sk.level != "Proficient") "(${sk.level})" else ""
-                            }
-
-                            val titleStart = sb.length
-                            sb.append(titleText)
-                            val titleEnd = sb.length
-                            sb.setSpan(StyleSpan(Typeface.BOLD), titleStart, titleEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-
-                            if (descText.isNotBlank()) {
-                                sb.append(descText)
-                            }
-
+                            val skillNamesText = data.skills.mapNotNull { if (it.name.isNotBlank()) it.name else null }.joinToString(", ")
+                            sb.append(skillNamesText)
+                            
                             val layout = StaticLayout.Builder.obtain(sb, 0, sb.length, bodyPaint, contentWidth.toInt()).setLineSpacing(0f, data.customLineSpacing).build()
                             checkAndAddNewPage(layout.height.toFloat() + 4f)
                             canvas.save()
@@ -4290,6 +4476,47 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                             layout.draw(canvas)
                             canvas.restore()
                             currentY += layout.height + entryGap
+                        }
+                        else -> { // "BULLET_WITH_DESC"
+                            data.skills.forEach { sk ->
+                                if (sk.name.isNotBlank()) {
+                                    val sb = SpannableStringBuilder()
+                                    sb.append(bulletPrefix)
+
+                                    val titleText = if (sk.description.isNotBlank()) {
+                                        "${sk.name}: "
+                                    } else if (sk.name.contains(":")) {
+                                        "${sk.name.substringBefore(":")}: "
+                                    } else {
+                                        "${sk.name} "
+                                    }
+
+                                    val descText = if (sk.description.isNotBlank()) {
+                                        sk.description
+                                    } else if (sk.name.contains(":")) {
+                                        sk.name.substringAfter(":").trim()
+                                    } else {
+                                        if (sk.level.isNotBlank() && sk.level != "Proficient") "(${sk.level})" else ""
+                                    }
+
+                                    val titleStart = sb.length
+                                    sb.append(titleText)
+                                    val titleEnd = sb.length
+                                    sb.setSpan(StyleSpan(Typeface.BOLD), titleStart, titleEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+
+                                    if (descText.isNotBlank()) {
+                                        sb.append(descText)
+                                    }
+
+                                    val layout = StaticLayout.Builder.obtain(sb, 0, sb.length, bodyPaint, contentWidth.toInt()).setLineSpacing(0f, data.customLineSpacing).build()
+                                    checkAndAddNewPage(layout.height.toFloat() + 4f)
+                                    canvas.save()
+                                    canvas.translate(margin, currentY)
+                                    layout.draw(canvas)
+                                    canvas.restore()
+                                    currentY += layout.height + entryGap
+                                }
+                            }
                         }
                     }
                     currentY += 2f
@@ -5119,6 +5346,22 @@ fun AtsCvBuilderTool(
                             }
                         }
 
+                        val newId = UUID.randomUUID().toString()
+                        val autoTitle = if (circularText.isNotBlank()) {
+                            circularText.trim().lines().firstOrNull()?.take(28) ?: (if (isBn) "সার্কুলার #${cvData.savedCirculars.size + 1}" else "Circular #${cvData.savedCirculars.size + 1}")
+                        } else {
+                            if (isBn) "সার্কুলার ইমেজ #${cvData.savedCirculars.size + 1}" else "Circular Image #${cvData.savedCirculars.size + 1}"
+                        }
+                        val newCirc = SavedCircularAnalysis(
+                            id = newId,
+                            title = autoTitle,
+                            text = circularText.ifBlank { "[Image analyzed circular]" },
+                            initialScore = matchPct,
+                            initialMissingKeywords = missingKeywords,
+                            initialMatchingStrengths = matchingStrengths,
+                            timestamp = System.currentTimeMillis()
+                        )
+
                         updateCvDataState(cvData.copy(
                             skills = updatedSkills,
                             lastJobMatchPercentage = matchPct,
@@ -5130,7 +5373,9 @@ fun AtsCvBuilderTool(
                             targetJobCircular = circularText,
                             generatedEmailSubject = emailSubject,
                             generatedCoverLetter = coverLetter,
-                            generatedFollowUpEmail = followUpEmail
+                            generatedFollowUpEmail = followUpEmail,
+                            savedCirculars = cvData.savedCirculars + newCirc,
+                            activeCircularId = newId
                         ))
                         Toast.makeText(context, if (isBn) "সার্কুলার অ্যানালাইসিস সম্পন্ন! ম্যাচ স্কোর: ${matchPct}%" else "Job circular analyzed! Match score: ${matchPct}%", Toast.LENGTH_SHORT).show()
                     } catch (e: Exception) {
@@ -5451,16 +5696,20 @@ fun AtsCvBuilderTool(
                                     val newItems = lines.mapNotNull { line ->
                                         val clean = line.removePrefix("•").removePrefix("-").removePrefix("*").removePrefix("▪").replace(Regex("^\\d+[\\.\\)]\\s*"), "").trim()
                                         if (clean.isBlank()) null
-                                        else if (clean.contains(":")) {
-                                            val parts = clean.split(":", limit = 2)
-                                            CvSkillItem(name = parts[0].trim(), description = parts[1].trim())
-                                        } else {
-                                            CvSkillItem(name = clean, description = "Experienced in applying $clean effectively to optimize workflows and project deliverables.")
+                                        else {
+                                            val (name, desc) = if (clean.contains(":")) {
+                                                val parts = clean.split(":", limit = 2)
+                                                parts[0].trim() to parts[1].trim()
+                                            } else {
+                                                clean to "Experienced in applying $clean effectively to optimize workflows and project deliverables."
+                                            }
+                                            val cat = findBestCategoryForSkill(name)
+                                            CvSkillItem(name = name, description = desc, category = cat)
                                         }
                                     }
                                     if (newItems.isNotEmpty()) {
                                         updateCvDataState(cvData.copy(skills = cvData.skills + newItems))
-                                        showToast(if (isBn) "${newItems.size}টি স্কিল (ডেসক্রিপশন সহ) যোগ হয়েছে!" else "Added ${newItems.size} skill entries with descriptions!")
+                                        showToast(if (isBn) "${newItems.size}টি স্কিল (ডেসক্রিপশন সহ) গ্রুপ অনুযায়ী যোগ হয়েছে!" else "Added ${newItems.size} skill entries with group categorization!")
                                     }
                                 }
                                 "SKILLS_SINGLE" -> {
@@ -5471,14 +5720,15 @@ fun AtsCvBuilderTool(
                                     } else {
                                         clean to "Skilled in utilizing $clean for production workflows and tasks."
                                     }
+                                    val cat = findBestCategoryForSkill(name)
                                     if (activeAiExperienceIndex in cvData.skills.indices) {
                                         val list = cvData.skills.toMutableList()
-                                        list[activeAiExperienceIndex] = list[activeAiExperienceIndex].copy(name = name, description = desc)
+                                        list[activeAiExperienceIndex] = list[activeAiExperienceIndex].copy(name = name, description = desc, category = cat)
                                         updateCvDataState(cvData.copy(skills = list))
-                                        showToast(if (isBn) "স্কিল ও ডেসক্রিপশন আপডেট হয়েছে!" else "Skill & description updated!")
+                                        showToast(if (isBn) "স্কিল ও গ্রুপ ডেসক্রিপশন আপডেট হয়েছে!" else "Skill, category & description updated!")
                                     } else {
-                                        updateCvDataState(cvData.copy(skills = cvData.skills + CvSkillItem(name = name, description = desc)))
-                                        showToast(if (isBn) "নতুন স্কিল ও ডেসক্রিপশন যোগ হয়েছে!" else "New skill & description added!")
+                                        updateCvDataState(cvData.copy(skills = cvData.skills + CvSkillItem(name = name, description = desc, category = cat)))
+                                        showToast(if (isBn) "নতুন স্কিল ও ক্যাটাগরি যোগ হয়েছে!" else "New skill & category added!")
                                     }
                                 }
                                 "EXPERIENCE" -> {
@@ -5545,13 +5795,26 @@ fun AtsCvBuilderTool(
                                             }
                                         }
 
+                                        val newId = UUID.randomUUID().toString()
+                                        val circTitle = if (cvData.jobTitle.isNotBlank()) "Circular for ${cvData.jobTitle}" else "Circular Match #${cvData.savedCirculars.size + 1}"
+                                        val newCirc = SavedCircularAnalysis(
+                                            id = newId,
+                                            title = circTitle,
+                                            text = cvData.targetJobCircular.ifBlank { "AI Prompt Circular Analysis" },
+                                            initialScore = matchPct,
+                                            initialMissingKeywords = missingKeywords,
+                                            initialMatchingStrengths = matchingStrengths,
+                                            timestamp = System.currentTimeMillis()
+                                        )
                                         updateCvDataState(cvData.copy(
                                             skills = updatedSkills,
                                             lastJobMatchPercentage = matchPct,
                                             lastMatchingStrengths = matchingStrengths,
                                             lastMissingKeywords = missingKeywords,
                                             lastImprovementTips = improvementTips,
-                                            lastTailoredSummary = tailoredSummary
+                                            lastTailoredSummary = tailoredSummary,
+                                            savedCirculars = cvData.savedCirculars + newCirc,
+                                            activeCircularId = newId
                                         ))
                                         showToast(if (isBn) "সার্কুলার অ্যানালাইসিস সম্পন্ন! ম্যাচ স্কোর: ${matchPct}%" else "Job circular analyzed! Match score: ${matchPct}%")
                                     } catch (e: Exception) {
@@ -8358,49 +8621,110 @@ private fun EducationAndSkillsTab(
         )
 
         cvData.skills.forEachIndexed { index, sk ->
-            val fullText = if (sk.description.isNotBlank()) "${sk.name}: ${sk.description}" else sk.name
+            val currentCategory = sk.category.ifBlank { "Technical & Software Engineering" }
+            val skillOptions = SKILL_CATEGORY_LIBRARY[currentCategory] ?: emptyList()
+            val currentSkillSelect = if (skillOptions.contains(sk.name)) sk.name else if (sk.name.isBlank()) "" else "Others (ম্যানুয়াল ইনপুট)"
+            
             Surface(
                 shape = RoundedCornerShape(10.dp),
                 color = themeColors.cardBg,
                 border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.1f)),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 8.dp)
+                    .padding(bottom = 10.dp)
             ) {
-                Row(
-                    modifier = Modifier.padding(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(modifier = Modifier.weight(1f)) {
-                        CvCustomTextField(
-                            label = if (isBn) "কী স্কিল ফিল্ড #${index + 1}" else "Key Skill Entry #${index + 1}",
-                            value = fullText,
-                            onValueChange = { input ->
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (isBn) "কী স্কিল #${index + 1}" else "Key Skill Entry #${index + 1}",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = themeColors.buttonEqualBg
+                        )
+                        IconButton(
+                            onClick = {
                                 val newList = cvData.skills.toMutableList()
-                                if (input.contains(":")) {
-                                    val parts = input.split(":", limit = 2)
-                                    newList[index] = sk.copy(name = parts[0].trim(), description = parts[1].trim())
+                                newList.removeAt(index)
+                                onCvDataChange(cvData.copy(skills = newList))
+                            },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red.copy(alpha = 0.7f), modifier = Modifier.size(15.dp))
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(6.dp))
+                    
+                    // Dropdowns Row
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        CvCustomDropdown(
+                            label = if (isBn) "স্কিল ক্যাটাগরি / গ্রুপ" else "Skill Category / Group",
+                            selectedValue = currentCategory,
+                            options = SKILL_CATEGORY_LIBRARY.keys.toList(),
+                            onValueChange = { cat ->
+                                val opts = SKILL_CATEGORY_LIBRARY[cat] ?: emptyList()
+                                val defaultSkill = opts.firstOrNull() ?: ""
+                                val newList = cvData.skills.toMutableList()
+                                newList[index] = sk.copy(category = cat, name = defaultSkill)
+                                onCvDataChange(cvData.copy(skills = newList))
+                            },
+                            themeColors = themeColors,
+                            modifier = Modifier.weight(1.2f)
+                        )
+                        
+                        Spacer(modifier = Modifier.width(8.dp))
+                        
+                        CvCustomDropdown(
+                            label = if (isBn) "স্কিল নির্বাচন" else "Select Skill",
+                            selectedValue = currentSkillSelect,
+                            options = skillOptions + "Others (ম্যানুয়াল ইনপুট)",
+                            onValueChange = { s ->
+                                val newList = cvData.skills.toMutableList()
+                                if (s == "Others (ম্যানুয়াল ইনপুট)") {
+                                    newList[index] = sk.copy(category = currentCategory, name = "")
                                 } else {
-                                    newList[index] = sk.copy(name = input, description = "")
+                                    newList[index] = sk.copy(category = currentCategory, name = s)
                                 }
                                 onCvDataChange(cvData.copy(skills = newList))
                             },
-                            themeColors = themeColors, isLiveEdit = isLiveEdit, isBn = isBn,
-                            placeholderText = if (isBn) "যেমন: Financial Management: Skilled in daily record keeping..." else "e.g., Financial Management: Skilled in daily tracking...",
-                            onAiPrompt = { onRequestAiPrompt("Skill Suggestion", "Suggest a skill description for a ${cvData.jobTitle}...", "SKILLS_SINGLE", index) }
+                            themeColors = themeColors,
+                            modifier = Modifier.weight(1.0f)
                         )
                     }
-                    Spacer(modifier = Modifier.width(6.dp))
-                    IconButton(
-                        onClick = {
+                    
+                    if (currentSkillSelect == "Others (ম্যানুয়াল ইনপুট)" || sk.name.isBlank()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        CvCustomTextField(
+                            label = if (isBn) "কাস্টম স্কিল টাইটেল" else "Custom Skill Title",
+                            value = sk.name,
+                            onValueChange = { text ->
+                                val newList = cvData.skills.toMutableList()
+                                newList[index] = sk.copy(name = text)
+                                onCvDataChange(cvData.copy(skills = newList))
+                            },
+                            themeColors = themeColors, isLiveEdit = isLiveEdit, isBn = isBn,
+                            placeholderText = if (isBn) "যেমন: Flutter, Android Jetpack" else "e.g., Flutter, Android Jetpack"
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    CvCustomTextField(
+                        label = if (isBn) "দক্ষতার বিবরণ (ঐচ্ছিক)" else "Competency Description (Optional)",
+                        value = sk.description,
+                        onValueChange = { desc ->
                             val newList = cvData.skills.toMutableList()
-                            newList.removeAt(index)
+                            newList[index] = sk.copy(description = desc)
                             onCvDataChange(cvData.copy(skills = newList))
                         },
-                        modifier = Modifier.size(28.dp)
-                    ) {
-                        Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red.copy(alpha = 0.7f), modifier = Modifier.size(16.dp))
-                    }
+                        themeColors = themeColors, isLiveEdit = isLiveEdit, isBn = isBn,
+                        placeholderText = if (isBn) "যেমন: ১+ বছরের অভিজ্ঞতা এবং প্রজেক্টে সফল ব্যবহার।" else "e.g., 1+ years hands-on experience and successful production use.",
+                        onAiPrompt = { onRequestAiPrompt("Skill Suggestion", "Suggest a professional resume competency bullet description for the skill '${sk.name}' under the category '${sk.category}' for a ${cvData.jobTitle} candidate...", "SKILLS_SINGLE", index) }
+                    )
                 }
             }
         }
@@ -9855,7 +10179,6 @@ private fun AiJobCircularMatchTab(
     var circularImageBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var selectedComparisonSuggestion by remember { mutableStateOf<AiSuggestionItem?>(null) }
     var activeFixDialogData by remember { mutableStateOf<CvFixActionDialogData?>(null) }
-    var savedCirculars by remember { mutableStateOf(loadSavedCirculars(context)) }
     var showSaveCircularDialog by remember { mutableStateOf(false) }
     var newCircularTitle by remember { mutableStateOf("") }
     var activeAiSection by remember { mutableStateOf("ATS_SCORE") }
@@ -9946,20 +10269,22 @@ private fun AiJobCircularMatchTab(
             confirmButton = {
                 Button(
                     onClick = {
-                        val title = newCircularTitle.trim().ifBlank { if (isBn) "সার্কুলার #${savedCirculars.size + 1}" else "Circular #${savedCirculars.size + 1}" }
-                        val newItem = SavedCircularItem(
+                        val title = newCircularTitle.trim().ifBlank { if (isBn) "সার্কুলার #${cvData.savedCirculars.size + 1}" else "Circular #${cvData.savedCirculars.size + 1}" }
+                        val newId = java.util.UUID.randomUUID().toString()
+                        val newItem = SavedCircularAnalysis(
+                            id = newId,
                             title = title,
                             text = circularTextInput,
-                            matchPct = cvData.lastJobMatchPercentage,
-                            matchingStrengths = cvData.lastMatchingStrengths,
-                            missingKeywords = cvData.lastMissingKeywords,
-                            tailoredSummary = cvData.lastTailoredSummary,
-                            suggestionsJson = cvData.lastCircularSuggestionsJson,
-                            date = "Saved"
+                            initialScore = cvData.lastJobMatchPercentage,
+                            initialMatchingStrengths = cvData.lastMatchingStrengths,
+                            initialMissingKeywords = cvData.lastMissingKeywords,
+                            timestamp = System.currentTimeMillis()
                         )
-                        val updated = listOf(newItem) + savedCirculars
-                        savedCirculars = updated
-                        saveSavedCirculars(context, updated)
+                        val updated = cvData.savedCirculars + newItem
+                        onCvDataChange(cvData.copy(
+                            savedCirculars = updated,
+                            activeCircularId = newId
+                        ))
                         showSaveCircularDialog = false
                         newCircularTitle = ""
                         Toast.makeText(context, if (isBn) "সার্কুলার সংরক্ষিত হয়েছে" else "Circular saved", Toast.LENGTH_SHORT).show()
@@ -10190,10 +10515,19 @@ private fun AiJobCircularMatchTab(
         else -> Color(0xFFEF4444)
     }
 
+    // Active circular calculation
+    val activeCirc = cvData.savedCirculars.find { it.id == cvData.activeCircularId }
+    val (dispScore, dispMatching, dispMissing) = if (activeCirc != null) {
+        val rt = calculateRealtimeCircularMatch(cvData, activeCirc.initialMissingKeywords, activeCirc.initialMatchingStrengths, activeCirc.initialScore)
+        Triple(rt.score, rt.matchingStrengths, rt.remainingMissingKeywords)
+    } else {
+        Triple(cvData.lastJobMatchPercentage, cvData.lastMatchingStrengths, cvData.lastMissingKeywords)
+    }
+
     // Circular Alignment Checklist Items
-    val isTitleAligned = cvData.jobTitle.isNotBlank() && (circularTextInput.isBlank() || circularTextInput.contains(cvData.jobTitle, ignoreCase = true) || cvData.lastJobMatchPercentage >= 65)
-    val areSkillsAligned = cvData.lastMissingKeywords.isEmpty() && cvData.skills.size >= 5
-    val isExpAligned = expCount >= 1 && (cvData.lastMatchingStrengths.isNotEmpty() || circularTextInput.isBlank())
+    val isTitleAligned = cvData.jobTitle.isNotBlank() && (circularTextInput.isBlank() || circularTextInput.contains(cvData.jobTitle, ignoreCase = true) || dispScore >= 65)
+    val areSkillsAligned = dispMissing.isEmpty() && cvData.skills.size >= 5
+    val isExpAligned = expCount >= 1 && (dispMatching.isNotEmpty() || circularTextInput.isBlank())
     val isEduAligned = eduCount >= 1
 
     val circularMatchItems = listOf(
@@ -10220,17 +10554,17 @@ private fun AiJobCircularMatchTab(
             titleBn = "প্রয়োজনীয় হার্ড ও টেকনিক্যাল স্কিলস (Required Skills)",
             titleEn = "Circular Required Competencies",
             isMatched = areSkillsAligned,
-            statusTextBn = if (areSkillsAligned) "${cvData.skills.size}টি প্রয়োজনীয় স্কিল সার্কুলারের সাথে নিখুঁতভাবে মিলেছে।" else if (cvData.lastMissingKeywords.isNotEmpty()) "${cvData.lastMissingKeywords.size}টি গুরুত্বপূর্ণ সার্কুলার কী-ওয়ার্ড সিভিতে নেই।" else "সার্কুলার অনুযায়ী অন্তত ৫টি স্কিল যুক্ত করুন।",
-            statusTextEn = if (areSkillsAligned) "All essential core skills and keywords are aligned." else if (cvData.lastMissingKeywords.isNotEmpty()) "${cvData.lastMissingKeywords.size} required keywords from the circular are missing in your CV." else "Add at least 5 relevant competencies for this circular.",
+            statusTextBn = if (areSkillsAligned) "${cvData.skills.size}টি প্রয়োজনীয় স্কিল সার্কুলারের সাথে নিখুঁতভাবে মিলেছে।" else if (dispMissing.isNotEmpty()) "${dispMissing.size}টি গুরুত্বপূর্ণ সার্কুলার কী-ওয়ার্ড সিভিতে নেই।" else "সার্কুলার অনুযায়ী অন্তত ৫টি স্কিল যুক্ত করুন।",
+            statusTextEn = if (areSkillsAligned) "All essential core skills and keywords are aligned." else if (dispMissing.isNotEmpty()) "${dispMissing.size} required keywords from the circular are missing in your CV." else "Add at least 5 relevant competencies for this circular.",
             requirementBn = "সার্কুলারে যেসব কী-ওয়ার্ড ও টেকনিক্যাল টুলস চাওয়া হয়েছে সেগুলো সিভির স্কিল লিস্টে থাকা বাধ্যতামূলক।",
             requirementEn = "Technical keywords and competencies from the circular must be present in the CV.",
-            whatToChangeBn = "অনুপস্থিত কী-ওয়ার্ডগুলো (${cvData.lastMissingKeywords.take(4).joinToString()}) বিস্তারিত বিবরণ সহ স্কিল লিস্টে যুক্ত করতে হবে।",
-            whatToChangeEn = "Add missing circular keywords (${cvData.lastMissingKeywords.take(4).joinToString()}) with context descriptions.",
-            proposedContent = cvData.lastMissingKeywords.joinToString("\n") { "• $it: Proficient in applying $it effectively in professional workflows." },
+            whatToChangeBn = "অনুপস্থিত কী-ওয়ার্ডগুলো (${dispMissing.take(4).joinToString()}) বিস্তারিত বিবরণ সহ স্কিল লিস্টে যুক্ত করতে হবে।",
+            whatToChangeEn = "Add missing circular keywords (${dispMissing.take(4).joinToString()}) with context descriptions.",
+            proposedContent = dispMissing.joinToString("\n") { "• $it: Proficient in applying $it effectively in professional workflows." },
             targetTab = 2,
             autoFixAction = {
                 val currentNames = cvData.skills.map { it.name.lowercase().trim() }.toSet()
-                val toAdd = cvData.lastMissingKeywords
+                val toAdd = dispMissing
                     .filter { !currentNames.contains(it.lowercase().trim()) }
                     .map { kw ->
                         CvSkillItem(
@@ -10666,24 +11000,6 @@ private fun AiJobCircularMatchTab(
                             if (circularTextInput.isBlank() && circularImageBitmap == null) {
                                 Toast.makeText(context, if (isBn) "সার্কুলার টেক্সট বা ছবি দিন" else "Provide circular text or image", Toast.LENGTH_SHORT).show()
                             } else {
-                                // Auto-save circular text if not already saved
-                                if (circularTextInput.isNotBlank() && savedCirculars.none { it.text.trim() == circularTextInput.trim() }) {
-                                    val autoTitle = circularTextInput.trim().lines().firstOrNull()?.take(28) ?: (if (isBn) "সার্কুলার #${savedCirculars.size + 1}" else "Circular #${savedCirculars.size + 1}")
-                                    val newItem = SavedCircularItem(
-                                        id = System.currentTimeMillis().toString(),
-                                        title = autoTitle,
-                                        text = circularTextInput,
-                                        matchPct = 0,
-                                        matchingStrengths = emptyList(),
-                                        missingKeywords = emptyList(),
-                                        tailoredSummary = "",
-                                        suggestionsJson = "",
-                                        date = "Saved"
-                                    )
-                                    val updated = listOf(newItem) + savedCirculars
-                                    savedCirculars = updated
-                                    saveSavedCirculars(context, updated)
-                                }
 
                                 val bmp = circularImageBitmap
                                 if (bmp != null) {
@@ -10725,10 +11041,10 @@ private fun AiJobCircularMatchTab(
                 }
 
                 // Saved Circulars Quick Selector Chips
-                if (savedCirculars.isNotEmpty()) {
+                if (cvData.savedCirculars.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = if (isBn) "সংরক্ষিত সার্কুলারসমূহ (${savedCirculars.size}টি):" else "Saved Circulars (${savedCirculars.size}):",
+                        text = if (isBn) "সংরক্ষিত সার্কুলারসমূহ (${cvData.savedCirculars.size}টি):" else "Saved Circulars (${cvData.savedCirculars.size}):",
                         fontSize = 11.5.sp,
                         fontWeight = FontWeight.Bold,
                         color = themeColors.displayText
@@ -10738,13 +11054,15 @@ private fun AiJobCircularMatchTab(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        items(savedCirculars) { circularItem ->
+                        items(cvData.savedCirculars) { circularItem ->
+                            val isSelected = cvData.activeCircularId == circularItem.id
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
-                                color = themeColors.background,
-                                border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.15f)),
+                                color = if (isSelected) themeColors.buttonEqualBg.copy(alpha = 0.12f) else themeColors.background,
+                                border = BorderStroke(1.dp, if (isSelected) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.15f)),
                                 onClick = {
                                     circularTextInput = circularItem.text
+                                    onCvDataChange(cvData.copy(activeCircularId = circularItem.id))
                                     Toast.makeText(context, if (isBn) "'${circularItem.title}' লোড হয়েছে" else "Loaded '${circularItem.title}'", Toast.LENGTH_SHORT).show()
                                 }
                             ) {
@@ -10752,15 +11070,28 @@ private fun AiJobCircularMatchTab(
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Icon(imageVector = Icons.Default.Description, contentDescription = null, tint = themeColors.buttonEqualBg, modifier = Modifier.size(14.dp))
+                                    Icon(
+                                        imageVector = Icons.Default.Description,
+                                        contentDescription = null,
+                                        tint = if (isSelected) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.5f),
+                                        modifier = Modifier.size(14.dp)
+                                    )
                                     Spacer(modifier = Modifier.width(6.dp))
-                                    Text(text = circularItem.title, fontSize = 11.sp, color = themeColors.displayText, fontWeight = FontWeight.Medium)
+                                    Text(
+                                        text = circularItem.title,
+                                        fontSize = 11.sp,
+                                        color = if (isSelected) themeColors.buttonEqualBg else themeColors.displayText,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                    )
                                     Spacer(modifier = Modifier.width(6.dp))
                                     IconButton(
                                         onClick = {
-                                            val updated = savedCirculars.filter { it.id != circularItem.id }
-                                            savedCirculars = updated
-                                            saveSavedCirculars(context, updated)
+                                            val updated = cvData.savedCirculars.filter { it.id != circularItem.id }
+                                            val newActiveId = if (cvData.activeCircularId == circularItem.id) "" else cvData.activeCircularId
+                                            onCvDataChange(cvData.copy(
+                                                savedCirculars = updated,
+                                                activeCircularId = newActiveId
+                                            ))
                                         },
                                         modifier = Modifier.size(18.dp)
                                     ) {
@@ -10773,12 +11104,12 @@ private fun AiJobCircularMatchTab(
                 }
 
                 // --- CIRCULAR MATCHING RESULTS ---
-                if (cvData.lastJobMatchPercentage > 0 || cvData.lastMatchingStrengths.isNotEmpty() || cvData.lastMissingKeywords.isNotEmpty() || circularTextInput.isNotBlank()) {
+                if (dispScore > 0 || dispMatching.isNotEmpty() || dispMissing.isNotEmpty() || circularTextInput.isNotBlank()) {
                     Spacer(modifier = Modifier.height(14.dp))
                     HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.1f))
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    val matchPct = cvData.lastJobMatchPercentage
+                    val matchPct = dispScore
                     val matchColor = when {
                         matchPct >= 75 -> Color(0xFF10B981)
                         matchPct >= 50 -> Color(0xFFF59E0B)
@@ -10919,7 +11250,7 @@ private fun AiJobCircularMatchTab(
                     }
 
                     // Matching Strengths
-                    if (cvData.lastMatchingStrengths.isNotEmpty()) {
+                    if (dispMatching.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
                             text = if (isBn) "মিলে যাওয়া শক্তিশালী স্কিলসমূহ (Match Strengths):" else "Matching Strengths & Keywords:",
@@ -10932,7 +11263,7 @@ private fun AiJobCircularMatchTab(
                             horizontalArrangement = Arrangement.spacedBy(6.dp),
                             verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            cvData.lastMatchingStrengths.forEach { str ->
+                            dispMatching.forEach { str ->
                                 Surface(
                                     shape = RoundedCornerShape(6.dp),
                                     color = Color(0xFF10B981).copy(alpha = 0.12f),
@@ -10951,7 +11282,7 @@ private fun AiJobCircularMatchTab(
                     }
 
                     // Missing Keywords & 1-Click Add with Descriptions
-                    if (cvData.lastMissingKeywords.isNotEmpty()) {
+                    if (dispMissing.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(12.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -10967,7 +11298,7 @@ private fun AiJobCircularMatchTab(
                             Button(
                                 onClick = {
                                     val currentSkillNames = cvData.skills.map { it.name.lowercase().trim() }.toSet()
-                                    val newSkills = cvData.lastMissingKeywords
+                                    val newSkills = dispMissing
                                         .filter { !currentSkillNames.contains(it.lowercase().trim()) }
                                         .map { kw ->
                                             CvSkillItem(
@@ -10998,7 +11329,7 @@ private fun AiJobCircularMatchTab(
                             horizontalArrangement = Arrangement.spacedBy(6.dp),
                             verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            cvData.lastMissingKeywords.forEach { kw ->
+                            dispMissing.forEach { kw ->
                                 Surface(
                                     shape = RoundedCornerShape(6.dp),
                                     color = Color(0xFFEF4444).copy(alpha = 0.1f),
@@ -12474,6 +12805,50 @@ private fun CustomizationTab(
                         valueRange = 0.95f..1.45f,
                         colors = SliderDefaults.colors(thumbColor = themeColors.buttonEqualBg, activeTrackColor = themeColors.buttonEqualBg)
                     )
+                }
+
+                // --- Skill Display Style ---
+                Spacer(modifier = Modifier.height(12.dp))
+                Divider(color = themeColors.displayText.copy(alpha = 0.08f))
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = if (isBn) "স্কিল প্রদর্শন স্টাইল" else "Skills Display Style",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = themeColors.displayText
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    listOf(
+                        "GROUPED_COMMA" to (if (isBn) "গ্রুপ ও কমা" else "Grouped Comma"),
+                        "INLINE_COMMA" to (if (isBn) "সব কমা দিয়ে" else "Inline Comma"),
+                        "BULLET_WITH_DESC" to (if (isBn) "বুলেট ও বিবরণ" else "Bullet & Desc")
+                    ).forEach { (styleKey, styleLabel) ->
+                        val isSelected = cvData.skillDisplayStyle == styleKey
+                        Surface(
+                            onClick = { onCvDataChange(cvData.copy(skillDisplayStyle = styleKey)) },
+                            shape = RoundedCornerShape(8.dp),
+                            color = if (isSelected) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.05f),
+                            border = BorderStroke(1.dp, if (isSelected) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.15f)),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Box(
+                                modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = styleLabel,
+                                    fontSize = 10.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (isSelected) Color.White else themeColors.displayText,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
