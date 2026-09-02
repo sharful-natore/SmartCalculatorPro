@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Compare
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
@@ -23,7 +24,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -44,6 +48,7 @@ fun AiCoPilotChatbotSection(
     onCompareClick: (AiSuggestionItem) -> Unit
 ) {
     val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
     
     Spacer(modifier = Modifier.height(18.dp))
     Surface(
@@ -120,10 +125,10 @@ fun AiCoPilotChatbotSection(
                 }
             } else {
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(max = 300.dp)
+                        .heightIn(max = 350.dp)
                         .verticalScroll(rememberScrollState())
                         .padding(bottom = 8.dp)
                 ) {
@@ -135,45 +140,91 @@ fun AiCoPilotChatbotSection(
                         ) {
                             Row(
                                 horizontalArrangement = if (isAi) Arrangement.Start else Arrangement.End,
-                                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 2.dp),
                                 verticalAlignment = Alignment.Bottom
                             ) {
                                 if (isAi) {
                                     Surface(
                                         shape = CircleShape,
                                         color = themeColors.buttonEqualBg,
-                                        modifier = Modifier.size(24.dp).align(Alignment.Top)
+                                        modifier = Modifier.size(26.dp).align(Alignment.Top)
                                     ) {
                                         Box(contentAlignment = Alignment.Center) {
                                             Icon(
                                                 imageVector = Icons.Default.AutoAwesome,
                                                 contentDescription = null,
                                                 tint = Color.White,
-                                                modifier = Modifier.size(12.dp)
+                                                modifier = Modifier.size(13.dp)
                                             )
                                         }
                                     }
                                     Spacer(modifier = Modifier.width(6.dp))
                                 }
                                 
-                                Surface(
-                                    shape = RoundedCornerShape(
-                                        topStart = 12.dp,
-                                        topEnd = 12.dp,
-                                        bottomStart = if (isAi) 2.dp else 12.dp,
-                                        bottomEnd = if (isAi) 12.dp else 2.dp
-                                    ),
-                                    color = if (isAi) themeColors.background else themeColors.buttonEqualBg,
-                                    border = BorderStroke(1.dp, if (isAi) themeColors.displayText.copy(alpha = 0.08f) else Color.Transparent),
-                                    modifier = Modifier.widthIn(max = 270.dp)
+                                Column(
+                                    modifier = Modifier.widthIn(max = 280.dp),
+                                    horizontalAlignment = if (isAi) Alignment.Start else Alignment.End
                                 ) {
-                                    Text(
-                                        text = msg.text,
-                                        fontSize = 11.5.sp,
-                                        color = if (isAi) themeColors.displayText else Color.White,
-                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                                        lineHeight = 16.sp
-                                    )
+                                    Surface(
+                                        shape = RoundedCornerShape(
+                                            topStart = 12.dp,
+                                            topEnd = 12.dp,
+                                            bottomStart = if (isAi) 2.dp else 12.dp,
+                                            bottomEnd = if (isAi) 12.dp else 2.dp
+                                        ),
+                                        color = if (isAi) themeColors.background else themeColors.buttonEqualBg,
+                                        border = BorderStroke(1.dp, if (isAi) themeColors.displayText.copy(alpha = 0.08f) else Color.Transparent),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                                            SelectionContainer {
+                                                Text(
+                                                    text = msg.text,
+                                                    fontSize = 11.5.sp,
+                                                    color = if (isAi) themeColors.displayText else Color.White,
+                                                    lineHeight = 16.sp
+                                                )
+                                            }
+
+                                            if (isAi && msg.proposedCvData != null) {
+                                                Spacer(modifier = Modifier.height(6.dp))
+
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.End,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Surface(
+                                                        shape = RoundedCornerShape(6.dp),
+                                                        color = Color(0xFF10B981),
+                                                        onClick = {
+                                                            onCvDataChange(msg.proposedCvData)
+                                                            Toast.makeText(context, if (isBn) "সিভিতে প্রয়োগ করা হয়েছে!" else "Applied to CV!", Toast.LENGTH_SHORT).show()
+                                                        }
+                                                    ) {
+                                                        Row(
+                                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                                            verticalAlignment = Alignment.CenterVertically
+                                                        ) {
+                                                            Icon(
+                                                                imageVector = Icons.Default.Check,
+                                                                contentDescription = "Apply to CV",
+                                                                tint = Color.White,
+                                                                modifier = Modifier.size(11.dp)
+                                                            )
+                                                            Spacer(modifier = Modifier.width(3.dp))
+                                                            Text(
+                                                                text = if (isBn) "সিভিতে বসান" else "Apply to CV",
+                                                                fontSize = 9.5.sp,
+                                                                fontWeight = FontWeight.Bold,
+                                                                color = Color.White
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
 
@@ -185,7 +236,7 @@ fun AiCoPilotChatbotSection(
                                     color = themeColors.background.copy(alpha = 0.7f),
                                     border = BorderStroke(1.dp, Color(0xFF10B981).copy(alpha = 0.25f)),
                                     modifier = Modifier
-                                        .padding(start = 30.dp, end = 10.dp)
+                                        .padding(start = 32.dp, end = 4.dp)
                                         .fillMaxWidth()
                                 ) {
                                     Column(modifier = Modifier.padding(10.dp)) {
@@ -257,7 +308,7 @@ fun AiCoPilotChatbotSection(
                                     }
                                 }
                             }
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(4.dp))
                         }
                     }
 

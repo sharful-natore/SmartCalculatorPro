@@ -723,14 +723,14 @@ fun CvLiveEditPanel(
                             .horizontalScroll(rememberScrollState())
                             .padding(vertical = 4.dp)
                     ) {
-                        val shapes = listOf("Circle", "Rounded", "Square", "Rectangle")
+                        val shapes = listOf("Circle", "Rounded", "Square")
                         shapes.forEach { shapeName ->
                             val isSelected = localData.photoShape == shapeName
                             val label = when (shapeName) {
                                 "Circle" -> if (isBn) "বৃত্ত" else "Circle"
                                 "Rounded" -> if (isBn) "কোণ গোল" else "Rounded"
                                 "Square" -> if (isBn) "বর্গ" else "Square"
-                                else -> if (isBn) "আয়তাকার" else "Rectangle"
+                                else -> shapeName
                             }
                             Surface(
                                 onClick = { localData = localData.copy(photoShape = shapeName) },
