@@ -325,52 +325,82 @@ data class RealtimeMatchResult(
 val SKILL_CATEGORY_LIBRARY = mapOf(
     "Technical & Software Engineering" to listOf(
         "Kotlin", "Java", "Android SDK", "Jetpack Compose", "Coroutines & Flow", "Room Database",
-        "Retrofit & REST APIs", "Python", "C++", "React.js", "Node.js", "Flutter & Dart",
+        "Retrofit & REST APIs", "Python", "C++", "C#", "React.js", "Node.js", "Flutter & Dart",
         "SQL & PostgreSQL", "GraphQL", "Git & GitHub", "Docker & Containers", "Kubernetes",
-        "CI/CD Pipelines", "Microservices Architecture", "System Design & Architecture"
+        "CI/CD Pipelines", "Microservices Architecture", "System Design & Architecture",
+        "Swift & iOS Development", "JavaScript & TypeScript", "Next.js & Vue.js", "NoSQL (MongoDB & Redis)",
+        "Firebase & Cloud Firestore", "PHP & Laravel", "Go (Golang)", "Rust", "Ruby on Rails",
+        "Django & FastAPI", "Spring Boot", "HTML5 & CSS3", "Sass & Tailwind CSS", "Machine Learning & PyTorch",
+        "TensorFlow & Keras", "Natural Language Processing (NLP)", "Computer Vision", "Data Science & Pandas",
+        "C Programming"
     ),
     "Tools, Cloud & Platforms" to listOf(
         "AWS (Amazon Web Services)", "Google Cloud Platform (GCP)", "Microsoft Azure", "Firebase",
         "JIRA & Confluence", "Postman & API Testing", "Figma & Wireframing", "Linux & Shell Scripting",
         "SAP ERP", "Salesforce CRM", "Microsoft Excel (VLOOKUP, Pivot)", "Power BI & Analytics",
-        "Tableau Data Viz", "Git, GitLab & Bitbucket"
+        "Tableau Data Viz", "Git, GitLab & Bitbucket", "Jenkins & GitHub Actions", "Splunk & ELK Stack",
+        "VMware & Virtualization", "Terraform (IaC)", "Ansible & Chef", "Oracle DB", "Trello & Asana",
+        "Microsoft PowerPoint & Word", "Adobe Creative Cloud", "Slack & Zoom", "Google Workspace",
+        "Grafana & Prometheus", "PostgreSQL Client", "Visual Studio Code", "Android Studio", "Xcode"
     ),
     "Functional & Core Competencies" to listOf(
         "Data Analysis & Visualization", "Agile & Scrum Project Management", "Quality Assurance & Testing",
         "Strategic Planning & Execution", "Business Analysis & Requirement Gathering", "Process Optimization",
-        "Operations & Workflow Management", "Risk Assessment & Management", "Client Relationship Management"
+        "Operations & Workflow Management", "Risk Assessment & Management", "Client Relationship Management",
+        "Product Lifecycle Management", "SDLC Methodologies", "UX Research", "Information Security",
+        "System Integration", "Root Cause Analysis", "Performance Tuning", "Data Governance & Compliance",
+        "Disaster Recovery Planning", "Supply Chain Logistics", "Market Research"
     ),
     "Management, Business & Strategy" to listOf(
         "Team Leadership & Mentorship", "Stakeholder Management", "Budgeting & Financial Forecasting",
         "Resource Allocation", "Cross-functional Coordination", "Vendor & Contract Negotiation",
-        "Change Management", "Strategic Growth & Scaling"
+        "Change Management", "Strategic Growth & Scaling", "Business Development", "Organizational Leadership",
+        "Conflict Management", "Key Performance Indicators (KPIs)", "Operations Management", "Public Relations",
+        "Executive Reporting", "Policy Formulation", "Recruitment & Talent Acquisition", "Performance Management",
+        "Corporate Strategy", "Customer Success Management"
     ),
     "Finance, Accounting & Banking" to listOf(
         "Financial Analysis & Reporting", "Auditing & Internal Control", "Taxation & Compliance",
         "Bookkeeping & General Ledger", "Credit Risk Analysis", "QuickBooks & Tally Prime",
-        "Treasury Management", "Cost Accounting"
+        "Treasury Management", "Cost Accounting", "Financial Modeling", "Investment Banking",
+        "Wealth Management", "Risk Management & Compliance", "Accounts Payable & Receivable",
+        "Payroll Management", "VAT & AIT Assessment", "Billing & Invoicing", "GAAP & IFRS Standards",
+        "Budgetary Control", "SAP FICO", "Excel for Finance"
     ),
     "Marketing, Sales & Growth" to listOf(
         "Digital Marketing Strategy", "SEO & SEM Optimization", "Content Creation & Copywriting",
         "Social Media Campaign Management", "Brand Building & Positioning", "Lead Generation & Sales Funnels",
-        "CRM & Customer Retention", "Performance Marketing"
+        "CRM & Customer Retention", "Performance Marketing", "Business-to-Business (B2B) Sales",
+        "Business-to-Consumer (B2C) Sales", "Key Account Management", "Market Segmentation",
+        "Email Marketing Automation", "Google Analytics & Ads", "Influencer Marketing", "Public Relations (PR)",
+        "Sales Negotiation", "Product Marketing", "Customer Acquisition", "E-commerce Management"
     ),
     "Design, UI/UX & Creative" to listOf(
         "UI/UX Design & Prototyping", "User Research & Usability Testing", "Figma & Adobe XD",
-        "Adobe Photoshop & Illustrator", "Graphic & Visual Design", "Design Systems & Pattern Libraries"
+        "Adobe Photoshop & Illustrator", "Graphic & Visual Design", "Design Systems & Pattern Libraries",
+        "Adobe InDesign", "Video Editing & Premiere Pro", "After Effects & Motion Graphics",
+        "3D Animation & Blender", "Typography & Layout", "Brand Identity Design", "Sketching & Storyboarding",
+        "Infographic Design", "Responsive Web Design", "CorelDRAW"
     ),
     "Engineering & Technical Domain" to listOf(
         "AutoCAD & 3D Modeling", "Quality Control & Quality Assurance", "Structural Engineering & Analysis",
-        "Electrical Circuit Design", "PLC & Industrial Automation", "HVAC Systems & Maintenance"
+        "Electrical Circuit Design", "PLC & Industrial Automation", "HVAC Systems & Maintenance",
+        "SolidWorks & CAD", "MATLAB & Simulink", "Embedded Systems", "Robotics & Control",
+        "Manufacturing Processes", "Geotechnical Analysis", "Project Engineering", "RF Engineering",
+        "Safety Standards & OSHA", "Instrumentation & Measurement", "CNC Programming"
     ),
     "Soft Skills & Professional Excellence" to listOf(
         "Effective Business Communication", "Critical Thinking & Decision Making", "Complex Problem Solving",
         "Time Management & Prioritization", "Adaptability & Resilience", "Negotiation & Conflict Resolution",
-        "Public Speaking & Presentation Skills"
+        "Public Speaking & Presentation Skills", "Interpersonal Skills & Empathy", "Active Listening",
+        "Teamwork & Collaboration", "Creative Problem Solving", "Work Ethic & Professionalism",
+        "Leadership & Initiative", "Attention to Detail", "Stress Management", "Emotional Intelligence (EQ)"
     ),
     "Languages & Global Communication" to listOf(
         "Bengali (Native)", "English (Full Professional Proficiency)", "Business Communication",
-        "Technical Writing & Documentation"
+        "Technical Writing & Documentation", "German (Elementary/Intermediate)", "Spanish (Elementary/Intermediate)",
+        "French (Elementary/Intermediate)", "Hindi (Conversational)", "Arabic (Elementary/Intermediate)",
+        "Chinese (Mandarin)", "Japanese", "Professional Translation", "Report Writing"
     )
 )
 
@@ -1345,6 +1375,7 @@ data class CvData(
     val itemSpacing: Float = 4f,
     val customLineSpacing: Float = 1.15f,
     val skillDisplayStyle: String = "GROUPED_COMMA", // "GROUPED_COMMA", "INLINE_COMMA", "BULLET_WITH_DESC"
+    val showSkillDescriptions: Boolean = true,
 
     // ATS & Job Circular Analysis fields
     val lastJobMatchPercentage: Int = 0,
@@ -2441,6 +2472,7 @@ private fun saveAllCvProfiles(context: Context, profiles: List<CvData>) {
                 put("itemSpacing", profile.itemSpacing.toDouble())
                 put("customLineSpacing", profile.customLineSpacing.toDouble())
                 put("skillDisplayStyle", profile.skillDisplayStyle)
+                put("showSkillDescriptions", profile.showSkillDescriptions)
                 
                 // Gemini AI & Circular fields
                 put("lastAtsScoreFromGemini", profile.lastAtsScoreFromGemini)
@@ -2648,6 +2680,7 @@ private fun loadAllCvProfiles(context: Context): List<CvData> {
                     itemSpacing = obj.optDouble("itemSpacing", 4.0).toFloat(),
                     customLineSpacing = obj.optDouble("customLineSpacing", 1.15).toFloat(),
                     skillDisplayStyle = obj.optString("skillDisplayStyle", "GROUPED_COMMA"),
+                    showSkillDescriptions = obj.optBoolean("showSkillDescriptions", true),
                     lastAtsScoreFromGemini = obj.optInt("lastAtsScoreFromGemini", 0),
                     lastAtsSuggestionsJson = obj.optString("lastAtsSuggestionsJson", ""),
                     lastCircularSuggestionsJson = obj.optString("lastCircularSuggestionsJson", ""),
@@ -4483,20 +4516,23 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                                     val sb = SpannableStringBuilder()
                                     sb.append(bulletPrefix)
 
-                                    val titleText = if (sk.description.isNotBlank()) {
-                                        "${sk.name}: "
-                                    } else if (sk.name.contains(":")) {
-                                        "${sk.name.substringBefore(":")}: "
+                                    val hasDesc = data.showSkillDescriptions && (sk.description.isNotBlank() || sk.name.contains(":"))
+                                    val titleText = if (hasDesc) {
+                                        if (sk.description.isNotBlank()) "${sk.name}: " else "${sk.name.substringBefore(":")}: "
                                     } else {
-                                        "${sk.name} "
+                                        if (sk.name.contains(":")) sk.name.substringBefore(":") else sk.name
                                     }
 
-                                    val descText = if (sk.description.isNotBlank()) {
-                                        sk.description
-                                    } else if (sk.name.contains(":")) {
-                                        sk.name.substringAfter(":").trim()
+                                    val descText = if (data.showSkillDescriptions) {
+                                        if (sk.description.isNotBlank()) {
+                                            sk.description
+                                        } else if (sk.name.contains(":")) {
+                                            sk.name.substringAfter(":").trim()
+                                        } else {
+                                            if (sk.level.isNotBlank() && sk.level != "Proficient") "(${sk.level})" else ""
+                                        }
                                     } else {
-                                        if (sk.level.isNotBlank() && sk.level != "Proficient") "(${sk.level})" else ""
+                                        ""
                                     }
 
                                     val titleStart = sb.length
@@ -8552,21 +8588,104 @@ private fun EducationAndSkillsTab(
         Spacer(modifier = Modifier.height(18.dp))
 
         // KEY SKILL AND COMPETENCE SECTION BLOCK
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            SectionCardHeader(
-                title = if (isBn) "Key Skill and Competence (${cvData.skills.size})" else "Key Skill and Competence (${cvData.skills.size})",
-                icon = Icons.Default.Code,
-                themeColors = themeColors,
-                modifier = Modifier.weight(1f, fill = false)
-            )
+        val context = LocalContext.current
+        var localAddedCategories by remember { mutableStateOf<List<String>>(emptyList()) }
+        var showAddCategoryMenu by remember { mutableStateOf(false) }
+        var showCustomCategoryDialog by remember { mutableStateOf(false) }
+        var customCategoryInput by remember { mutableStateOf("") }
+
+        Column(modifier = Modifier.fillMaxWidth()) {
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                SectionCardHeader(
+                    title = if (isBn) "কী স্কিল এবং পারদর্শিতা (${cvData.skills.size})" else "Key Skill & Competence (${cvData.skills.size})",
+                    icon = Icons.Default.Code,
+                    themeColors = themeColors,
+                    modifier = Modifier.weight(1f)
+                )
+
+                // Add Category button
+                Box {
+                    Surface(
+                        onClick = { showAddCategoryMenu = true },
+                        shape = RoundedCornerShape(12.dp),
+                        color = themeColors.buttonEqualBg.copy(alpha = 0.12f),
+                        border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.3f))
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(imageVector = Icons.Default.Add, contentDescription = null, tint = themeColors.buttonEqualBg, modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(3.dp))
+                            Text(text = if (isBn) "ক্যাটাগরি" else "Category", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = themeColors.buttonEqualBg)
+                        }
+                    }
+
+                    DropdownMenu(
+                        expanded = showAddCategoryMenu,
+                        onDismissRequest = { showAddCategoryMenu = false },
+                        modifier = Modifier.background(themeColors.cardBg)
+                    ) {
+                        val availableCategories = SKILL_CATEGORY_LIBRARY.keys.toList() + "Custom / অন্যান্য"
+                        availableCategories.forEach { categoryName ->
+                            DropdownMenuItem(
+                                text = { Text(text = categoryName, fontSize = 12.sp, color = themeColors.displayText) },
+                                onClick = {
+                                    showAddCategoryMenu = false
+                                    if (categoryName == "Custom / অন্যান্য") {
+                                        showCustomCategoryDialog = true
+                                    } else {
+                                        if (!localAddedCategories.contains(categoryName)) {
+                                            localAddedCategories = localAddedCategories + categoryName
+                                        }
+                                    }
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Show/Hide Skill Description switch
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .background(themeColors.displayText.copy(alpha = 0.05f), RoundedCornerShape(8.dp))
+                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                        text = if (isBn) "বিবরণ" else "Desc",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.displayText.copy(alpha = 0.8f)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Switch(
+                        checked = cvData.showSkillDescriptions,
+                        onCheckedChange = { onCvDataChange(cvData.copy(showSkillDescriptions = it)) },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = themeColors.buttonEqualBg,
+                            checkedTrackColor = themeColors.buttonEqualBg.copy(alpha = 0.4f),
+                            uncheckedThumbColor = themeColors.displayText.copy(alpha = 0.5f),
+                            uncheckedTrackColor = themeColors.displayText.copy(alpha = 0.1f)
+                        ),
+                        modifier = Modifier.scale(0.7f)
+                    )
+                }
+
+                Spacer(modifier = Modifier.weight(1f))
+
                 Surface(
                     onClick = {
                         onRequestAiPrompt(
@@ -8577,7 +8696,8 @@ private fun EducationAndSkillsTab(
                         )
                     },
                     shape = RoundedCornerShape(12.dp),
-                    color = themeColors.buttonEqualBg
+                    color = themeColors.buttonEqualBg,
+                    border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.3f))
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
@@ -8588,27 +8708,51 @@ private fun EducationAndSkillsTab(
                         Text(text = if (isBn) "এআই জেনারেট" else "AI Generate", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = Color.White)
                     }
                 }
-
-                Surface(
-                    onClick = {
-                        val newList = cvData.skills.toMutableList()
-                        newList.add(CvSkillItem(name = "Skill Title: Description of proficiency..."))
-                        onCvDataChange(cvData.copy(skills = newList))
-                    },
-                    shape = RoundedCornerShape(12.dp),
-                    color = themeColors.buttonEqualBg.copy(alpha = 0.12f),
-                    border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.3f))
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(imageVector = Icons.Default.Add, contentDescription = null, tint = themeColors.buttonEqualBg, modifier = Modifier.size(14.dp))
-                        Spacer(modifier = Modifier.width(3.dp))
-                        Text(text = if (isBn) "যুক্ত করুন" else "Add", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = themeColors.buttonEqualBg)
-                    }
-                }
             }
+        }
+
+        if (showCustomCategoryDialog) {
+            AlertDialog(
+                onDismissRequest = { showCustomCategoryDialog = false },
+                title = { Text(text = if (isBn) "নতুন কাস্টম ক্যাটাগরি" else "New Custom Category", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText) },
+                text = {
+                    OutlinedTextField(
+                        value = customCategoryInput,
+                        onValueChange = { customCategoryInput = it },
+                        placeholder = { Text(text = if (isBn) "যেমন: Soft Skills & Leadership" else "e.g., Soft Skills & Leadership") },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = themeColors.buttonEqualBg,
+                            unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f),
+                            focusedTextColor = themeColors.displayText,
+                            unfocusedTextColor = themeColors.displayText
+                        )
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            if (customCategoryInput.isNotBlank()) {
+                                val catName = customCategoryInput.trim()
+                                if (!localAddedCategories.contains(catName)) {
+                                    localAddedCategories = localAddedCategories + catName
+                                }
+                                customCategoryInput = ""
+                                showCustomCategoryDialog = false
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg)
+                    ) {
+                        Text(text = if (isBn) "যোগ করুন" else "Add", color = Color.White)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showCustomCategoryDialog = false }) {
+                        Text(text = if (isBn) "বাতিল" else "Cancel", color = themeColors.displayText)
+                    }
+                },
+                containerColor = themeColors.cardBg
+            )
         }
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -8620,111 +8764,265 @@ private fun EducationAndSkillsTab(
             modifier = Modifier.padding(bottom = 8.dp)
         )
 
-        cvData.skills.forEachIndexed { index, sk ->
-            val currentCategory = sk.category.ifBlank { "Technical & Software Engineering" }
-            val skillOptions = SKILL_CATEGORY_LIBRARY[currentCategory] ?: emptyList()
-            val currentSkillSelect = if (skillOptions.contains(sk.name)) sk.name else if (sk.name.isBlank()) "" else "Others (ম্যানুয়াল ইনপুট)"
-            
-            Surface(
-                shape = RoundedCornerShape(10.dp),
-                color = themeColors.cardBg,
-                border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.1f)),
+        val activeCategories = (cvData.skills.map { it.category.ifBlank { "Technical & Software Engineering" } } + localAddedCategories).distinct()
+
+        if (activeCategories.isEmpty()) {
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 10.dp)
+                    .padding(vertical = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = if (isBn) "কী স্কিল #${index + 1}" else "Key Skill Entry #${index + 1}",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = themeColors.buttonEqualBg
-                        )
-                        IconButton(
-                            onClick = {
-                                val newList = cvData.skills.toMutableList()
-                                newList.removeAt(index)
-                                onCvDataChange(cvData.copy(skills = newList))
-                            },
-                            modifier = Modifier.size(24.dp)
+                Icon(
+                    imageVector = Icons.Default.Code,
+                    contentDescription = null,
+                    tint = themeColors.displayText.copy(alpha = 0.3f),
+                    modifier = Modifier.size(48.dp)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = if (isBn) "কোনো স্কিল ক্যাটাগরি যোগ করা হয়নি।" else "No skill categories added yet.",
+                    fontSize = 12.5.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = themeColors.displayText.copy(alpha = 0.6f)
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = if (isBn) "ওপরে থাকা '+ ক্যাটাগরি' বাটনে ক্লিক করে ক্যাটাগরি যোগ করুন।" else "Click the '+ Category' button above to add a category.",
+                    fontSize = 11.sp,
+                    color = themeColors.displayText.copy(alpha = 0.4f),
+                    textAlign = TextAlign.Center
+                )
+            }
+        } else {
+            activeCategories.forEach { cat ->
+                val skillsInCat = cvData.skills.filter { it.category == cat }
+
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = themeColors.cardBg,
+                    border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.08f)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp)
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red.copy(alpha = 0.7f), modifier = Modifier.size(15.dp))
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.FolderOpen,
+                                    contentDescription = null,
+                                    tint = themeColors.buttonEqualBg,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = cat,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.displayText
+                                )
+                            }
+
+                            IconButton(
+                                onClick = {
+                                    localAddedCategories = localAddedCategories.filter { it != cat }
+                                    val remainingSkills = cvData.skills.filter { it.category != cat }
+                                    onCvDataChange(cvData.copy(skills = remainingSkills))
+                                    Toast.makeText(context, if (isBn) "'$cat' ক্যাটাগরি মুছে ফেলা হয়েছে" else "Removed category '$cat'", Toast.LENGTH_SHORT).show()
+                                },
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = "Delete Category",
+                                    tint = Color.Red.copy(alpha = 0.7f),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                        HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.05f))
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        if (skillsInCat.isEmpty()) {
+                            Text(
+                                text = if (isBn) "এই ক্যাটাগরিতে কোনো স্কিল নেই। নিচের বাটনে ক্লিক করে যোগ করুন।" else "No skills in this category. Click the button below to add.",
+                                fontSize = 11.sp,
+                                color = themeColors.displayText.copy(alpha = 0.4f),
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            )
+                        } else {
+                            skillsInCat.forEach { sk ->
+                                val originalIdx = cvData.skills.indexOfFirst { it.id == sk.id }
+                                if (originalIdx != -1) {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(bottom = 8.dp)
+                                            .background(
+                                                color = themeColors.displayText.copy(alpha = 0.02f),
+                                                shape = RoundedCornerShape(8.dp)
+                                            )
+                                            .border(
+                                                width = 0.5.dp,
+                                                color = themeColors.displayText.copy(alpha = 0.05f),
+                                                shape = RoundedCornerShape(8.dp)
+                                            )
+                                            .padding(8.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                modifier = Modifier.weight(1f)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Check,
+                                                    contentDescription = null,
+                                                    tint = Color(0xFF10B981),
+                                                    modifier = Modifier.size(12.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(6.dp))
+
+                                                if (sk.name.isBlank()) {
+                                                    OutlinedTextField(
+                                                        value = sk.name,
+                                                        onValueChange = { text ->
+                                                            val newList = cvData.skills.toMutableList()
+                                                            newList[originalIdx] = sk.copy(name = text)
+                                                            onCvDataChange(cvData.copy(skills = newList))
+                                                        },
+                                                        placeholder = { Text(if (isBn) "স্কিল টাইটেল লিখুন" else "Enter Skill Title", fontSize = 11.5.sp) },
+                                                        singleLine = true,
+                                                        colors = OutlinedTextFieldDefaults.colors(
+                                                            focusedBorderColor = themeColors.buttonEqualBg,
+                                                            unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.15f),
+                                                            focusedTextColor = themeColors.displayText,
+                                                            unfocusedTextColor = themeColors.displayText
+                                                        ),
+                                                        shape = RoundedCornerShape(6.dp),
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .height(42.dp),
+                                                        textStyle = TextStyle(fontSize = 11.5.sp)
+                                                    )
+                                                } else {
+                                                    Text(
+                                                        text = sk.name,
+                                                        fontSize = 11.5.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = themeColors.displayText,
+                                                        modifier = Modifier.clickable {
+                                                            val newList = cvData.skills.toMutableList()
+                                                            newList[originalIdx] = sk.copy(name = "")
+                                                            onCvDataChange(cvData.copy(skills = newList))
+                                                        }
+                                                    )
+                                                }
+                                            }
+
+                                            IconButton(
+                                                onClick = {
+                                                    val newList = cvData.skills.toMutableList()
+                                                    newList.removeAt(originalIdx)
+                                                    onCvDataChange(cvData.copy(skills = newList))
+                                                },
+                                                modifier = Modifier.size(24.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Close,
+                                                    contentDescription = "Remove Skill",
+                                                    tint = Color.Red.copy(alpha = 0.6f),
+                                                    modifier = Modifier.size(14.dp)
+                                                )
+                                            }
+                                        }
+
+                                        if (cvData.showSkillDescriptions) {
+                                            Spacer(modifier = Modifier.height(6.dp))
+                                            CvCustomTextField(
+                                                label = if (isBn) "দক্ষতার বিবরণ (ঐচ্ছিক)" else "Competency Description (Optional)",
+                                                value = sk.description,
+                                                onValueChange = { desc ->
+                                                    val newList = cvData.skills.toMutableList()
+                                                    newList[originalIdx] = sk.copy(description = desc)
+                                                    onCvDataChange(cvData.copy(skills = newList))
+                                                },
+                                                themeColors = themeColors, isLiveEdit = isLiveEdit, isBn = isBn,
+                                                placeholderText = if (isBn) "যেমন: ১+ বছরের অভিজ্ঞতা এবং প্রজেক্টে সফল ব্যবহার।" else "e.g., 1+ years hands-on experience and successful production use.",
+                                                onAiPrompt = { onRequestAiPrompt("Skill Suggestion", "Suggest a professional resume competency bullet description for the skill '${sk.name}' under the category '${sk.category}' for a ${cvData.jobTitle} candidate...", "SKILLS_SINGLE", originalIdx) }
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        var showSkillSelectorMenu by remember { mutableStateOf(false) }
+
+                        Box(modifier = Modifier.align(Alignment.End)) {
+                            Surface(
+                                onClick = { showSkillSelectorMenu = true },
+                                shape = RoundedCornerShape(8.dp),
+                                color = themeColors.buttonEqualBg.copy(alpha = 0.08f),
+                                border = BorderStroke(0.5.dp, themeColors.buttonEqualBg.copy(alpha = 0.2f))
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Add,
+                                        contentDescription = null,
+                                        tint = themeColors.buttonEqualBg,
+                                        modifier = Modifier.size(13.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(3.dp))
+                                    Text(
+                                        text = if (isBn) "স্কিল যোগ করুন" else "Add Skill",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = themeColors.buttonEqualBg
+                                    )
+                                }
+                            }
+
+                            DropdownMenu(
+                                expanded = showSkillSelectorMenu,
+                                onDismissRequest = { showSkillSelectorMenu = false },
+                                modifier = Modifier.background(themeColors.cardBg)
+                            ) {
+                                val predefinedSkills = SKILL_CATEGORY_LIBRARY[cat] ?: emptyList()
+                                val options = predefinedSkills + "Others (ম্যানুয়াল ইনপুট)"
+                                options.forEach { option ->
+                                    DropdownMenuItem(
+                                        text = { Text(text = option, fontSize = 12.sp, color = themeColors.displayText) },
+                                        onClick = {
+                                            showSkillSelectorMenu = false
+                                            val newList = cvData.skills.toMutableList()
+                                            if (option == "Others (ম্যানুয়াল ইনপুট)") {
+                                                newList.add(CvSkillItem(name = "", category = cat))
+                                            } else {
+                                                newList.add(CvSkillItem(name = option, category = cat))
+                                            }
+                                            onCvDataChange(cvData.copy(skills = newList))
+                                        }
+                                    )
+                                }
+                            }
                         }
                     }
-                    
-                    Spacer(modifier = Modifier.height(6.dp))
-                    
-                    // Dropdowns Row
-                    Row(modifier = Modifier.fillMaxWidth()) {
-                        CvCustomDropdown(
-                            label = if (isBn) "স্কিল ক্যাটাগরি / গ্রুপ" else "Skill Category / Group",
-                            selectedValue = currentCategory,
-                            options = SKILL_CATEGORY_LIBRARY.keys.toList(),
-                            onValueChange = { cat ->
-                                val opts = SKILL_CATEGORY_LIBRARY[cat] ?: emptyList()
-                                val defaultSkill = opts.firstOrNull() ?: ""
-                                val newList = cvData.skills.toMutableList()
-                                newList[index] = sk.copy(category = cat, name = defaultSkill)
-                                onCvDataChange(cvData.copy(skills = newList))
-                            },
-                            themeColors = themeColors,
-                            modifier = Modifier.weight(1.2f)
-                        )
-                        
-                        Spacer(modifier = Modifier.width(8.dp))
-                        
-                        CvCustomDropdown(
-                            label = if (isBn) "স্কিল নির্বাচন" else "Select Skill",
-                            selectedValue = currentSkillSelect,
-                            options = skillOptions + "Others (ম্যানুয়াল ইনপুট)",
-                            onValueChange = { s ->
-                                val newList = cvData.skills.toMutableList()
-                                if (s == "Others (ম্যানুয়াল ইনপুট)") {
-                                    newList[index] = sk.copy(category = currentCategory, name = "")
-                                } else {
-                                    newList[index] = sk.copy(category = currentCategory, name = s)
-                                }
-                                onCvDataChange(cvData.copy(skills = newList))
-                            },
-                            themeColors = themeColors,
-                            modifier = Modifier.weight(1.0f)
-                        )
-                    }
-                    
-                    if (currentSkillSelect == "Others (ম্যানুয়াল ইনপুট)" || sk.name.isBlank()) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        CvCustomTextField(
-                            label = if (isBn) "কাস্টম স্কিল টাইটেল" else "Custom Skill Title",
-                            value = sk.name,
-                            onValueChange = { text ->
-                                val newList = cvData.skills.toMutableList()
-                                newList[index] = sk.copy(name = text)
-                                onCvDataChange(cvData.copy(skills = newList))
-                            },
-                            themeColors = themeColors, isLiveEdit = isLiveEdit, isBn = isBn,
-                            placeholderText = if (isBn) "যেমন: Flutter, Android Jetpack" else "e.g., Flutter, Android Jetpack"
-                        )
-                    }
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    CvCustomTextField(
-                        label = if (isBn) "দক্ষতার বিবরণ (ঐচ্ছিক)" else "Competency Description (Optional)",
-                        value = sk.description,
-                        onValueChange = { desc ->
-                            val newList = cvData.skills.toMutableList()
-                            newList[index] = sk.copy(description = desc)
-                            onCvDataChange(cvData.copy(skills = newList))
-                        },
-                        themeColors = themeColors, isLiveEdit = isLiveEdit, isBn = isBn,
-                        placeholderText = if (isBn) "যেমন: ১+ বছরের অভিজ্ঞতা এবং প্রজেক্টে সফল ব্যবহার।" else "e.g., 1+ years hands-on experience and successful production use.",
-                        onAiPrompt = { onRequestAiPrompt("Skill Suggestion", "Suggest a professional resume competency bullet description for the skill '${sk.name}' under the category '${sk.category}' for a ${cvData.jobTitle} candidate...", "SKILLS_SINGLE", index) }
-                    )
                 }
             }
         }

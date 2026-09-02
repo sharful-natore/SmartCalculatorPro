@@ -15,6 +15,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.platform.LocalContext
+import android.widget.Toast
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.AddAPhoto
@@ -27,6 +30,7 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -432,6 +436,10 @@ fun CvLiveEditPanel(
     onRefreshPreview: () -> Unit
 ) {
     var localData by remember(cvData) { mutableStateOf(cvData) }
+    var localAddedCategories by remember { mutableStateOf<List<String>>(emptyList()) }
+    var showAddCategoryMenu by remember { mutableStateOf(false) }
+    var showCustomCategoryDialog by remember { mutableStateOf(false) }
+    var customCategoryInput by remember { mutableStateOf("") }
 
     fun commitAndRefresh(updated: CvData) {
         onCvDataChange(updated)
@@ -1342,19 +1350,101 @@ fun CvLiveEditPanel(
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(12.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    SectionCardHeader(
-                        title = if (isBn) "দক্ষতাসমূহ (${localData.skills.size})" else "Skills (${localData.skills.size})",
-                        icon = Icons.Default.Psychology,
-                        themeColors = themeColors, modifier = Modifier.weight(1f)
-                    )
+                val context = LocalContext.current
 
-                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Button(
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        SectionCardHeader(
+                            title = if (isBn) "দক্ষতাসমূহ (${localData.skills.size})" else "Skills (${localData.skills.size})",
+                            icon = Icons.Default.Psychology,
+                            themeColors = themeColors,
+                            modifier = Modifier.weight(1f)
+                        )
+                        
+                        // Add Category button
+                        Box {
+                            Surface(
+                                onClick = { showAddCategoryMenu = true },
+                                shape = RoundedCornerShape(12.dp),
+                                color = themeColors.buttonEqualBg.copy(alpha = 0.12f),
+                                border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.3f))
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(imageVector = Icons.Default.Add, contentDescription = null, tint = themeColors.buttonEqualBg, modifier = Modifier.size(14.dp))
+                                    Spacer(modifier = Modifier.width(3.dp))
+                                    Text(text = if (isBn) "ক্যাটাগরি" else "Category", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = themeColors.buttonEqualBg)
+                                }
+                            }
+
+                            DropdownMenu(
+                                expanded = showAddCategoryMenu,
+                                onDismissRequest = { showAddCategoryMenu = false },
+                                modifier = Modifier.background(themeColors.cardBg)
+                            ) {
+                                val availableCategories = SKILL_CATEGORY_LIBRARY.keys.toList() + "Custom / অন্যান্য"
+                                availableCategories.forEach { categoryName ->
+                                    DropdownMenuItem(
+                                        text = { Text(text = categoryName, fontSize = 12.sp, color = themeColors.displayText) },
+                                        onClick = {
+                                            showAddCategoryMenu = false
+                                            if (categoryName == "Custom / অন্যান্য") {
+                                                showCustomCategoryDialog = true
+                                            } else {
+                                                if (!localAddedCategories.contains(categoryName)) {
+                                                    localAddedCategories = localAddedCategories + categoryName
+                                                }
+                                            }
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        // Show/Hide Skill Description switch
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .background(themeColors.displayText.copy(alpha = 0.05f), RoundedCornerShape(8.dp))
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = if (isBn) "বিবরণ" else "Desc",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.displayText.copy(alpha = 0.8f)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Switch(
+                                checked = localData.showSkillDescriptions,
+                                onCheckedChange = { localData = localData.copy(showSkillDescriptions = it) },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = themeColors.buttonEqualBg,
+                                    checkedTrackColor = themeColors.buttonEqualBg.copy(alpha = 0.4f),
+                                    uncheckedThumbColor = themeColors.displayText.copy(alpha = 0.5f),
+                                    uncheckedTrackColor = themeColors.displayText.copy(alpha = 0.1f)
+                                ),
+                                modifier = Modifier.scale(0.7f)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.weight(1f))
+
+                        Surface(
                             onClick = {
                                 val prompt = "Target Job: '${localData.jobTitle.ifBlank { "Professional" }}'. Suggest top 8 in-demand industry skills as comma-separated items."
                                 onRequestAiPrompt(
@@ -1364,83 +1454,327 @@ fun CvLiveEditPanel(
                                     -1
                                 )
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
-                            shape = RoundedCornerShape(16.dp),
-                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
-                            modifier = Modifier.height(30.dp)
+                            shape = RoundedCornerShape(12.dp),
+                            color = themeColors.buttonEqualBg,
+                            border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.3f))
                         ) {
-                            Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = Color.White, modifier = Modifier.size(13.dp))
-                            Spacer(modifier = Modifier.width(3.dp))
-                            Text(if (isBn) "এআই" else "AI", color = Color.White, fontSize = 10.5.sp, fontWeight = FontWeight.Bold)
-                        }
-
-                        Button(
-                            onClick = {
-                                val newList = localData.skills + CvSkillItem(
-                                    name = "",
-                                    level = "Expert",
-                                    category = "Functional/Core Skills"
-                                )
-                                localData = localData.copy(skills = newList)
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
-                            shape = RoundedCornerShape(16.dp),
-                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
-                            modifier = Modifier.height(30.dp)
-                        ) {
-                            Icon(Icons.Default.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(13.dp))
-                            Spacer(modifier = Modifier.width(3.dp))
-                            Text(if (isBn) "যোগ" else "Add", color = Color.White, fontSize = 10.5.sp, fontWeight = FontWeight.Bold)
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = null, tint = Color.White, modifier = Modifier.size(13.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(text = if (isBn) "এআই জেনারেট" else "AI Generate", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            }
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                if (showCustomCategoryDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showCustomCategoryDialog = false },
+                        title = { Text(text = if (isBn) "নতুন কাস্টম ক্যাটাগরি" else "New Custom Category", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText) },
+                        text = {
+                            OutlinedTextField(
+                                value = customCategoryInput,
+                                onValueChange = { customCategoryInput = it },
+                                placeholder = { Text(text = if (isBn) "যেমন: Soft Skills & Leadership" else "e.g., Soft Skills & Leadership") },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = themeColors.buttonEqualBg,
+                                    unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f),
+                                    focusedTextColor = themeColors.displayText,
+                                    unfocusedTextColor = themeColors.displayText
+                                )
+                            )
+                        },
+                        confirmButton = {
+                            Button(
+                                onClick = {
+                                    if (customCategoryInput.isNotBlank()) {
+                                        val catName = customCategoryInput.trim()
+                                        if (!localAddedCategories.contains(catName)) {
+                                            localAddedCategories = localAddedCategories + catName
+                                        }
+                                        customCategoryInput = ""
+                                        showCustomCategoryDialog = false
+                                    }
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg)
+                            ) {
+                                Text(text = if (isBn) "যোগ করুন" else "Add", color = Color.White)
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showCustomCategoryDialog = false }) {
+                                Text(text = if (isBn) "বাতিল" else "Cancel", color = themeColors.displayText)
+                            }
+                        },
+                        containerColor = themeColors.cardBg
+                    )
+                }
 
-                localData.skills.forEachIndexed { idx, sk ->
-                    val fullText = if (sk.description.isNotBlank()) "${sk.name}: ${sk.description}" else if (sk.name.contains(":")) sk.name else if (sk.level.isNotBlank() && sk.level != "Proficient" && sk.level != "Expert") "${sk.name}: ${sk.level}" else sk.name
-                    Row(
+                Spacer(modifier = Modifier.height(14.dp))
+
+                val activeCategories = (localData.skills.map { it.category.ifBlank { "Technical & Software Engineering" } } + localAddedCategories).distinct()
+
+                if (activeCategories.isEmpty()) {
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 3.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            .padding(vertical = 20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        OutlinedTextField(
-                            value = fullText,
-                            onValueChange = { input ->
-                                val list = localData.skills.toMutableList()
-                                if (input.contains(":")) {
-                                    val parts = input.split(":", limit = 2)
-                                    list[idx] = sk.copy(
-                                        name = parts[0].trim(),
-                                        description = parts[1].trim(),
-                                        level = parts[1].trim()
+                        Icon(
+                            imageVector = Icons.Default.Psychology,
+                            contentDescription = null,
+                            tint = themeColors.displayText.copy(alpha = 0.3f),
+                            modifier = Modifier.size(40.dp)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = if (isBn) "কোনো স্কিল ক্যাটাগরি যোগ করা হয়নি।" else "No skill categories added yet.",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = themeColors.displayText.copy(alpha = 0.6f)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = if (isBn) "ওপরে থাকা '+ ক্যাটাগরি' বাটনে ক্লিক করে ক্যাটাগরি যোগ করুন।" else "Click the '+ Category' button above to add a category.",
+                            fontSize = 11.sp,
+                            color = themeColors.displayText.copy(alpha = 0.4f),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                } else {
+                    activeCategories.forEach { cat ->
+                        val skillsInCat = localData.skills.filter { it.category == cat }
+
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = themeColors.background,
+                            border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.08f)),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 10.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(10.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            imageVector = Icons.Default.FolderOpen,
+                                            contentDescription = null,
+                                            tint = themeColors.buttonEqualBg,
+                                            modifier = Modifier.size(15.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = cat,
+                                            fontSize = 11.5.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = themeColors.displayText
+                                        )
+                                    }
+
+                                    IconButton(
+                                        onClick = {
+                                            localAddedCategories = localAddedCategories.filter { it != cat }
+                                            val remainingSkills = localData.skills.filter { it.category != cat }
+                                            localData = localData.copy(skills = remainingSkills)
+                                            Toast.makeText(context, if (isBn) "'$cat' ক্যাটাগরি মুছে ফেলা হয়েছে" else "Removed category '$cat'", Toast.LENGTH_SHORT).show()
+                                        },
+                                        modifier = Modifier.size(24.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Delete,
+                                            contentDescription = "Delete Category",
+                                            tint = Color.Red.copy(alpha = 0.7f),
+                                            modifier = Modifier.size(15.dp)
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(6.dp))
+                                HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.05f))
+                                Spacer(modifier = Modifier.height(6.dp))
+
+                                if (skillsInCat.isEmpty()) {
+                                    Text(
+                                        text = if (isBn) "এই ক্যাটাগরিতে কোনো স্কিল নেই।" else "No skills in this category.",
+                                        fontSize = 10.5.sp,
+                                        color = themeColors.displayText.copy(alpha = 0.4f),
+                                        modifier = Modifier.padding(vertical = 4.dp)
                                     )
                                 } else {
-                                    list[idx] = sk.copy(
-                                        name = input.trim(),
-                                        description = "",
-                                        level = ""
-                                    )
-                                }
-                                localData = localData.copy(skills = list)
-                            },
-                            label = { Text(if (isBn) "স্কিল ও বিবরণ #${idx + 1}" else "Skill & Detail #${idx + 1}", fontSize = 10.sp) },
-                            singleLine = true,
-                            shape = RoundedCornerShape(8.dp),
-                            modifier = Modifier.weight(1f)
-                        )
+                                    skillsInCat.forEach { sk ->
+                                        val originalIdx = localData.skills.indexOfFirst { it.id == sk.id }
+                                        if (originalIdx != -1) {
+                                            Column(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(bottom = 6.dp)
+                                                    .background(
+                                                        color = themeColors.displayText.copy(alpha = 0.02f),
+                                                        shape = RoundedCornerShape(6.dp)
+                                                    )
+                                                    .border(
+                                                        width = 0.5.dp,
+                                                        color = themeColors.displayText.copy(alpha = 0.05f),
+                                                        shape = RoundedCornerShape(6.dp)
+                                                    )
+                                                    .padding(6.dp)
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Row(
+                                                        verticalAlignment = Alignment.CenterVertically,
+                                                        modifier = Modifier.weight(1f)
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = Icons.Default.Check,
+                                                            contentDescription = null,
+                                                            tint = Color(0xFF10B981),
+                                                            modifier = Modifier.size(11.dp)
+                                                        )
+                                                        Spacer(modifier = Modifier.width(6.dp))
 
-                        IconButton(
-                            onClick = {
-                                val list = localData.skills.toMutableList()
-                                list.removeAt(idx)
-                                localData = localData.copy(skills = list)
-                            },
-                            modifier = Modifier.size(28.dp)
-                        ) {
-                            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red.copy(alpha = 0.7f), modifier = Modifier.size(16.dp))
+                                                        if (sk.name.isBlank()) {
+                                                            OutlinedTextField(
+                                                                value = sk.name,
+                                                                onValueChange = { text ->
+                                                                    val newList = localData.skills.toMutableList()
+                                                                    newList[originalIdx] = sk.copy(name = text)
+                                                                    localData = localData.copy(skills = newList)
+                                                                },
+                                                                placeholder = { Text(if (isBn) "স্কিল টাইটেল লিখুন" else "Enter Skill Title", fontSize = 11.sp) },
+                                                                singleLine = true,
+                                                                colors = OutlinedTextFieldDefaults.colors(
+                                                                    focusedBorderColor = themeColors.buttonEqualBg,
+                                                                    unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.15f),
+                                                                    focusedTextColor = themeColors.displayText,
+                                                                    unfocusedTextColor = themeColors.displayText
+                                                                ),
+                                                                shape = RoundedCornerShape(6.dp),
+                                                                modifier = Modifier
+                                                                    .fillMaxWidth()
+                                                                    .height(40.dp),
+                                                                textStyle = TextStyle(fontSize = 11.sp)
+                                                            )
+                                                        } else {
+                                                            Text(
+                                                                text = sk.name,
+                                                                fontSize = 11.sp,
+                                                                fontWeight = FontWeight.Bold,
+                                                                color = themeColors.displayText,
+                                                                modifier = Modifier.clickable {
+                                                                    val newList = localData.skills.toMutableList()
+                                                                    newList[originalIdx] = sk.copy(name = "")
+                                                                    localData = localData.copy(skills = newList)
+                                                                }
+                                                            )
+                                                        }
+                                                    }
+
+                                                    IconButton(
+                                                        onClick = {
+                                                            val newList = localData.skills.toMutableList()
+                                                            newList.removeAt(originalIdx)
+                                                            localData = localData.copy(skills = newList)
+                                                        },
+                                                        modifier = Modifier.size(22.dp)
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = Icons.Default.Close,
+                                                            contentDescription = "Remove Skill",
+                                                            tint = Color.Red.copy(alpha = 0.6f),
+                                                            modifier = Modifier.size(13.dp)
+                                                        )
+                                                    }
+                                                }
+
+                                                if (localData.showSkillDescriptions) {
+                                                    Spacer(modifier = Modifier.height(4.dp))
+                                                    CvCustomTextField(
+                                                        label = if (isBn) "দক্ষতার বিবরণ (ঐচ্ছিক)" else "Competency Description (Optional)",
+                                                        value = sk.description,
+                                                        onValueChange = { desc ->
+                                                            val newList = localData.skills.toMutableList()
+                                                            newList[originalIdx] = sk.copy(description = desc)
+                                                            localData = localData.copy(skills = newList)
+                                                        },
+                                                        themeColors = themeColors, isLiveEdit = true, isBn = isBn,
+                                                        placeholderText = if (isBn) "যেমন: ১+ বছরের অভিজ্ঞতা" else "e.g., 1+ years experience",
+                                                        onAiPrompt = { onRequestAiPrompt("Skill Suggestion", "Suggest a professional resume competency bullet description for the skill '${sk.name}' under the category '${sk.category}' for a ${localData.jobTitle} candidate...", "SKILLS_SINGLE", originalIdx) }
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(4.dp))
+
+                                var showSkillSelectorMenu by remember { mutableStateOf(false) }
+
+                                Box(modifier = Modifier.align(Alignment.End)) {
+                                    Surface(
+                                        onClick = { showSkillSelectorMenu = true },
+                                        shape = RoundedCornerShape(8.dp),
+                                        color = themeColors.buttonEqualBg.copy(alpha = 0.08f),
+                                        border = BorderStroke(0.5.dp, themeColors.buttonEqualBg.copy(alpha = 0.2f))
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Add,
+                                                contentDescription = null,
+                                                tint = themeColors.buttonEqualBg,
+                                                modifier = Modifier.size(12.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(3.dp))
+                                            Text(
+                                                text = if (isBn) "স্কিল যোগ করুন" else "Add Skill",
+                                                fontSize = 9.5.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = themeColors.buttonEqualBg
+                                            )
+                                        }
+                                    }
+
+                                    DropdownMenu(
+                                        expanded = showSkillSelectorMenu,
+                                        onDismissRequest = { showSkillSelectorMenu = false },
+                                        modifier = Modifier.background(themeColors.cardBg)
+                                    ) {
+                                        val predefinedSkills = SKILL_CATEGORY_LIBRARY[cat] ?: emptyList()
+                                        val options = predefinedSkills + "Others (ম্যানুয়াল ইনপুট)"
+                                        options.forEach { option ->
+                                            DropdownMenuItem(
+                                                text = { Text(text = option, fontSize = 12.sp, color = themeColors.displayText) },
+                                                onClick = {
+                                                    showSkillSelectorMenu = false
+                                                    val newList = localData.skills.toMutableList()
+                                                    if (option == "Others (ম্যানুয়াল ইনপুট)") {
+                                                        newList.add(CvSkillItem(name = "", category = cat))
+                                                    } else {
+                                                        newList.add(CvSkillItem(name = option, category = cat))
+                                                    }
+                                                    localData = localData.copy(skills = newList)
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
