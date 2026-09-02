@@ -297,6 +297,14 @@ data class CvCustomSectionItem(
     val sectionType: String = "EXPERIENCE" // "EXPERIENCE", "EDUCATION", "OTHER"
 )
 
+data class CoPilotMessage(
+    val id: String = UUID.randomUUID().toString(),
+    val sender: String, // "user", "ai"
+    val text: String,
+    val timestamp: Long = System.currentTimeMillis(),
+    val proposedCvData: CvData? = null
+)
+
 data class CvHistoryItem(
     val id: String = UUID.randomUUID().toString(),
     val fileName: String = "",
@@ -520,7 +528,7 @@ private fun CvHistoryDialog(
                                             overflow = TextOverflow.Ellipsis
                                         )
                                         Text(
-                                            text = "${item.profileLabel} â€¢ ${item.fileName}",
+                                            text = "${item.profileLabel} • ${item.fileName}",
                                             fontSize = 10.5.sp,
                                             color = themeColors.buttonEqualBg,
                                             maxLines = 1,
@@ -982,7 +990,7 @@ private fun ProfileManagerDialog(
                                             overflow = TextOverflow.Ellipsis
                                         )
                                         Text(
-                                            text = "${profile.fullName.ifBlank { "Candidate" }} â€¢ ${profile.jobTitle.ifBlank { "No Title" }}",
+                                            text = "${profile.fullName.ifBlank { "Candidate" }} • ${profile.jobTitle.ifBlank { "No Title" }}",
                                             fontSize = 10.5.sp,
                                             color = themeColors.displayText.copy(alpha = 0.6f),
                                             maxLines = 1,
@@ -1308,7 +1316,7 @@ internal fun autoFixAtsScoreTo100(cvData: CvData): CvData {
                 company = "Global Solutions Ltd.",
                 startDate = "2021",
                 endDate = "Present",
-                description = "â€¢ Led cross-functional team of 12 professionals to deliver key client projects, increasing client satisfaction by 35%.\nâ€¢ Managed project budget of $150,000 and reduced operational delivery overhead by 25% through process optimization."
+                description = "• Led cross-functional team of 12 professionals to deliver key client projects, increasing client satisfaction by 35%.\n• Managed project budget of $150,000 and reduced operational delivery overhead by 25% through process optimization."
             )
         )
     } else {
@@ -1316,9 +1324,9 @@ internal fun autoFixAtsScoreTo100(cvData: CvData): CvData {
             var desc = exp.description
             if (!desc.contains("%") && !desc.contains("$") && !desc.any { it.isDigit() }) {
                 desc = if (desc.isBlank()) {
-                    "â€¢ Achieved 30% performance improvement and reduced processing errors by 45% using standardized workflows."
+                    "• Achieved 30% performance improvement and reduced processing errors by 45% using standardized workflows."
                 } else {
-                    "${desc.trim()}\nâ€¢ Increased operational efficiency by 35% and achieved 98% on-time project delivery."
+                    "${desc.trim()}\n• Increased operational efficiency by 35% and achieved 98% on-time project delivery."
                 }
             }
             exp.copy(
@@ -1386,7 +1394,7 @@ internal fun autoFixIndividualAtsCheck(cvData: CvData, categoryEn: String): CvDa
         )
         "Experience" -> {
             val exps = if (cvData.experiences.isEmpty()) {
-                listOf(CvExperienceItem(role = cvData.jobTitle.ifBlank { "Project Manager" }, company = "Leading Company Ltd.", startDate = "2021", endDate = "Present", description = "â€¢ Achieved 35% team efficiency improvement and managed $50K project budget."))
+                listOf(CvExperienceItem(role = cvData.jobTitle.ifBlank { "Project Manager" }, company = "Leading Company Ltd.", startDate = "2021", endDate = "Present", description = "• Achieved 35% team efficiency improvement and managed $50K project budget."))
             } else {
                 cvData.experiences.map { exp ->
                     val desc = exp.description
@@ -1394,7 +1402,7 @@ internal fun autoFixIndividualAtsCheck(cvData: CvData, categoryEn: String): CvDa
                         exp.copy(
                             role = exp.role.ifBlank { "Project Manager" },
                             company = exp.company.ifBlank { "Leading Company Ltd." },
-                            description = "${desc.trim()}\nâ€¢ Achieved 35% operational efficiency growth and managed key deliverables."
+                            description = "${desc.trim()}\n• Achieved 35% operational efficiency growth and managed key deliverables."
                         )
                     } else exp.copy(
                         role = exp.role.ifBlank { "Project Manager" },
@@ -1443,7 +1451,7 @@ internal fun applyIndividualAtsImprovement(cv: CvData, category: String, value: 
             // proposedValue can be comma separated skills or a list of "Skill: Description"
             val rawSkills = value.split(",", "\n")
             rawSkills.forEach { raw ->
-                val clean = raw.removePrefix("â€¢").removePrefix("-").removePrefix("*").trim()
+                val clean = raw.removePrefix("•").removePrefix("-").removePrefix("*").trim()
                 if (clean.isNotBlank()) {
                     val skillItem = if (clean.contains(":")) {
                         val parts = clean.split(":", limit = 2)
@@ -1601,9 +1609,9 @@ private fun getSeedProfilesList(isBn: Boolean = true): List<CvData> {
         githubOrPortfolio = "portfolio.shariful.com",
         summary = "A highly analytical and result-oriented Management MBA Graduate with a strong foundation in business strategy, market research, and financial analysis. Proven expertise in leveraging data-driven insights to optimize business operations, increase project efficiency, and drive marketing campaigns. Excellent communication, team leadership, and strategic planning skills.",
         isFresher = false,
-        fresherAcademicProjects = "â€¢ Final Year Capstone: Supply Chain Optimization & Demand Forecasting Model\nâ€¢ Analyzed FMCG retail distribution networks using statistical forecasting, increasing warehouse inventory turnaround by 18%.\nâ€¢ Business Analytics Seminar: Consumer Credit Risk Assessment with Regression Modeling",
-        fresherInternshipsVolunteer = "â€¢ Strategic Projects Intern â€” Bangladesh Business Leadership Forum (3 Months)\nâ€¢ Coordinated digital communication, executive speaker sessions, and student registration for 1,200+ attendees.\nâ€¢ Volunteer Community Lead â€” Youth Empowerment & Skills Initiative (2023)",
-        fresherLeadershipClubs = "â€¢ Vice President â€” University Management & Business Club (2022-2023)\nâ€¢ Finalist â€” National Inter-University Business Case Competition 2023\nâ€¢ Chief Organizer â€” DU National Business Fest 2022",
+        fresherAcademicProjects = "• Final Year Capstone: Supply Chain Optimization & Demand Forecasting Model\n• Analyzed FMCG retail distribution networks using statistical forecasting, increasing warehouse inventory turnaround by 18%.\n• Business Analytics Seminar: Consumer Credit Risk Assessment with Regression Modeling",
+        fresherInternshipsVolunteer = "• Strategic Projects Intern — Bangladesh Business Leadership Forum (3 Months)\n• Coordinated digital communication, executive speaker sessions, and student registration for 1,200+ attendees.\n• Volunteer Community Lead — Youth Empowerment & Skills Initiative (2023)",
+        fresherLeadershipClubs = "• Vice President — University Management & Business Club (2022-2023)\n• Finalist — National Inter-University Business Case Competition 2023\n• Chief Organizer — DU National Business Fest 2022",
         fresherKeyCoursework = "Strategic Management, Corporate Finance, Business Statistics, Marketing Analytics, Supply Chain Logistics, Financial Accounting, Econometrics",
         showSignatureLine = true,
         experiences = listOf(
@@ -1613,7 +1621,7 @@ private fun getSeedProfilesList(isBn: Boolean = true): List<CvData> {
                 startDate = "Jan 2024",
                 endDate = "Present",
                 isCurrent = true,
-                description = "â€¢ Conducted market research and competitor analysis to assist in strategic decision-making.\nâ€¢ Developed interactive business performance dashboards, increasing analytical clarity by 25%.\nâ€¢ Managed cross-functional project coordination across marketing and product design teams."
+                description = "• Conducted market research and competitor analysis to assist in strategic decision-making.\n• Developed interactive business performance dashboards, increasing analytical clarity by 25%.\n• Managed cross-functional project coordination across marketing and product design teams."
             ),
             CvExperienceItem(
                 company = "Strategic Marketing Group",
@@ -1621,7 +1629,7 @@ private fun getSeedProfilesList(isBn: Boolean = true): List<CvData> {
                 startDate = "Jun 2023",
                 endDate = "Dec 2023",
                 isCurrent = false,
-                description = "â€¢ Collaborated on brand optimization and promotional campaigns for FMCG sector clients.\nâ€¢ Assisted in preparation of financial models and feasibility reports for new product launches."
+                description = "• Collaborated on brand optimization and promotional campaigns for FMCG sector clients.\n• Assisted in preparation of financial models and feasibility reports for new product launches."
             )
         ),
         educations = listOf(
@@ -1670,7 +1678,7 @@ private fun getSeedProfilesList(isBn: Boolean = true): List<CvData> {
                 startDate = "Feb 2022",
                 endDate = "Present",
                 isCurrent = true,
-                description = "â€¢ Spearheaded end-to-end recruitment pipelines, onboarding 60+ skilled professionals across IT and Finance.\nâ€¢ Supervised monthly payroll administration, provident fund deductions, and statutory compliance.\nâ€¢ Formulated company-wide HR handbook and code of conduct policies reducing turnover by 15%."
+                description = "• Spearheaded end-to-end recruitment pipelines, onboarding 60+ skilled professionals across IT and Finance.\n• Supervised monthly payroll administration, provident fund deductions, and statutory compliance.\n• Formulated company-wide HR handbook and code of conduct policies reducing turnover by 15%."
             ),
             CvExperienceItem(
                 company = "Orion Technologies Ltd",
@@ -1678,7 +1686,7 @@ private fun getSeedProfilesList(isBn: Boolean = true): List<CvData> {
                 startDate = "Jul 2019",
                 endDate = "Jan 2022",
                 isCurrent = false,
-                description = "â€¢ Maintained confidential employee databases, leave records, and performance evaluation metrics.\nâ€¢ Organized quarterly employee wellness workshops and cross-team team building events."
+                description = "• Maintained confidential employee databases, leave records, and performance evaluation metrics.\n• Organized quarterly employee wellness workshops and cross-team team building events."
             )
         ),
         educations = listOf(
@@ -1726,7 +1734,7 @@ private fun getSeedProfilesList(isBn: Boolean = true): List<CvData> {
                 startDate = "Mar 2021",
                 endDate = "Present",
                 isCurrent = true,
-                description = "â€¢ Evaluated corporate loan proposals and conducted audited financial statement ratio analyses.\nâ€¢ Prepared comprehensive Credit Appraisal Memorandums (CAM) aligned with Bangladesh Bank CRG guidelines.\nâ€¢ Monitored portfolio asset quality and conducted regular stress testing on capital adequacy."
+                description = "• Evaluated corporate loan proposals and conducted audited financial statement ratio analyses.\n• Prepared comprehensive Credit Appraisal Memorandums (CAM) aligned with Bangladesh Bank CRG guidelines.\n• Monitored portfolio asset quality and conducted regular stress testing on capital adequacy."
             ),
             CvExperienceItem(
                 company = "Standard Chartered Bank",
@@ -1734,7 +1742,7 @@ private fun getSeedProfilesList(isBn: Boolean = true): List<CvData> {
                 startDate = "Jan 2018",
                 endDate = "Feb 2021",
                 isCurrent = false,
-                description = "â€¢ Assessed creditworthiness for 120+ SME clients, disbursing BDT 80 Crore in structured facilities.\nâ€¢ Optimized verification turn-around time (TAT) by 30% through automated scoring templates."
+                description = "• Assessed creditworthiness for 120+ SME clients, disbursing BDT 80 Crore in structured facilities.\n• Optimized verification turn-around time (TAT) by 30% through automated scoring templates."
             )
         ),
         educations = listOf(
@@ -1783,7 +1791,7 @@ private fun getSeedProfilesList(isBn: Boolean = true): List<CvData> {
                 startDate = "Oct 2021",
                 endDate = "Present",
                 isCurrent = true,
-                description = "â€¢ Managed 3 flagship national FMCG brands with full P&L accountability.\nâ€¢ Directed 360-degree ATL/BTL marketing campaigns achieving a 22% uplift in market share.\nâ€¢ Led social media influencer programs that generated over 15 Million organic digital impressions."
+                description = "• Managed 3 flagship national FMCG brands with full P&L accountability.\n• Directed 360-degree ATL/BTL marketing campaigns achieving a 22% uplift in market share.\n• Led social media influencer programs that generated over 15 Million organic digital impressions."
             ),
             CvExperienceItem(
                 company = "Mindshare Bangladesh",
@@ -1791,7 +1799,7 @@ private fun getSeedProfilesList(isBn: Boolean = true): List<CvData> {
                 startDate = "Jan 2019",
                 endDate = "Sep 2021",
                 isCurrent = false,
-                description = "â€¢ Executed programmatic PPC and Meta ad campaigns with an average ROAS of 4.2x.\nâ€¢ Formulated consumer behavior insights using Google Analytics 4 and Semrush."
+                description = "• Executed programmatic PPC and Meta ad campaigns with an average ROAS of 4.2x.\n• Formulated consumer behavior insights using Google Analytics 4 and Semrush."
             )
         ),
         educations = listOf(
@@ -1839,7 +1847,7 @@ private fun getSeedProfilesList(isBn: Boolean = true): List<CvData> {
                 startDate = "Apr 2021",
                 endDate = "Present",
                 isCurrent = true,
-                description = "â€¢ Supervised field execution of livelihood enhancement interventions supporting 12,000+ vulnerable households.\nâ€¢ Coordinated baseline, midline, and endline surveys utilizing KoboToolbox and ODK mobile data tools.\nâ€¢ Liaised with local government authorities, UNO, and community leaders for seamless project facilitation."
+                description = "• Supervised field execution of livelihood enhancement interventions supporting 12,000+ vulnerable households.\n• Coordinated baseline, midline, and endline surveys utilizing KoboToolbox and ODK mobile data tools.\n• Liaised with local government authorities, UNO, and community leaders for seamless project facilitation."
             ),
             CvExperienceItem(
                 company = "Save the Children International",
@@ -1847,7 +1855,7 @@ private fun getSeedProfilesList(isBn: Boolean = true): List<CvData> {
                 startDate = "Jan 2018",
                 endDate = "Mar 2021",
                 isCurrent = false,
-                description = "â€¢ Established community feedback and complaint response mechanisms (CRM) ensuring 100% accountability.\nâ€¢ Drafted monthly donor progress reports adhering to USAID and ECHO grant specifications."
+                description = "• Established community feedback and complaint response mechanisms (CRM) ensuring 100% accountability.\n• Drafted monthly donor progress reports adhering to USAID and ECHO grant specifications."
             )
         ),
         educations = listOf(
@@ -1896,7 +1904,7 @@ private fun getSeedProfilesList(isBn: Boolean = true): List<CvData> {
                 startDate = "Jul 2022",
                 endDate = "Present",
                 isCurrent = true,
-                description = "â€¢ Engineered cloud microservices processing 2.5M daily fintech transactions with 99.99% uptime.\nâ€¢ Spearheaded the migration from monolithic architecture to Dockerized Kubernetes clusters on AWS.\nâ€¢ Mentored 8 junior and mid-level engineers in TDD, CI/CD automation, and clean code standards."
+                description = "• Engineered cloud microservices processing 2.5M daily fintech transactions with 99.99% uptime.\n• Spearheaded the migration from monolithic architecture to Dockerized Kubernetes clusters on AWS.\n• Mentored 8 junior and mid-level engineers in TDD, CI/CD automation, and clean code standards."
             ),
             CvExperienceItem(
                 company = "Dynamic Solution Innovators (DSi)",
@@ -1904,7 +1912,7 @@ private fun getSeedProfilesList(isBn: Boolean = true): List<CvData> {
                 startDate = "Oct 2019",
                 endDate = "Jun 2022",
                 isCurrent = false,
-                description = "â€¢ Developed RESTful and GraphQL backend endpoints using Node.js, NestJS, and PostgreSQL.\nâ€¢ Reduced database query latency by 40% through indexing optimization and Redis distributed caching."
+                description = "• Developed RESTful and GraphQL backend endpoints using Node.js, NestJS, and PostgreSQL.\n• Reduced database query latency by 40% through indexing optimization and Redis distributed caching."
             )
         ),
         educations = listOf(
@@ -1931,7 +1939,7 @@ private fun getSeedProfilesList(isBn: Boolean = true): List<CvData> {
             )
         ),
         languages = "English (Professional Working), Bengali (Native)",
-        certifications = "AWS Certified Solutions Architect â€“ Associate (2023)\nOracle Certified Professional: Java SE 11 Developer (2021)",
+        certifications = "AWS Certified Solutions Architect – Associate (2023)\nOracle Certified Professional: Java SE 11 Developer (2021)",
         references = "Available upon request.",
         templateStyle = CvTemplateStyle.MODERN_MINIMALIST
     )
@@ -1953,7 +1961,7 @@ private fun getSeedProfilesList(isBn: Boolean = true): List<CvData> {
                 startDate = "May 2021",
                 endDate = "Present",
                 isCurrent = true,
-                description = "â€¢ Directed domestic and overseas raw material procurement with annual spend exceeding BDT 120 Crore.\nâ€¢ Negotiated freight forwarding tariffs, saving 12% in international ocean transit expenses.\nâ€¢ Supervised SAP ERP Materials Management (MM) workflows and warehouse cycle counting."
+                description = "• Directed domestic and overseas raw material procurement with annual spend exceeding BDT 120 Crore.\n• Negotiated freight forwarding tariffs, saving 12% in international ocean transit expenses.\n• Supervised SAP ERP Materials Management (MM) workflows and warehouse cycle counting."
             ),
             CvExperienceItem(
                 company = "Abul Khair Steel Products Ltd",
@@ -1961,7 +1969,7 @@ private fun getSeedProfilesList(isBn: Boolean = true): List<CvData> {
                 startDate = "Aug 2018",
                 endDate = "Apr 2021",
                 isCurrent = false,
-                description = "â€¢ Processed commercial letters of credit (LC), HS code assessments, and customs duty assessments.\nâ€¢ Monitored supplier OTIF (On-Time In-Full) performance benchmarks across 85 active vendors."
+                description = "• Processed commercial letters of credit (LC), HS code assessments, and customs duty assessments.\n• Monitored supplier OTIF (On-Time In-Full) performance benchmarks across 85 active vendors."
             )
         ),
         educations = listOf(
@@ -2010,7 +2018,7 @@ private fun getSeedProfilesList(isBn: Boolean = true): List<CvData> {
                 startDate = "Jan 2021",
                 endDate = "Present",
                 isCurrent = true,
-                description = "â€¢ Delivered core undergraduate and graduate lectures on Econometrics, Macroeconomics, and Game Theory.\nâ€¢ Supervised 25+ student thesis projects and managed departmental curriculum development committees.\nâ€¢ Secured research grant of BDT 15 Lakh for urban socio-economic mobility assessment."
+                description = "• Delivered core undergraduate and graduate lectures on Econometrics, Macroeconomics, and Game Theory.\n• Supervised 25+ student thesis projects and managed departmental curriculum development committees.\n• Secured research grant of BDT 15 Lakh for urban socio-economic mobility assessment."
             ),
             CvExperienceItem(
                 company = "University of Liberal Arts Bangladesh (ULAB)",
@@ -2018,7 +2026,7 @@ private fun getSeedProfilesList(isBn: Boolean = true): List<CvData> {
                 startDate = "Sep 2017",
                 endDate = "Dec 2020",
                 isCurrent = false,
-                description = "â€¢ Conducted weekly tutorial sections and lab exercises utilizing Stata, R, and Python.\nâ€¢ Organized international economics symposiums and served as faculty advisor for debate club."
+                description = "• Conducted weekly tutorial sections and lab exercises utilizing Stata, R, and Python.\n• Organized international economics symposiums and served as faculty advisor for debate club."
             )
         ),
         educations = listOf(
@@ -2072,7 +2080,7 @@ private fun getSeedProfilesList(isBn: Boolean = true): List<CvData> {
                 startDate = "Jun 2022",
                 endDate = "Present",
                 isCurrent = true,
-                description = "â€¢ Led a frontline tier-2 support team of 18 specialists delivering 24/7 client resolution.\nâ€¢ Implemented AI-driven ticket triaging rules in Zendesk, lowering First Response Time (FRT) by 45%.\nâ€¢ Collaborated with engineering teams to resolve recurring UX bugs affecting app user experience."
+                description = "• Led a frontline tier-2 support team of 18 specialists delivering 24/7 client resolution.\n• Implemented AI-driven ticket triaging rules in Zendesk, lowering First Response Time (FRT) by 45%.\n• Collaborated with engineering teams to resolve recurring UX bugs affecting app user experience."
             ),
             CvExperienceItem(
                 company = "Daraz Bangladesh (Alibaba Group)",
@@ -2080,7 +2088,7 @@ private fun getSeedProfilesList(isBn: Boolean = true): List<CvData> {
                 startDate = "Feb 2020",
                 endDate = "May 2022",
                 isCurrent = false,
-                description = "â€¢ Handled priority VIP merchant disputes, resolving 95% of cases within initial SLA.\nâ€¢ Trained 40+ onboarding agents on soft skills, complaint de-escalation, and empathy guidelines."
+                description = "• Handled priority VIP merchant disputes, resolving 95% of cases within initial SLA.\n• Trained 40+ onboarding agents on soft skills, complaint de-escalation, and empathy guidelines."
             )
         ),
         educations = listOf(
@@ -3064,7 +3072,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
             drawSideHeader("KEY SKILLS")
             data.skills.forEach { sk ->
                 val fullText = if (sk.description.isNotBlank()) "${sk.name}: ${sk.description}" else sk.name
-                val bulletText = "â€¢ $fullText"
+                val bulletText = "• $fullText"
                 val spannable = SpannableStringBuilder(bulletText)
                 val colonIndex = bulletText.indexOf(':')
                 if (colonIndex > 0) {
@@ -3170,8 +3178,8 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                     if (idx == 0) {
                         drawMainSectionHeader("EXPERIENCE")
                     }
-                    val head = "${exp.role} â€” ${exp.company}"
-                    val date = "${exp.startDate}${if (exp.startDate.isNotBlank() && exp.endDate.isNotBlank()) " â€“ " else ""}${if (exp.isCurrent) "Present" else exp.endDate}"
+                    val head = "${exp.role} — ${exp.company}"
+                    val date = "${exp.startDate}${if (exp.startDate.isNotBlank() && exp.endDate.isNotBlank()) " – " else ""}${if (exp.isCurrent) "Present" else exp.endDate}"
                     val headLayout = StaticLayout.Builder.obtain(head, 0, head.length, bodyBoldPaint, (mainColWidth * 0.72f).toInt()).setLineSpacing(0f, data.customLineSpacing).build()
                     val dateLayout = StaticLayout.Builder.obtain(date, 0, date.length, contactPaint, (mainColWidth * 0.28f).toInt()).setAlignment(Layout.Alignment.ALIGN_OPPOSITE).setLineSpacing(0f, data.customLineSpacing).build()
 
@@ -3191,7 +3199,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                     if (exp.description.isNotBlank()) {
                         val lines = exp.description.split("\n").map { it.trim() }.filter { it.isNotBlank() }
                         lines.forEach { line ->
-                            val bulletLine = if (line.startsWith("â€¢") || line.startsWith("-") || line.startsWith("â–ª") || line.startsWith("â—†")) line else "â€¢ $line"
+                            val bulletLine = if (line.startsWith("•") || line.startsWith("-") || line.startsWith("▪") || line.startsWith("◆")) line else "• $line"
                             val dLayout = StaticLayout.Builder.obtain(bulletLine, 0, bulletLine.length, bodyPaint, (mainColWidth - 8f).toInt()).setLineSpacing(0f, data.customLineSpacing).build()
                             checkAndAddNewPageTwoColumn(dLayout.height.toFloat() + 4f)
                             canvas.save()
@@ -3214,7 +3222,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                     drawMainSectionHeader("EDUCATION")
                 }
                 val degreePart = getFormattedDegreeText(edu)
-                val eduTitle = if (degreePart.isNotBlank() && edu.institution.isNotBlank()) "$degreePart â€” ${edu.institution}" else degreePart.ifBlank { edu.institution }
+                val eduTitle = if (degreePart.isNotBlank() && edu.institution.isNotBlank()) "$degreePart — ${edu.institution}" else degreePart.ifBlank { edu.institution }
                 
                 val resultText = if (edu.resultType.isNotBlank() && edu.result.isNotBlank()) "${edu.resultType}: ${edu.result}" else edu.result
                 val eduSub = "Year: ${edu.passingYear}${if (edu.passingYear.isNotBlank() && resultText.isNotBlank()) "  |  " else ""}$resultText"
@@ -3328,7 +3336,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
             data.email.takeIf { it.isNotBlank() },
             data.address.takeIf { it.isNotBlank() },
             data.linkedin.takeIf { it.isNotBlank() }
-        ).joinToString("  â€¢  ")
+        ).joinToString("  •  ")
         if (contactLine.isNotBlank()) {
             val cLayout = StaticLayout.Builder.obtain(contactLine, 0, contactLine.length, bannerContactPaint, bannerTextWidth.toInt()).setLineSpacing(0f, data.customLineSpacing).build()
             canvas.save()
@@ -3377,7 +3385,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
             data.phone.takeIf { it.isNotBlank() },
             data.email.takeIf { it.isNotBlank() },
             data.linkedin.takeIf { it.isNotBlank() }?.removePrefix("https://")?.removePrefix("www.")
-        ).joinToString("  â€¢  ")
+        ).joinToString("  •  ")
 
         if (contactLine.isNotBlank()) {
             val hContactPaint = TextPaint().apply {
@@ -3512,7 +3520,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
             data.email.takeIf { it.isNotBlank() },
             data.address.takeIf { it.isNotBlank() },
             data.linkedin.takeIf { it.isNotBlank() }?.removePrefix("https://")?.removePrefix("www.")
-        ).joinToString("   â€¢   ")
+        ).joinToString("   •   ")
 
         if (contactLine.isNotBlank()) {
             val cPaint = TextPaint().apply {
@@ -3610,7 +3618,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
             data.phone.takeIf { it.isNotBlank() },
             data.email.takeIf { it.isNotBlank() },
             data.linkedin.takeIf { it.isNotBlank() }?.removePrefix("https://")?.removePrefix("www.")
-        ).joinToString("  â�â€“  ")
+        ).joinToString("  ▪  ")
         if (contactLine.isNotBlank()) {
             val exeCPaint = TextPaint().apply {
                 isAntiAlias = true
@@ -3735,7 +3743,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                     textSize = 11.5f * fontScaleMultiplier
                     typeface = Typeface.create("serif", Typeface.BOLD)
                 }
-                canvas.drawText("â�â€“  ${headerText.uppercase()}", margin, currentY + 11f, exePaint)
+                canvas.drawText("▪  ${headerText.uppercase()}", margin, currentY + 11f, exePaint)
                 currentY += 15f
                 val rulePaint = Paint().apply {
                     color = AndroidColor.BLACK
@@ -3814,7 +3822,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                     textSize = 11.5f * fontScaleMultiplier
                     typeface = Typeface.create("serif", Typeface.BOLD)
                 }
-                canvas.drawText("â—†  ${headerText.uppercase()}", margin, currentY + 11f, dPaint)
+                canvas.drawText("◆  ${headerText.uppercase()}", margin, currentY + 11f, dPaint)
                 currentY += 15f
                 val rulePaint = Paint().apply {
                     color = primaryColor
@@ -3876,12 +3884,12 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
 
     val bulletPrefix = when (data.bulletStyle) {
         "DASH" -> "- "
-        "SQUARE" -> "â–ª "
-        "DIAMOND" -> "â—† "
+        "SQUARE" -> "▪ "
+        "DIAMOND" -> "◆ "
         "COMMA" -> ""
         "PIPE" -> ""
         "NONE" -> ""
-        else -> "â€¢ "
+        else -> "• "
     }
 
     effectiveSectionOrder.forEach { secKey ->
@@ -3943,7 +3951,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                         val sortedEdu = data.educations.sortedByDescending { it.passingYear.toIntOrNull() ?: 0 }
                         sortedEdu.forEach { edu ->
                             val degreeText = getFormattedDegreeText(edu)
-                            val instText = "${edu.institution}${if (edu.result.isNotBlank()) "  â€¢  ${edu.result}" else ""}"
+                            val instText = "${edu.institution}${if (edu.result.isNotBlank()) "  •  ${edu.result}" else ""}"
                             val yearText = edu.passingYear
 
                             val degLayout = StaticLayout.Builder.obtain(degreeText, 0, degreeText.length, bodyBoldPaint, (contentWidth * 0.75f).toInt()).setLineSpacing(0f, data.customLineSpacing).build()
@@ -4116,7 +4124,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                         drawSectionHeader("ADDITIONAL PRACTICUM & WORK EXPERIENCE", "ðŸ’¼")
                         data.experiences.forEach { exp ->
                             if (exp.role.isNotBlank() || exp.company.isNotBlank()) {
-                                val expTitle = "$bulletPrefix${exp.role} â€“ ${exp.company} (${exp.location})${if (exp.startDate.isNotBlank()) " [${exp.startDate} - ${if (exp.isCurrent) "Present" else exp.endDate}]" else ""}"
+                                val expTitle = "$bulletPrefix${exp.role} – ${exp.company} (${exp.location})${if (exp.startDate.isNotBlank()) " [${exp.startDate} - ${if (exp.isCurrent) "Present" else exp.endDate}]" else ""}"
                                 val titleLayout = StaticLayout.Builder.obtain(expTitle, 0, expTitle.length, bodyBoldPaint, contentWidth.toInt()).setLineSpacing(0f, data.customLineSpacing).build()
                                 checkAndAddNewPage(titleLayout.height.toFloat() + 4f)
                                 canvas.save(); canvas.translate(margin, currentY); titleLayout.draw(canvas); canvas.restore()
@@ -4125,7 +4133,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                                 if (exp.description.isNotBlank()) {
                                     val lines = exp.description.split("\n").map { it.trim() }.filter { it.isNotBlank() }
                                     lines.forEach { line ->
-                                        val bulletLine = if (line.startsWith("â€¢") || line.startsWith("-") || line.startsWith("â–ª") || line.startsWith("â—†")) line else "$bulletPrefix$line"
+                                        val bulletLine = if (line.startsWith("•") || line.startsWith("-") || line.startsWith("▪") || line.startsWith("◆")) line else "$bulletPrefix$line"
                                         val descLayout = StaticLayout.Builder.obtain(bulletLine, 0, bulletLine.length, bodyPaint, (contentWidth - 12f).toInt()).setLineSpacing(0f, data.customLineSpacing).build()
                                         checkAndAddNewPage(descLayout.height.toFloat() + 2f)
                                         canvas.save(); canvas.translate(margin + 12f, currentY); descLayout.draw(canvas); canvas.restore()
@@ -4145,7 +4153,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
 
                         data.experiences.forEach { exp ->
                             if (exp.role.isNotBlank() || exp.company.isNotBlank()) {
-                                val expTitle = "$bulletPrefix${exp.role} â€“ ${exp.company} (${exp.location})${if (exp.startDate.isNotBlank()) " [${exp.startDate} - ${if (exp.isCurrent) "Present" else exp.endDate}]" else ""}"
+                                val expTitle = "$bulletPrefix${exp.role} – ${exp.company} (${exp.location})${if (exp.startDate.isNotBlank()) " [${exp.startDate} - ${if (exp.isCurrent) "Present" else exp.endDate}]" else ""}"
                                 val titleLayout = StaticLayout.Builder.obtain(expTitle, 0, expTitle.length, bodyBoldPaint, contentWidth.toInt()).setLineSpacing(0f, data.customLineSpacing).build()
                                 checkAndAddNewPage(titleLayout.height.toFloat() + 4f)
                                 canvas.save(); canvas.translate(margin, currentY); titleLayout.draw(canvas); canvas.restore()
@@ -4154,7 +4162,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                                 if (exp.description.isNotBlank()) {
                                     val lines = exp.description.split("\n").map { it.trim() }.filter { it.isNotBlank() }
                                     lines.forEach { line ->
-                                        val bulletLine = if (line.startsWith("â€¢") || line.startsWith("-") || line.startsWith("â–ª") || line.startsWith("â—†")) line else "$bulletPrefix$line"
+                                        val bulletLine = if (line.startsWith("•") || line.startsWith("-") || line.startsWith("▪") || line.startsWith("◆")) line else "$bulletPrefix$line"
                                         val descLayout = StaticLayout.Builder.obtain(bulletLine, 0, bulletLine.length, bodyPaint, (contentWidth - 12f).toInt()).setLineSpacing(0f, data.customLineSpacing).build()
                                         checkAndAddNewPage(descLayout.height.toFloat() + 2f)
                                         canvas.save(); canvas.translate(margin + 12f, currentY); descLayout.draw(canvas); canvas.restore()
@@ -4172,7 +4180,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
 
             "SKILLS" -> {
                 if (data.skills.isNotEmpty()) {
-                    drawSectionHeader("KEY SKILLS & COMPETENCIES", "âš¡")
+                    drawSectionHeader("KEY SKILLS & COMPETENCIES", "⚡")
                     data.skills.forEach { sk ->
                         if (sk.name.isNotBlank()) {
                             val sb = SpannableStringBuilder()
@@ -4601,9 +4609,9 @@ private fun generateCvDocxFile(context: Context, data: CvData): File {
             if (exp.description.isNotBlank()) {
                 val lines = exp.description.split("\n")
                 for (l in lines) {
-                    val clean = l.trim().removePrefix("â€¢").removePrefix("-").trim()
+                    val clean = l.trim().removePrefix("•").removePrefix("-").trim()
                     if (clean.isNotBlank()) {
-                        xmlSb.append("    <w:p><w:pPr><w:ind w:left=\"360\"/></w:pPr><w:r><w:rPr><w:sz w:val=\"20\"/><w:color w:val=\"374151\"/></w:rPr><w:t>â€¢ ")
+                        xmlSb.append("    <w:p><w:pPr><w:ind w:left=\"360\"/></w:pPr><w:r><w:rPr><w:sz w:val=\"20\"/><w:color w:val=\"374151\"/></w:rPr><w:t>• ")
                         xmlSb.append(escapeXml(clean))
                         xmlSb.append("</w:t></w:r></w:p>\n")
                     }
@@ -4639,7 +4647,7 @@ private fun generateCvDocxFile(context: Context, data: CvData): File {
         appendSectionHeader("Key Skill & Competence")
         for (sk in data.skills) {
             xmlSb.append("    <w:p><w:pPr><w:ind w:left=\"360\"/></w:pPr>")
-            xmlSb.append("<w:r><w:rPr><w:b/><w:sz w:val=\"22\"/><w:color w:val=\"111827\"/></w:rPr><w:t>â€¢ ")
+            xmlSb.append("<w:r><w:rPr><w:b/><w:sz w:val=\"22\"/><w:color w:val=\"111827\"/></w:rPr><w:t>• ")
             xmlSb.append(escapeXml(sk.name))
             if (sk.description.isNotBlank()) {
                 xmlSb.append(": </w:t></w:r><w:r><w:rPr><w:sz w:val=\"20\"/><w:color w:val=\"374151\"/></w:rPr><w:t>")
@@ -4864,7 +4872,7 @@ fun AtsCvBuilderTool(
     ) { uri: Uri? ->
         if (uri != null) {
             isAiLoading = true
-            aiLoadingMessage = if (isBn) "âœ¨ জেমিনি এআই আপনার পিডিএফ সিভি বিশ্লেষণ করে প্রোফাইল তৈরি করছে..." else "âœ¨ Gemini AI is analyzing your PDF resume to create a profile..."
+            aiLoadingMessage = if (isBn) "✨ জেমিনি এআই আপনার পিডিএফ সিভি বিশ্লেষণ করে প্রোফাইল তৈরি করছে..." else "✨ Gemini AI is analyzing your PDF resume to create a profile..."
             scope.launch {
                 try {
                     val inputStream = context.contentResolver.openInputStream(uri)
@@ -5020,7 +5028,7 @@ fun AtsCvBuilderTool(
                         jsonObj.optJSONArray("newSkills")?.let { arr ->
                             for (i in 0 until arr.length()) {
                                 val skName = arr.getString(i)
-                                val clean = skName.removePrefix("â€¢").removePrefix("-").removePrefix("*").trim()
+                                val clean = skName.removePrefix("•").removePrefix("-").removePrefix("*").trim()
                                 if (updatedSkills.none { it.name.equals(clean, ignoreCase = true) || (clean.contains(":") && it.name.equals(clean.substringBefore(":").trim(), ignoreCase = true)) }) {
                                     val item = if (clean.contains(":")) {
                                         val parts = clean.split(":", limit = 2)
@@ -5160,7 +5168,7 @@ fun AtsCvBuilderTool(
 
     // Auto-render live PDF vector preview on changes or when switching tabs
     LaunchedEffect(cvData, previewRefreshKey, selectedTab) {
-        if (selectedTab != 4) {
+        if (selectedTab != 5) {
             return@LaunchedEffect
         }
         kotlinx.coroutines.delay(300)
@@ -5332,7 +5340,7 @@ fun AtsCvBuilderTool(
             onGenerate = { promptText ->
                 showAiPromptDialog = false
                 isAiLoading = true
-                aiLoadingMessage = if (isBn) "âœ¨ জেমিনি এআই আপনার কাস্টম প্রম্পট অন্যায়ী লিখছে..." else "âœ¨ Gemini AI is generating content from your prompt..."
+                aiLoadingMessage = if (isBn) "✨ জেমিনি এআই আপনার কাস্টম প্রম্পট অন্যায়ী লিখছে..." else "✨ Gemini AI is generating content from your prompt..."
 
                 scope.launch {
                     try {
@@ -5359,7 +5367,7 @@ fun AtsCvBuilderTool(
                                         .map { it.trim() }
                                         .filter { it.isNotBlank() && !it.startsWith("Here") && !it.startsWith("Sure") }
                                     val newItems = lines.map { line ->
-                                        val clean = line.removePrefix("â€¢").removePrefix("-").removePrefix("*").removePrefix("â–ª").trim()
+                                        val clean = line.removePrefix("•").removePrefix("-").removePrefix("*").removePrefix("▪").trim()
                                         CvSkillItem(name = clean)
                                     }
                                     if (newItems.isNotEmpty()) {
@@ -5447,7 +5455,7 @@ fun AtsCvBuilderTool(
                                 "EDUCATION" -> {
                                     val lines = resultText.split("\n").map { it.trim() }.filter { it.isNotBlank() }
                                     val newEduItems = lines.map { line ->
-                                        val clean = line.removePrefix("â€¢").removePrefix("-").removePrefix("*").trim()
+                                        val clean = line.removePrefix("•").removePrefix("-").removePrefix("*").trim()
                                         CvEducationItem(examLevel = "Others", degree = clean, institution = "AI Generated Institution", passingYear = "2024", result = "Pass")
                                     }
                                     if (newEduItems.isNotEmpty()) {
@@ -5458,7 +5466,7 @@ fun AtsCvBuilderTool(
                                 "EXPERIENCE_GEN" -> {
                                     val lines = resultText.split("\n").map { it.trim() }.filter { it.isNotBlank() }
                                     val newExpItems = lines.map { line ->
-                                        val clean = line.removePrefix("â€¢").removePrefix("-").removePrefix("*").trim()
+                                        val clean = line.removePrefix("•").removePrefix("-").removePrefix("*").trim()
                                         CvExperienceItem(role = clean, company = "AI Suggested Organization", startDate = "2023", endDate = "Present")
                                     }
                                     if (newExpItems.isNotEmpty()) {
@@ -5502,7 +5510,7 @@ fun AtsCvBuilderTool(
                                 "PROJECTS" -> {
                                     val lines = resultText.split("\n").map { it.trim() }.filter { it.isNotBlank() }
                                     val newProjects = lines.map { line ->
-                                        val clean = line.removePrefix("â€¢").removePrefix("-").removePrefix("*").trim()
+                                        val clean = line.removePrefix("•").removePrefix("-").removePrefix("*").trim()
                                         val titlePart = clean.substringBefore(":").trim()
                                         val descPart = clean.substringAfter(":").trim()
                                         CvProjectItem(title = titlePart, description = if (descPart != titlePart && descPart.isNotBlank()) descPart else clean)
@@ -5662,9 +5670,9 @@ fun AtsCvBuilderTool(
 
             // Beautiful tab controls (Removal of double clipart/emojis, using proper Icons)
             val tabs = if (isBn) {
-                listOf("প্রোফাইল", "অভিজ্ঞতা", "শিক্ষা ও স্কিল", "জব ম্যাচ", "প্রিভিউ")
+                listOf("প্রোফাইল", "অভিজ্ঞতা", "শিক্ষা ও স্কিল", "জব ম্যাচ", "কাস্টমাইজেশন", "প্রিভিউ")
             } else {
-                listOf("Profile", "Experience", "Education", "Job Match", "Preview")
+                listOf("Profile", "Experience", "Education", "Job Match", "Customization", "Preview")
             }
 
             val tabIcons = listOf(
@@ -5672,6 +5680,7 @@ fun AtsCvBuilderTool(
                 Icons.Default.Work,
                 Icons.Default.School,
                 Icons.Default.AutoAwesome,
+                Icons.Default.Tune,
                 Icons.Default.Visibility
             )
 
@@ -5856,7 +5865,14 @@ fun AtsCvBuilderTool(
                         }
                     )
 
-                    4 -> PreviewAndExportTab(
+                    4 -> CustomizationTab(
+                        cvData = cvData,
+                        onCvDataChange = { updateCvDataState(it) },
+                        themeColors = themeColors,
+                        isBn = isBn
+                    )
+
+                    5 -> PreviewAndExportTab(
                         cvData = cvData,
                         onCvDataChange = { updateCvDataState(it) },
                         pdfFile = generatedPdfFile,
@@ -6786,7 +6802,8 @@ private fun ProfileAndPersonasTab(
             SectionCardHeader(
                 title = if (isBn) "পেশাগত বিবরণী" else "Professional Summary",
                 icon = Icons.Default.Description,
-                themeColors = themeColors
+                themeColors = themeColors,
+                modifier = Modifier.weight(1f, fill = false)
             )
             Button(
                 onClick = onGenerateSummaryAi,
@@ -7045,7 +7062,7 @@ private fun ExperienceTab(
                         isBn = isBn,
                         minLines = 3,
                         onAiPrompt = { onRequestAiPrompt("Academic Projects AI", "Generate academic project descriptions for a ${cvData.jobTitle}...", "FRESHER", -1) },
-                        placeholderText = "â€¢ Automated Sales Pipeline Analysis using Python & PowerBI...\nâ€¢ FinTech Microfinance Mobile App Case Study..."
+                        placeholderText = "• Automated Sales Pipeline Analysis using Python & PowerBI...\n• FinTech Microfinance Mobile App Case Study..."
                     )
                 }
             }
@@ -7089,7 +7106,7 @@ private fun ExperienceTab(
                         isLiveEdit = isLiveEdit,
                         isBn = isBn,
                         minLines = 3,
-                        placeholderText = "â€¢ Summer Intern at Apex Logistics (Data Reconciliation)\nâ€¢ Volunteer Organizer for National Blood Donation Camp..."
+                        placeholderText = "• Summer Intern at Apex Logistics (Data Reconciliation)\n• Volunteer Organizer for National Blood Donation Camp..."
                     )
                 }
             }
@@ -7133,7 +7150,7 @@ private fun ExperienceTab(
                         isLiveEdit = isLiveEdit,
                         isBn = isBn,
                         minLines = 3,
-                        placeholderText = "â€¢ President / General Secretary at University Business Club\nâ€¢ Finalist, National Inter-University Case Competition..."
+                        placeholderText = "• President / General Secretary at University Business Club\n• Finalist, National Inter-University Case Competition..."
                     )
                 }
             }
@@ -7378,7 +7395,7 @@ private fun ExperienceTab(
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 3,
                         maxLines = 15,
-                        placeholder = { Text(text = "â€¢ Conducted business evaluations...\nâ€¢ Tailored campaign KPIs...\nâ€¢ Coordinated teams...", fontSize = 11.5.sp) },
+                        placeholder = { Text(text = "• Conducted business evaluations...\n• Tailored campaign KPIs...\n• Coordinated teams...", fontSize = 11.5.sp) },
                         shape = RoundedCornerShape(10.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = themeColors.buttonEqualBg,
@@ -7821,7 +7838,8 @@ private fun EducationAndSkillsTab(
             SectionCardHeader(
                 title = if (isBn) "শিক্ষাগত যোগ্যতা" else "Education Details",
                 icon = Icons.Default.School,
-                themeColors = themeColors
+                themeColors = themeColors,
+                modifier = Modifier.weight(1f, fill = false)
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Button(
@@ -8110,7 +8128,8 @@ private fun EducationAndSkillsTab(
             SectionCardHeader(
                 title = if (isBn) "Key Skill and Competence (${cvData.skills.size})" else "Key Skill and Competence (${cvData.skills.size})",
                 icon = Icons.Default.Code,
-                themeColors = themeColors
+                themeColors = themeColors,
+                modifier = Modifier.weight(1f, fill = false)
             )
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Button(
@@ -8210,7 +8229,8 @@ private fun EducationAndSkillsTab(
             SectionCardHeader(
                 title = if (isBn) "ট্রেনিং ও সার্টিফিকেট" else "Training & Certifications",
                 icon = Icons.Default.Verified,
-                themeColors = themeColors
+                themeColors = themeColors,
+                modifier = Modifier.weight(1f, fill = false)
             )
             Button(
                 onClick = {
@@ -8239,7 +8259,7 @@ private fun EducationAndSkillsTab(
             modifier = Modifier.fillMaxWidth(),
             minLines = 3,
             maxLines = 15,
-            placeholder = { Text(text = "â€¢ Project Management Professional (PMP) - PMI, 2024\nâ€¢ Business Intelligence - Coursera, 2023", fontSize = 11.5.sp) },
+            placeholder = { Text(text = "• Project Management Professional (PMP) - PMI, 2024\n• Business Intelligence - Coursera, 2023", fontSize = 11.5.sp) },
             shape = RoundedCornerShape(10.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = themeColors.buttonEqualBg,
@@ -8257,7 +8277,8 @@ private fun EducationAndSkillsTab(
             SectionCardHeader(
                 title = if (isBn) "রেফারেন্স (References)" else "References",
                 icon = Icons.Default.SupervisorAccount,
-                themeColors = themeColors
+                themeColors = themeColors,
+                modifier = Modifier.weight(1f, fill = false)
             )
             Button(
                 onClick = {
@@ -8862,6 +8883,104 @@ private fun getCurrentCategoryValue(cv: CvData, category: String): String {
     }
 }
 
+private fun parseUpdatedCvData(jsonStr: String, currentCv: CvData): Pair<String, CvData?> {
+    try {
+        val clean = jsonStr.substringAfter("{").substringBeforeLast("}").let { "{$it}" }
+        val obj = org.json.JSONObject(clean)
+        val text = obj.optString("text", "আমি আপনার সিভি আপডেট করেছি।")
+        val updatedObj = obj.optJSONObject("updatedCvData") ?: return Pair(text, null)
+        
+        // Parse basic text fields
+        var nextCv = currentCv.copy(
+            fullName = updatedObj.optString("fullName", currentCv.fullName),
+            jobTitle = updatedObj.optString("jobTitle", currentCv.jobTitle),
+            email = updatedObj.optString("email", currentCv.email),
+            phone = updatedObj.optString("phone", currentCv.phone),
+            address = updatedObj.optString("address", currentCv.address),
+            linkedin = updatedObj.optString("linkedin", currentCv.linkedin),
+            githubOrPortfolio = updatedObj.optString("githubOrPortfolio", currentCv.githubOrPortfolio),
+            summary = updatedObj.optString("summary", currentCv.summary),
+            certifications = updatedObj.optString("certifications", currentCv.certifications),
+            references = updatedObj.optString("references", currentCv.references),
+            languages = updatedObj.optString("languages", currentCv.languages)
+        )
+        
+        // Parse experiences
+        updatedObj.optJSONArray("experiences")?.let { arr ->
+            val list = mutableListOf<CvExperienceItem>()
+            for (i in 0 until arr.length()) {
+                val itemObj = arr.getJSONObject(i)
+                list.add(CvExperienceItem(
+                    id = itemObj.optString("id", UUID.randomUUID().toString()),
+                    company = itemObj.optString("company", ""),
+                    role = itemObj.optString("role", ""),
+                    startDate = itemObj.optString("startDate", ""),
+                    endDate = itemObj.optString("endDate", ""),
+                    isCurrent = itemObj.optBoolean("isCurrent", false),
+                    description = itemObj.optString("description", ""),
+                    location = itemObj.optString("location", "Dhaka, Bangladesh")
+                ))
+            }
+            nextCv = nextCv.copy(experiences = list)
+        }
+        
+        // Parse educations
+        updatedObj.optJSONArray("educations")?.let { arr ->
+            val list = mutableListOf<CvEducationItem>()
+            for (i in 0 until arr.length()) {
+                val itemObj = arr.getJSONObject(i)
+                list.add(CvEducationItem(
+                    id = itemObj.optString("id", UUID.randomUUID().toString()),
+                    degree = itemObj.optString("degree", ""),
+                    institution = itemObj.optString("institution", ""),
+                    passingYear = itemObj.optString("passingYear", ""),
+                    result = itemObj.optString("result", ""),
+                    examLevel = itemObj.optString("examLevel", ""),
+                    subjectMajor = itemObj.optString("subjectMajor", ""),
+                    resultType = itemObj.optString("resultType", "")
+                ))
+            }
+            nextCv = nextCv.copy(educations = list)
+        }
+        
+        // Parse skills
+        updatedObj.optJSONArray("skills")?.let { arr ->
+            val list = mutableListOf<CvSkillItem>()
+            for (i in 0 until arr.length()) {
+                val itemObj = arr.getJSONObject(i)
+                list.add(CvSkillItem(
+                    id = itemObj.optString("id", UUID.randomUUID().toString()),
+                    name = itemObj.optString("name", ""),
+                    level = itemObj.optString("level", "Proficient"),
+                    category = itemObj.optString("category", "Functional/Core Skills"),
+                    description = itemObj.optString("description", "")
+                ))
+            }
+            nextCv = nextCv.copy(skills = list)
+        }
+        
+        // Parse projects
+        updatedObj.optJSONArray("projects")?.let { arr ->
+            val list = mutableListOf<CvProjectItem>()
+            for (i in 0 until arr.length()) {
+                val itemObj = arr.getJSONObject(i)
+                list.add(CvProjectItem(
+                    id = itemObj.optString("id", UUID.randomUUID().toString()),
+                    title = itemObj.optString("title", ""),
+                    description = itemObj.optString("description", ""),
+                    link = itemObj.optString("link", "")
+                ))
+            }
+            nextCv = nextCv.copy(projects = list)
+        }
+        
+        return Pair(text, nextCv)
+    } catch (e: Exception) {
+        e.printStackTrace()
+        return Pair("দুঃখিত, এআই রেসপন্সটি পার্স করার সময় সমস্যা হয়েছে: ${e.localizedMessage}", null)
+    }
+}
+
 @Composable
 private fun KeywordAnalysisCard(
     matchedKeywords: List<String>,
@@ -9041,6 +9160,11 @@ private fun AiJobCircularMatchTab(
     var savedCirculars by remember { mutableStateOf(listOf<SavedCircularItem>()) }
     var beforeAfterSuggestionToApply by remember { mutableStateOf<AiSuggestionItem?>(null) }
 
+    var coPilotMessages by remember { mutableStateOf(listOf<CoPilotMessage>()) }
+    var userMessageText by remember { mutableStateOf("") }
+    var isChatLoading by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
     LaunchedEffect(cvData.lastJobMatchPercentage, cvData.lastCircularSuggestionsJson) {
         if (cvData.lastJobMatchPercentage > 0 && cvData.targetJobCircular.isNotBlank()) {
             val titleText = if (cvData.targetJobCircular.length > 35) {
@@ -9058,6 +9182,86 @@ private fun AiJobCircularMatchTab(
                     tailoredSummary = cvData.lastTailoredSummary,
                     suggestionsJson = cvData.lastCircularSuggestionsJson
                 )
+            }
+            
+            if (coPilotMessages.isEmpty()) {
+                val systemGreeting = if (isBn) {
+                    "✨ আসসালামু আলাইকুম! আমি আপনার সিভি এবং জব সার্কুলার বিশ্লেষণ করেছি। আমাদের বর্তমান ম্যাচ স্কোর **${cvData.lastJobMatchPercentage}%**।\n\n" +
+                    "আপনার সিভিতে বেশ কিছু এআই প্রস্তাবিত সমাধান পাওয়া গেছে। আমি একটি খসড়া তৈরি করেছি যেখানে প্রয়োজনীয় কি-ওয়ার্ড এবং একটি এআই টেইলর্ড সামারি যুক্ত করা আছে।\n\n" +
+                    "আপনি কি এই পরিবর্তনগুলো সিভিতে প্রয়োগ করতে চান, নাকি কোনো বিশেষ অংশ মডিফাই করতে চান? আমাকে চ্যাটে বলুন, আমি এখনই পরিবর্তন করে দিচ্ছি!"
+                } else {
+                    "✨ Hello! I have analyzed your CV against the job circular. Our current match score is **${cvData.lastJobMatchPercentage}%**.\n\n" +
+                    "I have prepared a tailored draft for you with optimized professional summaries and missing keywords.\n\n" +
+                    "Would you like to apply these suggestions to your CV, or make specific modifications? Just let me know in the chat below!"
+                }
+                coPilotMessages = listOf(
+                    CoPilotMessage(
+                        sender = "ai",
+                        text = systemGreeting,
+                        proposedCvData = cvData
+                    )
+                )
+            }
+        }
+    }
+
+    fun sendCoPilotMessage(text: String) {
+        if (text.isBlank()) return
+        
+        val userMsg = CoPilotMessage(sender = "user", text = text)
+        coPilotMessages = coPilotMessages + userMsg
+        userMessageText = ""
+        isChatLoading = true
+        
+        scope.launch {
+            try {
+                val promptBuilder = StringBuilder()
+                promptBuilder.append("Target Job Circular Context:\n${cvData.targetJobCircular}\n\n")
+                
+                promptBuilder.append("Current CV State:\n")
+                promptBuilder.append("fullName: ${cvData.fullName}\n")
+                promptBuilder.append("jobTitle: ${cvData.jobTitle}\n")
+                promptBuilder.append("email: ${cvData.email}\n")
+                promptBuilder.append("phone: ${cvData.phone}\n")
+                promptBuilder.append("linkedin: ${cvData.linkedin}\n")
+                promptBuilder.append("summary: ${cvData.summary}\n")
+                promptBuilder.append("skills: ${cvData.skills.joinToString { it.name }}\n")
+                promptBuilder.append("experiences: ${cvData.experiences.joinToString { "${it.role} at ${it.company}: ${it.description}" }}\n")
+                
+                promptBuilder.append("\nChat History:\n")
+                coPilotMessages.takeLast(6).forEach { msg ->
+                    promptBuilder.append("${msg.sender.uppercase()}: ${msg.text}\n")
+                }
+                
+                promptBuilder.append("\nUser Latest Command: $text\n\n")
+                promptBuilder.append("Task: Read the user command and apply it to modify the CV. If the user asks to add skills, add them. If they ask to rewrite the summary, rewrite it. If they ask to remove or edit work experience or education, make those exact updates. Be highly collaborative, intelligent, and helpful.\n")
+                promptBuilder.append("Return strictly a JSON object with keys:\n")
+                promptBuilder.append("1. 'text': Your explanation in Bengali about what you changed, why it helps ATS score, and what to do next.\n")
+                promptBuilder.append("2. 'updatedCvData': A JSON object representing the modified CV with fields: fullName, jobTitle, email, phone, address, linkedin, githubOrPortfolio, summary, experiences (array with company, role, startDate, endDate, isCurrent, description, location), educations (array with degree, institution, passingYear, result, examLevel, subjectMajor, resultType), skills (array with name, level, category, description), projects (array with title, description, link), certifications (string), references (string), languages (string).\n")
+                promptBuilder.append("Do NOT wrap in markdown or backticks.")
+
+                val sysPrompt = "You are a professional interactive AI CV Co-Pilot. Return strictly a single valid JSON object."
+                
+                val responseStr = callGeminiAiApi(promptBuilder.toString(), sysPrompt)
+                val parsed = parseUpdatedCvData(responseStr, cvData)
+                
+                withContext(Dispatchers.Main) {
+                    coPilotMessages = coPilotMessages + CoPilotMessage(
+                        sender = "ai",
+                        text = parsed.first,
+                        proposedCvData = parsed.second
+                    )
+                    isChatLoading = false
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                withContext(Dispatchers.Main) {
+                    coPilotMessages = coPilotMessages + CoPilotMessage(
+                        sender = "ai",
+                        text = "দুঃখিত, আপনার কমান্ডটি প্রসেস করতে একটি ত্রুটি হয়েছে: ${e.localizedMessage}"
+                    )
+                    isChatLoading = false
+                }
             }
         }
     }
@@ -9750,10 +9954,24 @@ private fun AiJobCircularMatchTab(
                         }
                     }
                 }
+
+
             }
         }
     }
     }
+    
+    AiCoPilotChatbotSection(
+        themeColors = themeColors,
+        isBn = isBn,
+        coPilotMessages = coPilotMessages,
+        userMessageText = userMessageText,
+        onUserMessageTextChange = { userMessageText = it },
+        isChatLoading = isChatLoading,
+        onSendMessage = { sendCoPilotMessage(it) },
+        onCvDataChange = onCvDataChange,
+        onCompareClick = { beforeAfterSuggestionToApply = it }
+    )
     }
 
     if (activeFixItem != null) {
@@ -9773,6 +9991,22 @@ private fun AiJobCircularMatchTab(
                 activeFixItem = null
             },
             callGeminiAiApi = callGeminiAiApi
+        )
+    }
+
+    if (beforeAfterSuggestionToApply != null) {
+        CvBeforeAfterComparisonDialog(
+            suggestion = beforeAfterSuggestionToApply!!,
+            cvData = cvData,
+            themeColors = themeColors,
+            isBn = isBn,
+            onConfirm = { updatedData ->
+                onCvDataChange(updatedData)
+                beforeAfterSuggestionToApply = null
+            },
+            onDismiss = {
+                beforeAfterSuggestionToApply = null
+            }
         )
     }
 }
@@ -10099,8 +10333,10 @@ private fun PreviewAndExportTab(
             SectionCardHeader(
                 title = if (isBn) "লাইভ ভেক্টর প্রিভিউ (${pdfBitmaps.size}টি পেজ)" else "Live Vector Preview (${pdfBitmaps.size} Page${if (pdfBitmaps.size > 1) "s" else ""})",
                 icon = Icons.Default.Visibility,
-                themeColors = themeColors
+                themeColors = themeColors,
+                modifier = Modifier.weight(1f)
             )
+            Spacer(modifier = Modifier.width(8.dp))
             OutlinedButton(
                 onClick = onRefreshPreview,
                 shape = RoundedCornerShape(20.dp),
@@ -10355,7 +10591,7 @@ private fun CvCustomTextField(
 }
 
 @Composable
-private fun CvCustomLargeTextField(
+internal fun CvCustomLargeTextField(
     onAiPrompt: (() -> Unit)? = null,
     label: String,
     value: String,
@@ -10380,8 +10616,8 @@ private fun CvCustomLargeTextField(
                 )
             }
             if (onAiPrompt != null) {
-                IconButton(onClick = onAiPrompt, modifier = Modifier.size(22.dp)) {
-                    Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = "AI Help", tint = themeColors.buttonEqualBg, modifier = Modifier.size(16.dp))
+                IconButton(onClick = onAiPrompt, modifier = Modifier.size(24.dp).background(themeColors.buttonEqualBg, CircleShape)) {
+                    Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = "AI Help", tint = Color.White, modifier = Modifier.size(13.dp))
                 }
             }
         }
@@ -10612,5 +10848,236 @@ private fun CustomizationTab(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun CvBeforeAfterComparisonDialog(
+    suggestion: AiSuggestionItem,
+    cvData: CvData,
+    themeColors: CalculatorThemeColors,
+    isBn: Boolean,
+    onConfirm: (CvData) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val currentValue = getCurrentValueForCategory(suggestion, cvData)
+    val proposedValue = suggestion.proposedValue
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.AutoAwesome,
+                    contentDescription = null,
+                    tint = themeColors.buttonEqualBg,
+                    modifier = Modifier.size(22.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = if (isBn) "এআই প্রস্তাবিত পরিবর্তন" else "AI Suggested Changes",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = themeColors.displayText
+                )
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+            ) {
+                Text(
+                    text = if (isBn) suggestion.titleBn else suggestion.titleEn,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = themeColors.displayText
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = if (isBn) suggestion.descBn else suggestion.descEn,
+                    fontSize = 11.sp,
+                    color = themeColors.displayText.copy(alpha = 0.7f),
+                    lineHeight = 15.sp
+                )
+                
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // CURRENT VERSION SECTION
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = Color.Red.copy(alpha = 0.04f),
+                    border = BorderStroke(1.dp, Color.Red.copy(alpha = 0.15f)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(10.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Surface(
+                                shape = RoundedCornerShape(4.dp),
+                                color = Color.Red.copy(alpha = 0.15f)
+                            ) {
+                                Text(
+                                    text = if (isBn) "বর্তমান" else "CURRENT",
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.Red,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = currentValue.ifBlank { if (isBn) "(ফাঁকা)" else "(Empty)" },
+                            fontSize = 11.5.sp,
+                            color = themeColors.displayText.copy(alpha = 0.8f),
+                            lineHeight = 16.sp
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // PROPOSED VERSION SECTION
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = Color(0xFF10B981).copy(alpha = 0.05f),
+                    border = BorderStroke(1.dp, Color(0xFF10B981).copy(alpha = 0.2f)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(10.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Surface(
+                                shape = RoundedCornerShape(4.dp),
+                                color = Color(0xFF10B981).copy(alpha = 0.18f)
+                            ) {
+                                Text(
+                                    text = if (isBn) "প্রস্তাবিত সংস্করণ" else "PROPOSED",
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF10B981),
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = proposedValue,
+                            fontSize = 11.5.sp,
+                            color = themeColors.displayText,
+                            lineHeight = 16.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val updatedData = applySuggestionToCvData(suggestion, cvData)
+                    onConfirm(updatedData)
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text(
+                    text = if (isBn) "পরিবর্তন নিশ্চিত করুন" else "Apply Changes",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(
+                    text = if (isBn) "বাতিল" else "Cancel",
+                    color = themeColors.displayText.copy(alpha = 0.6f)
+                )
+            }
+        },
+        shape = RoundedCornerShape(16.dp),
+        containerColor = themeColors.cardBg
+    )
+}
+
+private fun getCurrentValueForCategory(suggestion: AiSuggestionItem, cvData: CvData): String {
+    val category = suggestion.category.trim().lowercase()
+    return when {
+        category == "summary" -> cvData.summary
+        category.startsWith("experience_") -> {
+            val idx = category.substringAfter("experience_").toIntOrNull() ?: 0
+            val exp = cvData.experiences.getOrNull(idx)
+            if (exp != null) {
+                if (exp.role.isNotBlank()) "${exp.role}: ${exp.description}" else exp.description
+            } else ""
+        }
+        category.startsWith("education_") -> {
+            val idx = category.substringAfter("education_").toIntOrNull() ?: 0
+            val ed = cvData.educations.getOrNull(idx)
+            if (ed != null) {
+                if (ed.institution.isNotBlank()) "${ed.institution}: ${ed.degree}" else ed.degree
+            } else ""
+        }
+        category == "skills" -> {
+            cvData.skills.joinToString("\n") { if (it.description.isNotBlank()) "${it.name}: ${it.description}" else it.name }
+        }
+        else -> ""
+    }
+}
+
+private fun applySuggestionToCvData(suggestion: AiSuggestionItem, cvData: CvData): CvData {
+    val category = suggestion.category.trim().lowercase()
+    val newVal = suggestion.proposedValue
+    return when {
+        category == "summary" -> {
+            cvData.copy(summary = newVal)
+        }
+        category.startsWith("experience_") -> {
+            val idx = category.substringAfter("experience_").toIntOrNull() ?: 0
+            val updatedExps = cvData.experiences.mapIndexed { index, exp ->
+                if (index == idx) {
+                    if (newVal.contains(":")) {
+                        val parts = newVal.split(":", limit = 2)
+                        val r = parts[0].trim()
+                        val d = parts[1].trim()
+                        exp.copy(role = r, description = d)
+                    } else {
+                        exp.copy(description = newVal)
+                    }
+                } else exp
+            }
+            cvData.copy(experiences = updatedExps)
+        }
+        category.startsWith("education_") -> {
+            val idx = category.substringAfter("education_").toIntOrNull() ?: 0
+            val updatedEds = cvData.educations.mapIndexed { index, ed ->
+                if (index == idx) {
+                    if (newVal.contains(":")) {
+                        val parts = newVal.split(":", limit = 2)
+                        val inst = parts[0].trim()
+                        val deg = parts[1].trim()
+                        ed.copy(institution = inst, degree = deg)
+                    } else {
+                        ed.copy(degree = newVal)
+                    }
+                } else ed
+            }
+            cvData.copy(educations = updatedEds)
+        }
+        category == "skills" -> {
+            val lines = newVal.split(Regex("[,\n•▪◆*]+")).map { it.trim() }.filter { it.isNotBlank() }
+            val updatedSkills = lines.map { line ->
+                if (line.contains(":")) {
+                    val p = line.split(":", limit = 2)
+                    CvSkillItem(name = p[0].trim(), description = p[1].trim())
+                } else {
+                    CvSkillItem(name = line, description = "")
+                }
+            }
+            cvData.copy(skills = updatedSkills)
+        }
+        else -> cvData
     }
 }
