@@ -1198,7 +1198,12 @@ data class CvData(
     val showContactIcons: Boolean = true,
     val showSectionIcons: Boolean = false,
     val fontScale: String = "STANDARD", // "COMPACT", "STANDARD", "COMFORTABLE", "LARGE"
-    val bulletStyle: String = "BULLET", // "BULLET", "DASH", "SQUARE", "DIAMOND", "COMMA", "PIPE", "NONE"
+    val bulletStyle: String = "BULLET", // "BULLET", "DASH", "SQUARE", "DIAMOND", "CHECK", "ARROW", "COMMA", "PIPE", "NONE"
+    val primaryColorHexOverride: String = "",
+    val dividerStyle: String = "SOLID", // "SOLID", "DASHED", "DOTTED", "DOUBLE", "NONE"
+    val dividerThickness: Float = 1.0f,
+    val sectionTitleSize: Float = 11.5f,
+    val bodyFontSize: Float = 9.5f,
     val customMargin: Float = 36f,
     val sectionSpacing: Float = 8f,
     val itemSpacing: Float = 4f,
@@ -2287,6 +2292,11 @@ private fun saveAllCvProfiles(context: Context, profiles: List<CvData>) {
                 put("showSectionIcons", profile.showSectionIcons)
                 put("fontScale", profile.fontScale)
                 put("bulletStyle", profile.bulletStyle)
+                put("primaryColorHexOverride", profile.primaryColorHexOverride)
+                put("dividerStyle", profile.dividerStyle)
+                put("dividerThickness", profile.dividerThickness.toDouble())
+                put("sectionTitleSize", profile.sectionTitleSize.toDouble())
+                put("bodyFontSize", profile.bodyFontSize.toDouble())
                 put("customMargin", profile.customMargin.toDouble())
                 put("sectionSpacing", profile.sectionSpacing.toDouble())
                 put("itemSpacing", profile.itemSpacing.toDouble())
@@ -2469,6 +2479,11 @@ private fun loadAllCvProfiles(context: Context): List<CvData> {
                     showSectionIcons = obj.optBoolean("showSectionIcons", false),
                     fontScale = obj.optString("fontScale", "STANDARD"),
                     bulletStyle = obj.optString("bulletStyle", "BULLET"),
+                    primaryColorHexOverride = obj.optString("primaryColorHexOverride", ""),
+                    dividerStyle = obj.optString("dividerStyle", "SOLID"),
+                    dividerThickness = obj.optDouble("dividerThickness", 1.0).toFloat(),
+                    sectionTitleSize = obj.optDouble("sectionTitleSize", 11.5).toFloat(),
+                    bodyFontSize = obj.optDouble("bodyFontSize", 9.5).toFloat(),
                     customMargin = obj.optDouble("customMargin", 36.0).toFloat(),
                     sectionSpacing = obj.optDouble("sectionSpacing", 8.0).toFloat(),
                     itemSpacing = obj.optDouble("itemSpacing", 4.0).toFloat(),
@@ -2501,6 +2516,26 @@ private fun saveActiveProfileId(context: Context, id: String) {
 
 // ================= GEMINI AI MULTI-MODAL CALL =================
 
+// Helper to compress image bytes for AI payload to prevent timeouts
+private fun compressImageBytesForAi(inputBytes: ByteArray, maxDim: Int = 1024, quality: Int = 80): ByteArray {
+    return try {
+        val options = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        android.graphics.BitmapFactory.decodeByteArray(inputBytes, 0, inputBytes.size, options)
+        var scale = 1
+        while (options.outWidth / scale > maxDim || options.outHeight / scale > maxDim) {
+            scale *= 2
+        }
+        val decodeOptions = android.graphics.BitmapFactory.Options().apply { inSampleSize = scale }
+        val bmp = android.graphics.BitmapFactory.decodeByteArray(inputBytes, 0, inputBytes.size, decodeOptions) ?: return inputBytes
+        val baos = java.io.ByteArrayOutputStream()
+        bmp.compress(android.graphics.Bitmap.CompressFormat.JPEG, quality, baos)
+        bmp.recycle()
+        baos.toByteArray()
+    } catch (e: Exception) {
+        inputBytes
+    }
+}
+
 private suspend fun callGeminiAiMultiModal(
     prompt: String,
     systemInstruction: String,
@@ -2517,58 +2552,70 @@ private suspend fun callGeminiAiMultiModal(
     conn.requestMethod = "POST"
     conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
     conn.doOutput = true
-    conn.connectTimeout = 20000
-    conn.readTimeout = 25000
+    conn.connectTimeout = 60000
+    conn.readTimeout = 60000
 
-    val requestJson = JSONObject().apply {
-        val contentsArr = JSONArray()
-        contentsArr.put(JSONObject().apply {
-            val partsArr = JSONArray()
-            partsArr.put(JSONObject().put("text", prompt))
+    try {
+        val requestJson = JSONObject().apply {
+            val contentsArr = JSONArray()
+            contentsArr.put(JSONObject().apply {
+                val partsArr = JSONArray()
+                partsArr.put(JSONObject().put("text", prompt))
 
-            if (imageBytes != null) {
-                val base64Str = Base64.encodeToString(imageBytes, Base64.NO_WRAP)
-                partsArr.put(JSONObject().apply {
-                    put("inline_data", JSONObject().apply {
-                        put("mime_type", mimeType)
-                        put("data", base64Str)
+                if (imageBytes != null && imageBytes.isNotEmpty()) {
+                    val finalBytes = if (imageBytes.size > 150 * 1024) compressImageBytesForAi(imageBytes) else imageBytes
+                    val base64Str = Base64.encodeToString(finalBytes, Base64.NO_WRAP)
+                    partsArr.put(JSONObject().apply {
+                        put("inline_data", JSONObject().apply {
+                            put("mime_type", mimeType)
+                            put("data", base64Str)
+                        })
                     })
+                }
+                put("parts", partsArr)
+            })
+            put("contents", contentsArr)
+
+            if (systemInstruction.isNotBlank()) {
+                put("system_instruction", JSONObject().apply {
+                    val sysParts = JSONArray()
+                    sysParts.put(JSONObject().put("text", systemInstruction))
+                    put("parts", sysParts)
                 })
             }
-            put("parts", partsArr)
-        })
-        put("contents", contentsArr)
-
-        if (systemInstruction.isNotBlank()) {
-            put("system_instruction", JSONObject().apply {
-                val sysParts = JSONArray()
-                sysParts.put(JSONObject().put("text", systemInstruction))
-                put("parts", sysParts)
-            })
         }
-    }
 
-    conn.outputStream.use { os ->
-        os.write(requestJson.toString().toByteArray(Charsets.UTF_8))
-    }
+        conn.outputStream.use { os ->
+            os.write(requestJson.toString().toByteArray(Charsets.UTF_8))
+        }
 
-    val responseCode = conn.responseCode
-    if (responseCode == 200) {
-        val responseStr = conn.inputStream.bufferedReader().use { it.readText() }
-        val resObj = JSONObject(responseStr)
-        val candidates = resObj.optJSONArray("candidates")
-        if (candidates != null && candidates.length() > 0) {
-            val cand = candidates.getJSONObject(0)
-            val content = cand.optJSONObject("content")
-            val parts = content?.optJSONArray("parts")
-            if (parts != null && parts.length() > 0) {
-                return@withContext parts.getJSONObject(0).optString("text", "")
+        val responseCode = conn.responseCode
+        if (responseCode == 200) {
+            val responseStr = conn.inputStream.bufferedReader().use { it.readText() }
+            val resObj = JSONObject(responseStr)
+            val candidates = resObj.optJSONArray("candidates")
+            if (candidates != null && candidates.length() > 0) {
+                val cand = candidates.getJSONObject(0)
+                val content = cand.optJSONObject("content")
+                val parts = content?.optJSONArray("parts")
+                if (parts != null && parts.length() > 0) {
+                    return@withContext parts.getJSONObject(0).optString("text", "")
+                }
             }
+            throw IllegalStateException("No contents generated from AI model.")
+        } else {
+            val errStr = conn.errorStream?.bufferedReader()?.use { it.readText() } ?: ""
+            throw IllegalStateException("Gemini AI API Error ($responseCode): $errStr")
         }
-        throw IllegalStateException("No contents generated from AI model.")
-    } else {
-        val errStr = conn.errorStream?.bufferedReader()?.use { it.readText() } ?: ""
-        throw IllegalStateException("Gemini AI API Error ($responseCode): $errStr")
+    } catch (e: java.net.SocketTimeoutException) {
+        throw IllegalStateException("এআই রেসপন্স পেতে বিলম্ব হয়েছে (Timeout)। অনুগ্ৰহ করে ছবিটির সাইজ ছোট করুন বা পুনরায় চেষ্টা করুন।")
+    } catch (e: java.io.InterruptedIOException) {
+        throw IllegalStateException("এআই সার্ভিস রেসপন্স টাইমআউট। অনুগ্ৰহ করে পুনরায় চেষ্টা করুন।")
+    } catch (e: Exception) {
+        if (e.message?.contains("timeout", ignoreCase = true) == true) {
+            throw IllegalStateException("এআই রেসপন্স পেতে বিলম্ব হয়েছে (Timeout)। অনুগ্ৰহ করে পুনরায় চেষ্টা করুন।")
+        }
+        throw e
     }
 }
 
@@ -2883,7 +2930,9 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
     var currentY = margin
 
     val pdfStyle = data.templateStyle
-    val primaryColor = pdfStyle.primaryColorHex
+    val primaryColor = if (data.primaryColorHexOverride.isNotBlank()) {
+        try { AndroidColor.parseColor(data.primaryColorHexOverride) } catch (e: Exception) { pdfStyle.primaryColorHex }
+    } else pdfStyle.primaryColorHex
     val textColor = AndroidColor.parseColor("#0F172A")
     val subTextColor = AndroidColor.parseColor("#334155")
     val mutedLineColor = AndroidColor.parseColor("#CBD5E1")
@@ -3745,90 +3794,99 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
 
     // --- Section Header Renderer Custom to Template Style ---
     var isFirstSection = true
+    fun drawHeaderDividerLine(lineY: Float, lineColor: Int = primaryColor, defaultThickness: Float = 1.0f) {
+        if (data.dividerStyle == "NONE") return
+        val dThickness = if (data.dividerThickness != 1.0f) data.dividerThickness else defaultThickness
+        val rPaint = Paint().apply {
+            color = lineColor
+            strokeWidth = dThickness
+            style = Paint.Style.STROKE
+            isAntiAlias = true
+        }
+        when (data.dividerStyle) {
+            "DASHED" -> {
+                rPaint.pathEffect = android.graphics.DashPathEffect(floatArrayOf(6f, 4f), 0f)
+                canvas.drawLine(margin, lineY, pageWidth - margin, lineY, rPaint)
+            }
+            "DOTTED" -> {
+                rPaint.pathEffect = android.graphics.DashPathEffect(floatArrayOf(2f, 3f), 0f)
+                canvas.drawLine(margin, lineY, pageWidth - margin, lineY, rPaint)
+            }
+            "DOUBLE" -> {
+                canvas.drawLine(margin, lineY - 1f, pageWidth - margin, lineY - 1f, rPaint)
+                canvas.drawLine(margin, lineY + 2f, pageWidth - margin, lineY + 2f, rPaint)
+            }
+            else -> { // SOLID
+                canvas.drawLine(margin, lineY, pageWidth - margin, lineY, rPaint)
+            }
+        }
+    }
+
     fun drawSectionHeader(title: String, defaultIconKey: String = "") {
         if (!isFirstSection) currentY += sectionGap
         isFirstSection = false
         checkAndAddNewPage(28f)
         val headerText = if (data.showSectionIcons && defaultIconKey.isNotBlank()) "$defaultIconKey $title" else title
+        val titleTextSize = data.sectionTitleSize * fontScaleMultiplier
         when (pdfStyle) {
             CvTemplateStyle.HARVARD_CLASSIC -> {
                 val hPaint = TextPaint().apply {
                     isAntiAlias = true
                     color = AndroidColor.BLACK
-                    textSize = 11.5f * fontScaleMultiplier
+                    textSize = titleTextSize
                     typeface = Typeface.create("serif", Typeface.BOLD)
                 }
                 canvas.drawText(headerText.uppercase(), margin, currentY + 11f, hPaint)
                 currentY += 15f
-                val rulePaint = Paint().apply {
-                    color = AndroidColor.BLACK
-                    strokeWidth = 1f
-                }
-                canvas.drawLine(margin, currentY, pageWidth - margin, currentY, rulePaint)
+                drawHeaderDividerLine(currentY, AndroidColor.BLACK, 1f)
                 currentY += 8f
             }
             CvTemplateStyle.EXECUTIVE_MONOCHROME_LUXE -> {
                 val exePaint = TextPaint().apply {
                     isAntiAlias = true
                     color = AndroidColor.BLACK
-                    textSize = 11.5f * fontScaleMultiplier
+                    textSize = titleTextSize
                     typeface = Typeface.create("serif", Typeface.BOLD)
                 }
                 canvas.drawText("▪  ${headerText.uppercase()}", margin, currentY + 11f, exePaint)
                 currentY += 15f
-                val rulePaint = Paint().apply {
-                    color = AndroidColor.BLACK
-                    strokeWidth = 1f
-                }
-                canvas.drawLine(margin, currentY, pageWidth - margin, currentY, rulePaint)
+                drawHeaderDividerLine(currentY, AndroidColor.BLACK, 1f)
                 currentY += 8f
             }
             CvTemplateStyle.CANVA_MINIMALIST_CLEAN -> {
                 val cPaint = TextPaint().apply {
                     isAntiAlias = true
                     color = primaryColor
-                    textSize = 11.5f * fontScaleMultiplier
+                    textSize = titleTextSize
                     typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
                 }
                 canvas.drawText(headerText.uppercase(), margin, currentY + 11f, cPaint)
                 currentY += 15f
-                val rulePaint = Paint().apply {
-                    color = AndroidColor.parseColor("#E2E8F0")
-                    strokeWidth = 1f
-                }
-                canvas.drawLine(margin, currentY, pageWidth - margin, currentY, rulePaint)
+                drawHeaderDividerLine(currentY, AndroidColor.parseColor("#E2E8F0"), 1f)
                 currentY += 8f
             }
             CvTemplateStyle.SINGLE_COLUMN_HIGH_IMPACT_ATS -> {
                 val atsPaint = TextPaint().apply {
                     isAntiAlias = true
                     color = primaryColor
-                    textSize = 11.5f * fontScaleMultiplier
+                    textSize = titleTextSize
                     typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
                 }
                 canvas.drawText(headerText.uppercase(), margin, currentY + 11f, atsPaint)
                 currentY += 15f
-                val rulePaint = Paint().apply {
-                    color = primaryColor
-                    strokeWidth = 1.4f
-                }
-                canvas.drawLine(margin, currentY, pageWidth - margin, currentY, rulePaint)
+                drawHeaderDividerLine(currentY, primaryColor, 1.4f)
                 currentY += 8f
             }
             CvTemplateStyle.NORDIC_SLATE_MODERN -> {
                 val slatePaint = TextPaint().apply {
                     isAntiAlias = true
                     color = primaryColor
-                    textSize = 11.5f * fontScaleMultiplier
+                    textSize = titleTextSize
                     typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
                 }
                 canvas.drawText(headerText.uppercase(), margin, currentY + 11f, slatePaint)
                 currentY += 15f
-                val rulePaint = Paint().apply {
-                    color = AndroidColor.parseColor("#94A3B8")
-                    strokeWidth = 0.9f
-                }
-                canvas.drawLine(margin, currentY, pageWidth - margin, currentY, rulePaint)
+                drawHeaderDividerLine(currentY, AndroidColor.parseColor("#94A3B8"), 0.9f)
                 currentY += 8f
             }
             CvTemplateStyle.MODERN_MINIMALIST -> {
@@ -3839,27 +3897,19 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                 canvas.drawRoundRect(android.graphics.RectF(margin, currentY + 1f, margin + 3.5f, currentY + 13f), 2f, 2f, barPaint)
                 canvas.drawText(headerText.uppercase(), margin + 9f, currentY + 11f, sectionHeaderPaint)
                 currentY += 15f
-                val rulePaint = Paint().apply {
-                    color = AndroidColor.parseColor("#E2E8F0")
-                    strokeWidth = 0.8f
-                }
-                canvas.drawLine(margin, currentY, pageWidth - margin, currentY, rulePaint)
+                drawHeaderDividerLine(currentY, AndroidColor.parseColor("#E2E8F0"), 0.8f)
                 currentY += 8f
             }
             CvTemplateStyle.ELEGANT_PREMIUM -> {
                 val dPaint = TextPaint().apply {
                     isAntiAlias = true
                     color = primaryColor
-                    textSize = 11.5f * fontScaleMultiplier
+                    textSize = titleTextSize
                     typeface = Typeface.create("serif", Typeface.BOLD)
                 }
                 canvas.drawText("◆  ${headerText.uppercase()}", margin, currentY + 11f, dPaint)
                 currentY += 15f
-                val rulePaint = Paint().apply {
-                    color = primaryColor
-                    strokeWidth = 1.2f
-                }
-                canvas.drawLine(margin, currentY, pageWidth - margin, currentY, rulePaint)
+                drawHeaderDividerLine(currentY, primaryColor, 1.2f)
                 currentY += 8f
             }
             CvTemplateStyle.CREATIVE_MARKETING -> {
@@ -3871,38 +3921,27 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                 canvas.drawRoundRect(pillRect, 3f, 3f, pillPaint)
                 canvas.drawText(headerText.uppercase(), margin + 12f, currentY + 11f, sectionHeaderPaint)
                 currentY += 16f
-                val rulePaint = Paint().apply {
-                    color = AndroidColor.parseColor("#FECDD3")
-                    strokeWidth = 1f
-                }
-                canvas.drawLine(margin, currentY, pageWidth - margin, currentY, rulePaint)
+                drawHeaderDividerLine(currentY, AndroidColor.parseColor("#FECDD3"), 1f)
                 currentY += 8f
             }
             CvTemplateStyle.CLEAN_TECH_STARTUP, CvTemplateStyle.SILICON_VALLEY_TECH_LEAD -> {
                 val codePrefixPaint = TextPaint().apply {
                     isAntiAlias = true
                     color = primaryColor
-                    textSize = 11.5f * fontScaleMultiplier
+                    textSize = titleTextSize
                     typeface = Typeface.create("monospace", Typeface.BOLD)
                 }
                 canvas.drawText("// ${headerText.uppercase()}", margin, currentY + 11f, codePrefixPaint)
                 currentY += 15f
-                val rulePaint = Paint().apply {
-                    color = primaryColor
-                    strokeWidth = 1f
-                }
-                canvas.drawLine(margin, currentY, pageWidth - margin, currentY, rulePaint)
+                drawHeaderDividerLine(currentY, primaryColor, 1f)
                 currentY += 8f
             }
             else -> {
                 val formattedHeader = if (headerText.endsWith(":")) headerText else "$headerText:"
                 canvas.drawText(formattedHeader.uppercase(), margin, currentY + 11f, sectionHeaderPaint)
                 currentY += 15f
-                val rulePaint = Paint().apply {
-                    color = if (pdfStyle == CvTemplateStyle.CLASSIC_CORPORATE) AndroidColor.BLACK else primaryColor
-                    strokeWidth = 1f
-                }
-                canvas.drawLine(margin, currentY, pageWidth - margin, currentY, rulePaint)
+                val defaultLineColor = if (pdfStyle == CvTemplateStyle.CLASSIC_CORPORATE) AndroidColor.BLACK else primaryColor
+                drawHeaderDividerLine(currentY, defaultLineColor, 1f)
                 currentY += 8f
             }
         }
@@ -3917,6 +3956,8 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
         "DASH" -> "- "
         "SQUARE" -> "▪ "
         "DIAMOND" -> "◆ "
+        "CHECK" -> "✓ "
+        "ARROW" -> "➢ "
         "COMMA" -> ""
         "PIPE" -> ""
         "NONE" -> ""
@@ -6361,15 +6402,22 @@ private fun ProfileAndPersonasTab(
                     else -> androidx.compose.ui.graphics.RectangleShape
                 }
 
+                val previewWidthDp = (74.dp * (cvData.photoWidth / 80f)).coerceIn(40.dp, 130.dp)
+                val previewHeightDp = if (cvData.photoShape == "Circle" || cvData.photoShape == "Square") {
+                    previewWidthDp
+                } else {
+                    (74.dp * (cvData.photoHeight / 80f)).coerceIn(40.dp, 140.dp)
+                }
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Larger Photo Preview (74.dp)
+                    // Dynamic Photo Preview responding to width/height sliders
                     Box(
                         modifier = Modifier
-                            .size(74.dp)
+                            .size(width = previewWidthDp, height = previewHeightDp)
                             .background(Color.Gray.copy(alpha = 0.08f), shape = previewShape)
                             .then(
                                 if (cvData.photoBorderWidth > 0f) {
@@ -6582,9 +6630,16 @@ private fun ProfileAndPersonasTab(
                                 )
                             }
                             Slider(
-                                value = cvData.photoWidth.toFloat(),
-                                onValueChange = { onCvDataChange(cvData.copy(photoWidth = it.toInt())) },
-                                valueRange = 55f..120f,
+                                value = cvData.photoWidth.toFloat().coerceIn(45f, 140f),
+                                onValueChange = { newW ->
+                                    val wInt = newW.toInt()
+                                    if (cvData.photoShape == "Circle" || cvData.photoShape == "Square") {
+                                        onCvDataChange(cvData.copy(photoWidth = wInt, photoHeight = wInt))
+                                    } else {
+                                        onCvDataChange(cvData.copy(photoWidth = wInt))
+                                    }
+                                },
+                                valueRange = 45f..140f,
                                 colors = SliderDefaults.colors(
                                     thumbColor = themeColors.buttonEqualBg,
                                     activeTrackColor = themeColors.buttonEqualBg,
@@ -6604,9 +6659,16 @@ private fun ProfileAndPersonasTab(
                                 )
                             }
                             Slider(
-                                value = cvData.photoHeight.toFloat(),
-                                onValueChange = { onCvDataChange(cvData.copy(photoHeight = it.toInt())) },
-                                valueRange = 55f..140f,
+                                value = cvData.photoHeight.toFloat().coerceIn(45f, 160f),
+                                onValueChange = { newH ->
+                                    val hInt = newH.toInt()
+                                    if (cvData.photoShape == "Circle" || cvData.photoShape == "Square") {
+                                        onCvDataChange(cvData.copy(photoHeight = hInt, photoWidth = hInt))
+                                    } else {
+                                        onCvDataChange(cvData.copy(photoHeight = hInt))
+                                    }
+                                },
+                                valueRange = 45f..160f,
                                 colors = SliderDefaults.colors(
                                     thumbColor = themeColors.buttonEqualBg,
                                     activeTrackColor = themeColors.buttonEqualBg,
@@ -12110,13 +12172,447 @@ private fun CustomizationTab(
         defaultSectionList.map { it.first }
     }
 
+    val colorPresets = listOf(
+        "#0F172A" to if (isBn) "ডিফল্ট নেভি" else "Default Navy",
+        "#1E3A8A" to if (isBn) "রয়েল ব্লু" else "Royal Blue",
+        "#059669" to if (isBn) "ইমারেল্ড গ্রিন" else "Emerald Green",
+        "#7C3AED" to if (isBn) "পার্পল থিম" else "Royal Purple",
+        "#881337" to if (isBn) "বারগন্ডি রেড" else "Burgundy Red",
+        "#0284C7" to if (isBn) "স্কাই ব্লু" else "Sky Blue",
+        "#D97706" to if (isBn) "ব্রোঞ্জ গোল্ড" else "Bronze Gold",
+        "#334155" to if (isBn) "স্লেট গ্রে" else "Slate Gray"
+    )
+
+    val bulletOptions = listOf(
+        "BULLET" to ("• " + (if (isBn) "বৃত্তাকার (•)" else "Standard (•)")),
+        "SQUARE" to ("▪ " + (if (isBn) "বর্গাকার (▪)" else "Square (▪)")),
+        "DIAMOND" to ("◆ " + (if (isBn) "ডায়মন্ড (◆)" else "Diamond (◆)")),
+        "DASH" to ("- " + (if (isBn) "ড্যাশ (-)" else "Dash (-)")),
+        "CHECK" to ("✓ " + (if (isBn) "টিক চিহ্ন (✓)" else "Checkmark (✓)")),
+        "ARROW" to ("➢ " + (if (isBn) "অ্যারো (➢)" else "Arrow (➢)")),
+        "NONE" to (if (isBn) "কোনোটি না (None)" else "None")
+    )
+
+    val dividerOptions = listOf(
+        "SOLID" to if (isBn) "সলিড লাইন" else "Solid Line",
+        "DASHED" to if (isBn) "ড্যাশড লাইন" else "Dashed Line",
+        "DOTTED" to if (isBn) "ডটেড লাইন" else "Dotted Line",
+        "DOUBLE" to if (isBn) "ডাবল লাইন" else "Double Line",
+        "NONE" to if (isBn) "লাইন ছাড়া" else "No Line"
+    )
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .then(if (isScrollable) Modifier.verticalScroll(scrollState) else Modifier)
-            .padding(14.dp)
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        // --- 1. SECTION ORDER & VISIBILITY ---
+        // --- 1. COLOR & THEME CUSTOMIZATION ---
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = themeColors.cardBg,
+            border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.12f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(14.dp)) {
+                SectionCardHeader(
+                    title = if (isBn) "থিম কালার ও একসেন্ট কাস্টমাইজেশন" else "Theme Color & Primary Accent",
+                    icon = Icons.Default.Palette,
+                    themeColors = themeColors
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = if (isBn) "সিভির হেডার, বর্ডার ও সেকশন টাইটেলের জন্য আপনার পছন্দের ব্র্যান্ড কালার নির্বাচন করুন।"
+                    else "Choose a primary accent color for CV section titles, borders, and headers.",
+                    fontSize = 11.sp,
+                    color = themeColors.displayText.copy(alpha = 0.7f)
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Color preset chips
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(vertical = 4.dp)
+                ) {
+                    items(colorPresets.size) { idx ->
+                        val (hex, label) = colorPresets[idx]
+                        val isSelected = cvData.primaryColorHexOverride.equals(hex, ignoreCase = true) ||
+                                (cvData.primaryColorHexOverride.isBlank() && hex == "#0F172A")
+                        Surface(
+                            onClick = {
+                                onCvDataChange(cvData.copy(primaryColorHexOverride = if (hex == "#0F172A") "" else hex))
+                            },
+                            shape = RoundedCornerShape(20.dp),
+                            color = if (isSelected) Color(AndroidColor.parseColor(hex)) else themeColors.background,
+                            border = BorderStroke(
+                                width = if (isSelected) 2.dp else 1.dp,
+                                color = if (isSelected) themeColors.displayText else Color(AndroidColor.parseColor(hex))
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(10.dp)
+                                        .background(Color(AndroidColor.parseColor(hex)), CircleShape)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = label,
+                                    fontSize = 10.5.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (isSelected) Color.White else themeColors.displayText
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Custom Hex Input
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = cvData.primaryColorHexOverride,
+                        onValueChange = { onCvDataChange(cvData.copy(primaryColorHexOverride = it.trim())) },
+                        label = { Text(if (isBn) "কাস্টম হেক্স কালার (যেমন #1E3A8A)" else "Custom Hex Color (e.g. #1E3A8A)", fontSize = 10.sp) },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = themeColors.buttonEqualBg,
+                            unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f)
+                        )
+                    )
+                    if (cvData.primaryColorHexOverride.isNotBlank()) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        TextButton(
+                            onClick = { onCvDataChange(cvData.copy(primaryColorHexOverride = "")) }
+                        ) {
+                            Text(if (isBn) "রিসেট" else "Reset", fontSize = 11.sp, color = themeColors.buttonEqualBg)
+                        }
+                    }
+                }
+            }
+        }
+
+        // --- 2. BULLET POINT STYLE ---
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = themeColors.cardBg,
+            border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.12f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(14.dp)) {
+                SectionCardHeader(
+                    title = if (isBn) "বুলেট পয়েন্ট ও সিম্বল স্টাইল" else "Bullet Point Symbols",
+                    icon = Icons.Default.FormatListBulleted,
+                    themeColors = themeColors
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = if (isBn) "অভিজ্ঞতা, প্রজেক্ট ও স্কিলসের লিস্ট আইটেমগুলোর জন্য বুলেট পয়েন্টের স্টাইল পছন্দ করুন।"
+                    else "Select bullet symbol style for experience and skill bullet points.",
+                    fontSize = 11.sp,
+                    color = themeColors.displayText.copy(alpha = 0.7f)
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(vertical = 4.dp)
+                ) {
+                    items(bulletOptions.size) { idx ->
+                        val (bKey, bLabel) = bulletOptions[idx]
+                        val isSelected = cvData.bulletStyle == bKey
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = { onCvDataChange(cvData.copy(bulletStyle = bKey)) },
+                            label = { Text(bLabel, fontSize = 11.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = themeColors.buttonEqualBg,
+                                selectedLabelColor = Color.White
+                            )
+                        )
+                    }
+                }
+            }
+        }
+
+        // --- 3. SECTION DIVIDER LINES ---
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = themeColors.cardBg,
+            border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.12f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(14.dp)) {
+                SectionCardHeader(
+                    title = if (isBn) "সেকশন ডিভাইডার / লাইন স্টাইল" else "Section Divider Line Style",
+                    icon = Icons.Default.HorizontalRule,
+                    themeColors = themeColors
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = if (isBn) "সেকশন টাইটেলের নিচের বর্ডার লাইনের স্টাইল ও থিকনেস কাস্টমাইজ করুন।"
+                    else "Customize the divider line style and stroke thickness under section headings.",
+                    fontSize = 11.sp,
+                    color = themeColors.displayText.copy(alpha = 0.7f)
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(vertical = 4.dp)
+                ) {
+                    items(dividerOptions.size) { idx ->
+                        val (dKey, dLabel) = dividerOptions[idx]
+                        val isSelected = cvData.dividerStyle == dKey
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = { onCvDataChange(cvData.copy(dividerStyle = dKey)) },
+                            label = { Text(dLabel, fontSize = 11.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = themeColors.buttonEqualBg,
+                                selectedLabelColor = Color.White
+                            )
+                        )
+                    }
+                }
+
+                if (cvData.dividerStyle != "NONE") {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = if (isBn) "লাইন থিকনেস: ${"%.1f".format(cvData.dividerThickness)} pt" else "Line Thickness: ${"%.1f".format(cvData.dividerThickness)} pt",
+                            fontSize = 10.5.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = themeColors.displayText.copy(alpha = 0.8f)
+                        )
+                    }
+                    Slider(
+                        value = cvData.dividerThickness,
+                        onValueChange = { onCvDataChange(cvData.copy(dividerThickness = it)) },
+                        valueRange = 0.5f..3.0f,
+                        colors = SliderDefaults.colors(
+                            thumbColor = themeColors.buttonEqualBg,
+                            activeTrackColor = themeColors.buttonEqualBg
+                        )
+                    )
+                }
+            }
+        }
+
+        // --- 4. TYPOGRAPHY & FONT SIZING ---
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = themeColors.cardBg,
+            border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.12f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(14.dp)) {
+                SectionCardHeader(
+                    title = if (isBn) "ফন্ট সাইজ ও টাইপোগ্রাফি স্কেলিং" else "Typography & Font Sizes",
+                    icon = Icons.Default.TextFields,
+                    themeColors = themeColors
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = if (isBn) "সিভির হেডার ও বডি টেক্সটের ফন্ট সাইজ এবং লাইন স্পেসিং পরিবর্তন করুন।"
+                    else "Adjust section title size, body font size, and line spacing.",
+                    fontSize = 11.sp,
+                    color = themeColors.displayText.copy(alpha = 0.7f)
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Title size slider
+                Column {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text(if (isBn) "সেকশন টাইটেল সাইজ" else "Section Title Size", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                        Text("${"%.1f".format(cvData.sectionTitleSize)} pt", fontSize = 10.5.sp, color = themeColors.buttonEqualBg)
+                    }
+                    Slider(
+                        value = cvData.sectionTitleSize,
+                        onValueChange = { onCvDataChange(cvData.copy(sectionTitleSize = it)) },
+                        valueRange = 9.0f..15.0f,
+                        colors = SliderDefaults.colors(thumbColor = themeColors.buttonEqualBg, activeTrackColor = themeColors.buttonEqualBg)
+                    )
+                }
+
+                // Body text size slider
+                Column {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text(if (isBn) "বডি টেক্সট সাইজ" else "Body Text Size", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                        Text("${"%.1f".format(cvData.bodyFontSize)} pt", fontSize = 10.5.sp, color = themeColors.buttonEqualBg)
+                    }
+                    Slider(
+                        value = cvData.bodyFontSize,
+                        onValueChange = { onCvDataChange(cvData.copy(bodyFontSize = it)) },
+                        valueRange = 7.5f..12.0f,
+                        colors = SliderDefaults.colors(thumbColor = themeColors.buttonEqualBg, activeTrackColor = themeColors.buttonEqualBg)
+                    )
+                }
+
+                // Line height spacing
+                Column {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text(if (isBn) "লাইন স্পেসিং (Line Height)" else "Line Spacing (Line Height)", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                        Text("${"%.2f".format(cvData.customLineSpacing)}x", fontSize = 10.5.sp, color = themeColors.buttonEqualBg)
+                    }
+                    Slider(
+                        value = cvData.customLineSpacing,
+                        onValueChange = { onCvDataChange(cvData.copy(customLineSpacing = it)) },
+                        valueRange = 0.95f..1.45f,
+                        colors = SliderDefaults.colors(thumbColor = themeColors.buttonEqualBg, activeTrackColor = themeColors.buttonEqualBg)
+                    )
+                }
+            }
+        }
+
+        // --- 5. ICONS & VISUAL TOGGLES ---
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = themeColors.cardBg,
+            border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.12f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(14.dp)) {
+                SectionCardHeader(
+                    title = if (isBn) "আইকন ও বাড়তি এলিমেন্ট কন্ট্রোল" else "Icons & Visual Elements",
+                    icon = Icons.Default.SmartButton,
+                    themeColors = themeColors
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Section Icons Toggle
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(if (isBn) "সেকশন হেডার আইকন" else "Section Header Icons", fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                        Text(if (isBn) "সেকশন টাইটেলের সাথে ক্যাটাগরি আইকন দেখাবে" else "Show category icons alongside section titles", fontSize = 10.sp, color = themeColors.displayText.copy(alpha = 0.6f))
+                    }
+                    Switch(
+                        checked = cvData.showSectionIcons,
+                        onCheckedChange = { onCvDataChange(cvData.copy(showSectionIcons = it)) },
+                        colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = themeColors.buttonEqualBg),
+                        modifier = Modifier.scale(0.8f)
+                    )
+                }
+
+                Divider(modifier = Modifier.padding(vertical = 8.dp), color = themeColors.displayText.copy(alpha = 0.1f))
+
+                // Contact Icons Toggle
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(if (isBn) "যোগাযোগ তথ্যের আইকন" else "Contact Detail Icons", fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                        Text(if (isBn) "মোবাইল, ইমেইল ও এড্রেসে আইকন দেখাবে" else "Show phone, email, and address vector icons", fontSize = 10.sp, color = themeColors.displayText.copy(alpha = 0.6f))
+                    }
+                    Switch(
+                        checked = cvData.showContactIcons,
+                        onCheckedChange = { onCvDataChange(cvData.copy(showContactIcons = it)) },
+                        colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = themeColors.buttonEqualBg),
+                        modifier = Modifier.scale(0.8f)
+                    )
+                }
+
+                Divider(modifier = Modifier.padding(vertical = 8.dp), color = themeColors.displayText.copy(alpha = 0.1f))
+
+                // Signature Line Toggle
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(if (isBn) "সিগনেচার ও তারিখের লাইন" else "Signature & Date Line", fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                        Text(if (isBn) "সিভির নিচে সই ও তারিখ দেওয়ার ডেডিকেটেড লাইন" else "Include signature & date line at bottom", fontSize = 10.sp, color = themeColors.displayText.copy(alpha = 0.6f))
+                    }
+                    Switch(
+                        checked = cvData.showSignatureLine,
+                        onCheckedChange = { onCvDataChange(cvData.copy(showSignatureLine = it)) },
+                        colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = themeColors.buttonEqualBg),
+                        modifier = Modifier.scale(0.8f)
+                    )
+                }
+            }
+        }
+
+        // --- 6. MARGINS & SPACING ---
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = themeColors.cardBg,
+            border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.12f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(14.dp)) {
+                SectionCardHeader(
+                    title = if (isBn) "মার্জিন ও গ্যাপ স্পেসিং" else "Margins & Page Spacing",
+                    icon = Icons.Default.AspectRatio,
+                    themeColors = themeColors
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Page Margin Slider
+                Column {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text(if (isBn) "পেজ মার্জিন (Page Margin)" else "Page Margin", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                        Text("${cvData.customMargin.toInt()} pt", fontSize = 10.5.sp, color = themeColors.buttonEqualBg)
+                    }
+                    Slider(
+                        value = cvData.customMargin,
+                        onValueChange = { onCvDataChange(cvData.copy(customMargin = it)) },
+                        valueRange = 20f..54f,
+                        colors = SliderDefaults.colors(thumbColor = themeColors.buttonEqualBg, activeTrackColor = themeColors.buttonEqualBg)
+                    )
+                }
+
+                // Section Gap Slider
+                Column {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text(if (isBn) "সেকশন গ্যাপ (Section Gap)" else "Section Gap", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                        Text("${cvData.sectionSpacing.toInt()} pt", fontSize = 10.5.sp, color = themeColors.buttonEqualBg)
+                    }
+                    Slider(
+                        value = cvData.sectionSpacing,
+                        onValueChange = { onCvDataChange(cvData.copy(sectionSpacing = it)) },
+                        valueRange = 4f..18f,
+                        colors = SliderDefaults.colors(thumbColor = themeColors.buttonEqualBg, activeTrackColor = themeColors.buttonEqualBg)
+                    )
+                }
+
+                // Item Gap Slider
+                Column {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text(if (isBn) "আইটেম গ্যাপ (Item Spacing)" else "Item Spacing", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText)
+                        Text("${cvData.itemSpacing.toInt()} pt", fontSize = 10.5.sp, color = themeColors.buttonEqualBg)
+                    }
+                    Slider(
+                        value = cvData.itemSpacing,
+                        onValueChange = { onCvDataChange(cvData.copy(itemSpacing = it)) },
+                        valueRange = 2f..12f,
+                        colors = SliderDefaults.colors(thumbColor = themeColors.buttonEqualBg, activeTrackColor = themeColors.buttonEqualBg)
+                    )
+                }
+            }
+        }
+
+        // --- 7. SECTION ORDERING & VISIBILITY ---
         Surface(
             shape = RoundedCornerShape(12.dp),
             color = themeColors.cardBg,
