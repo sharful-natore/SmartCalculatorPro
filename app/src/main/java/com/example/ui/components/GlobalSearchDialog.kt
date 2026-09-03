@@ -180,6 +180,7 @@ fun ToolType.matchesToolQuery(query: String, language: AppLanguage): Boolean {
         ToolType.TUITION_FEES -> listOf("টিউশন", "ফি", "tuition", "fee")
         ToolType.ATS_CV_BUILDER -> listOf("সিভি", "রিজিউমি", "বায়োডাটা", "বায়ো-ডাটা", "চাকরি", "জব", "cv", "resume", "ats", "builder", "bio data", "job")
         ToolType.SMART_CV_BUILDER -> listOf("স্মার্ট সিভি", "স্মার্ট", "সিভি", "রিজিউমি", "বায়োডাটা", "smart cv", "cv studio", "resume", "ats", "job")
+        ToolType.KIDS_LEARNING -> listOf("কিডস", "বাচ্চা", "বর্ণমালা", "বানান", "নামতা", "ছড়া", "গল্প", "স্লেট", "ড্রয়িং", "পশুপাখি", "kids", "learning", "child", "children", "alphabet", "spelling", "phonics", "rhymes", "drawing")
         ToolType.COLOR_CONVERTER -> listOf("কালার", "রং", "রঙ", "হেক্স", "আরজিবি", "color", "hex", "rgb", "hsl")
         else -> emptyList()
     }

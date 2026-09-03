@@ -18,6 +18,7 @@ enum class ToolCategory(
     ELECTRICITY("Electricity & Power", "বিদ্যুৎ ও শক্তি", Icons.Default.Bolt),
     VEHICLE("Smart & Vehicle Tools", "স্মার্ট ও যানবাহন", Icons.Default.DirectionsCar),
     EDUCATION("Education & Results", "শিক্ষা ও ফলাফল", Icons.Default.School),
+    KIDS("Kids Learning & Fun", "কিডস লার্নিং ও খেলা", Icons.Default.ChildCare),
     DEVELOPER("Developer Tools", "ডেভেলপার টুলস", Icons.Default.Code),
     ENGINEERING("Engineering", "ইঞ্জিনিয়ারিং", Icons.Default.SettingsInputComponent);
 
@@ -32,6 +33,7 @@ enum class ToolCategory(
                 ELECTRICITY -> "बिजली और ऊर्जा"
                 VEHICLE -> "वाहन उपकरण"
                 EDUCATION -> "शिक्षा और परिणाम"
+                KIDS -> "बच्चों की शिक्षा व खेल"
                 ISLAMIC -> "इस्लामिक सेवाएं"
                 DEVELOPER -> "डेवलपर टूल्स"
                 ENGINEERING -> "इंजीनियरिंग"
@@ -43,6 +45,7 @@ enum class ToolCategory(
                 ELECTRICITY -> "الكهرباء والطاقة"
                 VEHICLE -> "أدوات المركبات"
                 EDUCATION -> "التعليم والنتائج"
+                KIDS -> "تعليم وترفيه الأطفال"
                 ISLAMIC -> "الخدمات الإسلامية"
                 DEVELOPER -> "أدوات المطور"
                 ENGINEERING -> "الهندسة"
@@ -54,6 +57,7 @@ enum class ToolCategory(
                 ELECTRICITY -> "Électricité et Énergie"
                 VEHICLE -> "Outils Véhicule"
                 EDUCATION -> "Éducation et Résultats"
+                KIDS -> "Apprentissage Enfants"
                 ISLAMIC -> "Services Islamiques"
                 DEVELOPER -> "Outils Développeur"
                 ENGINEERING -> "Ingénierie"
@@ -65,6 +69,7 @@ enum class ToolCategory(
                 ELECTRICITY -> "Electricidad y Energía"
                 VEHICLE -> "Herramientas de Vehículo"
                 EDUCATION -> "Educación y Resultados"
+                KIDS -> "Aprendizaje Niños"
                 ISLAMIC -> "Servicios Islámicos"
                 DEVELOPER -> "Herramientas de Desarrollador"
                 ENGINEERING -> "Ingeniería"
@@ -76,6 +81,7 @@ enum class ToolCategory(
                 ELECTRICITY -> "Elektrizität & Strom"
                 VEHICLE -> "Fahrzeug-Tools"
                 EDUCATION -> "Bildung & Ergebnisse"
+                KIDS -> "Kinder-Lernen & Spaß"
                 ISLAMIC -> "Islamische Dienste"
                 DEVELOPER -> "Entwickler-Tools"
                 ENGINEERING -> "Ingenieurwesen"
@@ -87,6 +93,7 @@ enum class ToolCategory(
                 ELECTRICITY -> "电力与能源"
                 VEHICLE -> "车辆与出行"
                 EDUCATION -> "教育与成果"
+                KIDS -> "儿童早教与游戏"
                 ISLAMIC -> "伊斯兰服务"
                 DEVELOPER -> "开发者工具"
                 ENGINEERING -> "工程"
@@ -355,6 +362,13 @@ enum class ToolType(
         ToolCategory.EDUCATION, Icons.Default.AutoAwesome
     ),
 
+    // Kids Learning Section
+    KIDS_LEARNING(
+        "Kids Learning", "কিডস লার্নিং",
+        "শিশুদের বর্ণমালা, বানান করে পড়া, ইংরেজি ফনিক্স চার্ট ও বানানের নিয়ম, গণিত ও নামতা, ছড়া, পশুপাখি, ম্যাজিক স্লেট ও ব্রেন কুইজের ডিজিটাল পাঠশালা",
+        ToolCategory.KIDS, Icons.Default.ChildCare
+    ),
+
     PHONE_DIAGNOSTICS(
         "Phone Diagnostics", "ফোন ডায়াগনসিস",
         "ফোনের সকল সেন্সর, টাচস্ক্রিন, স্পিকার, ভাইব্রেশন ও ডিসপ্লে ডায়াগনস্টিক টেস্ট",
@@ -490,6 +504,7 @@ enum class ToolType(
                 PDF_MAKER -> "Create custom A4 PDF documents from notes, text, and photos with zero app size impact"
                 ATS_CV_BUILDER -> "Build ATS-friendly professional resumes, tailor content with Gemini AI, and export HD PDFs"
                 SMART_CV_BUILDER -> "Next-gen professional Smart CV Studio with live canvas preview, modular block manager, Google XYZ AI writer, circular heatmap, and international templates"
+                KIDS_LEARNING -> "Interactive kids learning with alphabets, spelling & phonics, math counting & tables, rhymes, animals, magic drawing slate, and brain quizzes"
             }
         }
     }

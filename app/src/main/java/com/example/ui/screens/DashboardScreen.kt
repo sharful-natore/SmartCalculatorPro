@@ -3227,7 +3227,8 @@ fun ToolDetailView(
                          toolType == com.example.data.model.ToolType.PDF_READER ||
                          toolType == com.example.data.model.ToolType.PDF_MAKER ||
                          toolType == com.example.data.model.ToolType.ATS_CV_BUILDER ||
-                         toolType == com.example.data.model.ToolType.SMART_CV_BUILDER
+                         toolType == com.example.data.model.ToolType.SMART_CV_BUILDER ||
+                         toolType == com.example.data.model.ToolType.KIDS_LEARNING
 
     val isFullWidthTool = toolType == com.example.data.model.ToolType.MARKET_LIST || isQuranOrNamaz
 
@@ -3426,12 +3427,28 @@ fun ToolDetailView(
                 themeColors = themeColors,
                 onBackClick = { viewModel.selectedToolType = null }
             )
+            ToolType.KIDS_LEARNING -> com.example.ui.screens.tools.kids.KidsLearningScreen(
+                viewModel = viewModel,
+                themeColors = themeColors,
+                onBackClick = { viewModel.selectedToolType = null }
+            )
         }
     }
 }
 
 private fun getToolInfoItems(toolType: ToolType, isBn: Boolean): List<Pair<String, String>> {
     return when (toolType) {
+        ToolType.KIDS_LEARNING -> if (isBn) {
+            listOf(
+                "১. কিডস লার্নিং কী?" to "শিশুদের আনন্দদায়ক উপায়ে বাংলা ও ইংরেজি বর্ণমালা, বানান করে পড়া, গণিত-নামতা, ছড়া এবং বিজ্ঞান ও প্রাণীজগত শেখার সম্পূর্ণ অফলাইন শিক্ষামূলক প্ল্যাটফর্ম।",
+                "২. বিশেষ সুবিধাসমূহ" to "• প্রতিটি শব্দ ও বর্ণ কারচিহ্ন সহ ভেঙ্গে ভেঙ্গে বানান করে অডিওতে উচ্চারণ শেখায়।\n• ম্যাজিক স্লেট ও ট্রেসিং বোর্ডে বর্ণ হাত ঘুরিয়ে লেখার সুবিধা।\n• ১০০% অফলাইন ও শিশুদের সুরক্ষায় ১-ট্যাপ প্যারেন্টাল চাইল্ড লক।"
+            )
+        } else {
+            listOf(
+                "1. What is Kids Learning?" to "An interactive offline early-learning sanctuary for kids to master Bengali & English alphabets, phonics, spelling by syllables, math tables, rhymes, and nature.",
+                "2. Key Capabilities" to "• Step-by-step phonics spelling audio recitation.\n• Dotted finger tracing magic slate.\n• 100% offline, distraction-free environment with child lock."
+            )
+        }
         ToolType.SMART_CV_BUILDER -> if (isBn) {
             listOf(
                 "১. স্মার্ট সিভি স্টুডিও কী?" to "এটি নেক্সট-জেনারেশন এআই সিভি মেকার যাতে লাইভ ক্যানভাস প্রিভিউ, ড্র্যাগ-অ্যান্ড-ড্রপ সেকশন ম্যানেজার, এবং গুগল XYZ এআই রাইটার রয়েছে।",
