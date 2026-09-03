@@ -1586,7 +1586,7 @@ fun CvLiveEditPanel(
 
                 val activeCategories = (localData.skills.map {
                     val resolvedCat = it.category.ifBlank { findBestCategoryForSkill(it.name) }
-                    if (resolvedCat == "Technical & Software Engineering") "Technical & Software" else resolvedCat
+                    normalizeCategoryName(resolvedCat)
                 } + localAddedCategories).distinct()
 
                 if (activeCategories.isEmpty()) {
@@ -1621,7 +1621,7 @@ fun CvLiveEditPanel(
                     activeCategories.forEach { cat ->
                         val skillsInCat = localData.skills.filter {
                             val resolvedCat = it.category.ifBlank { findBestCategoryForSkill(it.name) }
-                            val finalCat = if (resolvedCat == "Technical & Software Engineering") "Technical & Software" else resolvedCat
+                            val finalCat = normalizeCategoryName(resolvedCat)
                             finalCat == cat
                         }
 
@@ -1691,7 +1691,7 @@ fun CvLiveEditPanel(
                                                                 showChangeCategoryMenu = false
                                                                 val updatedSkills = localData.skills.map { sk ->
                                                                     val currentResolvedCat = sk.category.ifBlank { findBestCategoryForSkill(sk.name) }
-                                                                    val finalResolvedCat = if (currentResolvedCat == "Technical & Software Engineering") "Technical & Software" else currentResolvedCat
+                                                                    val finalResolvedCat = normalizeCategoryName(currentResolvedCat)
                                                                     if (finalResolvedCat == cat) {
                                                                         sk.copy(category = targetCat)
                                                                     } else {
@@ -1716,7 +1716,7 @@ fun CvLiveEditPanel(
                                                         localAddedCategories = localAddedCategories.filter { it != cat }
                                                         val remainingSkills = localData.skills.filter { sk ->
                                                             val resolvedCat = sk.category.ifBlank { findBestCategoryForSkill(sk.name) }
-                                                            val finalCat = if (resolvedCat == "Technical & Software Engineering") "Technical & Software" else resolvedCat
+                                                            val finalCat = normalizeCategoryName(resolvedCat)
                                                             finalCat != cat
                                                         }
                                                         localData = localData.copy(skills = remainingSkills)

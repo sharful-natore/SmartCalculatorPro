@@ -3226,7 +3226,8 @@ fun ToolDetailView(
                          toolType == com.example.data.model.ToolType.QURAN_LEARNING ||
                          toolType == com.example.data.model.ToolType.PDF_READER ||
                          toolType == com.example.data.model.ToolType.PDF_MAKER ||
-                         toolType == com.example.data.model.ToolType.ATS_CV_BUILDER
+                         toolType == com.example.data.model.ToolType.ATS_CV_BUILDER ||
+                         toolType == com.example.data.model.ToolType.SMART_CV_BUILDER
 
     val isFullWidthTool = toolType == com.example.data.model.ToolType.MARKET_LIST || isQuranOrNamaz
 
@@ -3420,12 +3421,28 @@ fun ToolDetailView(
                 themeColors = themeColors,
                 onBackClick = { viewModel.selectedToolType = null }
             )
+            ToolType.SMART_CV_BUILDER -> com.example.ui.screens.tools.smartcv.SmartCvStudioScreen(
+                viewModel = viewModel,
+                themeColors = themeColors,
+                onBackClick = { viewModel.selectedToolType = null }
+            )
         }
     }
 }
 
 private fun getToolInfoItems(toolType: ToolType, isBn: Boolean): List<Pair<String, String>> {
     return when (toolType) {
+        ToolType.SMART_CV_BUILDER -> if (isBn) {
+            listOf(
+                "১. স্মার্ট সিভি স্টুডিও কী?" to "এটি নেক্সট-জেনারেশন এআই সিভি মেকার যাতে লাইভ ক্যানভাস প্রিভিউ, ড্র্যাগ-অ্যান্ড-ড্রপ সেকশন ম্যানেজার, এবং গুগল XYZ এআই রাইটার রয়েছে।",
+                "২. পেজ বাজেট ও হিটম্যাপ" to "• লাইভ পেজ বাজেট বার দেখায় আপনার সিভি ১ পৃষ্ঠায় যথাযথভাবে ফিট হচ্ছে কিনা।\n• জব সার্কুলার পেস্ট করলে এআই ম্যাচ স্কোর (০-১০০%) এবং মিসিং কি-ওয়ার্ডের হিটম্যাপ প্রদর্শন করে।"
+            )
+        } else {
+            listOf(
+                "1. What is Smart CV Studio?" to "A next-generation CV suite featuring live A4 canvas rendering, modular drag-and-drop block management, and Google XYZ AI bullet engineering.",
+                "2. Page Budget & Heatmap" to "• Real-time page budget bar warns before text awkwardly spills over onto page 2.\n• Job circular analyzer matches required competencies and generates keyword heatmaps."
+            )
+        }
         ToolType.ATS_CV_BUILDER -> if (isBn) {
             listOf(
                 "১. ATS (Applicant Tracking System) কী?" to "এটি আন্তর্জাতিক কোম্পানি ও করপোরেট প্রতিষ্ঠানসমূহে ব্যবহৃত সফটওয়্যার যা প্রার্থীর সিভি স্বয়ংক্রিয়ভাবে স্ক্যান করে ফিল্টার ও র‍্যাঙ্ক করে।",

@@ -179,6 +179,7 @@ fun ToolType.matchesToolQuery(query: String, language: AppLanguage): Boolean {
         ToolType.GPA, ToolType.CGPA -> listOf("জিপিএ", "সিজিপিএ", "গ্রেড", "পয়েন্ট", "পয়েন্ট", "gpa", "cgpa", "result")
         ToolType.TUITION_FEES -> listOf("টিউশন", "ফি", "tuition", "fee")
         ToolType.ATS_CV_BUILDER -> listOf("সিভি", "রিজিউমি", "বায়োডাটা", "বায়ো-ডাটা", "চাকরি", "জব", "cv", "resume", "ats", "builder", "bio data", "job")
+        ToolType.SMART_CV_BUILDER -> listOf("স্মার্ট সিভি", "স্মার্ট", "সিভি", "রিজিউমি", "বায়োডাটা", "smart cv", "cv studio", "resume", "ats", "job")
         ToolType.COLOR_CONVERTER -> listOf("কালার", "রং", "রঙ", "হেক্স", "আরজিবি", "color", "hex", "rgb", "hsl")
         else -> emptyList()
     }

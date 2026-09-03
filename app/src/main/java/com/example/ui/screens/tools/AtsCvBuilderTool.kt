@@ -461,17 +461,17 @@ fun findBestCategoryForSkill(skillName: String): String {
         }
     }
     return when {
-        lower.contains("kotlin") || lower.contains("java") || lower.contains("python") || lower.contains("react") || lower.contains("node") || lower.contains("git") || lower.contains("sql") || lower.contains("programming") || lower.contains("developer") || lower.contains("software") || lower.contains("api") || lower.contains("rest") || lower.contains("code") || lower.contains("coding") || lower.contains("algorithm") || lower.contains("frontend") || lower.contains("backend") || lower.contains("fullstack") || lower.contains("app dev") || lower.contains("development") -> "Technical & Software"
+        lower.contains("kotlin") || lower.contains("java") || lower.contains("python") || lower.contains("react") || lower.contains("node") || lower.contains("git") || lower.contains("sql") || lower.contains("programming") || lower.contains("developer") || lower.contains("software") || lower.contains("api") || lower.contains("rest") || lower.contains("code") || lower.contains("coding") || lower.contains("algorithm") || lower.contains("frontend") || lower.contains("backend") || lower.contains("fullstack") || lower.contains("app dev") -> "Technical & Software"
         
         lower.contains("excel") || lower.contains("word") || lower.contains("powerpoint") || lower.contains("sheets") || lower.contains("office") || lower.contains("trello") || lower.contains("jira") || lower.contains("asana") || lower.contains("slack") || lower.contains("zoom") || lower.contains("workspace") || lower.contains("cloud") || lower.contains("aws") || lower.contains("gcp") || lower.contains("firebase") || lower.contains("figma") || lower.contains("analytics") || lower.contains("crm") || lower.contains("salesforce") || lower.contains("zendesk") || lower.contains("freshdesk") || lower.contains("postman") -> "Tools, Cloud & Platforms"
         
         lower.contains("inventory") || lower.contains("stock") || lower.contains("warehouse") || lower.contains("dispatch") || lower.contains("logistics") || lower.contains("logistical") || lower.contains("store") || lower.contains("material") || lower.contains("supply chain") || lower.contains("procurement") || lower.contains("operations") || lower.contains("shipping") || lower.contains("delivery") || lower.contains("customer") || lower.contains("support") || lower.contains("client") || lower.contains("complaint") || lower.contains("resolution") || lower.contains("escalation") || lower.contains("service") || lower.contains("experience") || lower.contains("cx") || lower.contains("csat") || lower.contains("sla") || lower.contains("ticket") || lower.contains("qa") || lower.contains("quality") || lower.contains("agile") || lower.contains("scrum") || lower.contains("project") || lower.contains("product") || lower.contains("business") || lower.contains("analyst") || lower.contains("requirement") || lower.contains("process") || lower.contains("optimization") || lower.contains("workflow") || lower.contains("risk") || lower.contains("planning") || lower.contains("strategy") || lower.contains("execution") -> "Functional & Core Competencies"
         
-        lower.contains("lead") || lower.contains("team") || lower.contains("stakeholder") || lower.contains("budget") || lower.contains("mentor") || lower.contains("strategy") || lower.contains("negotiate") -> "Management, Business & Strategy"
+        lower.contains("lead") || lower.contains("team") || lower.contains("stakeholder") || lower.contains("budget") || lower.contains("mentor") || lower.contains("negotiate") || lower.contains("management") || lower.contains("development") -> "Management, Business & Strategy"
         
         lower.contains("finance") || lower.contains("audit") || lower.contains("tax") || lower.contains("accounting") || lower.contains("bank") || lower.contains("bookkeeper") || lower.contains("tally") -> "Finance, Accounting & Banking"
         
-        lower.contains("marketing") || lower.contains("sales") || lower.contains("seo") || lower.contains("sem") || lower.contains("social") || lower.contains("content") || lower.contains("brand") || lower.contains("lead generation") -> "Marketing, Sales & Growth"
+        lower.contains("marketing") || lower.contains("sales") || lower.contains("seo") || lower.contains("sem") || lower.contains("social") || lower.contains("content") || lower.contains("brand") || lower.contains("lead generation") || lower.contains("market") || lower.contains("dealer") || lower.contains("distributor") || lower.contains("territory") -> "Marketing, Sales & Growth"
         
         lower.contains("design") || lower.contains("ui") || lower.contains("ux") || lower.contains("graphic") || lower.contains("adobe") || lower.contains("photoshop") || lower.contains("illustrator") -> "Design, UI/UX & Creative"
         
@@ -479,8 +479,18 @@ fun findBestCategoryForSkill(skillName: String): String {
         
         lower.contains("english") || lower.contains("bengali") || lower.contains("bangla") || lower.contains("language") || lower.contains("german") || lower.contains("spanish") -> "Languages & Global Communication"
         
-        else -> "Soft Skills & Professional Excellence"
+        else -> "Soft Skills"
     }
+}
+
+fun normalizeCategoryName(cat: String): String {
+    val lower = cat.lowercase()
+    if (lower.contains("soft skill")) return "Soft Skills"
+    if (lower.contains("business") && lower.contains("management")) return "Business & Management"
+    if ((lower.contains("technical") || lower.contains("software")) && !lower.contains("analytical")) return "Technical & Software"
+    if (lower.contains("marketing") || lower.contains("sales") || lower.contains("growth")) return "Marketing, Sales & Growth"
+    if (lower.contains("analytical")) return "Analytical & Technical"
+    return cat
 }
 
 data class CvProjectItem(
@@ -4492,7 +4502,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                         "GROUPED_COMMA" -> {
                             val grouped = data.skills.groupBy {
                                 val resolvedCat = it.category.ifBlank { findBestCategoryForSkill(it.name) }
-                                if (resolvedCat == "Technical & Software Engineering") "Technical & Software" else resolvedCat
+                                normalizeCategoryName(resolvedCat)
                             }
                             grouped.forEach { (cat, skills) ->
                                 val sb = SpannableStringBuilder()
@@ -8951,7 +8961,7 @@ private fun EducationAndSkillsTab(
 
         val activeCategories = (cvData.skills.map {
             val resolvedCat = it.category.ifBlank { findBestCategoryForSkill(it.name) }
-            if (resolvedCat == "Technical & Software Engineering") "Technical & Software" else resolvedCat
+            normalizeCategoryName(resolvedCat)
         } + localAddedCategories).distinct()
 
         if (activeCategories.isEmpty()) {
@@ -8986,7 +8996,7 @@ private fun EducationAndSkillsTab(
             activeCategories.forEach { cat ->
                 val skillsInCat = cvData.skills.filter {
                     val resolvedCat = it.category.ifBlank { findBestCategoryForSkill(it.name) }
-                    val finalCat = if (resolvedCat == "Technical & Software Engineering") "Technical & Software" else resolvedCat
+                    val finalCat = normalizeCategoryName(resolvedCat)
                     finalCat == cat
                 }
 
@@ -9056,7 +9066,7 @@ private fun EducationAndSkillsTab(
                                                         showChangeCategoryMenu = false
                                                         val updatedSkills = cvData.skills.map { sk ->
                                                             val currentResolvedCat = sk.category.ifBlank { findBestCategoryForSkill(sk.name) }
-                                                            val finalResolvedCat = if (currentResolvedCat == "Technical & Software Engineering") "Technical & Software" else currentResolvedCat
+                                                            val finalResolvedCat = normalizeCategoryName(currentResolvedCat)
                                                             if (finalResolvedCat == cat) {
                                                                 sk.copy(category = targetCat)
                                                             } else {
@@ -9077,7 +9087,7 @@ private fun EducationAndSkillsTab(
                                         localAddedCategories = localAddedCategories.filter { it != cat }
                                         val remainingSkills = cvData.skills.filter { sk ->
                                             val resolvedCat = sk.category.ifBlank { findBestCategoryForSkill(sk.name) }
-                                            val finalCat = if (resolvedCat == "Technical & Software Engineering") "Technical & Software" else resolvedCat
+                                            val finalCat = normalizeCategoryName(resolvedCat)
                                             finalCat != cat
                                         }
                                         onCvDataChange(cvData.copy(skills = remainingSkills))
