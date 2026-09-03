@@ -240,14 +240,14 @@ object KidsDataProvider {
         SpellingWordItem("পুতুল", "প - ু - ত - ু - ল", "খেলনা (Doll)", listOf("প", "ু", "ত", "ু", "ল"), "প + ু = পু, ত + ু = তু + ল = পুতুল", "🪆", SpellingCategory.BANGLA_THREE_LETTER, Color(0xFF7E57C2)),
 
         // BANGLA ADVANCED (৪-৫ বর্ণ)
-        SpellingWordItem("প্রজাপতি", "প - ্র - জ - া - প - ত - ি", "রঙিন পতঙ্গ (Butterfly)", listOf("প", "্র", "জ", "া", "প", "ত", "ি"), "প + ্র = প্র, জ + া = জা, প, ত + ি = তি -> প্রজাপতি", "🦋", SpellingCategory.BANGLA_ADVANCED, Color(0xFF8E24AA)),
-        SpellingWordItem("রংধনু", "র - ং - ধ - ন - ু", "সাত রঙের রামধনু (Rainbow)", listOf("র", "ং", "ধ", "ন", "ু"), "র + ং = রং, ধ, ন + ু = নু -> রংধনু", "🌈", SpellingCategory.BANGLA_ADVANCED, Color(0xFF00ACC1)),
-        SpellingWordItem("বিদ্যালয়", "ব - ি - দ - ্য - া - ল - য়", "পাঠশালা / স্কুল (School)", listOf("ব", "ি", "দ", "্য", "া", "ল", "য়"), "ব + ি = বি, দ + ্য + া = দ্যা, ল, য় -> বিদ্যালয়", "🏫", SpellingCategory.BANGLA_ADVANCED, Color(0xFF1E88E5)),
-        SpellingWordItem("বাংলাদেশ", "ব - া - ং - ল - া - দ - ে - শ", "আমাদের মাতৃভূমি", listOf("ব", "া", "ং", "ল", "া", "দ", "ে", "শ"), "বাং-লা-দে-শ -> বাংলাদেশ", "🇧🇩", SpellingCategory.BANGLA_ADVANCED, Color(0xFF2E7D32)),
-        SpellingWordItem("তরমুজ", "ত - র - ম - ু - জ", "গ্রীষ্মকালীন রসালো ফল", listOf("ত", "র", "ম", "ু", "জ"), "ত + র = তর, ম + ু = মু + জ = তরমুজ", "🍉", SpellingCategory.BANGLA_ADVANCED, Color(0xFFE53935)),
-        SpellingWordItem("সাইকেল", "স - া - ই - ক - ে - ল", "দ্বিচক্র যান (Bicycle)", listOf("স", "া", "ই", "ক", "ে", "ল"), "স + া = সা + ই = সাই, ক + ে = কে + ল = সাইকেল", "🚲", SpellingCategory.BANGLA_ADVANCED, Color(0xFFFF9800)),
-        SpellingWordItem("কম্পিউটার", "ক - ম - প - ি - উ - ট - া - র", "গণকযন্ত্র (Computer)", listOf("ক", "ম", "প", "ি", "উ", "ট", "া", "র"), "কম-পি-উ-টার -> কম্পিউটার", "💻", SpellingCategory.BANGLA_ADVANCED, Color(0xFF3949AB)),
-        SpellingWordItem("সূর্যমুখী", "স - ূ - র - ্য - ম - ু - খ - ী", "হলুদ সূর্যমুখী ফুল", listOf("স", "ূ", "র", "্য", "ম", "ু", "খ", "ী"), "সূর্য-মুখী -> সূর্যমুখী", "🌻", SpellingCategory.BANGLA_ADVANCED, Color(0xFFFBC02D)),
+        SpellingWordItem("প্রজাপতি", "প্র - জ - া - প - তি", "রঙিন পতঙ্গ (Butterfly)", listOf("প্র", "জ", "া", "প", "তি"), "প্র + জ + া = প্রজা, প + ত + ি = পতি -> প্রজাপতি", "🦋", SpellingCategory.BANGLA_ADVANCED, Color(0xFF8E24AA)),
+        SpellingWordItem("রংধনু", "র - ং - ধ - ন - ু", "সাত রঙের রামধনু (Rainbow)", listOf("র", "ং", "ধ", "নু"), "র + ং = রং, ধ + ন + ু = নু -> রংধনু", "🌈", SpellingCategory.BANGLA_ADVANCED, Color(0xFF00ACC1)),
+        SpellingWordItem("বিদ্যালয়", "ব - ি - দ - ্য - া - ল - য়", "পাঠশালা / স্কুল (School)", listOf("বি", "দ্যা", "ল", "য়"), "ব + ি = বি, দ + ্য + া = দ্যা, ল, য় -> বিদ্যালয়", "🏫", SpellingCategory.BANGLA_ADVANCED, Color(0xFF1E88E5)),
+        SpellingWordItem("বাংলাদেশ", "ব - া - ং - ল - া - দ - ে - শ", "আমাদের মাতৃভূমি", listOf("বাং", "লা", "দে", "শ"), "বাং + লা + দে + শ -> বাংলাদেশ", "🇧🇩", SpellingCategory.BANGLA_ADVANCED, Color(0xFF2E7D32)),
+        SpellingWordItem("তরমুজ", "ত - র - ম - ু - জ", "গ্রীষ্মকালীন রসালো ফল", listOf("ত", "র", "মু", "জ"), "ত + র = তর, ম + ু = মু + জ = তরমুজ", "🍉", SpellingCategory.BANGLA_ADVANCED, Color(0xFFE53935)),
+        SpellingWordItem("সাইকেল", "স - া - ই - ক - ে - ল", "দ্বিচক্র যান (Bicycle)", listOf("সা", "ই", "কে", "ল"), "স + া = সা + ই = সাই, ক + ে = কে + ল = সাইকেল", "🚲", SpellingCategory.BANGLA_ADVANCED, Color(0xFFFF9800)),
+        SpellingWordItem("কম্পিউটার", "ক - ম - প - ি - উ - ট - া - র", "গণকযন্ত্র (Computer)", listOf("কম", "পি", "উ", "টার"), "কম-পি-উ-টার -> কম্পিউটার", "💻", SpellingCategory.BANGLA_ADVANCED, Color(0xFF3949AB)),
+        SpellingWordItem("সূর্যমুখী", "স - ূ - র - ্য - ম - ু - খ - ী", "হলুদ সূর্যমুখী ফুল", listOf("সূ", "র্য", "মু", "খী"), "সূর্য + মুখী -> সূর্যমুখী", "🌻", SpellingCategory.BANGLA_ADVANCED, Color(0xFFFBC02D)),
 
         // ENGLISH 3-LETTER CVC
         SpellingWordItem("CAT", "C - A - T", "বিড়াল (Meow)", listOf("C", "A", "T"), "C (/k/) + A (/æ/) + T (/t/) = CAT", "🐱", SpellingCategory.ENGLISH_CVC, Color(0xFFFF9800)),
@@ -1106,7 +1106,7 @@ object KidsDataProvider {
                 "চাঁদ উঠেছে ফুল ফুটেছে",
                 "কদম তলায় কে?",
                 "হাতি নাচছে ঘোড়া নাচছে",
-                "সোনামণির বে!"
+                "সোনামণির বিয়ে!"
             ),
             linesEn = listOf(
                 "The moon has risen, flowers bloom,",
@@ -1515,4 +1515,907 @@ object KidsDataProvider {
         Pair("🐘", "হাতি (Elephant)"),
         Pair("🥭", "আম (Mango)")
     )
+
+    // -------------------------------------------------------------
+    // BALLOON POP GAME DATA
+    // -------------------------------------------------------------
+    fun getBalloonTargets(category: BalloonCategory): List<BalloonTarget> {
+        val colorsList = listOf(
+            Color(0xFFE53935), Color(0xFF1E88E5), Color(0xFF43A047),
+            Color(0xFFFB8C00), Color(0xFF8E24AA), Color(0xFF00ACC1)
+        )
+
+        return when (category) {
+            BalloonCategory.LETTERS -> listOf(
+                BalloonTarget(
+                    promptBn = "খুঁজে বের করো: 'ক' বেলুন",
+                    targetLabel = "ক",
+                    targetSpeech = "খুঁজে বের করো ক",
+                    correctId = "ক",
+                    options = listOf(
+                        BalloonOption("ক", "ক", "🎈", "ক", colorsList[0]),
+                        BalloonOption("খ", "খ", "🎈", "খ", colorsList[1]),
+                        BalloonOption("গ", "গ", "🎈", "গ", colorsList[2]),
+                        BalloonOption("ঘ", "ঘ", "🎈", "ঘ", colorsList[3])
+                    )
+                ),
+                BalloonTarget(
+                    promptBn = "খুঁজে বের করো: 'অ' বেলুন",
+                    targetLabel = "অ",
+                    targetSpeech = "খুঁজে বের করো অ",
+                    correctId = "অ",
+                    options = listOf(
+                        BalloonOption("আ", "আ", "🎈", "আ", colorsList[1]),
+                        BalloonOption("অ", "অ", "🎈", "অ", colorsList[0]),
+                        BalloonOption("ই", "ই", "🎈", "ই", colorsList[2]),
+                        BalloonOption("উ", "উ", "🎈", "উ", colorsList[4])
+                    )
+                ),
+                BalloonTarget(
+                    promptBn = "খুঁজে বের করো: 'B' বেলুন",
+                    targetLabel = "B",
+                    targetSpeech = "Find letter B",
+                    correctId = "B",
+                    options = listOf(
+                        BalloonOption("A", "A", "🎈", "A", colorsList[2]),
+                        BalloonOption("B", "B", "🎈", "B", colorsList[1]),
+                        BalloonOption("D", "D", "🎈", "D", colorsList[0]),
+                        BalloonOption("C", "C", "🎈", "C", colorsList[3])
+                    )
+                ),
+                BalloonTarget(
+                    promptBn = "খুঁজে বের করো: 'ম' বেলুন",
+                    targetLabel = "ম",
+                    targetSpeech = "খুঁজে বের করো ম",
+                    correctId = "ম",
+                    options = listOf(
+                        BalloonOption("প", "প", "🎈", "প", colorsList[3]),
+                        BalloonOption("ফ", "ফ", "🎈", "ফ", colorsList[1]),
+                        BalloonOption("ব", "ব", "🎈", "ব", colorsList[2]),
+                        BalloonOption("ম", "ম", "🎈", "ম", colorsList[4])
+                    )
+                ),
+                BalloonTarget(
+                    promptBn = "খুঁজে বের করো: 'S' বেলুন",
+                    targetLabel = "S",
+                    targetSpeech = "Find letter S",
+                    correctId = "S",
+                    options = listOf(
+                        BalloonOption("O", "O", "🎈", "O", colorsList[0]),
+                        BalloonOption("S", "S", "🎈", "S", colorsList[5]),
+                        BalloonOption("P", "P", "🎈", "P", colorsList[1]),
+                        BalloonOption("R", "R", "🎈", "R", colorsList[2])
+                    )
+                )
+            )
+
+            BalloonCategory.NUMBERS -> listOf(
+                BalloonTarget(
+                    promptBn = "খুঁজে বের করো: '৩' (তিন) বেলুন",
+                    targetLabel = "৩",
+                    targetSpeech = "খুঁজে বের করো তিন",
+                    correctId = "৩",
+                    options = listOf(
+                        BalloonOption("১", "১", "🎈", "এক", colorsList[1]),
+                        BalloonOption("২", "২", "🎈", "দুই", colorsList[2]),
+                        BalloonOption("৩", "৩", "🎈", "তিন", colorsList[0]),
+                        BalloonOption("৪", "৪", "🎈", "চার", colorsList[3])
+                    )
+                ),
+                BalloonTarget(
+                    promptBn = "খুঁজে বের করো: '৭' (সাত) বেলুন",
+                    targetLabel = "৭",
+                    targetSpeech = "খুঁজে বের করো সাত",
+                    correctId = "৭",
+                    options = listOf(
+                        BalloonOption("৫", "৫", "🎈", "পাঁচ", colorsList[2]),
+                        BalloonOption("৬", "৬", "🎈", "ছয়", colorsList[4]),
+                        BalloonOption("৭", "৭", "🎈", "সাত", colorsList[1]),
+                        BalloonOption("৮", "৮", "🎈", "আট", colorsList[0])
+                    )
+                ),
+                BalloonTarget(
+                    promptBn = "খুঁজে বের করো: '5' (Five) বেলুন",
+                    targetLabel = "5",
+                    targetSpeech = "Find number 5",
+                    correctId = "5",
+                    options = listOf(
+                        BalloonOption("3", "3", "🎈", "Three", colorsList[3]),
+                        BalloonOption("5", "5", "🎈", "Five", colorsList[5]),
+                        BalloonOption("6", "6", "🎈", "Six", colorsList[1]),
+                        BalloonOption("2", "2", "🎈", "Two", colorsList[0])
+                    )
+                ),
+                BalloonTarget(
+                    promptBn = "খুঁজে বের করো: '১০' (দশ) বেলুন",
+                    targetLabel = "১০",
+                    targetSpeech = "খুঁজে বের করো দশ",
+                    correctId = "১০",
+                    options = listOf(
+                        BalloonOption("৯", "৯", "🎈", "নয়", colorsList[0]),
+                        BalloonOption("১০", "১০", "🎈", "দশ", colorsList[2]),
+                        BalloonOption("৭", "৭", "🎈", "সাত", colorsList[3]),
+                        BalloonOption("৮", "৮", "🎈", "আট", colorsList[1])
+                    )
+                )
+            )
+
+            BalloonCategory.COLORS -> listOf(
+                BalloonTarget(
+                    promptBn = "বের করো: লাল রঙের বেলুন 🔴",
+                    targetLabel = "লাল",
+                    targetSpeech = "খুঁজে বের করো লাল বেলুন",
+                    correctId = "red",
+                    options = listOf(
+                        BalloonOption("red", "লাল", "🔴", "লাল", Color(0xFFE53935)),
+                        BalloonOption("blue", "নীল", "🔵", "নীল", Color(0xFF1E88E5)),
+                        BalloonOption("green", "সবুজ", "🟢", "সবুজ", Color(0xFF43A047)),
+                        BalloonOption("yellow", "হলুদ", "🟡", "হলুদ", Color(0xFFFDD835))
+                    )
+                ),
+                BalloonTarget(
+                    promptBn = "বের করো: সবুজ রঙের বেলুন 🟢",
+                    targetLabel = "সবুজ",
+                    targetSpeech = "খুঁজে বের করো সবুজ বেলুন",
+                    correctId = "green",
+                    options = listOf(
+                        BalloonOption("purple", "বেগুনি", "🟣", "বেগুনি", Color(0xFF8E24AA)),
+                        BalloonOption("green", "সবুজ", "🟢", "সবুজ", Color(0xFF43A047)),
+                        BalloonOption("orange", "কমলা", "🟠", "কমলা", Color(0xFFFB8C00)),
+                        BalloonOption("blue", "নীল", "🔵", "নীল", Color(0xFF1E88E5))
+                    )
+                ),
+                BalloonTarget(
+                    promptBn = "বের করো: হলুদ রঙের বেলুন 🟡",
+                    targetLabel = "হলুদ",
+                    targetSpeech = "খুঁজে বের করো হলুদ বেলুন",
+                    correctId = "yellow",
+                    options = listOf(
+                        BalloonOption("blue", "নীল", "🔵", "নীল", Color(0xFF1E88E5)),
+                        BalloonOption("red", "লাল", "🔴", "লাল", Color(0xFFE53935)),
+                        BalloonOption("yellow", "হলুদ", "🟡", "হলুদ", Color(0xFFFDD835)),
+                        BalloonOption("cyan", "সিয়ান", "💧", "সিয়ান", Color(0xFF00ACC1))
+                    )
+                )
+            )
+
+            BalloonCategory.ANIMALS -> listOf(
+                BalloonTarget(
+                    promptBn = "খুঁজে বের করো: সিংহ 🦁 (হালুম!)",
+                    targetLabel = "🦁",
+                    targetSpeech = "খুঁজে বের করো বনের রাজা সিংহ",
+                    correctId = "lion",
+                    options = listOf(
+                        BalloonOption("cat", "🐱", "বিড়াল", "বিড়াল", colorsList[1]),
+                        BalloonOption("lion", "🦁", "সিংহ", "সিংহ", colorsList[3]),
+                        BalloonOption("dog", "🐶", "কুকুর", "কুকুর", colorsList[0]),
+                        BalloonOption("elephant", "🐘", "হাতি", "হাতি", colorsList[5])
+                    )
+                ),
+                BalloonTarget(
+                    promptBn = "খুঁজে বের করো: কিউট বিড়াল 🐱 (মিউ মিউ!)",
+                    targetLabel = "🐱",
+                    targetSpeech = "খুঁজে বের করো মিউ মিউ বিড়াল",
+                    correctId = "cat",
+                    options = listOf(
+                        BalloonOption("horse", "🐴", "ঘোড়া", "ঘোড়া", colorsList[4]),
+                        BalloonOption("frog", "🐸", "ব্যাঙ", "ব্যাঙ", colorsList[2]),
+                        BalloonOption("cat", "🐱", "বিড়াল", "বিড়াল", colorsList[0]),
+                        BalloonOption("duck", "🦆", "হাঁস", "হাঁস", colorsList[1])
+                    )
+                ),
+                BalloonTarget(
+                    promptBn = "খুঁজে বের করো: বড় কানওয়ালা হাতি 🐘",
+                    targetLabel = "🐘",
+                    targetSpeech = "খুঁজে বের করো বড় হাতি",
+                    correctId = "elephant",
+                    options = listOf(
+                        BalloonOption("elephant", "🐘", "হাতি", "হাতি", colorsList[5]),
+                        BalloonOption("tiger", "🐯", "বাঘ", "বাঘ", colorsList[0]),
+                        BalloonOption("rabbit", "🐰", "খরগোশ", "খরগোশ", colorsList[1]),
+                        BalloonOption("bird", "🦜", "পাখি", "পাখি", colorsList[2])
+                    )
+                )
+            )
+        }
+    }
+
+    // -------------------------------------------------------------
+    // WORD BUILDER PUZZLE DATA
+    // -------------------------------------------------------------
+    fun getWordPuzzles(category: PuzzleCategory): List<PuzzleWordItem> {
+        return when (category) {
+            PuzzleCategory.EASY_BANGLA -> listOf(
+                PuzzleWordItem(
+                    id = "p_aam",
+                    targetWord = "আম",
+                    letterTiles = listOf("ম", "আ"),
+                    correctOrder = listOf("আ", "ম"),
+                    imageEmoji = "🥭",
+                    hintBn = "রসাল ও মিষ্টি জাতীয় ফল",
+                    category = category,
+                    accentColor = Color(0xFFFFB300)
+                ),
+                PuzzleWordItem(
+                    id = "p_boi",
+                    targetWord = "বই",
+                    letterTiles = listOf("ই", "ব"),
+                    correctOrder = listOf("ব", "ই"),
+                    imageEmoji = "📚",
+                    hintBn = "পড়াশোনা করার বই",
+                    category = category,
+                    accentColor = Color(0xFF1E88E5)
+                ),
+                PuzzleWordItem(
+                    id = "p_mach",
+                    targetWord = "মাছ",
+                    letterTiles = listOf("ছ", "মা"),
+                    correctOrder = listOf("মা", "ছ"),
+                    imageEmoji = "🐟",
+                    hintBn = "পানিতে সাঁতার কাটে",
+                    category = category,
+                    accentColor = Color(0xFF00ACC1)
+                ),
+                PuzzleWordItem(
+                    id = "p_ful",
+                    targetWord = "ফুল",
+                    letterTiles = listOf("ল", "ফু"),
+                    correctOrder = listOf("ফু", "ল"),
+                    imageEmoji = "🌸",
+                    hintBn = "বাগানে সুন্দর ফোটে",
+                    category = category,
+                    accentColor = Color(0xFFE91E63)
+                ),
+                PuzzleWordItem(
+                    id = "p_ghor",
+                    targetWord = "ঘর",
+                    letterTiles = listOf("র", "ঘ"),
+                    correctOrder = listOf("ঘ", "র"),
+                    imageEmoji = "🏠",
+                    hintBn = "আমাদের মিষ্টি বাড়ি",
+                    category = category,
+                    accentColor = Color(0xFF8D6E63)
+                ),
+                PuzzleWordItem(
+                    id = "p_dudh",
+                    targetWord = "দুধ",
+                    letterTiles = listOf("ধ", "দু"),
+                    correctOrder = listOf("দু", "ধ"),
+                    imageEmoji = "🥛",
+                    hintBn = "পুষ্টিকর সাদা পানীয়",
+                    category = category,
+                    accentColor = Color(0xFF78909C)
+                ),
+                PuzzleWordItem(
+                    id = "p_pakhi",
+                    targetWord = "পাখি",
+                    letterTiles = listOf("খি", "পা"),
+                    correctOrder = listOf("পা", "খি"),
+                    imageEmoji = "🐦",
+                    hintBn = "আকাশে ডানা মেলে ওড়ে",
+                    category = category,
+                    accentColor = Color(0xFF43A047)
+                )
+            )
+
+            PuzzleCategory.MEDIUM_BANGLA -> listOf(
+                PuzzleWordItem(
+                    id = "p_kolom",
+                    targetWord = "কলম",
+                    letterTiles = listOf("ল", "ক", "ম"),
+                    correctOrder = listOf("ক", "ল", "ম"),
+                    imageEmoji = "🖊️",
+                    hintBn = "যা দিয়ে খাতায় সুন্দর লিখি",
+                    category = category,
+                    accentColor = Color(0xFF3949AB)
+                ),
+                PuzzleWordItem(
+                    id = "p_shapla",
+                    targetWord = "শাপলা",
+                    letterTiles = listOf("লা", "শা", "প"),
+                    correctOrder = listOf("শা", "প", "লা"),
+                    imageEmoji = "🪷",
+                    hintBn = "আমাদের মিষ্টি জাতীয় ফুল",
+                    category = category,
+                    accentColor = Color(0xFFD81B60)
+                ),
+                PuzzleWordItem(
+                    id = "p_horin",
+                    targetWord = "হরিণ",
+                    letterTiles = listOf("ণ", "হ", "রি"),
+                    correctOrder = listOf("হ", "রি", "ণ"),
+                    imageEmoji = "🦌",
+                    hintBn = "সুন্দরবনের মায়াবী চিত্রা হরিণ",
+                    category = category,
+                    accentColor = Color(0xFFFB8C00)
+                ),
+                PuzzleWordItem(
+                    id = "p_ilish",
+                    targetWord = "ইলিশ",
+                    letterTiles = listOf("শ", "ই", "লি"),
+                    correctOrder = listOf("ই", "লি", "শ"),
+                    imageEmoji = "🐟",
+                    hintBn = "আমাদের সুস্বাদু জাতীয় মাছ",
+                    category = category,
+                    accentColor = Color(0xFF0097A7)
+                ),
+                PuzzleWordItem(
+                    id = "p_surjo",
+                    targetWord = "সূর্য",
+                    letterTiles = listOf("র্য", "সূ"),
+                    correctOrder = listOf("সূ", "র্য"),
+                    imageEmoji = "☀️",
+                    hintBn = "সকালে পূর্ব আকাশে আলো দেয়",
+                    category = category,
+                    accentColor = Color(0xFFF57C00)
+                ),
+                PuzzleWordItem(
+                    id = "p_golap",
+                    targetWord = "গোলাপ",
+                    letterTiles = listOf("প", "গো", "লা"),
+                    correctOrder = listOf("গো", "লা", "প"),
+                    imageEmoji = "🌹",
+                    hintBn = "লাল রঙের সুগন্ধি ফুল",
+                    category = category,
+                    accentColor = Color(0xFFE53935)
+                )
+            )
+
+            PuzzleCategory.EASY_ENGLISH -> listOf(
+                PuzzleWordItem(
+                    id = "p_cat",
+                    targetWord = "CAT",
+                    letterTiles = listOf("T", "C", "A"),
+                    correctOrder = listOf("C", "A", "T"),
+                    imageEmoji = "🐱",
+                    hintBn = "বিড়াল (A cute pet animal)",
+                    category = category,
+                    accentColor = Color(0xFFFF7043)
+                ),
+                PuzzleWordItem(
+                    id = "p_dog",
+                    targetWord = "DOG",
+                    letterTiles = listOf("G", "D", "O"),
+                    correctOrder = listOf("D", "O", "G"),
+                    imageEmoji = "🐶",
+                    hintBn = "কুকুর (A friendly loyal friend)",
+                    category = category,
+                    accentColor = Color(0xFF8D6E63)
+                ),
+                PuzzleWordItem(
+                    id = "p_sun",
+                    targetWord = "SUN",
+                    letterTiles = listOf("N", "S", "U"),
+                    correctOrder = listOf("S", "U", "N"),
+                    imageEmoji = "☀️",
+                    hintBn = "সূর্য (Bright shining star)",
+                    category = category,
+                    accentColor = Color(0xFFFFA000)
+                ),
+                PuzzleWordItem(
+                    id = "p_bus",
+                    targetWord = "BUS",
+                    letterTiles = listOf("S", "B", "U"),
+                    correctOrder = listOf("B", "U", "S"),
+                    imageEmoji = "🚌",
+                    hintBn = "বাস (School bus vehicle)",
+                    category = category,
+                    accentColor = Color(0xFF0288D1)
+                ),
+                PuzzleWordItem(
+                    id = "p_cup",
+                    targetWord = "CUP",
+                    letterTiles = listOf("P", "C", "U"),
+                    correctOrder = listOf("C", "U", "P"),
+                    imageEmoji = "☕",
+                    hintBn = "কাপ (Used for drinking milk)",
+                    category = category,
+                    accentColor = Color(0xFF7E57C2)
+                ),
+                PuzzleWordItem(
+                    id = "p_box",
+                    targetWord = "BOX",
+                    letterTiles = listOf("X", "B", "O"),
+                    correctOrder = listOf("B", "O", "X"),
+                    imageEmoji = "📦",
+                    hintBn = "বাক্স (Used to store toys)",
+                    category = category,
+                    accentColor = Color(0xFFA1887F)
+                )
+            )
+
+            PuzzleCategory.MEDIUM_ENGLISH -> listOf(
+                PuzzleWordItem(
+                    id = "p_fish",
+                    targetWord = "FISH",
+                    letterTiles = listOf("H", "F", "S", "I"),
+                    correctOrder = listOf("F", "I", "S", "H"),
+                    imageEmoji = "🐟",
+                    hintBn = "মাছ (Swims in clear water)",
+                    category = category,
+                    accentColor = Color(0xFF00ACC1)
+                ),
+                PuzzleWordItem(
+                    id = "p_lion",
+                    targetWord = "LION",
+                    letterTiles = listOf("N", "L", "O", "I"),
+                    correctOrder = listOf("L", "I", "O", "N"),
+                    imageEmoji = "🦁",
+                    hintBn = "সিংহ (King of the wild jungle)",
+                    category = category,
+                    accentColor = Color(0xFFFFA000)
+                ),
+                PuzzleWordItem(
+                    id = "p_book",
+                    targetWord = "BOOK",
+                    letterTiles = listOf("K", "B", "O", "O"),
+                    correctOrder = listOf("B", "O", "O", "K"),
+                    imageEmoji = "📚",
+                    hintBn = "বই (We read stories in it)",
+                    category = category,
+                    accentColor = Color(0xFF1E88E5)
+                ),
+                PuzzleWordItem(
+                    id = "p_star",
+                    targetWord = "STAR",
+                    letterTiles = listOf("R", "S", "A", "T"),
+                    correctOrder = listOf("S", "T", "A", "R"),
+                    imageEmoji = "⭐",
+                    hintBn = "তারা (Twinkles high in the sky)",
+                    category = category,
+                    accentColor = Color(0xFFFFD600)
+                ),
+                PuzzleWordItem(
+                    id = "p_tree",
+                    targetWord = "TREE",
+                    letterTiles = listOf("E", "T", "E", "R"),
+                    correctOrder = listOf("T", "R", "E", "E"),
+                    imageEmoji = "🌳",
+                    hintBn = "গাছ (Gives fresh air and fruit)",
+                    category = category,
+                    accentColor = Color(0xFF43A047)
+                ),
+                PuzzleWordItem(
+                    id = "p_bird",
+                    targetWord = "BIRD",
+                    letterTiles = listOf("D", "B", "R", "I"),
+                    correctOrder = listOf("B", "I", "R", "D"),
+                    imageEmoji = "🐦",
+                    hintBn = "পাখি (Sings sweet songs)",
+                    category = category,
+                    accentColor = Color(0xFF039BE5)
+                )
+            )
+        }
+    }
+
+    // -------------------------------------------------------------
+    // GOOD HABITS & MANNERS DATA
+    // -------------------------------------------------------------
+    fun getHabitItems(category: HabitCategory): List<HabitItem> {
+        return when (category) {
+            HabitCategory.DAILY_ROUTINE -> listOf(
+                HabitItem(
+                    id = "h_wake_up",
+                    titleBn = "ভোরে ঘুম থেকে ওঠা",
+                    titleEn = "Wake Up Early",
+                    descriptionBn = "সূর্য ওঠার সাথে সাথে হাসিমুখে ভোরে ঘুম থেকে উঠবো।",
+                    spokenAudioBn = "ভোরে ঘুম থেকে ওঠা খুব ভালো অভ্যাস। সকালে ঘুম থেকে উঠলে শরীর ও মন ভালো থাকে।",
+                    doTextBn = "সকালে হাসিমুখে বিছানা ছাড়া ও গুরুজনদের সালাম দেওয়া",
+                    dontTextBn = "দেরি করে আলসেমি করে বিছানায় শুয়ে থাকা",
+                    emoji = "🌅",
+                    category = category,
+                    accentColor = Color(0xFFFB8C00)
+                ),
+                HabitItem(
+                    id = "h_brush_teeth",
+                    titleBn = "দিনে দু'বার দাঁত মাজা",
+                    titleEn = "Brush Teeth Twice a Day",
+                    descriptionBn = "সকালে খাওয়ার পর এবং রাতে ঘুমানোর আগে ভালো করে দাঁত ব্রাশ করবো।",
+                    spokenAudioBn = "দিনে দুবার দাঁত ব্রাশ করতে হবে। এতে দাঁতের পোকা হয় না এবং মুখ সুন্দর থাকে।",
+                    doTextBn = "ভালোভাবে ২ মিনিট উপর-নিচ ব্রাশ করা",
+                    dontTextBn = "মিষ্টি বা চকলেট খেয়ে না ধুয়ে ঘুমিয়ে পড়া",
+                    emoji = "🪥",
+                    category = category,
+                    accentColor = Color(0xFF00ACC1)
+                ),
+                HabitItem(
+                    id = "h_wash_hands",
+                    titleBn = "সাবান দিয়ে হাত ধোয়া",
+                    titleEn = "Wash Hands with Soap",
+                    descriptionBn = "খাওয়ার আগে এবং বাইরে থেকে ফিরে ২০ সেকেন্ড সাবান দিয়ে হাত ধোবো।",
+                    spokenAudioBn = "খাওয়ার আগে এবং খেলার পর অবশ্যই সাবান দিয়ে হাত ধুয়ে নেব। এতে জীবাণু পেটে যায় না।",
+                    doTextBn = "হাতের আঙুলের ফাঁকসহ পরিষ্কার করে ধোয়া",
+                    dontTextBn = "ময়লা হাতে খাবার মুখে দেওয়া",
+                    emoji = "🧼",
+                    category = category,
+                    accentColor = Color(0xFF1E88E5)
+                ),
+                HabitItem(
+                    id = "h_bath_clean",
+                    titleBn = "পরিচ্ছন্ন গোসল ও পোশাক",
+                    titleEn = "Daily Bath & Clean Clothes",
+                    descriptionBn = "প্রতিদিন সুন্দর করে গোসল করবো এবং ধোয়া পরিষ্কার পোশাক পরবো।",
+                    spokenAudioBn = "প্রতিদিন নিয়ম করে গোসল করা এবং পরিষ্কার জামা পরা স্বাস্থ্যসম্মত অভ্যাস।",
+                    doTextBn = "গা ভালো করে সাবান দিয়ে পরিষ্কার রাখা",
+                    dontTextBn = "একই ময়লা জামাকাপড় বারবার পরা",
+                    emoji = "🚿",
+                    category = category,
+                    accentColor = Color(0xFF43A047)
+                )
+            )
+
+            HabitCategory.EATING_MANNERS -> listOf(
+                HabitItem(
+                    id = "h_eat_bismillah",
+                    titleBn = "আল্লাহর নাম নিয়ে শুরু করা",
+                    titleEn = "Begin with Prayer / Bismillah",
+                    descriptionBn = "খাওয়ার শুরুতে বিসমিল্লাহ বা ঈশ্বরের নাম নেব এবং ডান হাতে খাবো।",
+                    spokenAudioBn = "খাবার শুরুর আগে বিসমিল্লাহ বলবো এবং সবসময় ডান হাত দিয়ে খাবার খাবো।",
+                    doTextBn = "খাওয়ার শুরুতে কৃতজ্ঞতা প্রকাশ ও ডান হাত ব্যবহার",
+                    dontTextBn = "খাবার নিয়ে দৌড়াদৌড়ি বা বাঁ হাতে খাওয়া",
+                    emoji = "🤲",
+                    category = category,
+                    accentColor = Color(0xFF8E24AA)
+                ),
+                HabitItem(
+                    id = "h_no_waste",
+                    titleBn = "খাবার অপচয় না করা",
+                    titleEn = "Do Not Waste Food",
+                    descriptionBn = "প্লেটে যতটুকু খেতে পারবো ততটুকুই নেব, খাবার নষ্ট করবো না।",
+                    spokenAudioBn = "খাবার খুব মূল্যবান নেয়ামত। যতটুকু খেতে পারব ততটুকু নেব, খাবার অপচয় করব না।",
+                    doTextBn = "প্লেট পরিষ্কার করে সম্পূর্ণ খাবার শেষ করা",
+                    dontTextBn = "খাবার নিয়ে খেলাধুলা করা বা ফেলে দেওয়া",
+                    emoji = "🍲",
+                    category = category,
+                    accentColor = Color(0xFFE53935)
+                ),
+                HabitItem(
+                    id = "h_no_screen_eat",
+                    titleBn = "খাওয়ার সময় মোবাইল না দেখা",
+                    titleEn = "No Screen While Eating",
+                    descriptionBn = "খাওয়ার সময় টিভি বা মোবাইল না দেখে পরিবারের সাথে বসে মনোযোগ দিয়ে খাবো।",
+                    spokenAudioBn = "খাওয়ার সময় মোবাইল বা টিভি দেখতে নেই। শান্তভাবে চিবিয়ে খাবার উপভোগ করতে হয়।",
+                    doTextBn = "খাবারের স্বাদ গ্রহণ ও পরিবারের সাথে হাসিমুখে খাওয়া",
+                    dontTextBn = "ভিডিও বা কার্টুন না চালিয়ে খাবার না খাওয়ার জেদ করা",
+                    emoji = "📵",
+                    category = category,
+                    accentColor = Color(0xFF5E35B1)
+                )
+            )
+
+            HabitCategory.STUDY_MANNERS -> listOf(
+                HabitItem(
+                    id = "h_study_ontime",
+                    titleBn = "সময়মতো নিয়মিত পড়াশোনা",
+                    titleEn = "Study on Time Every Day",
+                    descriptionBn = "প্রতিদিন নির্দিষ্ট সময় মনোযোগ দিয়ে পড়ালেখা ও বাড়ির কাজ শেষ করবো।",
+                    spokenAudioBn = "প্রতিদিন মন দিয়ে পড়ালেখা করব। পড়ালেখা করলে অনেক বড় মানুষ হওয়া যায়।",
+                    doTextBn = "নির্দিষ্ট পড়ার টেবিলে মনোযোগ দিয়ে বসা",
+                    dontTextBn = "পড়াশোনা ফেলে রেখে সারাদিন স্ক্রিনে গেম খেলা",
+                    emoji = "📚",
+                    category = category,
+                    accentColor = Color(0xFF1E88E5)
+                ),
+                HabitItem(
+                    id = "h_organize_bag",
+                    titleBn = "ব্যাগ ও পড়ার টেবিল সাজিয়ে রাখা",
+                    titleEn = "Keep Study Area Organized",
+                    descriptionBn = "পড়ার পর বই, খাতা, পেন্সিল সুন্দর করে যথাস্থানে গুছিয়ে রাখবো।",
+                    spokenAudioBn = "পড়ার পর বই খাতা ও পেন্সিল সুন্দর করে গুছিয়ে ব্যাগে রাখব। এতে জিনিস হারায় না।",
+                    doTextBn = "পড়াশোনা শেষে টেবিল ও ব্যাগ পরিপাটি রাখা",
+                    dontTextBn = "মেঝেতে বই বা খাতা ছড়িয়ে ছিটিয়ে রাখা",
+                    emoji = "🎒",
+                    category = category,
+                    accentColor = Color(0xFFFB8C00)
+                ),
+                HabitItem(
+                    id = "h_respect_teachers",
+                    titleBn = "শিক্ষকদের সম্মান করা",
+                    titleEn = "Respect Teachers & Elders",
+                    descriptionBn = "শিক্ষকদের কথা মনোযোগ দিয়ে শুনবো এবং তাঁদের শ্রদ্ধা করবো।",
+                    spokenAudioBn = "শিক্ষক ও বড়দের সব কথা মনোযোগ দিয়ে শুনব এবং তাঁদের সম্মান করব।",
+                    doTextBn = "ক্লাসে শান্ত থাকা ও হাত তুলে প্রশ্ন করা",
+                    dontTextBn = "অন্যের কথার মাঝে বাধা দেওয়া বা উচ্চস্বরে চিৎকার",
+                    emoji = "👩‍🏫",
+                    category = category,
+                    accentColor = Color(0xFF00897B)
+                )
+            )
+
+            HabitCategory.SOCIAL_MANNERS -> listOf(
+                HabitItem(
+                    id = "h_say_salam",
+                    titleBn = "দেখা হলে সালাম ও শুভেচ্ছা জানানো",
+                    titleEn = "Greet with Salam / Hello",
+                    descriptionBn = "পরিচিত বা বড়দের দেখলে হাসিমুখে সালাম বা নমস্কার জানাবো।",
+                    spokenAudioBn = "কাউকে দেখলে হাসিমুখে সালাম বা শুভেচ্ছা জানাব। এটি খুব সুন্দর একটি গুণ।",
+                    doTextBn = "সুন্দর হাসিমুখে সম্ভাষণ জানানো",
+                    dontTextBn = "বড়দের দেখে মুখ ফিরিয়ে অন্য দিকে চলে যাওয়া",
+                    emoji = "🤝",
+                    category = category,
+                    accentColor = Color(0xFF3949AB)
+                ),
+                HabitItem(
+                    id = "h_say_thanks",
+                    titleBn = "ধন্যবাদ ও দুঃখিত (Sorry) বলা",
+                    titleEn = "Say Thank You & Sorry",
+                    descriptionBn = "কেউ সাহায্য করলে 'ধন্যবাদ' বলবো, নিজের ভুল হলে 'স্যরি' বলবো।",
+                    spokenAudioBn = "কেউ কিছু দিলে ধন্যবাদ বলব, আর নিজের কোনো ভুল হলে সাথে সাথে স্যরি বলব।",
+                    doTextBn = "কৃতজ্ঞতা প্রকাশ ও ভদ্র বিনয়ী আচরণ",
+                    dontTextBn = "ভুল করেও জেদ ধরা বা অস্বীকার করা",
+                    emoji = "💖",
+                    category = category,
+                    accentColor = Color(0xFFD81B60)
+                ),
+                HabitItem(
+                    id = "h_sharing_caring",
+                    titleBn = "শেয়ার করা ও সাহায্য করা",
+                    titleEn = "Share Toys & Help Others",
+                    descriptionBn = "বন্ধুদের সাথে খেলনা শেয়ার করবো এবং দুর্বলদের সাহায্য করবো।",
+                    spokenAudioBn = "বন্ধুদের সাথে খেলনা ও খাবার শেয়ার করে খাব। সবাইকে সাহায্য করলে সবাই ভালোবাসে।",
+                    doTextBn = "মিলেমিশে আনন্দ নিয়ে খেলাধুলা করা",
+                    dontTextBn = "খেলনা একাই আটকে রাখা বা ঝগড়া করা",
+                    emoji = "🧸",
+                    category = category,
+                    accentColor = Color(0xFF43A047)
+                ),
+                HabitItem(
+                    id = "h_truth_always",
+                    titleBn = "সবসময় সত্য কথা বলা",
+                    titleEn = "Always Speak the Truth",
+                    descriptionBn = "যেকোনো পরিস্থিতিতে সবসময় সত্য কথা বলবো, কখনো মিথ্যা বলবো না।",
+                    spokenAudioBn = "সবসময় সত্যি কথা বলতে হয়। সত্যবাদীকে সবাই ভালোবাসে এবং বিশ্বাস করে।",
+                    doTextBn = "সাহসের সাথে সত্য কথা স্বীকার করা",
+                    dontTextBn = "ভয় পেয়ে মিথ্যা কথা বলা",
+                    emoji = "🕊️",
+                    category = category,
+                    accentColor = Color(0xFF00ACC1)
+                )
+            )
+
+            HabitCategory.NIGHT_ROUTINE -> listOf(
+                HabitItem(
+                    id = "h_pack_toys",
+                    titleBn = "খেলনা গুছিয়ে বাক্সে রাখা",
+                    titleEn = "Pack Toys in Box",
+                    descriptionBn = "খেলার পর সব খেলনা সুন্দর করে যথাস্থানে গুছিয়ে রাখবো।",
+                    spokenAudioBn = "খেলার শেষে সব খেলনা সুন্দর করে তুলে রাখব, যাতে ঘর পরিষ্কার থাকে।",
+                    doTextBn = "নিজের কাজ নিজে গুছিয়ে সম্পন্ন করা",
+                    dontTextBn = "মেঝেজুড়ে খেলনা ফেলে রেখে চলে যাওয়া",
+                    emoji = "📦",
+                    category = category,
+                    accentColor = Color(0xFF8D6E63)
+                ),
+                HabitItem(
+                    id = "h_night_prayer",
+                    titleBn = "ঘুমানোর আগে দোয়া ও প্রার্থনা",
+                    titleEn = "Bedtime Prayer & Goodnight",
+                    descriptionBn = "ঘুমানোর আগে সুন্দর করে দোয়া ও প্রার্থনা করবো এবং সবাইকে শুভরাত্রি বলবো।",
+                    spokenAudioBn = "ঘুমাতে যাওয়ার আগে দোয়া করব এবং মা বাবাকে জড়িয়ে ধরে শুভরাত্রি জানাব।",
+                    doTextBn = "শান্ত ও প্রফুল্ল মনে বিছানায় যাওয়া",
+                    dontTextBn = "দেরি করে জেগে থাকা বা মোবাইলের জন্য কান্নাকাটি",
+                    emoji = "🌙",
+                    category = category,
+                    accentColor = Color(0xFF3F51B5)
+                ),
+                HabitItem(
+                    id = "h_early_sleep",
+                    titleBn = "তাড়াতাড়ি ঘুমানো",
+                    titleEn = "Sleep Early for Health",
+                    descriptionBn = "রাত ৯টা থেকে ১০টার মধ্যে ঘুমিয়ে পড়বো যাতে সকালে সতেজ লাগতে পারে।",
+                    spokenAudioBn = "তাড়াতাড়ি ঘুমিয়ে পড়লে সকালে তাড়াতাড়ি চোখ খোলে ও পুরো দিন সুন্দর কাটে।",
+                    doTextBn = "পর্যাপ্ত ৮-৯ ঘণ্টা আরামদায়ক ঘুম",
+                    dontTextBn = "রাত জেগে মোবাইল স্ক্রিন দেখা",
+                    emoji = "⏰",
+                    category = category,
+                    accentColor = Color(0xFF00897B)
+                )
+            )
+        }
+    }
+
+    // -------------------------------------------------------------
+    // ILLUSTRATED MORAL STORIES DATA
+    // -------------------------------------------------------------
+    fun getMoralStories(): List<MoralStoryItem> {
+        return listOf(
+            MoralStoryItem(
+                id = "story_hare_tortoise",
+                titleBn = "খরগোশ ও কচ্ছপের দৌড়",
+                titleEn = "The Hare & The Tortoise",
+                coverEmoji = "🐢",
+                moralBn = "অহংকার পতনের মূল। নিয়মিত চেষ্টা ও ধৈর্য দিয়ে যেকোনো কাজে সফলতা অর্জন করা যায়।",
+                moralEn = "Slow and steady wins the race. Pride always leads to failure.",
+                themeColor = Color(0xFF2E7D32),
+                scenes = listOf(
+                    StoryScene(
+                        sceneNumber = 1,
+                        imageEmoji = "🐇💨 🐢",
+                        headingBn = "খরগোশের অহংকার ও উপহাস",
+                        descriptionBn = "এক বনে এক খরগোশ বাস করত। সে খুব দ্রুত দৌড়াতে পারত বলে তার খুব অহংকার ছিল। সে ধীরগতির কচ্ছপকে দেখে সবসময় হাসাহাসি করত।",
+                        narrationBn = "এক বনে এক চঞ্চল খরগোশ বাস করত। সে খুব দ্রুত দৌড়াত বলে নিজেকে সেরা ভাবত। একদিন সে ধীরে চলা কচ্ছপকে দেখে উপহাস করতে লাগল।"
+                    ),
+                    StoryScene(
+                        sceneNumber = 2,
+                        imageEmoji = "🏁 🏃‍♂️ 🐢",
+                        headingBn = "দৌড় প্রতিযোগিতার সূচনা",
+                        descriptionBn = "কচ্ছপ শান্ত হয়ে খরগোশকে দৌড় প্রতিযোগিতার আহ্বান জানাল। বনের সব পশুপাখি দৌড় দেখার জন্য ভিড় করল। সংকেত পেতেই খরগোশ ঝড়ের বেগে ছুটে গেল।",
+                        narrationBn = "কচ্ছপ বলল, চলো আমরা একটি দৌড় প্রতিযোগিতা করি। দৌড় শুরু হতেই খরগোশ চোখের পলকে অনেক দূর চলে গেল।"
+                    ),
+                    StoryScene(
+                        sceneNumber = 3,
+                        imageEmoji = "🌳 😴 🐇",
+                        headingBn = "খরগোশের অলস ঘুম",
+                        descriptionBn = "অর্ধেক পথ গিয়ে খরগোশ ভাবল, কচ্ছপ তো অনেক পেছনে! তাই সে একটি ছায়াযুক্ত গাছের নিচে একটু বিশ্রাম নিতে গিয়ে গভীর ঘুমে তলিয়ে গেল।",
+                        narrationBn = "খরগোশ ভাবল, কচ্ছপ তো আসতে অনেক দেরি করবে। এই ভেবে সে একটি গাছের ছায়ায় ঘুমিয়ে পড়ল।"
+                    ),
+                    StoryScene(
+                        sceneNumber = 4,
+                        imageEmoji = "🏆 🥇 🐢 🎊",
+                        headingBn = "কচ্ছপের অবিচল বিজয়",
+                        descriptionBn = "কিন্তু কচ্ছপ এক মুহূর্তও না থেমে ধীরে ধীরে এগিয়ে গেল এবং ঘুমন্ত খরগোশকে ছাড়িয়ে বিজয় রেখা পার করল! খরগোশ ঘুম ভেঙে দেখল কচ্ছপ বিজয়ী হয়ে গেছে।",
+                        narrationBn = "কচ্ছপ না থেমে ধীরে ধীরে এগিয়ে গেল এবং সবার আগে ফিনিশ লাইনে পৌঁছে বিজয়ী হলো। ঘুম ভেঙে খরগোশ খুব লজ্জিত হলো।"
+                    )
+                )
+            ),
+            MoralStoryItem(
+                id = "story_thirsty_crow",
+                titleBn = "তৃষ্ণার্ত কাক ও কলসি",
+                titleEn = "The Thirsty Crow",
+                coverEmoji = "🦅",
+                moralBn = "যেখানে ইচ্ছা আছে, সেখানে উপায় হয়। বুদ্ধি দিয়ে যেকোনো কঠিন পরিস্থিতি সহজ করা যায়।",
+                moralEn = "Where there is a will, there is a way. Intelligence solves any problem.",
+                themeColor = Color(0xFF00838F),
+                scenes = listOf(
+                    StoryScene(
+                        sceneNumber = 1,
+                        imageEmoji = "☀️ 🦅 🏜️",
+                        headingBn = "তৃষ্ণায় কাতর কাক",
+                        descriptionBn = "এক গ্রীষ্মের তপ্ত দুপুরে এক তৃষ্ণার্ত কাক এক ফোঁটা পানির খোঁজে পুরো বন ও মাঠ ঘুরে বেড়াচ্ছিল। চারদিকে কোনো পানি ছিল না।",
+                        narrationBn = "এক গরমের দিনে খুব তৃষ্ণার্ত একটি কাক পানির খোঁজে আকাশে উড়ে বেড়াচ্ছিল। সে ভীষণ ক্লান্ত হয়ে পড়েছিল।"
+                    ),
+                    StoryScene(
+                        sceneNumber = 2,
+                        imageEmoji = "🏺 🦅 🤔",
+                        headingBn = "কলসি ও তলানির পানি",
+                        descriptionBn = "হঠাৎ সে একটি বাগানে মাটির কলসি দেখতে পেল। খুশিতে উড়ে গিয়ে দেখল কলসির একদম তলানিতে অল্প পানি রয়েছে, কিন্তু তার ঠোঁট পানি পর্যন্ত পৌঁছাল না।",
+                        narrationBn = "কাক একটি কলসি দেখতে পেল। কিন্তু কলসির নিচে অল্প পানি থাকায় তার ঠোঁট পানি পর্যন্ত পৌঁছাল না।"
+                    ),
+                    StoryScene(
+                        sceneNumber = 3,
+                        imageEmoji = "🪨 🏺 🦅 💡",
+                        headingBn = "কাকের চমৎকার বুদ্ধি",
+                        descriptionBn = "কাক নিরাশ হলো না। সে আশেপাশে ছোট ছোট নুড়ি পাথর দেখতে পেয়ে বুদ্ধি করল। সে এক এক করে ঠোঁটে করে পাথর এনে কলসির ভেতরে ফেলতে লাগল।",
+                        narrationBn = "কাক বুদ্ধি করে পাশ থেকে একটি একটি নুড়ি পাথর এনে কলসিতে ফেলতে লাগল।"
+                    ),
+                    StoryScene(
+                        sceneNumber = 4,
+                        imageEmoji = "💧 🦅 😋 ✨",
+                        headingBn = "তৃষ্ণা নিবারণ ও আনন্দ",
+                        descriptionBn = "পাথর ফেলার সাথে সাথে কলসির পানি ধীরে ধীরে উপরে উঠে এলো। কাক পেট ভরে মিষ্টি পানি পান করে আনন্দের সাথে আকাশে উড়ে গেল।",
+                        narrationBn = "পাথর ফেলার কারণে পানি উপরে উঠে এলো এবং কাক তৃপ্তি সহকারে পানি পান করে উড়ে গেল।"
+                    )
+                )
+            ),
+            MoralStoryItem(
+                id = "story_lion_mouse",
+                titleBn = "সিংহ ও ছোট্ট ইঁদুর",
+                titleEn = "The Lion & The Mouse",
+                coverEmoji = "🦁",
+                moralBn = "কাউকে কখনো ছোট ভাবতে নেই। ছোটরাও বড়দের পরম উপকারী বন্ধু হতে পারে।",
+                moralEn = "Never underestimate anyone. Kindness is never wasted.",
+                themeColor = Color(0xFFEF6C00),
+                scenes = listOf(
+                    StoryScene(
+                        sceneNumber = 1,
+                        imageEmoji = "🦁 💤 🐭",
+                        headingBn = "ঘুমন্ত সিংহ ও চঞ্চল ইঁদুর",
+                        descriptionBn = "বনের রাজা সিংহ এক গাছের ছায়ায় ঘুমাচ্ছিল। এক ছোট্ট ইঁদুর খেলা করতে করতে না বুঝে সিংহের গায়ের উপর উঠে পড়ল। সিংহের ঘুম ভেঙে গেল।",
+                        narrationBn = "সিংহ ঘুমাচ্ছিল। এক দুষ্টু ছোট্ট ইঁদুর খেলতে খেলতে সিংহের নাকের ওপর দিয়ে দৌড়ে গেল এবং সিংহ রেগে জেগে উঠল।"
+                    ),
+                    StoryScene(
+                        sceneNumber = 2,
+                        imageEmoji = "🦁 🐾 🐭 🥺",
+                        headingBn = "ইঁদুরের প্রাণভিক্ষা",
+                        descriptionBn = "সিংহ থাবা দিয়ে ইঁদুরটিকে চেপে ধরে মারতে গেল। ইঁদুর কাঁপতে কাঁপতে ক্ষমা চাইল এবং বলল— 'মহারাজ, আমাকে ছেড়ে দিন, কোনো একদিন আমিও আপনার উপকারে আসতে পারি!' সিংহ হেসে তাকে ছেড়ে দিল।",
+                        narrationBn = "ইঁদুর করজোড়ে ক্ষমা চাইল এবং বলল, আমাকে বাঁচান মহারাজ, আমিও একদিন আপনার উপকারে আসব। সিংহ দয়া করে তাকে ছেড়ে দিল।"
+                    ),
+                    StoryScene(
+                        sceneNumber = 3,
+                        imageEmoji = "🕸️ 🦁 🪤 😱",
+                        headingBn = "শিকারির জালে সিংহ",
+                        descriptionBn = "কয়েকদিন পর এক শিকারি বনে এসে শক্ত দড়ির জাল পেতে সিংহকে বন্দি করে ফেলল। সিংহ চেষ্টা করেও জাল ছিঁড়তে না পেরে জোরে গর্জন করতে লাগল।",
+                        narrationBn = "কয়েকদিন পর শিকারির জালে সিংহ আটকা পড়ল। অসহায় সিংহ গর্জন করতে লাগল।"
+                    ),
+                    StoryScene(
+                        sceneNumber = 4,
+                        imageEmoji = "🐭 ✂️ 🦁 🤝",
+                        headingBn = "ইঁদুরের সাহায্যে সিংহের মুক্তি",
+                        descriptionBn = "গর্জন শুনে ছোট্ট ইঁদুর ছুটে এলো। সে তার ধারালো দাঁত দিয়ে দ্রুত জালের দড়ি কেটে ফেলল! সিংহ মুক্ত হলো এবং দুজনে আজীবনের বন্ধু হয়ে গেল।",
+                        narrationBn = "ইঁদুর এসে তার ধারালো দাঁত দিয়ে জাল কেটে রাজাকে মুক্ত করল। সিংহ বুঝল ছোটরাও অনেক বড় উপকার করতে পারে।"
+                    )
+                )
+            ),
+            MoralStoryItem(
+                id = "story_boy_wolf",
+                titleBn = "রাখাল বালক ও মিথ্যার ফল",
+                titleEn = "The Boy Who Cried Wolf",
+                coverEmoji = "🐺",
+                moralBn = "কখনো মিথ্যা বলতে নেই। যে একবার মিথ্যা বলে, মানুষ সত্য বললেও তাকে আর বিশ্বাস করে না।",
+                moralEn = "Never lie. Liars are not believed even when they speak the truth.",
+                themeColor = Color(0xFFC62828),
+                scenes = listOf(
+                    StoryScene(
+                        sceneNumber = 1,
+                        imageEmoji = "🐑 👦 ⛰️",
+                        headingBn = "পাহাড়ে রাখালের দুষ্টুমি",
+                        descriptionBn = "এক রাখাল বালক পাহাড়ের ঢালে ভেড়া চরাত। একদিন তার একঘেয়ে লাগায় সে দুষ্টুমি করে চিৎকার করতে লাগল— 'বাঘ এসেছে! বাঘ এসেছে! বাঁচাও!'",
+                        narrationBn = "এক দুষ্টু রাখাল বালক মজা করার জন্য চিৎকার করে বলল— বাঘ এসেছে! আমাকে বাঁচাও!"
+                    ),
+                    StoryScene(
+                        sceneNumber = 2,
+                        imageEmoji = "👨‍🌾 🏃‍♂️ 👦 😂",
+                        headingBn = "গ্রামবাসীর ছুটে আসা ও উপহাস",
+                        descriptionBn = "গ্রামের কৃষকেরা কাজ ফেলে লাঠিসোঁটা নিয়ে ছুটে এলো। এসে দেখল রাখাল একা একা হেসে লুটোপুটি খাচ্ছে, কোনো বাঘ নেই! সবাই খুব বিরক্ত হয়ে ফিরে গেল।",
+                        narrationBn = "গ্রামের লোকেরা লাঠি নিয়ে সাহায্য করতে এলো। কিন্তু দেখল রাখাল বালক তাদের বোকা বানিয়ে হাসছে।"
+                    ),
+                    StoryScene(
+                        sceneNumber = 3,
+                        imageEmoji = "🐺 🌲 🐑 😱",
+                        headingBn = "সত্যিকারের নেকড়ে বাঘের আক্রমণ",
+                        descriptionBn = "কয়েকদিন পর সত্যি সত্যিই জঙ্গল থেকে এক ভয়ংকর নেকড়ে বাঘ ভেড়ার পালের উপর আক্রমণ করল। রাখাল বালক ভয় পেয়ে প্রাণপণে চিৎকার করতে লাগল— 'বাঘ এসেছে! সত্যি বাঘ এসেছে!'",
+                        narrationBn = "কয়েকদিন পর সত্যিই এক ভয়ংকর বাঘ এলো। রাখাল ভয়ে কাঁপতে কাঁপতে চিৎকার করে সাহায্য চাইল।"
+                    ),
+                    StoryScene(
+                        sceneNumber = 4,
+                        imageEmoji = "👦 😭 🐑 🐺",
+                        headingBn = "মিথ্যার করুণ পরিণতি",
+                        descriptionBn = "কিন্তু গ্রামের লোকেরা ভাবল রাখাল আবার তামাশা করছে, তাই কেউ এলো না। বাঘ রাখালের সব ভেড়া খেয়ে ফেলল। রাখাল বালক কেঁদে বুঝল মিথ্যা বলার ফল কত খারাপ!",
+                        narrationBn = "গ্রামবাসীরা ভাবল রাখাল আবার মিথ্যা বলছে, তাই কেউ এলো না। রাখাল বুঝল মিথ্যা বলা কত বড় অন্যায়।"
+                    )
+                )
+            ),
+            MoralStoryItem(
+                id = "story_ant_dove",
+                titleBn = "দয়ালু পিঁপড়া ও ঘুঘু পাখি",
+                titleEn = "The Ant and the Dove",
+                coverEmoji = "🕊️",
+                moralBn = "ভালো কাজের ভালো ফল পাওয়া যায়। নিঃস্বার্থ উপকারের প্রতিদান সবসময় শুভ হয়।",
+                moralEn = "One good turn deserves another. Kindness always returns.",
+                themeColor = Color(0xFF1565C0),
+                scenes = listOf(
+                    StoryScene(
+                        sceneNumber = 1,
+                        imageEmoji = "🌊 🐜 🆘",
+                        headingBn = "নদীর স্রোতে অসহায় পিঁপড়া",
+                        descriptionBn = "এক ছোট পিঁপড়া নদীর তীরে পানি খেতে গিয়ে পা পিছলে পানির প্রবল স্রোতে ভেসে যাচ্ছিল। সে বাঁচাও বাঁচাও বলে চিৎকার করছিল।",
+                        narrationBn = "এক ছোট পিঁপড়া নদীর পানিতে পড়ে ডুবে যাচ্ছিল এবং বাঁচার জন্য ছটফট করছিল।"
+                    ),
+                    StoryScene(
+                        sceneNumber = 2,
+                        imageEmoji = "🌳 🕊️ 🍃 🐜",
+                        headingBn = "ঘুঘু পাখির জীবনদান",
+                        descriptionBn = "গাছের ডালে বসে থাকা এক দয়ালু ঘুঘু পাখি তা দেখতে পেয়ে একটি বড় গাছের পাতা ছিঁড়ে পানির উপর ফেলল। পিঁপড়া পাতার উপর উঠে প্রাণে বেঁচে তীরে ফিরে এলো।",
+                        narrationBn = "এক ঘুঘু পাখি একটি পাতা ফেলে দিল। পিঁপড়াটি পাতার ওপর চড়ে নিরাপদে নদীর তীরে পৌঁছাল।"
+                    ),
+                    StoryScene(
+                        sceneNumber = 3,
+                        imageEmoji = "🏹 👨‍🌾 🕊️ 🐜",
+                        headingBn = "শিকারির তির ও বিপদ",
+                        descriptionBn = "কিছুদিন পর এক শিকারি এসে গাছের ডালে বসা ঘুমন্ত ঘুঘু পাখিটির দিকে তির তাক করল। ঘুঘু তা লক্ষ্য করেনি।",
+                        narrationBn = "একদিন এক শিকারি ঘুঘু পাখিকে শিকার করার জন্য তির তাক করল।"
+                    ),
+                    StoryScene(
+                        sceneNumber = 4,
+                        imageEmoji = "🐜 💥 🏹 🕊️ 🌈",
+                        headingBn = "উপকারের ঋণ শোধ",
+                        descriptionBn = "পিঁপড়াটি তা দেখতে পেয়ে দৌড়ে গিয়ে শিকারির পায়ে জোরে কামড় দিল! ব্যথায় শিকারির তির লক্ষ্যভ্রষ্ট হলো এবং ঘুঘু পাখিটি ডানা মেলে নিরাপদে উড়ে গেল।",
+                        narrationBn = "পিঁপড়া শিকারির পায়ে জোরে কামড় দিল। শিকারির তির ফস্কে গেল এবং ঘুঘু পাখি উড়ে প্রাণে বাঁচল।"
+                    )
+                )
+            )
+        )
+    }
 }
+

@@ -5,9 +5,11 @@ import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.Draw
 import androidx.compose.material.icons.filled.Extension
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.Spellcheck
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.example.ui.theme.CalculatorThemeColors
@@ -23,9 +25,13 @@ enum class KidsSectionTab(val titleBn: String, val titleEn: String, val icon: Im
     ALPHABET("বর্ণমালা", "Alphabets", Icons.Default.Spellcheck),
     SPELLING("বানান ও শব্দ", "Spelling", Icons.AutoMirrored.Filled.MenuBook),
     MATH("গণিত ও নামতা", "Math & Tables", Icons.Default.Calculate),
-    RHYMES("ছড়া ও কবিতা", "Rhymes", Icons.Default.MusicNote),
+    SLATE("ট্রেসিং গাইড", "Tracing & Slate", Icons.Default.Draw),
+    BALLOON("বেলুন পপ", "Balloon Pop", Icons.Default.Star),
+    PUZZLE("শব্দ পাজল", "Word Puzzle", Icons.Default.Extension),
+    HABITS("ভালো অভ্যাস", "Good Habits", Icons.Default.Favorite),
+    STORIES("ছোটদের গল্প", "Moral Stories", Icons.AutoMirrored.Filled.MenuBook),
+    RHYMES("ছড়া ও গান", "Rhymes", Icons.Default.MusicNote),
     NATURE("প্রাণী ও প্রকৃতি", "Animals & Nature", Icons.Default.Pets),
-    SLATE("ম্যাজিক স্লেট", "Magic Slate", Icons.Default.Draw),
     QUIZ("মজার কুইজ", "Brain Games", Icons.Default.Extension)
 }
 
@@ -204,3 +210,97 @@ data class MemoryCard(
     val isFaceUp: Boolean = false,
     val isMatched: Boolean = false
 )
+
+// -------------------------------------------------------------
+// 7. BALLOON POP GAME MODELS (বেলুন পপ ও সাউন্ড ক্যাচ)
+// -------------------------------------------------------------
+enum class BalloonCategory(val titleBn: String, val titleEn: String, val icon: String) {
+    LETTERS("বর্ণমালা", "Letters", "🔤"),
+    NUMBERS("সংখ্যা ১-১০", "Numbers", "🔢"),
+    COLORS("রং মেলানো", "Colors", "🎨"),
+    ANIMALS("প্রাণীর সাউন্ড", "Animals", "🦁")
+}
+
+data class BalloonTarget(
+    val promptBn: String,
+    val targetLabel: String,
+    val targetSpeech: String,
+    val options: List<BalloonOption>,
+    val correctId: String
+)
+
+data class BalloonOption(
+    val id: String,
+    val displayText: String,
+    val displayEmoji: String = "",
+    val speech: String,
+    val color: Color
+)
+
+// -------------------------------------------------------------
+// 8. WORD BUILDER PUZZLE MODELS (ছবি ও শব্দ মেলানো পাজল)
+// -------------------------------------------------------------
+enum class PuzzleCategory(val titleBn: String, val titleEn: String) {
+    EASY_BANGLA("সহজ বাংলা (২-৩ বর্ণ)", "Bangla Easy"),
+    MEDIUM_BANGLA("যুক্তবর্ণ ও ৪ বর্ণ", "Bangla Medium"),
+    EASY_ENGLISH("English (3-Letter)", "English 3-Letter"),
+    MEDIUM_ENGLISH("English (4-5 Letter)", "English 4-5 Letter")
+}
+
+data class PuzzleWordItem(
+    val id: String,
+    val targetWord: String,
+    val letterTiles: List<String>, // Scrambled letter tiles e.g. ["ম", "আ"]
+    val correctOrder: List<String>, // Ordered letters e.g. ["আ", "ম"]
+    val imageEmoji: String,
+    val hintBn: String,
+    val category: PuzzleCategory,
+    val accentColor: Color
+)
+
+// -------------------------------------------------------------
+// 9. GOOD HABITS & MANNERS MODELS (ভালো অভ্যাস ও শিষ্টাচার)
+// -------------------------------------------------------------
+enum class HabitCategory(val titleBn: String, val titleEn: String, val icon: String) {
+    DAILY_ROUTINE("সকাল ও পরিচ্ছন্নতা", "Daily Routine", "🌅"),
+    EATING_MANNERS("খাওয়ার আদব", "Eating Manners", "🍽️"),
+    STUDY_MANNERS("পড়াশোনা ও বিদ্যালয়", "Study & School", "🎒"),
+    SOCIAL_MANNERS("আদব-কায়দা ও আচরণ", "Good Manners", "🤝"),
+    NIGHT_ROUTINE("রাতের নিয়ম", "Bedtime Habits", "🌙")
+}
+
+data class HabitItem(
+    val id: String,
+    val titleBn: String,
+    val titleEn: String,
+    val descriptionBn: String,
+    val spokenAudioBn: String,
+    val doTextBn: String,
+    val dontTextBn: String,
+    val emoji: String,
+    val category: HabitCategory,
+    val accentColor: Color
+)
+
+// -------------------------------------------------------------
+// 10. ILLUSTRATED MORAL STORIES MODELS (ছোটদের সচিত্র গল্প)
+// -------------------------------------------------------------
+data class StoryScene(
+    val sceneNumber: Int,
+    val imageEmoji: String,
+    val headingBn: String,
+    val descriptionBn: String,
+    val narrationBn: String
+)
+
+data class MoralStoryItem(
+    val id: String,
+    val titleBn: String,
+    val titleEn: String,
+    val coverEmoji: String,
+    val moralBn: String,
+    val moralEn: String,
+    val themeColor: Color,
+    val scenes: List<StoryScene>
+)
+

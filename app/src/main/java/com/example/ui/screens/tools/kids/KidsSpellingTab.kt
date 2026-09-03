@@ -4,6 +4,8 @@ import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -428,7 +430,9 @@ fun SpellingCard(
             Spacer(modifier = Modifier.height(8.dp))
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
@@ -474,7 +478,9 @@ fun SpellingCard(
                                 text = block,
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = blockTextColor
+                                color = blockTextColor,
+                                maxLines = 1,
+                                softWrap = false
                             )
                         }
                     }
@@ -508,7 +514,9 @@ fun SpellingCard(
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Black,
                         color = item.accentColor,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)
+                        maxLines = 1,
+                        softWrap = false,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                     )
                 }
             }
