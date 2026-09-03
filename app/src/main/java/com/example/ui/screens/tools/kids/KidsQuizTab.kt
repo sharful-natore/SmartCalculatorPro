@@ -8,8 +8,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -103,6 +105,7 @@ fun QuestionQuizSection(
     var selectedOptionIndex by remember { mutableStateOf<Int?>(null) }
     var isAnswered by remember { mutableStateOf(false) }
     var isCorrect by remember { mutableStateOf(false) }
+    val scrollState = rememberScrollState()
 
     fun loadQuestion(index: Int) {
         currentQuestionIndex = index
@@ -112,141 +115,139 @@ fun QuestionQuizSection(
     }
 
     Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.SpaceBetween
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(scrollState)
+            .padding(bottom = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Column {
-            // Question Progress Header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "প্রশ্ন: ${currentQuestionIndex + 1} / ${questions.size}",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = themeColors.accent
-                )
-                Text(
-                    text = "+${currentQuestion.rewardPoints} স্টার ⭐",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFFFF9800)
-                )
-            }
+        // Question Progress Header
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "প্রশ্ন: ${currentQuestionIndex + 1} / ${questions.size}",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = themeColors.accent
+            )
+            Text(
+                text = "+${currentQuestion.rewardPoints} স্টার ⭐",
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFFFF9800)
+            )
+        }
 
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // Main Question Card
-            Card(
-                shape = RoundedCornerShape(22.dp),
-                colors = CardDefaults.cardColors(containerColor = themeColors.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        // Main Question Card
+        Card(
+            shape = RoundedCornerShape(22.dp),
+            colors = CardDefaults.cardColors(containerColor = themeColors.surface),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(1.dp, themeColors.accent.copy(alpha = 0.25f), RoundedCornerShape(22.dp))
+        ) {
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .border(1.dp, themeColors.accent.copy(alpha = 0.25f), RoundedCornerShape(22.dp))
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Column(
+                // Big Visual Prompt (Emoji / Partial Word)
+                Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(18.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .size(86.dp)
+                        .background(themeColors.accent.copy(alpha = 0.12f), CircleShape),
+                    contentAlignment = Alignment.Center
                 ) {
-                    // Big Visual Prompt (Emoji / Partial Word)
-                    Box(
-                        modifier = Modifier
-                            .size(90.dp)
-                            .background(themeColors.accent.copy(alpha = 0.12f), CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(text = currentQuestion.visualPrompt, fontSize = 42.sp)
-                    }
+                    Text(text = currentQuestion.visualPrompt, fontSize = 40.sp)
+                }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
-                    Text(
-                        text = currentQuestion.questionBn,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center,
-                        color = themeColors.onSurface
-                    )
+                Text(
+                    text = currentQuestion.questionBn,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    color = themeColors.onSurface
+                )
 
-                    Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-                    // Audio Button to read question
-                    FilledTonalButton(
-                        onClick = {
-                            audioPlayer.speak(currentQuestion.questionBn, isBn = true)
-                        },
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Icon(Icons.Default.VolumeUp, contentDescription = "Read question", modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(text = "প্রশ্নটি শোনো", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                    }
+                // Audio Button to read question
+                FilledTonalButton(
+                    onClick = {
+                        audioPlayer.speak(currentQuestion.questionBn, isBn = true)
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+                ) {
+                    Icon(Icons.Default.VolumeUp, contentDescription = "Read question", modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(text = "প্রশ্নটি শোনো", fontSize = 12.5.sp, fontWeight = FontWeight.Bold)
                 }
             }
+        }
 
-            Spacer(modifier = Modifier.height(14.dp))
+        // Options List
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            currentQuestion.options.forEachIndexed { optIndex, optText ->
+                val isThisSelected = selectedOptionIndex == optIndex
+                val isThisCorrect = optIndex == currentQuestion.correctIndex
 
-            // Options List
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                currentQuestion.options.forEachIndexed { optIndex, optText ->
-                    val isThisSelected = selectedOptionIndex == optIndex
-                    val isThisCorrect = optIndex == currentQuestion.correctIndex
+                val correctGreen = if (themeColors.isDark) Color(0xFF81C784) else Color(0xFF2E7D32)
+                val wrongRed = if (themeColors.isDark) Color(0xFFEF5350) else Color(0xFFC62828)
 
-                    val correctGreen = if (themeColors.isDark) Color(0xFF81C784) else Color(0xFF2E7D32)
-                    val wrongRed = if (themeColors.isDark) Color(0xFFEF5350) else Color(0xFFC62828)
+                val (bgColor, textColor, borderColor) = when {
+                    !isAnswered -> Triple(themeColors.surface, themeColors.onSurface, themeColors.onSurface.copy(alpha = 0.15f))
+                    isThisCorrect -> Triple(Color(0xFF4CAF50).copy(alpha = 0.18f), correctGreen, correctGreen)
+                    isThisSelected && !isCorrect -> Triple(Color(0xFFE53935).copy(alpha = 0.18f), wrongRed, wrongRed)
+                    else -> Triple(themeColors.surface, themeColors.onSurface.copy(alpha = 0.4f), themeColors.onSurface.copy(alpha = 0.1f))
+                }
 
-                    val (bgColor, textColor, borderColor) = when {
-                        !isAnswered -> Triple(themeColors.surface, themeColors.onSurface, themeColors.onSurface.copy(alpha = 0.15f))
-                        isThisCorrect -> Triple(Color(0xFF4CAF50).copy(alpha = 0.18f), correctGreen, correctGreen)
-                        isThisSelected && !isCorrect -> Triple(Color(0xFFE53935).copy(alpha = 0.18f), wrongRed, wrongRed)
-                        else -> Triple(themeColors.surface, themeColors.onSurface.copy(alpha = 0.4f), themeColors.onSurface.copy(alpha = 0.1f))
-                    }
-
-                    Card(
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = bgColor),
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = bgColor),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.5.dp, borderColor, RoundedCornerShape(16.dp))
+                        .clickable(enabled = !isAnswered) {
+                            audioPlayer.playClickSound()
+                            selectedOptionIndex = optIndex
+                            isAnswered = true
+                            if (optIndex == currentQuestion.correctIndex) {
+                                isCorrect = true
+                                audioPlayer.playCelebrationSound()
+                                audioPlayer.speak("সঠিক উত্তর! চমৎকার!", isBn = true)
+                                onRewardStars(currentQuestion.rewardPoints)
+                            } else {
+                                isCorrect = false
+                                audioPlayer.speak("হলো না, সঠিক উত্তর ছিল ${currentQuestion.options[currentQuestion.correctIndex]}", isBn = true)
+                            }
+                        }
+                ) {
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .border(1.5.dp, borderColor, RoundedCornerShape(16.dp))
-                            .clickable(enabled = !isAnswered) {
-                                audioPlayer.playClickSound()
-                                selectedOptionIndex = optIndex
-                                isAnswered = true
-                                if (optIndex == currentQuestion.correctIndex) {
-                                    isCorrect = true
-                                    audioPlayer.playCelebrationSound()
-                                    audioPlayer.speak("সঠিক উত্তর! চমৎকার!", isBn = true)
-                                    onRewardStars(currentQuestion.rewardPoints)
-                                } else {
-                                    isCorrect = false
-                                    audioPlayer.speak("হলো না, সঠিক উত্তর ছিল ${currentQuestion.options[currentQuestion.correctIndex]}", isBn = true)
-                                }
-                            }
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 14.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = optText,
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = textColor
-                            )
-                            if (isAnswered) {
-                                if (isThisCorrect) {
-                                    Icon(Icons.Default.CheckCircle, contentDescription = "Correct", tint = correctGreen)
-                                } else if (isThisSelected) {
-                                    Icon(Icons.Default.Cancel, contentDescription = "Wrong", tint = wrongRed)
-                                }
+                        Text(
+                            text = optText,
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = textColor
+                        )
+                        if (isAnswered) {
+                            if (isThisCorrect) {
+                                Icon(Icons.Default.CheckCircle, contentDescription = "Correct", tint = correctGreen)
+                            } else if (isThisSelected) {
+                                Icon(Icons.Default.Cancel, contentDescription = "Wrong", tint = wrongRed)
                             }
                         }
                     }
@@ -269,8 +270,7 @@ fun QuestionQuizSection(
                 shape = RoundedCornerShape(16.dp),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp)
-                    .padding(bottom = 8.dp)
+                    .height(48.dp)
             ) {
                 Text(
                     text = if (currentQuestionIndex < questions.size - 1) "পরবর্তী প্রশ্ন ➡️" else "প্রথম থেকে আবার শুরু 🔄",

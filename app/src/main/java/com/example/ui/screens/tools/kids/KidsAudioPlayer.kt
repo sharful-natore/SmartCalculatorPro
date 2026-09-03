@@ -139,16 +139,15 @@ class KidsAudioPlayer(private val context: Context) : TextToSpeech.OnInitListene
     }
 
     /**
-     * Pronounce Phonics letter sound with Bengali phonetic explanation & example word
+     * Pronounce Phonics letter sound with clear, child-friendly delivery
      */
     fun speakPhonicsLetter(letter: String, soundBn: String, exampleWord: String) {
         if (isMuted) return
-        scope.launch {
+        stop()
+        if (exampleWord.isNotEmpty()) {
+            speak("$letter. $exampleWord.", isBn = false)
+        } else {
             speak(letter, isBn = false)
-            delay(750)
-            speak("ধ্বনি $soundBn", isBn = true)
-            delay(950)
-            speak(exampleWord, isBn = false)
         }
     }
 
@@ -158,19 +157,15 @@ class KidsAudioPlayer(private val context: Context) : TextToSpeech.OnInitListene
     }
 
     /**
-     * Read out a phonics rule with its formula and examples
+     * Read out a phonics rule cleanly
      */
     fun speakPhonicsRule(ruleTitle: String, explanationBn: String, exampleWords: List<String>) {
         if (isMuted) return
+        stop()
         scope.launch {
             speak(ruleTitle, isBn = false)
-            delay(850)
+            delay(700)
             speak(explanationBn, isBn = true)
-            delay(1100)
-            for (word in exampleWords.take(3)) {
-                speak(word, isBn = false)
-                delay(800)
-            }
         }
     }
 

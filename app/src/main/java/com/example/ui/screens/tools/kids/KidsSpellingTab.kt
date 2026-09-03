@@ -20,6 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -514,9 +515,10 @@ fun SpellingCard(
                         contentColor = themeColors.onAccent
                     ),
                     shape = RoundedCornerShape(14.dp),
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
                     modifier = Modifier
-                        .weight(1.3f)
-                        .height(44.dp)
+                        .weight(1.2f)
+                        .height(48.dp)
                 ) {
                     Icon(
                         imageVector = if (isSpellingActive) Icons.Default.GraphicEq else Icons.Default.VolumeUp,
@@ -524,12 +526,13 @@ fun SpellingCard(
                         tint = themeColors.onAccent,
                         modifier = Modifier.size(18.dp)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = if (isSpellingActive) "বানান হচ্ছে..." else "বানান শোনো 🔊",
+                        text = if (isSpellingActive) "বানান হচ্ছে..." else "বানান শোনো",
                         style = MaterialTheme.typography.labelLarge,
                         color = themeColors.onAccent,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp
                     )
                 }
 
@@ -540,9 +543,10 @@ fun SpellingCard(
                     shape = RoundedCornerShape(14.dp),
                     border = androidx.compose.foundation.BorderStroke(1.5.dp, puzzleBorderColor),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = puzzleBorderColor),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
                     modifier = Modifier
                         .weight(1f)
-                        .height(44.dp)
+                        .height(48.dp)
                 ) {
                     Icon(
                         Icons.Default.Extension,
@@ -555,7 +559,7 @@ fun SpellingCard(
                         text = "নিজে মেলাও",
                         color = puzzleBorderColor,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp
+                        fontSize = 12.5.sp
                     )
                 }
             }
@@ -600,7 +604,7 @@ fun PhonicsAlphabetSection(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp)
+                            .padding(14.dp)
                     ) {
                         // Letter Header Row
                         Row(
@@ -608,53 +612,55 @@ fun PhonicsAlphabetSection(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(54.dp)
-                                        .background(letterItem.accentColor.copy(alpha = 0.15f), CircleShape)
-                                        .border(2.dp, letterItem.accentColor, CircleShape),
-                                    contentAlignment = Alignment.Center
-                                ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .background(letterItem.accentColor.copy(alpha = 0.15f), CircleShape)
+                                    .border(2.dp, letterItem.accentColor, CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "${letterItem.letter} ${letterItem.letter.lowercase()}",
+                                    fontSize = 17.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = letterItem.accentColor
+                                )
+                            }
+
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(horizontal = 10.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text(
-                                        text = "${letterItem.letter} ${letterItem.letter.lowercase()}",
-                                        fontSize = 20.sp,
-                                        fontWeight = FontWeight.Black,
-                                        color = letterItem.accentColor
+                                        text = "ধ্বনি: ${letterItem.soundBn}",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = themeColors.onSurface
                                     )
-                                }
-
-                                Spacer(modifier = Modifier.width(12.dp))
-
-                                Column {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Surface(
+                                        shape = RoundedCornerShape(6.dp),
+                                        color = letterItem.accentColor.copy(alpha = 0.15f)
+                                    ) {
                                         Text(
-                                            text = "ধ্বনি: ${letterItem.soundBn}",
-                                            style = MaterialTheme.typography.titleMedium,
+                                            text = letterItem.ipa,
+                                            fontSize = 11.sp,
                                             fontWeight = FontWeight.Bold,
-                                            color = themeColors.onSurface
+                                            color = letterItem.accentColor,
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                         )
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Surface(
-                                            shape = RoundedCornerShape(8.dp),
-                                            color = letterItem.accentColor.copy(alpha = 0.15f)
-                                        ) {
-                                            Text(
-                                                text = letterItem.ipa,
-                                                fontSize = 12.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = letterItem.accentColor,
-                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                            )
-                                        }
                                     }
-
-                                    Text(
-                                        text = "ধ্বনি উচ্চারণ: ${letterItem.soundBn}",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = themeColors.onSurface.copy(alpha = 0.7f)
-                                    )
                                 }
+
+                                Text(
+                                    text = letterItem.ruleExplanation,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = themeColors.onSurface.copy(alpha = 0.7f),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
                             }
 
                             // Speaker Button for this Letter
@@ -665,12 +671,18 @@ fun PhonicsAlphabetSection(
                                     onRewardStars(1)
                                 },
                                 shape = CircleShape,
+                                modifier = Modifier.size(42.dp),
                                 colors = IconButtonDefaults.filledIconButtonColors(
                                     containerColor = letterItem.accentColor,
                                     contentColor = Color.White
                                 )
                             ) {
-                                Icon(Icons.Default.VolumeUp, contentDescription = "Listen Phonics", tint = Color.White)
+                                Icon(
+                                    imageVector = Icons.Default.VolumeUp,
+                                    contentDescription = "Speak letter sound",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(20.dp)
+                                )
                             }
                         }
 

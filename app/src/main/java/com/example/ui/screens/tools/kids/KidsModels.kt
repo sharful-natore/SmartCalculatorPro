@@ -1,6 +1,15 @@
 package com.example.ui.screens.tools.kids
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.filled.Calculate
+import androidx.compose.material.icons.filled.Draw
+import androidx.compose.material.icons.filled.Extension
+import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.Pets
+import androidx.compose.material.icons.filled.Spellcheck
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import com.example.ui.theme.CalculatorThemeColors
 
 val CalculatorThemeColors.surface: Color get() = this.cardBg
@@ -9,14 +18,14 @@ val CalculatorThemeColors.accent: Color get() = this.buttonEqualBg
 val CalculatorThemeColors.onAccent: Color get() = this.buttonEqualText
 val CalculatorThemeColors.surfaceVariant: Color get() = this.chipBg
 
-enum class KidsSectionTab(val titleBn: String, val titleEn: String, val icon: String) {
-    ALPHABET("বর্ণমালা", "Alphabets", "🔤"),
-    SPELLING("বানান ও শব্দ", "Spelling", "📖"),
-    MATH("গণিত ও নামতা", "Math & Tables", "🔢"),
-    RHYMES("ছড়া ও কবিতা", "Rhymes", "🎵"),
-    NATURE("প্রাণী ও প্রকৃতি", "Animals & Nature", "🦁"),
-    SLATE("ম্যাজিক স্লেট", "Magic Slate", "🎨"),
-    QUIZ("মজার কুইজ", "Brain Games", "🧩")
+enum class KidsSectionTab(val titleBn: String, val titleEn: String, val icon: ImageVector) {
+    ALPHABET("বর্ণমালা", "Alphabets", Icons.Default.Spellcheck),
+    SPELLING("বানান ও শব্দ", "Spelling", Icons.AutoMirrored.Filled.MenuBook),
+    MATH("গণিত ও নামতা", "Math & Tables", Icons.Default.Calculate),
+    RHYMES("ছড়া ও কবিতা", "Rhymes", Icons.Default.MusicNote),
+    NATURE("প্রাণী ও প্রকৃতি", "Animals & Nature", Icons.Default.Pets),
+    SLATE("ম্যাজিক স্লেট", "Magic Slate", Icons.Default.Draw),
+    QUIZ("মজার কুইজ", "Brain Games", Icons.Default.Extension)
 }
 
 // -------------------------------------------------------------

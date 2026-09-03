@@ -26,6 +26,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -72,14 +73,14 @@ fun KidsLearningScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "কিডস লার্নিং",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Black,
-                            color = themeColors.onSurface
-                        )
-                    }
+                    Text(
+                        text = "কিডস লার্নিং",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 },
                 navigationIcon = {
                     IconButton(
@@ -103,47 +104,49 @@ fun KidsLearningScreen(
                 actions = {
                     // Star Counter Badge
                     Surface(
-                        shape = RoundedCornerShape(16.dp),
+                        shape = RoundedCornerShape(14.dp),
                         color = Color(0xFFFFB300).copy(alpha = 0.18f),
                         border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFFB300)),
-                        modifier = Modifier.padding(end = 4.dp)
+                        modifier = Modifier.padding(end = 2.dp)
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(text = "⭐", fontSize = 16.sp)
-                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(text = "⭐", fontSize = 13.sp)
+                            Spacer(modifier = Modifier.width(3.dp))
                             Text(
                                 text = "$totalStars",
                                 fontWeight = FontWeight.Black,
                                 color = Color(0xFFE65100),
-                                fontSize = 14.sp
+                                fontSize = 13.sp
                             )
                         }
                     }
 
                     // Audio Mute/Unmute Toggle
                     IconButton(
+                        modifier = Modifier.size(38.dp),
                         onClick = {
                             audioPlayer.isMuted = !audioPlayer.isMuted
                             if (!audioPlayer.isMuted) {
                                 audioPlayer.playSuccessChime()
-                                audioPlayer.speak("সাউন্ড অন করা হয়েছে", isBn = true)
+                                audioPlayer.speak("সাউন্ড চালু হয়েছে", isBn = true)
                             }
                         }
                     ) {
                         Icon(
                             imageVector = if (audioPlayer.isMuted) Icons.Default.VolumeOff else Icons.Default.VolumeUp,
                             contentDescription = "Toggle Mute",
-                            tint = if (audioPlayer.isMuted) Color(0xFFD32F2F) else themeColors.accent
+                            tint = if (audioPlayer.isMuted) Color(0xFFD32F2F) else themeColors.accent,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
 
                     // Child Lock Button
                     Box(
                         modifier = Modifier
-                            .padding(end = 6.dp)
+                            .padding(horizontal = 2.dp)
                             .pointerInput(isChildLocked) {
                                 detectTapGestures(
                                     onTap = {
@@ -168,25 +171,29 @@ fun KidsLearningScreen(
                         Surface(
                             shape = CircleShape,
                             color = if (isChildLocked) Color(0xFFD32F2F) else themeColors.surfaceVariant,
-                            modifier = Modifier.size(38.dp)
+                            modifier = Modifier.size(34.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
                                     imageVector = if (isChildLocked) Icons.Default.Lock else Icons.Default.LockOpen,
                                     contentDescription = "Child Lock",
                                     tint = if (isChildLocked) Color.White else themeColors.onSurface.copy(alpha = 0.7f),
-                                    modifier = Modifier.size(18.dp)
+                                    modifier = Modifier.size(17.dp)
                                 )
                             }
                         }
                     }
 
                     // Info Button
-                    IconButton(onClick = { showInfoDialog = true }) {
+                    IconButton(
+                        modifier = Modifier.size(38.dp),
+                        onClick = { showInfoDialog = true }
+                    ) {
                         Icon(
                             Icons.Default.Info,
                             contentDescription = "Kids Info",
-                            tint = themeColors.onSurface.copy(alpha = 0.7f)
+                            tint = themeColors.onSurface.copy(alpha = 0.7f),
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 },
@@ -205,8 +212,8 @@ fun KidsLearningScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(themeColors.surface)
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 items(KidsSectionTab.values()) { tab ->
                     val isSelected = activeTab == tab
@@ -214,28 +221,33 @@ fun KidsLearningScreen(
                     val contentColor = if (isSelected) themeColors.onAccent else themeColors.onSurface
 
                     Surface(
-                        shape = RoundedCornerShape(20.dp),
+                        shape = RoundedCornerShape(18.dp),
                         color = tabBg,
-                        border = if (isSelected) null else androidx.compose.foundation.BorderStroke(1.dp, themeColors.onSurface.copy(alpha = 0.1f)),
+                        border = if (isSelected) null else androidx.compose.foundation.BorderStroke(1.dp, themeColors.onSurface.copy(alpha = 0.12f)),
                         modifier = Modifier
-                            .height(46.dp)
-                            .clip(RoundedCornerShape(20.dp))
+                            .height(42.dp)
+                            .clip(RoundedCornerShape(18.dp))
                             .clickable {
                                 audioPlayer.playClickSound()
                                 activeTab = tab
                             }
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 14.dp),
+                            modifier = Modifier.padding(horizontal = 12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(text = tab.icon, fontSize = 18.sp)
+                            Icon(
+                                imageVector = tab.icon,
+                                contentDescription = tab.titleBn,
+                                tint = contentColor,
+                                modifier = Modifier.size(18.dp)
+                            )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = tab.titleBn,
                                 style = MaterialTheme.typography.labelMedium.copy(
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                    fontSize = 13.sp
+                                    fontSize = 12.5.sp
                                 ),
                                 color = contentColor
                             )

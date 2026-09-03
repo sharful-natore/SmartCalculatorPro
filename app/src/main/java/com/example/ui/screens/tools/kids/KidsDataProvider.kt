@@ -210,9 +210,13 @@ object KidsDataProvider {
         SpellingWordItem("HEN", "H - E - N", "মুরগি (Lays Eggs)", listOf("H", "E", "N"), "H (/h/) + E (/e/) + N (/n/) = HEN", "🐔", SpellingCategory.ENGLISH_CVC, Color(0xFFD81B60)),
         SpellingWordItem("TOP", "T - O - P", "লাটিম খেলনা", listOf("T", "O", "P"), "T (/t/) + O (/ɒ/) + P (/p/) = TOP", "🪀", SpellingCategory.ENGLISH_CVC, Color(0xFF0288D1)),
         SpellingWordItem("NET", "N - E - T", "মাছ ধরার জাল", listOf("N", "E", "T"), "N (/n/) + E (/e/) + T (/t/) = NET", "🕸️", SpellingCategory.ENGLISH_CVC, Color(0xFF00796B)),
-        SpellingWordItem("PIN", "P - I - N", "ছোট আলপিন", listOf("P", "I", "G"), "P (/p/) + I (/ɪ/) + N (/n/) = PIN", "📌", SpellingCategory.ENGLISH_CVC, Color(0xFFC2185B)),
+        SpellingWordItem("PIN", "P - I - N", "ছোট আলপিন", listOf("P", "I", "N"), "P (/p/) + I (/ɪ/) + N (/n/) = PIN", "📌", SpellingCategory.ENGLISH_CVC, Color(0xFFC2185B)),
         SpellingWordItem("MAP", "M - A - P", "মানচিত্র (Map)", listOf("M", "A", "P"), "M (/m/) + A (/æ/) + P (/p/) = MAP", "🗺️", SpellingCategory.ENGLISH_CVC, Color(0xFF43A047)),
         SpellingWordItem("BAG", "B - A - G", "স্কুল ব্যাগ / থলে", listOf("B", "A", "G"), "B (/b/) + A (/æ/) + G (/g/) = BAG", "🎒", SpellingCategory.ENGLISH_CVC, Color(0xFF1976D2)),
+        SpellingWordItem("LEG", "L - E - G", "শরীরের পা", listOf("L", "E", "G"), "L (/l/) + E (/e/) + G (/g/) = LEG", "🦵", SpellingCategory.ENGLISH_CVC, Color(0xFF8D6E63)),
+        SpellingWordItem("LIP", "L - I - P", "মুখের ঠোঁট", listOf("L", "I", "P"), "L (/l/) + I (/ɪ/) + P (/p/) = LIP", "👄", SpellingCategory.ENGLISH_CVC, Color(0xFFE91E63)),
+        SpellingWordItem("SUN", "S - U - N", "উজ্জ্বল সূর্য", listOf("S", "U", "N"), "S (/s/) + U (/ʌ/) + N (/n/) = SUN", "☀️", SpellingCategory.ENGLISH_CVC, Color(0xFFFFB300)),
+        SpellingWordItem("MOP", "M - O - P", "মেঝের মোছা", listOf("M", "O", "P"), "M (/m/) + O (/ɒ/) + P (/p/) = MOP", "🧹", SpellingCategory.ENGLISH_CVC, Color(0xFF00ACC1)),
 
         // ENGLISH WORDS (4-5 LETTERS & DIGRAPHS)
         SpellingWordItem("BOOK", "B - O - O - K", "বই (Reading)", listOf("B", "O", "O", "K"), "B - O - O - K = BOOK", "📚", SpellingCategory.ENGLISH_WORDS, Color(0xFF1E88E5)),
@@ -1048,47 +1052,119 @@ object KidsDataProvider {
     // 5. ANIMALS & NATURE (পশুপাখি ও চারপাশ)
     // -------------------------------------------------------------
     val natureItems = listOf(
-        // ANIMALS
-        NatureItem("বাঘ", "Tiger", "টাইগার", "হালুম! (Roar!)", "🐅", NatureCategory.ANIMALS, "রয়্যাল বেঙ্গল টাইগার বাংলাদেশের জাতীয় পশু।", Color(0xFFFF6F00)),
-        NatureItem("সিংহ", "Lion", "লায়ন", "গর্জন! (Roar!)", "🦁", NatureCategory.ANIMALS, "সিংহকে বনের রাজা বলা হয়।", Color(0xFFFFA000)),
-        NatureItem("হাতি", "Elephant", "এলিফ্যান্ট", "চিঁহিঁ! (Trumpet)", "🐘", NatureCategory.ANIMALS, "হাতি হলো ডাঙার সবচেয়ে বড় স্তন্যপায়ী প্রাণী।", Color(0xFF546E7A)),
-        NatureItem("বিড়াল", "Cat", "ক্যাট", "মিউ মিউ! (Meow)", "🐱", NatureCategory.ANIMALS, "বিড়াল মাছ খেতে ও খেলতে খুব ভালোবাসে।", Color(0xFFFFB300)),
-        NatureItem("কুকুর", "Dog", "ডগ", "ঘেউ ঘেউ! (Woof)", "🐶", NatureCategory.ANIMALS, "কুকুর মানুষের সবচেয়ে বিশ্বস্ত বন্ধু।", Color(0xFF8D6E63)),
-        NatureItem("গরু", "Cow", "কাউ", "হাম্বা! (Moo)", "🐄", NatureCategory.ANIMALS, "গরু আমাদের পুষ্টিকর মিষ্টি দুধ দেয়।", Color(0xFF43A047)),
-        NatureItem("দোয়েল", "Magpie Robin", "ম্যাগপাই", "শিস শিস! (Chirp)", "🐦", NatureCategory.ANIMALS, "দোয়েল বাংলাদেশের জাতীয় পাখি।", Color(0xFF0288D1)),
-        NatureItem("ময়ূর", "Peacock", "পিকক", "কেকা ধ্বনি!", "🦚", NatureCategory.ANIMALS, "ময়ূর পেখম মেলে অপরূপ নাচ দেখায়।", Color(0xFF00897B)),
-
-        // FRUITS
-        NatureItem("আম", "Mango", "ম্যাঙ্গো", "রসালো মিষ্টি", "🥭", NatureCategory.FRUITS, "আম হলো সব ফলের রাজা।", Color(0xFFFF8F00)),
-        NatureItem("কাঁঠাল", "Jackfruit", "জ্যাকফ্রুট", "জাতীয় ফল", "🍈", NatureCategory.FRUITS, "কাঁঠাল বাংলাদেশের জাতীয় ফল।", Color(0xFF7CB342)),
-        NatureItem("কলা", "Banana", "ব্যানানা", "পুষ্টিকর ফল", "🍌", NatureCategory.FRUITS, "কলা খেলে শরীরে দ্রুত শক্তি পাওয়া যায়।", Color(0xFFFBC02D)),
-        NatureItem("আপেল", "Apple", "অ্যাপল", "লাল টুকটুকে", "🍎", NatureCategory.FRUITS, "প্রতিদিন একটি আপেল খেলে ডাক্তার দূরে থাকে।", Color(0xFFE53935)),
-        NatureItem("তরমুজ", "Watermelon", "ওয়াটারমেলন", "রসালো লাল", "🍉", NatureCategory.FRUITS, "গরমে ঠান্ডা তরমুজ খেতে ভীষণ আরাম।", Color(0xFFD81B60)),
+        // ANIMALS & BIRDS
+        NatureItem("বাঘ", "Tiger", "টাইগার", "হালুম!", "🐅", NatureCategory.ANIMALS, "রয়্যাল বেঙ্গল টাইগার বাংলাদেশের জাতীয় পশু।", Color(0xFFFF6F00)),
+        NatureItem("সিংহ", "Lion", "লায়ন", "গর্জন!", "🦁", NatureCategory.ANIMALS, "সিংহকে বনের রাজা বলা হয়।", Color(0xFFFFA000)),
+        NatureItem("হাতি", "Elephant", "এলিফ্যান্ট", "চিঁহিঁ!", "🐘", NatureCategory.ANIMALS, "হাতি হলো ডাঙার সবচেয়ে বড় স্তন্যপায়ী প্রাণী।", Color(0xFF546E7A)),
+        NatureItem("হরিণ", "Deer", "ডিয়ার", "মায়াবী হরিণ", "🦌", NatureCategory.ANIMALS, "হরিণের চোখ খুব সুন্দর এবং সে দ্রুত দৌড়ায়।", Color(0xFF8D6E63)),
+        NatureItem("বিড়াল", "Cat", "ক্যাট", "মিউ মিউ!", "🐱", NatureCategory.ANIMALS, "বিড়াল মাছ খেতে ও খেলতে খুব ভালোবাসে।", Color(0xFFFFB300)),
+        NatureItem("কুকুর", "Dog", "ডগ", "ঘেউ ঘেউ!", "🐶", NatureCategory.ANIMALS, "কুকুর মানুষের সবচেয়ে বিশ্বস্ত ও প্রভুভক্ত বন্ধু।", Color(0xFF8D6E63)),
+        NatureItem("গরু", "Cow", "কাউ", "হাম্বা!", "🐄", NatureCategory.ANIMALS, "গরু আমাদের পুষ্টিকর মিষ্টি দুধ দেয়।", Color(0xFF43A047)),
+        NatureItem("ঘোড়া", "Horse", "হর্স", "চিঁহিঁ!", "🐎", NatureCategory.ANIMALS, "ঘোড়া খুব দ্রুত দৌড়াতে পারে।", Color(0xFF6D4C41)),
+        NatureItem("ছাগল", "Goat", "গোট", "ম্যা ম্যা!", "🐐", NatureCategory.ANIMALS, "ছাগল ঘাস ও গাছের সবুজ পাতা খায়।", Color(0xFF795548)),
+        NatureItem("খরগোশ", "Rabbit", "র‍্যাবিট", "লাফিয়ে চলে", "🐇", NatureCategory.ANIMALS, "খরগোশ গাজর খেতে খুব পছন্দ করে।", Color(0xFFE91E63)),
+        NatureItem("বানর", "Monkey", "মাঙ্কি", "কিকি কিকি!", "🐒", NatureCategory.ANIMALS, "বানর গাছে গাছে লাফিয়ে খেলা করে।", Color(0xFFF57C00)),
+        NatureItem("ভালুক", "Bear", "বেয়ার", "বনের ভালুক", "🐻", NatureCategory.ANIMALS, "ভালুক মিষ্টি মধু ও মাছ খেতে ভালোবাসে।", Color(0xFF5D4037)),
+        NatureItem("জিরাফ", "Giraffe", "জিরাফ", "লম্বা গলা", "🦒", NatureCategory.ANIMALS, "জিরাফ পৃথিবীর সবচেয়ে লম্বা প্রাণী।", Color(0xFFFFB300)),
+        NatureItem("জেব্রা", "Zebra", "জেব্রা", "কালো-সাদা দাগ", "🦓", NatureCategory.ANIMALS, "জেব্রার শরীরে সাদা ও কালো ডোরাকাটা দাগ থাকে।", Color(0xFF37474F)),
+        NatureItem("ক্যাঙ্গারু", "Kangaroo", "ক্যাঙ্গারু", "লাফিয়ে ছোটে", "🦘", NatureCategory.ANIMALS, "ক্যাঙ্গারু তার থলিতে বাচ্চা রাখে।", Color(0xFFE65100)),
+        NatureItem("উট", "Camel", "ক্যামেল", "মরুর জাহাজ", "🐪", NatureCategory.ANIMALS, "উট মরুভূমিতে অনেক দিন পানি না খেয়ে চলতে পারে।", Color(0xFFD84315)),
+        NatureItem("ডলফিন", "Dolphin", "ডলফিন", "বন্ধুবৎসল", "🐬", NatureCategory.ANIMALS, "ডলফিন পানিতে চমৎকার খেলা দেখায়।", Color(0xFF0288D1)),
+        NatureItem("তিমি", "Whale", "হোয়েল", "সাগরের বিশালাকায়", "🐋", NatureCategory.ANIMALS, "নীল তিমি পৃথিবীর সবচেয়ে বড় প্রাণী।", Color(0xFF1565C0)),
+        NatureItem("কচ্ছপ", "Turtle", "টার্টল", "ধীরে হাঁটে", "🐢", NatureCategory.ANIMALS, "কচ্ছপের পিঠের শক্ত খোলস তাকে রক্ষা করে।", Color(0xFF2E7D32)),
+        NatureItem("ব্যাঙ", "Frog", "ফ্রগ", "ঘ্যাঙর ঘ্যাঙ!", "🐸", NatureCategory.ANIMALS, "বর্ষাকালে ব্যাঙের ডাক বেশি শোনা যায়।", Color(0xFF388E3C)),
+        NatureItem("দোয়েল", "Magpie Robin", "ম্যাগপাই", "শিস শিস!", "🐦", NatureCategory.ANIMALS, "দোয়েল বাংলাদেশের জাতীয় পাখি।", Color(0xFF0288D1)),
+        NatureItem("টিয়া", "Parrot", "প্যারট", "কথা বলে", "🦜", NatureCategory.ANIMALS, "টিয়া পাখির সবুজ ডানা ও লাল টুকটুকে ঠোঁট।", Color(0xFF4CAF50)),
+        NatureItem("ময়ূর", "Peacock", "পিকক", "পেখম মেলে নাচে", "🦚", NatureCategory.ANIMALS, "ময়ূর পেখম মেলে অপরূপ নাচ দেখায়।", Color(0xFF00897B)),
+        NatureItem("কোকিল", "Cuckoo", "কুকু", "কুহু কুহু!", "🐦‍⬛", NatureCategory.ANIMALS, "বসন্তকালে কোকিল মিষ্টি সুরে গান গায়।", Color(0xFF37474F)),
+        NatureItem("কাক", "Crow", "ক্রো", "কা কা!", "🐦‍⬛", NatureCategory.ANIMALS, "কাক খুব চতুর ও পরিচিত পাখি।", Color(0xFF455A64)),
+        NatureItem("চড়ুই", "Sparrow", "স্প্যারো", "চিঁ চিঁ!", "🐤", NatureCategory.ANIMALS, "চড়ুই আমাদের ঘরের কোণে বাসা বাঁধে।", Color(0xFFFFB300)),
+        NatureItem("পেঁচা", "Owl", "আউল", "হু হু!", "🦉", NatureCategory.ANIMALS, "পেঁচা রাতে জেগে থাকে ও স্পষ্ট দেখে।", Color(0xFF795548)),
+        NatureItem("হাঁস", "Duck", "ডাক", "প্যাক প্যাক!", "🦆", NatureCategory.ANIMALS, "হাঁস পানিতে মনের সুখে সাঁতার কাটে।", Color(0xFF00897B)),
+        NatureItem("রাজহাঁস", "Swan", "সোয়ান", "ধবধবে সাদা", "🦢", NatureCategory.ANIMALS, "রাজহাঁস দেখতে রাজকীয় ও অত্যন্ত সুন্দর।", Color(0xFF00ACC1)),
+        NatureItem("বক", "Heron", "হেরন", "মাছ শিকারি", "🦩", NatureCategory.ANIMALS, "বক নদীর ধারে এক পায়ে দাঁড়িয়ে মাছ ধরে।", Color(0xFF009688)),
+        NatureItem("ঈগল", "Eagle", "ঈগল", "আকাশের রাজা", "🦅", NatureCategory.ANIMALS, "ঈগল পাখি উঁচুতে উড়ে তীক্ষ্ণ চোখে শিকার খোঁজে।", Color(0xFF4E342E)),
+        NatureItem("কবুতর", "Pigeon", "পিজিয়ন", "বাক বাকুম!", "🕊️", NatureCategory.ANIMALS, "কবুতর শান্তির প্রতীক হিসেবে পরিচিত।", Color(0xFF78909C)),
+        NatureItem("মাছরাঙা", "Kingfisher", "কিংফিশার", "ঝাঁপ দিয়ে মাছ ধরে", "🪶", NatureCategory.ANIMALS, "মাছরাঙার পালক খুব সুন্দর রঙিন হয়।", Color(0xFF039BE5)),
 
         // FLOWERS
         NatureItem("শাপলা", "Water Lily", "ওয়াটার লিলি", "জাতীয় ফুল", "🪷", NatureCategory.FLOWERS, "সাদা শাপলা বাংলাদেশের জাতীয় ফুল।", Color(0xFF00ACC1)),
-        NatureItem("গোলাপ", "Rose", "রোজ", "ফুলের রানি", "🌹", NatureCategory.FLOWERS, "গোলাপের সুবাস মন জুড়িয়ে দেয়।", Color(0xFFE91E63)),
-        NatureItem("সূর্যমুখী", "Sunflower", "সানফ্লাওয়ার", "সূর্যমুখী", "🌻", NatureCategory.FLOWERS, "সূর্যমুখী ফুল সূর্যের দিকে মুখ করে হাসে।", Color(0xFFFFB300)),
+        NatureItem("গোলাপ", "Rose", "রোজ", "ফুলের রানি", "🌹", NatureCategory.FLOWERS, "গোলাপের মিষ্টি সুবাস মন জুড়িয়ে দেয়।", Color(0xFFE91E63)),
+        NatureItem("সূর্যমুখী", "Sunflower", "সানফ্লাওয়ার", "সূর্যমুখী ফুল", "🌻", NatureCategory.FLOWERS, "সূর্যমুখী ফুল সূর্যের দিকে মুখ করে হাসে।", Color(0xFFFFB300)),
         NatureItem("জবা", "Hibiscus", "হিবিস্কাস", "রক্তজবা", "🌺", NatureCategory.FLOWERS, "লাল টুকটুকে জবা ফুল বাগান সুন্দর করে।", Color(0xFFC2185B)),
+        NatureItem("বেলি", "Jasmine", "জেসমিন", "সুগন্ধি ফুল", "🌼", NatureCategory.FLOWERS, "বেলি ফুলের মালা পরতে মেয়েরা ভালোবাসে।", Color(0xFFFFF176)),
+        NatureItem("রজনীগন্ধা", "Tuberose", "টিউবরোজ", "মনমাতানো গন্ধ", "🌸", NatureCategory.FLOWERS, "রজনীগন্ধা বিয়ে ও উৎসবে ব্যবহার করা হয়।", Color(0xFF81C784)),
+        NatureItem("গাঁদা", "Marigold", "মেরিগোল্ড", "হলুদ গাঁদা", "🏵️", NatureCategory.FLOWERS, "শীতকালে গাঢ় হলুদ ও কমলা গাঁদা ফুল ফোটে।", Color(0xFFFF9800)),
+        NatureItem("কদম", "Burflower", "কাদাম্বা", "বর্ষার ফুল", "🟡", NatureCategory.FLOWERS, "বর্ষাকালে গাছের ডালে গোল গোল কদম ফুল ফোটে।", Color(0xFFFBC02D)),
+        NatureItem("পদ্ম", "Lotus", "লোটাস", "পবিত্র পদ্ম", "🪷", NatureCategory.FLOWERS, "পদ্ম ফুল দিঘির জলে অপরূপ সৌন্দর্য ছড়ায়।", Color(0xFFEC407A)),
+        NatureItem("পলাশ", "Flame of Forest", "পলাশ", "বসন্তের লাল", "💐", NatureCategory.FLOWERS, "বসন্তে লাল পলাশ ফুলে গাছ রঙিন হয়ে ওঠে।", Color(0xFFD84315)),
+        NatureItem("শিউলি", "Night Jasmine", "শিউলি", "শরতের ফুল", "🌾", NatureCategory.FLOWERS, "শরতের ভোরে শিউলি ফুল ঝরে পড়ে।", Color(0xFFFF7043)),
+        NatureItem("চন্দ্রমল্লিকা", "Chrysanthemum", "ক্রিসেন্থিমাম", "শীতের বাহার", "💮", NatureCategory.FLOWERS, "চন্দ্রমল্লিকা নানা রঙের অপূর্ব শোভা দেয়।", Color(0xFF9C27B0)),
+        NatureItem("ডালিয়া", "Dahlia", "ডালিয়া", "বড় পাপড়ি", "🌸", NatureCategory.FLOWERS, "শীতের বাগানে বড় ডালিয়া ফুল সবার নজর কাড়ে।", Color(0xFFAD1457)),
+
+        // FRUITS
+        NatureItem("আম", "Mango", "ম্যাঙ্গো", "ফলের রাজা", "🥭", NatureCategory.FRUITS, "আম হলো মিষ্টি রসালো ফলের রাজা।", Color(0xFFFF8F00)),
+        NatureItem("কাঁঠাল", "Jackfruit", "জ্যাকফ্রুট", "জাতীয় ফল", "🍈", NatureCategory.FRUITS, "কাঁঠাল বাংলাদেশের জাতীয় ফল।", Color(0xFF7CB342)),
+        NatureItem("কলা", "Banana", "ব্যানানা", "পুষ্টিকর ফল", "🍌", NatureCategory.FRUITS, "কলা খেলে শরীরে প্রচুর ভিটামিন ও শক্তি পাওয়া যায়।", Color(0xFFFBC02D)),
+        NatureItem("আপেল", "Apple", "অ্যাপল", "লাল টুকটুকে", "🍎", NatureCategory.FRUITS, "প্রতিদিন একটি আপেল রোগবালাই দূরে রাখে।", Color(0xFFE53935)),
+        NatureItem("কমলা", "Orange", "অরেঞ্জ", "মিষ্টি-টক ফল", "🍊", NatureCategory.FRUITS, "কমলালেবুতে প্রচুর ভিটামিন সি থাকে।", Color(0xFFFF6F00)),
+        NatureItem("তরমুজ", "Watermelon", "ওয়াটারমেলন", "রসালো লাল", "🍉", NatureCategory.FRUITS, "গরমে ঠান্ডা তরমুজ খেলে শরীর জুড়িয়ে যায়।", Color(0xFFD81B60)),
+        NatureItem("পেয়ারা", "Guava", "গুয়াভা", "সবুজ পেয়ারা", "🍐", NatureCategory.FRUITS, "পেয়ারাতে লেবুর চেয়েও বেশি ভিটামিন সি আছে।", Color(0xFF689F38)),
+        NatureItem("আনারস", "Pineapple", "পাইনঅ্যাপল", "রসালো মিষ্টি", "🍍", NatureCategory.FRUITS, "আনারস একটি সুস্বাদু রসালো গ্রীষ্মকালীন ফল।", Color(0xFFF57C00)),
+        NatureItem("লিচু", "Litchi", "লিচি", "মিষ্টি কোয়া", "🍒", NatureCategory.FRUITS, "লিচু রসালো ও অত্যন্ত মিষ্টি ফল।", Color(0xFFE91E63)),
+        NatureItem("পেঁপে", "Papaya", "পাপায়া", "হলুদ পাকা পেঁপে", "🍈", NatureCategory.FRUITS, "পাকা পেঁপে মিষ্টি ও পেটের জন্য খুব উপকারী।", Color(0xFFFFA000)),
+        NatureItem("আঙুর", "Grape", "গ্রেপস", "রসের থোকা", "🍇", NatureCategory.FRUITS, "আঙুর থোকায় থোকায় গাছে ধরে।", Color(0xFF7B1FA2)),
+        NatureItem("ডালিম", "Pomegranate", "পোমেগ্রানেট", "দানা ভরা ফল", "🍎", NatureCategory.FRUITS, "ডালিমের লাল দানাগুলো দেখতে মুক্তার মতো।", Color(0xFFC2185B)),
+        NatureItem("স্ট্রবেরি", "Strawberry", "স্ট্রবেরি", "লাল মিষ্টি", "🍓", NatureCategory.FRUITS, "স্ট্রবেরি খুব আকর্ষণীয় ও সুস্বাদু ফল।", Color(0xFFD81B60)),
+        NatureItem("নারকেল", "Coconut", "কোকোনাট", "মিষ্টি পানি", "🥥", NatureCategory.FRUITS, "ডাবের পানি শরীর ঠান্ডা ও সতেজ রাখে।", Color(0xFF6D4C41)),
+        NatureItem("লেবু", "Lemon", "লেমন", "টক লেবু", "🍋", NatureCategory.FRUITS, "লেবুর শরবত ক্লান্তি দূর করে।", Color(0xFFFDD835)),
 
         // VEGETABLES
-        NatureItem("আলু", "Potato", "পটেটো", "সবজির রাজা", "🥔", NatureCategory.VEGETABLES, "আলু দিয়ে নানা রকম মুখরোচক খাবার বানানো যায়।", Color(0xFF8D6E63)),
-        NatureItem("টমেটো", "Tomato", "টমেটো", "লাল সালাদ", "🍅", NatureCategory.VEGETABLES, "টমেটোতে প্রচুর ভিটামিন সি থাকে।", Color(0xFFE53935)),
+        NatureItem("আলু", "Potato", "পটেটো", "সবজির রাজা", "🥔", NatureCategory.VEGETABLES, "আলু দিয়ে সব ধরনের তরকারি ও চিপস তৈরি হয়।", Color(0xFF8D6E63)),
+        NatureItem("টমেটো", "Tomato", "টমেটো", "লাল সালাদ", "🍅", NatureCategory.VEGETABLES, "টমেটো কাঁচা ও রান্না উভয়ভাবেই খাওয়া যায়।", Color(0xFFE53935)),
         NatureItem("গাজর", "Carrot", "ক্যারট", "মিষ্টি গাজর", "🥕", NatureCategory.VEGETABLES, "গাজর খেলে চোখের দৃষ্টিশক্তি ভালো থাকে।", Color(0xFFFF6F00)),
-        NatureItem("বেগুন", "Eggplant", "এগপ্ল্যান্ট", "বেগুনী সবজি", "🍆", NatureCategory.VEGETABLES, "মচমচে বেগুনি ভাজা সবার খুব প্রিয়।", Color(0xFF7B1FA2)),
+        NatureItem("বেগুন", "Eggplant", "এগপ্ল্যান্ট", "বেগুনী সবজি", "🍆", NatureCategory.VEGETABLES, "মচমচে বেগুনি ভাজা খেতে খুবই চমৎকার।", Color(0xFF7B1FA2)),
+        NatureItem("ফুলকপি", "Cauliflower", "কলিফ্লাওয়ার", "শীতের সবজি", "🥦", NatureCategory.VEGETABLES, "ফুলকপির রোস্ট ও তরকারি অত্যন্ত সুস্বাদু।", Color(0xFF43A047)),
+        NatureItem("বাঁধাকপি", "Cabbage", "ক্যাবাজ", "পাতার বাঁধাকপি", "🥬", NatureCategory.VEGETABLES, "বাঁধাকপির সালাদ স্বাস্থ্যকর ও পুষ্টিকর।", Color(0xFF388E3C)),
+        NatureItem("শসা", "Cucumber", "কিউকাম্বার", "ঠান্ডা সালাদ", "🥒", NatureCategory.VEGETABLES, "শসা শরীরে পানির ঘাটতি পূরণ করে।", Color(0xFF2E7D32)),
+        NatureItem("মুলা", "Radish", "র‍্যাডিশ", "সাদা মুলা", "🪤", NatureCategory.VEGETABLES, "মুলা শীতে সালাদ ও তরকারি হিসেবে খাওয়া হয়।", Color(0xFF9E9E9E)),
+        NatureItem("লাউ", "Bottle Gourd", "বটল গার্ড", "মিষ্টি লাউ", "🥒", NatureCategory.VEGETABLES, "লাউ শরীর ঠান্ডা রাখে ও খুব পুষ্টিকর।", Color(0xFF7CB342)),
+        NatureItem("মিষ্টি কুমড়া", "Pumpkin", "পাম্পকিন", "হলুদ কুমড়া", "🎃", NatureCategory.VEGETABLES, "মিষ্টি কুমড়াতে প্রচুর ভিটামিন এ আছে।", Color(0xFFFF9800)),
+        NatureItem("মটরশুঁটি", "Peas", "পিস", "সবুজ দানা", "🫛", NatureCategory.VEGETABLES, "পোলাও ও সালাদে মটরশুঁটি দিলে দারুণ লাগে।", Color(0xFF4CAF50)),
+        NatureItem("ঢ্যাঁড়শ", "Okra", "ওকরা", "সবুজ ঢ্যাঁড়শ", "🌿", NatureCategory.VEGETABLES, "ঢ্যাঁড়শ ভাজি আমাদের সবার পছন্দের।", Color(0xFF00897B)),
 
         // VEHICLES
-        NatureItem("গাড়ি", "Car", "কার", "পিপ পিপ! (Beep)", "🚗", NatureCategory.VEHICLES, "গাড়ি চড়ে আমরা দ্রুত এক স্থান থেকে অন্য স্থানে যাই।", Color(0xFF1E88E5)),
-        NatureItem("উড়োজাহাজ", "Airplane", "এয়ারপ্লেন", "আকাশের বাহন", "✈️", NatureCategory.VEHICLES, "উড়োজাহাজ মেঘের ওপর দিয়ে ডানা মেলে উড়ে।", Color(0xFF0288D1)),
-        NatureItem("ট্রেন", "Train", "ট্রেন", "ঝিক ঝিক ঝিক!", "🚂", NatureCategory.VEHICLES, "ট্রেন লাইনের ওপর দিয়ে লম্বা বগি নিয়ে ছোটে।", Color(0xFF37474F)),
-        NatureItem("নৌকা", "Boat", "বোট", "নদীর বাহন", "⛵", NatureCategory.VEHICLES, "নদীতে পাল তুলে নৌকা ভেসে চলে।", Color(0xFF009688)),
+        NatureItem("গাড়ি", "Car", "কার", "পিপ পিপ!", "🚗", NatureCategory.VEHICLES, "গাড়ি চড়ে আমরা শহরের রাস্তায় চলাচল করি।", Color(0xFF1E88E5)),
+        NatureItem("বাস", "Bus", "বাস", "পোঁ পোঁ!", "🚌", NatureCategory.VEHICLES, "বাসে করে অনেক মানুষ একসাথে ভ্রমণ করে।", Color(0xFFFF9800)),
+        NatureItem("ট্রাক", "Truck", "ট্রাক", "ভারী মালপত্র", "🚚", NatureCategory.VEHICLES, "ট্রাক দিয়ে এক শহর থেকে অন্য শহরে পণ্য নেওয়া হয়।", Color(0xFF546E7A)),
+        NatureItem("ট্রেন", "Train", "ট্রেন", "ঝিক ঝিক ঝিক!", "🚂", NatureCategory.VEHICLES, "ট্রেন রেললাইনের ওপর দিয়ে দূরদেশে যায়।", Color(0xFF37474F)),
+        NatureItem("উড়োজাহাজ", "Airplane", "এয়ারপ্লেন", "আকাশে ওড়ে", "✈️", NatureCategory.VEHICLES, "উড়োজাহাজে চড়ে এক দেশ থেকে অন্য দেশে যাওয়া যায়।", Color(0xFF0288D1)),
+        NatureItem("হেলিকপ্টার", "Helicopter", "হেলিকপ্টার", "পাখা ঘোরে", "🚁", NatureCategory.VEHICLES, "হেলিকপ্টার সোজা আকাশে উঠতে ও নামতে পারে।", Color(0xFFD81B60)),
+        NatureItem("নৌকা", "Boat", "বোট", "নদীর বাহন", "⛵", NatureCategory.VEHICLES, "নদীতে বৈঠা বেয়ে বা পাল তুলে নৌকা চলে।", Color(0xFF009688)),
+        NatureItem("লঞ্চ", "Launch", "লঞ্চ", "নদীর যাত্রীযান", "🚢", NatureCategory.VEHICLES, "লঞ্চে করে মানুষ নদী পারাপার হয়।", Color(0xFF00838F)),
+        NatureItem("জাহাজ", "Ship", "শিপ", "সাগরের জাহাজ", "🛳️", NatureCategory.VEHICLES, "বিশাল জাহাজ মহাসাগরের বুক চিরে চলে।", Color(0xFF1565C0)),
+        NatureItem("সাইকেল", "Bicycle", "বাইসাইকেল", "প্যাডেল দিয়ে চলে", "🚲", NatureCategory.VEHICLES, "সাইকেল চালানো স্বাস্থ্যের জন্য খুব ভালো।", Color(0xFF43A047)),
+        NatureItem("রিকশা", "Rickshaw", "রিকশা", "টুং টাং বেল", "🛺", NatureCategory.VEHICLES, "রিকশা বাংলাদেশের ঐতিহ্যবাহী জনপ্রিয় বাহন।", Color(0xFFE91E63)),
+        NatureItem("মোটরসাইকেল", "Motorcycle", "মোটরবাইক", "দ্রুত গতি", "🏍️", NatureCategory.VEHICLES, "মোটরসাইকেল চালানোর সময় হেলমেট পরতে হয়।", Color(0xFFD32F2F)),
+        NatureItem("অ্যাম্বুলেন্স", "Ambulance", "অ্যাম্বুলেন্স", "সাইরেন বাজে!", "🚑", NatureCategory.VEHICLES, "অ্যাম্বুলেন্স জরুরি সময়ে রোগীকে হাসপাতালে নেয়।", Color(0xFFC62828)),
+        NatureItem("ফায়ার ট্রাক", "Fire Truck", "ফায়ার ইঞ্জিন", "আগুন নেভায়", "🚒", NatureCategory.VEHICLES, "দমকল কর্মীরা ফায়ার ট্রাক দিয়ে আগুন নেভান।", Color(0xFFE53935)),
+        NatureItem("রকেট", "Rocket", "রকেট", "মহাকাশে যায়", "🚀", NatureCategory.VEHICLES, "রকেট পৃথিবীর বাইরে মহাকাশে নভোচারী নিয়ে যায়।", Color(0xFF6A1B9A)),
 
         // COLORS & SHAPES
-        NatureItem("লাল", "Red", "রেড", "রং", "🔴", NatureCategory.COLORS_SHAPES, "লাল টকটকে রক্তের রং ও আমাদের পতাকার বৃত্ত।", Color(0xFFE53935)),
-        NatureItem("সবুজ", "Green", "গ্রিন", "রং", "🟢", NatureCategory.COLORS_SHAPES, "সবুজ গাছপালা ও আমাদের দেশের শ্যামল প্রকৃতি।", Color(0xFF43A047)),
-        NatureItem("নীল", "Blue", "ব্লু", "রং", "🔵", NatureCategory.COLORS_SHAPES, "নীল আকাশ ও গভীর সমুদ্রের সুন্দর রং।", Color(0xFF1E88E5)),
-        NatureItem("বৃত্ত", "Circle", "সার্কেল", "আকার", "⭕", NatureCategory.COLORS_SHAPES, "থালা ও ফুটবলের মতো গোল আকারকে বৃত্ত বলে।", Color(0xFFFF9800)),
-        NatureItem("ত্রিভুজ", "Triangle", "ট্রায়াঙ্গল", "আকার", "🔺", NatureCategory.COLORS_SHAPES, "তিনটি বাহু বিশিষ্ট জ্যামিতিক রূপ হলো ত্রিভুজ।", Color(0xFF8E24AA))
+        NatureItem("লাল", "Red", "রেড", "রং", "🔴", NatureCategory.COLORS_SHAPES, "লাল রক্তের রং ও আমাদের জাতীয় পতাকার সূর্যের রং।", Color(0xFFE53935)),
+        NatureItem("সবুজ", "Green", "গ্রিন", "রং", "🟢", NatureCategory.COLORS_SHAPES, "সবুজ গাছপালা ও আমাদের পতাকার জমিনের রং।", Color(0xFF43A047)),
+        NatureItem("নীল", "Blue", "ব্লু", "রং", "🔵", NatureCategory.COLORS_SHAPES, "নীল আকাশ ও গভীর সমুদ্রের চমৎকার রং।", Color(0xFF1E88E5)),
+        NatureItem("হলুদ", "Yellow", "ইয়েলো", "রং", "🟡", NatureCategory.COLORS_SHAPES, "হলুদ পাকা আম, কলা ও রোদঝিলমিল সূর্য।", Color(0xFFFBC02D)),
+        NatureItem("কমলা", "Orange", "অরেঞ্জ", "রং", "🟠", NatureCategory.COLORS_SHAPES, "কমলা লেবু ও গোধূলির আকাশের রং।", Color(0xFFFF6F00)),
+        NatureItem("বেগুনি", "Purple", "পার্পল", "রং", "🟣", NatureCategory.COLORS_SHAPES, "বেগুন ও সুন্দর অপরাজিতা ফুলের রং।", Color(0xFF7B1FA2)),
+        NatureItem("গোলাপি", "Pink", "পিঙ্ক", "রং", "🌸", NatureCategory.COLORS_SHAPES, "গোলাপ ও পদ্ম ফুলের মিষ্টি রং।", Color(0xFFE91E63)),
+        NatureItem("কালো", "Black", "ব্ল্যাক", "রং", "⚫", NatureCategory.COLORS_SHAPES, "কালো কুচকুচে রাত ও মাথার চুলের রং।", Color(0xFF212121)),
+        NatureItem("সাদা", "White", "হোয়াইট", "রং", "⚪", NatureCategory.COLORS_SHAPES, "সাদা শাপলা, দুধ ও শান্তির প্রতীক।", Color(0xFF78909C)),
+        NatureItem("বৃত্ত", "Circle", "সার্কেল", "আকার", "⭕", NatureCategory.COLORS_SHAPES, "থালা, চাকা ও ফুটবলের গোল রূপকে বৃত্ত বলে।", Color(0xFFFF9800)),
+        NatureItem("ত্রিভুজ", "Triangle", "ট্রায়াঙ্গল", "আকার", "🔺", NatureCategory.COLORS_SHAPES, "তিনটি সরলরেখা দিয়ে ঘেরা রূপকে ত্রিভুজ বলে।", Color(0xFF8E24AA)),
+        NatureItem("বর্গক্ষেত্র", "Square", "স্কয়ার", "আকার", "⏹️", NatureCategory.COLORS_SHAPES, "চারটি সমান বাহু বিশিষ্ট রূপকে বর্গ বা চারকোনা বলে।", Color(0xFF00ACC1)),
+        NatureItem("তারা", "Star", "স্টার", "আকার", "⭐", NatureCategory.COLORS_SHAPES, "পাঁচ কোনাবিশিষ্ট আকাশের ঝলমলে তারা।", Color(0xFFFFB300)),
+        NatureItem("হার্ট", "Heart", "হার্ট", "আকার", "❤️", NatureCategory.COLORS_SHAPES, "ভালোবাসার মিষ্টি হৃদয়ের আকার।", Color(0xFFD81B60))
     )
 
     // -------------------------------------------------------------
@@ -1154,16 +1230,108 @@ object KidsDataProvider {
             correctIndex = 2,
             rewardPoints = 10,
             hintBn = "কালো-সাদা রঙের মিষ্টি গানের দোয়েল!"
+        ),
+        QuizQuestion(
+            type = QuizGameType.PICTURE_TO_WORD,
+            questionBn = "কোন ফুলটি আমাদের জাতীয় ফুল?",
+            questionEn = "What is the national flower of Bangladesh?",
+            visualPrompt = "🪷",
+            options = listOf("গোলাপ", "সূর্যমুখী", "শাপলা", "গাঁদা"),
+            correctIndex = 2,
+            rewardPoints = 10,
+            hintBn = "জলে ফোটা সাদা শাপলা ফুল!"
+        ),
+        QuizQuestion(
+            type = QuizGameType.PICTURE_TO_WORD,
+            questionBn = "বনের রাজা বলা হয় কোন প্রাণীকে?",
+            questionEn = "Who is the king of the jungle?",
+            visualPrompt = "🦁",
+            options = listOf("হাতি", "সিংহ", "বাঘ", "ভালুক"),
+            correctIndex = 1,
+            rewardPoints = 10,
+            hintBn = "কেশরী সিংহের মাথায় যেন মুকুট!"
+        ),
+        QuizQuestion(
+            type = QuizGameType.COUNTING_PUZZLE,
+            questionBn = "এখানে কয়টি আপেল আছে গুনে বলো?",
+            questionEn = "Count how many apples are here?",
+            visualPrompt = "🍎 🍎 🍎",
+            options = listOf("১টি", "২টি", "৩টি", "৪টি"),
+            correctIndex = 2,
+            rewardPoints = 10,
+            hintBn = "এক, দুই, তিন!"
+        ),
+        QuizQuestion(
+            type = QuizGameType.ANIMAL_SOUND,
+            questionBn = "গরু কীভাবে ডাকে?",
+            questionEn = "What sound does a cow make?",
+            visualPrompt = "🐄",
+            options = listOf("ঘেউ ঘেউ", "হাম্বা হাম্বা", "প্যাক প্যাক", "চিঁহিঁ"),
+            correctIndex = 1,
+            rewardPoints = 10,
+            hintBn = "গরু ডাকে হাম্বা হাম্বা!"
+        ),
+        QuizQuestion(
+            type = QuizGameType.MISSING_LETTER,
+            questionBn = "Complete the word: S - U - [ ? ] = SUN ☀️",
+            questionEn = "Fill the last letter:",
+            visualPrompt = "S U _",
+            options = listOf("T", "N", "P", "G"),
+            correctIndex = 1,
+            rewardPoints = 10,
+            hintBn = "S-U-N is SUN!"
+        ),
+        QuizQuestion(
+            type = QuizGameType.PICTURE_TO_WORD,
+            questionBn = "কোন বাহনটি আকাশে ওড়ে?",
+            questionEn = "Which vehicle flies in the sky?",
+            visualPrompt = "✈️",
+            options = listOf("গাড়ি", "ট্রেন", "উড়োজাহাজ", "নৌকা"),
+            correctIndex = 2,
+            rewardPoints = 10,
+            hintBn = "ডানা মেলে মেঘের ওপরে উড়ে চলে!"
+        ),
+        QuizQuestion(
+            type = QuizGameType.PICTURE_TO_WORD,
+            questionBn = "বাংলাদেশের জাতীয় ফল কোনটি?",
+            questionEn = "What is the national fruit of Bangladesh?",
+            visualPrompt = "🍈",
+            options = listOf("আম", "কাঁঠাল", "কলা", "লিচু"),
+            correctIndex = 1,
+            rewardPoints = 10,
+            hintBn = "গায়ে কাঁটা কিন্তু ভেতরে মিষ্টি কোয়া!"
+        ),
+        QuizQuestion(
+            type = QuizGameType.MISSING_LETTER,
+            questionBn = "সঠিক বর্ণ বসাও: ক + [ ? ] = কলম 🖊️",
+            questionEn = "Find missing letters: K + [ ? ] = KALAM",
+            visualPrompt = "ক + [ ? ] = কলম",
+            options = listOf("রম", "লম", "দম", "গম"),
+            correctIndex = 1,
+            rewardPoints = 10,
+            hintBn = "ক + ল + ম = কলম!"
+        ),
+        QuizQuestion(
+            type = QuizGameType.PICTURE_TO_WORD,
+            questionBn = "গোল আকারের আকৃতিকে কী বলা হয়?",
+            questionEn = "What is the name of round shape?",
+            visualPrompt = "⭕",
+            options = listOf("ত্রিভুজ", "বর্গ", "বৃত্ত", "তারা"),
+            correctIndex = 2,
+            rewardPoints = 10,
+            hintBn = "ফুটবলের মতো গোলাকার বৃত্ত!"
         )
     )
 
-    // 8 Pairs for Memory Game
+    // Pairs for Memory Game
     val memoryPairs = listOf(
         Pair("🦁", "সিংহ (Lion)"),
         Pair("🍎", "আপেল (Apple)"),
         Pair("🚗", "গাড়ি (Car)"),
         Pair("🌸", "ফুল (Flower)"),
         Pair("⭐", "তারা (Star)"),
-        Pair("🐟", "মাছ (Fish)")
+        Pair("🐟", "মাছ (Fish)"),
+        Pair("🐘", "হাতি (Elephant)"),
+        Pair("🥭", "আম (Mango)")
     )
 }

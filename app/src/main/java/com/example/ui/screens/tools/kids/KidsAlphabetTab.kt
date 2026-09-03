@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -122,7 +123,7 @@ fun KidsAlphabetTab(
 
         // Letter Grid
         LazyVerticalGrid(
-            columns = GridCells.Adaptive(minSize = 74.dp),
+            columns = GridCells.Adaptive(minSize = 78.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             modifier = Modifier.fillMaxSize(),
@@ -135,7 +136,7 @@ fun KidsAlphabetTab(
                     onClick = {
                         audioPlayer.playClickSound()
                         audioPlayer.speak(
-                            if (selectedCategory == AlphabetCategory.ENGLISH) item.wordEn else item.letter,
+                            if (selectedCategory == AlphabetCategory.ENGLISH) "${item.letter}. ${item.wordBn}" else "${item.letter}। ${item.wordBn}",
                             isBn = selectedCategory != AlphabetCategory.ENGLISH
                         )
                         selectedLetterItem = item
@@ -174,7 +175,7 @@ fun LetterCardTile(
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = Modifier
-            .aspectRatio(0.92f)
+            .aspectRatio(0.80f)
             .clip(RoundedCornerShape(18.dp))
             .border(
                 width = 1.5.dp,
@@ -186,21 +187,20 @@ fun LetterCardTile(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(6.dp),
+                .padding(horizontal = 4.dp, vertical = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
+            verticalArrangement = Arrangement.SpaceEvenly
         ) {
             // Top emoji
             Text(
                 text = item.emoji,
-                fontSize = 20.sp,
-                modifier = Modifier.padding(top = 2.dp)
+                fontSize = 20.sp
             )
 
             // Letter
             Text(
                 text = item.letter,
-                fontSize = if (item.letter.length > 2) 20.sp else 28.sp,
+                fontSize = if (item.letter.length > 2) 18.sp else 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = item.accentColor,
                 textAlign = TextAlign.Center
@@ -210,9 +210,10 @@ fun LetterCardTile(
             Text(
                 text = item.wordBn,
                 fontSize = 11.sp,
-                fontWeight = FontWeight.Medium,
-                color = themeColors.onSurface.copy(alpha = 0.85f),
+                fontWeight = FontWeight.SemiBold,
+                color = themeColors.onSurface.copy(alpha = 0.9f),
                 maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center
             )
         }
