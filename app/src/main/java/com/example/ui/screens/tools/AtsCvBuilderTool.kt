@@ -308,6 +308,8 @@ data class CvSkillItem(
 data class SavedCircularAnalysis(
     val id: String = UUID.randomUUID().toString(),
     val title: String = "",
+    val companyName: String = "",
+    val jobTitle: String = "",
     val text: String = "",
     val initialScore: Int = 0,
     val initialMissingKeywords: List<String> = emptyList(),
@@ -2494,6 +2496,8 @@ private fun saveAllCvProfiles(context: Context, profiles: List<CvData>) {
                     sCircArr.put(JSONObject().apply {
                         put("id", sc.id)
                         put("title", sc.title)
+                        put("companyName", sc.companyName)
+                        put("jobTitle", sc.jobTitle)
                         put("text", sc.text)
                         put("initialScore", sc.initialScore)
                         val missingArr = JSONArray()
@@ -2710,6 +2714,8 @@ private fun loadAllCvProfiles(context: Context): List<CvData> {
                             list.add(SavedCircularAnalysis(
                                 id = cObj.optString("id", UUID.randomUUID().toString()),
                                 title = cObj.optString("title", ""),
+                                companyName = cObj.optString("companyName", ""),
+                                jobTitle = cObj.optString("jobTitle", ""),
                                 text = cObj.optString("text", ""),
                                 initialScore = cObj.optInt("initialScore", 0),
                                 initialMissingKeywords = mList,
@@ -4484,7 +4490,10 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                     drawSectionHeader("KEY SKILLS & COMPETENCIES", "⚡")
                     when (data.skillDisplayStyle) {
                         "GROUPED_COMMA" -> {
-                            val grouped = data.skills.groupBy { it.category.ifBlank { "Functional & Core Competencies" } }
+                            val grouped = data.skills.groupBy {
+                                val resolvedCat = it.category.ifBlank { findBestCategoryForSkill(it.name) }
+                                if (resolvedCat == "Technical & Software Engineering") "Technical & Software" else resolvedCat
+                            }
                             grouped.forEach { (cat, skills) ->
                                 val sb = SpannableStringBuilder()
                                 sb.append(bulletPrefix)
@@ -5146,6 +5155,7 @@ fun AtsCvBuilderTool(
     // History & Profile state
     var historyList by remember { mutableStateOf(loadCvHistory(context)) }
     var showHistoryDialog by remember { mutableStateOf(false) }
+    var deleteConfirmDialogState by remember { mutableStateOf<DeleteConfirmState?>(null) }
 
     var undoStack by remember { mutableStateOf(listOf<CvData>()) }
     var redoStack by remember { mutableStateOf(listOf<CvData>()) }
@@ -5643,6 +5653,47 @@ fun AtsCvBuilderTool(
                 historyList = emptyList()
                 showToast(if (isBn) "সমস্ত ইতিহাস মোছা হয়েছে" else "All history cleared")
             }
+        )
+    }
+
+    if (deleteConfirmDialogState != null) {
+        AlertDialog(
+            onDismissRequest = { deleteConfirmDialogState = null },
+            title = {
+                Text(
+                    text = deleteConfirmDialogState!!.title,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    color = themeColors.displayText
+                )
+            },
+            text = {
+                Text(
+                    text = deleteConfirmDialogState!!.message,
+                    fontSize = 14.sp,
+                    color = themeColors.displayText.copy(alpha = 0.8f)
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        deleteConfirmDialogState!!.onConfirm()
+                        deleteConfirmDialogState = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red.copy(alpha = 0.8f))
+                ) {
+                    Text(text = if (isBn) "হ্যাঁ, ডিলিট করুন" else "Yes, Delete", color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { deleteConfirmDialogState = null }
+                ) {
+                    Text(text = if (isBn) "বাতিল" else "Cancel", color = themeColors.displayText.copy(alpha = 0.6f))
+                }
+            },
+            containerColor = themeColors.cardBg,
+            shape = RoundedCornerShape(14.dp)
         )
     }
 
@@ -6334,11 +6385,17 @@ fun AtsCvBuilderTool(
                                 val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
                                 val validName = if (customName.isNotBlank()) customName.trim() else "CV_${cvData.fullName.ifBlank { "Resume" }.replace(" ", "_")}_ATS.pdf"
                                 val finalFileName = if (validName.endsWith(".pdf", ignoreCase = true)) validName else "$validName.pdf"
-                                val destFile = File(downloadsDir, finalFileName)
-                                file.copyTo(destFile, overwrite = true)
+                                var destFile = File(downloadsDir, finalFileName)
+                                var counter = 1
+                                while (destFile.exists()) {
+                                    val nameWithoutExt = finalFileName.removeSuffix(".pdf").removeSuffix(".PDF")
+                                    destFile = File(downloadsDir, "${nameWithoutExt}_$counter.pdf")
+                                    counter++
+                                }
+                                file.copyTo(destFile, overwrite = false)
                                 addOrUpdateCvHistory(context, destFile, cvData)
                                 historyList = loadCvHistory(context)
-                                showToast(if (isBn) "পিডিএফ '$finalFileName' ডাউনলোড ফোল্ডারে সেভ হয়েছে!" else "PDF '$finalFileName' saved to Downloads!")
+                                showToast(if (isBn) "পিডিএফ '${destFile.name}' ডাউনলোড ফোল্ডারে সেভ হয়েছে!" else "PDF '${destFile.name}' saved to Downloads!")
                             } catch (e: Exception) {
                                 try {
                                     addOrUpdateCvHistory(context, file, cvData)
@@ -7335,6 +7392,49 @@ private fun ExperienceTab(
     isScrollable: Boolean = true,
     isLiveEdit: Boolean = false
 ) {
+    var deleteConfirmDialogState by remember { mutableStateOf<DeleteConfirmState?>(null) }
+    
+    if (deleteConfirmDialogState != null) {
+        AlertDialog(
+            onDismissRequest = { deleteConfirmDialogState = null },
+            title = {
+                Text(
+                    text = deleteConfirmDialogState!!.title,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    color = themeColors.displayText
+                )
+            },
+            text = {
+                Text(
+                    text = deleteConfirmDialogState!!.message,
+                    fontSize = 14.sp,
+                    color = themeColors.displayText.copy(alpha = 0.8f)
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        deleteConfirmDialogState!!.onConfirm()
+                        deleteConfirmDialogState = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red.copy(alpha = 0.8f))
+                ) {
+                    Text(text = if (isBn) "হ্যাঁ, ডিলিট করুন" else "Yes, Delete", color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { deleteConfirmDialogState = null }
+                ) {
+                    Text(text = if (isBn) "বাতিল" else "Cancel", color = themeColors.displayText.copy(alpha = 0.6f))
+                }
+            },
+            containerColor = themeColors.cardBg,
+            shape = RoundedCornerShape(14.dp)
+        )
+    }
+
     val scrollState = rememberScrollState()
     
     Column(
@@ -7748,13 +7848,22 @@ private fun ExperienceTab(
                             text = if (isBn) "অভিজ্ঞতা #${index + 1}" else "Position #${index + 1}",
                             fontWeight = FontWeight.Bold,
                             fontSize = 12.sp,
-                            color = themeColors.buttonEqualBg
+                            color = themeColors.buttonEqualBg,
+                            modifier = Modifier.weight(1f),
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                         )
                         IconButton(
                             onClick = {
-                                val newList = cvData.experiences.toMutableList()
-                                newList.removeAt(index)
-                                onCvDataChange(cvData.copy(experiences = newList))
+                                deleteConfirmDialogState = DeleteConfirmState(
+                                    title = if (isBn) "অভিজ্ঞতা ডিলিট করার নিশ্চয়তা" else "Confirm Experience Deletion",
+                                    message = if (isBn) "আপনি কি নিশ্চিত যে এই কাজের অভিজ্ঞতাটি ডিলিট করতে চান?" else "Are you sure you want to delete this work experience?",
+                                    onConfirm = {
+                                        val newList = cvData.experiences.toMutableList()
+                                        newList.removeAt(index)
+                                        onCvDataChange(cvData.copy(experiences = newList))
+                                    }
+                                )
                             },
                             modifier = Modifier.size(24.dp)
                         ) {
@@ -7900,6 +8009,49 @@ private fun EducationAndSkillsTab(
     isScrollable: Boolean = true,
     isLiveEdit: Boolean = false
 ) {
+    var deleteConfirmDialogState by remember { mutableStateOf<DeleteConfirmState?>(null) }
+    
+    if (deleteConfirmDialogState != null) {
+        AlertDialog(
+            onDismissRequest = { deleteConfirmDialogState = null },
+            title = {
+                Text(
+                    text = deleteConfirmDialogState!!.title,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    color = themeColors.displayText
+                )
+            },
+            text = {
+                Text(
+                    text = deleteConfirmDialogState!!.message,
+                    fontSize = 14.sp,
+                    color = themeColors.displayText.copy(alpha = 0.8f)
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        deleteConfirmDialogState!!.onConfirm()
+                        deleteConfirmDialogState = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red.copy(alpha = 0.8f))
+                ) {
+                    Text(text = if (isBn) "হ্যাঁ, ডিলিট করুন" else "Yes, Delete", color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { deleteConfirmDialogState = null }
+                ) {
+                    Text(text = if (isBn) "বাতিল" else "Cancel", color = themeColors.displayText.copy(alpha = 0.6f))
+                }
+            },
+            containerColor = themeColors.cardBg,
+            shape = RoundedCornerShape(14.dp)
+        )
+    }
+
     val scrollState = rememberScrollState()
 
     // Standard Job Application Dropdown Options
@@ -8426,12 +8578,26 @@ private fun EducationAndSkillsTab(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = "Education Entry #${index + 1}", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = themeColors.buttonEqualBg)
+                        Text(
+                            text = "Education Entry #${index + 1}", 
+                            fontWeight = FontWeight.Bold, 
+                            fontSize = 12.sp, 
+                            color = themeColors.buttonEqualBg,
+                            modifier = Modifier.weight(1f),
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                        )
                         IconButton(
                             onClick = {
-                                val newList = cvData.educations.toMutableList()
-                                newList.removeAt(index)
-                                onCvDataChange(cvData.copy(educations = newList))
+                                deleteConfirmDialogState = DeleteConfirmState(
+                                    title = if (isBn) "শিক্ষাগত যোগ্যতা ডিলিট করার নিশ্চয়তা" else "Confirm Education Deletion",
+                                    message = if (isBn) "আপনি কি নিশ্চিত যে এই শিক্ষাগত যোগ্যতাটি ডিলিট করতে চান?" else "Are you sure you want to delete this educational qualification?",
+                                    onConfirm = {
+                                        val newList = cvData.educations.toMutableList()
+                                        newList.removeAt(index)
+                                        onCvDataChange(cvData.copy(educations = newList))
+                                    }
+                                )
                             },
                             modifier = Modifier.size(24.dp)
                         ) {
@@ -9015,9 +9181,15 @@ private fun EducationAndSkillsTab(
 
                                             IconButton(
                                                 onClick = {
-                                                    val newList = cvData.skills.toMutableList()
-                                                    newList.removeAt(originalIdx)
-                                                    onCvDataChange(cvData.copy(skills = newList))
+                                                    deleteConfirmDialogState = DeleteConfirmState(
+                                                        title = if (isBn) "স্কিল মুছে ফেলার নিশ্চয়তা" else "Confirm Skill Deletion",
+                                                        message = if (isBn) "আপনি কি নিশ্চিত যে '${sk.name}' স্কিলটি ডিলিট করতে চান?" else "Are you sure you want to delete the skill '${sk.name}'?",
+                                                        onConfirm = {
+                                                            val newList = cvData.skills.toMutableList()
+                                                            newList.removeAt(originalIdx)
+                                                            onCvDataChange(cvData.copy(skills = newList))
+                                                        }
+                                                    )
                                                 },
                                                 modifier = Modifier.size(24.dp)
                                             ) {
@@ -10562,6 +10734,7 @@ private fun AiJobCircularMatchTab(
     var activeFixDialogData by remember { mutableStateOf<CvFixActionDialogData?>(null) }
     var showSaveCircularDialog by remember { mutableStateOf(false) }
     var newCircularTitle by remember { mutableStateOf("") }
+    var newCircularCompany by remember { mutableStateOf("") }
     var activeAiSection by remember { mutableStateOf("ATS_SCORE") }
 
     // Chatbot State
@@ -10625,7 +10798,7 @@ private fun AiJobCircularMatchTab(
             text = {
                 Column {
                     Text(
-                        text = if (isBn) "ভবিষ্যতে পুনরায় ম্যাচ করার জন্য একটি নাম দিন:" else "Enter a title to save this circular for future matching:",
+                        text = if (isBn) "ভবিষ্যতে পুনরায় ম্যাচ করার জন্য পদের নাম ও কোম্পানির নাম দিন:" else "Enter job title and company to save this circular:",
                         fontSize = 12.sp,
                         color = themeColors.displayText.copy(alpha = 0.7f)
                     )
@@ -10635,7 +10808,25 @@ private fun AiJobCircularMatchTab(
                         onValueChange = { newCircularTitle = it },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
-                        placeholder = { Text(if (isBn) "যেমন: Senior Software Engineer - BRAC" else "e.g., Senior Software Engineer") },
+                        label = { Text(if (isBn) "পদের নাম (Job Title)" else "Job Title") },
+                        placeholder = { Text(if (isBn) "যেমন: Senior Software Engineer" else "e.g., Senior Software Engineer") },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = themeColors.buttonEqualBg,
+                            unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f),
+                            focusedContainerColor = themeColors.cardBg,
+                            unfocusedContainerColor = themeColors.cardBg,
+                            focusedTextColor = themeColors.displayText,
+                            unfocusedTextColor = themeColors.displayText
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = newCircularCompany,
+                        onValueChange = { newCircularCompany = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        label = { Text(if (isBn) "কোম্পানির নাম (Company Name)" else "Company Name") },
+                        placeholder = { Text(if (isBn) "যেমন: BRAC" else "e.g., Google") },
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = themeColors.buttonEqualBg,
                             unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f),
@@ -10651,10 +10842,13 @@ private fun AiJobCircularMatchTab(
                 Button(
                     onClick = {
                         val title = newCircularTitle.trim().ifBlank { if (isBn) "সার্কুলার #${cvData.savedCirculars.size + 1}" else "Circular #${cvData.savedCirculars.size + 1}" }
+                        val company = newCircularCompany.trim()
                         val newId = java.util.UUID.randomUUID().toString()
                         val newItem = SavedCircularAnalysis(
                             id = newId,
                             title = title,
+                            companyName = company,
+                            jobTitle = title, // Title is acting as job title
                             text = circularTextInput,
                             initialScore = cvData.lastJobMatchPercentage,
                             initialMatchingStrengths = cvData.lastMatchingStrengths,
@@ -10668,6 +10862,7 @@ private fun AiJobCircularMatchTab(
                         ))
                         showSaveCircularDialog = false
                         newCircularTitle = ""
+                        newCircularCompany = ""
                         Toast.makeText(context, if (isBn) "সার্কুলার সংরক্ষিত হয়েছে" else "Circular saved", Toast.LENGTH_SHORT).show()
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg)
@@ -11448,23 +11643,36 @@ private fun AiJobCircularMatchTab(
                                 }
                             ) {
                                 Row(
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Description,
                                         contentDescription = null,
                                         tint = if (isSelected) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.5f),
-                                        modifier = Modifier.size(14.dp)
+                                        modifier = Modifier.size(20.dp)
                                     )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(
-                                        text = circularItem.title,
-                                        fontSize = 11.sp,
-                                        color = if (isSelected) themeColors.buttonEqualBg else themeColors.displayText,
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Column(
+                                        modifier = Modifier.widthIn(max = 160.dp)
+                                    ) {
+                                        Text(
+                                            text = circularItem.companyName.ifBlank { "Unknown Company" },
+                                            fontSize = 13.sp,
+                                            color = if (isSelected) themeColors.buttonEqualBg else themeColors.displayText,
+                                            fontWeight = FontWeight.Bold,
+                                            maxLines = 1,
+                                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                        )
+                                        Text(
+                                            text = circularItem.jobTitle.ifBlank { circularItem.title },
+                                            fontSize = 11.5.sp,
+                                            color = themeColors.displayText.copy(alpha = 0.7f),
+                                            maxLines = 1,
+                                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(8.dp))
                                     IconButton(
                                         onClick = {
                                             val updated = cvData.savedCirculars.filter { it.id != circularItem.id }
@@ -11474,9 +11682,9 @@ private fun AiJobCircularMatchTab(
                                                 activeCircularId = newActiveId
                                             ))
                                         },
-                                        modifier = Modifier.size(18.dp)
+                                        modifier = Modifier.size(20.dp)
                                     ) {
-                                        Icon(imageVector = Icons.Default.Close, contentDescription = "Remove", tint = themeColors.displayText.copy(alpha = 0.5f), modifier = Modifier.size(12.dp))
+                                        Icon(imageVector = Icons.Default.Close, contentDescription = "Remove", tint = themeColors.displayText.copy(alpha = 0.5f), modifier = Modifier.size(16.dp))
                                     }
                                 }
                             }

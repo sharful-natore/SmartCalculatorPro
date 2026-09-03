@@ -423,6 +423,12 @@ fun CvImageCropperDialog(
     )
 }
 
+data class DeleteConfirmState(
+    val title: String,
+    val message: String,
+    val onConfirm: () -> Unit
+)
+
 // ================= DELIVERABLE: CLEAN & COMPACT LIVE EDIT PANEL =================
 @Composable
 fun CvLiveEditPanel(
@@ -440,6 +446,48 @@ fun CvLiveEditPanel(
     var showAddCategoryMenu by remember { mutableStateOf(false) }
     var showCustomCategoryDialog by remember { mutableStateOf(false) }
     var customCategoryInput by remember { mutableStateOf("") }
+    var deleteConfirmDialogState by remember { mutableStateOf<DeleteConfirmState?>(null) }
+
+    if (deleteConfirmDialogState != null) {
+        AlertDialog(
+            onDismissRequest = { deleteConfirmDialogState = null },
+            title = {
+                Text(
+                    text = deleteConfirmDialogState!!.title,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    color = themeColors.displayText
+                )
+            },
+            text = {
+                Text(
+                    text = deleteConfirmDialogState!!.message,
+                    fontSize = 14.sp,
+                    color = themeColors.displayText.copy(alpha = 0.8f)
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        deleteConfirmDialogState!!.onConfirm()
+                        deleteConfirmDialogState = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red.copy(alpha = 0.8f))
+                ) {
+                    Text(text = if (isBn) "হ্যাঁ, ডিলিট করুন" else "Yes, Delete", color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { deleteConfirmDialogState = null }
+                ) {
+                    Text(text = if (isBn) "বাতিল" else "Cancel", color = themeColors.displayText.copy(alpha = 0.6f))
+                }
+            },
+            containerColor = themeColors.cardBg,
+            shape = RoundedCornerShape(14.dp)
+        )
+    }
 
     fun commitAndRefresh(updated: CvData) {
         onCvDataChange(updated)
@@ -968,7 +1016,10 @@ fun CvLiveEditPanel(
                                     text = if (exp.role.isNotBlank()) "${exp.role} @ ${exp.company}" else (if (isBn) "অভিজ্ঞতা #${idx + 1}" else "Experience #${idx + 1}"),
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 12.sp,
-                                    color = themeColors.buttonEqualBg
+                                    color = themeColors.buttonEqualBg,
+                                    modifier = Modifier.weight(1f),
+                                    maxLines = 2,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                                 )
 
                                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -989,9 +1040,15 @@ fun CvLiveEditPanel(
 
                                     IconButton(
                                         onClick = {
-                                            val list = localData.experiences.toMutableList()
-                                            list.removeAt(idx)
-                                            localData = localData.copy(experiences = list)
+                                            deleteConfirmDialogState = DeleteConfirmState(
+                                                title = if (isBn) "অভিজ্ঞতা ডিলিট করার নিশ্চয়তা" else "Confirm Experience Deletion",
+                                                message = if (isBn) "আপনি কি নিশ্চিত যে এই কাজের অভিজ্ঞতাটি ডিলিট করতে চান?" else "Are you sure you want to delete this work experience?",
+                                                onConfirm = {
+                                                    val list = localData.experiences.toMutableList()
+                                                    list.removeAt(idx)
+                                                    localData = localData.copy(experiences = list)
+                                                }
+                                            )
                                         },
                                         modifier = Modifier.size(24.dp)
                                     ) {
@@ -1249,14 +1306,23 @@ fun CvLiveEditPanel(
                                     text = if (edu.degree.isNotBlank()) edu.degree else (if (isBn) "ডিগ্রি #${idx + 1}" else "Degree #${idx + 1}"),
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 12.sp,
-                                    color = themeColors.buttonEqualBg
+                                    color = themeColors.buttonEqualBg,
+                                    modifier = Modifier.weight(1f),
+                                    maxLines = 2,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                                 )
 
                                 IconButton(
                                     onClick = {
-                                        val list = localData.educations.toMutableList()
-                                        list.removeAt(idx)
-                                        localData = localData.copy(educations = list)
+                                        deleteConfirmDialogState = DeleteConfirmState(
+                                            title = if (isBn) "শিক্ষাগত যোগ্যতা ডিলিট করার নিশ্চয়তা" else "Confirm Education Deletion",
+                                            message = if (isBn) "আপনি কি নিশ্চিত যে এই শিক্ষাগত যোগ্যতাটি ডিলিট করতে চান?" else "Are you sure you want to delete this educational qualification?",
+                                            onConfirm = {
+                                                val list = localData.educations.toMutableList()
+                                                list.removeAt(idx)
+                                                localData = localData.copy(educations = list)
+                                            }
+                                        )
                                     },
                                     modifier = Modifier.size(24.dp)
                                 ) {
@@ -1643,14 +1709,20 @@ fun CvLiveEditPanel(
 
                                         IconButton(
                                             onClick = {
-                                                localAddedCategories = localAddedCategories.filter { it != cat }
-                                                val remainingSkills = localData.skills.filter { sk ->
-                                                    val resolvedCat = sk.category.ifBlank { findBestCategoryForSkill(sk.name) }
-                                                    val finalCat = if (resolvedCat == "Technical & Software Engineering") "Technical & Software" else resolvedCat
-                                                    finalCat != cat
-                                                }
-                                                localData = localData.copy(skills = remainingSkills)
-                                                Toast.makeText(context, if (isBn) "'$cat' ক্যাটাগরি মুছে ফেলা হয়েছে" else "Removed category '$cat'", Toast.LENGTH_SHORT).show()
+                                                deleteConfirmDialogState = DeleteConfirmState(
+                                                    title = if (isBn) "ক্যাটাগরি ডিলিট করার নিশ্চয়তা" else "Confirm Category Deletion",
+                                                    message = if (isBn) "আপনি কি নিশ্চিত যে '$cat' ক্যাটাগরি এবং এর অধীনে থাকা সব স্কিল মুছে ফেলতে চান?" else "Are you sure you want to delete the category '$cat' and all its skills?",
+                                                    onConfirm = {
+                                                        localAddedCategories = localAddedCategories.filter { it != cat }
+                                                        val remainingSkills = localData.skills.filter { sk ->
+                                                            val resolvedCat = sk.category.ifBlank { findBestCategoryForSkill(sk.name) }
+                                                            val finalCat = if (resolvedCat == "Technical & Software Engineering") "Technical & Software" else resolvedCat
+                                                            finalCat != cat
+                                                        }
+                                                        localData = localData.copy(skills = remainingSkills)
+                                                        Toast.makeText(context, if (isBn) "'$cat' ক্যাটাগরি মুছে ফেলা হয়েছে" else "Removed category '$cat'", Toast.LENGTH_SHORT).show()
+                                                    }
+                                                )
                                             },
                                             modifier = Modifier.size(24.dp)
                                         ) {
@@ -1750,9 +1822,15 @@ fun CvLiveEditPanel(
 
                                                     IconButton(
                                                         onClick = {
-                                                            val newList = localData.skills.toMutableList()
-                                                            newList.removeAt(originalIdx)
-                                                            localData = localData.copy(skills = newList)
+                                                            deleteConfirmDialogState = DeleteConfirmState(
+                                                                title = if (isBn) "স্কিল মুছে ফেলার নিশ্চয়তা" else "Confirm Skill Deletion",
+                                                                message = if (isBn) "আপনি কি নিশ্চিত যে '${sk.name}' স্কিলটি ডিলিট করতে চান?" else "Are you sure you want to delete the skill '${sk.name}'?",
+                                                                onConfirm = {
+                                                                    val newList = localData.skills.toMutableList()
+                                                                    newList.removeAt(originalIdx)
+                                                                    localData = localData.copy(skills = newList)
+                                                                }
+                                                            )
                                                         },
                                                         modifier = Modifier.size(22.dp)
                                                     ) {
@@ -1940,14 +2018,23 @@ fun CvLiveEditPanel(
                                     text = if (proj.title.isNotBlank()) proj.title else (if (isBn) "প্রজেক্ট #${idx + 1}" else "Project #${idx + 1}"),
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 12.sp,
-                                    color = themeColors.buttonEqualBg
+                                    color = themeColors.buttonEqualBg,
+                                    modifier = Modifier.weight(1f),
+                                    maxLines = 2,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                                 )
 
                                 IconButton(
                                     onClick = {
-                                        val list = localData.projects.toMutableList()
-                                        list.removeAt(idx)
-                                        localData = localData.copy(projects = list)
+                                        deleteConfirmDialogState = DeleteConfirmState(
+                                            title = if (isBn) "প্রজেক্ট ডিলিট করার নিশ্চয়তা" else "Confirm Project Deletion",
+                                            message = if (isBn) "আপনি কি নিশ্চিত যে এই প্রজেক্টটি ডিলিট করতে চান?" else "Are you sure you want to delete this project?",
+                                            onConfirm = {
+                                                val list = localData.projects.toMutableList()
+                                                list.removeAt(idx)
+                                                localData = localData.copy(projects = list)
+                                            }
+                                        )
                                     },
                                     modifier = Modifier.size(24.dp)
                                 ) {
@@ -2165,9 +2252,15 @@ fun CvLiveEditPanel(
 
                                 IconButton(
                                     onClick = {
-                                        val list = localData.customSections.toMutableList()
-                                        list.removeAt(idx)
-                                        localData = localData.copy(customSections = list)
+                                        deleteConfirmDialogState = DeleteConfirmState(
+                                            title = if (isBn) "কাস্টম সেকশন ডিলিট করার নিশ্চয়তা" else "Confirm Custom Section Deletion",
+                                            message = if (isBn) "আপনি কি নিশ্চিত যে এই কাস্টম সেকশনটি ডিলিট করতে চান?" else "Are you sure you want to delete this custom section?",
+                                            onConfirm = {
+                                                val list = localData.customSections.toMutableList()
+                                                list.removeAt(idx)
+                                                localData = localData.copy(customSections = list)
+                                            }
+                                        )
                                     },
                                     modifier = Modifier.size(24.dp)
                                 ) {

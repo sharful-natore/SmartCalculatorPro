@@ -3928,13 +3928,13 @@ How can I help you today?"""
         bmiResultValue = df.format(bmi)
         
         bmiCategoryResult = when {
-            bmi <= 15.9 -> "Very Severely Underweight"
-            bmi in 16.0..16.9 -> "Severely Underweight"
-            bmi in 17.0..18.4 -> "Underweight"
-            bmi in 18.5..24.9 -> "Normal"
-            bmi in 25.0..29.9 -> "Overweight"
-            bmi in 30.0..34.9 -> "Obese Class I"
-            bmi in 35.0..39.9 -> "Obese Class II"
+            bmi < 16.0 -> "Very Severely Underweight"
+            bmi < 17.0 -> "Severely Underweight"
+            bmi < 18.5 -> "Underweight"
+            bmi < 25.0 -> "Normal"
+            bmi < 30.0 -> "Overweight"
+            bmi < 35.0 -> "Obese Class I"
+            bmi < 40.0 -> "Obese Class II"
             else -> "Obese Class III"
         }
 
