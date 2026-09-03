@@ -36,12 +36,15 @@ import com.example.ui.theme.CalculatorThemeColors
 fun KidsAlphabetTab(
     themeColors: CalculatorThemeColors,
     audioPlayer: KidsAudioPlayer,
+    selectedCategory: AlphabetCategory = AlphabetCategory.BANGLA_VOWEL,
+    onCategoryChange: (AlphabetCategory) -> Unit = {},
+    isRandomOrder: Boolean = false,
+    onToggleRandomOrder: () -> Unit = {},
+    onReshuffle: () -> Unit = {},
+    shuffleSeed: Int = 0,
     onTraceLetter: (String) -> Unit
 ) {
-    var selectedCategory by remember { mutableStateOf(AlphabetCategory.BANGLA_VOWEL) }
     var selectedLetterItem by remember { mutableStateOf<LetterItem?>(null) }
-    var isRandomOrder by remember { mutableStateOf(false) }
-    var shuffleSeed by remember { mutableStateOf(0) }
 
     val baseItems = when (selectedCategory) {
         AlphabetCategory.BANGLA_VOWEL -> KidsDataProvider.banglaVowels
@@ -61,146 +64,25 @@ fun KidsAlphabetTab(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = 16.dp, vertical = 4.dp)
     ) {
-        // Category Pills
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 10.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            AlphabetCategory.values().forEach { cat ->
-                val isSelected = selectedCategory == cat
-                val bgColor = if (isSelected) themeColors.accent else themeColors.surface
-                val contentColor = if (isSelected) themeColors.onAccent else themeColors.onSurface
-
-                Surface(
-                    shape = RoundedCornerShape(16.dp),
-                    color = bgColor,
-                    border = if (!isSelected) androidx.compose.foundation.BorderStroke(1.dp, themeColors.onSurface.copy(alpha = 0.15f)) else null,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(42.dp)
-                        .clickable {
-                            audioPlayer.playClickSound()
-                            selectedCategory = cat
-                        }
-                ) {
-                    Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 4.dp)) {
-                        Text(
-                            text = cat.titleBn,
-                            style = MaterialTheme.typography.labelMedium.copy(
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                fontSize = 11.5.sp
-                            ),
-                            color = contentColor,
-                            textAlign = TextAlign.Center,
-                            maxLines = 1
-                        )
-                    }
-                }
-            }
-        }
-
-        // Practice Mode Control Bar (Sequential vs Random Shuffle)
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            // Mode Toggle Chip
-            Surface(
-                shape = RoundedCornerShape(20.dp),
-                color = if (isRandomOrder) Color(0xFF673AB7).copy(alpha = 0.15f) else themeColors.surfaceVariant.copy(alpha = 0.5f),
-                border = androidx.compose.foundation.BorderStroke(
-                    1.2.dp,
-                    if (isRandomOrder) Color(0xFF673AB7) else themeColors.onSurface.copy(alpha = 0.2f)
-                ),
-                modifier = Modifier
-                    .clip(RoundedCornerShape(20.dp))
-                    .clickable {
-                        audioPlayer.playClickSound()
-                        isRandomOrder = !isRandomOrder
-                        if (isRandomOrder) {
-                            shuffleSeed++
-                            audioPlayer.speak("এলোমেলো প্র্যাকটিস চালু হয়েছে। বর্ণ দেখে চিনতে পারো কি না দেখো!", isBn = true)
-                        } else {
-                            audioPlayer.speak("ধারাবাহিক ক্রম চালু হয়েছে।", isBn = true)
-                        }
-                    }
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = if (isRandomOrder) "🔀 এলোমেলো প্র্যাকটিস" else "📑 ধারাবাহিক ক্রম",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = if (isRandomOrder) Color(0xFF673AB7) else themeColors.onSurface
-                    )
-                }
-            }
-
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                // If Random is active, show reshuffle button
-                if (isRandomOrder) {
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = Color(0xFF673AB7),
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .clickable {
-                                audioPlayer.playClickSound()
-                                shuffleSeed++
-                                audioPlayer.speak("বর্ণমালা আবার এলোমেলো করা হয়েছে!", isBn = true)
-                            }
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(text = "🔄 রি-শাফল", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
-
-                Surface(
-                    shape = RoundedCornerShape(10.dp),
-                    color = themeColors.accent.copy(alpha = 0.15f)
-                ) {
-                    Text(
-                        text = "${currentItems.size}টি বর্ণ",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = themeColors.accent,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-        }
-
-        // Letter Grid
+        // Letter Grid - taking full screen with bottom padding for switcher
         LazyVerticalGrid(
             columns = GridCells.Adaptive(minSize = 78.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = 24.dp)
+            contentPadding = PaddingValues(top = 4.dp, bottom = 88.dp)
         ) {
             items(currentItems) { item ->
+                val isEnglish = selectedCategory == AlphabetCategory.ENGLISH
                 LetterCardTile(
                     item = item,
                     themeColors = themeColors,
                     onClick = {
                         audioPlayer.playClickSound()
-                        audioPlayer.speak(
-                            if (selectedCategory == AlphabetCategory.ENGLISH) "${item.letter}. ${item.wordBn}" else "${item.letter}। ${item.wordBn}",
-                            isBn = selectedCategory != AlphabetCategory.ENGLISH
-                        )
+                        val speech = KidsDataProvider.getAlphabetSpeechText(item, isEnglish = isEnglish, isDetailed = false)
+                        audioPlayer.speak(speech, isBn = !isEnglish)
                         selectedLetterItem = item
                     }
                 )
@@ -413,10 +295,8 @@ fun LetterDetailDialog(
                     Button(
                         onClick = {
                             audioPlayer.playSuccessChime()
-                            audioPlayer.speak(
-                                if (isEnglish) "${item.letter}. ${item.wordEn}." else "${item.letter}। ${item.wordBn}। ${item.exampleSentence}",
-                                isBn = !isEnglish
-                            )
+                            val speech = KidsDataProvider.getAlphabetSpeechText(item, isEnglish = isEnglish, isDetailed = true)
+                            audioPlayer.speak(speech, isBn = !isEnglish)
                         },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = themeColors.accent,

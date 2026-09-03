@@ -17,6 +17,7 @@ val CalculatorThemeColors.onSurface: Color get() = this.displayText
 val CalculatorThemeColors.accent: Color get() = this.buttonEqualBg
 val CalculatorThemeColors.onAccent: Color get() = this.buttonEqualText
 val CalculatorThemeColors.surfaceVariant: Color get() = this.chipBg
+val CalculatorThemeColors.titleBarText: Color get() = if (this.isDark) this.displayText else this.buttonEqualText
 
 enum class KidsSectionTab(val titleBn: String, val titleEn: String, val icon: ImageVector) {
     ALPHABET("বর্ণমালা", "Alphabets", Icons.Default.Spellcheck),

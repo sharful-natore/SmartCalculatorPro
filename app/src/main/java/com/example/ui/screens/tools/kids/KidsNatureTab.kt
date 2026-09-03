@@ -31,9 +31,10 @@ import com.example.ui.theme.CalculatorThemeColors
 fun KidsNatureTab(
     themeColors: CalculatorThemeColors,
     audioPlayer: KidsAudioPlayer,
+    selectedCategory: NatureCategory = NatureCategory.ANIMALS,
+    onCategoryChange: (NatureCategory) -> Unit = {},
     onRewardStars: (Int) -> Unit
 ) {
-    var selectedCategory by remember { mutableStateOf(NatureCategory.ANIMALS) }
     var selectedItem by remember { mutableStateOf<NatureItem?>(null) }
 
     val currentItems = remember(selectedCategory) {
@@ -43,53 +44,15 @@ fun KidsNatureTab(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = 16.dp, vertical = 4.dp)
     ) {
-        // Nature Categories Horizontal Filter Row
-        LazyRow(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(NatureCategory.values()) { cat ->
-                val isSelected = selectedCategory == cat
-                Surface(
-                    shape = RoundedCornerShape(18.dp),
-                    color = if (isSelected) themeColors.accent else themeColors.surface,
-                    border = if (!isSelected) androidx.compose.foundation.BorderStroke(1.dp, themeColors.onSurface.copy(alpha = 0.15f)) else null,
-                    modifier = Modifier
-                        .height(42.dp)
-                        .clickable {
-                            audioPlayer.playClickSound()
-                            selectedCategory = cat
-                        }
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 14.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(text = cat.emoji, fontSize = 16.sp)
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = cat.titleBn,
-                            style = MaterialTheme.typography.labelMedium.copy(
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                            ),
-                            color = if (isSelected) themeColors.onAccent else themeColors.onSurface
-                        )
-                    }
-                }
-            }
-        }
-
         // Subtitle Guidance
         Text(
             text = "ছবিতে স্পর্শ করে ডাক ও পরিচয় শোনো 👇",
             style = MaterialTheme.typography.bodySmall,
             color = themeColors.onSurface.copy(alpha = 0.7f),
             fontWeight = FontWeight.Medium,
-            modifier = Modifier.padding(bottom = 8.dp)
+            modifier = Modifier.padding(bottom = 6.dp)
         )
 
         // Items Grid
@@ -98,7 +61,7 @@ fun KidsNatureTab(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = 24.dp)
+            contentPadding = PaddingValues(top = 4.dp, bottom = 88.dp)
         ) {
             items(currentItems) { item ->
                 Card(

@@ -44,12 +44,14 @@ enum class PhonicsSubCategory(val titleBn: String, val icon: String) {
 fun KidsSpellingTab(
     themeColors: CalculatorThemeColors,
     audioPlayer: KidsAudioPlayer,
+    mainMode: SpellingTabMode = SpellingTabMode.WORDS,
+    onMainModeChange: (SpellingTabMode) -> Unit = {},
+    selectedCategory: SpellingCategory = SpellingCategory.BANGLA_TWO_LETTER,
+    onCategoryChange: (SpellingCategory) -> Unit = {},
+    selectedPhonicsCategory: PhonicsSubCategory = PhonicsSubCategory.ALPHABET_SOUNDS,
+    onPhonicsCategoryChange: (PhonicsSubCategory) -> Unit = {},
     onRewardStars: (Int) -> Unit
 ) {
-    var mainMode by remember { mutableStateOf(SpellingTabMode.WORDS) }
-    var selectedCategory by remember { mutableStateOf(SpellingCategory.BANGLA_TWO_LETTER) }
-    var selectedPhonicsCategory by remember { mutableStateOf(PhonicsSubCategory.ALPHABET_SOUNDS) }
-
     var puzzleTargetWord by remember { mutableStateOf<SpellingWordItem?>(null) }
     var highlightedStepIndex by remember { mutableStateOf(-1) }
     var currentlySpellingWord by remember { mutableStateOf<String?>(null) }
@@ -61,7 +63,7 @@ fun KidsSpellingTab(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = 16.dp, vertical = 4.dp)
     ) {
         // Primary Mode Switcher: Words vs Phonics Rules
         Row(
@@ -81,7 +83,7 @@ fun KidsSpellingTab(
                         .height(46.dp)
                         .clickable {
                             audioPlayer.playClickSound()
-                            mainMode = mode
+                            onMainModeChange(mode)
                         }
                 ) {
                     Row(
@@ -127,7 +129,7 @@ fun KidsSpellingTab(
                             .height(40.dp)
                             .clickable {
                                 audioPlayer.playClickSound()
-                                selectedCategory = cat
+                                onCategoryChange(cat)
                             }
                     ) {
                         Box(
@@ -178,7 +180,7 @@ fun KidsSpellingTab(
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(14.dp),
-                contentPadding = PaddingValues(bottom = 28.dp)
+                contentPadding = PaddingValues(top = 4.dp, bottom = 88.dp)
             ) {
                 items(filteredWords) { wordItem ->
                     val isCurrentlySpellingThis = currentlySpellingWord == wordItem.word
@@ -238,7 +240,7 @@ fun KidsSpellingTab(
                             .height(40.dp)
                             .clickable {
                                 audioPlayer.playClickSound()
-                                selectedPhonicsCategory = subCat
+                                onPhonicsCategoryChange(subCat)
                             }
                     ) {
                         Row(
@@ -601,7 +603,7 @@ fun PhonicsAlphabetSection(
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(14.dp),
-            contentPadding = PaddingValues(bottom = 28.dp)
+            contentPadding = PaddingValues(top = 4.dp, bottom = 88.dp)
         ) {
             items(items) { letterItem ->
                 Card(
@@ -800,7 +802,7 @@ fun PhonicsRulesListSection(
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(14.dp),
-        contentPadding = PaddingValues(bottom = 28.dp)
+        contentPadding = PaddingValues(top = 4.dp, bottom = 88.dp)
     ) {
         // Educational Intro Banner
         item {

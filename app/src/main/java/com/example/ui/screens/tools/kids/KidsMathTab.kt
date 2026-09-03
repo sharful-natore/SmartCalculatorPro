@@ -33,9 +33,10 @@ import kotlinx.coroutines.launch
 fun KidsMathTab(
     themeColors: CalculatorThemeColors,
     audioPlayer: KidsAudioPlayer,
+    subTab: Int = 0,
+    onSubTabChange: (Int) -> Unit = {},
     onRewardStars: (Int) -> Unit
 ) {
-    var subTab by remember { mutableStateOf(0) } // 0: Counting (সংখ্যা), 1: Times Tables (নামতা)
     var selectedNumberItem by remember { mutableStateOf<NumberItem?>(null) }
     var selectedTableNumber by remember { mutableStateOf(1) }
     val coroutineScope = rememberCoroutineScope()
@@ -45,44 +46,8 @@ fun KidsMathTab(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = 16.dp, vertical = 4.dp)
     ) {
-        // SubTab Switcher
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            val tabs = listOf("সংখ্যা ও গণনা (১-২০)", "নামতার পাঠশালা (১-১০)")
-            tabs.forEachIndexed { idx, title ->
-                val isSelected = subTab == idx
-                Surface(
-                    shape = RoundedCornerShape(16.dp),
-                    color = if (isSelected) themeColors.accent else themeColors.surface,
-                    border = if (!isSelected) androidx.compose.foundation.BorderStroke(1.dp, themeColors.onSurface.copy(alpha = 0.15f)) else null,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(44.dp)
-                        .clickable {
-                            audioPlayer.playClickSound()
-                            subTab = idx
-                        }
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text(
-                            text = title,
-                            style = MaterialTheme.typography.labelMedium.copy(
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                fontSize = 13.sp
-                            ),
-                            color = if (isSelected) themeColors.onAccent else themeColors.onSurface
-                        )
-                    }
-                }
-            }
-        }
-
         if (subTab == 0) {
             // COUNTING (সংখ্যা ও গণনা ১-২০)
             Row(
@@ -109,7 +74,7 @@ fun KidsMathTab(
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
-                contentPadding = PaddingValues(bottom = 24.dp)
+                contentPadding = PaddingValues(top = 4.dp, bottom = 88.dp)
             ) {
                 items(KidsDataProvider.numberItems) { item ->
                     Card(
@@ -297,7 +262,7 @@ fun KidsMathTab(
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(bottom = 24.dp)
+                    contentPadding = PaddingValues(top = 4.dp, bottom = 88.dp)
                 ) {
                     items(currentTable.items) { item ->
                         val isHighlighted = isReadingWholeTable && highlightedTableRowIndex == item.multiplier - 1

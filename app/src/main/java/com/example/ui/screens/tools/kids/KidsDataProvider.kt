@@ -4,6 +4,63 @@ import androidx.compose.ui.graphics.Color
 
 object KidsDataProvider {
 
+    /**
+     * Pronunciation text helper according to requirements:
+     * - Bengali Swaraborno: "স্বরে অ, স্বরে অ তে অজগর", "স্বরে আ, স্বরে আ তে আম", etc.
+     * - Bengali Byanjonborno: "ক, ক তে কলম", "খ, খ তে খরগোশ", etc.
+     * - English Alphabet: "A, A for Apple", "B, B for Ball", etc.
+     */
+    fun getAlphabetSpeechText(item: LetterItem, isEnglish: Boolean, isDetailed: Boolean = false): String {
+        if (isEnglish) {
+            val rawLetter = item.letter.trim()
+            val letterChar = rawLetter.split(" ").firstOrNull()?.uppercase() ?: rawLetter.take(1).uppercase()
+            val word = item.wordBn.trim()
+            val baseSpeech = "$letterChar, $letterChar for $word"
+            return if (isDetailed && item.exampleSentence.isNotEmpty()) {
+                "$baseSpeech. ${item.exampleSentence}"
+            } else {
+                baseSpeech
+            }
+        } else {
+            val letter = item.letter.trim()
+            val word = item.wordBn.trim()
+            val vowelName = when (letter) {
+                "অ" -> "স্বরে অ"
+                "আ" -> "স্বরে আ"
+                "ই" -> "হ্রস্ব ই"
+                "ঈ" -> "দীর্ঘ ঈ"
+                "উ" -> "হ্রস্ব উ"
+                "ঊ" -> "দীর্ঘ ঊ"
+                "ঋ" -> "ঋ"
+                "এ" -> "এ"
+                "ঐ" -> "ঐ"
+                "ও" -> "ও"
+                "ঔ" -> "ঔ"
+                else -> null
+            }
+
+            val spokenWord = if (word.contains("ঐরাবত")) "ওইরা বত" else word
+            val baseSpeech = if (letter == "ঐ") {
+                "ঐ, ঐ তে ওইরা বত"
+            } else if (vowelName != null) {
+                "$vowelName, $vowelName তে $spokenWord"
+            } else if (item.pronunciation.isNotEmpty() && item.pronunciation != letter && !item.pronunciation.contains("কার")) {
+                "${item.pronunciation}, $letter তে $spokenWord"
+            } else if (item.pronunciation.contains("কার")) {
+                "${item.pronunciation}, $spokenWord"
+            } else {
+                "$letter, $letter তে $spokenWord"
+            }
+
+            return if (isDetailed && item.exampleSentence.isNotEmpty()) {
+                val sentence = item.exampleSentence.replace("ঐরাবত", "ওইরা বত")
+                "$baseSpeech। $sentence"
+            } else {
+                baseSpeech
+            }
+        }
+    }
+
     // -------------------------------------------------------------
     // 1. BANGLA SWAROBORNO (১১টি স্বরবর্ণ)
     // -------------------------------------------------------------
@@ -1010,7 +1067,23 @@ object KidsDataProvider {
         val items = (1..10).map { i ->
             val prod = n * i
             val textBn = "${toBn(n)} × ${toBn(i)} = ${toBn(prod)}"
-            val speechBn = "${toBn(n)} ${multiplierBnWords[i]} ${toBn(prod)}"
+            val speechBn = when {
+                n == 1 -> "${toBn(i)} একে ${toBn(i)}"
+                n == 2 -> when (i) {
+                    1 -> "২ একে ২"
+                    2 -> "২ দুগুণে ৪"
+                    3 -> "৩ দুগুণে ৬"
+                    4 -> "৪ দুগুণে ৮"
+                    5 -> "৫ দুগুণে ১০"
+                    6 -> "৬ দুগুণে ১২"
+                    7 -> "৭ দুগুণে ১৪"
+                    8 -> "৮ দুগুণে ১৬"
+                    9 -> "৯ দুগুণে ১৮"
+                    10 -> "২ দশে ২০"
+                    else -> "২ ${multiplierBnWords[i]} ${toBn(prod)}"
+                }
+                else -> "${toBn(n)} ${multiplierBnWords[i]} ${toBn(prod)}"
+            }
             val textEn = "$n × $i = $prod"
             val speechEn = "$n times $i is $prod"
             MultiplicationItem(n, i, prod, textBn, speechBn, textEn, speechEn)

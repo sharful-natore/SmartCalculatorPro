@@ -78,6 +78,12 @@ class KidsAudioPlayer(private val context: Context) : TextToSpeech.OnInitListene
         val engine = tts ?: return
 
         try {
+            val spokenText = if (isBn) {
+                text.replace("ঐরাবত", "ওইরা বত")
+            } else {
+                text
+            }
+
             val targetLocale = if (isBn) {
                 Locale("bn", "BD")
             } else {
@@ -95,10 +101,10 @@ class KidsAudioPlayer(private val context: Context) : TextToSpeech.OnInitListene
 
             val utteranceId = "kids_speak_${System.currentTimeMillis()}"
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                engine.speak(text, TextToSpeech.QUEUE_FLUSH, null, utteranceId)
+                engine.speak(spokenText, TextToSpeech.QUEUE_FLUSH, null, utteranceId)
             } else {
                 @Suppress("DEPRECATION")
-                engine.speak(text, TextToSpeech.QUEUE_FLUSH, null)
+                engine.speak(spokenText, TextToSpeech.QUEUE_FLUSH, null)
             }
         } catch (e: Exception) {
             // Graceful ignore

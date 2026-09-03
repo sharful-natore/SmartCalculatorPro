@@ -32,6 +32,8 @@ import kotlinx.coroutines.launch
 fun KidsRhymesTab(
     themeColors: CalculatorThemeColors,
     audioPlayer: KidsAudioPlayer,
+    showEnglish: Boolean = false,
+    onShowEnglishChange: (Boolean) -> Unit = {},
     onRewardStars: (Int) -> Unit
 ) {
     val rhymes = KidsDataProvider.rhymesList
@@ -40,7 +42,6 @@ fun KidsRhymesTab(
 
     var isPlaying by remember { mutableStateOf(false) }
     var activeLineIndex by remember { mutableStateOf(-1) }
-    var showEnglish by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     var playbackJob by remember { mutableStateOf<Job?>(null) }
 
@@ -171,7 +172,7 @@ fun KidsRhymesTab(
                         selected = showEnglish,
                         onClick = {
                             stopPlayback()
-                            showEnglish = !showEnglish
+                            onShowEnglishChange(!showEnglish)
                         },
                         label = {
                             Text(

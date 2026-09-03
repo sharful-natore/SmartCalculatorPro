@@ -66,6 +66,40 @@ fun KidsLearningScreen(
     var activeTab by remember { mutableStateOf(KidsSectionTab.ALPHABET) }
     var slateInitialLetter by remember { mutableStateOf<String?>(null) }
 
+    // Sub-Category States for each learning section
+    var alphabetCategory by remember { mutableStateOf(AlphabetCategory.BANGLA_VOWEL) }
+    var isAlphabetRandom by remember { mutableStateOf(false) }
+    var alphabetShuffleSeed by remember { mutableStateOf(0) }
+
+    var spellingMode by remember { mutableStateOf(SpellingTabMode.WORDS) }
+    var spellingWordCategory by remember { mutableStateOf(SpellingCategory.BANGLA_TWO_LETTER) }
+    var phonicsSubCategory by remember { mutableStateOf(PhonicsSubCategory.ALPHABET_SOUNDS) }
+
+    var mathSubTab by remember { mutableStateOf(0) }
+    var natureCategory by remember { mutableStateOf(NatureCategory.ANIMALS) }
+    var rhymesShowEnglish by remember { mutableStateOf(false) }
+
+    // Scroll visibility state for Top Bar, Top Tabs, and Bottom Switcher
+    var isControlsVisible by remember { mutableStateOf(true) }
+
+    val scrollConnection = remember {
+        object : androidx.compose.ui.input.nestedscroll.NestedScrollConnection {
+            override fun onPreScroll(
+                available: androidx.compose.ui.geometry.Offset,
+                source: androidx.compose.ui.input.nestedscroll.NestedScrollSource
+            ): androidx.compose.ui.geometry.Offset {
+                if (available.y < -12f) {
+                    // Scrolling down into content (gesture upwards) -> Hide headers and chips for full-screen content
+                    isControlsVisible = false
+                } else if (available.y > 12f) {
+                    // Scrolling up (gesture downwards) -> Show switcher chips to allow switching content
+                    isControlsVisible = true
+                }
+                return androidx.compose.ui.geometry.Offset.Zero
+            }
+        }
+    }
+
     // Child Lock State
     var isChildLocked by remember { mutableStateOf(false) }
     var showUnlockHintDialog by remember { mutableStateOf(false) }
@@ -89,7 +123,9 @@ fun KidsLearningScreen(
     }
 
     Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier = Modifier
+            .nestedScroll(scrollBehavior.nestedScrollConnection)
+            .nestedScroll(scrollConnection),
         topBar = {
             TopAppBar(
                 scrollBehavior = scrollBehavior,
@@ -99,14 +135,14 @@ fun KidsLearningScreen(
                             text = "কিডস লার্নিং",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = themeColors.onSurface,
+                            color = themeColors.titleBarText,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                         Text(
                             text = activeTab.titleBn,
                             style = MaterialTheme.typography.labelSmall,
-                            color = themeColors.accent,
+                            color = themeColors.titleBarText.copy(alpha = 0.85f),
                             fontWeight = FontWeight.SemiBold
                         )
                     }
@@ -126,7 +162,7 @@ fun KidsLearningScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
-                            tint = themeColors.onSurface
+                            tint = themeColors.titleBarText
                         )
                     }
                 },
@@ -134,8 +170,8 @@ fun KidsLearningScreen(
                     // Star Counter Badge
                     Surface(
                         shape = RoundedCornerShape(14.dp),
-                        color = Color(0xFFFFB300).copy(alpha = 0.18f),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFFB300)),
+                        color = Color.White.copy(alpha = 0.22f),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.45f)),
                         modifier = Modifier.padding(end = 2.dp)
                     ) {
                         Row(
@@ -147,7 +183,7 @@ fun KidsLearningScreen(
                             Text(
                                 text = "$totalStars",
                                 fontWeight = FontWeight.Black,
-                                color = Color(0xFFE65100),
+                                color = Color.White,
                                 fontSize = 13.sp
                             )
                         }
@@ -167,7 +203,7 @@ fun KidsLearningScreen(
                         Icon(
                             imageVector = if (audioPlayer.isMuted) Icons.Default.VolumeOff else Icons.Default.VolumeUp,
                             contentDescription = "Toggle Mute",
-                            tint = if (audioPlayer.isMuted) Color(0xFFD32F2F) else themeColors.accent,
+                            tint = if (audioPlayer.isMuted) Color(0xFFFF5252) else themeColors.titleBarText,
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -180,18 +216,18 @@ fun KidsLearningScreen(
                                 detectTapGestures(
                                     onTap = {
                                         if (!isChildLocked) {
-                                            isChildLocked = true
-                                            audioPlayer.playSuccessChime()
-                                            audioPlayer.speak("চাইল্ড লক চালু হয়েছে", isBn = true)
+                                             isChildLocked = true
+                                             audioPlayer.playSuccessChime()
+                                             audioPlayer.speak("চাইল্ড লক চালু হয়েছে", isBn = true)
                                         } else {
-                                            showUnlockHintDialog = true
+                                             showUnlockHintDialog = true
                                         }
                                     },
                                     onLongPress = {
                                         if (isChildLocked) {
-                                            isChildLocked = false
-                                            audioPlayer.playCelebrationSound()
-                                            audioPlayer.speak("চাইল্ড লক আনলক হয়েছে", isBn = true)
+                                             isChildLocked = false
+                                             audioPlayer.playCelebrationSound()
+                                             audioPlayer.speak("চাইল্ড লক আনলক হয়েছে", isBn = true)
                                         }
                                     }
                                 )
@@ -199,14 +235,14 @@ fun KidsLearningScreen(
                     ) {
                         Surface(
                             shape = CircleShape,
-                            color = if (isChildLocked) Color(0xFFD32F2F) else themeColors.surfaceVariant,
+                            color = if (isChildLocked) Color(0xFFD32F2F) else Color.White.copy(alpha = 0.22f),
                             modifier = Modifier.size(34.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
                                     imageVector = if (isChildLocked) Icons.Default.Lock else Icons.Default.LockOpen,
                                     contentDescription = "Child Lock",
-                                    tint = if (isChildLocked) Color.White else themeColors.onSurface.copy(alpha = 0.7f),
+                                    tint = if (isChildLocked) Color.White else themeColors.titleBarText,
                                     modifier = Modifier.size(17.dp)
                                 )
                             }
@@ -221,12 +257,18 @@ fun KidsLearningScreen(
                         Icon(
                             Icons.Default.Info,
                             contentDescription = "Kids Info",
-                            tint = themeColors.onSurface.copy(alpha = 0.7f),
+                            tint = themeColors.titleBarText.copy(alpha = 0.85f),
                             modifier = Modifier.size(20.dp)
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = themeColors.surface)
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = themeColors.titleBarBg,
+                    scrolledContainerColor = themeColors.titleBarBg,
+                    navigationIconContentColor = themeColors.titleBarText,
+                    titleContentColor = themeColors.titleBarText,
+                    actionIconContentColor = themeColors.titleBarText
+                )
             )
         },
         containerColor = themeColors.background
@@ -236,58 +278,66 @@ fun KidsLearningScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // Horizontal Tab Navigation
-            LazyRow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(themeColors.surface)
-                    .padding(horizontal = 10.dp, vertical = 6.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            // Horizontal Tab Navigation (Hides when scrolling down into content)
+            AnimatedVisibility(
+                visible = isControlsVisible,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
             ) {
-                items(KidsSectionTab.values()) { tab ->
-                    val isSelected = activeTab == tab
-                    val tabBg = if (isSelected) themeColors.accent else themeColors.surfaceVariant.copy(alpha = 0.45f)
-                    val contentColor = if (isSelected) themeColors.onAccent else themeColors.onSurface
+                LazyRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(themeColors.surface)
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    items(KidsSectionTab.values()) { tab ->
+                        val isSelected = activeTab == tab
+                        val tabBg = if (isSelected) themeColors.accent else themeColors.surfaceVariant.copy(alpha = 0.45f)
+                        val contentColor = if (isSelected) themeColors.onAccent else themeColors.onSurface
 
-                    Surface(
-                        shape = RoundedCornerShape(18.dp),
-                        color = tabBg,
-                        border = if (isSelected) null else androidx.compose.foundation.BorderStroke(1.dp, themeColors.onSurface.copy(alpha = 0.12f)),
-                        modifier = Modifier
-                            .height(42.dp)
-                            .clip(RoundedCornerShape(18.dp))
-                            .clickable {
-                                audioPlayer.playClickSound()
-                                activeTab = tab
-                            }
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                        Surface(
+                            shape = RoundedCornerShape(18.dp),
+                            color = tabBg,
+                            border = if (isSelected) null else androidx.compose.foundation.BorderStroke(1.dp, themeColors.onSurface.copy(alpha = 0.12f)),
+                            modifier = Modifier
+                                .height(42.dp)
+                                .clip(RoundedCornerShape(18.dp))
+                                .clickable {
+                                    audioPlayer.playClickSound()
+                                    activeTab = tab
+                                }
                         ) {
-                            Icon(
-                                imageVector = tab.icon,
-                                contentDescription = tab.titleBn,
-                                tint = contentColor,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = tab.titleBn,
-                                style = MaterialTheme.typography.labelMedium.copy(
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                    fontSize = 12.5.sp
-                                ),
-                                color = contentColor
-                            )
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = tab.icon,
+                                    contentDescription = tab.titleBn,
+                                    tint = contentColor,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = tab.titleBn,
+                                    style = MaterialTheme.typography.labelMedium.copy(
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                        fontSize = 12.5.sp
+                                    ),
+                                    color = contentColor
+                                )
+                            }
                         }
                     }
                 }
             }
 
-            Divider(color = themeColors.onSurface.copy(alpha = 0.08f), thickness = 1.dp)
+            if (isControlsVisible) {
+                Divider(color = themeColors.onSurface.copy(alpha = 0.08f), thickness = 1.dp)
+            }
 
-            // Dynamic Tab Content
+            // Dynamic Tab Content with Floating Bottom Sub-Switcher
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -297,6 +347,23 @@ fun KidsLearningScreen(
                     KidsSectionTab.ALPHABET -> KidsAlphabetTab(
                         themeColors = themeColors,
                         audioPlayer = audioPlayer,
+                        selectedCategory = alphabetCategory,
+                        onCategoryChange = { alphabetCategory = it },
+                        isRandomOrder = isAlphabetRandom,
+                        onToggleRandomOrder = {
+                            isAlphabetRandom = !isAlphabetRandom
+                            if (isAlphabetRandom) {
+                                alphabetShuffleSeed++
+                                audioPlayer.speak("এলোমেলো প্র্যাকটিস চালু হয়েছে।", isBn = true)
+                            } else {
+                                audioPlayer.speak("ধারাবাহিক ক্রম চালু হয়েছে।", isBn = true)
+                            }
+                        },
+                        onReshuffle = {
+                            alphabetShuffleSeed++
+                            audioPlayer.speak("বর্ণমালা আবার এলোমেলো করা হয়েছে!", isBn = true)
+                        },
+                        shuffleSeed = alphabetShuffleSeed,
                         onTraceLetter = { letter ->
                             slateInitialLetter = letter
                             activeTab = KidsSectionTab.SLATE
@@ -305,21 +372,33 @@ fun KidsLearningScreen(
                     KidsSectionTab.SPELLING -> KidsSpellingTab(
                         themeColors = themeColors,
                         audioPlayer = audioPlayer,
+                        mainMode = spellingMode,
+                        onMainModeChange = { spellingMode = it },
+                        selectedCategory = spellingWordCategory,
+                        onCategoryChange = { spellingWordCategory = it },
+                        selectedPhonicsCategory = phonicsSubCategory,
+                        onPhonicsCategoryChange = { phonicsSubCategory = it },
                         onRewardStars = { amount -> addStars(amount) }
                     )
                     KidsSectionTab.MATH -> KidsMathTab(
                         themeColors = themeColors,
                         audioPlayer = audioPlayer,
+                        subTab = mathSubTab,
+                        onSubTabChange = { mathSubTab = it },
                         onRewardStars = { amount -> addStars(amount) }
                     )
                     KidsSectionTab.RHYMES -> KidsRhymesTab(
                         themeColors = themeColors,
                         audioPlayer = audioPlayer,
+                        showEnglish = rhymesShowEnglish,
+                        onShowEnglishChange = { rhymesShowEnglish = it },
                         onRewardStars = { amount -> addStars(amount) }
                     )
                     KidsSectionTab.NATURE -> KidsNatureTab(
                         themeColors = themeColors,
                         audioPlayer = audioPlayer,
+                        selectedCategory = natureCategory,
+                        onCategoryChange = { natureCategory = it },
                         onRewardStars = { amount -> addStars(amount) }
                     )
                     KidsSectionTab.SLATE -> KidsSlateTab(
@@ -332,6 +411,50 @@ fun KidsLearningScreen(
                         themeColors = themeColors,
                         audioPlayer = audioPlayer,
                         onRewardStars = { amount -> addStars(amount) }
+                    )
+                }
+
+                // Floating Bottom Content Switcher Bar (Visible on scroll up, hidden on scroll down)
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = isControlsVisible && (activeTab != KidsSectionTab.SLATE && activeTab != KidsSectionTab.QUIZ),
+                    enter = slideInVertically { it } + fadeIn(),
+                    exit = slideOutVertically { it } + fadeOut(),
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(horizontal = 12.dp, vertical = 10.dp)
+                ) {
+                    KidsBottomSubSwitcherBar(
+                        activeTab = activeTab,
+                        themeColors = themeColors,
+                        audioPlayer = audioPlayer,
+                        alphabetCategory = alphabetCategory,
+                        onAlphabetCategoryChange = { alphabetCategory = it },
+                        isAlphabetRandom = isAlphabetRandom,
+                        onToggleAlphabetRandom = {
+                            isAlphabetRandom = !isAlphabetRandom
+                            if (isAlphabetRandom) {
+                                alphabetShuffleSeed++
+                                audioPlayer.speak("এলোমেলো প্র্যাকটিস চালু হয়েছে।", isBn = true)
+                            } else {
+                                audioPlayer.speak("ধারাবাহিক ক্রম চালু হয়েছে।", isBn = true)
+                            }
+                        },
+                        onAlphabetReshuffle = {
+                            alphabetShuffleSeed++
+                            audioPlayer.speak("বর্ণমালা আবার এলোমেলো করা হয়েছে!", isBn = true)
+                        },
+                        spellingMode = spellingMode,
+                        onSpellingModeChange = { spellingMode = it },
+                        spellingWordCategory = spellingWordCategory,
+                        onSpellingWordCategoryChange = { spellingWordCategory = it },
+                        phonicsSubCategory = phonicsSubCategory,
+                        onPhonicsSubCategoryChange = { phonicsSubCategory = it },
+                        mathSubTab = mathSubTab,
+                        onMathSubTabChange = { mathSubTab = it },
+                        rhymesShowEnglish = rhymesShowEnglish,
+                        onRhymesShowEnglishChange = { rhymesShowEnglish = it },
+                        natureCategory = natureCategory,
+                        onNatureCategoryChange = { natureCategory = it }
                     )
                 }
             }
@@ -450,6 +573,372 @@ fun KidsLearningScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun KidsBottomSubSwitcherBar(
+    activeTab: KidsSectionTab,
+    themeColors: CalculatorThemeColors,
+    audioPlayer: KidsAudioPlayer,
+    alphabetCategory: AlphabetCategory,
+    onAlphabetCategoryChange: (AlphabetCategory) -> Unit,
+    isAlphabetRandom: Boolean,
+    onToggleAlphabetRandom: () -> Unit,
+    onAlphabetReshuffle: () -> Unit,
+    spellingMode: SpellingTabMode,
+    onSpellingModeChange: (SpellingTabMode) -> Unit,
+    spellingWordCategory: SpellingCategory,
+    onSpellingWordCategoryChange: (SpellingCategory) -> Unit,
+    phonicsSubCategory: PhonicsSubCategory,
+    onPhonicsSubCategoryChange: (PhonicsSubCategory) -> Unit,
+    mathSubTab: Int,
+    onMathSubTabChange: (Int) -> Unit,
+    rhymesShowEnglish: Boolean,
+    onRhymesShowEnglishChange: (Boolean) -> Unit,
+    natureCategory: NatureCategory,
+    onNatureCategoryChange: (NatureCategory) -> Unit
+) {
+    Surface(
+        shape = RoundedCornerShape(26.dp),
+        color = themeColors.surface.copy(alpha = 0.95f),
+        tonalElevation = 8.dp,
+        shadowElevation = 8.dp,
+        border = androidx.compose.foundation.BorderStroke(1.5.dp, themeColors.accent.copy(alpha = 0.35f)),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(26.dp))
+    ) {
+        when (activeTab) {
+            KidsSectionTab.ALPHABET -> {
+                LazyRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    items(AlphabetCategory.values()) { cat ->
+                        val isSelected = alphabetCategory == cat
+                        Surface(
+                            shape = RoundedCornerShape(16.dp),
+                            color = if (isSelected) themeColors.accent else themeColors.surfaceVariant.copy(alpha = 0.5f),
+                            border = if (!isSelected) androidx.compose.foundation.BorderStroke(1.dp, themeColors.onSurface.copy(alpha = 0.12f)) else null,
+                            modifier = Modifier
+                                .height(38.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .clickable {
+                                    audioPlayer.playClickSound()
+                                    onAlphabetCategoryChange(cat)
+                                }
+                        ) {
+                            Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 10.dp)) {
+                                Text(
+                                    text = cat.titleBn,
+                                    style = MaterialTheme.typography.labelMedium.copy(
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                        fontSize = 12.sp
+                                    ),
+                                    color = if (isSelected) themeColors.onAccent else themeColors.onSurface,
+                                    maxLines = 1
+                                )
+                            }
+                        }
+                    }
+
+                    item {
+                        // Random / Sequential Mode Chip
+                        Surface(
+                            shape = RoundedCornerShape(16.dp),
+                            color = if (isAlphabetRandom) Color(0xFF673AB7) else themeColors.surfaceVariant.copy(alpha = 0.5f),
+                            modifier = Modifier
+                                .height(38.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .clickable {
+                                    audioPlayer.playClickSound()
+                                    onToggleAlphabetRandom()
+                                }
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = if (isAlphabetRandom) "🔀 এলোমেলো" else "📑 ধারাবাহিক",
+                                    style = MaterialTheme.typography.labelMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 12.sp
+                                    ),
+                                    color = if (isAlphabetRandom) Color.White else themeColors.onSurface
+                                )
+                            }
+                        }
+                    }
+
+                    if (isAlphabetRandom) {
+                        item {
+                            Surface(
+                                shape = RoundedCornerShape(14.dp),
+                                color = Color(0xFF673AB7).copy(alpha = 0.2f),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF673AB7)),
+                                modifier = Modifier
+                                    .height(38.dp)
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .clickable {
+                                        audioPlayer.playClickSound()
+                                        onAlphabetReshuffle()
+                                    }
+                            ) {
+                                Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 8.dp)) {
+                                    Text(text = "🔄 শাফল", color = Color(0xFF673AB7), fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            KidsSectionTab.SPELLING -> {
+                LazyRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Mode Toggle (Words vs Phonics)
+                    item {
+                        Surface(
+                            shape = RoundedCornerShape(16.dp),
+                            color = themeColors.accent.copy(alpha = 0.15f),
+                            border = androidx.compose.foundation.BorderStroke(1.2.dp, themeColors.accent),
+                            modifier = Modifier
+                                .height(38.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .clickable {
+                                    audioPlayer.playClickSound()
+                                    val nextMode = if (spellingMode == SpellingTabMode.WORDS) SpellingTabMode.PHONICS else SpellingTabMode.WORDS
+                                    onSpellingModeChange(nextMode)
+                                }
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = if (spellingMode == SpellingTabMode.WORDS) "📖 শব্দ ⇄ 🗣️ ফনিক্স" else "🗣️ ফনিক্স ⇄ 📖 শব্দ",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 11.5.sp,
+                                    color = themeColors.accent
+                                )
+                            }
+                        }
+                    }
+
+                    if (spellingMode == SpellingTabMode.WORDS) {
+                        items(SpellingCategory.values()) { cat ->
+                            val isSelected = spellingWordCategory == cat
+                            Surface(
+                                shape = RoundedCornerShape(16.dp),
+                                color = if (isSelected) themeColors.accent else themeColors.surfaceVariant.copy(alpha = 0.5f),
+                                border = if (!isSelected) androidx.compose.foundation.BorderStroke(1.dp, themeColors.onSurface.copy(alpha = 0.12f)) else null,
+                                modifier = Modifier
+                                    .height(38.dp)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .clickable {
+                                        audioPlayer.playClickSound()
+                                        onSpellingWordCategoryChange(cat)
+                                    }
+                            ) {
+                                Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 10.dp)) {
+                                    Text(
+                                        text = cat.titleBn,
+                                        style = MaterialTheme.typography.labelMedium.copy(
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                            fontSize = 11.5.sp
+                                        ),
+                                        color = if (isSelected) themeColors.onAccent else themeColors.onSurface,
+                                        maxLines = 1
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        items(PhonicsSubCategory.values()) { subCat ->
+                            val isSelected = phonicsSubCategory == subCat
+                            Surface(
+                                shape = RoundedCornerShape(16.dp),
+                                color = if (isSelected) themeColors.accent else themeColors.surfaceVariant.copy(alpha = 0.5f),
+                                border = if (!isSelected) androidx.compose.foundation.BorderStroke(1.dp, themeColors.onSurface.copy(alpha = 0.12f)) else null,
+                                modifier = Modifier
+                                    .height(38.dp)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .clickable {
+                                        audioPlayer.playClickSound()
+                                        onPhonicsSubCategoryChange(subCat)
+                                    }
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(text = subCat.icon, fontSize = 14.sp)
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = subCat.titleBn,
+                                        style = MaterialTheme.typography.labelMedium.copy(
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                            fontSize = 11.5.sp
+                                        ),
+                                        color = if (isSelected) themeColors.onAccent else themeColors.onSurface,
+                                        maxLines = 1
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            KidsSectionTab.MATH -> {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    val tabs = listOf("🔢 সংখ্যা ও গণনা (১-২০)", "✖️ নামতার পাঠশালা (১-১০)")
+                    tabs.forEachIndexed { idx, title ->
+                        val isSelected = mathSubTab == idx
+                        Surface(
+                            shape = RoundedCornerShape(16.dp),
+                            color = if (isSelected) themeColors.accent else themeColors.surfaceVariant.copy(alpha = 0.5f),
+                            border = if (!isSelected) androidx.compose.foundation.BorderStroke(1.dp, themeColors.onSurface.copy(alpha = 0.15f)) else null,
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(40.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .clickable {
+                                    audioPlayer.playClickSound()
+                                    onMathSubTabChange(idx)
+                                }
+                        ) {
+                            Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 6.dp)) {
+                                Text(
+                                    text = title,
+                                    style = MaterialTheme.typography.labelMedium.copy(
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                        fontSize = 12.sp
+                                    ),
+                                    color = if (isSelected) themeColors.onAccent else themeColors.onSurface,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            KidsSectionTab.RHYMES -> {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    val isBnSelected = !rhymesShowEnglish
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = if (isBnSelected) themeColors.accent else themeColors.surfaceVariant.copy(alpha = 0.5f),
+                        border = if (!isBnSelected) androidx.compose.foundation.BorderStroke(1.dp, themeColors.onSurface.copy(alpha = 0.15f)) else null,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(40.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .clickable {
+                                audioPlayer.playClickSound()
+                                onRhymesShowEnglishChange(false)
+                            }
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(
+                                text = "🎶 বাংলা ছড়া ও গান",
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    fontWeight = if (isBnSelected) FontWeight.Bold else FontWeight.Medium,
+                                    fontSize = 12.5.sp
+                                ),
+                                color = if (isBnSelected) themeColors.onAccent else themeColors.onSurface
+                            )
+                        }
+                    }
+
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = if (rhymesShowEnglish) themeColors.accent else themeColors.surfaceVariant.copy(alpha = 0.5f),
+                        border = if (!rhymesShowEnglish) androidx.compose.foundation.BorderStroke(1.dp, themeColors.onSurface.copy(alpha = 0.15f)) else null,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(40.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .clickable {
+                                audioPlayer.playClickSound()
+                                onRhymesShowEnglishChange(true)
+                            }
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(
+                                text = "🇬🇧 English Rhymes",
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    fontWeight = if (rhymesShowEnglish) FontWeight.Bold else FontWeight.Medium,
+                                    fontSize = 12.5.sp
+                                ),
+                                color = if (rhymesShowEnglish) themeColors.onAccent else themeColors.onSurface
+                            )
+                        }
+                    }
+                }
+            }
+            KidsSectionTab.NATURE -> {
+                LazyRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    items(NatureCategory.values()) { cat ->
+                        val isSelected = natureCategory == cat
+                        Surface(
+                            shape = RoundedCornerShape(16.dp),
+                            color = if (isSelected) themeColors.accent else themeColors.surfaceVariant.copy(alpha = 0.5f),
+                            border = if (!isSelected) androidx.compose.foundation.BorderStroke(1.dp, themeColors.onSurface.copy(alpha = 0.12f)) else null,
+                            modifier = Modifier
+                                .height(38.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .clickable {
+                                    audioPlayer.playClickSound()
+                                    onNatureCategoryChange(cat)
+                                }
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(text = cat.emoji, fontSize = 15.sp)
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = cat.titleBn,
+                                    style = MaterialTheme.typography.labelMedium.copy(
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                        fontSize = 12.sp
+                                    ),
+                                    color = if (isSelected) themeColors.onAccent else themeColors.onSurface
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            else -> {}
         }
     }
 }
