@@ -40,12 +40,22 @@ fun KidsAlphabetTab(
 ) {
     var selectedCategory by remember { mutableStateOf(AlphabetCategory.BANGLA_VOWEL) }
     var selectedLetterItem by remember { mutableStateOf<LetterItem?>(null) }
+    var isRandomOrder by remember { mutableStateOf(false) }
+    var shuffleSeed by remember { mutableStateOf(0) }
 
-    val currentItems = when (selectedCategory) {
+    val baseItems = when (selectedCategory) {
         AlphabetCategory.BANGLA_VOWEL -> KidsDataProvider.banglaVowels
         AlphabetCategory.BANGLA_CONSONANT -> KidsDataProvider.banglaConsonants
         AlphabetCategory.BANGLA_KAR -> KidsDataProvider.banglaKarMarks
         AlphabetCategory.ENGLISH -> KidsDataProvider.englishAlphabet
+    }
+
+    val currentItems = remember(selectedCategory, isRandomOrder, shuffleSeed) {
+        if (isRandomOrder) {
+            baseItems.shuffled(kotlin.random.Random(shuffleSeed + selectedCategory.ordinal * 100))
+        } else {
+            baseItems
+        }
     }
 
     Column(
@@ -57,7 +67,7 @@ fun KidsAlphabetTab(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 12.dp),
+                .padding(bottom = 10.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             AlphabetCategory.values().forEach { cat ->
@@ -93,7 +103,7 @@ fun KidsAlphabetTab(
             }
         }
 
-        // Subtitle / helper note
+        // Practice Mode Control Bar (Sequential vs Random Shuffle)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -101,23 +111,75 @@ fun KidsAlphabetTab(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(
-                text = "যেকোনো বর্ণে ট্যাপ করে উচ্চারণ শোনো ও ছবি দেখো 👇",
-                style = MaterialTheme.typography.bodySmall,
-                color = themeColors.onSurface.copy(alpha = 0.7f),
-                fontWeight = FontWeight.Medium
-            )
+            // Mode Toggle Chip
             Surface(
-                shape = RoundedCornerShape(10.dp),
-                color = themeColors.accent.copy(alpha = 0.15f)
+                shape = RoundedCornerShape(20.dp),
+                color = if (isRandomOrder) Color(0xFF673AB7).copy(alpha = 0.15f) else themeColors.surfaceVariant.copy(alpha = 0.5f),
+                border = androidx.compose.foundation.BorderStroke(
+                    1.2.dp,
+                    if (isRandomOrder) Color(0xFF673AB7) else themeColors.onSurface.copy(alpha = 0.2f)
+                ),
+                modifier = Modifier
+                    .clip(RoundedCornerShape(20.dp))
+                    .clickable {
+                        audioPlayer.playClickSound()
+                        isRandomOrder = !isRandomOrder
+                        if (isRandomOrder) {
+                            shuffleSeed++
+                            audioPlayer.speak("এলোমেলো প্র্যাকটিস চালু হয়েছে। বর্ণ দেখে চিনতে পারো কি না দেখো!", isBn = true)
+                        } else {
+                            audioPlayer.speak("ধারাবাহিক ক্রম চালু হয়েছে।", isBn = true)
+                        }
+                    }
             ) {
-                Text(
-                    text = "${currentItems.size}টি বর্ণ",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = themeColors.accent,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                    fontWeight = FontWeight.Bold
-                )
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = if (isRandomOrder) "🔀 এলোমেলো প্র্যাকটিস" else "📑 ধারাবাহিক ক্রম",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isRandomOrder) Color(0xFF673AB7) else themeColors.onSurface
+                    )
+                }
+            }
+
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                // If Random is active, show reshuffle button
+                if (isRandomOrder) {
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = Color(0xFF673AB7),
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable {
+                                audioPlayer.playClickSound()
+                                shuffleSeed++
+                                audioPlayer.speak("বর্ণমালা আবার এলোমেলো করা হয়েছে!", isBn = true)
+                            }
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(text = "🔄 রি-শাফল", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = themeColors.accent.copy(alpha = 0.15f)
+                ) {
+                    Text(
+                        text = "${currentItems.size}টি বর্ণ",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = themeColors.accent,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
 

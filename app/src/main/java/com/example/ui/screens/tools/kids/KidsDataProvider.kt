@@ -867,6 +867,114 @@ object KidsDataProvider {
         )
     )
 
+    // WORD FAMILIES & BLENDING LESSONS (বর্ণ জোড়া লেগে শব্দ তৈরির নিয়ম)
+    val wordFamilyRules = listOf(
+        PhonicsRuleItem(
+            ruleTitle = "-AT Family (অ্যাট পরিবার)",
+            formula = "Consonant + AT = ক্যাট, ব্যাট, র্যাট...",
+            explanationBn = "যে কোনো অক্ষরের সাথে 'at' (অ্যাট) জোড়া লাগালে সহজে শব্দ তৈরি হয়: C + at = Cat, B + at = Bat, H + at = Hat, M + at = Mat, R + at = Rat।",
+            examples = listOf(
+                PhonicsWordExample("Cat", "ক্যাট", "বিড়াল (C + at)", "🐱"),
+                PhonicsWordExample("Bat", "ব্যাট", "খেলার ব্যাট (B + at)", "🦇"),
+                PhonicsWordExample("Hat", "হ্যাট", "টুপি (H + at)", "🎩"),
+                PhonicsWordExample("Rat", "র‍্যাট", "ইঁদুর (R + at)", "🐀"),
+                PhonicsWordExample("Mat", "ম্যাট", "মাদুর (M + at)", "🧶")
+            ),
+            accentColor = Color(0xFFE53935)
+        ),
+        PhonicsRuleItem(
+            ruleTitle = "-AN Family (অ্যান পরিবার)",
+            formula = "Consonant + AN = ফ্যান, প্যান, ভ্যান...",
+            explanationBn = "অক্ষরের সাথে 'an' (অ্যান) জুড়ে দিলে: F + an = Fan, P + an = Pan, V + an = Van, M + an = Man, C + an = Can।",
+            examples = listOf(
+                PhonicsWordExample("Fan", "ফ্যান", "পাখা (F + an)", "🪭"),
+                PhonicsWordExample("Pan", "প্যান", "কড়াই (P + an)", "🍳"),
+                PhonicsWordExample("Van", "ভ্যান", "ভ্যান গাড়ি (V + an)", "🚐"),
+                PhonicsWordExample("Man", "ম্যান", "পুরুষ মানুষ (M + an)", "👨"),
+                PhonicsWordExample("Can", "ক্যান", "টিনের কৌটো (C + an)", "🥫")
+            ),
+            accentColor = Color(0xFF1E88E5)
+        ),
+        PhonicsRuleItem(
+            ruleTitle = "-EN & -ET Families (এন ও এট পরিবার)",
+            formula = "Consonant + EN / ET = পেন, হেন, নেট, পেট...",
+            explanationBn = "E-এর শর্ট সাউন্ড 'এ'। P + en = Pen, H + en = Hen, T + en = Ten, N + et = Net, P + et = Pet, W + et = Wet।",
+            examples = listOf(
+                PhonicsWordExample("Pen", "পেন", "কলম (P + en)", "🖊️"),
+                PhonicsWordExample("Hen", "হেন", "মুরগি (H + en)", "🐔"),
+                PhonicsWordExample("Ten", "টেন", "সংখ্যা ১০ (T + en)", "🔟"),
+                PhonicsWordExample("Net", "নেট", "জাল (N + et)", "🕸️"),
+                PhonicsWordExample("Pet", "পেট", "পোষা প্রাণী (P + et)", "🐶")
+            ),
+            accentColor = Color(0xFF3949AB)
+        ),
+        PhonicsRuleItem(
+            ruleTitle = "-IN & -IG Families (ইন ও ইগ পরিবার)",
+            formula = "Consonant + IN / IG = পিন, উইন, পিগ, বিগ...",
+            explanationBn = "I-এর শর্ট সাউন্ড 'ই'। P + in = Pin, W + in = Win, B + in = Bin, P + ig = Pig, B + ig = Big, D + ig = Dig।",
+            examples = listOf(
+                PhonicsWordExample("Pin", "পিন", "আলপিন (P + in)", "📌"),
+                PhonicsWordExample("Win", "উইন", "জয়লাভ করা (W + in)", "🏆"),
+                PhonicsWordExample("Bin", "বিন", "ময়লার ঝুড়ি (B + in)", "🗑️"),
+                PhonicsWordExample("Pig", "পিগ", "শূকর ছানা (P + ig)", "🐷"),
+                PhonicsWordExample("Big", "বিগ", "বিশাল বড় (B + ig)", "🐘")
+            ),
+            accentColor = Color(0xFF00897B)
+        ),
+        PhonicsRuleItem(
+            ruleTitle = "-OG & -OP Families (অগ ও অপ পরিবার)",
+            formula = "Consonant + OG / OP = ডগ, লগ, টপ, মপ...",
+            explanationBn = "O-এর শর্ট সাউন্ড 'অ'। D + og = Dog, L + og = Log, F + og = Fog, T + op = Top, M + op = Mop, H + op = Hop।",
+            examples = listOf(
+                PhonicsWordExample("Dog", "ডগ", "কুকুর (D + og)", "🐶"),
+                PhonicsWordExample("Log", "লগ", "গাছের গুঁড়ি (L + og)", "🪵"),
+                PhonicsWordExample("Top", "টপ", "লাটিম খেলনা (T + op)", "🪀"),
+                PhonicsWordExample("Mop", "মপ", "মেঝের মোছা (M + op)", "🧹"),
+                PhonicsWordExample("Hop", "হপ", "লাফানো (H + op)", "🦘")
+            ),
+            accentColor = Color(0xFFFF9800)
+        ),
+        PhonicsRuleItem(
+            ruleTitle = "-UG & -UN Families (আগ ও আন পরিবার)",
+            formula = "Consonant + UG / UN = সান, রান, বাগ, মাগ...",
+            explanationBn = "U-এর শর্ট সাউন্ড 'আ'। S + un = Sun, R + un = Run, B + un = Bun, B + ug = Bug, M + ug = Mug, H + ug = Hug।",
+            examples = listOf(
+                PhonicsWordExample("Sun", "সান", "সূর্য (S + un)", "☀️"),
+                PhonicsWordExample("Run", "রান", "দৌড়ানো (R + un)", "🏃"),
+                PhonicsWordExample("Bug", "বাগ", "ছোট পোকা (B + ug)", "🐞"),
+                PhonicsWordExample("Mug", "মাগ", "পানির মগ (M + ug)", "🍺"),
+                PhonicsWordExample("Hug", "হাগ", "জড়িয়ে ধরা (H + ug)", "🤗")
+            ),
+            accentColor = Color(0xFF4CAF50)
+        ),
+        PhonicsRuleItem(
+            ruleTitle = "Double Vowels (EE, OO, EA, AI, OA)",
+            formula = "দুটি Vowel মিলে দীর্ঘ সুর (Tree, Moon, Boat, Rain)",
+            explanationBn = "যখন দুটি Vowel পাশাপাশি আসে, তখন প্রথম Vowel-এর নাম দীর্ঘ হয়ে উচ্চারিত হয়: EE/EA = 'ঈ' (Tree, Leaf), OO = 'উ/ঊ' (Moon, Book), OA = 'ও' (Boat, Goat), AI/AY = 'এই' (Rain, Day)।",
+            examples = listOf(
+                PhonicsWordExample("Tree", "ট্রী", "গাছ (EE = ঈ)", "🌳"),
+                PhonicsWordExample("Moon", "মুন", "চাঁদ (OO = ঊ)", "🌙"),
+                PhonicsWordExample("Boat", "বোট", "নৌকা (OA = ও)", "⛵"),
+                PhonicsWordExample("Rain", "রেইন", "বৃষ্টি (AI = এই)", "🌧️"),
+                PhonicsWordExample("Leaf", "লিফ", "পাতা (EA = ঈ)", "🍃")
+            ),
+            accentColor = Color(0xFF8E24AA)
+        ),
+        PhonicsRuleItem(
+            ruleTitle = "-ALL & -AR Rules (অল ও আর পরিবার)",
+            formula = "A + LL = 'অল' (Ball), A + R = 'আর' (Car)",
+            explanationBn = "A-এর পর LL থাকলে মুখ গোল করে 'অল' উচ্চারিত হয় (Ball, Wall, Call)। A-এর পর R থাকলে খোলা গলায় 'আর' উচ্চারিত হয় (Car, Star, Park)।",
+            examples = listOf(
+                PhonicsWordExample("Ball", "বল", "খেলার বল (B + all)", "⚽"),
+                PhonicsWordExample("Wall", "ওয়াল", "দেওয়াল (W + all)", "🧱"),
+                PhonicsWordExample("Car", "কার", "গাড়ি (C + ar)", "🚗"),
+                PhonicsWordExample("Star", "স্টার", "আকাশের তারা (St + ar)", "⭐"),
+                PhonicsWordExample("Park", "পার্ক", "খেলার পার্ক (P + ar + k)", "🏞️")
+            ),
+            accentColor = Color(0xFF00ACC1)
+        )
+    )
+
     // -------------------------------------------------------------
     // 3. NUMBERS 1 TO 20 (সংখ্যা ও গণনা)
     // -------------------------------------------------------------
@@ -1085,7 +1193,7 @@ object KidsDataProvider {
         NatureItem("বক", "Heron", "হেরন", "মাছ শিকারি", "🦩", NatureCategory.ANIMALS, "বক নদীর ধারে এক পায়ে দাঁড়িয়ে মাছ ধরে।", Color(0xFF009688)),
         NatureItem("ঈগল", "Eagle", "ঈগল", "আকাশের রাজা", "🦅", NatureCategory.ANIMALS, "ঈগল পাখি উঁচুতে উড়ে তীক্ষ্ণ চোখে শিকার খোঁজে।", Color(0xFF4E342E)),
         NatureItem("কবুতর", "Pigeon", "পিজিয়ন", "বাক বাকুম!", "🕊️", NatureCategory.ANIMALS, "কবুতর শান্তির প্রতীক হিসেবে পরিচিত।", Color(0xFF78909C)),
-        NatureItem("মাছরাঙা", "Kingfisher", "কিংফিশার", "ঝাঁপ দিয়ে মাছ ধরে", "🪶", NatureCategory.ANIMALS, "মাছরাঙার পালক খুব সুন্দর রঙিন হয়।", Color(0xFF039BE5)),
+        NatureItem("মাছরাঙা", "Kingfisher", "কিংফিশার", "ঝাঁপ দিয়ে মাছ ধরে", "🐦", NatureCategory.ANIMALS, "মাছরাঙা রঙিন পালকের চতুর মাছ শিকারি পাখি।", Color(0xFF039BE5)),
 
         // FLOWERS
         NatureItem("শাপলা", "Water Lily", "ওয়াটার লিলি", "জাতীয় ফুল", "🪷", NatureCategory.FLOWERS, "সাদা শাপলা বাংলাদেশের জাতীয় ফুল।", Color(0xFF00ACC1)),
@@ -1095,10 +1203,10 @@ object KidsDataProvider {
         NatureItem("বেলি", "Jasmine", "জেসমিন", "সুগন্ধি ফুল", "🌼", NatureCategory.FLOWERS, "বেলি ফুলের মালা পরতে মেয়েরা ভালোবাসে।", Color(0xFFFFF176)),
         NatureItem("রজনীগন্ধা", "Tuberose", "টিউবরোজ", "মনমাতানো গন্ধ", "🌸", NatureCategory.FLOWERS, "রজনীগন্ধা বিয়ে ও উৎসবে ব্যবহার করা হয়।", Color(0xFF81C784)),
         NatureItem("গাঁদা", "Marigold", "মেরিগোল্ড", "হলুদ গাঁদা", "🏵️", NatureCategory.FLOWERS, "শীতকালে গাঢ় হলুদ ও কমলা গাঁদা ফুল ফোটে।", Color(0xFFFF9800)),
-        NatureItem("কদম", "Burflower", "কাদাম্বা", "বর্ষার ফুল", "🟡", NatureCategory.FLOWERS, "বর্ষাকালে গাছের ডালে গোল গোল কদম ফুল ফোটে।", Color(0xFFFBC02D)),
+        NatureItem("কদম", "Burflower", "কাদাম্বা", "বর্ষার ফুল", "🏵️", NatureCategory.FLOWERS, "বর্ষাকালে গাছের ডালে গোল গোল কদম ফুল ফোটে।", Color(0xFFFBC02D)),
         NatureItem("পদ্ম", "Lotus", "লোটাস", "পবিত্র পদ্ম", "🪷", NatureCategory.FLOWERS, "পদ্ম ফুল দিঘির জলে অপরূপ সৌন্দর্য ছড়ায়।", Color(0xFFEC407A)),
-        NatureItem("পলাশ", "Flame of Forest", "পলাশ", "বসন্তের লাল", "💐", NatureCategory.FLOWERS, "বসন্তে লাল পলাশ ফুলে গাছ রঙিন হয়ে ওঠে।", Color(0xFFD84315)),
-        NatureItem("শিউলি", "Night Jasmine", "শিউলি", "শরতের ফুল", "🌾", NatureCategory.FLOWERS, "শরতের ভোরে শিউলি ফুল ঝরে পড়ে।", Color(0xFFFF7043)),
+        NatureItem("পলাশ", "Flame of Forest", "পলাশ", "বসন্তের লাল", "🌺", NatureCategory.FLOWERS, "বসন্তে লাল পলাশ ফুলে গাছ রঙিন হয়ে ওঠে।", Color(0xFFD84315)),
+        NatureItem("শিউলি", "Night Jasmine", "শিউলি", "শরতের ফুল", "💮", NatureCategory.FLOWERS, "শরতের ভোরে সুবাসিত শিউলি ফুল ঝরে পড়ে।", Color(0xFFFF7043)),
         NatureItem("চন্দ্রমল্লিকা", "Chrysanthemum", "ক্রিসেন্থিমাম", "শীতের বাহার", "💮", NatureCategory.FLOWERS, "চন্দ্রমল্লিকা নানা রঙের অপূর্ব শোভা দেয়।", Color(0xFF9C27B0)),
         NatureItem("ডালিয়া", "Dahlia", "ডালিয়া", "বড় পাপড়ি", "🌸", NatureCategory.FLOWERS, "শীতের বাগানে বড় ডালিয়া ফুল সবার নজর কাড়ে।", Color(0xFFAD1457)),
 
@@ -1127,7 +1235,7 @@ object KidsDataProvider {
         NatureItem("ফুলকপি", "Cauliflower", "কলিফ্লাওয়ার", "শীতের সবজি", "🥦", NatureCategory.VEGETABLES, "ফুলকপির রোস্ট ও তরকারি অত্যন্ত সুস্বাদু।", Color(0xFF43A047)),
         NatureItem("বাঁধাকপি", "Cabbage", "ক্যাবাজ", "পাতার বাঁধাকপি", "🥬", NatureCategory.VEGETABLES, "বাঁধাকপির সালাদ স্বাস্থ্যকর ও পুষ্টিকর।", Color(0xFF388E3C)),
         NatureItem("শসা", "Cucumber", "কিউকাম্বার", "ঠান্ডা সালাদ", "🥒", NatureCategory.VEGETABLES, "শসা শরীরে পানির ঘাটতি পূরণ করে।", Color(0xFF2E7D32)),
-        NatureItem("মুলা", "Radish", "র‍্যাডিশ", "সাদা মুলা", "🪤", NatureCategory.VEGETABLES, "মুলা শীতে সালাদ ও তরকারি হিসেবে খাওয়া হয়।", Color(0xFF9E9E9E)),
+        NatureItem("মুলা", "Radish", "র‍্যাডিশ", "সাদা মুলা", "🌱", NatureCategory.VEGETABLES, "মুলা শীতে সালাদ ও তরকারি হিসেবে খাওয়া হয়।", Color(0xFF9E9E9E)),
         NatureItem("লাউ", "Bottle Gourd", "বটল গার্ড", "মিষ্টি লাউ", "🥒", NatureCategory.VEGETABLES, "লাউ শরীর ঠান্ডা রাখে ও খুব পুষ্টিকর।", Color(0xFF7CB342)),
         NatureItem("মিষ্টি কুমড়া", "Pumpkin", "পাম্পকিন", "হলুদ কুমড়া", "🎃", NatureCategory.VEGETABLES, "মিষ্টি কুমড়াতে প্রচুর ভিটামিন এ আছে।", Color(0xFFFF9800)),
         NatureItem("মটরশুঁটি", "Peas", "পিস", "সবুজ দানা", "🫛", NatureCategory.VEGETABLES, "পোলাও ও সালাদে মটরশুঁটি দিলে দারুণ লাগে।", Color(0xFF4CAF50)),
@@ -1157,7 +1265,7 @@ object KidsDataProvider {
         NatureItem("হলুদ", "Yellow", "ইয়েলো", "রং", "🟡", NatureCategory.COLORS_SHAPES, "হলুদ পাকা আম, কলা ও রোদঝিলমিল সূর্য।", Color(0xFFFBC02D)),
         NatureItem("কমলা", "Orange", "অরেঞ্জ", "রং", "🟠", NatureCategory.COLORS_SHAPES, "কমলা লেবু ও গোধূলির আকাশের রং।", Color(0xFFFF6F00)),
         NatureItem("বেগুনি", "Purple", "পার্পল", "রং", "🟣", NatureCategory.COLORS_SHAPES, "বেগুন ও সুন্দর অপরাজিতা ফুলের রং।", Color(0xFF7B1FA2)),
-        NatureItem("গোলাপি", "Pink", "পিঙ্ক", "রং", "🌸", NatureCategory.COLORS_SHAPES, "গোলাপ ও পদ্ম ফুলের মিষ্টি রং।", Color(0xFFE91E63)),
+        NatureItem("গোলাপি", "Pink", "পিঙ্ক", "রং", "💖", NatureCategory.COLORS_SHAPES, "গোলাপ ও পদ্ম ফুলের মিষ্টি রং।", Color(0xFFE91E63)),
         NatureItem("কালো", "Black", "ব্ল্যাক", "রং", "⚫", NatureCategory.COLORS_SHAPES, "কালো কুচকুচে রাত ও মাথার চুলের রং।", Color(0xFF212121)),
         NatureItem("সাদা", "White", "হোয়াইট", "রং", "⚪", NatureCategory.COLORS_SHAPES, "সাদা শাপলা, দুধ ও শান্তির প্রতীক।", Color(0xFF78909C)),
         NatureItem("বৃত্ত", "Circle", "সার্কেল", "আকার", "⭕", NatureCategory.COLORS_SHAPES, "থালা, চাকা ও ফুটবলের গোল রূপকে বৃত্ত বলে।", Color(0xFFFF9800)),

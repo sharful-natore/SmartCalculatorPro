@@ -33,6 +33,7 @@ enum class SpellingTabMode(val titleBn: String, val icon: String) {
 
 enum class PhonicsSubCategory(val titleBn: String, val icon: String) {
     ALPHABET_SOUNDS("A-Z ফনিক্স চার্ট", "🔤"),
+    WORD_FAMILIES("শব্দ গঠন ও ব্লেন্ডিং (-at, -in, -ee...)", "🧩"),
     VOWEL_RULES("হ্রস্ব ও দীর্ঘ Vowel (Magic E)", "✨"),
     DIGRAPHS("ডাইগ্রাফ (SH, CH, TH...)", "👥"),
     BLENDS("যুক্তধ্বনি (Blends)", "🔗"),
@@ -262,6 +263,16 @@ fun KidsSpellingTab(
                 PhonicsSubCategory.ALPHABET_SOUNDS -> {
                     PhonicsAlphabetSection(
                         items = KidsDataProvider.phonicsLetterSounds,
+                        themeColors = themeColors,
+                        audioPlayer = audioPlayer,
+                        onRewardStars = onRewardStars
+                    )
+                }
+                PhonicsSubCategory.WORD_FAMILIES -> {
+                    PhonicsRulesListSection(
+                        rules = KidsDataProvider.wordFamilyRules,
+                        introTitle = "শব্দ তৈরির সহজ নিয়ম (Word Families & Blending)",
+                        introDescription = "ভাওয়েল ও ব্যঞ্জনবর্ণ জোড়া লাগিয়ে কীভাবে হাজারো ইংরেজি শব্দ সহজে পড়া যায় তার দারুণ লেসন! নিচে ট্যাপ করে করে পড়ো ও শোনো।",
                         themeColors = themeColors,
                         audioPlayer = audioPlayer,
                         onRewardStars = onRewardStars
@@ -614,14 +625,14 @@ fun PhonicsAlphabetSection(
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(48.dp)
+                                    .size(52.dp)
                                     .background(letterItem.accentColor.copy(alpha = 0.15f), CircleShape)
                                     .border(2.dp, letterItem.accentColor, CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = "${letterItem.letter} ${letterItem.letter.lowercase()}",
-                                    fontSize = 17.sp,
+                                    text = letterItem.letter,
+                                    fontSize = 18.sp,
                                     fontWeight = FontWeight.Black,
                                     color = letterItem.accentColor
                                 )
@@ -632,12 +643,16 @@ fun PhonicsAlphabetSection(
                                     .weight(1f)
                                     .padding(horizontal = 10.dp)
                             ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
                                     Text(
                                         text = "ধ্বনি: ${letterItem.soundBn}",
                                         style = MaterialTheme.typography.titleSmall,
                                         fontWeight = FontWeight.Bold,
-                                        color = themeColors.onSurface
+                                        color = themeColors.onSurface,
+                                        modifier = Modifier.weight(1f, fill = false)
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Surface(
@@ -654,11 +669,12 @@ fun PhonicsAlphabetSection(
                                     }
                                 }
 
+                                Spacer(modifier = Modifier.height(2.dp))
                                 Text(
                                     text = letterItem.ruleExplanation,
                                     style = MaterialTheme.typography.bodySmall,
                                     color = themeColors.onSurface.copy(alpha = 0.7f),
-                                    maxLines = 1,
+                                    maxLines = 2,
                                     overflow = TextOverflow.Ellipsis
                                 )
                             }
@@ -721,41 +737,42 @@ fun PhonicsAlphabetSection(
 
                         Spacer(modifier = Modifier.height(6.dp))
 
-                        Row(
+                        LazyRow(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            letterItem.exampleWords.forEach { example ->
+                            items(letterItem.exampleWords) { example ->
                                 Surface(
                                     shape = RoundedCornerShape(12.dp),
                                     color = themeColors.surfaceVariant.copy(alpha = 0.5f),
                                     border = androidx.compose.foundation.BorderStroke(1.dp, letterItem.accentColor.copy(alpha = 0.25f)),
                                     modifier = Modifier
-                                        .weight(1f)
                                         .clip(RoundedCornerShape(12.dp))
                                         .clickable {
                                             audioPlayer.playClickSound()
                                             audioPlayer.speak("${example.word}। ${example.pronunciationBn}। ${example.meaningBn}", isBn = true)
                                         }
                                 ) {
-                                    Column(
-                                        modifier = Modifier.padding(8.dp),
-                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                                        verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Text(text = example.emoji, fontSize = 20.sp)
-                                        Spacer(modifier = Modifier.height(2.dp))
-                                        Text(
-                                            text = example.word,
-                                            style = MaterialTheme.typography.labelMedium,
-                                            fontWeight = FontWeight.Bold,
-                                            color = letterItem.accentColor
-                                        )
-                                        Text(
-                                            text = example.pronunciationBn,
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = themeColors.onSurface.copy(alpha = 0.7f),
-                                            fontSize = 10.sp
-                                        )
+                                        Text(text = example.emoji, fontSize = 22.sp)
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Column {
+                                            Text(
+                                                text = example.word,
+                                                style = MaterialTheme.typography.labelMedium,
+                                                fontWeight = FontWeight.Bold,
+                                                color = letterItem.accentColor
+                                            )
+                                            Text(
+                                                text = "${example.pronunciationBn} (${example.meaningBn})",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = themeColors.onSurface.copy(alpha = 0.7f),
+                                                fontSize = 10.5.sp
+                                            )
+                                        }
                                     }
                                 }
                             }

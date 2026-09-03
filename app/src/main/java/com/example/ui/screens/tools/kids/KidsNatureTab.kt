@@ -125,14 +125,38 @@ fun KidsNatureTab(
                             .padding(14.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        // Big Emoji Circle
+                        // Big Visual Circle with High Contrast Background and Accent Border
                         Box(
                             modifier = Modifier
-                                .size(64.dp)
-                                .background(item.accentColor.copy(alpha = 0.15f), CircleShape),
+                                .size(68.dp)
+                                .background(
+                                    if (item.category == NatureCategory.COLORS_SHAPES && item.accentColor == Color(0xFFFFFFFF))
+                                        Color(0xFFF0F0F0)
+                                    else
+                                        item.accentColor.copy(alpha = 0.22f),
+                                    CircleShape
+                                )
+                                .border(
+                                    width = 2.dp,
+                                    color = if (item.accentColor == Color(0xFFFFFFFF)) Color(0xFF9E9E9E) else item.accentColor.copy(alpha = 0.7f),
+                                    shape = CircleShape
+                                ),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(text = item.emoji, fontSize = 36.sp)
+                            if (item.category == NatureCategory.COLORS_SHAPES && item.emoji.isEmpty()) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = item.accentColor,
+                                    border = androidx.compose.foundation.BorderStroke(1.5.dp, Color.Gray.copy(alpha = 0.4f)),
+                                    modifier = Modifier.size(42.dp)
+                                ) {}
+                            } else {
+                                Text(
+                                    text = item.emoji,
+                                    fontSize = 36.sp,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
                         }
 
                         Spacer(modifier = Modifier.height(10.dp))

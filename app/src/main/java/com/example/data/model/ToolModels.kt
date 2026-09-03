@@ -356,11 +356,6 @@ enum class ToolType(
         "জেমিনি এআই চালিত প্রফেশনাল ও ATS-ফ্রেন্ডলি সিভি তৈরি, চাকরির বিবরণ অনুযায়ী টিউন করা ও এইচডি পিডিএফ এক্সপোর্ট",
         ToolCategory.EDUCATION, Icons.Default.Badge
     ),
-    SMART_CV_BUILDER(
-        "Smart CV Studio", "স্মার্ট সিভি বিল্ডার",
-        "নেক্সট-জেন এআই সিভি স্টুডিও: লাইভ ক্যানভাস প্রিভিউ, মডুলার ব্লক, গুগল XYZ এআই রাইটার, সার্কুলার হিটম্যাপ ও আন্তর্জাতিক ৪টি টেমপ্লেট",
-        ToolCategory.EDUCATION, Icons.Default.AutoAwesome
-    ),
 
     // Kids Learning Section
     KIDS_LEARNING(
@@ -503,7 +498,6 @@ enum class ToolType(
                 PDF_READER -> "View, zoom and read PDF documents on your device using native renderer"
                 PDF_MAKER -> "Create custom A4 PDF documents from notes, text, and photos with zero app size impact"
                 ATS_CV_BUILDER -> "Build ATS-friendly professional resumes, tailor content with Gemini AI, and export HD PDFs"
-                SMART_CV_BUILDER -> "Next-gen professional Smart CV Studio with live canvas preview, modular block manager, Google XYZ AI writer, circular heatmap, and international templates"
                 KIDS_LEARNING -> "Interactive kids learning with alphabets, spelling & phonics, math counting & tables, rhymes, animals, magic drawing slate, and brain quizzes"
             }
         }

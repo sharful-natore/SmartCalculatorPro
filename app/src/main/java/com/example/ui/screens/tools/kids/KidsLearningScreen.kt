@@ -1,6 +1,7 @@
 package com.example.ui.screens.tools.kids
 
 import android.content.Context
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -22,6 +23,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -69,18 +71,45 @@ fun KidsLearningScreen(
     var showUnlockHintDialog by remember { mutableStateOf(false) }
     var showInfoDialog by remember { mutableStateOf(false) }
 
+    // Scroll Behavior for auto-collapsing header on scroll
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+
+    // Android System Back Button Handler
+    BackHandler(enabled = true) {
+        if (isChildLocked) {
+            showUnlockHintDialog = true
+            audioPlayer.speak("চাইল্ড লক অন রয়েছে। আনলক করতে লাল তালার বাটনটি ৩ সেকেন্ড চেপে রাখুন।", isBn = true)
+        } else if (activeTab != KidsSectionTab.ALPHABET) {
+            audioPlayer.playClickSound()
+            activeTab = KidsSectionTab.ALPHABET
+        } else {
+            audioPlayer.playClickSound()
+            onBackClick()
+        }
+    }
+
     Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(
+                scrollBehavior = scrollBehavior,
                 title = {
-                    Text(
-                        text = "কিডস লার্নিং",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = themeColors.onSurface,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                    Column {
+                        Text(
+                            text = "কিডস লার্নিং",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = themeColors.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text = activeTab.titleBn,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = themeColors.accent,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
                 },
                 navigationIcon = {
                     IconButton(
