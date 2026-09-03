@@ -301,7 +301,7 @@ data class CvSkillItem(
     val id: String = UUID.randomUUID().toString(),
     val name: String = "",
     val level: String = "Proficient",
-    val category: String = "Technical & Software Engineering", // Technical & Software Engineering, Tools & Platforms, Functional Competencies, Soft Skills & Leadership, Management & Business, Finance & Accounting, Marketing & Sales, Design & UI/UX, Engineering & Technical, Languages
+    val category: String = "",
     val description: String = ""
 )
 
@@ -323,7 +323,7 @@ data class RealtimeMatchResult(
 )
 
 val SKILL_CATEGORY_LIBRARY = mapOf(
-    "Technical & Software Engineering" to listOf(
+    "Technical & Software" to listOf(
         "Kotlin", "Java", "Android SDK", "Jetpack Compose", "Coroutines & Flow", "Room Database",
         "Retrofit & REST APIs", "Python", "C++", "C#", "React.js", "Node.js", "Flutter & Dart",
         "SQL & PostgreSQL", "GraphQL", "Git & GitHub", "Docker & Containers", "Kubernetes",
@@ -451,22 +451,32 @@ fun calculateRealtimeCircularMatch(
 }
 
 fun findBestCategoryForSkill(skillName: String): String {
-    val lower = skillName.lowercase()
+    val lower = skillName.lowercase().trim()
     for ((cat, skills) in SKILL_CATEGORY_LIBRARY) {
+        val resolvedCat = if (cat == "Technical & Software Engineering") "Technical & Software" else cat
         if (skills.any { it.lowercase() == lower || lower.contains(it.lowercase()) }) {
-            return cat
+            return resolvedCat
         }
     }
     return when {
-        lower.contains("kotlin") || lower.contains("java") || lower.contains("python") || lower.contains("react") || lower.contains("node") || lower.contains("git") || lower.contains("sql") || lower.contains("programming") || lower.contains("developer") || lower.contains("software") || lower.contains("api") || lower.contains("rest") -> "Technical & Software Engineering"
-        lower.contains("cloud") || lower.contains("aws") || lower.contains("gcp") || lower.contains("firebase") || lower.contains("figma") || lower.contains("excel") || lower.contains("analytics") || lower.contains("crm") -> "Tools, Cloud & Platforms"
-        lower.contains("management") || lower.contains("agile") || lower.contains("scrum") || lower.contains("project") || lower.contains("business") || lower.contains("qa") || lower.contains("quality") || lower.contains("client") -> "Functional & Core Competencies"
+        lower.contains("kotlin") || lower.contains("java") || lower.contains("python") || lower.contains("react") || lower.contains("node") || lower.contains("git") || lower.contains("sql") || lower.contains("programming") || lower.contains("developer") || lower.contains("software") || lower.contains("api") || lower.contains("rest") || lower.contains("code") || lower.contains("coding") || lower.contains("algorithm") || lower.contains("frontend") || lower.contains("backend") || lower.contains("fullstack") || lower.contains("app dev") || lower.contains("development") -> "Technical & Software"
+        
+        lower.contains("excel") || lower.contains("word") || lower.contains("powerpoint") || lower.contains("sheets") || lower.contains("office") || lower.contains("trello") || lower.contains("jira") || lower.contains("asana") || lower.contains("slack") || lower.contains("zoom") || lower.contains("workspace") || lower.contains("cloud") || lower.contains("aws") || lower.contains("gcp") || lower.contains("firebase") || lower.contains("figma") || lower.contains("analytics") || lower.contains("crm") || lower.contains("salesforce") || lower.contains("zendesk") || lower.contains("freshdesk") || lower.contains("postman") -> "Tools, Cloud & Platforms"
+        
+        lower.contains("inventory") || lower.contains("stock") || lower.contains("warehouse") || lower.contains("dispatch") || lower.contains("logistics") || lower.contains("logistical") || lower.contains("store") || lower.contains("material") || lower.contains("supply chain") || lower.contains("procurement") || lower.contains("operations") || lower.contains("shipping") || lower.contains("delivery") || lower.contains("customer") || lower.contains("support") || lower.contains("client") || lower.contains("complaint") || lower.contains("resolution") || lower.contains("escalation") || lower.contains("service") || lower.contains("experience") || lower.contains("cx") || lower.contains("csat") || lower.contains("sla") || lower.contains("ticket") || lower.contains("qa") || lower.contains("quality") || lower.contains("agile") || lower.contains("scrum") || lower.contains("project") || lower.contains("product") || lower.contains("business") || lower.contains("analyst") || lower.contains("requirement") || lower.contains("process") || lower.contains("optimization") || lower.contains("workflow") || lower.contains("risk") || lower.contains("planning") || lower.contains("strategy") || lower.contains("execution") -> "Functional & Core Competencies"
+        
         lower.contains("lead") || lower.contains("team") || lower.contains("stakeholder") || lower.contains("budget") || lower.contains("mentor") || lower.contains("strategy") || lower.contains("negotiate") -> "Management, Business & Strategy"
+        
         lower.contains("finance") || lower.contains("audit") || lower.contains("tax") || lower.contains("accounting") || lower.contains("bank") || lower.contains("bookkeeper") || lower.contains("tally") -> "Finance, Accounting & Banking"
+        
         lower.contains("marketing") || lower.contains("sales") || lower.contains("seo") || lower.contains("sem") || lower.contains("social") || lower.contains("content") || lower.contains("brand") || lower.contains("lead generation") -> "Marketing, Sales & Growth"
+        
         lower.contains("design") || lower.contains("ui") || lower.contains("ux") || lower.contains("graphic") || lower.contains("adobe") || lower.contains("photoshop") || lower.contains("illustrator") -> "Design, UI/UX & Creative"
+        
         lower.contains("cad") || lower.contains("civil") || lower.contains("mechanical") || lower.contains("plc") || lower.contains("electrical") || lower.contains("engineering") -> "Engineering & Technical Domain"
+        
         lower.contains("english") || lower.contains("bengali") || lower.contains("bangla") || lower.contains("language") || lower.contains("german") || lower.contains("spanish") -> "Languages & Global Communication"
+        
         else -> "Soft Skills & Professional Excellence"
     }
 }
@@ -5327,7 +5337,8 @@ fun AtsCvBuilderTool(
                 promptBuilder.append("5. Write a tailored summary aligned with the circular.\n")
                 promptBuilder.append("6. Return a list of specific CV suggestions for improvement. Each suggestion MUST contain: id (e.g. 'cir_1'), titleEn, titleBn, descEn, descBn, category (e.g., 'summary', 'skills', 'experience_0'), proposedValue (the tailored text/skills/bullets to insert).\n")
                 promptBuilder.append("7. Write a professional application Email Subject Line, a concise Cover Letter, and a Follow-Up Email tailored specifically to this circular and candidate profile.\n")
-                promptBuilder.append("8. Return strictly valid JSON object with keys: matchPercentage (int), tailoredSummary (string), matchingStrengths (array of string), missingKeywords (array of string), improvementTips (array of string), newSkills (array of string), emailSubject (string), coverLetter (string), followUpEmail (string), suggestions (array of objects with keys: id, titleEn, titleBn, descEn, descBn, category, proposedValue). Do NOT wrap in markdown syntax like ```json.")
+                promptBuilder.append("8. Extract the Company Name (e.g. 'BRAC', 'Brain Station 23', etc.) and the Job Designation/Title (e.g. 'Senior Software Engineer') from the job circular.\n")
+                promptBuilder.append("9. Return strictly valid JSON object with keys: matchPercentage (int), companyName (string), jobTitle (string), tailoredSummary (string), matchingStrengths (array of string), missingKeywords (array of string), improvementTips (array of string), newSkills (array of string), emailSubject (string), coverLetter (string), followUpEmail (string), suggestions (array of objects with keys: id, titleEn, titleBn, descEn, descBn, category, proposedValue). Do NOT wrap in markdown syntax like ```json.")
 
                 val sysPrompt = "You are a top ATS recruitment specialist & resume evaluator. Analyze candidate resume against target job circular. Return strictly a valid JSON object. Do NOT include markdown code blocks or any comments before or after the JSON."
                 
@@ -5343,6 +5354,8 @@ fun AtsCvBuilderTool(
                         val cleanJsonStr = resultText.substringAfter("{").substringBeforeLast("}").let { "{$it}" }
                         val jsonObj = org.json.JSONObject(cleanJsonStr)
                         val matchPct = jsonObj.optInt("matchPercentage", 85)
+                        val compName = jsonObj.optString("companyName", "").trim()
+                        val desig = jsonObj.optString("jobTitle", "").trim()
                         val tailoredSummary = jsonObj.optString("tailoredSummary", cvData.summary)
                         val emailSubject = jsonObj.optString("emailSubject", "")
                         val coverLetter = jsonObj.optString("coverLetter", "")
@@ -5383,7 +5396,13 @@ fun AtsCvBuilderTool(
                         }
 
                         val newId = UUID.randomUUID().toString()
-                        val autoTitle = if (circularText.isNotBlank()) {
+                        val autoTitle = if (compName.isNotEmpty() && desig.isNotEmpty()) {
+                            "$compName - $desig"
+                        } else if (desig.isNotEmpty()) {
+                            desig
+                        } else if (compName.isNotEmpty()) {
+                            compName
+                        } else if (circularText.isNotBlank()) {
                             circularText.trim().lines().firstOrNull()?.take(28) ?: (if (isBn) "সার্কুলার #${cvData.savedCirculars.size + 1}" else "Circular #${cvData.savedCirculars.size + 1}")
                         } else {
                             if (isBn) "সার্কুলার ইমেজ #${cvData.savedCirculars.size + 1}" else "Circular Image #${cvData.savedCirculars.size + 1}"
@@ -5707,7 +5726,7 @@ fun AtsCvBuilderTool(
                 scope.launch {
                     try {
                         val sysPrompt = when (aiPromptTargetField) {
-                            "CIRCULAR_MATCH" -> "You are a top ATS recruitment specialist & resume evaluator. Analyze candidate resume against target job circular. Output STRICTLY valid JSON with structure: {\"matchPercentage\": 88, \"tailoredSummary\": \"...\", \"matchingStrengths\": [\"Strength 1\", \"Strength 2\"], \"missingKeywords\": [\"Keyword1\", \"Keyword2\"], \"improvementTips\": [\"Tip 1\", \"Tip 2\"], \"newSkills\": [\"Skill1\", \"Skill2\"]}. Do NOT include markdown syntax."
+                            "CIRCULAR_MATCH" -> "You are a top ATS recruitment specialist & resume evaluator. Analyze candidate resume against target job circular. Output STRICTLY valid JSON with structure: {\"matchPercentage\": 88, \"companyName\": \"Company Name\", \"jobTitle\": \"Job Designation/Title\", \"tailoredSummary\": \"...\", \"matchingStrengths\": [\"Strength 1\", \"Strength 2\"], \"missingKeywords\": [\"Keyword1\", \"Keyword2\"], \"improvementTips\": [\"Tip 1\", \"Tip 2\"], \"newSkills\": [\"Skill1\", \"Skill2\"]}. Do NOT include markdown syntax."
                             "FRESHER_COMPLETE" -> "You are a professional university career coach and top ATS resume consultant. Generate 4 high-impact resume sections for freshers. Output strictly valid JSON with keys: 'academicProjects', 'internshipsVolunteer', 'leadershipClubs', 'keyCoursework'."
                             "SKILLS" -> "You are an expert HR Manager & Technical Recruiter. Generate a list of top relevant skills with concise title and action-oriented description for each skill. Output each skill strictly on a new line in format: 'Skill Title: Detailed description of proficiency or application'. Example:\nFinancial Management: Skilled in budget forecasting, cost control, and financial reporting.\nOutput ONLY the skills list line by line. Do NOT include markdown code blocks, numbers, or greetings."
                             else -> "CRITICAL INSTRUCTION: You are an expert HR Manager and professional resume writer. Write ONLY the exact, precise text content requested for the CV field. DO NOT include any conversational text, greetings, explanations, or wrap-up remarks. DO NOT include introductory phrases like \'Here is the objective:\' or \'Certainly!\'. DO NOT use markdown code blocks (```). Your ENTIRE output must be exclusively the raw text to be inserted into the CV, ready to copy-paste. Nothing else."
@@ -8764,7 +8783,10 @@ private fun EducationAndSkillsTab(
             modifier = Modifier.padding(bottom = 8.dp)
         )
 
-        val activeCategories = (cvData.skills.map { it.category.ifBlank { "Technical & Software Engineering" } } + localAddedCategories).distinct()
+        val activeCategories = (cvData.skills.map {
+            val resolvedCat = it.category.ifBlank { findBestCategoryForSkill(it.name) }
+            if (resolvedCat == "Technical & Software Engineering") "Technical & Software" else resolvedCat
+        } + localAddedCategories).distinct()
 
         if (activeCategories.isEmpty()) {
             Column(
@@ -8796,7 +8818,11 @@ private fun EducationAndSkillsTab(
             }
         } else {
             activeCategories.forEach { cat ->
-                val skillsInCat = cvData.skills.filter { it.category == cat }
+                val skillsInCat = cvData.skills.filter {
+                    val resolvedCat = it.category.ifBlank { findBestCategoryForSkill(it.name) }
+                    val finalCat = if (resolvedCat == "Technical & Software Engineering") "Technical & Software" else resolvedCat
+                    finalCat == cat
+                }
 
                 Surface(
                     shape = RoundedCornerShape(12.dp),
@@ -8812,7 +8838,10 @@ private fun EducationAndSkillsTab(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
+                            Row(
+                                modifier = Modifier.weight(1f),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
                                 Icon(
                                     imageVector = Icons.Default.FolderOpen,
                                     contentDescription = null,
@@ -8828,21 +8857,75 @@ private fun EducationAndSkillsTab(
                                 )
                             }
 
-                            IconButton(
-                                onClick = {
-                                    localAddedCategories = localAddedCategories.filter { it != cat }
-                                    val remainingSkills = cvData.skills.filter { it.category != cat }
-                                    onCvDataChange(cvData.copy(skills = remainingSkills))
-                                    Toast.makeText(context, if (isBn) "'$cat' ক্যাটাগরি মুছে ফেলা হয়েছে" else "Removed category '$cat'", Toast.LENGTH_SHORT).show()
-                                },
-                                modifier = Modifier.size(24.dp)
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Delete,
-                                    contentDescription = "Delete Category",
-                                    tint = Color.Red.copy(alpha = 0.7f),
-                                    modifier = Modifier.size(16.dp)
-                                )
+                                // Arrow DropDown to change category
+                                var showChangeCategoryMenu by remember { mutableStateOf(false) }
+                                Box {
+                                    IconButton(
+                                        onClick = { showChangeCategoryMenu = true },
+                                        modifier = Modifier.size(24.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.ArrowDropDown,
+                                            contentDescription = "Change Category",
+                                            tint = themeColors.displayText.copy(alpha = 0.6f),
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+
+                                    DropdownMenu(
+                                        expanded = showChangeCategoryMenu,
+                                        onDismissRequest = { showChangeCategoryMenu = false },
+                                        modifier = Modifier.background(themeColors.cardBg)
+                                    ) {
+                                        val availableCategories = SKILL_CATEGORY_LIBRARY.keys.toList()
+                                        availableCategories.forEach { targetCat ->
+                                            if (targetCat != cat) {
+                                                DropdownMenuItem(
+                                                    text = { Text(text = targetCat, fontSize = 11.sp, color = themeColors.displayText) },
+                                                    onClick = {
+                                                        showChangeCategoryMenu = false
+                                                        val updatedSkills = cvData.skills.map { sk ->
+                                                            val currentResolvedCat = sk.category.ifBlank { findBestCategoryForSkill(sk.name) }
+                                                            val finalResolvedCat = if (currentResolvedCat == "Technical & Software Engineering") "Technical & Software" else currentResolvedCat
+                                                            if (finalResolvedCat == cat) {
+                                                                sk.copy(category = targetCat)
+                                                            } else {
+                                                                sk
+                                                            }
+                                                        }
+                                                        onCvDataChange(cvData.copy(skills = updatedSkills))
+                                                        Toast.makeText(context, if (isBn) "ক্যাটাগরি পরিবর্তন করা হয়েছে" else "Category updated to $targetCat", Toast.LENGTH_SHORT).show()
+                                                    }
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+
+                                IconButton(
+                                    onClick = {
+                                        localAddedCategories = localAddedCategories.filter { it != cat }
+                                        val remainingSkills = cvData.skills.filter { sk ->
+                                            val resolvedCat = sk.category.ifBlank { findBestCategoryForSkill(sk.name) }
+                                            val finalCat = if (resolvedCat == "Technical & Software Engineering") "Technical & Software" else resolvedCat
+                                            finalCat != cat
+                                        }
+                                        onCvDataChange(cvData.copy(skills = remainingSkills))
+                                        Toast.makeText(context, if (isBn) "'$cat' ক্যাটাগরি মুছে ফেলা হয়েছে" else "Removed category '$cat'", Toast.LENGTH_SHORT).show()
+                                    },
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = "Delete Category",
+                                        tint = Color.Red.copy(alpha = 0.7f),
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
                             }
                         }
 
@@ -11934,11 +12017,50 @@ private fun AiJobCircularMatchTab(
                         - Circular Details: ${circularTextInput.ifBlank { "No explicit circular provided yet." }}
                         - Last ATS Match Score: ${cvData.lastAtsScoreFromGemini}%
 
-                        If you suggest a modified summary or modified role, wrap a JSON block in ```json ... ``` with key 'summary' or 'jobTitle' so the candidate can click 'Apply' to update their master CV data.
+                        If you suggest modifications or rephrase/generate content for ANY part of the CV (such as updating the Summary, Job Title, adding/removing/editing Skills, Experience, Education, Projects, etc.), wrap a JSON block in ```json ... ``` containing ONLY the modified fields with any of these keys:
+                        - "fullName": string
+                        - "jobTitle": string
+                        - "email": string
+                        - "phone": string
+                        - "address": string
+                        - "linkedin": string
+                        - "githubOrPortfolio": string
+                        - "summary": string
+                        - "languages": string
+                        - "certifications": string
+                        - "references": string
+                        - "isFresher": boolean
+                        - "fresherAcademicProjects": string
+                        - "fresherInternshipsVolunteer": string
+                        - "fresherLeadershipClubs": string
+                        - "fresherKeyCoursework": string
+                        - "skills": array of objects with keys: name (string), level (string), category (string), description (string)
+                        - "experiences": array of objects with keys: company (string), role (string), startDate (string), endDate (string), isCurrent (boolean), description (string), location (string)
+                        - "educations": array of objects with keys: degree (string), institution (string), passingYear (string), result (string), examLevel (string), subjectMajor (string), resultType (string)
+                        - "projects": array of objects with keys: title (string), description (string), link (string)
+
+                        Always provide a friendly explanation first, write out the complete, rephrased/generated text clearly in your main conversational message (so the candidate can see, read and copy it directly if they want), and then include the ```json ... ``` block at the very end of your response so the system can let them click "Apply" or "Compare" to automatically update their master CV data.
                     """.trimIndent()
 
+                    val historyBuilder = StringBuilder()
+                    val historyMessages = coPilotMessages.takeLast(11).dropLast(1)
+                    if (historyMessages.isNotEmpty()) {
+                        historyBuilder.append("\nRecent Chat History Context:\n")
+                        historyMessages.forEach { msg ->
+                            val roleName = if (msg.sender == "ai") "AI Co-Pilot" else "Candidate"
+                            historyBuilder.append("$roleName: ${msg.text}\n")
+                        }
+                        historyBuilder.append("\n")
+                    }
+
+                    val fullPrompt = if (historyBuilder.isNotEmpty()) {
+                        "${historyBuilder.toString()}Current Candidate Query: $displayPrompt"
+                    } else {
+                        displayPrompt
+                    }
+
                     val aiResponseText = callGeminiAiMultiModal(
-                        prompt = displayPrompt,
+                        prompt = fullPrompt,
                         systemInstruction = sysPrompt,
                         imageBytes = attachmentBytes,
                         mimeType = mimeType ?: "image/jpeg"
@@ -11947,23 +12069,30 @@ private fun AiJobCircularMatchTab(
                     var proposedCvData: CvData? = null
                     var cleanResponse = aiResponseText
 
-                    if (aiResponseText.contains("```json")) {
+                    val extractedJson = extractJsonFromText(aiResponseText)
+                    if (extractedJson != null) {
                         try {
-                            val jsonStart = aiResponseText.indexOf("```json") + 7
-                            val jsonEnd = aiResponseText.indexOf("```", jsonStart)
-                            if (jsonEnd > jsonStart) {
-                                val jsonContent = aiResponseText.substring(jsonStart, jsonEnd).trim()
-                                val jsonObj = org.json.JSONObject(jsonContent)
-                                var updatedSummary = cvData.summary
-                                if (jsonObj.has("summary")) {
-                                    updatedSummary = jsonObj.optString("summary", cvData.summary)
+                            proposedCvData = jsonStringToCvData(extractedJson, cvData)
+                            
+                            // Remove the JSON block from cleanResponse so the user gets a neat text output
+                            if (aiResponseText.contains("```json")) {
+                                val idx = aiResponseText.indexOf("```json")
+                                val endIdx = aiResponseText.indexOf("```", idx + 7)
+                                if (endIdx != -1) {
+                                    cleanResponse = (aiResponseText.substring(0, idx).trim() + "\n\n" + aiResponseText.substring(endIdx + 3).trim()).trim()
                                 }
-                                var updatedTitle = cvData.jobTitle
-                                if (jsonObj.has("jobTitle")) {
-                                    updatedTitle = jsonObj.optString("jobTitle", cvData.jobTitle)
+                            } else if (aiResponseText.contains("```")) {
+                                val idx = aiResponseText.indexOf("```")
+                                val endIdx = aiResponseText.indexOf("```", idx + 3)
+                                if (endIdx != -1) {
+                                    cleanResponse = (aiResponseText.substring(0, idx).trim() + "\n\n" + aiResponseText.substring(endIdx + 3).trim()).trim()
                                 }
-                                proposedCvData = cvData.copy(summary = updatedSummary, jobTitle = updatedTitle)
-                                cleanResponse = (aiResponseText.substring(0, aiResponseText.indexOf("```json")).trim() + "\n\n" + aiResponseText.substring(jsonEnd + 3).trim()).trim()
+                            } else {
+                                val startIdx = aiResponseText.indexOf("{")
+                                val endIdx = aiResponseText.lastIndexOf("}")
+                                if (startIdx != -1 && endIdx > startIdx) {
+                                    cleanResponse = (aiResponseText.substring(0, startIdx).trim() + "\n\n" + aiResponseText.substring(endIdx + 1).trim()).trim()
+                                }
                             }
                         } catch (e: Exception) {
                             // ignore JSON parse errors
@@ -12220,15 +12349,23 @@ private fun PreviewAndExportTab(
                 modifier = Modifier.height(38.dp)
             ) {
                 Row(
-                    modifier = Modifier.padding(3.dp),
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .padding(3.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Surface(
                         shape = RoundedCornerShape(16.dp),
                         color = if (previewMode == "PREVIEW") themeColors.buttonEqualBg else Color.Transparent,
-                        onClick = { previewMode = "PREVIEW" }
+                        onClick = { previewMode = "PREVIEW" },
+                        modifier = Modifier.fillMaxHeight()
                     ) {
-                        Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 20.dp)) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .padding(horizontal = 20.dp)
+                        ) {
                             Text(
                                 text = if (isBn) "লাইভ প্রিভিউ" else "Live Preview",
                                 fontSize = 12.sp,
@@ -12241,9 +12378,15 @@ private fun PreviewAndExportTab(
                     Surface(
                         shape = RoundedCornerShape(16.dp),
                         color = if (previewMode == "LIVE_EDIT") themeColors.buttonEqualBg else Color.Transparent,
-                        onClick = { previewMode = "LIVE_EDIT" }
+                        onClick = { previewMode = "LIVE_EDIT" },
+                        modifier = Modifier.fillMaxHeight()
                     ) {
-                        Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 20.dp)) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .padding(horizontal = 20.dp)
+                        ) {
                             Text(
                                 text = if (isBn) "লাইভ এডিট" else "Live Edit",
                                 fontSize = 12.sp,
@@ -13523,7 +13666,11 @@ private fun CvBeforeAfterComparisonDialog(
                         }
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = proposedValue,
+                            text = if (suggestion.category.trim().lowercase() == "copilot_all") {
+                                getProposedDifferencesSummary(cvData, jsonStringToCvData(suggestion.proposedValue, cvData), isBn)
+                            } else {
+                                proposedValue
+                            },
                             fontSize = 11.5.sp,
                             color = themeColors.displayText,
                             lineHeight = 16.sp,
@@ -13566,6 +13713,9 @@ private fun CvBeforeAfterComparisonDialog(
 private fun getCurrentValueForCategory(suggestion: AiSuggestionItem, cvData: CvData): String {
     val category = suggestion.category.trim().lowercase()
     return when {
+        category == "copilot_all" -> {
+            getOriginalDifferencesSummary(cvData, jsonStringToCvData(suggestion.proposedValue, cvData))
+        }
         category == "summary" -> cvData.summary
         category.startsWith("experience_") -> {
             val idx = category.substringAfter("experience_").toIntOrNull() ?: 0
@@ -13592,6 +13742,9 @@ private fun applySuggestionToCvData(suggestion: AiSuggestionItem, cvData: CvData
     val category = suggestion.category.trim().lowercase()
     val newVal = suggestion.proposedValue
     return when {
+        category == "copilot_all" -> {
+            jsonStringToCvData(newVal, cvData)
+        }
         category == "summary" -> {
             cvData.copy(summary = newVal)
         }
@@ -13641,4 +13794,277 @@ private fun applySuggestionToCvData(suggestion: AiSuggestionItem, cvData: CvData
         }
         else -> cvData
     }
+}
+
+internal fun cvDataToJsonString(cv: CvData): String {
+    val obj = org.json.JSONObject().apply {
+        put("fullName", cv.fullName)
+        put("jobTitle", cv.jobTitle)
+        put("email", cv.email)
+        put("phone", cv.phone)
+        put("address", cv.address)
+        put("linkedin", cv.linkedin)
+        put("githubOrPortfolio", cv.githubOrPortfolio)
+        put("summary", cv.summary)
+        put("languages", cv.languages)
+        put("certifications", cv.certifications)
+        put("references", cv.references)
+        put("isFresher", cv.isFresher)
+        put("fresherAcademicProjects", cv.fresherAcademicProjects)
+        put("fresherInternshipsVolunteer", cv.fresherInternshipsVolunteer)
+        put("fresherLeadershipClubs", cv.fresherLeadershipClubs)
+        put("fresherKeyCoursework", cv.fresherKeyCoursework)
+        
+        val expArr = org.json.JSONArray()
+        cv.experiences.forEach { exp ->
+            expArr.put(org.json.JSONObject().apply {
+                put("company", exp.company)
+                put("role", exp.role)
+                put("startDate", exp.startDate)
+                put("endDate", exp.endDate)
+                put("isCurrent", exp.isCurrent)
+                put("description", exp.description)
+                put("location", exp.location)
+            })
+        }
+        put("experiences", expArr)
+
+        val eduArr = org.json.JSONArray()
+        cv.educations.forEach { edu ->
+            eduArr.put(org.json.JSONObject().apply {
+                put("degree", edu.degree)
+                put("institution", edu.institution)
+                put("passingYear", edu.passingYear)
+                put("result", edu.result)
+                put("examLevel", edu.examLevel)
+                put("subjectMajor", edu.subjectMajor)
+                put("resultType", edu.resultType)
+            })
+        }
+        put("educations", eduArr)
+
+        val skillArr = org.json.JSONArray()
+        cv.skills.forEach { sk ->
+            skillArr.put(org.json.JSONObject().apply {
+                put("name", sk.name)
+                put("level", sk.level)
+                put("category", sk.category)
+                put("description", sk.description)
+            })
+        }
+        put("skills", skillArr)
+
+        val projArr = org.json.JSONArray()
+        cv.projects.forEach { pr ->
+            projArr.put(org.json.JSONObject().apply {
+                put("title", pr.title)
+                put("description", pr.description)
+                put("link", pr.link)
+            })
+        }
+        put("projects", projArr)
+    }
+    return obj.toString()
+}
+
+internal fun jsonStringToCvData(jsonStr: String, baseCv: CvData): CvData {
+    try {
+        val jsonObj = org.json.JSONObject(jsonStr)
+        var currentCv = baseCv
+        
+        if (jsonObj.has("fullName")) currentCv = currentCv.copy(fullName = jsonObj.getString("fullName"))
+        if (jsonObj.has("jobTitle")) currentCv = currentCv.copy(jobTitle = jsonObj.getString("jobTitle"))
+        if (jsonObj.has("email")) currentCv = currentCv.copy(email = jsonObj.getString("email"))
+        if (jsonObj.has("phone")) currentCv = currentCv.copy(phone = jsonObj.getString("phone"))
+        if (jsonObj.has("address")) currentCv = currentCv.copy(address = jsonObj.getString("address"))
+        if (jsonObj.has("linkedin")) currentCv = currentCv.copy(linkedin = jsonObj.getString("linkedin"))
+        if (jsonObj.has("githubOrPortfolio")) currentCv = currentCv.copy(githubOrPortfolio = jsonObj.getString("githubOrPortfolio"))
+        if (jsonObj.has("summary")) currentCv = currentCv.copy(summary = jsonObj.getString("summary"))
+        if (jsonObj.has("languages")) currentCv = currentCv.copy(languages = jsonObj.getString("languages"))
+        if (jsonObj.has("certifications")) currentCv = currentCv.copy(certifications = jsonObj.getString("certifications"))
+        if (jsonObj.has("references")) currentCv = currentCv.copy(references = jsonObj.getString("references"))
+        if (jsonObj.has("isFresher")) currentCv = currentCv.copy(isFresher = jsonObj.getBoolean("isFresher"))
+        if (jsonObj.has("fresherAcademicProjects")) currentCv = currentCv.copy(fresherAcademicProjects = jsonObj.getString("fresherAcademicProjects"))
+        if (jsonObj.has("fresherInternshipsVolunteer")) currentCv = currentCv.copy(fresherInternshipsVolunteer = jsonObj.getString("fresherInternshipsVolunteer"))
+        if (jsonObj.has("fresherLeadershipClubs")) currentCv = currentCv.copy(fresherLeadershipClubs = jsonObj.getString("fresherLeadershipClubs"))
+        if (jsonObj.has("fresherKeyCoursework")) currentCv = currentCv.copy(fresherKeyCoursework = jsonObj.getString("fresherKeyCoursework"))
+        
+        if (jsonObj.has("experiences")) {
+            val arr = jsonObj.getJSONArray("experiences")
+            val expList = mutableListOf<CvExperienceItem>()
+            for (i in 0 until arr.length()) {
+                val itemObj = arr.getJSONObject(i)
+                expList.add(CvExperienceItem(
+                    company = itemObj.optString("company", ""),
+                    role = itemObj.optString("role", ""),
+                    startDate = itemObj.optString("startDate", ""),
+                    endDate = itemObj.optString("endDate", ""),
+                    isCurrent = itemObj.optBoolean("isCurrent", false),
+                    description = itemObj.optString("description", ""),
+                    location = itemObj.optString("location", "Dhaka, Bangladesh")
+                ))
+            }
+            currentCv = currentCv.copy(experiences = expList)
+        }
+        
+        if (jsonObj.has("educations")) {
+            val arr = jsonObj.getJSONArray("educations")
+            val eduList = mutableListOf<CvEducationItem>()
+            for (i in 0 until arr.length()) {
+                val itemObj = arr.getJSONObject(i)
+                eduList.add(CvEducationItem(
+                    degree = itemObj.optString("degree", ""),
+                    institution = itemObj.optString("institution", ""),
+                    passingYear = itemObj.optString("passingYear", ""),
+                    result = itemObj.optString("result", ""),
+                    examLevel = itemObj.optString("examLevel", ""),
+                    subjectMajor = itemObj.optString("subjectMajor", ""),
+                    resultType = itemObj.optString("resultType", "")
+                ))
+            }
+            currentCv = currentCv.copy(educations = eduList)
+        }
+        
+        if (jsonObj.has("skills")) {
+            val arr = jsonObj.getJSONArray("skills")
+            val skillList = mutableListOf<CvSkillItem>()
+            for (i in 0 until arr.length()) {
+                val itemObj = arr.getJSONObject(i)
+                val skName = itemObj.optString("name", "")
+                skillList.add(CvSkillItem(
+                    name = skName,
+                    level = itemObj.optString("level", "Proficient"),
+                    category = itemObj.optString("category", "").ifBlank { findBestCategoryForSkill(skName) },
+                    description = itemObj.optString("description", "")
+                ))
+            }
+            currentCv = currentCv.copy(skills = skillList)
+        }
+        
+        if (jsonObj.has("projects")) {
+            val arr = jsonObj.getJSONArray("projects")
+            val projList = mutableListOf<CvProjectItem>()
+            for (i in 0 until arr.length()) {
+                val itemObj = arr.getJSONObject(i)
+                projList.add(CvProjectItem(
+                    title = itemObj.optString("title", ""),
+                    description = itemObj.optString("description", ""),
+                    link = itemObj.optString("link", "")
+                ))
+            }
+            currentCv = currentCv.copy(projects = projList)
+        }
+        
+        return currentCv
+    } catch (e: Exception) {
+        e.printStackTrace()
+        return baseCv
+    }
+}
+
+internal fun getOriginalDifferencesSummary(original: CvData, proposed: CvData): String {
+    val sb = StringBuilder()
+    if (original.fullName != proposed.fullName) {
+        sb.append("• Name: ${original.fullName}\n")
+    }
+    if (original.jobTitle != proposed.jobTitle) {
+        sb.append("• Title: ${original.jobTitle}\n")
+    }
+    if (original.email != proposed.email) {
+        sb.append("• Email: ${original.email}\n")
+    }
+    if (original.phone != proposed.phone) {
+        sb.append("• Phone: ${original.phone}\n")
+    }
+    if (original.address != proposed.address) {
+        sb.append("• Address: ${original.address}\n")
+    }
+    if (original.summary != proposed.summary) {
+        sb.append("• Summary: ${original.summary.take(80)}...\n")
+    }
+    if (original.languages != proposed.languages) {
+        sb.append("• Languages: ${original.languages}\n")
+    }
+    if (original.certifications != proposed.certifications) {
+        sb.append("• Certifications: ${original.certifications.take(80)}...\n")
+    }
+    if (original.references != proposed.references) {
+        sb.append("• References: ${original.references.take(80)}...\n")
+    }
+    if (original.skills != proposed.skills) {
+        sb.append("• Skills: ${original.skills.joinToString { it.name }}\n")
+    }
+    if (original.experiences != proposed.experiences) {
+        sb.append("• Experiences: ${original.experiences.size} items\n")
+    }
+    if (original.educations != proposed.educations) {
+        sb.append("• Educations: ${original.educations.size} items\n")
+    }
+    if (original.projects != proposed.projects) {
+        sb.append("• Projects: ${original.projects.size} items\n")
+    }
+    return sb.toString().ifBlank { "No significant differences." }
+}
+
+internal fun getProposedDifferencesSummary(original: CvData, proposed: CvData, isBn: Boolean): String {
+    val sb = StringBuilder()
+    if (original.fullName != proposed.fullName) {
+        sb.append(if (isBn) "• নাম: ${proposed.fullName}\n" else "• Name: ${proposed.fullName}\n")
+    }
+    if (original.jobTitle != proposed.jobTitle) {
+        sb.append(if (isBn) "• পদবি: ${proposed.jobTitle}\n" else "• Title: ${proposed.jobTitle}\n")
+    }
+    if (original.email != proposed.email) {
+        sb.append(if (isBn) "• ইমেইল: ${proposed.email}\n" else "• Email: ${proposed.email}\n")
+    }
+    if (original.phone != proposed.phone) {
+        sb.append(if (isBn) "• ফোন: ${proposed.phone}\n" else "• Phone: ${proposed.phone}\n")
+    }
+    if (original.address != proposed.address) {
+        sb.append(if (isBn) "• ঠিকানা: ${proposed.address}\n" else "• Address: ${proposed.address}\n")
+    }
+    if (original.summary != proposed.summary) {
+        sb.append(if (isBn) "• নতুন সামারি: ${proposed.summary}\n" else "• New Summary: ${proposed.summary}\n")
+    }
+    if (original.languages != proposed.languages) {
+        sb.append(if (isBn) "• ভাষা: ${proposed.languages}\n" else "• Languages: ${proposed.languages}\n")
+    }
+    if (original.certifications != proposed.certifications) {
+        sb.append(if (isBn) "• নতুন সার্টিফিকেশন: ${proposed.certifications}\n" else "• New Certifications: ${proposed.certifications}\n")
+    }
+    if (original.references != proposed.references) {
+        sb.append(if (isBn) "• নতুন রেফারেন্স: ${proposed.references}\n" else "• New References: ${proposed.references}\n")
+    }
+    if (original.skills != proposed.skills) {
+        sb.append(if (isBn) "• নতুন স্কিলসমূহ: ${proposed.skills.joinToString { it.name }}\n" else "• New Skills: ${proposed.skills.joinToString { it.name }}\n")
+    }
+    if (original.experiences != proposed.experiences) {
+        sb.append(if (isBn) "• নতুন অভিজ্ঞতাসমূহ (${proposed.experiences.size}টি আইটেম)\n" else "• New Experiences (${proposed.experiences.size} items)\n")
+    }
+    if (original.educations != proposed.educations) {
+        sb.append(if (isBn) "• নতুন শিক্ষা বিবরণী (${proposed.educations.size}টি আইটেম)\n" else "• New Educations (${proposed.educations.size} items)\n")
+    }
+    if (original.projects != proposed.projects) {
+        sb.append(if (isBn) "• নতুন প্রজেক্টসমূহ (${proposed.projects.size}টি আইটেম)\n" else "• New Projects (${proposed.projects.size} items)\n")
+    }
+    return sb.toString().ifBlank { if (isBn) "সামান্য কিছু ইন্টারনাল সিভি ফিল্ড পরিবর্তন করা হয়েছে।" else "Minor internal CV fields updated." }
+}
+
+internal fun extractJsonFromText(text: String): String? {
+    if (text.contains("```json")) {
+        val start = text.indexOf("```json") + 7
+        val end = text.indexOf("```", start)
+        if (end > start) return text.substring(start, end).trim()
+    } else if (text.contains("```")) {
+        val start = text.indexOf("```") + 3
+        val end = text.indexOf("```", start)
+        if (end > start) return text.substring(start, end).trim()
+    }
+    // Try to find first '{' and last '}'
+    val firstBrace = text.indexOf('{')
+    val lastBrace = text.lastIndexOf('}')
+    if (firstBrace != -1 && lastBrace > firstBrace) {
+        return text.substring(firstBrace, lastBrace + 1).trim()
+    }
+    return null
 }

@@ -389,8 +389,8 @@ fun AiCoPilotChatbotSection(
                                                             titleBn = "কো-পাইলট প্রস্তাবিত আপডেট",
                                                             descEn = "Compare the changes suggested by Co-Pilot in this chat turn.",
                                                             descBn = "চ্যাট কো-পাইলট দ্বারা প্রস্তাবিত পরিবর্তনগুলোর তুলনা দেখে নিশ্চিত করুন।",
-                                                            category = "Summary",
-                                                            proposedValue = msg.proposedCvData.summary
+                                                            category = "copilot_all",
+                                                            proposedValue = cvDataToJsonString(msg.proposedCvData!!)
                                                         )
                                                     )
                                                 },

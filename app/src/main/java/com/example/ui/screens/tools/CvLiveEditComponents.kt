@@ -1098,91 +1098,93 @@ fun CvLiveEditPanel(
 
 
         // --- 3.5 FRESHER / ENTRY LEVEL SECTIONS ---
-        Surface(
-            shape = RoundedCornerShape(12.dp),
-            color = themeColors.cardBg,
-            border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.12f)),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(modifier = Modifier.padding(14.dp)) {
-                SectionCardHeader(
-                    title = if (isBn) "ফ্রেশার / এন্ট্রি লেভেল সেকশন" else "Fresher / Entry Level Sections",
-                    icon = Icons.Default.School,
-                    themeColors = themeColors
-                )
-                Spacer(modifier = Modifier.height(10.dp))
-                
-                CvCustomLargeTextField(
-                    onAiPrompt = {
-                        val prompt = "Write 3 bullet points for a fresh graduate's academic project. Highlight problem-solving, tools used (like Python, React), and outcomes. Make it ATS-friendly."
-                        onRequestAiPrompt(
-                            if (isBn) "একাডেমিক প্রজেক্ট এআই" else "Academic Projects AI",
-                            prompt,
-                            "FRESHER_ACADEMIC_PROJECTS",
-                            -1
-                        )
-                    },
-                    label = if (isBn) "একাডেমিক প্রজেক্টস / থিসিস" else "Academic Projects / Thesis",
-                    value = localData.fresherAcademicProjects,
-                    onValueChange = { localData = localData.copy(fresherAcademicProjects = it) },
-                    themeColors = themeColors,
-                    placeholderText = if (isBn) "ভার্সিটির প্রজেক্ট বা থিসিসের বিস্তারিত লিখুন..." else "Describe your university projects or thesis...",
-                    isLiveEdit = true,
-                    isBn = isBn
-                )
-                
-                Spacer(modifier = Modifier.height(10.dp))
-                
-                CvCustomLargeTextField(
-                    onAiPrompt = {
-                        val prompt = "Write 2-3 bullet points for extra-curricular activities or volunteer work. Highlight leadership, teamwork, and event management skills. ATS-friendly format."
-                        onRequestAiPrompt(
-                            if (isBn) "এক্সট্রা-কারিকুলার এআই" else "Extra-Curricular AI",
-                            prompt,
-                            "FRESHER_EXTRACURRICULAR",
-                            -1
-                        )
-                    },
-                    label = if (isBn) "এক্সট্রা-কারিকুলার ও ভলান্টিয়ারিং" else "Extra-Curricular & Volunteering",
-                    value = localData.fresherInternshipsVolunteer,
-                    onValueChange = { localData = localData.copy(fresherInternshipsVolunteer = it) },
-                    themeColors = themeColors,
-                    placeholderText = if (isBn) "ভলান্টিয়ারিং বা সহশিক্ষামূলক কাজের বিবরণ..." else "Describe your volunteering or extra-curricular activities...",
-                    isLiveEdit = true,
-                    isBn = isBn
-                )
-                
-                Spacer(modifier = Modifier.height(10.dp))
-                
-                CvCustomLargeTextField(
-                    onAiPrompt = {
-                        val prompt = "Write 2 bullet points describing a club leadership role (e.g., President, General Secretary) for a fresh graduate resume. Focus on organizing events and managing teams."
-                        onRequestAiPrompt(
-                            if (isBn) "লিডারশিপ ও ক্লাব এআই" else "Leadership & Clubs AI",
-                            prompt,
-                            "FRESHER_LEADERSHIP",
-                            -1
-                        )
-                    },
-                    label = if (isBn) "লিডারশিপ ও ক্লাব এক্টিভিটিস" else "Leadership & Club Activities",
-                    value = localData.fresherLeadershipClubs,
-                    onValueChange = { localData = localData.copy(fresherLeadershipClubs = it) },
-                    themeColors = themeColors,
-                    placeholderText = if (isBn) "ক্লাবে আপনার পদ ও কাজের বিবরণ..." else "Describe your club roles and responsibilities...",
-                    isLiveEdit = true,
-                    isBn = isBn
-                )
+        if (localData.isFresher) {
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = themeColors.cardBg,
+                border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.12f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    SectionCardHeader(
+                        title = if (isBn) "ফ্রেশার / এন্ট্রি লেভেল সেকশন" else "Fresher / Entry Level Sections",
+                        icon = Icons.Default.School,
+                        themeColors = themeColors
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    
+                    CvCustomLargeTextField(
+                        onAiPrompt = {
+                            val prompt = "Write 3 bullet points for a fresh graduate's academic project. Highlight problem-solving, tools used (like Python, React), and outcomes. Make it ATS-friendly."
+                            onRequestAiPrompt(
+                                if (isBn) "একাডেমিক প্রজেক্ট এআই" else "Academic Projects AI",
+                                prompt,
+                                "FRESHER_ACADEMIC_PROJECTS",
+                                -1
+                            )
+                        },
+                        label = if (isBn) "একাডেমিক প্রজেক্টস / থিসিস" else "Academic Projects / Thesis",
+                        value = localData.fresherAcademicProjects,
+                        onValueChange = { localData = localData.copy(fresherAcademicProjects = it) },
+                        themeColors = themeColors,
+                        placeholderText = if (isBn) "ভার্সিটির প্রজেক্ট বা থিসিসের বিস্তারিত লিখুন..." else "Describe your university projects or thesis...",
+                        isLiveEdit = true,
+                        isBn = isBn
+                    )
+                    
+                    Spacer(modifier = Modifier.height(10.dp))
+                    
+                    CvCustomLargeTextField(
+                        onAiPrompt = {
+                            val prompt = "Write 2-3 bullet points for extra-curricular activities or volunteer work. Highlight leadership, teamwork, and event management skills. ATS-friendly format."
+                            onRequestAiPrompt(
+                                if (isBn) "এক্সট্রা-কারিকুলার এআই" else "Extra-Curricular AI",
+                                prompt,
+                                "FRESHER_EXTRACURRICULAR",
+                                -1
+                            )
+                        },
+                        label = if (isBn) "এক্সট্রা-কারিকুলার ও ভলান্টিয়ারিং" else "Extra-Curricular & Volunteering",
+                        value = localData.fresherInternshipsVolunteer,
+                        onValueChange = { localData = localData.copy(fresherInternshipsVolunteer = it) },
+                        themeColors = themeColors,
+                        placeholderText = if (isBn) "ভলান্টিয়ারিং বা সহশিক্ষামূলক কাজের বিবরণ..." else "Describe your volunteering or extra-curricular activities...",
+                        isLiveEdit = true,
+                        isBn = isBn
+                    )
+                    
+                    Spacer(modifier = Modifier.height(10.dp))
+                    
+                    CvCustomLargeTextField(
+                        onAiPrompt = {
+                            val prompt = "Write 2 bullet points describing a club leadership role (e.g., President, General Secretary) for a fresh graduate resume. Focus on organizing events and managing teams."
+                            onRequestAiPrompt(
+                                if (isBn) "লিডারশিপ ও ক্লাব এআই" else "Leadership & Clubs AI",
+                                prompt,
+                                "FRESHER_LEADERSHIP",
+                                -1
+                            )
+                        },
+                        label = if (isBn) "লিডারশিপ ও ক্লাব এক্টিভিটিস" else "Leadership & Club Activities",
+                        value = localData.fresherLeadershipClubs,
+                        onValueChange = { localData = localData.copy(fresherLeadershipClubs = it) },
+                        themeColors = themeColors,
+                        placeholderText = if (isBn) "ক্লাবে আপনার পদ ও কাজের বিবরণ..." else "Describe your club roles and responsibilities...",
+                        isLiveEdit = true,
+                        isBn = isBn
+                    )
 
-                Spacer(modifier = Modifier.height(10.dp))
-                Button(
-                    onClick = { commitAndRefresh(localData) },
-                    colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
-                    modifier = Modifier.fillMaxWidth().height(38.dp),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Icon(Icons.Default.Save, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(if (isBn) "সেভ ও রিফ্রেশ" else "Save & Refresh", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Button(
+                        onClick = { commitAndRefresh(localData) },
+                        colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
+                        modifier = Modifier.fillMaxWidth().height(38.dp),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Icon(Icons.Default.Save, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(if (isBn) "সেভ ও রিফ্রেশ" else "Save & Refresh", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    }
                 }
             }
         }
@@ -1516,7 +1518,10 @@ fun CvLiveEditPanel(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                val activeCategories = (localData.skills.map { it.category.ifBlank { "Technical & Software Engineering" } } + localAddedCategories).distinct()
+                val activeCategories = (localData.skills.map {
+                    val resolvedCat = it.category.ifBlank { findBestCategoryForSkill(it.name) }
+                    if (resolvedCat == "Technical & Software Engineering") "Technical & Software" else resolvedCat
+                } + localAddedCategories).distinct()
 
                 if (activeCategories.isEmpty()) {
                     Column(
@@ -1548,7 +1553,11 @@ fun CvLiveEditPanel(
                     }
                 } else {
                     activeCategories.forEach { cat ->
-                        val skillsInCat = localData.skills.filter { it.category == cat }
+                        val skillsInCat = localData.skills.filter {
+                            val resolvedCat = it.category.ifBlank { findBestCategoryForSkill(it.name) }
+                            val finalCat = if (resolvedCat == "Technical & Software Engineering") "Technical & Software" else resolvedCat
+                            finalCat == cat
+                        }
 
                         Surface(
                             shape = RoundedCornerShape(10.dp),
@@ -1564,7 +1573,10 @@ fun CvLiveEditPanel(
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Row(
+                                        modifier = Modifier.weight(1f),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
                                         Icon(
                                             imageVector = Icons.Default.FolderOpen,
                                             contentDescription = null,
@@ -1580,21 +1592,75 @@ fun CvLiveEditPanel(
                                         )
                                     }
 
-                                    IconButton(
-                                        onClick = {
-                                            localAddedCategories = localAddedCategories.filter { it != cat }
-                                            val remainingSkills = localData.skills.filter { it.category != cat }
-                                            localData = localData.copy(skills = remainingSkills)
-                                            Toast.makeText(context, if (isBn) "'$cat' ক্যাটাগরি মুছে ফেলা হয়েছে" else "Removed category '$cat'", Toast.LENGTH_SHORT).show()
-                                        },
-                                        modifier = Modifier.size(24.dp)
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
                                     ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Delete,
-                                            contentDescription = "Delete Category",
-                                            tint = Color.Red.copy(alpha = 0.7f),
-                                            modifier = Modifier.size(15.dp)
-                                        )
+                                        // Arrow DropDown to change category
+                                        var showChangeCategoryMenu by remember { mutableStateOf(false) }
+                                        Box {
+                                            IconButton(
+                                                onClick = { showChangeCategoryMenu = true },
+                                                modifier = Modifier.size(24.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.ArrowDropDown,
+                                                    contentDescription = "Change Category",
+                                                    tint = themeColors.displayText.copy(alpha = 0.6f),
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                            }
+
+                                            DropdownMenu(
+                                                expanded = showChangeCategoryMenu,
+                                                onDismissRequest = { showChangeCategoryMenu = false },
+                                                modifier = Modifier.background(themeColors.cardBg)
+                                            ) {
+                                                val availableCategories = SKILL_CATEGORY_LIBRARY.keys.toList()
+                                                availableCategories.forEach { targetCat ->
+                                                    if (targetCat != cat) {
+                                                        DropdownMenuItem(
+                                                            text = { Text(text = targetCat, fontSize = 11.sp, color = themeColors.displayText) },
+                                                            onClick = {
+                                                                showChangeCategoryMenu = false
+                                                                val updatedSkills = localData.skills.map { sk ->
+                                                                    val currentResolvedCat = sk.category.ifBlank { findBestCategoryForSkill(sk.name) }
+                                                                    val finalResolvedCat = if (currentResolvedCat == "Technical & Software Engineering") "Technical & Software" else currentResolvedCat
+                                                                    if (finalResolvedCat == cat) {
+                                                                        sk.copy(category = targetCat)
+                                                                    } else {
+                                                                        sk
+                                                                    }
+                                                                }
+                                                                localData = localData.copy(skills = updatedSkills)
+                                                                Toast.makeText(context, if (isBn) "ক্যাটাগরি পরিবর্তন করা হয়েছে" else "Category updated to $targetCat", Toast.LENGTH_SHORT).show()
+                                                            }
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        IconButton(
+                                            onClick = {
+                                                localAddedCategories = localAddedCategories.filter { it != cat }
+                                                val remainingSkills = localData.skills.filter { sk ->
+                                                    val resolvedCat = sk.category.ifBlank { findBestCategoryForSkill(sk.name) }
+                                                    val finalCat = if (resolvedCat == "Technical & Software Engineering") "Technical & Software" else resolvedCat
+                                                    finalCat != cat
+                                                }
+                                                localData = localData.copy(skills = remainingSkills)
+                                                Toast.makeText(context, if (isBn) "'$cat' ক্যাটাগরি মুছে ফেলা হয়েছে" else "Removed category '$cat'", Toast.LENGTH_SHORT).show()
+                                            },
+                                            modifier = Modifier.size(24.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Delete,
+                                                contentDescription = "Delete Category",
+                                                tint = Color.Red.copy(alpha = 0.7f),
+                                                modifier = Modifier.size(15.dp)
+                                            )
+                                        }
                                     }
                                 }
 
