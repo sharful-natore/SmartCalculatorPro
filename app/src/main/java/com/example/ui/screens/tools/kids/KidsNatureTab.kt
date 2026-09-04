@@ -44,8 +44,38 @@ fun KidsNatureTab(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .padding(horizontal = 14.dp, vertical = 4.dp)
     ) {
+        // Top Nature Category Chips
+        LazyRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            items(NatureCategory.values()) { cat ->
+                val isSelected = selectedCategory == cat
+                Surface(
+                    shape = RoundedCornerShape(14.dp),
+                    color = if (isSelected) themeColors.accent else themeColors.surface,
+                    border = if (!isSelected) androidx.compose.foundation.BorderStroke(1.dp, themeColors.onSurface.copy(alpha = 0.12f)) else null,
+                    modifier = Modifier.clickable {
+                        audioPlayer.playClickSound()
+                        onCategoryChange(cat)
+                    }
+                ) {
+                    Text(
+                        text = cat.titleBn,
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            fontSize = 12.5.sp
+                        ),
+                        color = if (isSelected) themeColors.onAccent else themeColors.onSurface,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp)
+                    )
+                }
+            }
+        }
         // Subtitle Guidance
         Text(
             text = "ছবিতে স্পর্শ করে ডাক ও পরিচয় শোনো 👇",
@@ -61,7 +91,7 @@ fun KidsNatureTab(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(top = 4.dp, bottom = 88.dp)
+            contentPadding = PaddingValues(top = 4.dp, bottom = 24.dp)
         ) {
             items(currentItems) { item ->
                 Card(

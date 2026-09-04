@@ -42,6 +42,7 @@ import kotlinx.coroutines.launch
 fun KidsLearningScreen(
     viewModel: CalculatorViewModel,
     themeColors: CalculatorThemeColors,
+    initialTab: KidsSectionTab = KidsSectionTab.ALPHABET,
     onBackClick: () -> Unit
 ) {
     val context = LocalContext.current
@@ -63,7 +64,7 @@ fun KidsLearningScreen(
         audioPlayer.playCelebrationSound()
     }
 
-    var activeTab by remember { mutableStateOf(KidsSectionTab.ALPHABET) }
+    var activeTab by remember { mutableStateOf(initialTab) }
     var slateInitialLetter by remember { mutableStateOf<String?>(null) }
 
     // Sub-Category States for each learning section
@@ -127,12 +128,8 @@ fun KidsLearningScreen(
     }
 
     Scaffold(
-        modifier = Modifier
-            .nestedScroll(scrollBehavior.nestedScrollConnection)
-            .nestedScroll(scrollConnection),
         topBar = {
             TopAppBar(
-                scrollBehavior = scrollBehavior,
                 title = {
                     Column {
                         Text(
@@ -282,64 +279,56 @@ fun KidsLearningScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // Horizontal Tab Navigation (Hides when scrolling down into content)
-            AnimatedVisibility(
-                visible = isControlsVisible,
-                enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut()
+            // Horizontal Tab Navigation (Always pinned at top)
+            LazyRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(themeColors.surface)
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                LazyRow(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(themeColors.surface)
-                        .padding(horizontal = 10.dp, vertical = 6.dp),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    items(KidsSectionTab.values()) { tab ->
-                        val isSelected = activeTab == tab
-                        val tabBg = if (isSelected) themeColors.accent else themeColors.surfaceVariant.copy(alpha = 0.45f)
-                        val contentColor = if (isSelected) themeColors.onAccent else themeColors.onSurface
+                items(KidsSectionTab.values()) { tab ->
+                    val isSelected = activeTab == tab
+                    val tabBg = if (isSelected) themeColors.accent else themeColors.surfaceVariant.copy(alpha = 0.45f)
+                    val contentColor = if (isSelected) themeColors.onAccent else themeColors.onSurface
 
-                        Surface(
-                            shape = RoundedCornerShape(18.dp),
-                            color = tabBg,
-                            border = if (isSelected) null else androidx.compose.foundation.BorderStroke(1.dp, themeColors.onSurface.copy(alpha = 0.12f)),
-                            modifier = Modifier
-                                .height(42.dp)
-                                .clip(RoundedCornerShape(18.dp))
-                                .clickable {
-                                    audioPlayer.playClickSound()
-                                    activeTab = tab
-                                }
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 12.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = tab.icon,
-                                    contentDescription = tab.titleBn,
-                                    tint = contentColor,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = tab.titleBn,
-                                    style = MaterialTheme.typography.labelMedium.copy(
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                        fontSize = 12.5.sp
-                                    ),
-                                    color = contentColor
-                                )
+                    Surface(
+                        shape = RoundedCornerShape(18.dp),
+                        color = tabBg,
+                        border = if (isSelected) null else androidx.compose.foundation.BorderStroke(1.dp, themeColors.onSurface.copy(alpha = 0.12f)),
+                        modifier = Modifier
+                            .height(42.dp)
+                            .clip(RoundedCornerShape(18.dp))
+                            .clickable {
+                                audioPlayer.playClickSound()
+                                activeTab = tab
                             }
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = tab.icon,
+                                contentDescription = tab.titleBn,
+                                tint = contentColor,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = tab.titleBn,
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    fontSize = 12.5.sp
+                                ),
+                                color = contentColor
+                            )
                         }
                     }
                 }
             }
 
-            if (isControlsVisible) {
-                Divider(color = themeColors.onSurface.copy(alpha = 0.08f), thickness = 1.dp)
-            }
+            Divider(color = themeColors.onSurface.copy(alpha = 0.08f), thickness = 1.dp)
 
             // Dynamic Tab Content with Floating Bottom Sub-Switcher
             Box(

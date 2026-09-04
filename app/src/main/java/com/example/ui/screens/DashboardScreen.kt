@@ -3227,7 +3227,12 @@ fun ToolDetailView(
                          toolType == com.example.data.model.ToolType.PDF_READER ||
                          toolType == com.example.data.model.ToolType.PDF_MAKER ||
                          toolType == com.example.data.model.ToolType.ATS_CV_BUILDER ||
-                         toolType == com.example.data.model.ToolType.KIDS_LEARNING
+                         toolType == com.example.data.model.ToolType.KIDS_LEARNING ||
+                         toolType == com.example.data.model.ToolType.KIDS_SLATE ||
+                         toolType == com.example.data.model.ToolType.KIDS_BALLOON ||
+                         toolType == com.example.data.model.ToolType.KIDS_PUZZLE ||
+                         toolType == com.example.data.model.ToolType.KIDS_HABITS ||
+                         toolType == com.example.data.model.ToolType.KIDS_STORIES
 
     val isFullWidthTool = toolType == com.example.data.model.ToolType.MARKET_LIST || isQuranOrNamaz
 
@@ -3424,6 +3429,37 @@ fun ToolDetailView(
             ToolType.KIDS_LEARNING -> com.example.ui.screens.tools.kids.KidsLearningScreen(
                 viewModel = viewModel,
                 themeColors = themeColors,
+                initialTab = com.example.ui.screens.tools.kids.KidsSectionTab.ALPHABET,
+                onBackClick = { viewModel.selectedToolType = null }
+            )
+            ToolType.KIDS_SLATE -> com.example.ui.screens.tools.kids.KidsLearningScreen(
+                viewModel = viewModel,
+                themeColors = themeColors,
+                initialTab = com.example.ui.screens.tools.kids.KidsSectionTab.SLATE,
+                onBackClick = { viewModel.selectedToolType = null }
+            )
+            ToolType.KIDS_BALLOON -> com.example.ui.screens.tools.kids.KidsLearningScreen(
+                viewModel = viewModel,
+                themeColors = themeColors,
+                initialTab = com.example.ui.screens.tools.kids.KidsSectionTab.BALLOON,
+                onBackClick = { viewModel.selectedToolType = null }
+            )
+            ToolType.KIDS_PUZZLE -> com.example.ui.screens.tools.kids.KidsLearningScreen(
+                viewModel = viewModel,
+                themeColors = themeColors,
+                initialTab = com.example.ui.screens.tools.kids.KidsSectionTab.PUZZLE,
+                onBackClick = { viewModel.selectedToolType = null }
+            )
+            ToolType.KIDS_HABITS -> com.example.ui.screens.tools.kids.KidsLearningScreen(
+                viewModel = viewModel,
+                themeColors = themeColors,
+                initialTab = com.example.ui.screens.tools.kids.KidsSectionTab.HABITS,
+                onBackClick = { viewModel.selectedToolType = null }
+            )
+            ToolType.KIDS_STORIES -> com.example.ui.screens.tools.kids.KidsLearningScreen(
+                viewModel = viewModel,
+                themeColors = themeColors,
+                initialTab = com.example.ui.screens.tools.kids.KidsSectionTab.STORIES,
                 onBackClick = { viewModel.selectedToolType = null }
             )
         }
@@ -3441,6 +3477,33 @@ private fun getToolInfoItems(toolType: ToolType, isBn: Boolean): List<Pair<Strin
             listOf(
                 "1. What is Kids Learning?" to "An interactive offline early-learning sanctuary for kids to master Bengali & English alphabets, phonics, spelling by syllables, math tables, rhymes, and nature.",
                 "2. Key Capabilities" to "• Step-by-step phonics spelling audio recitation.\n• Dotted finger tracing magic slate.\n• 100% offline, distraction-free environment with child lock."
+            )
+        }
+        ToolType.KIDS_SLATE -> if (isBn) {
+            listOf(
+                "১. ম্যাজিক স্লেট কী?" to "বাংলা ও ইংরেজি বর্ণমালা, সংখ্যা এবং নানা আকৃতি হাত ঘুরিয়ে ট্রেসিং ও আঁকাআঁকি করার ডিজিটাল বোর্ডিং।"
+            )
+        } else {
+            listOf(
+                "1. What is Magic Slate?" to "A digital tracing slate for kids to practice finger tracing of alphabets, numbers, and shapes with vibrant chalkboard colors."
+            )
+        }
+        ToolType.KIDS_BALLOON -> if (isBn) {
+            listOf(
+                "১. বেলুন পপ খেলা কী?" to "উচ্চরণ ও নির্দেশ শুনে সঠিক বর্ণ বা সংখ্যার বেলুন স্পর্শ করে ফোটানোর আকর্ষণীয় ও শিক্ষণীয় গেম।"
+            )
+        } else {
+            listOf(
+                "1. What is Balloon Pop Game?" to "An interactive audio-guided balloon popping game to learn recognition of letters, numbers, and words."
+            )
+        }
+        ToolType.KIDS_PUZZLE, ToolType.KIDS_HABITS, ToolType.KIDS_STORIES -> if (isBn) {
+            listOf(
+                "১. কিডস ফান অ্যান্ড লার্নিং" to "শিশুদের আনন্দময় মানসিক বিকাশ ও আনন্দের মাধ্যমে শেখার জন্য প্রস্তুতকৃত শিক্ষণীয় গেম ও নীতিগল্পের ডিজিটাল সংকলন।"
+            )
+        } else {
+            listOf(
+                "1. Kids Learning & Fun" to "Interactive educational brain games, moral stories, and habits guide for young minds."
             )
         }
         ToolType.ATS_CV_BUILDER -> if (isBn) {

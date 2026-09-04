@@ -76,8 +76,46 @@ fun KidsRhymesTab(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = 14.dp, vertical = 6.dp)
     ) {
+        // Top Language Category Chips
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            val langOptions = listOf(
+                false to "🎶 বাংলা ছড়া ও গান",
+                true to "🇬🇧 English Rhymes"
+            )
+            langOptions.forEach { (isEn, label) ->
+                val isSelected = showEnglish == isEn
+                Surface(
+                    shape = RoundedCornerShape(14.dp),
+                    color = if (isSelected) themeColors.accent else themeColors.surface,
+                    border = if (!isSelected) androidx.compose.foundation.BorderStroke(1.dp, themeColors.onSurface.copy(alpha = 0.12f)) else null,
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable {
+                            stopPlayback()
+                            audioPlayer.playClickSound()
+                            onShowEnglishChange(isEn)
+                        }
+                ) {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            fontSize = 12.5.sp
+                        ),
+                        color = if (isSelected) themeColors.onAccent else themeColors.onSurface,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
+            }
+        }
         // Rhyme Selector Carousel
         LazyRow(
             modifier = Modifier

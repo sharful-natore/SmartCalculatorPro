@@ -46,8 +46,45 @@ fun KidsMathTab(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .padding(horizontal = 14.dp, vertical = 4.dp)
     ) {
+        // Top SubTab Chips
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            val subTabs = listOf(
+                0 to "🔢 সংখ্যা ও গণনা (১-২০)",
+                1 to "✖️ নামতার পাঠশালা (১-১০)"
+            )
+            subTabs.forEach { (index, title) ->
+                val isSelected = subTab == index
+                Surface(
+                    shape = RoundedCornerShape(14.dp),
+                    color = if (isSelected) themeColors.accent else themeColors.surface,
+                    border = if (!isSelected) androidx.compose.foundation.BorderStroke(1.dp, themeColors.onSurface.copy(alpha = 0.12f)) else null,
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable {
+                            audioPlayer.playClickSound()
+                            onSubTabChange(index)
+                        }
+                ) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            fontSize = 12.sp
+                        ),
+                        color = if (isSelected) themeColors.onAccent else themeColors.onSurface,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
+            }
+        }
         if (subTab == 0) {
             // COUNTING (সংখ্যা ও গণনা ১-২০)
             Row(

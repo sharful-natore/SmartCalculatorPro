@@ -52,10 +52,22 @@ fun KidsPuzzleTab(
         mutableStateListOf<String>()
     }
 
-    // Available tiles remaining to pick
+    // Available tiles remaining to pick (Guaranteed strictly jumbled)
     val availableTiles = remember(currentPuzzleIndex, selectedCategory) {
         mutableStateListOf<String>().apply {
-            currentPuzzle?.let { addAll(it.letterTiles.shuffled()) }
+            currentPuzzle?.let { puzzle ->
+                val target = puzzle.correctOrder
+                var shuffledList = puzzle.letterTiles.shuffled()
+                var attempts = 0
+                while (target.size > 1 && shuffledList == target && attempts < 10) {
+                    shuffledList = puzzle.letterTiles.shuffled()
+                    attempts++
+                }
+                if (target.size > 1 && shuffledList == target) {
+                    shuffledList = target.reversed()
+                }
+                addAll(shuffledList)
+            }
         }
     }
 

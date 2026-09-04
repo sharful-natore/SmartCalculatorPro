@@ -7,9 +7,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -64,15 +66,97 @@ fun KidsAlphabetTab(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .padding(horizontal = 14.dp, vertical = 4.dp)
     ) {
-        // Letter Grid - taking full screen with bottom padding for switcher
+        // Top Category Selector Chips
+        LazyRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            items(AlphabetCategory.values()) { cat ->
+                val isSelected = selectedCategory == cat
+                Surface(
+                    shape = RoundedCornerShape(14.dp),
+                    color = if (isSelected) themeColors.accent else themeColors.surface,
+                    border = if (!isSelected) androidx.compose.foundation.BorderStroke(1.dp, themeColors.onSurface.copy(alpha = 0.12f)) else null,
+                    modifier = Modifier.clickable {
+                        audioPlayer.playClickSound()
+                        onCategoryChange(cat)
+                    }
+                ) {
+                    Text(
+                        text = cat.titleBn,
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            fontSize = 12.5.sp
+                        ),
+                        color = if (isSelected) themeColors.onAccent else themeColors.onSurface,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp)
+                    )
+                }
+            }
+        }
+
+        // Practice Mode Row (Sequential vs Random + Reshuffle)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Sequential / Random Toggle
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = themeColors.surfaceVariant.copy(alpha = 0.5f),
+                modifier = Modifier.clickable {
+                    audioPlayer.playClickSound()
+                    onToggleRandomOrder()
+                }
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = if (isRandomOrder) "🔀 এলোমেলো ক্রম" else "📑 ধারাবাহিক ক্রম",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = themeColors.onSurface
+                    )
+                }
+            }
+
+            // Reshuffle button if random
+            if (isRandomOrder) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = themeColors.accent.copy(alpha = 0.15f),
+                    modifier = Modifier.clickable {
+                        audioPlayer.playClickSound()
+                        onReshuffle()
+                    }
+                ) {
+                    Text(
+                        text = "🎲 আবার এলোমেলো",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.accent,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                    )
+                }
+            }
+        }
+
+        // Letter Grid
         LazyVerticalGrid(
             columns = GridCells.Adaptive(minSize = 78.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(top = 4.dp, bottom = 88.dp)
+            contentPadding = PaddingValues(top = 2.dp, bottom = 24.dp)
         ) {
             items(currentItems) { item ->
                 val isEnglish = selectedCategory == AlphabetCategory.ENGLISH

@@ -275,15 +275,33 @@ fun KidsSlateTab(
                                 lineTo(stroke.path[i].x, stroke.path[i].y)
                             }
                         }
-                        drawPath(
-                            path = path,
-                            color = stroke.color,
-                            style = Stroke(
-                                width = stroke.strokeWidth,
-                                cap = StrokeCap.Round,
-                                join = StrokeJoin.Round
+                        val isEraserStroke = stroke.color == Color(0xFF131D2A)
+                        if (isEraserStroke) {
+                            drawPath(
+                                path = path,
+                                color = stroke.color,
+                                style = Stroke(width = stroke.strokeWidth, cap = StrokeCap.Round, join = StrokeJoin.Round)
                             )
-                        )
+                        } else {
+                            // Layer 1: Outer Translucent Chalk Dust
+                            drawPath(
+                                path = path,
+                                color = stroke.color.copy(alpha = 0.35f),
+                                style = Stroke(width = stroke.strokeWidth * 1.38f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+                            )
+                            // Layer 2: Main Chalk Body
+                            drawPath(
+                                path = path,
+                                color = stroke.color.copy(alpha = 0.88f),
+                                style = Stroke(width = stroke.strokeWidth, cap = StrokeCap.Round, join = StrokeJoin.Round)
+                            )
+                            // Layer 3: Inner Chalk Core
+                            drawPath(
+                                path = path,
+                                color = Color.White.copy(alpha = 0.35f),
+                                style = Stroke(width = stroke.strokeWidth * 0.32f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+                            )
+                        }
                     } else if (stroke.path.size == 1) {
                         drawCircle(
                             color = stroke.color,
@@ -301,15 +319,32 @@ fun KidsSlateTab(
                         }
                     }
                     val activeColor = if (isEraser) Color(0xFF131D2A) else selectedColor
-                    drawPath(
-                        path = path,
-                        color = activeColor,
-                        style = Stroke(
-                            width = strokeWidth,
-                            cap = StrokeCap.Round,
-                            join = StrokeJoin.Round
+                    if (isEraser) {
+                        drawPath(
+                            path = path,
+                            color = activeColor,
+                            style = Stroke(width = strokeWidth, cap = StrokeCap.Round, join = StrokeJoin.Round)
                         )
-                    )
+                    } else {
+                        // Layer 1: Outer Translucent Chalk Dust
+                        drawPath(
+                            path = path,
+                            color = activeColor.copy(alpha = 0.35f),
+                            style = Stroke(width = strokeWidth * 1.38f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+                        )
+                        // Layer 2: Main Chalk Body
+                        drawPath(
+                            path = path,
+                            color = activeColor.copy(alpha = 0.88f),
+                            style = Stroke(width = strokeWidth, cap = StrokeCap.Round, join = StrokeJoin.Round)
+                        )
+                        // Layer 3: Inner Chalk Core
+                        drawPath(
+                            path = path,
+                            color = Color.White.copy(alpha = 0.35f),
+                            style = Stroke(width = strokeWidth * 0.32f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+                        )
+                    }
                 }
             }
 

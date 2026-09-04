@@ -27,6 +27,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -346,103 +347,185 @@ fun BalloonCard(
     // Floating bounce animation
     val infiniteTransition = rememberInfiniteTransition(label = "balloon_float")
     val offsetY by infiniteTransition.animateFloat(
-        initialValue = -4f,
-        targetValue = 4f,
+        initialValue = -5f,
+        targetValue = 5f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1200, easing = FastOutSlowInEasing),
+            animation = tween(1400, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "balloon_bounce"
     )
 
     val scale by animateFloatAsState(
-        targetValue = if (isPopped) 1.25f else if (isWrong) 0.9f else 1.0f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+        targetValue = if (isPopped) 0.05f else if (isWrong) 0.88f else 1.0f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
         label = "balloon_scale"
     )
 
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
+    // Particle Burst Animation when popped
+    var burstProgress by remember { mutableStateOf(0f) }
+    LaunchedEffect(isPopped) {
+        if (isPopped) {
+            burstProgress = 0f
+            animate(
+                initialValue = 0f,
+                targetValue = 1f,
+                animationSpec = tween(400, easing = LinearOutSlowInEasing)
+            ) { value, _ ->
+                burstProgress = value
+            }
+        } else {
+            burstProgress = 0f
+        }
+    }
+
+    Box(
+        contentAlignment = Alignment.Center,
         modifier = Modifier
             .fillMaxWidth()
+            .height(185.dp)
             .offset(y = offsetY.dp)
-            .scale(scale)
-            .clickable { onPop() }
     ) {
-        // Balloon Body
-        Surface(
-            shape = RoundedCornerShape(topStart = 45.dp, topEnd = 45.dp, bottomStart = 35.dp, bottomEnd = 35.dp),
-            color = option.color,
-            shadowElevation = 6.dp,
-            modifier = Modifier
-                .size(width = 135.dp, height = 150.dp)
-        ) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                // Highlight Reflection Arc
-                Canvas(modifier = Modifier.fillMaxSize()) {
-                    drawArc(
-                        color = Color.White.copy(alpha = 0.38f),
-                        startAngle = 200f,
-                        sweepAngle = 60f,
-                        useCenter = false,
-                        topLeft = Offset(16.dp.toPx(), 14.dp.toPx()),
-                        size = Size(35.dp.toPx(), 45.dp.toPx()),
-                        style = Stroke(width = 4.dp.toPx())
-                    )
-                }
+        if (burstProgress > 0f) {
+            // Particle Burst Explosion
+            Canvas(modifier = Modifier.size(170.dp)) {
+                val numParticles = 12
+                val maxRadius = size.minDimension * 0.55f * burstProgress
+                val alpha = (1f - burstProgress).coerceIn(0f, 1f)
+                val particleColors = listOf(
+                    option.color, Color.Yellow, Color.White, Color.Cyan, Color(0xFFFF4081)
+                )
 
-                // Balloon Content (Letter, Number, or Emoji)
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                    modifier = Modifier.padding(8.dp)
-                ) {
-                    if (option.displayEmoji.isNotEmpty() && option.displayEmoji != "🎈") {
-                        Text(
-                            text = option.displayEmoji,
-                            fontSize = 36.sp
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                    }
-                    Text(
-                        text = option.displayText,
-                        fontSize = if (option.displayText.length > 3) 18.sp else 36.sp,
-                        fontWeight = FontWeight.Black,
-                        color = Color.White,
-                        textAlign = TextAlign.Center
+                for (i in 0 until numParticles) {
+                    val angle = (i * (360f / numParticles)) * (Math.PI / 180f)
+                    val px = center.x + maxRadius * kotlin.math.cos(angle).toFloat()
+                    val py = center.y + maxRadius * kotlin.math.sin(angle).toFloat()
+                    val pColor = particleColors[i % particleColors.size]
+
+                    // Draw star/circle fragment
+                    drawCircle(
+                        color = pColor.copy(alpha = alpha),
+                        radius = (8.dp.toPx() * (1f - burstProgress * 0.5f)),
+                        center = Offset(px, py)
                     )
                 }
             }
         }
 
-        // Balloon Knot & Thread
-        Canvas(
-            modifier = Modifier
-                .width(20.dp)
-                .height(24.dp)
-        ) {
-            // Knot Triangle
-            val knotPath = Path().apply {
-                moveTo(size.width / 2 - 6.dp.toPx(), 0f)
-                lineTo(size.width / 2 + 6.dp.toPx(), 0f)
-                lineTo(size.width / 2, 8.dp.toPx())
-                close()
-            }
-            drawPath(path = knotPath, color = option.color)
+        if (!isPopped || burstProgress < 0.3f) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .scale(scale)
+                    .clickable { onPop() }
+            ) {
+                // Realistic Teardrop Balloon Canvas
+                Box(
+                    modifier = Modifier.size(width = 130.dp, height = 150.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Canvas(modifier = Modifier.fillMaxSize()) {
+                        val w = size.width
+                        val h = size.height
+                        val balloonBodyHeight = h * 0.88f
 
-            // Thread
-            val threadPath = Path().apply {
-                moveTo(size.width / 2, 8.dp.toPx())
-                quadraticTo(size.width / 2 - 4.dp.toPx(), 16.dp.toPx(), size.width / 2, 24.dp.toPx())
+                        // Teardrop Balloon Path
+                        val balloonPath = Path().apply {
+                            moveTo(w * 0.5f, 0f)
+                            // Top Right curve
+                            cubicTo(
+                                w * 1.05f, 0f,
+                                w * 1.05f, balloonBodyHeight * 0.65f,
+                                w * 0.54f, balloonBodyHeight
+                            )
+                            // Bottom Knot Point Right
+                            lineTo(w * 0.54f, balloonBodyHeight + 6.dp.toPx())
+                            lineTo(w * 0.46f, balloonBodyHeight + 6.dp.toPx())
+                            lineTo(w * 0.46f, balloonBodyHeight)
+                            // Top Left curve
+                            cubicTo(
+                                -w * 0.05f, balloonBodyHeight * 0.65f,
+                                -w * 0.05f, 0f,
+                                w * 0.5f, 0f
+                            )
+                            close()
+                        }
+
+                        // Draw Balloon Body Shadow & Fill
+                        drawPath(path = balloonPath, color = option.color)
+
+                        // Glossy Highlight reflection arc (Top-Left)
+                        val highlightPath = Path().apply {
+                            moveTo(w * 0.22f, h * 0.15f)
+                            cubicTo(
+                                w * 0.28f, h * 0.08f,
+                                w * 0.45f, h * 0.08f,
+                                w * 0.52f, h * 0.12f
+                            )
+                        }
+                        drawPath(
+                            path = highlightPath,
+                            color = Color.White.copy(alpha = 0.45f),
+                            style = Stroke(width = 5.dp.toPx(), cap = StrokeCap.Round)
+                        )
+
+                        // Small bottom highlight dot
+                        drawCircle(
+                            color = Color.White.copy(alpha = 0.3f),
+                            radius = 3.dp.toPx(),
+                            center = Offset(w * 0.25f, h * 0.28f)
+                        )
+
+                        // Knot Triangle
+                        val knotPath = Path().apply {
+                            moveTo(w * 0.5f - 8.dp.toPx(), balloonBodyHeight + 4.dp.toPx())
+                            lineTo(w * 0.5f + 8.dp.toPx(), balloonBodyHeight + 4.dp.toPx())
+                            lineTo(w * 0.5f, balloonBodyHeight + 12.dp.toPx())
+                            close()
+                        }
+                        drawPath(path = knotPath, color = option.color)
+
+                        // String Thread Curve
+                        val threadPath = Path().apply {
+                            moveTo(w * 0.5f, balloonBodyHeight + 12.dp.toPx())
+                            cubicTo(
+                                w * 0.5f - 10.dp.toPx(), balloonBodyHeight + 20.dp.toPx(),
+                                w * 0.5f + 10.dp.toPx(), balloonBodyHeight + 28.dp.toPx(),
+                                w * 0.5f, h
+                            )
+                        }
+                        drawPath(
+                            path = threadPath,
+                            color = Color.White.copy(alpha = 0.65f),
+                            style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round)
+                        )
+                    }
+
+                    // Content inside Balloon
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier
+                            .padding(horizontal = 8.dp)
+                            .padding(bottom = 16.dp)
+                    ) {
+                        if (option.displayEmoji.isNotEmpty() && option.displayEmoji != "🎈") {
+                            Text(
+                                text = option.displayEmoji,
+                                fontSize = 32.sp
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                        }
+                        Text(
+                            text = option.displayText,
+                            fontSize = if (option.displayText.length > 3) 16.sp else 34.sp,
+                            fontWeight = FontWeight.Black,
+                            color = Color.White,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
             }
-            drawPath(
-                path = threadPath,
-                color = Color.Gray.copy(alpha = 0.7f),
-                style = Stroke(width = 2.dp.toPx())
-            )
         }
     }
 }

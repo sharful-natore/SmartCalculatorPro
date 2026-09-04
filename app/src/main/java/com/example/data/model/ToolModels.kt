@@ -357,11 +357,36 @@ enum class ToolType(
         ToolCategory.EDUCATION, Icons.Default.Badge
     ),
 
-    // Kids Learning Section
+    // Kids Learning & Fun Section
     KIDS_LEARNING(
-        "Kids Learning", "কিডস লার্নিং",
-        "শিশুদের বর্ণমালা, বানান করে পড়া, ইংরেজি ফনিক্স চার্ট ও বানানের নিয়ম, গণিত ও নামতা, ছড়া, পশুপাখি, ম্যাজিক স্লেট ও ব্রেন কুইজের ডিজিটাল পাঠশালা",
+        "Kids Learning", "বর্ণমালা ও পড়াশোনা",
+        "শিশুদের বর্ণমালা, বানান করে পড়া, ইংরেজি ফনিক্স চার্ট, গণিত ও নামতা, ছড়া এবং বিজ্ঞান ও প্রাণীজগত শিক্ষার ডিজিটাল পাঠশালা",
         ToolCategory.KIDS, Icons.Default.ChildCare
+    ),
+    KIDS_SLATE(
+        "Magic Slate", "ম্যাজিক স্লেট ও ট্রেসিং",
+        "অক্ষর, সংখ্যা ও আকৃতি ট্রেসিং এবং বাচ্চাদের ডিজিটাল ড্রয়িং ও লেখা শেখার স্লেট",
+        ToolCategory.KIDS, Icons.Default.Draw
+    ),
+    KIDS_BALLOON(
+        "Balloon Pop Game", "বেলুন পপ খেলা",
+        "বর্ণ, শব্দ ও সংখ্যা চিনে বেলুন ফোটানোর মজার ও আকর্ষণীয় গেম",
+        ToolCategory.KIDS, Icons.Default.Star
+    ),
+    KIDS_PUZZLE(
+        "Word Puzzle Game", "শব্দ পাজল খেলা",
+        "অক্ষর সাজিয়ে বর্ণ ও শব্দ জট সমাধানের শিক্ষণীয় ব্রেন গেম",
+        ToolCategory.KIDS, Icons.Default.Extension
+    ),
+    KIDS_HABITS(
+        "Good Habits & Manners", "ভালো অভ্যাস ও আদব-কায়দা",
+        "দৈনন্দিন ভালো অভ্যাস, পরিচ্ছন্নতা, শিষ্টাচার ও ইসলামিক আদব কায়দা শেখা",
+        ToolCategory.KIDS, Icons.Default.Favorite
+    ),
+    KIDS_STORIES(
+        "Moral Stories", "ছোটদের নীতিগল্প",
+        "সুন্দর ছবি, এনিমেশন ও নৈতিক শিক্ষণীয় ছোটদের গল্প ও শিক্ষামূলক কাহিনী",
+        ToolCategory.KIDS, Icons.Default.MenuBook
     ),
 
     PHONE_DIAGNOSTICS(
@@ -499,6 +524,11 @@ enum class ToolType(
                 PDF_MAKER -> "Create custom A4 PDF documents from notes, text, and photos with zero app size impact"
                 ATS_CV_BUILDER -> "Build ATS-friendly professional resumes, tailor content with Gemini AI, and export HD PDFs"
                 KIDS_LEARNING -> "Interactive kids learning with alphabets, spelling & phonics, math counting & tables, rhymes, animals, magic drawing slate, and brain quizzes"
+                KIDS_SLATE -> "Digital magic slate and finger tracing board for alphabets, numbers, and shapes"
+                KIDS_BALLOON -> "Fun audio-guided balloon pop game to recognize letters and numbers"
+                KIDS_PUZZLE -> "Educational word puzzle game to solve letter jumbles"
+                KIDS_HABITS -> "Good habits, cleanliness, and manners guide for kids"
+                KIDS_STORIES -> "Illustrated moral stories and audio fables for children"
             }
         }
     }
