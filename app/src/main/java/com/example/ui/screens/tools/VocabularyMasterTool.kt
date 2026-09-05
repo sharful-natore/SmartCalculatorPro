@@ -3,6 +3,9 @@ package com.example.ui.screens.tools
 import android.content.Context
 import android.speech.tts.TextToSpeech
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.animation.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -154,9 +157,19 @@ fun VocabularyMasterTool(
         prefs.edit().putStringSet("bookmarked_words", bookmarkedIds.toSet()).apply()
     }
 
-    // Active Word List generated from installed packs & disk database
-    val allWords = remember(installedPacks.toList()) {
-        VocabularyDataProvider.getWordsForPacks(context, installedPacks.toSet())
+    // Active Word List generated asynchronously from installed packs & disk database (Prevents UI Freeze)
+    var allWords by remember { mutableStateOf<List<VocabWord>>(VocabularyDataPacks.starterWords) }
+    var isDataLoading by remember { mutableStateOf(false) }
+
+    LaunchedEffect(installedPacks.toList()) {
+        isDataLoading = true
+        withContext(Dispatchers.IO) {
+            val loaded = VocabularyDataProvider.getWordsForPacks(context, installedPacks.toSet())
+            withContext(Dispatchers.Main) {
+                allWords = loaded
+                isDataLoading = false
+            }
+        }
     }
 
     var selectedTab by remember { mutableStateOf(VocabTab.EXPLORE) }
@@ -166,6 +179,45 @@ fun VocabularyMasterTool(
     var selectedSortOption by remember { mutableStateOf(VocabSortOption.FREQUENCY) }
     var selectedLetterFilter by remember { mutableStateOf<Char?>(null) }
     var top1000Only by remember { mutableStateOf(false) }
+
+    var randomWordDialog by remember { mutableStateOf<VocabWord?>(null) }
+
+    val currentHourKey = remember { System.currentTimeMillis() / (1000 * 60 * 60) }
+    var dismissedHourKey by remember { mutableStateOf(-1L) }
+
+    val hourlyWord = remember(currentHourKey, allWords) {
+        if (allWords.isNotEmpty()) {
+            val index = (currentHourKey % allWords.size).toInt().let { if (it < 0) -it else it }
+            allWords[index]
+        } else null
+    }
+
+    LaunchedEffect(allWords) {
+        if (allWords.isNotEmpty()) {
+            val wordOfDay = allWords.randomOrNull() ?: allWords.first()
+            com.example.util.VocabNotificationHelper.triggerDailyWordNotificationIfNeeded(context, wordOfDay)
+        }
+    }
+
+    val hasActiveStateForBack = searchQuery.isNotEmpty() ||
+            selectedLetterFilter != null ||
+            selectedCategoryFilter != "All" ||
+            selectedPosFilter != "All" ||
+            top1000Only ||
+            selectedTab != VocabTab.EXPLORE
+
+    BackHandler(enabled = hasActiveStateForBack) {
+        if (searchQuery.isNotEmpty()) {
+            searchQuery = ""
+        } else if (selectedLetterFilter != null || selectedCategoryFilter != "All" || selectedPosFilter != "All" || top1000Only) {
+            selectedLetterFilter = null
+            selectedCategoryFilter = "All"
+            selectedPosFilter = "All"
+            top1000Only = false
+        } else if (selectedTab != VocabTab.EXPLORE) {
+            selectedTab = VocabTab.EXPLORE
+        }
+    }
 
     var isHeaderVisible by remember { mutableStateOf(true) }
     val nestedScrollConnection = remember {
@@ -218,7 +270,7 @@ fun VocabularyMasterTool(
                             val randomWord = allWords.randomOrNull()
                             if (randomWord != null) {
                                 speakWord(randomWord.word)
-                                Toast.makeText(context, "${randomWord.word} : ${randomWord.meaningBn}", Toast.LENGTH_SHORT).show()
+                                randomWordDialog = randomWord
                             }
                         }) {
                             Icon(
@@ -386,6 +438,10 @@ fun VocabularyMasterTool(
                         bookmarkedIds = bookmarkedIds,
                         onBookmarkToggle = { toggleBookmark(it) },
                         onSpeak = { speakWord(it) },
+                        hourlyWord = hourlyWord,
+                        isBannerDismissed = (dismissedHourKey == currentHourKey),
+                        onDismissHourBanner = { dismissedHourKey = currentHourKey },
+                        onOpenRandomWordDialog = { randomWordDialog = it },
                         themeColors = themeColors,
                         isBn = isBn,
                         isHeaderVisible = isHeaderVisible
@@ -437,6 +493,25 @@ fun VocabularyMasterTool(
             }
         }
     }
+
+    if (randomWordDialog != null) {
+        RandomWordDetailDialog(
+            vocab = randomWordDialog!!,
+            isBookmarked = bookmarkedIds.contains(randomWordDialog!!.id),
+            onBookmarkToggle = { toggleBookmark(randomWordDialog!!.id) },
+            onSpeak = { speakWord(it) },
+            onNextRandom = {
+                val next = allWords.randomOrNull()
+                if (next != null) {
+                    speakWord(next.word)
+                    randomWordDialog = next
+                }
+            },
+            onDismiss = { randomWordDialog = null },
+            themeColors = themeColors,
+            isBn = isBn
+        )
+    }
 }
 
 @Composable
@@ -457,6 +532,10 @@ fun VocabExploreTab(
     bookmarkedIds: List<String>,
     onBookmarkToggle: (String) -> Unit,
     onSpeak: (String) -> Unit,
+    hourlyWord: VocabWord? = null,
+    isBannerDismissed: Boolean = false,
+    onDismissHourBanner: () -> Unit = {},
+    onOpenRandomWordDialog: (VocabWord) -> Unit = {},
     themeColors: CalculatorThemeColors,
     isBn: Boolean,
     isHeaderVisible: Boolean = true
@@ -495,29 +574,62 @@ fun VocabExploreTab(
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
+        // Hourly Word Banner
+        if (!isBannerDismissed && hourlyWord != null) {
+            WordOfTheHourBanner(
+                vocab = hourlyWord,
+                onClose = onDismissHourBanner,
+                onViewDetails = {
+                    onSpeak(hourlyWord.word)
+                    onOpenRandomWordDialog(hourlyWord)
+                },
+                onSpeak = { onSpeak(hourlyWord.word) },
+                themeColors = themeColors,
+                isBn = isBn
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
         // Search Input Bar (Always visible at top)
+        val searchTextColor = if (themeColors.isDark) Color.White else Color(0xFF191C1E)
         OutlinedTextField(
             value = searchQuery,
             onValueChange = onSearchChange,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 6.dp),
-            placeholder = { Text(if (isBn) "শব্দ বা বাংলা অর্থ খুঁজুন..." else "Search word or meaning...") },
+            placeholder = {
+                Text(
+                    text = if (isBn) "শব্দ বা বাংলা অর্থ খুঁজুন..." else "Search word or meaning...",
+                    color = searchTextColor.copy(alpha = 0.5f)
+                )
+            },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = themeColors.accent) },
             trailingIcon = {
                 if (searchQuery.isNotEmpty()) {
                     IconButton(onClick = { onSearchChange("") }) {
-                        Icon(Icons.Default.Close, contentDescription = "Clear")
+                        Icon(Icons.Default.Close, contentDescription = "Clear", tint = searchTextColor.copy(alpha = 0.7f))
                     }
                 }
             },
             singleLine = true,
             shape = RoundedCornerShape(12.dp),
+            textStyle = androidx.compose.ui.text.TextStyle(
+                color = searchTextColor,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium
+            ),
             colors = OutlinedTextFieldDefaults.colors(
+                focusedTextColor = searchTextColor,
+                unfocusedTextColor = searchTextColor,
+                focusedPlaceholderColor = searchTextColor.copy(alpha = 0.5f),
+                unfocusedPlaceholderColor = searchTextColor.copy(alpha = 0.5f),
                 focusedBorderColor = themeColors.accent,
-                unfocusedBorderColor = themeColors.onSurface.copy(alpha = 0.2f),
+                unfocusedBorderColor = searchTextColor.copy(alpha = 0.3f),
                 focusedContainerColor = themeColors.surface,
-                unfocusedContainerColor = themeColors.surface
+                unfocusedContainerColor = themeColors.surface,
+                focusedLeadingIconColor = themeColors.accent,
+                unfocusedLeadingIconColor = themeColors.accent
             )
         )
 
@@ -806,7 +918,26 @@ fun VocabWordCard(
                 )
             }
 
-            // Expanded Details
+            // Synonyms & Antonyms (Shown by default)
+            if (vocab.synonyms.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = (if (isBn) "সমার্থক: " else "Synonyms: ") + vocab.synonyms.joinToString(", "),
+                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+                    color = Color(0xFF2E7D32)
+                )
+            }
+
+            if (vocab.antonyms.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = (if (isBn) "বিপরীত: " else "Antonyms: ") + vocab.antonyms.joinToString(", "),
+                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+                    color = Color(0xFFC62828)
+                )
+            }
+
+            // Expanded Details (Example sentence, Category, Rank)
             AnimatedVisibility(visible = expanded) {
                 Column(modifier = Modifier.padding(top = 10.dp)) {
                     HorizontalDivider(color = themeColors.onSurface.copy(alpha = 0.1f))
@@ -831,24 +962,6 @@ fun VocabWordCard(
                                 modifier = Modifier.padding(top = 2.dp)
                             )
                         }
-                    }
-
-                    if (vocab.synonyms.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            text = if (isBn) "সমার্থক শব্দ (Synonyms): " + vocab.synonyms.joinToString(", ") else "Synonyms: " + vocab.synonyms.joinToString(", "),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color(0xFF4CAF50)
-                        )
-                    }
-
-                    if (vocab.antonyms.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = if (isBn) "বিপরীত শব্দ (Antonyms): " + vocab.antonyms.joinToString(", ") else "Antonyms: " + vocab.antonyms.joinToString(", "),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color(0xFFF44336)
-                        )
                     }
 
                     Spacer(modifier = Modifier.height(6.dp))
@@ -1580,12 +1693,12 @@ fun VocabStoreTab(
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(
-                        text = if (isBn) "অফলাইন ডিকশনারি ডাটা ডাউনলোড" else "Offline Dictionary Download",
+                        text = if (isBn) "পরীক্ষার মাস্টার ভোকাবুলারি প্যাকেজ" else "Exam Master Vocabulary Pack",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                         color = themeColors.onSurface
                     )
                     Text(
-                        text = if (isBn) "সম্পূর্ণ খাঁটি ইংলিশ-বাংলা ডাটাবেজ ডাউনলোড করে ১০০,০০০+ শব্দ অফলাইনে ব্যবহার করুন।" else "Download verified English-Bengali database with 100,000+ real words.",
+                        text = if (isBn) "বিসিএস, ব্যাংক ও বিশ্ববিদ্যালয় ভর্তি পরীক্ষার জন্য ১০,০০০+ শব্দ এক ক্লিকে সেটআপ করুন।" else "Set up 10,000+ high-yield words for BCS, Bank & University Admission in one tap.",
                         style = MaterialTheme.typography.bodySmall,
                         color = themeColors.onSurface.copy(alpha = 0.7f)
                     )
@@ -1624,13 +1737,13 @@ fun VocabStoreTab(
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = if (isBn) "সম্পূর্ণ ১০৩,৬৫০+ ইংলিশ-বাংলা ডিকশনারি" else "Complete 103,650+ English-Bangla Dictionary",
+                            text = if (isBn) "১০,০০০+ বিসিএস, ব্যাংক ও ভর্তি পরীক্ষা মাস্টার ভোকাবুলারি" else "10,000+ BCS, Bank & Admission Master Vocab",
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                             color = themeColors.onSurface
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = if (isBn) "১০৩,৬৫০+ খাঁটি শব্দ • ৭.৮ MB • অফলাইন ডিকশনারি" else "103,650+ Real Words • 7.8 MB • Complete Database",
+                            text = if (isBn) "১০,০০০+ মাস্টার শব্দ • ১০০০% ব্যাকগ্রাউন্ড ডাটা • অফলাইন সেটআপ" else "10,000+ Master Words • 100% Full Details • Offline Setup",
                             style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
                             color = themeColors.accent
                         )
@@ -1640,7 +1753,7 @@ fun VocabStoreTab(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = if (isBn) "ইংরেজি শব্দ, বাংলা অর্থ, সঠিক উচ্চারণ, পদ প্রকরণ ও ক্যাটাগরিভিত্তিক শ্রেণীবিন্যাসসহ সম্পূর্ণ খাঁটি ডিকশনারি ডাটাবেজ। একবার ডাউলোডের পর আজীবনের জন্য অফলাইনে কাজ করবে।" else "Comprehensive English-Bengali dictionary containing authentic meanings, phonetics, parts of speech and categories. Works completely offline.",
+                    text = if (isBn) "ইংরেজি শব্দ, সঠিক উচ্চারণ সংকেত, স্পষ্ট বাংলা অর্থ, সমার্থক শব্দ (Synonyms), বিপরীত শব্দ (Antonyms), পদ প্রকরণ (Part of Speech) এবং বাংলা অনুবাদ সহ বাস্তবভিত্তিক উদাহরণ বাক্য সম্বলিত ১০,০০০+ সবচেয়ে বেশি কমন পড়া শব্দভান্ডার। এক ক্লিকেই ডাউনলোড ও অফলাইন সেটআপ সম্পন্ন হবে।" else "Complete 10,000+ high-yield competitive exam vocabulary pack featuring full phonetics, Bangla meanings, synonyms, antonyms, parts of speech, and contextual example sentences with Bangla translations. Sets up instantly with a single tap.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = themeColors.onSurface.copy(alpha = 0.75f)
                 )
@@ -1841,7 +1954,15 @@ fun VocabFavoritesTab(
 
 // Data Provider with Pre-compiled & Real Downloaded Packs
 object VocabularyDataProvider {
+    @Volatile
+    private var memoryCache: List<VocabWord>? = null
+
     fun getWordsForPacks(context: Context, installedPackIds: Set<String>): List<VocabWord> {
+        val cached = memoryCache
+        if (cached != null && cached.isNotEmpty() && (installedPackIds.contains("master_dictionary") || installedPackIds.contains("all_100k_dict"))) {
+            return cached
+        }
+
         val list = VocabularyDataPacks.starterWords.toMutableList()
 
         for (packId in installedPackIds) {
@@ -1851,6 +1972,396 @@ object VocabularyDataProvider {
             }
         }
 
-        return list.distinctBy { it.word.lowercase() }
+        val distinctList = list.distinctBy { it.word.lowercase() }
+        val result = distinctList.mapIndexed { index, word ->
+            word.copy(frequencyRank = index + 1)
+        }
+        if (installedPackIds.contains("master_dictionary") || installedPackIds.contains("all_100k_dict")) {
+            memoryCache = result
+        }
+        return result
     }
+
+    fun clearCache() {
+        memoryCache = null
+    }
+}
+
+@Composable
+fun WordOfTheHourBanner(
+    vocab: VocabWord,
+    onClose: () -> Unit,
+    onViewDetails: () -> Unit,
+    onSpeak: () -> Unit,
+    themeColors: CalculatorThemeColors,
+    isBn: Boolean
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .clickable { onViewDetails() },
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = themeColors.accent.copy(alpha = 0.12f)),
+        border = BorderStroke(1.dp, themeColors.accent.copy(alpha = 0.3f))
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = themeColors.accent,
+                    contentColor = themeColors.onAccent
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Schedule,
+                            contentDescription = null,
+                            modifier = Modifier.size(14.dp),
+                            tint = themeColors.onAccent
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = if (isBn) "প্রতি ঘন্টার বিশেষ শব্দ (Word of the Hour)" else "Word of the Hour",
+                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                            color = themeColors.onAccent
+                        )
+                    }
+                }
+
+                IconButton(
+                    onClick = onClose,
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Dismiss Banner",
+                        tint = themeColors.onSurface.copy(alpha = 0.6f),
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = vocab.word,
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                        color = themeColors.onSurface
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = themeColors.surfaceVariant
+                    ) {
+                        Text(
+                            text = vocab.partOfSpeech,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = themeColors.accent,
+                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
+                        )
+                    }
+                }
+
+                IconButton(
+                    onClick = onSpeak,
+                    modifier = Modifier.size(28.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+                        contentDescription = "Speak",
+                        tint = themeColors.accent,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+
+            Text(
+                text = vocab.meaningBn,
+                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
+                color = themeColors.accent,
+                modifier = Modifier.padding(top = 2.dp)
+            )
+
+            if (vocab.synonyms.isNotEmpty()) {
+                Text(
+                    text = (if (isBn) "সমার্থক: " else "Synonyms: ") + vocab.synonyms.take(3).joinToString(", "),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color(0xFF2E7D32),
+                    modifier = Modifier.padding(top = 2.dp),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                Text(
+                    text = if (isBn) "বিস্তারিত দেখুন ➔" else "View Details ➔",
+                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                    color = themeColors.accent
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun RandomWordDetailDialog(
+    vocab: VocabWord,
+    isBookmarked: Boolean,
+    onBookmarkToggle: () -> Unit,
+    onSpeak: (String) -> Unit,
+    onNextRandom: () -> Unit,
+    onDismiss: () -> Unit,
+    themeColors: CalculatorThemeColors,
+    isBn: Boolean
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = null,
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+            ) {
+                // Header with Close Button
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(
+                            shape = CircleShape,
+                            color = themeColors.accent.copy(alpha = 0.15f)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Shuffle,
+                                contentDescription = null,
+                                tint = themeColors.accent,
+                                modifier = Modifier
+                                    .padding(6.dp)
+                                    .size(20.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = if (isBn) "বিশেষ র্যান্ডম শব্দ" else "Random Word Detail",
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                            color = themeColors.onSurface
+                        )
+                    }
+
+                    IconButton(onClick = onDismiss, modifier = Modifier.size(32.dp)) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Close",
+                            tint = themeColors.onSurface.copy(alpha = 0.6f)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Word Header Box
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = themeColors.accent.copy(alpha = 0.08f),
+                    border = BorderStroke(1.dp, themeColors.accent.copy(alpha = 0.2f)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = vocab.word,
+                                    style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.ExtraBold),
+                                    color = themeColors.onSurface
+                                )
+                                if (vocab.phonetic.isNotBlank()) {
+                                    Text(
+                                        text = vocab.phonetic,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = themeColors.onSurface.copy(alpha = 0.6f)
+                                    )
+                                }
+                            }
+
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Surface(
+                                    shape = RoundedCornerShape(6.dp),
+                                    color = themeColors.accent,
+                                    contentColor = themeColors.onAccent
+                                ) {
+                                    Text(
+                                        text = vocab.partOfSpeech,
+                                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(4.dp))
+                                IconButton(onClick = { onSpeak(vocab.word) }, modifier = Modifier.size(36.dp)) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+                                        contentDescription = "Pronounce",
+                                        tint = themeColors.accent
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                        HorizontalDivider(color = themeColors.accent.copy(alpha = 0.2f))
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = if (isBn) "বাংলা অর্থ:" else "Bengali Meaning:",
+                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                            color = themeColors.onSurface.copy(alpha = 0.6f)
+                        )
+                        Text(
+                            text = vocab.meaningBn,
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                            color = themeColors.accent
+                        )
+                    }
+                }
+
+                // Synonyms
+                if (vocab.synonyms.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = if (isBn) "সমার্থক শব্দ (Synonyms):" else "Synonyms:",
+                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                        color = Color(0xFF2E7D32)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = vocab.synonyms.joinToString(", "),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = themeColors.onSurface
+                    )
+                }
+
+                // Antonyms
+                if (vocab.antonyms.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = if (isBn) "বিপরীত শব্দ (Antonyms):" else "Antonyms:",
+                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                        color = Color(0xFFC62828)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = vocab.antonyms.joinToString(", "),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = themeColors.onSurface
+                    )
+                }
+
+                // Example Sentence
+                if (vocab.exampleEn.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = if (isBn) "উদাহরণ বাক্য (Example):" else "Example Sentence:",
+                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                        color = themeColors.onSurface.copy(alpha = 0.7f)
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = themeColors.surfaceVariant.copy(alpha = 0.4f),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(10.dp)) {
+                            Text(
+                                text = "\"${vocab.exampleEn}\"",
+                                style = MaterialTheme.typography.bodySmall.copy(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic),
+                                color = themeColors.onSurface
+                            )
+                            if (vocab.exampleBn.isNotBlank()) {
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = vocab.exampleBn,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = themeColors.onSurface.copy(alpha = 0.7f)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Category: ${vocab.category}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = themeColors.onSurface.copy(alpha = 0.5f)
+                    )
+                    Text(
+                        text = "Frequency Rank #${vocab.frequencyRank}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = themeColors.onSurface.copy(alpha = 0.5f)
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onNextRandom,
+                colors = ButtonDefaults.buttonColors(containerColor = themeColors.accent, contentColor = themeColors.onAccent),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Icon(Icons.Default.Shuffle, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(if (isBn) "আরেকটি শব্দ" else "Next Word")
+            }
+        },
+        dismissButton = {
+            Row {
+                IconButton(onClick = onBookmarkToggle) {
+                    Icon(
+                        imageVector = if (isBookmarked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                        contentDescription = "Bookmark",
+                        tint = if (isBookmarked) Color(0xFFE91E63) else themeColors.onSurface.copy(alpha = 0.6f)
+                    )
+                }
+                OutlinedButton(
+                    onClick = onDismiss,
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text(if (isBn) "বন্ধ করুন" else "Close")
+                }
+            }
+        },
+        containerColor = themeColors.surface,
+        shape = RoundedCornerShape(20.dp)
+    )
 }

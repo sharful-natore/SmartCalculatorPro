@@ -3150,17 +3150,17 @@ fun ToolGridCardItem(
 
             if (isNew) {
                 Surface(
-                    shape = RoundedCornerShape(bottomStart = 8.dp, topEnd = 16.dp),
+                    shape = RoundedCornerShape(bottomStart = 6.dp, topEnd = 16.dp),
                     color = Color(0xFFE53935),
-                    shadowElevation = 2.dp,
+                    shadowElevation = 1.dp,
                     modifier = Modifier.align(Alignment.TopEnd)
                 ) {
                     Text(
                         text = "NEW",
                         color = Color.White,
-                        fontSize = 9.sp,
+                        fontSize = 8.sp,
                         fontWeight = FontWeight.Black,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 0.5.dp)
                     )
                 }
             }
