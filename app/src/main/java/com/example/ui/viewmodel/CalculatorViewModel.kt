@@ -464,13 +464,32 @@ class CalculatorViewModel(
         }
     }
 
+    fun getToolOpenCount(toolType: com.example.data.model.ToolType, usageList: List<ToolUsage> = allToolUsage.value): Int {
+        val usages = usageList.associate { it.toolId to it.usageCount }
+        return usages["TOOL_${toolType.name}"] ?: 0
+    }
+
+    fun isNewTool(toolType: com.example.data.model.ToolType, usageList: List<ToolUsage> = allToolUsage.value): Boolean {
+        val newlyAddedTools = setOf(
+            com.example.data.model.ToolType.VOCABULARY_MASTER,
+            com.example.data.model.ToolType.ATS_CV_BUILDER,
+            com.example.data.model.ToolType.POCKET_MAGNIFIER,
+            com.example.data.model.ToolType.EMERGENCY_HELPLINE,
+            com.example.data.model.ToolType.SOUND_METER
+        )
+        if (!newlyAddedTools.contains(toolType)) return false
+        val count = getToolOpenCount(toolType, usageList)
+        return count < 5
+    }
+
     fun getSortedTools(
         tools: List<com.example.data.model.ToolType>,
         usageList: List<ToolUsage>
     ): List<com.example.data.model.ToolType> {
         val usages = usageList.associate { it.toolId to it.usageCount }
         return tools.sortedWith(
-            compareByDescending<com.example.data.model.ToolType> { usages["TOOL_${it.name}"] ?: 0 }
+            compareByDescending<com.example.data.model.ToolType> { isNewTool(it, usageList) }
+                .thenByDescending { usages["TOOL_${it.name}"] ?: 0 }
                 .thenBy { it.titleEn }
         )
     }
@@ -2307,7 +2326,8 @@ How can I help you today?"""
         val usages = usageList.associate { it.toolId to it.usageCount }
 
         return allInCat.sortedWith(
-            compareByDescending<com.example.data.model.ToolType> { usages["TOOL_${it.name}"] ?: 0 }
+            compareByDescending<com.example.data.model.ToolType> { isNewTool(it, usageList) }
+                .thenByDescending { usages["TOOL_${it.name}"] ?: 0 }
                 .thenBy { it.titleEn }
         )
     }

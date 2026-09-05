@@ -12,8 +12,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
@@ -890,8 +892,8 @@ fun VocabQuizTab(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(vertical = 8.dp),
-        verticalArrangement = Arrangement.SpaceBetween
+            .verticalScroll(rememberScrollState())
+            .padding(vertical = 8.dp)
     ) {
         // Score Header
         Row(
@@ -1101,6 +1103,10 @@ fun VocabStoreTab(
     themeColors: CalculatorThemeColors,
     isBn: Boolean
 ) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val downloadingPacks = remember { mutableStateMapOf<String, Float>() }
+
     val availablePacks = listOf(
         VocabPack(
             id = "starter",
@@ -1196,6 +1202,8 @@ fun VocabStoreTab(
         ) {
             items(availablePacks) { pack ->
                 val isInstalled = installedPacks.contains(pack.id)
+                val isDownloading = downloadingPacks.containsKey(pack.id)
+                val downloadProgress = downloadingPacks[pack.id] ?: 0f
 
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -1246,6 +1254,37 @@ fun VocabStoreTab(
                             color = themeColors.onSurface.copy(alpha = 0.7f)
                         )
 
+                        if (isDownloading) {
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        text = if (isBn) "ডাউনলোড ও ডাটাবেস সমন্বয় হচ্ছে..." else "Downloading & syncing database...",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = themeColors.accent
+                                    )
+                                    Text(
+                                        text = "${(downloadProgress * 100).toInt()}%",
+                                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                                        color = themeColors.accent
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                LinearProgressIndicator(
+                                    progress = { downloadProgress },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(6.dp)
+                                        .clip(RoundedCornerShape(3.dp)),
+                                    color = themeColors.accent,
+                                    trackColor = themeColors.accent.copy(alpha = 0.2f)
+                                )
+                            }
+                        }
+
                         Spacer(modifier = Modifier.height(12.dp))
 
                         Row(
@@ -1279,9 +1318,37 @@ fun VocabStoreTab(
                                         )
                                     }
                                 }
+                            } else if (isDownloading) {
+                                Button(
+                                    onClick = { },
+                                    enabled = false,
+                                    shape = RoundedCornerShape(10.dp)
+                                ) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(16.dp),
+                                        strokeWidth = 2.dp,
+                                        color = themeColors.onSurface
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(if (isBn) "ডাউনলোড হচ্ছে..." else "Downloading...")
+                                }
                             } else {
                                 Button(
-                                    onClick = { onInstallPack(pack.id) },
+                                    onClick = {
+                                        coroutineScope.launch {
+                                            downloadingPacks[pack.id] = 0.05f
+                                            VocabularyPackRepository.downloadAndAssemblePack(
+                                                context = context,
+                                                packId = pack.id,
+                                                onProgress = { p ->
+                                                    downloadingPacks[pack.id] = p
+                                                }
+                                            )
+                                            delay(200)
+                                            downloadingPacks.remove(pack.id)
+                                            onInstallPack(pack.id)
+                                        }
+                                    },
                                     shape = RoundedCornerShape(10.dp),
                                     colors = ButtonDefaults.buttonColors(containerColor = themeColors.accent)
                                 ) {
@@ -1360,100 +1427,24 @@ fun VocabFavoritesTab(
     }
 }
 
-// Data Provider with Pre-compiled & Synthesized Packs
+// Data Provider with Pre-compiled & High Frequency On-Demand Packs
 object VocabularyDataProvider {
-    private val starterWords = listOf(
-        VocabWord("sw_1", "Resilient", "/rɪˈzɪl.jənt/", "Adj", "স্থিতিস্থাপক, প্রতিকূলতা জয় করতে সক্ষম", "She is resilient and never gives up.", "তিনি দৃঢ়চেতা এবং কখনো হার মানেন না।", listOf("Tough", "Strong"), listOf("Fragile", "Weak"), "IELTS", "starter"),
-        VocabWord("sw_2", "Eloquent", "/ˈel.ə.kwənt/", "Adj", "বাকপটু, আকর্ষণীয় ও মার্জিত বক্তা", "He gave an eloquent speech at the seminar.", "তিনি সেমিনারে একটি চমৎকার ও প্রাঞ্জল বক্তব্য দেন।", listOf("Fluent", "Articulate"), listOf("Inarticulate"), "Spoken", "starter"),
-        VocabWord("sw_3", "Meticulous", "/məˈtɪk.jə.ləs/", "Adj", "খুঁতখুঁতে, অত্যন্ত সতর্ক ও নিখুঁত", "He is meticulous about his code quality.", "তিনি তার কোডের মানের ব্যাপারে অত্যন্ত সতর্ক।", listOf("Precise", "Thorough"), listOf("Careless", "Sloppy"), "Academic", "starter"),
-        VocabWord("sw_4", "Pragmatic", "/præɡˈmæt.ɪk/", "Adj", "বাস্তবধর্মী, বাস্তববাদী", "We need a pragmatic solution to this problem.", "এই সমস্যার জন্য আমাদের একটি বাস্তবমুখী সমাধান দরকার।", listOf("Practical", "Realistic"), listOf("Idealistic"), "BCS", "starter"),
-        VocabWord("sw_5", "Perseverance", "/ˌpɜː.sɪˈvɪə.rəns/", "Noun", "অধ্যবসায়, নিরবচ্ছিন্ন প্রচেষ্টা", "Success comes through patience and perseverance.", "ধৈর্য ও অধ্যবসায়ের মাধ্যমেই সাফল্য আসে।", listOf("Persistence", "Dedication"), listOf("Apathy"), "IELTS", "starter"),
-        VocabWord("sw_6", "Ambiguous", "/æmˈbɪɡ.ju.əs/", "Adj", "দ্ব্যর্থবোধক, অস্পষ্ট", "The instructions were confusing and ambiguous.", "নির্দেশনাগুলো বিভ্রান্তিকর ও অস্পষ্ট ছিল।", listOf("Vague", "Unclear"), listOf("Clear", "Definite"), "BCS", "starter"),
-        VocabWord("sw_7", "Inevitable", "/ɪˈnev.ɪ.tə.bəl/", "Adj", "অনিবার্য, যা এড়ানো যায় না", "Change is an inevitable part of life.", "পরিবর্তন জীবনের একটি অনিবার্য অংশ।", listOf("Unavoidable", "Certain"), listOf("Avoidable"), "Academic", "starter"),
-        VocabWord("sw_8", "Benevolent", "/bəˈnev.əl.ənt/", "Adj", "দয়াবান, পরোপকারী", "A benevolent gentleman donated to the orphanage.", "একজন দয়ালু ব্যক্তি এতিমখানায় অনুদান দিয়েছেন।", listOf("Kind", "Generous"), listOf("Malevolent", "Cruel"), "Spoken", "starter"),
-        VocabWord("sw_9", "Ubiquitous", "/juːˈbɪk.wɪ.təs/", "Adj", "সর্বব্যাপী, যা সর্বত্র বিদ্যমান", "Smartphones have become ubiquitous today.", "স্মার্টফোন আজকাল সর্বত্র ছড়িয়ে পড়েছে।", listOf("Omnipresent", "Everywhere"), listOf("Rare", "Scarce"), "IELTS", "starter"),
-        VocabWord("sw_10", "Candid", "/ˈkæn.dɪd/", "Adj", "অকপট, স্পষ্টবাদী ও সৎ", "She gave her candid opinion on the proposal.", "প্রস্তাবটির বিষয়ে তিনি তার অকপট মতামত দিয়েছেন।", listOf("Frank", "Honest"), listOf("Deceitful", "Shy"), "Spoken", "starter"),
-        VocabWord("sw_11", "Diligence", "/ˈdɪl.ɪ.dʒəns/", "Noun", "পরিশ্রম, নিষ্ঠা", "His diligence earned him the promotion.", "তার নিষ্ঠা ও পরিশ্রম তাকে পদোন্নতি এনে দিয়েছিল।", listOf("Hard work", "Industriousness"), listOf("Laziness"), "BCS", "starter"),
-        VocabWord("sw_12", "Alleviate", "/əˈliː.vi.eɪt/", "Verb", "উপশম করা, তীব্রতা কমানো", "Medicine helps alleviate physical pain.", "ওষুধ শারীরিক ব্যথা উপশমে সহায়তা করে।", listOf("Relieve", "Ease", "Reduce"), listOf("Aggravate", "Worsen"), "IELTS", "starter"),
-        VocabWord("sw_13", "Lucid", "/ˈluː.sɪd/", "Adj", "স্পষ্ট, সহজে বোধগম্য", "The professor gave a lucid explanation.", "অধ্যাপক অত্যন্ত প্রাঞ্জল ব্যাখ্যা দিয়েছিলেন।", listOf("Clear", "Transparent"), listOf("Confusing", "Vague"), "Academic", "starter"),
-        VocabWord("sw_14", "Fortitude", "/ˈfɔː.tɪ.tʃuːd/", "Noun", "মানসিক শক্তি, বিপদে অটল থাকা", "She endured the hardship with great fortitude.", "তিনি অত্যন্ত মানসিক শক্তির সাথে কষ্ট সহ্য করেছিলেন।", listOf("Courage", "Bravery"), listOf("Fear", "Cowardice"), "BCS", "starter"),
-        VocabWord("sw_15", "Spontaneous", "/spɒnˈteɪ.ni.əs/", "Adj", "স্বতঃস্ফূর্ত, স্বাভাবিক", "The audience gave a spontaneous applause.", "দর্শকরা স্বতঃস্ফূর্ত করতালিতে মেতে উঠেছিল।", listOf("Natural", "Unplanned"), listOf("Forced", "Planned"), "Spoken", "starter"),
-        VocabWord("sw_16", "Comprehensive", "/ˌkɒm.prɪˈhen.sɪv/", "Adj", "বিস্তৃত, সর্বাঙ্গীণ, পূর্ণাঙ্গ", "The book offers a comprehensive guide to science.", "বইটি বিজ্ঞানের একটি পূর্ণাঙ্গ নির্দেশিকা দেয়।", listOf("Complete", "Exhaustive"), listOf("Limited", "Partial"), "Academic", "starter"),
-        VocabWord("sw_17", "Versatile", "/ˈvɜː.sə.taɪl/", "Adj", "বহুমুখী প্রতিভাধর, বহু কাজে সক্ষম", "He is a versatile actor and singer.", "তিনি একজন বহুমুখী অভিনেতা ও সংগীতশিল্পী।", listOf("Multitalented", "Adaptable"), listOf("Inflexible"), "Spoken", "starter"),
-        VocabWord("sw_18", "Empathy", "/ˈem.pə.θi/", "Noun", "সহমর্মিতা, অন্যের অনুভূতি উপলব্ধি করার ক্ষমতা", "True leadership requires genuine empathy.", "প্রকৃত নেতৃত্বের জন্য সত্যিকারের সহমর্মিতা প্রয়োজন।", listOf("Compassion", "Understanding"), listOf("Indifference"), "IELTS", "starter"),
-        VocabWord("sw_19", "Feasible", "/ˈfiː.zə.bəl/", "Adj", "বাস্তবায়নযোগ্য, সম্ভবপর", "Is this project practically feasible within budget?", "বাজেটের মধ্যে এই প্রজেক্টটি বাস্তবায়নযোগ্য কি?", listOf("Workable", "Viable"), listOf("Impossible"), "BCS", "starter"),
-        VocabWord("sw_20", "Piece of Cake", "/piːs əv keɪk/", "Idiom", "খুবই সহজ কাজ (দুধভাত)", "The exam was a piece of cake for him.", "পরীক্ষাটি তার জন্য খুবই সহজ ছিল।", listOf("Easy task", "Child's play"), listOf("Uphill task"), "Idioms", "starter"),
-        VocabWord("sw_21", "Break the Ice", "/breɪk ði aɪs/", "Idiom", "আড়ষ্টতা বা নীরবতা ভেঙে কথা শুরু করা", "A small joke helped break the ice.", "ছোট একটি কৌতুক পরিবেশের আড়ষ্টতা ভাঙতে সাহায্য করেছিল।", listOf("Initiate", "Warm up"), listOf("Stay silent"), "Idioms", "starter"),
-        VocabWord("sw_22", "Once in a Blue Moon", "/wʌns ɪn ə bluː muːn/", "Idiom", "কদাচিৎ, খুব বিরল ঘটনা", "He visits his hometown once in a blue moon.", "সে খুব বিরল সময়ে গ্রামের বাড়িতে যায়।", listOf("Rarely", "Seldom"), listOf("Frequently"), "Idioms", "starter"),
-        VocabWord("sw_23", "Pinnacle", "/ˈpɪn.ə.kəl/", "Noun", "চূড়া, সর্বোচ্চ শিখর", "He reached the pinnacle of his career.", "তিনি তার ক্যারিয়ারের সর্বোচ্চ শিখরে পৌঁছেছিলেন।", listOf("Peak", "Summit", "Apex"), listOf("Bottom", "Nadir"), "BCS", "starter"),
-        VocabWord("sw_24", "Scrutinize", "/ˈskruː.tɪ.naɪz/", "Verb", "সূক্ষ্মভাবে পরীক্ষা করা", "The auditors scrutinized every transaction.", "অডিটররা প্রতিটি লেনদেন গভীরভাবে পরীক্ষা করেছেন।", listOf("Examine", "Inspect"), listOf("Ignore", "Overlook"), "IELTS", "starter"),
-        VocabWord("sw_25", "Tenacious", "/təˈneɪ.ʃəs/", "Adj", "নাছোড়বান্দা, সংকল্পবদ্ধ", "He is a tenacious researcher.", "তিনি একজন অদম্য ও নাছোড় গবেষক।", listOf("Persistent", "Determined"), listOf("Yielding", "Weak"), "Academic", "starter")
-    )
-
     fun getWordsForPacks(installedPackIds: Set<String>): List<VocabWord> {
-        val list = starterWords.toMutableList()
+        val list = VocabularyDataPacks.starterWords.toMutableList()
 
         if (installedPackIds.contains("spoken_3000")) {
-            list.addAll(generateSpokenWords())
+            list.addAll(VocabularyHighFrequencyDataset.getSpoken3000Pack())
         }
         if (installedPackIds.contains("ielts_4000")) {
-            list.addAll(generateIeltsWords())
+            list.addAll(VocabularyHighFrequencyDataset.getIelts4000Pack())
         }
         if (installedPackIds.contains("bcs_5000")) {
-            list.addAll(generateBcsWords())
+            list.addAll(VocabularyHighFrequencyDataset.getBcs5000Pack())
         }
         if (installedPackIds.contains("mega_10000")) {
-            list.addAll(generateMegaWords())
+            list.addAll(VocabularyHighFrequencyDataset.getMega10000Pack())
         }
 
         return list.distinctBy { it.word.lowercase() }
-    }
-
-    private fun generateSpokenWords(): List<VocabWord> {
-        return listOf(
-            VocabWord("sp_1", "Accommodate", "/əˈkɒm.ə.deɪt/", "Verb", "স্থান দেওয়া, মানিয়ে নেওয়া", "The hotel can accommodate 200 guests.", "হোটেলটিতে ২০০ জন অতিথি থাকতে পারবেন।", listOf("House", "Adapt"), listOf("Reject"), "Spoken", "spoken_3000"),
-            VocabWord("sp_2", "Apparent", "/əˈpær.ənt/", "Adj", "দৃশ্যমান, সুস্পষ্ট", "Her happiness was apparent to everyone.", "তার আনন্দ সবার কাছে সুস্পষ্ট ছিল।", listOf("Evident", "Obvious"), listOf("Hidden"), "Spoken", "spoken_3000"),
-            VocabWord("sp_3", "Acknowledge", "/əkˈnɒl.ɪdʒ/", "Verb", "স্বীকার করা, স্বীকৃতি দেওয়া", "He refused to acknowledge his mistake.", "তিনি তার ভুল স্বীকার করতে রাজি হননি।", listOf("Admit", "Accept"), listOf("Deny"), "Spoken", "spoken_3000"),
-            VocabWord("sp_4", "Casual", "/ˈkæʒ.u.əl/", "Adj", "অনানুষ্ঠানিক, সাধারণ", "Wear casual clothes for the picnic.", "পিকনিকের জন্য সাধারণ জামাকাপড় পরুন।", listOf("Informal", "Relaxed"), listOf("Formal"), "Spoken", "spoken_3000"),
-            VocabWord("sp_5", "Cooperate", "/kəʊˈɒp.ər.eɪt/", "Verb", "সহযোগিতা করা", "All neighbors cooperated to clean the area.", "এলাকা পরিষ্কার করতে সব প্রতিবেশী সহযোগিতা করেছিলেন।", listOf("Collaborate", "Assist"), listOf("Hinder"), "Spoken", "spoken_3000"),
-            VocabWord("sp_6", "Enthusiastic", "/ɪnˌθjuː.ziˈæs.tɪk/", "Adj", "উৎসাহী, উদ্দীপ্ত", "Students were enthusiastic about the trip.", "ভ্রমণের ব্যাপারে ছাত্রছাত্রীরা খুব উৎসাহী ছিল।", listOf("Eager", "Excited"), listOf("Indifferent"), "Spoken", "spoken_3000"),
-            VocabWord("sp_7", "Hesitate", "/ˈhez.ɪ.teɪt/", "Verb", "দ্বিধা করা, ইতস্তত করা", "Do not hesitate to ask any question.", "যেকোনো প্রশ্ন করতে দ্বিধা করবেন না।", listOf("Waver", "Pause"), listOf("Proceed"), "Spoken", "spoken_3000"),
-            VocabWord("sp_8", "Intriguing", "/ɪnˈtriː.ɡɪŋ/", "Adj", "কৌতূহলোদ্দীপক, আকর্ষণীয়", "She told an intriguing story.", "তিনি একটি চমৎকার কৌতূহলোদ্দীপক গল্প শোনালেন।", listOf("Fascinating", "Interesting"), listOf("Boring"), "Spoken", "spoken_3000"),
-            VocabWord("sp_9", "Reliable", "/rɪˈlaɪ.ə.bəl/", "Adj", "নির্ভরযোগ্য, বিশ্বাসযোগ্য", "He is a reliable friend in hard times.", "কঠিন সময়ে তিনি একজন নির্ভরযোগ্য বন্ধু।", listOf("Trustworthy", "Dependable"), listOf("Unreliable"), "Spoken", "spoken_3000"),
-            VocabWord("sp_10", "Spill the Beans", "/spɪl ðə biːnz/", "Idiom", "গোপন কথা ফাঁস করে দেওয়া", "Do not spill the beans about the surprise party.", "সারপ্রাইজ পার্টির গোপন কথা ফাঁস করো না।", listOf("Reveal secret"), listOf("Keep secret"), "Idioms", "spoken_3000")
-        )
-    }
-
-    private fun generateIeltsWords(): List<VocabWord> {
-        return listOf(
-            VocabWord("ie_1", "Aberration", "/ˌæb.əˈreɪ.ʃən/", "Noun", "স্বাভাবিক নিয়মের বিচ্যুতি বা ব্যতিক্রম", "The sudden cold wave was an aberration.", "হঠাৎ শৈত্যপ্রবাহ ছিল আবহাওয়ার একটি ব্যতিক্রম।", listOf("Anomaly", "Deviation"), listOf("Normality"), "IELTS", "ielts_4000"),
-            VocabWord("ie_2", "Proponent", "/prəˈpəʊ.nənt/", "Noun", "সমর্থক, প্রবক্তা", "He is a strong proponent of renewable energy.", "তিনি নবায়নযোগ্য শক্তির একজন প্রবল সমর্থক।", listOf("Advocate", "Supporter"), listOf("Opponent"), "IELTS", "ielts_4000"),
-            VocabWord("ie_3", "Exacerbate", "/ɪɡˈzæs.ə.beɪt/", "Verb", "পরিস্থিতি আরও খারাপ বা অবনতি করা", "Pollution exacerbates respiratory diseases.", "দূষণ শ্বাসকষ্টের রোগকে আরও বাড়িয়ে দেয়।", listOf("Worsen", "Aggravate"), listOf("Improve", "Alleviate"), "IELTS", "ielts_4000"),
-            VocabWord("ie_4", "Mitigate", "/ˈmɪt.ɪ.ɡeɪt/", "Verb", "প্রশমিত করা, হ্রাস করা", "Planting trees helps mitigate global warming.", "গাছ লাগানো গ্লোবাল ওয়ার্মিং কমাতে সাহায্য করে।", listOf("Lessen", "Diminish"), listOf("Intensify"), "IELTS", "ielts_4000"),
-            VocabWord("ie_5", "Substantiate", "/səbˈstæn.ʃi.eɪt/", "Verb", "প্রমাণ দিয়ে প্রতিষ্ঠা করা বা সত্যতা প্রতিপন্ন করা", "You must substantiate your thesis with data.", "আপনার থিসিস তথ্যের সাহায্যে প্রমাণ করতে হবে।", listOf("Verify", "Validate"), listOf("Disprove"), "IELTS", "ielts_4000"),
-            VocabWord("ie_6", "Prevalent", "/ˈprev.əl.ənt/", "Adj", "বহুল প্রচলিত, বিদ্যমান", "The custom is still prevalent in rural areas.", "প্রথাটি গ্রামাঞ্চলে এখনও প্রচলিত।", listOf("Widespread", "Common"), listOf("Rare"), "IELTS", "ielts_4000"),
-            VocabWord("ie_7", "Plausible", "/ˈplɔː.zə.bəl/", "Adj", "বিশ্বাসযোগ্য, যুক্তিযুক্ত", "Her explanation sounded plausible.", "তার ব্যাখ্যাটি যুক্তিযুক্ত মনে হয়েছিল।", listOf("Believable", "Reasonable"), listOf("Implausible"), "IELTS", "ielts_4000"),
-            VocabWord("ie_8", "Paradigm", "/ˈpær.ə.daɪm/", "Noun", "দৃষ্টান্ত, আদর্শ কাঠামো বা মডেল", "AI represents a paradigm shift in technology.", "এআই প্রযুক্তিতে একটি আদর্শ কাঠামোগত পরিবর্তন এনেছে।", listOf("Model", "Pattern", "Archetype"), listOf(), "IELTS", "ielts_4000")
-        )
-    }
-
-    private fun generateBcsWords(): List<VocabWord> {
-        return listOf(
-            VocabWord("bc_1", "Ephemeral", "/ɪˈfem.ər.əl/", "Adj", "ক্ষণস্থায়ী, অল্পকালব্যাপী", "Fame in social media is often ephemeral.", "সোশ্যাল মিডিয়ার খ্যাতি প্রায়শই ক্ষণস্থায়ী।", listOf("Fleeting", "Transient", "Short-lived"), listOf("Permanent", "Eternal"), "BCS", "bcs_5000"),
-            VocabWord("bc_2", "Fastidious", "/fæsˈtɪd.i.əs/", "Adj", "খুঁতখুঁতে, সহজে সন্তুষ্ট হয় না এমন", "He is fastidious regarding hygiene.", "পরিচ্ছন্নতার বিষয়ে তিনি অত্যন্ত খুঁতখুঁতে।", listOf("Picky", "Fussy"), listOf("Careless"), "BCS", "bcs_5000"),
-            VocabWord("bc_3", "Gregarious", "/ɡrɪˈɡeə.ri.əs/", "Adj", "মিশুক, দলপ্রিয়, সামাজপ্রিয়", "Dolphins are friendly and gregarious animals.", "ডলফিন বন্ধুভাবাপন্ন এবং দলপ্রিয় প্রাণী।", listOf("Sociable", "Outgoing"), listOf("Solitary", "Introverted"), "BCS", "bcs_5000"),
-            VocabWord("bc_4", "Magnanimous", "/mæɡˈnæn.ɪ.məs/", "Adj", "মহানুভব, উদারচেতা", "He was magnanimous in victory.", "বিজয়ের পর তিনি মহানুভবতা প্রদর্শন করেছিলেন।", listOf("Generous", "Noble"), listOf("Selfish", "Petty"), "BCS", "bcs_5000"),
-            VocabWord("bc_5", "Sycophant", "/ˈsɪk.ə.fænt/", "Noun", "চাটুকার, তোষামোদকারী", "The king was surrounded by flattering sycophants.", "রাজা স্তাবক চাটুকারদের দ্বারা পরিবেষ্টিত ছিলেন।", listOf("Flatterer", "Toady"), listOf(), "BCS", "bcs_5000"),
-            VocabWord("bc_6", "Venerate", "/ˈven.ər.eɪt/", "Verb", "গভীর শ্রদ্ধা করা, পূজা করা", "We venerate our freedom fighters.", "আমরা আমাদের বীর মুক্তিযোদ্ধাদের পরম শ্রদ্ধায় স্মরণ করি।", listOf("Revere", "Respect"), listOf("Despise"), "BCS", "bcs_5000")
-        )
-    }
-
-    private fun generateMegaWords(): List<VocabWord> {
-        return listOf(
-            VocabWord("mg_1", "Anachronism", "/əˈnæk.rə.nɪ.zəm/", "Noun", "কালবৈষম্য, যুগের সাথে অসংগতি", "A sword in modern warfare is an anachronism.", "আধুনিক যুদ্ধে তরবারি একটি কালবৈষম্য।", listOf("Misplacement"), listOf(), "Academic", "mega_10000"),
-            VocabWord("mg_2", "Capricious", "/kəˈprɪʃ.əs/", "Adj", "খামখেয়ালী, হঠাৎ মত পরিবর্তনশীল", "The island has capricious tropical weather.", "দ্বীপটিতে খামখেয়ালী ধরনের ক্রান্তীয় আবহাওয়া বিরাজ করে।", listOf("Whimsical", "Fickle"), listOf("Predictable", "Stable"), "Academic", "mega_10000"),
-            VocabWord("mg_3", "Obsequious", "/əbˈsiː.kwi.əs/", "Adj", "অতি তোষামোদকারী, দাসবৎ অনুগত", "He bowed in an obsequious manner.", "তিনি তোষামোদি ভঙ্গিতে মাথা নত করলেন।", listOf("Servile", "Submissive"), listOf("Assertive"), "Academic", "mega_10000"),
-            VocabWord("mg_4", "Enervate", "/ˈen.ə.veɪt/", "Verb", "দুর্বল করা, শক্তি হ্রাস করা", "Intense heat enervated the workers.", "তীব্র তাপদাহ কর্মীদের ক্লান্ত ও শক্তিহীন করে ফেলেছিল।", listOf("Weaken", "Exhaust"), listOf("Energize", "Strengthen"), "Academic", "mega_10000")
-        )
     }
 }

@@ -53,8 +53,8 @@ android {
     applicationId = "com.vibestudio.toolsmate"
     minSdk = 24
     targetSdk = 36
-    versionCode = 2
-    versionName = "1.2"
+    versionCode = 3
+    versionName = "3.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     buildConfigField("String", "GEMINI_API_KEY", "\"${findApiKey("GEMINI_API_KEY").replace("\"", "").replace("'", "")}\"")

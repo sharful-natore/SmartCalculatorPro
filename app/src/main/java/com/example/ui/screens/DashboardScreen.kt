@@ -3074,6 +3074,11 @@ fun ToolGridCardItem(
         ),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp)
     ) {
+        val allUsageList by viewModel.allToolUsage.collectAsStateWithLifecycle()
+        val isNew = remember(toolType, allUsageList) {
+            viewModel.isNewTool(toolType, allUsageList)
+        }
+
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier
@@ -3143,7 +3148,22 @@ fun ToolGridCardItem(
                 }
             }
 
-            /* CategoryRankBadge removed per user request */
+            if (isNew) {
+                Surface(
+                    shape = RoundedCornerShape(bottomStart = 8.dp, topEnd = 16.dp),
+                    color = Color(0xFFE53935),
+                    shadowElevation = 2.dp,
+                    modifier = Modifier.align(Alignment.TopEnd)
+                ) {
+                    Text(
+                        text = "NEW",
+                        color = Color.White,
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Black,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+            }
         }
     }
 }
