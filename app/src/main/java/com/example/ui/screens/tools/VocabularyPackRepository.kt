@@ -412,7 +412,22 @@ object ExpandedThesaurusEngine {
     fun cleanEnglishList(list: List<String>): List<String> {
         return list
             .map { it.trim() }
-            .filter { it.isNotBlank() && !isBengali(it) && it.length < 40 }
+            .filter { str ->
+                str.isNotBlank() &&
+                        !isBengali(str) &&
+                        str.length < 40 &&
+                        !str.startsWith("In a ", ignoreCase = true) &&
+                        !str.startsWith("With ", ignoreCase = true) &&
+                        !str.startsWith("Lack of ", ignoreCase = true) &&
+                        !str.startsWith("Opposite of ", ignoreCase = true) &&
+                        !str.startsWith("Process of ", ignoreCase = true) &&
+                        !str.startsWith("Quality of ", ignoreCase = true) &&
+                        !str.startsWith("Related to ", ignoreCase = true) &&
+                        !str.startsWith("Associated with ", ignoreCase = true) &&
+                        !str.startsWith("Hinder ", ignoreCase = true) &&
+                        !str.startsWith("Prevent ", ignoreCase = true) &&
+                        !str.startsWith("Non-", ignoreCase = true)
+            }
             .distinctBy { it.lowercase() }
     }
 
@@ -433,51 +448,10 @@ object ExpandedThesaurusEngine {
             cleanAnts.addAll(mapEntry.second)
         }
 
-        // Prefix/Suffix Smart Fallback Engine for Antonyms if empty
-        if (cleanAnts.isEmpty()) {
-            val derivedAnts = deriveAntonymsByRule(wordLower, pos)
-            cleanAnts.addAll(derivedAnts)
-        }
-
-        // Prefix/Suffix Smart Fallback Engine for Synonyms if empty
-        if (cleanSyns.isEmpty()) {
-            val derivedSyns = deriveSynonymsByRule(wordLower, pos)
-            cleanSyns.addAll(derivedSyns)
-        }
-
         val finalSyns = cleanEnglishList(cleanSyns).take(5)
         val finalAnts = cleanEnglishList(cleanAnts).take(5)
 
         return Pair(finalSyns, finalAnts)
-    }
-
-    private fun deriveAntonymsByRule(word: String, pos: String): List<String> {
-        return when {
-            word.startsWith("un") && word.length > 4 -> listOf(word.removePrefix("un").replaceFirstChar { it.uppercase() })
-            word.startsWith("in") && word.length > 4 -> listOf(word.removePrefix("in").replaceFirstChar { it.uppercase() })
-            word.startsWith("im") && word.length > 4 -> listOf(word.removePrefix("im").replaceFirstChar { it.uppercase() })
-            word.startsWith("dis") && word.length > 5 -> listOf(word.removePrefix("dis").replaceFirstChar { it.uppercase() })
-            word.startsWith("non") && word.length > 5 -> listOf(word.removePrefix("non").replaceFirstChar { it.uppercase() })
-            word.startsWith("ir") && word.length > 4 -> listOf(word.removePrefix("ir").replaceFirstChar { it.uppercase() })
-            word.startsWith("il") && word.length > 4 -> listOf(word.removePrefix("il").replaceFirstChar { it.uppercase() })
-            word.endsWith("less") -> listOf(word.removeSuffix("less") + "ful", "Careful", "Attentive")
-            word.endsWith("ful") -> listOf(word.removeSuffix("ful") + "less", "Careless", "Negligent")
-            word.endsWith("able") -> listOf("Un" + word, "Incapable")
-            word.endsWith("ive") -> listOf("Passive", "Inactive", "Unresponsive")
-            word.endsWith("ment") -> listOf("Lack of " + word, "Deficit")
-            pos.equals("Verb", ignoreCase = true) -> listOf("Hinder " + word, "Prevent " + word)
-            pos.equals("Adj", ignoreCase = true) || pos.equals("Adjective", ignoreCase = true) -> listOf("Non-" + word, "Unrelated")
-            else -> listOf("Opposite of " + word)
-        }
-    }
-
-    private fun deriveSynonymsByRule(word: String, pos: String): List<String> {
-        return when {
-            word.endsWith("tion") -> listOf("Process of " + word.removeSuffix("tion"), "Procedure", "Action")
-            word.endsWith("ness") -> listOf("Quality of " + word.removeSuffix("ness"), "State", "Condition")
-            word.endsWith("ly") -> listOf("In a " + word.removeSuffix("ly") + " manner", "With " + word.removeSuffix("ly"))
-            else -> listOf("Related to " + word, "Associated with " + word)
-        }
     }
 
     // Comprehensive Thesaurus Database for high-frequency competitive exam vocabulary

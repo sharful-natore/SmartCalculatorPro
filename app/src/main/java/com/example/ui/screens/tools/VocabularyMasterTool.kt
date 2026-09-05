@@ -937,34 +937,12 @@ fun VocabWordCard(
                 )
             }
 
-            // Expanded Details (Example sentence, Category, Rank)
+            // Expanded Details (Category, Rank)
             AnimatedVisibility(visible = expanded) {
                 Column(modifier = Modifier.padding(top = 10.dp)) {
                     HorizontalDivider(color = themeColors.onSurface.copy(alpha = 0.1f))
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    if (vocab.exampleEn.isNotBlank()) {
-                        Text(
-                            text = if (isBn) "উদাহরণ বাক্য:" else "Example Sentence:",
-                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                            color = themeColors.onSurface.copy(alpha = 0.7f)
-                        )
-                        Text(
-                            text = "\"${vocab.exampleEn}\"",
-                            style = MaterialTheme.typography.bodySmall.copy(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic),
-                            color = themeColors.onSurface
-                        )
-                        if (vocab.exampleBn.isNotBlank()) {
-                            Text(
-                                text = vocab.exampleBn,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = themeColors.onSurface.copy(alpha = 0.7f),
-                                modifier = Modifier.padding(top = 2.dp)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(6.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
@@ -2281,38 +2259,6 @@ fun RandomWordDetailDialog(
                         style = MaterialTheme.typography.bodyMedium,
                         color = themeColors.onSurface
                     )
-                }
-
-                // Example Sentence
-                if (vocab.exampleEn.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Text(
-                        text = if (isBn) "উদাহরণ বাক্য (Example):" else "Example Sentence:",
-                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                        color = themeColors.onSurface.copy(alpha = 0.7f)
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = themeColors.surfaceVariant.copy(alpha = 0.4f),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(modifier = Modifier.padding(10.dp)) {
-                            Text(
-                                text = "\"${vocab.exampleEn}\"",
-                                style = MaterialTheme.typography.bodySmall.copy(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic),
-                                color = themeColors.onSurface
-                            )
-                            if (vocab.exampleBn.isNotBlank()) {
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = vocab.exampleBn,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = themeColors.onSurface.copy(alpha = 0.7f)
-                                )
-                            }
-                        }
-                    }
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
