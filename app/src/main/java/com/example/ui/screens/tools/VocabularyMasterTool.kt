@@ -495,39 +495,39 @@ fun VocabExploreTab(
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // Collapsible Top Header & Chips Section (Hides on Scroll Down)
+        // Search Input Bar (Always visible at top)
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = onSearchChange,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 6.dp),
+            placeholder = { Text(if (isBn) "শব্দ বা বাংলা অর্থ খুঁজুন..." else "Search word or meaning...") },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = themeColors.accent) },
+            trailingIcon = {
+                if (searchQuery.isNotEmpty()) {
+                    IconButton(onClick = { onSearchChange("") }) {
+                        Icon(Icons.Default.Close, contentDescription = "Clear")
+                    }
+                }
+            },
+            singleLine = true,
+            shape = RoundedCornerShape(12.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = themeColors.accent,
+                unfocusedBorderColor = themeColors.onSurface.copy(alpha = 0.2f),
+                focusedContainerColor = themeColors.surface,
+                unfocusedContainerColor = themeColors.surface
+            )
+        )
+
+        // Collapsible Top Sub-Header Section (Hides A-Z scroller, Chips & Sort on Scroll Down)
         AnimatedVisibility(
             visible = isHeaderVisible,
             enter = expandVertically() + fadeIn(),
             exit = shrinkVertically() + fadeOut()
         ) {
             Column {
-                // Search Input Bar
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = onSearchChange,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 6.dp),
-                    placeholder = { Text(if (isBn) "শব্দ বা বাংলা অর্থ খুঁজুন..." else "Search word or meaning...") },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = themeColors.accent) },
-                    trailingIcon = {
-                        if (searchQuery.isNotEmpty()) {
-                            IconButton(onClick = { onSearchChange("") }) {
-                                Icon(Icons.Default.Close, contentDescription = "Clear")
-                            }
-                        }
-                    },
-                    singleLine = true,
-                    shape = RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = themeColors.accent,
-                        unfocusedBorderColor = themeColors.onSurface.copy(alpha = 0.2f),
-                        focusedContainerColor = themeColors.surface,
-                        unfocusedContainerColor = themeColors.surface
-                    )
-                )
-
                 // A-Z Quick Index Alphabet Scroller
                 Row(
                     modifier = Modifier
@@ -1624,7 +1624,7 @@ fun VocabStoreTab(
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = if (isBn) "সম্পূর্ণ ১০,০০০+ ইংলিশ-বাংলা ডিকশনারি" else "Complete 10,000+ English-Bangla Dictionary",
+                            text = if (isBn) "সম্পূর্ণ ১০৩,৬৫০+ ইংলিশ-বাংলা ডিকশনারি" else "Complete 103,650+ English-Bangla Dictionary",
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                             color = themeColors.onSurface
                         )
