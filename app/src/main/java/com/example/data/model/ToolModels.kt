@@ -356,6 +356,26 @@ enum class ToolType(
         "জেমিনি এআই চালিত প্রফেশনাল ও ATS-ফ্রেন্ডলি সিভি তৈরি, চাকরির বিবরণ অনুযায়ী টিউন করা ও এইচডি পিডিএফ এক্সপোর্ট",
         ToolCategory.EDUCATION, Icons.Default.Badge
     ),
+    VOCABULARY_MASTER(
+        "Vocabulary Master", "ভোকাবুলারি মাস্টার",
+        "ইংরেজি-বাংলা সমৃদ্ধ শব্দভান্ডার, উচ্চারণ, ফ্ল্যাশ কার্ড, কুইজ ও অন-ডিমান্ড ভোকাব প্যাক ডাউনলোড",
+        ToolCategory.EDUCATION, Icons.Default.Translate
+    ),
+    POCKET_MAGNIFIER(
+        "Pocket Magnifier", "পকেট ম্যাগনিফায়ার",
+        "ক্যামেরা জুম ও টর্চলাইট সহ ছোট লেখা ও সূক্ষ্ম জিনিস বড় করে দেখার পকেট ম্যাগনিফাইং গ্লাস",
+        ToolCategory.UTILITY, Icons.Default.ZoomIn
+    ),
+    EMERGENCY_HELPLINE(
+        "Emergency Helpline", "জরুরি হেল্পলাইন",
+        "জাতীয় জরুরি সেবা (৯৯৯), অ্যাম্বুলেন্স, পুলিশ, ফায়ার সার্ভিস ও জরুরি নম্বরে সরাসরি কল ও লোকেশন শেয়ারিং",
+        ToolCategory.UTILITY, Icons.Default.Emergency
+    ),
+    SOUND_METER(
+        "Sound / Decibel Meter", "সাউন্ড ও নয়েজ মিটার",
+        "ফোনের মাইক্রোফোন দিয়ে রিয়েল-টাইম শব্দের তীব্রতা (dB) পরিমাপ, ওয়েবফর্ম ও নয়েজ লেভেল গাইড",
+        ToolCategory.UTILITY, Icons.Default.GraphicEq
+    ),
 
     // Kids Learning & Fun Section
     KIDS_LEARNING(
@@ -529,6 +549,10 @@ enum class ToolType(
                 KIDS_PUZZLE -> "Educational word puzzle game to solve letter jumbles"
                 KIDS_HABITS -> "Good habits, cleanliness, and manners guide for kids"
                 KIDS_STORIES -> "Illustrated moral stories and audio fables for children"
+                VOCABULARY_MASTER -> "Master English vocabulary with audio pronunciation, flashcards, MCQ quizzes and on-demand offline dictionaries"
+                POCKET_MAGNIFIER -> "Pocket magnifying glass with camera zoom, bright torch, freeze frame, and high-contrast reading filters"
+                EMERGENCY_HELPLINE -> "Bangladesh emergency directory with 1-tap call to 999, 16263, police, fire, hospitals, and location SOS"
+                SOUND_METER -> "Real-time decibel noise meter with analog gauge, live waveform chart, and environmental exposure guide"
             }
         }
     }

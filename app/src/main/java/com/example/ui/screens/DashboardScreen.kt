@@ -3227,6 +3227,10 @@ fun ToolDetailView(
                          toolType == com.example.data.model.ToolType.PDF_READER ||
                          toolType == com.example.data.model.ToolType.PDF_MAKER ||
                          toolType == com.example.data.model.ToolType.ATS_CV_BUILDER ||
+                         toolType == com.example.data.model.ToolType.VOCABULARY_MASTER ||
+                         toolType == com.example.data.model.ToolType.POCKET_MAGNIFIER ||
+                         toolType == com.example.data.model.ToolType.EMERGENCY_HELPLINE ||
+                         toolType == com.example.data.model.ToolType.SOUND_METER ||
                          toolType == com.example.data.model.ToolType.KIDS_LEARNING ||
                          toolType == com.example.data.model.ToolType.KIDS_SLATE ||
                          toolType == com.example.data.model.ToolType.KIDS_BALLOON ||
@@ -3426,6 +3430,26 @@ fun ToolDetailView(
                 themeColors = themeColors,
                 onBackClick = { viewModel.selectedToolType = null }
             )
+            ToolType.VOCABULARY_MASTER -> com.example.ui.screens.tools.VocabularyMasterTool(
+                viewModel = viewModel,
+                themeColors = themeColors,
+                onBackClick = { viewModel.selectedToolType = null }
+            )
+            ToolType.POCKET_MAGNIFIER -> com.example.ui.screens.tools.PocketMagnifierTool(
+                viewModel = viewModel,
+                themeColors = themeColors,
+                onBackClick = { viewModel.selectedToolType = null }
+            )
+            ToolType.EMERGENCY_HELPLINE -> com.example.ui.screens.tools.EmergencyHelplineTool(
+                viewModel = viewModel,
+                themeColors = themeColors,
+                onBackClick = { viewModel.selectedToolType = null }
+            )
+            ToolType.SOUND_METER -> com.example.ui.screens.tools.SoundMeterTool(
+                viewModel = viewModel,
+                themeColors = themeColors,
+                onBackClick = { viewModel.selectedToolType = null }
+            )
             ToolType.KIDS_LEARNING -> com.example.ui.screens.tools.kids.KidsLearningScreen(
                 viewModel = viewModel,
                 themeColors = themeColors,
@@ -3515,6 +3539,50 @@ private fun getToolInfoItems(toolType: ToolType, isBn: Boolean): List<Pair<Strin
             listOf(
                 "1. What is ATS Optimization?" to "ATS (Applicant Tracking System) is software used by recruiters to automatically scan and rank resumes based on structural formatting and keywords.",
                 "2. Best Practices" to "• Use standard section headers and clear text fonts.\n• Use Gemini AI to tailor skills and experience for specific job circulars.\n• Download crisp A4 vector PDFs directly."
+            )
+        }
+        ToolType.VOCABULARY_MASTER -> if (isBn) {
+            listOf(
+                "১. ভক্যাবলারি মাস্টার কী?" to "দৈনন্দিন ইংরেজি ও পরীক্ষার জন্য প্রয়োজনীয় শব্দভাণ্ডার অন-ডিমান্ড প্যাকের মাধ্যমে শেখার ইন্টারেক্টিভ প্ল্যাটফর্ম।",
+                "২. ফিচারসমূহ" to "• অডিও উচ্চারণ (TTS) ও উদাহরণ বাক্য\n• ইন্টারেক্টিভ ফ্ল্যাশকার্ড ও সেলফ কুইজ\n• পছন্দসই শব্দ ফেভারিট হিসেবে সংরক্ষণ"
+            )
+        } else {
+            listOf(
+                "1. What is Vocabulary Master?" to "An interactive vocabulary mastery suite with on-demand downloadable topic packs.",
+                "2. Features" to "• Native TTS audio pronunciation and example sentences\n• Swipeable flashcards and speed quiz\n• Bookmarks and custom favorites"
+            )
+        }
+        ToolType.POCKET_MAGNIFIER -> if (isBn) {
+            listOf(
+                "১. পকেট ম্যাগনিফায়ার কীভাবে কাজ করে?" to "মোবাইলের ক্যামেরা ব্যবহার করে যেকোনো ছোট লেখা বা ওষুধ/বিল ভাউচারের সূক্ষ্ম টেক্সট ম্যাগনিফাই করে পড়তে সাহায্য করে।",
+                "২. বিশেষ সুবিধাসমূহ" to "• ফ্ল্যাশলাইট ও জুম স্লাইডার (১x থেকে ১০x)\n• ফ্রিজ ফ্রেম মোড: হাত না কাঁপিয়ে স্ক্রিন স্থির করে পড়া\n• হাই-কন্ট্রাস্ট ও রিডিং গাইডলাইন ফিল্টার"
+            )
+        } else {
+            listOf(
+                "1. What is Pocket Magnifier?" to "A high-precision optical magnifying tool that transforms your smartphone camera into a reading loupe.",
+                "2. Key Features" to "• High-power zoom (1x to 10x) and LED torch\n• Freeze Frame mode to inspect text comfortably without shaking\n• Reading guide line and high-contrast color modes"
+            )
+        }
+        ToolType.EMERGENCY_HELPLINE -> if (isBn) {
+            listOf(
+                "১. জরুরি হেল্পলাইন ডিরেক্টরি কী?" to "জাতীয় জরুরি সেবা (৯৯৯), স্বাস্থ্য বাতায়ন (১৬২৬৩), নারী ও শিশু হেল্পলাইন এবং বিদ্যুৎ-গ্যাস-ব্যাংক কার্ডের সরাসরি ১-ট্যাপ ডায়াল সুবিধা।",
+                "২. ব্যক্তিগত এসওএস" to "• নিজের পরিবার বা ডাক্তারের নম্বর সংরক্ষণ করুন\n• জিপিএস লোকেশন সহ ১-ট্যাপে স্বজনদের কাছে জরুরি বিপদবার্তা (SMS) পাঠান"
+            )
+        } else {
+            listOf(
+                "1. Emergency Helpline Directory" to "Instant 1-tap call access to 999, 16263 Health Hotline, Fire Rescue, Police, and Utility emergency lines.",
+                "2. Personal SOS" to "• Save emergency contacts\n• Send emergency SOS SMS with live GPS Google Maps coordinates in one tap"
+            )
+        }
+        ToolType.SOUND_METER -> if (isBn) {
+            listOf(
+                "১. সাউন্ড ও ডেসিবেল মিটার কী?" to "আপনার স্মার্টফোনের মাইক্রোফোন দিয়ে পরিবেশের শব্দের তীব্রতা (dB - Decibel) নির্ভুলভাবে পরিমাপ করার প্রফেশনাল মিটার।",
+                "২. স্বাস্থ্য ঝুঁকি" to "• ৮৫ ডেসিবেলের বেশি শব্দ দীর্ঘক্ষণ শুনলে শ্রবণশক্তি স্থায়ীভাবে নষ্ট হতে পারে।\n• এনালগ ডায়াল সুই, ওয়েভফর্ম গ্রাফ ও ক্যালিব্রেশন সুবিধা সংযুক্ত।"
+            )
+        } else {
+            listOf(
+                "1. What is Sound Meter?" to "A calibrated decibel (dB) sound level meter measuring real-time acoustic noise through device microphone.",
+                "2. Hearing Safety" to "• Warns when noise exceeds 85 dB (WHO safety threshold)\n• Analog needle gauge, live waveform chart, and min/avg/max tracking"
             )
         }
         ToolType.BMI -> if (isBn) {
