@@ -13,7 +13,6 @@ import java.util.concurrent.TimeUnit
 
 object VocabularyPackRepository {
     private const val TAG = "VocabPackRepo"
-    private const val PREFS_NAME = "vocab_pack_storage"
     
     private val httpClient = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
@@ -49,6 +48,7 @@ object VocabularyPackRepository {
                         put("antonyms", JSONArray(w.antonyms))
                         put("category", w.category)
                         put("packId", w.packId)
+                        put("frequencyRank", w.frequencyRank)
                     }
                     jsonArray.put(obj)
                 }
@@ -99,7 +99,8 @@ object VocabularyPackRepository {
                             synonyms = syns,
                             antonyms = ants,
                             category = obj.optString("category", "General"),
-                            packId = obj.optString("packId", packId)
+                            packId = obj.optString("packId", packId),
+                            frequencyRank = obj.optInt("frequencyRank", 9999)
                         )
                     )
                 }

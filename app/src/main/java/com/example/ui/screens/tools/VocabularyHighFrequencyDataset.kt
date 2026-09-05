@@ -8,12 +8,13 @@ object VocabularyHighFrequencyDataset {
         phonetic: String,
         pos: String,
         meaningBn: String,
-        exampleEn: String,
-        exampleBn: String,
-        synonyms: List<String>,
-        antonyms: List<String>,
         category: String,
-        packId: String
+        packId: String,
+        frequencyRank: Int,
+        synonyms: List<String> = emptyList(),
+        antonyms: List<String> = emptyList(),
+        exampleEn: String = "",
+        exampleBn: String = ""
     ): VocabWord {
         return VocabWord(
             id = id,
@@ -26,7 +27,8 @@ object VocabularyHighFrequencyDataset {
             synonyms = synonyms,
             antonyms = antonyms,
             category = category,
-            packId = packId
+            packId = packId,
+            frequencyRank = frequencyRank
         )
     }
 
@@ -349,12 +351,9 @@ object VocabularyHighFrequencyDataset {
                     phonetic = "/${word.lowercase()}/",
                     pos = pos,
                     meaningBn = meaning,
-                    exampleEn = "Always try to $word in your daily conversation.",
-                    exampleBn = "আপনার দৈনন্দিন কথোপকথনে সর্বদা এই শব্দটি প্রয়োগ করার চেষ্টা করুন।",
-                    synonyms = listOf("Key word", "Essential"),
-                    antonyms = emptyList(),
                     category = "Spoken",
-                    packId = "spoken_3000"
+                    packId = "spoken_3000",
+                    frequencyRank = index + 1
                 )
             )
         }
@@ -591,12 +590,9 @@ object VocabularyHighFrequencyDataset {
                     phonetic = "/${word.lowercase()}/",
                     pos = pos,
                     meaningBn = meaning,
-                    exampleEn = "Academic writing frequently utilizes the term $word.",
-                    exampleBn = "একাডেমিক লেখায় প্রায়শই এই পরিভাষাটি ব্যবহৃত হয়।",
-                    synonyms = listOf("Academic", "Band 8+"),
-                    antonyms = emptyList(),
                     category = "IELTS",
-                    packId = "ielts_4000"
+                    packId = "ielts_4000",
+                    frequencyRank = index + 1
                 )
             )
         }
@@ -850,12 +846,9 @@ object VocabularyHighFrequencyDataset {
                     phonetic = "/${word.lowercase()}/",
                     pos = pos,
                     meaningBn = meaning,
-                    exampleEn = "Frequently tested in BCS and Bank recruitment exams: $word.",
-                    exampleBn = "বিসিএস ও ব্যাংক নিয়োগ পরীক্ষায় বহুল জিজ্ঞাসিত শব্দ: $word।",
-                    synonyms = listOf("Competitive", "Govt Job"),
-                    antonyms = emptyList(),
                     category = "BCS",
-                    packId = "bcs_5000"
+                    packId = "bcs_5000",
+                    frequencyRank = index + 1
                 )
             )
         }
@@ -1029,12 +1022,9 @@ object VocabularyHighFrequencyDataset {
                     phonetic = "/${word.lowercase()}/",
                     pos = pos,
                     meaningBn = meaning,
-                    exampleEn = "A comprehensive English master vocabulary: $word.",
-                    exampleBn = "স্বয়ংসম্পূর্ণ ইংরেজি ডিকশনারির সমৃদ্ধ শব্দ: $word।",
-                    synonyms = listOf("Master Pack", "Comprehensive"),
-                    antonyms = emptyList(),
                     category = "Academic",
-                    packId = "mega_10000"
+                    packId = "mega_10000",
+                    frequencyRank = index + 1
                 )
             )
         }

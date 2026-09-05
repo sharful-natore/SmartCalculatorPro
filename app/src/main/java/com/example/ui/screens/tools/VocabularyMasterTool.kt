@@ -4,14 +4,17 @@ import android.content.Context
 import android.speech.tts.TextToSpeech
 import android.widget.Toast
 import androidx.compose.animation.*
-import androidx.compose.animation.core.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,7 +29,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -52,12 +54,13 @@ data class VocabWord(
     val phonetic: String,
     val partOfSpeech: String,
     val meaningBn: String,
-    val exampleEn: String,
-    val exampleBn: String,
+    val exampleEn: String = "",
+    val exampleBn: String = "",
     val synonyms: List<String> = emptyList(),
     val antonyms: List<String> = emptyList(),
     val category: String, // "Spoken", "IELTS", "BCS", "Academic", "Idioms"
-    val packId: String = "starter"
+    val packId: String = "starter",
+    val frequencyRank: Int = 9999
 )
 
 data class VocabPack(
@@ -77,6 +80,13 @@ enum class VocabTab(val titleBn: String, val titleEn: String) {
     QUIZ("কুইজ টেস্ট", "MCQ Quiz"),
     STORE("অন-ডিমান্ড স্টোর", "Word Store"),
     FAVORITES("সংরক্ষিত", "Favorites")
+}
+
+enum class VocabSortOption(val titleBn: String, val titleEn: String) {
+    FREQUENCY("টপ ফ্রিকোয়েন্সি", "Top Frequency"),
+    ALPHABETICAL_AZ("A থেকে Z", "A to Z"),
+    ALPHABETICAL_ZA("Z থেকে A", "Z to A"),
+    LENGTH("শব্দের দৈর্ঘ্য", "Word Length")
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -151,6 +161,9 @@ fun VocabularyMasterTool(
     var searchQuery by remember { mutableStateOf("") }
     var selectedCategoryFilter by remember { mutableStateOf("All") }
     var selectedPosFilter by remember { mutableStateOf("All") }
+    var selectedSortOption by remember { mutableStateOf(VocabSortOption.FREQUENCY) }
+    var selectedLetterFilter by remember { mutableStateOf<Char?>(null) }
+    var top1000Only by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -203,7 +216,7 @@ fun VocabularyMasterTool(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // Main Tab Navigation Chips (Pinned at Top)
+            // Main Tab Navigation Chips
             LazyRow(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -216,7 +229,7 @@ fun VocabularyMasterTool(
                     Surface(
                         shape = RoundedCornerShape(16.dp),
                         color = if (isSelected) themeColors.accent else themeColors.surfaceVariant.copy(alpha = 0.5f),
-                        border = if (isSelected) null else androidx.compose.foundation.BorderStroke(1.dp, themeColors.onSurface.copy(alpha = 0.12f)),
+                        border = if (isSelected) null else BorderStroke(1.dp, themeColors.onSurface.copy(alpha = 0.12f)),
                         modifier = Modifier
                             .height(38.dp)
                             .clip(RoundedCornerShape(16.dp))
@@ -252,7 +265,7 @@ fun VocabularyMasterTool(
                 }
             }
 
-            Divider(color = themeColors.onSurface.copy(alpha = 0.08f), thickness = 1.dp)
+            HorizontalDivider(color = themeColors.onSurface.copy(alpha = 0.08f), thickness = 1.dp)
 
             // Content Area
             Box(
@@ -269,6 +282,12 @@ fun VocabularyMasterTool(
                         onCategoryChange = { selectedCategoryFilter = it },
                         posFilter = selectedPosFilter,
                         onPosChange = { selectedPosFilter = it },
+                        sortOption = selectedSortOption,
+                        onSortChange = { selectedSortOption = it },
+                        letterFilter = selectedLetterFilter,
+                        onLetterChange = { selectedLetterFilter = it },
+                        top1000Only = top1000Only,
+                        onTop1000Toggle = { top1000Only = it },
                         bookmarkedIds = bookmarkedIds,
                         onBookmarkToggle = { toggleBookmark(it) },
                         onSpeak = { speakWord(it) },
@@ -333,14 +352,25 @@ fun VocabExploreTab(
     onCategoryChange: (String) -> Unit,
     posFilter: String,
     onPosChange: (String) -> Unit,
+    sortOption: VocabSortOption,
+    onSortChange: (VocabSortOption) -> Unit,
+    letterFilter: Char?,
+    onLetterChange: (Char?) -> Unit,
+    top1000Only: Boolean,
+    onTop1000Toggle: (Boolean) -> Unit,
     bookmarkedIds: List<String>,
     onBookmarkToggle: (String) -> Unit,
     onSpeak: (String) -> Unit,
     themeColors: CalculatorThemeColors,
     isBn: Boolean
 ) {
-    val filteredWords = remember(words, searchQuery, categoryFilter, posFilter) {
-        words.filter { item ->
+    val listState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
+
+    val filteredAndSortedWords = remember(
+        words, searchQuery, categoryFilter, posFilter, sortOption, letterFilter, top1000Only
+    ) {
+        var list = words.filter { item ->
             val matchesQuery = searchQuery.isBlank() ||
                     item.word.contains(searchQuery, ignoreCase = true) ||
                     item.meaningBn.contains(searchQuery, ignoreCase = true) ||
@@ -348,9 +378,19 @@ fun VocabExploreTab(
 
             val matchesCategory = categoryFilter == "All" || item.category.equals(categoryFilter, ignoreCase = true)
             val matchesPos = posFilter == "All" || item.partOfSpeech.equals(posFilter, ignoreCase = true)
+            val matchesLetter = letterFilter == null || item.word.startsWith(letterFilter, ignoreCase = true)
+            val matchesTop1000 = !top1000Only || item.frequencyRank <= 1000
 
-            matchesQuery && matchesCategory && matchesPos
+            matchesQuery && matchesCategory && matchesPos && matchesLetter && matchesTop1000
         }
+
+        list = when (sortOption) {
+            VocabSortOption.FREQUENCY -> list.sortedBy { it.frequencyRank }
+            VocabSortOption.ALPHABETICAL_AZ -> list.sortedBy { it.word.lowercase() }
+            VocabSortOption.ALPHABETICAL_ZA -> list.sortedByDescending { it.word.lowercase() }
+            VocabSortOption.LENGTH -> list.sortedBy { it.word.length }
+        }
+        list
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -361,7 +401,7 @@ fun VocabExploreTab(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 6.dp),
-            placeholder = { Text(if (isBn) "ইংরেজি শব্দ বা বাংলা অর্থ খুঁজুন..." else "Search word or meaning...") },
+            placeholder = { Text(if (isBn) "শব্দ বা বাংলা অর্থ খুঁজুন..." else "Search word or meaning...") },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = themeColors.accent) },
             trailingIcon = {
                 if (searchQuery.isNotEmpty()) {
@@ -380,38 +420,171 @@ fun VocabExploreTab(
             )
         )
 
-        // Filter Categories Chips
-        val categories = listOf("All", "Spoken", "IELTS", "BCS", "Academic", "Idioms")
-        LazyRow(
+        // Top 1,000 High Frequency Banner & Filter Switch
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = if (top1000Only) themeColors.accent.copy(alpha = 0.18f) else themeColors.surfaceVariant.copy(alpha = 0.35f),
+            border = BorderStroke(1.dp, if (top1000Only) themeColors.accent else themeColors.onSurface.copy(alpha = 0.1f)),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                .padding(vertical = 4.dp)
+                .clickable { onTop1000Toggle(!top1000Only) }
         ) {
-            items(categories) { cat ->
-                val isSelected = categoryFilter == cat
-                FilterChip(
-                    selected = isSelected,
-                    onClick = { onCategoryChange(cat) },
-                    label = {
-                        Text(
-                            text = when (cat) {
-                                "All" -> if (isBn) "সকল ক্যাটাগরি" else "All Categories"
-                                "Spoken" -> if (isBn) "স্পোকেন" else "Spoken"
-                                "IELTS" -> "IELTS"
-                                "BCS" -> if (isBn) "বিসিএস ও চাকরি" else "Job & BCS"
-                                "Academic" -> if (isBn) "একাডেমিক" else "Academic"
-                                "Idioms" -> if (isBn) "বাগধারা" else "Idioms"
-                                else -> cat
-                            },
-                            style = MaterialTheme.typography.labelSmall
-                        )
-                    },
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = themeColors.accent,
-                        selectedLabelColor = themeColors.onAccent
+            Row(
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.LocalFireDepartment,
+                        contentDescription = "Top 1000",
+                        tint = if (top1000Only) Color(0xFFFF5722) else themeColors.onSurface.copy(alpha = 0.6f),
+                        modifier = Modifier.size(20.dp)
                     )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column {
+                        Text(
+                            text = if (isBn) "শীর্ষ ১,০০০ মোস্ট ফ্রিকোয়েন্ট শব্দ" else "Top 1,000 High-Frequency Words",
+                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                            color = themeColors.onSurface
+                        )
+                        Text(
+                            text = if (isBn) "সর্বোচ্চ ব্যবহৃত প্রয়োজনীয় শব্দমালা" else "Most essential vocabulary for daily use & exams",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = themeColors.onSurface.copy(alpha = 0.65f)
+                        )
+                    }
+                }
+                Switch(
+                    checked = top1000Only,
+                    onCheckedChange = onTop1000Toggle,
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = themeColors.accent,
+                        checkedTrackColor = themeColors.accent.copy(alpha = 0.4f)
+                    ),
+                    modifier = Modifier.height(28.dp)
                 )
+            }
+        }
+
+        // A-Z Quick Index Alphabet Scroller
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+                .padding(vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = if (letterFilter == null) themeColors.accent else themeColors.surfaceVariant.copy(alpha = 0.4f),
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable { onLetterChange(null) }
+            ) {
+                Text(
+                    text = if (isBn) "সকল" else "All",
+                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                    color = if (letterFilter == null) themeColors.onAccent else themeColors.onSurface,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
+                )
+            }
+
+            ('A'..'Z').forEach { char ->
+                val isSelected = letterFilter == char
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = if (isSelected) themeColors.accent else themeColors.surfaceVariant.copy(alpha = 0.4f),
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { onLetterChange(if (isSelected) null else char) }
+                ) {
+                    Text(
+                        text = char.toString(),
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                        color = if (isSelected) themeColors.onAccent else themeColors.onSurface,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
+                    )
+                }
+            }
+        }
+
+        // Filter Categories & Sorting Row
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 2.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Category filter chips
+            val categories = listOf("All", "Spoken", "IELTS", "BCS", "Academic", "Idioms")
+            LazyRow(
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                items(categories) { cat ->
+                    val isSelected = categoryFilter == cat
+                    FilterChip(
+                        selected = isSelected,
+                        onClick = { onCategoryChange(cat) },
+                        label = {
+                            Text(
+                                text = when (cat) {
+                                    "All" -> if (isBn) "সকল ক্যাটাগরি" else "All"
+                                    "Spoken" -> if (isBn) "স্পোকেন" else "Spoken"
+                                    "IELTS" -> "IELTS"
+                                    "BCS" -> if (isBn) "বিসিএস" else "BCS"
+                                    "Academic" -> if (isBn) "একাডেমিক" else "Academic"
+                                    "Idioms" -> if (isBn) "বাগধারা" else "Idioms"
+                                    else -> cat
+                                },
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = themeColors.accent,
+                            selectedLabelColor = themeColors.onAccent
+                        )
+                    )
+                }
+            }
+
+            // Sort Dropdown Menu Button
+            var showSortMenu by remember { mutableStateOf(false) }
+            Box {
+                IconButton(onClick = { showSortMenu = true }) {
+                    Icon(
+                        imageVector = Icons.Default.Sort,
+                        contentDescription = "Sort",
+                        tint = themeColors.accent
+                    )
+                }
+                DropdownMenu(
+                    expanded = showSortMenu,
+                    onDismissRequest = { showSortMenu = false }
+                ) {
+                    VocabSortOption.values().forEach { option ->
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    text = if (isBn) option.titleBn else option.titleEn,
+                                    fontWeight = if (sortOption == option) FontWeight.Bold else FontWeight.Normal
+                                )
+                            },
+                            onClick = {
+                                onSortChange(option)
+                                showSortMenu = false
+                            },
+                            leadingIcon = {
+                                if (sortOption == option) {
+                                    Icon(Icons.Default.Check, contentDescription = null, tint = themeColors.accent)
+                                }
+                            }
+                        )
+                    }
+                }
             }
         }
 
@@ -424,13 +597,18 @@ fun VocabExploreTab(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = if (isBn) "মোট ফলাফল: ${filteredWords.size} টি শব্দ" else "Found ${filteredWords.size} words",
+                text = if (isBn) "মোট প্রদর্শিত: ${filteredAndSortedWords.size} টি শব্দ" else "Showing ${filteredAndSortedWords.size} words",
                 style = MaterialTheme.typography.labelMedium,
                 color = themeColors.onSurface.copy(alpha = 0.6f)
             )
+            Text(
+                text = if (isBn) "শর্ট: ${sortOption.titleBn}" else "Sorted by: ${sortOption.titleEn}",
+                style = MaterialTheme.typography.labelSmall,
+                color = themeColors.accent
+            )
         }
 
-        if (filteredWords.isEmpty()) {
+        if (filteredAndSortedWords.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -454,11 +632,12 @@ fun VocabExploreTab(
             }
         } else {
             LazyColumn(
+                state = listState,
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 contentPadding = PaddingValues(bottom = 16.dp)
             ) {
-                items(filteredWords, key = { it.id }) { vocab ->
+                items(filteredAndSortedWords, key = { it.id }) { vocab ->
                     VocabWordCard(
                         vocab = vocab,
                         isBookmarked = bookmarkedIds.contains(vocab.id),
@@ -516,6 +695,25 @@ fun VocabWordCard(
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                             )
                         }
+                        if (vocab.frequencyRank <= 1000) {
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = Color(0xFFFF5722).copy(alpha = 0.15f)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(Icons.Default.LocalFireDepartment, contentDescription = null, tint = Color(0xFFFF5722), modifier = Modifier.size(12.dp))
+                                    Text(
+                                        text = "#${vocab.frequencyRank}",
+                                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 10.sp),
+                                        color = Color(0xFFFF5722)
+                                    )
+                                }
+                            }
+                        }
                     }
                     if (vocab.phonetic.isNotEmpty()) {
                         Text(
@@ -563,8 +761,8 @@ fun VocabWordCard(
                 color = themeColors.onSurface
             )
 
-            // Example Sentence
-            if (vocab.exampleEn.isNotEmpty()) {
+            // Example Sentence (Only if genuine and non-empty)
+            if (vocab.exampleEn.isNotBlank() && vocab.exampleEn.length > 5) {
                 Spacer(modifier = Modifier.height(6.dp))
                 Surface(
                     shape = RoundedCornerShape(8.dp),
@@ -577,7 +775,7 @@ fun VocabWordCard(
                             style = MaterialTheme.typography.bodySmall.copy(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic),
                             color = themeColors.onSurface
                         )
-                        if (vocab.exampleBn.isNotEmpty()) {
+                        if (vocab.exampleBn.isNotBlank()) {
                             Text(
                                 text = "👉 ${vocab.exampleBn}",
                                 style = MaterialTheme.typography.labelSmall,
@@ -638,31 +836,125 @@ fun VocabFlashcardTab(
         return
     }
 
+    var selectedSource by remember { mutableStateOf("All") } // "All", "Top1000", "BCS", "IELTS", "Spoken"
+    var selectedLetter by remember { mutableStateOf<Char?>(null) }
+
+    val filteredWords = remember(words, selectedSource, selectedLetter) {
+        words.filter { w ->
+            val matchesSource = when (selectedSource) {
+                "Top1000" -> w.frequencyRank <= 1000
+                "BCS" -> w.category.equals("BCS", ignoreCase = true)
+                "IELTS" -> w.category.equals("IELTS", ignoreCase = true)
+                "Spoken" -> w.category.equals("Spoken", ignoreCase = true)
+                else -> true
+            }
+            val matchesLetter = selectedLetter == null || w.word.startsWith(selectedLetter!!, ignoreCase = true)
+            matchesSource && matchesLetter
+        }.ifEmpty { words }
+    }
+
     var currentIndex by remember { mutableStateOf(0) }
     var isFlipped by remember { mutableStateOf(false) }
-    val currentWord = words[currentIndex.coerceIn(0, words.size - 1)]
+
+    LaunchedEffect(filteredWords) {
+        currentIndex = 0
+        isFlipped = false
+    }
+
+    val currentWord = filteredWords[currentIndex.coerceIn(0, filteredWords.size - 1)]
 
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
+        // Flashcard Filter Strip
+        Column(modifier = Modifier.fillMaxWidth()) {
+            LazyRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                val sources = listOf("All", "Top1000", "Spoken", "IELTS", "BCS")
+                items(sources) { src ->
+                    val isSelected = selectedSource == src
+                    FilterChip(
+                        selected = isSelected,
+                        onClick = { selectedSource = src },
+                        label = {
+                            Text(
+                                text = when (src) {
+                                    "All" -> if (isBn) "সমস্ত শব্দ" else "All Words"
+                                    "Top1000" -> if (isBn) "টপ ১০০০" else "Top 1000"
+                                    "Spoken" -> if (isBn) "স্পোকেন" else "Spoken"
+                                    "IELTS" -> "IELTS"
+                                    "BCS" -> if (isBn) "বিসিএস ও জব" else "BCS & Job"
+                                    else -> src
+                                },
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = themeColors.accent,
+                            selectedLabelColor = themeColors.onAccent
+                        )
+                    )
+                }
+            }
+
+            // Quick letter jump for flashcard
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .padding(vertical = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = if (selectedLetter == null) themeColors.accent else themeColors.surfaceVariant.copy(alpha = 0.4f),
+                    modifier = Modifier.clickable { selectedLetter = null }
+                ) {
+                    Text(
+                        text = if (isBn) "সব অক্ষর" else "All A-Z",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (selectedLetter == null) themeColors.onAccent else themeColors.onSurface,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
+                    )
+                }
+                ('A'..'Z').forEach { c ->
+                    val isSel = selectedLetter == c
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = if (isSel) themeColors.accent else themeColors.surfaceVariant.copy(alpha = 0.4f),
+                        modifier = Modifier.clickable { selectedLetter = if (isSel) null else c }
+                    ) {
+                        Text(
+                            text = c.toString(),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (isSel) themeColors.onAccent else themeColors.onSurface,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
+                        )
+                    }
+                }
+            }
+        }
+
         // Progress & Controls
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 8.dp),
+                .padding(vertical = 4.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "${currentIndex + 1} / ${words.size}",
+                text = "${currentIndex + 1} / ${filteredWords.size}",
                 style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                 color = themeColors.accent
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 IconButton(onClick = {
-                    currentIndex = (words.indices).random()
+                    currentIndex = (filteredWords.indices).random()
                     isFlipped = false
                 }) {
                     Icon(Icons.Default.Shuffle, contentDescription = "Shuffle", tint = themeColors.accent)
@@ -682,7 +974,7 @@ fun VocabFlashcardTab(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .padding(vertical = 12.dp)
+                .padding(vertical = 8.dp)
                 .clickable { isFlipped = !isFlipped },
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = themeColors.surface),
@@ -695,7 +987,7 @@ fun VocabFlashcardTab(
                 contentAlignment = Alignment.Center
             ) {
                 if (!isFlipped) {
-                    // FRONT SIDE (English Word + Phonetic + POS)
+                    // FRONT SIDE
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Surface(
                             shape = RoundedCornerShape(12.dp),
@@ -703,7 +995,7 @@ fun VocabFlashcardTab(
                             modifier = Modifier.padding(bottom = 12.dp)
                         ) {
                             Text(
-                                text = currentWord.category,
+                                text = "${currentWord.category} • #${currentWord.frequencyRank}",
                                 style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
                                 color = themeColors.accent,
                                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
@@ -745,7 +1037,7 @@ fun VocabFlashcardTab(
                         )
                     }
                 } else {
-                    // BACK SIDE (Bangla Meaning + Examples + Synonyms)
+                    // BACK SIDE
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.fillMaxWidth()
@@ -759,7 +1051,7 @@ fun VocabFlashcardTab(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        if (currentWord.exampleEn.isNotEmpty()) {
+                        if (currentWord.exampleEn.isNotBlank() && currentWord.exampleEn.length > 5) {
                             Surface(
                                 shape = RoundedCornerShape(12.dp),
                                 color = themeColors.surfaceVariant.copy(alpha = 0.4f),
@@ -771,7 +1063,7 @@ fun VocabFlashcardTab(
                                         style = MaterialTheme.typography.bodySmall.copy(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic),
                                         color = themeColors.onSurface
                                     )
-                                    if (currentWord.exampleBn.isNotEmpty()) {
+                                    if (currentWord.exampleBn.isNotBlank()) {
                                         Text(
                                             text = currentWord.exampleBn,
                                             style = MaterialTheme.typography.labelSmall,
@@ -783,9 +1075,8 @@ fun VocabFlashcardTab(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp))
-
                         if (currentWord.synonyms.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(12.dp))
                             Text(
                                 text = "Synonyms: " + currentWord.synonyms.joinToString(", "),
                                 style = MaterialTheme.typography.bodySmall,
@@ -809,7 +1100,7 @@ fun VocabFlashcardTab(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 12.dp),
+                .padding(vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             OutlinedButton(
@@ -832,7 +1123,7 @@ fun VocabFlashcardTab(
 
             Button(
                 onClick = {
-                    if (currentIndex < words.size - 1) {
+                    if (currentIndex < filteredWords.size - 1) {
                         currentIndex++
                         isFlipped = false
                     } else {
@@ -868,22 +1159,41 @@ fun VocabQuizTab(
         return
     }
 
+    var selectedSource by remember { mutableStateOf("All") }
+    var selectedLetter by remember { mutableStateOf<Char?>(null) }
+    var quizMode by remember { mutableStateOf("EN_TO_BN") } // "EN_TO_BN", "BN_TO_EN"
+
+    val activeQuizPool = remember(words, selectedSource, selectedLetter) {
+        val pool = words.filter { w ->
+            val matchesSource = when (selectedSource) {
+                "Top1000" -> w.frequencyRank <= 1000
+                "BCS" -> w.category.equals("BCS", ignoreCase = true)
+                "IELTS" -> w.category.equals("IELTS", ignoreCase = true)
+                "Spoken" -> w.category.equals("Spoken", ignoreCase = true)
+                else -> true
+            }
+            val matchesLetter = selectedLetter == null || w.word.startsWith(selectedLetter!!, ignoreCase = true)
+            matchesSource && matchesLetter
+        }
+        if (pool.size >= 4) pool else words
+    }
+
     var score by remember { mutableStateOf(0) }
     var streak by remember { mutableStateOf(0) }
     var questionCount by remember { mutableStateOf(0) }
 
-    var targetWord by remember { mutableStateOf(words.random()) }
+    var targetWord by remember { mutableStateOf(activeQuizPool.random()) }
     var options by remember {
         mutableStateOf(
-            generateQuizOptions(targetWord, words)
+            generateQuizOptions(targetWord, activeQuizPool, quizMode == "BN_TO_EN")
         )
     }
     var selectedOptionIndex by remember { mutableStateOf<Int?>(null) }
     var isAnswered by remember { mutableStateOf(false) }
 
     fun nextQuestion() {
-        targetWord = words.random()
-        options = generateQuizOptions(targetWord, words)
+        targetWord = activeQuizPool.random()
+        options = generateQuizOptions(targetWord, activeQuizPool, quizMode == "BN_TO_EN")
         selectedOptionIndex = null
         isAnswered = false
         questionCount++
@@ -893,13 +1203,94 @@ fun VocabQuizTab(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(vertical = 8.dp)
+            .padding(vertical = 4.dp)
     ) {
+        // Quiz Customization Chips
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            val sources = listOf("All", "Top1000", "Spoken", "IELTS", "BCS")
+            items(sources) { src ->
+                val isSelected = selectedSource == src
+                FilterChip(
+                    selected = isSelected,
+                    onClick = {
+                        selectedSource = src
+                        nextQuestion()
+                    },
+                    label = {
+                        Text(
+                            text = when (src) {
+                                "All" -> if (isBn) "সকল শব্দ" else "All"
+                                "Top1000" -> if (isBn) "টপ ১০০০" else "Top 1000"
+                                "Spoken" -> if (isBn) "স্পোকেন" else "Spoken"
+                                "IELTS" -> "IELTS"
+                                "BCS" -> if (isBn) "বিসিএস ও জব" else "BCS & Job"
+                                else -> src
+                            },
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = themeColors.accent,
+                        selectedLabelColor = themeColors.onAccent
+                    )
+                )
+            }
+        }
+
+        // Mode Selector: English to Bangla vs Bangla to English
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = if (quizMode == "EN_TO_BN") themeColors.accent else themeColors.surfaceVariant.copy(alpha = 0.4f),
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable {
+                        quizMode = "EN_TO_BN"
+                        nextQuestion()
+                    }
+            ) {
+                Text(
+                    text = if (isBn) "🇬🇧 ইংরেজি ➔ 🇧🇩 বাংলা" else "EN ➔ BN Meaning",
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                    color = if (quizMode == "EN_TO_BN") themeColors.onAccent else themeColors.onSurface,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+            }
+
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = if (quizMode == "BN_TO_EN") themeColors.accent else themeColors.surfaceVariant.copy(alpha = 0.4f),
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable {
+                        quizMode = "BN_TO_EN"
+                        nextQuestion()
+                    }
+            ) {
+                Text(
+                    text = if (isBn) "🇧🇩 বাংলা ➔ 🇬🇧 ইংরেজি" else "BN ➔ EN Word",
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                    color = if (quizMode == "BN_TO_EN") themeColors.onAccent else themeColors.onSurface,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+            }
+        }
+
         // Score Header
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 8.dp),
+                .padding(vertical = 4.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -946,7 +1337,7 @@ fun VocabQuizTab(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 12.dp),
+                .padding(vertical = 8.dp),
             shape = RoundedCornerShape(18.dp),
             colors = CardDefaults.cardColors(containerColor = themeColors.surface),
             elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
@@ -954,43 +1345,62 @@ fun VocabQuizTab(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(20.dp),
+                    .padding(18.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = if (isBn) "নিচের শব্দটির সঠিক অর্থ কী?" else "What is the correct meaning?",
+                    text = if (quizMode == "EN_TO_BN") {
+                        if (isBn) "নিচের শব্দটির সঠিক বাংলা অর্থ কী?" else "What is the correct meaning?"
+                    } else {
+                        if (isBn) "নিচের বাংলা অর্থের সঠিক ইংরেজি শব্দটি কী?" else "What is the correct English word?"
+                    },
                     style = MaterialTheme.typography.labelMedium,
                     color = themeColors.onSurface.copy(alpha = 0.6f)
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = targetWord.word,
-                        style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-                        color = themeColors.accent
-                    )
-                    IconButton(onClick = { onSpeak(targetWord.word) }) {
-                        Icon(Icons.AutoMirrored.Filled.VolumeUp, contentDescription = "Speak", tint = themeColors.accent)
+                if (quizMode == "EN_TO_BN") {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = targetWord.word,
+                            style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                            color = themeColors.accent
+                        )
+                        IconButton(onClick = { onSpeak(targetWord.word) }) {
+                            Icon(Icons.AutoMirrored.Filled.VolumeUp, contentDescription = "Speak", tint = themeColors.accent)
+                        }
                     }
+                    Text(
+                        text = "${targetWord.phonetic} • (${targetWord.partOfSpeech})",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = themeColors.onSurface.copy(alpha = 0.6f)
+                    )
+                } else {
+                    Text(
+                        text = targetWord.meaningBn,
+                        style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                        color = themeColors.accent,
+                        textAlign = TextAlign.Center
+                    )
+                    Text(
+                        text = "(${targetWord.partOfSpeech})",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = themeColors.onSurface.copy(alpha = 0.6f),
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
                 }
-
-                Text(
-                    text = "${targetWord.phonetic} • (${targetWord.partOfSpeech})",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = themeColors.onSurface.copy(alpha = 0.6f)
-                )
             }
         }
 
         // Options
+        val correctAnswer = if (quizMode == "EN_TO_BN") targetWord.meaningBn else targetWord.word
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            options.forEachIndexed { index, optionMeaning ->
-                val isCorrect = optionMeaning == targetWord.meaningBn
+            options.forEachIndexed { index, optionText ->
+                val isCorrect = optionText == correctAnswer
                 val isSelected = selectedOptionIndex == index
 
                 val optionColor = when {
@@ -1010,7 +1420,7 @@ fun VocabQuizTab(
                 Surface(
                     shape = RoundedCornerShape(14.dp),
                     color = optionColor,
-                    border = androidx.compose.foundation.BorderStroke(1.5.dp, borderColor),
+                    border = BorderStroke(1.5.dp, borderColor),
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(14.dp))
@@ -1048,7 +1458,7 @@ fun VocabQuizTab(
                         Spacer(modifier = Modifier.width(12.dp))
 
                         Text(
-                            text = optionMeaning,
+                            text = optionText,
                             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
                             color = themeColors.onSurface,
                             modifier = Modifier.weight(1f)
@@ -1066,7 +1476,7 @@ fun VocabQuizTab(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
         // Next Button
         Button(
@@ -1085,14 +1495,15 @@ fun VocabQuizTab(
     }
 }
 
-fun generateQuizOptions(target: VocabWord, allWords: List<VocabWord>): List<String> {
+fun generateQuizOptions(target: VocabWord, allWords: List<VocabWord>, isBanglaToEnglish: Boolean): List<String> {
+    val correctAnswer = if (isBanglaToEnglish) target.word else target.meaningBn
     val wrongOptions = allWords
-        .filter { it.id != target.id && it.meaningBn != target.meaningBn }
-        .map { it.meaningBn }
+        .filter { it.id != target.id && (if (isBanglaToEnglish) it.word != target.word else it.meaningBn != target.meaningBn) }
+        .map { if (isBanglaToEnglish) it.word else it.meaningBn }
         .distinct()
         .shuffled()
         .take(3)
-    return (wrongOptions + target.meaningBn).shuffled()
+    return (wrongOptions + correctAnswer).shuffled()
 }
 
 @Composable
