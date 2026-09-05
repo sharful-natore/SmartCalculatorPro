@@ -29,6 +29,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -165,49 +169,70 @@ fun VocabularyMasterTool(
     var selectedLetterFilter by remember { mutableStateOf<Char?>(null) }
     var top1000Only by remember { mutableStateOf(false) }
 
+    var isHeaderVisible by remember { mutableStateOf(true) }
+    val nestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                val delta = available.y
+                if (delta < -12f) {
+                    isHeaderVisible = false
+                } else if (delta > 12f) {
+                    isHeaderVisible = true
+                }
+                return Offset.Zero
+            }
+        }
+    }
+
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text(
-                            text = if (isBn) "ভোকাবুলারি মাস্টার" else "Vocabulary Master",
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                            color = themeColors.onSurface
-                        )
-                        Text(
-                            text = if (isBn) "${allWords.size} টি শব্দ প্রস্তুত • অফলাইন ডিকশনারি" else "${allWords.size} Words Active • Offline Ready",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = themeColors.onSurface.copy(alpha = 0.7f)
-                        )
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = themeColors.onSurface
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = {
-                        val randomWord = allWords.randomOrNull()
-                        if (randomWord != null) {
-                            speakWord(randomWord.word)
-                            Toast.makeText(context, "${randomWord.word} : ${randomWord.meaningBn}", Toast.LENGTH_SHORT).show()
+            AnimatedVisibility(
+                visible = isHeaderVisible,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                TopAppBar(
+                    title = {
+                        Column {
+                            Text(
+                                text = if (isBn) "ভোকাবুলারি মাস্টার" else "Vocabulary Master",
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                color = themeColors.onSurface
+                            )
+                            Text(
+                                text = if (isBn) "${allWords.size} টি শব্দ প্রস্তুত • অফলাইন ডিকশনারি" else "${allWords.size} Words Active • Offline Ready",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = themeColors.onSurface.copy(alpha = 0.7f)
+                            )
                         }
-                    }) {
-                        Icon(
-                            imageVector = Icons.Default.Shuffle,
-                            contentDescription = "Random Word",
-                            tint = themeColors.accent
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = themeColors.surface)
-            )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onBackClick) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = themeColors.onSurface
+                            )
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = {
+                            val randomWord = allWords.randomOrNull()
+                            if (randomWord != null) {
+                                speakWord(randomWord.word)
+                                Toast.makeText(context, "${randomWord.word} : ${randomWord.meaningBn}", Toast.LENGTH_SHORT).show()
+                            }
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.Shuffle,
+                                contentDescription = "Random Word",
+                                tint = themeColors.accent
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = themeColors.surface)
+                )
+            }
         },
         containerColor = themeColors.background
     ) { innerPadding ->
@@ -215,51 +240,123 @@ fun VocabularyMasterTool(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .nestedScroll(nestedScrollConnection)
         ) {
-            // Main Tab Navigation Chips
-            LazyRow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(themeColors.surface)
-                    .padding(horizontal = 12.dp, vertical = 6.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            // Main Tab Navigation Chips (Collapsible or compact when scrolling)
+            AnimatedVisibility(
+                visible = isHeaderVisible,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
             ) {
-                items(VocabTab.values()) { tab ->
-                    val isSelected = selectedTab == tab
-                    Surface(
-                        shape = RoundedCornerShape(16.dp),
-                        color = if (isSelected) themeColors.accent else themeColors.surfaceVariant.copy(alpha = 0.5f),
-                        border = if (isSelected) null else BorderStroke(1.dp, themeColors.onSurface.copy(alpha = 0.12f)),
-                        modifier = Modifier
-                            .height(38.dp)
-                            .clip(RoundedCornerShape(16.dp))
-                            .clickable { selectedTab = tab }
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                LazyRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(themeColors.surface)
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(VocabTab.values()) { tab ->
+                        val isSelected = selectedTab == tab
+                        Surface(
+                            shape = RoundedCornerShape(16.dp),
+                            color = if (isSelected) themeColors.accent else themeColors.surfaceVariant.copy(alpha = 0.5f),
+                            border = if (isSelected) null else BorderStroke(1.dp, themeColors.onSurface.copy(alpha = 0.12f)),
+                            modifier = Modifier
+                                .height(38.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .clickable { selectedTab = tab }
                         ) {
-                            val icon = when (tab) {
-                                VocabTab.EXPLORE -> Icons.Default.MenuBook
-                                VocabTab.FLASHCARD -> Icons.Default.Style
-                                VocabTab.QUIZ -> Icons.Default.Quiz
-                                VocabTab.STORE -> Icons.Default.CloudDownload
-                                VocabTab.FAVORITES -> Icons.Default.Favorite
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                val icon = when (tab) {
+                                    VocabTab.EXPLORE -> Icons.Default.MenuBook
+                                    VocabTab.FLASHCARD -> Icons.Default.Style
+                                    VocabTab.QUIZ -> Icons.Default.Quiz
+                                    VocabTab.STORE -> Icons.Default.CloudDownload
+                                    VocabTab.FAVORITES -> Icons.Default.Favorite
+                                }
+                                Icon(
+                                    imageVector = icon,
+                                    contentDescription = tab.titleBn,
+                                    tint = if (isSelected) themeColors.onAccent else themeColors.onSurface,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = if (isBn) tab.titleBn else tab.titleEn,
+                                    style = MaterialTheme.typography.labelMedium.copy(
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                    ),
+                                    color = if (isSelected) themeColors.onAccent else themeColors.onSurface
+                                )
                             }
-                            Icon(
-                                imageVector = icon,
-                                contentDescription = tab.titleBn,
-                                tint = if (isSelected) themeColors.onAccent else themeColors.onSurface,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
+                        }
+                    }
+                }
+            }
+
+            // Compact 1-line chip indicator when header is hidden
+            AnimatedVisibility(
+                visible = !isHeaderVisible,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                Surface(
+                    color = themeColors.surface,
+                    border = BorderStroke(0.5.dp, themeColors.onSurface.copy(alpha = 0.12f)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { isHeaderVisible = true }
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            IconButton(
+                                onClick = onBackClick,
+                                modifier = Modifier.size(28.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = "Back",
+                                    tint = themeColors.onSurface
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = if (isBn) tab.titleBn else tab.titleEn,
-                                style = MaterialTheme.typography.labelMedium.copy(
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                                ),
-                                color = if (isSelected) themeColors.onAccent else themeColors.onSurface
+                                text = if (isBn) "ভোকাবুলারি (${allWords.size})" else "Vocab (${allWords.size})",
+                                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                                color = themeColors.onSurface
                             )
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = themeColors.accent.copy(alpha = 0.15f)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = if (isBn) selectedTab.titleBn else selectedTab.titleEn,
+                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                                    color = themeColors.accent
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(
+                                    imageVector = Icons.Default.ExpandMore,
+                                    contentDescription = "Expand Header",
+                                    tint = themeColors.accent,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -988,7 +1085,12 @@ fun VocabFlashcardTab(
             ) {
                 if (!isFlipped) {
                     // FRONT SIDE
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState())
+                    ) {
                         Surface(
                             shape = RoundedCornerShape(12.dp),
                             color = themeColors.accent.copy(alpha = 0.15f),
@@ -1040,7 +1142,9 @@ fun VocabFlashcardTab(
                     // BACK SIDE
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState())
                     ) {
                         Text(
                             text = currentWord.meaningBn,

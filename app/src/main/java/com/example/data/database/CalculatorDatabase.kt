@@ -8,7 +8,7 @@ import com.example.data.model.FinanceTransaction
 import com.example.data.model.HistoryEntry
 import com.example.data.model.ToolUsage
 
-@Database(entities = [HistoryEntry::class, ToolUsage::class, FinanceTransaction::class], version = 5, exportSchema = false)
+@Database(entities = [HistoryEntry::class, ToolUsage::class, FinanceTransaction::class], version = 6, exportSchema = false)
 abstract class CalculatorDatabase : RoomDatabase() {
     abstract fun historyDao(): HistoryDao
     abstract fun toolUsageDao(): ToolUsageDao

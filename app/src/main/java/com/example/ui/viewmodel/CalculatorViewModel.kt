@@ -478,8 +478,17 @@ class CalculatorViewModel(
             com.example.data.model.ToolType.SOUND_METER
         )
         if (!newlyAddedTools.contains(toolType)) return false
-        val count = getToolOpenCount(toolType, usageList)
-        return count < 5
+        val usage = usageList.find { it.toolId == "TOOL_${toolType.name}" }
+        val count = usage?.usageCount ?: 0
+        if (count >= 15) return false
+
+        val firstUsed = usage?.firstUsedTimestamp ?: 0L
+        if (firstUsed > 0L) {
+            val sevenDaysMs = 7 * 24 * 60 * 60 * 1000L
+            val elapsed = System.currentTimeMillis() - firstUsed
+            if (elapsed >= sevenDaysMs) return false
+        }
+        return true
     }
 
     fun getSortedTools(

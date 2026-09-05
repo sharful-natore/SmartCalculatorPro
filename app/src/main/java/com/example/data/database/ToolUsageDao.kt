@@ -27,12 +27,17 @@ interface ToolUsageDao {
     @Query("INSERT OR IGNORE INTO tool_usage (toolId, usageCount) VALUES (:toolId, 1)")
     suspend fun insertInitialUsage(toolId: String)
     
+    @Query("SELECT * FROM tool_usage WHERE toolId = :toolId")
+    suspend fun getToolUsage(toolId: String): ToolUsage?
+
     suspend fun recordUsage(toolId: String) {
-        val count = getUsageCount(toolId)
-        if (count == null) {
-            insertOrUpdateUsage(ToolUsage(toolId, 1))
+        val existing = getToolUsage(toolId)
+        val now = System.currentTimeMillis()
+        if (existing == null) {
+            insertOrUpdateUsage(ToolUsage(toolId = toolId, usageCount = 1, firstUsedTimestamp = now))
         } else {
-            incrementUsage(toolId)
+            val firstTime = if (existing.firstUsedTimestamp == 0L) now else existing.firstUsedTimestamp
+            insertOrUpdateUsage(ToolUsage(toolId = toolId, usageCount = existing.usageCount + 1, firstUsedTimestamp = firstTime))
         }
     }
 }
