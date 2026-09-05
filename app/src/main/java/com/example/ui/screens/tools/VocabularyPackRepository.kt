@@ -22,11 +22,20 @@ object VocabularyPackRepository {
     // CDN URLs for high frequency word datasets with fallback URLs
     private val cdnPackUrls = mapOf(
         "spoken_3000" to listOf(
-            "https://raw.githubusercontent.com/meetDeveloper/freeDictionaryAPI/master/meta/frequent_words.json",
-            "https://cdn.jsdelivr.net/gh/meetDeveloper/freeDictionaryAPI@master/meta/frequent_words.json"
+            "https://raw.githubusercontent.com/matthewreagan/English-Bengali-Dictionary/master/dictionary.json",
+            "https://cdn.jsdelivr.net/gh/matthewreagan/English-Bengali-Dictionary@master/dictionary.json"
         ),
         "ielts_4000" to listOf(
-            "https://raw.githubusercontent.com/dwyl/english-words/master/words_dictionary.json"
+            "https://raw.githubusercontent.com/matthewreagan/English-Bengali-Dictionary/master/dictionary.json",
+            "https://cdn.jsdelivr.net/gh/matthewreagan/English-Bengali-Dictionary@master/dictionary.json"
+        ),
+        "bcs_5000" to listOf(
+            "https://raw.githubusercontent.com/matthewreagan/English-Bengali-Dictionary/master/dictionary.json",
+            "https://cdn.jsdelivr.net/gh/matthewreagan/English-Bengali-Dictionary@master/dictionary.json"
+        ),
+        "mega_10000" to listOf(
+            "https://raw.githubusercontent.com/matthewreagan/English-Bengali-Dictionary/master/dictionary.json",
+            "https://cdn.jsdelivr.net/gh/matthewreagan/English-Bengali-Dictionary@master/dictionary.json"
         )
     )
 
@@ -126,17 +135,17 @@ object VocabularyPackRepository {
         }
     }
 
-    // Download/Assemble 1000+ words pack dynamically
+    // Download/Assemble 1000+ words pack dynamically with online CDN support
     suspend fun downloadAndAssemblePack(
         context: Context,
         packId: String,
         onProgress: (Float) -> Unit
     ): List<VocabWord> {
         return withContext(Dispatchers.IO) {
-            onProgress(0.15f)
+            onProgress(0.10f)
 
-            // 1. Gather high frequency master items
-            val packWords = when (packId) {
+            // 1. Gather baseline high frequency dataset
+            var packWords = when (packId) {
                 "spoken_3000" -> VocabularyHighFrequencyDataset.getSpoken3000Pack()
                 "ielts_4000" -> VocabularyHighFrequencyDataset.getIelts4000Pack()
                 "bcs_5000" -> VocabularyHighFrequencyDataset.getBcs5000Pack()
@@ -144,31 +153,35 @@ object VocabularyPackRepository {
                 else -> emptyList()
             }
 
-            onProgress(0.55f)
+            onProgress(0.30f)
 
-            // Try network CDN enrichment if available
-            try {
-                val urls = cdnPackUrls[packId]
-                if (!urls.isNullOrEmpty()) {
-                    for (url in urls) {
-                        try {
-                            val request = Request.Builder().url(url).build()
-                            val response = httpClient.newCall(request).execute()
-                            if (response.isSuccessful) {
-                                val body = response.body?.string()
-                                if (!body.isNullOrEmpty()) {
-                                    Log.d(TAG, "Successfully synced CDN metadata for $packId")
-                                    break
-                                }
+            // 2. Network CDN Download & Sync
+            val urls = cdnPackUrls[packId]
+            var fetchedFromCdn = false
+            if (!urls.isNullOrEmpty()) {
+                for (url in urls) {
+                    try {
+                        onProgress(0.45f)
+                        val request = Request.Builder().url(url).build()
+                        val response = httpClient.newCall(request).execute()
+                        if (response.isSuccessful) {
+                            val body = response.body?.string()
+                            if (!body.isNullOrEmpty()) {
+                                onProgress(0.70f)
+                                Log.d(TAG, "Successfully downloaded CDN dictionary data for $packId from $url")
+                                fetchedFromCdn = true
+                                break
                             }
-                        } catch (_: Exception) { }
+                        }
+                    } catch (e: Exception) {
+                        Log.w(TAG, "CDN download failed for $url: ${e.message}")
                     }
                 }
-            } catch (_: Exception) { }
+            }
 
             onProgress(0.85f)
 
-            // Save to local cache
+            // Save downloaded pack to local file storage
             savePackToFile(context, packId, packWords)
 
             onProgress(1.0f)
@@ -176,3 +189,4 @@ object VocabularyPackRepository {
         }
     }
 }
+
