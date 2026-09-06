@@ -184,29 +184,119 @@ object VocabularyPackRepository {
         }
     }
 
-    // Single-Tap Download and Assembly for 10,000 Master High-Yield Exam Vocabulary Pack
+    // Single-Tap Activation and Assembly for Master Offline High-Yield Vocabulary Pack
     suspend fun downloadAndAssemblePack(
         context: Context,
         packId: String,
         onProgress: (progress: Float, statusText: String) -> Unit
     ): List<VocabWord> {
         return withContext(Dispatchers.IO) {
-            onProgress(0.10f, "১০,০০০+ শব্দভান্ডার প্রসেসিং শুরু হচ্ছে...")
+            onProgress(0.10f, "অফলাইন শব্দভান্ডার প্রসেসিং শুরু হচ্ছে...")
             delay(150)
 
-            onProgress(0.35f, "বিসিএস, ব্যাংক ও বিশ্ববিদ্যালয় ভর্তি পরীক্ষা ডেটাসেট তৈরি করা হচ্ছে...")
+            onProgress(0.35f, "অফলাইন ডিকশনারি ডেটাসেট রিড করা হচ্ছে...")
             delay(200)
 
-            val masterList = VocabularyHighFrequencyDataset.getMega10000Pack()
+            val masterList = loadPackFromAssetsSync(context, "dictionary_1000.json") ?: emptyList()
 
             onProgress(0.70f, "সিনোনিম, অ্যান্টনিম, উচ্চারণ ও উদাহরণ বাক্য ইনডেক্সিং হচ্ছে...")
             delay(250)
 
-            onProgress(0.90f, "অফলাইন ডাটাবেজে সংরক্ষণ করা হচ্ছে...")
+            onProgress(0.90f, "অফলাইন ডাটাবেজে সক্রিয় ও সংরক্ষণ করা হচ্ছে...")
             savePackToFile(context, packId, masterList)
 
-            onProgress(1.0f, "১০,০০০+ মাস্টার শব্দভান্ডার সফলভাবে সেটআপ হয়েছে!")
+            onProgress(1.0f, "১,০০০+ অফলাইন মাস্টার শব্দভান্ডার সফলভাবে সক্রিয় হয়েছে!")
             masterList
+        }
+    }
+
+    // Helper to load pack from assets using JsonReader
+    fun loadPackFromAssetsSync(context: Context, fileName: String): List<VocabWord>? {
+        return try {
+            val list = mutableListOf<VocabWord>()
+            context.assets.open(fileName).buffered().reader(Charsets.UTF_8).use { reader ->
+                val jsonReader = android.util.JsonReader(reader)
+                jsonReader.isLenient = true
+                jsonReader.beginArray()
+                var index = 0
+                while (jsonReader.hasNext()) {
+                    jsonReader.beginObject()
+                    var id = ""
+                    var word = ""
+                    var phonetic = ""
+                    var pos = "Noun"
+                    var meaningBn = ""
+                    var exampleEn = ""
+                    var exampleBn = ""
+                    val syns = mutableListOf<String>()
+                    val ants = mutableListOf<String>()
+                    var category = "General"
+                    var pack = "master_dictionary"
+                    var rank = index + 1
+
+                    while (jsonReader.hasNext()) {
+                        val key = jsonReader.nextName()
+                        when (key) {
+                            "id" -> {
+                                try {
+                                    id = jsonReader.nextString()
+                                } catch (e: Exception) {
+                                    id = jsonReader.nextInt().toString()
+                                }
+                            }
+                            "word" -> word = jsonReader.nextString()
+                            "phonetic" -> phonetic = jsonReader.nextString()
+                            "pos" -> pos = jsonReader.nextString()
+                            "meaningBn" -> meaningBn = jsonReader.nextString()
+                            "exampleEn" -> exampleEn = jsonReader.nextString()
+                            "exampleBn" -> exampleBn = jsonReader.nextString()
+                            "synonyms" -> {
+                                if (jsonReader.peek() == android.util.JsonToken.BEGIN_ARRAY) {
+                                    jsonReader.beginArray()
+                                    while (jsonReader.hasNext()) syns.add(jsonReader.nextString())
+                                    jsonReader.endArray()
+                                } else jsonReader.skipValue()
+                            }
+                            "antonyms" -> {
+                                if (jsonReader.peek() == android.util.JsonToken.BEGIN_ARRAY) {
+                                    jsonReader.beginArray()
+                                    while (jsonReader.hasNext()) ants.add(jsonReader.nextString())
+                                    jsonReader.endArray()
+                                } else jsonReader.skipValue()
+                            }
+                            "category" -> category = jsonReader.nextString()
+                            "packId" -> pack = jsonReader.nextString()
+                            "frequencyRank" -> rank = jsonReader.nextInt()
+                            else -> jsonReader.skipValue()
+                        }
+                    }
+                    jsonReader.endObject()
+
+                    if (word.isNotBlank()) {
+                        list.add(
+                            buildVocabWord(
+                                id = if (id.isNotBlank()) id else "master_$index",
+                                word = word,
+                                phonetic = phonetic,
+                                pos = pos,
+                                meaningBn = meaningBn,
+                                exampleEn = exampleEn,
+                                exampleBn = exampleBn,
+                                rawSyns = syns,
+                                rawAnts = ants,
+                                packId = pack,
+                                index = index
+                            )
+                        )
+                    }
+                    index++
+                }
+                jsonReader.endArray()
+            }
+            list
+        } catch (e: Exception) {
+            Log.e(TAG, "Error loading pack from assets $fileName: ${e.message}")
+            null
         }
     }
 

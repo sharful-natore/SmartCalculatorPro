@@ -898,6 +898,14 @@ fun VocabWordCard(
                             modifier = Modifier.size(20.dp)
                         )
                     }
+                    IconButton(onClick = { expanded = !expanded }, modifier = Modifier.size(32.dp)) {
+                        Icon(
+                            imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                            contentDescription = if (expanded) "Collapse" else "Expand",
+                            tint = themeColors.accent,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
                 }
             }
 
@@ -937,18 +945,48 @@ fun VocabWordCard(
                 )
             }
 
-            // Expanded Details (Category, Rank)
+            // Expanded Details (Category, Rank, Examples)
             AnimatedVisibility(visible = expanded) {
                 Column(modifier = Modifier.padding(top = 10.dp)) {
                     HorizontalDivider(color = themeColors.onSurface.copy(alpha = 0.1f))
                     Spacer(modifier = Modifier.height(8.dp))
+
+                    if (vocab.exampleEn.isNotBlank()) {
+                        Text(
+                            text = if (isBn) "উদাহরণ বাক্য:" else "Example Sentence:",
+                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                            color = themeColors.accent
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = vocab.exampleEn,
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Normal),
+                            color = themeColors.onSurface
+                        )
+
+                        if (vocab.exampleBn.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = if (isBn) "বাংলা অনুবাদ:" else "Translation:",
+                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                                color = themeColors.onSurface.copy(alpha = 0.6f)
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = vocab.exampleBn,
+                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Normal),
+                                color = themeColors.onSurface.copy(alpha = 0.8f)
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(10.dp))
+                    }
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "Category: ${vocab.category}",
+                            text = if (isBn) "ক্যাটাগরি: ${vocab.category}" else "Category: ${vocab.category}",
                             style = MaterialTheme.typography.labelSmall,
                             color = themeColors.onSurface.copy(alpha = 0.5f)
                         )
@@ -1715,13 +1753,13 @@ fun VocabStoreTab(
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = if (isBn) "১০,০০০+ বিসিএস, ব্যাংক ও ভর্তি পরীক্ষা মাস্টার ভোকাবুলারি" else "10,000+ BCS, Bank & Admission Master Vocab",
+                            text = if (isBn) "১,১০০+ অতি প্রয়োজনীয় অফলাইন ভোকাবুলারি" else "1,100+ Essential Offline Vocabulary",
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                             color = themeColors.onSurface
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = if (isBn) "১০,০০০+ মাস্টার শব্দ • ১০০০% ব্যাকগ্রাউন্ড ডাটা • অফলাইন সেটআপ" else "10,000+ Master Words • 100% Full Details • Offline Setup",
+                            text = if (isBn) "১,১০০+ মাস্টার শব্দ • ১০০% অফলাইন সক্রিয়করণ" else "1,100+ Master Words • 100% Offline Activation",
                             style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
                             color = themeColors.accent
                         )
@@ -1731,7 +1769,7 @@ fun VocabStoreTab(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = if (isBn) "ইংরেজি শব্দ, সঠিক উচ্চারণ সংকেত, স্পষ্ট বাংলা অর্থ, সমার্থক শব্দ (Synonyms), বিপরীত শব্দ (Antonyms), পদ প্রকরণ (Part of Speech) এবং বাংলা অনুবাদ সহ বাস্তবভিত্তিক উদাহরণ বাক্য সম্বলিত ১০,০০০+ সবচেয়ে বেশি কমন পড়া শব্দভান্ডার। এক ক্লিকেই ডাউনলোড ও অফলাইন সেটআপ সম্পন্ন হবে।" else "Complete 10,000+ high-yield competitive exam vocabulary pack featuring full phonetics, Bangla meanings, synonyms, antonyms, parts of speech, and contextual example sentences with Bangla translations. Sets up instantly with a single tap.",
+                    text = if (isBn) "ইংরেজি শব্দ, সঠিক উচ্চারণ সংকেত, স্পষ্ট বাংলা অর্থ, সমার্থক শব্দ (Synonyms), বিপরীত শব্দ (Antonyms), পদ প্রকরণ (Part of Speech) এবং বাংলা অনুবাদ সহ বাস্তবভিত্তিক উদাহরণ বাক্য সম্বলিত ১,১০০+ সবচেয়ে বেশি প্রয়োজনীয় শব্দভান্ডার। কোনো ইন্টারনেট কানেকশন ছাড়াই অফলাইন ফাইল থেকে সরাসরি সক্রিয় করুন।" else "Complete 1,100+ high-yield vocabulary pack featuring full phonetics, Bangla meanings, synonyms, antonyms, parts of speech, and contextual example sentences with Bangla translations. Activates instantly from local offline files without internet.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = themeColors.onSurface.copy(alpha = 0.75f)
                 )
@@ -1820,7 +1858,7 @@ fun VocabStoreTab(
                                 color = themeColors.onSurface
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(if (isBn) "ডাউনলোড হচ্ছে..." else "Downloading...")
+                            Text(if (isBn) "সক্রিয় করা হচ্ছে..." else "Activating...")
                         }
                     } else {
                         Button(
@@ -1828,7 +1866,7 @@ fun VocabStoreTab(
                                 coroutineScope.launch {
                                     isDownloading = true
                                     downloadProgress = 0.05f
-                                    downloadStatusText = if (isBn) "ডাউনলোড প্রস্তুত করা হচ্ছে..." else "Preparing download..."
+                                    downloadStatusText = if (isBn) "প্রস্তুত করা হচ্ছে..." else "Preparing..."
 
                                     val words = VocabularyPackRepository.downloadAndAssemblePack(
                                         context = context,
@@ -1844,13 +1882,13 @@ fun VocabStoreTab(
                                         onInstallPack(masterPackId)
                                         Toast.makeText(
                                             context,
-                                            if (isBn) "ডিকশনারি ডাটাবেজ (${words.size} টি শব্দ) সফলভাবে ডাউনলোড ও সক্রিয় করা হয়েছে!" else "Downloaded ${words.size} words successfully!",
+                                            if (isBn) "১,১০০+ শব্দের ডিকশনারি সফলভাবে সক্রিয় করা হয়েছে!" else "Activated ${words.size} words successfully!",
                                             Toast.LENGTH_LONG
                                         ).show()
                                     } else {
                                         Toast.makeText(
                                             context,
-                                            if (isBn) "ডাউনলোড ব্যর্থ হয়েছে, ইন্টারনেট সংযোগ পরীক্ষা করুন" else "Download failed, check connection",
+                                            if (isBn) "সক্রিয় করতে ব্যর্থ হয়েছে, দয়া করে আবার চেষ্টা করুন" else "Activation failed, please try again",
                                             Toast.LENGTH_SHORT
                                         ).show()
                                     }
@@ -1859,10 +1897,10 @@ fun VocabStoreTab(
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = themeColors.accent)
                         ) {
-                            Icon(Icons.Default.Download, contentDescription = null, tint = themeColors.onAccent)
+                            Icon(Icons.Default.Check, contentDescription = null, tint = themeColors.onAccent)
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = if (isBn) "ডাউনলোড ও সক্রিয় করুন (৭.৮ MB)" else "Download & Activate (7.8 MB)",
+                                text = if (isBn) "অফলাইন ডিকশনারি সক্রিয় করুন" else "Activate Offline Dictionary",
                                 color = themeColors.onAccent,
                                 fontWeight = FontWeight.Bold
                             )
