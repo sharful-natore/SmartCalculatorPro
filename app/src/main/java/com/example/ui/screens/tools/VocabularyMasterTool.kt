@@ -164,6 +164,7 @@ fun VocabularyMasterTool(
     LaunchedEffect(installedPacks.toList()) {
         isDataLoading = true
         withContext(Dispatchers.IO) {
+            VocabularyDataProvider.clearCache()
             val loaded = VocabularyDataProvider.getWordsForPacks(context, installedPacks.toSet())
             withContext(Dispatchers.Main) {
                 allWords = loaded
@@ -1753,13 +1754,13 @@ fun VocabStoreTab(
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = if (isBn) "১,১০০+ অতি প্রয়োজনীয় অফলাইন ভোকাবুলারি" else "1,100+ Essential Offline Vocabulary",
+                            text = if (isBn) "২,৪৭৭ টি অতি প্রয়োজনীয় অফলাইন ভোকাবুলারি" else "2,477 Essential Offline Vocabulary",
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                             color = themeColors.onSurface
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = if (isBn) "১,১০০+ মাস্টার শব্দ • ১০০% অফলাইন সক্রিয়করণ" else "1,100+ Master Words • 100% Offline Activation",
+                            text = if (isBn) "২,৪৭৭ টি মাস্টার শব্দ • ১০০% অফলাইন সক্রিয়করণ" else "2,477 Master Words • 100% Offline Activation",
                             style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
                             color = themeColors.accent
                         )
@@ -1769,7 +1770,7 @@ fun VocabStoreTab(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = if (isBn) "ইংরেজি শব্দ, সঠিক উচ্চারণ সংকেত, স্পষ্ট বাংলা অর্থ, সমার্থক শব্দ (Synonyms), বিপরীত শব্দ (Antonyms), পদ প্রকরণ (Part of Speech) এবং বাংলা অনুবাদ সহ বাস্তবভিত্তিক উদাহরণ বাক্য সম্বলিত ১,১০০+ সবচেয়ে বেশি প্রয়োজনীয় শব্দভান্ডার। কোনো ইন্টারনেট কানেকশন ছাড়াই অফলাইন ফাইল থেকে সরাসরি সক্রিয় করুন।" else "Complete 1,100+ high-yield vocabulary pack featuring full phonetics, Bangla meanings, synonyms, antonyms, parts of speech, and contextual example sentences with Bangla translations. Activates instantly from local offline files without internet.",
+                    text = if (isBn) "ইংরেজি শব্দ, সঠিক উচ্চারণ সংকেত, স্পষ্ট বাংলা অর্থ, সমার্থক শব্দ (Synonyms), বিপরীত শব্দ (Antonyms), পদ প্রকরণ (Part of Speech) এবং বাংলা অনুবাদ সহ বাস্তবভিত্তিক উদাহরণ বাক্য সম্বলিত ২,৪৭৭ টি সবচেয়ে বেশি প্রয়োজনীয় শব্দভান্ডার। কোনো ইন্টারনেট কানেকশন ছাড়াই অফলাইন ফাইল থেকে সরাসরি সক্রিয় করুন।" else "Complete 2,477 high-yield vocabulary pack featuring full phonetics, Bangla meanings, synonyms, antonyms, parts of speech, and contextual example sentences with Bangla translations. Activates instantly from local offline files without internet.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = themeColors.onSurface.copy(alpha = 0.75f)
                 )
@@ -1882,7 +1883,7 @@ fun VocabStoreTab(
                                         onInstallPack(masterPackId)
                                         Toast.makeText(
                                             context,
-                                            if (isBn) "১,১০০+ শব্দের ডিকশনারি সফলভাবে সক্রিয় করা হয়েছে!" else "Activated ${words.size} words successfully!",
+                                            if (isBn) "২,৪৭৭ টি শব্দের ডিকশনারি সফলভাবে সক্রিয় করা হয়েছে!" else "Activated ${words.size} words successfully!",
                                             Toast.LENGTH_LONG
                                         ).show()
                                     } else {
@@ -1974,17 +1975,39 @@ object VocabularyDataProvider {
     private var memoryCache: List<VocabWord>? = null
 
     fun getWordsForPacks(context: Context, installedPackIds: Set<String>): List<VocabWord> {
+        val hasMaster = installedPackIds.contains("master_dictionary") || installedPackIds.contains("all_100k_dict")
         val cached = memoryCache
-        if (cached != null && cached.isNotEmpty() && (installedPackIds.contains("master_dictionary") || installedPackIds.contains("all_100k_dict"))) {
-            return cached
+        if (cached != null && cached.isNotEmpty()) {
+            if (!hasMaster || cached.size >= 2477) {
+                return cached
+            }
         }
 
-        val list = VocabularyDataPacks.starterWords.toMutableList()
+        val list = mutableListOf<VocabWord>()
 
-        for (packId in installedPackIds) {
-            val fileWords = VocabularyPackRepository.loadPackFromFileSync(context, packId)
-            if (!fileWords.isNullOrEmpty()) {
-                list.addAll(fileWords)
+        if (hasMaster) {
+            // Master dictionary is always loaded directly from assets to ensure full 2,477 words are active
+            val masterWords = VocabularyPackRepository.loadPackFromAssetsSync(context, "dictionary_1000.json")
+            if (!masterWords.isNullOrEmpty()) {
+                list.addAll(masterWords)
+            }
+            for (packId in installedPackIds) {
+                if (packId != "master_dictionary" && packId != "all_100k_dict" && packId != "starter") {
+                    val fileWords = VocabularyPackRepository.loadPackFromFileSync(context, packId)
+                    if (!fileWords.isNullOrEmpty()) {
+                        list.addAll(fileWords)
+                    }
+                }
+            }
+        } else {
+            list.addAll(VocabularyDataPacks.starterWords)
+            for (packId in installedPackIds) {
+                if (packId != "starter") {
+                    val fileWords = VocabularyPackRepository.loadPackFromFileSync(context, packId)
+                    if (!fileWords.isNullOrEmpty()) {
+                        list.addAll(fileWords)
+                    }
+                }
             }
         }
 
@@ -1992,7 +2015,7 @@ object VocabularyDataProvider {
         val result = distinctList.mapIndexed { index, word ->
             word.copy(frequencyRank = index + 1)
         }
-        if (installedPackIds.contains("master_dictionary") || installedPackIds.contains("all_100k_dict")) {
+        if (hasMaster) {
             memoryCache = result
         }
         return result

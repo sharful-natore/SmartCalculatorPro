@@ -79,6 +79,12 @@ object VocabularyPackRepository {
 
     // Synchronously or asynchronously load pack from local file storage using JsonReader (Prevents OOM)
     fun loadPackFromFileSync(context: Context, packId: String): List<VocabWord>? {
+        if (packId == "master_dictionary" || packId == "all_100k_dict") {
+            val assetWords = loadPackFromAssetsSync(context, "dictionary_1000.json")
+            if (!assetWords.isNullOrEmpty()) {
+                return assetWords
+            }
+        }
         return try {
             val file = File(context.filesDir, "vocab_pack_$packId.json")
             if (!file.exists()) return null
@@ -205,7 +211,7 @@ object VocabularyPackRepository {
             onProgress(0.90f, "অফলাইন ডাটাবেজে সক্রিয় ও সংরক্ষণ করা হচ্ছে...")
             savePackToFile(context, packId, masterList)
 
-            onProgress(1.0f, "১,০০০+ অফলাইন মাস্টার শব্দভান্ডার সফলভাবে সক্রিয় হয়েছে!")
+            onProgress(1.0f, "২,৪৭৭ টি অফলাইন মাস্টার শব্দভান্ডার সফলভাবে সক্রিয় হয়েছে!")
             masterList
         }
     }
