@@ -12,6 +12,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -52,52 +53,116 @@ import coil.compose.AsyncImage
 import com.example.R
 import com.example.data.model.ConverterType
 import com.example.data.model.ToolType
+import com.example.ui.screens.tools.EmergencyDataProvider
+import com.example.ui.screens.tools.VocabularyDataPacks
+import com.example.ui.screens.tools.VocabularyPackRepository
 import com.example.ui.theme.CalculatorThemeColors
 import com.example.ui.viewmodel.CalculatorViewModel
 import com.example.util.AppLanguage
+
+enum class SearchCategory(val titleBn: String, val titleEn: String) {
+    ALL("সবগুলো", "All"),
+    TOOLS("টুলস", "Tools"),
+    CONVERTERS("কনভার্টার", "Converters"),
+    VOCABULARY("শব্দভাণ্ডার", "Vocabulary"),
+    ISLAMIC("ইসলামিক", "Islamic"),
+    FINANCE("হিসাব", "Finance"),
+    NOTES("নোটস", "Notes"),
+    HELPLINE("জরুরি সেবা", "Helpline"),
+    HISTORY("হিস্ট্রি", "History")
+}
 
 sealed class SearchResult(
     val title: String,
     val subTitle: String,
     val icon: ImageVector,
+    val category: SearchCategory,
     val onClick: () -> Unit
 ) {
     class Converter(val type: ConverterType, language: AppLanguage, val onAction: () -> Unit) : SearchResult(
         title = if (language == AppLanguage.BENGALI) type.titleBn else type.titleEn,
         subTitle = if (language == AppLanguage.BENGALI) "কনভার্টার • ${type.units.take(6).joinToString(", ")}" else "Converter • ${type.units.take(6).joinToString(", ")}",
         icon = type.icon,
+        category = SearchCategory.CONVERTERS,
         onClick = onAction
     )
     class Tool(val type: ToolType, language: AppLanguage, val onAction: () -> Unit) : SearchResult(
         title = if (language == AppLanguage.BENGALI) type.titleBn else type.titleEn,
         subTitle = type.getDescription(language),
         icon = type.icon,
+        category = SearchCategory.TOOLS,
         onClick = onAction
     )
     class History(val expression: String, val result: String, val onAction: () -> Unit) : SearchResult(
         title = expression,
         subTitle = result,
         icon = Icons.Default.History,
+        category = SearchCategory.HISTORY,
         onClick = onAction
     )
     class QuranSurah(val surahNum: Int, val nameEn: String, val nameBn: String, val onAction: () -> Unit) : SearchResult(
         title = nameBn,
         subTitle = "কুরআন সূরা • $nameEn • Surah $surahNum",
         icon = Icons.Default.AutoStories,
+        category = SearchCategory.ISLAMIC,
         onClick = onAction
     )
     class Hadith(val reference: String, val narrator: String, val text: String, val onAction: () -> Unit) : SearchResult(
         title = reference,
         subTitle = if (narrator.isNotEmpty()) "$narrator: $text" else text,
         icon = Icons.Default.LibraryBooks,
+        category = SearchCategory.ISLAMIC,
         onClick = onAction
     )
     class Finance(val itemTitle: String, val itemSubtitle: String, val iconType: ImageVector, val onAction: () -> Unit) : SearchResult(
         title = itemTitle,
         subTitle = itemSubtitle,
         icon = iconType,
+        category = SearchCategory.FINANCE,
         onClick = onAction
     )
+    class Vocabulary(val word: String, val meaningBn: String, val phonetic: String, val pos: String, val onAction: () -> Unit) : SearchResult(
+        title = "$word ${if (phonetic.isNotEmpty()) "[$phonetic]" else ""}",
+        subTitle = "$pos • $meaningBn",
+        icon = Icons.Default.Translate,
+        category = SearchCategory.VOCABULARY,
+        onClick = onAction
+    )
+    class Note(val noteTitle: String, val contentSnippet: String, val onAction: () -> Unit) : SearchResult(
+        title = noteTitle,
+        subTitle = contentSnippet,
+        icon = Icons.Default.EditNote,
+        category = SearchCategory.NOTES,
+        onClick = onAction
+    )
+    class EmergencyHelpline(val name: String, val number: String, val desc: String, val onAction: () -> Unit) : SearchResult(
+        title = "$name ($number)",
+        subTitle = desc,
+        icon = Icons.Default.Call,
+        category = SearchCategory.HELPLINE,
+        onClick = onAction
+    )
+}
+
+object GlobalVocabularyCache {
+    @Volatile
+    private var cachedWords: List<com.example.ui.screens.tools.VocabWord>? = null
+
+    fun getWords(context: android.content.Context): List<com.example.ui.screens.tools.VocabWord> {
+        val existing = cachedWords
+        if (existing != null) return existing
+        return synchronized(this) {
+            val checkAgain = cachedWords
+            if (checkAgain != null) return checkAgain
+            val loaded = try {
+                VocabularyPackRepository.loadPackFromAssetsSync(context, "dictionary_1000.json")
+            } catch (e: Exception) {
+                null
+            } ?: VocabularyDataPacks.starterWords
+            cachedWords = loaded
+            loaded
+        }
+    }
 }
 
 fun ConverterType.matchesConverterQuery(query: String): Boolean {
@@ -432,15 +497,95 @@ fun GlobalSearchDialog(
                             e.printStackTrace()
                         }
 
+                        // Search Vocabulary Words
+                        try {
+                            val vocabWords = GlobalVocabularyCache.getWords(context)
+                            val qClean = query.lowercase().trim()
+                            var vocabMatches = 0
+                            for (v in vocabWords) {
+                                if (vocabMatches >= 10) break
+                                val wordMatch = v.word.lowercase().startsWith(qClean) || v.word.lowercase().contains(qClean)
+                                val meaningMatch = v.meaningBn.contains(qClean)
+                                val phoneticMatch = v.phonetic.lowercase().contains(qClean)
+                                if (wordMatch || meaningMatch || phoneticMatch) {
+                                    vocabMatches++
+                                    results.add(SearchResult.Vocabulary(
+                                        word = v.word,
+                                        meaningBn = v.meaningBn,
+                                        phonetic = v.phonetic,
+                                        pos = v.partOfSpeech
+                                    ) {
+                                        viewModel.selectedToolType = ToolType.VOCABULARY_MASTER
+                                        viewModel.activeTab = 0
+                                        viewModel.showGlobalSearch = false
+                                    })
+                                }
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+
+                        // Search Saved Notes
+                        try {
+                            val notes = viewModel.getSavedNotes()
+                            notes.forEach { note ->
+                                if (note.title.contains(query, ignoreCase = true) || note.content.contains(query, ignoreCase = true)) {
+                                    val snippet = if (note.content.length > 60) note.content.take(60) + "..." else note.content
+                                    results.add(SearchResult.Note(
+                                        noteTitle = note.title.ifBlank { if (language == AppLanguage.BENGALI) "শিরোনামহীন নোট" else "Untitled Note" },
+                                        contentSnippet = snippet
+                                    ) {
+                                        viewModel.selectedToolType = null
+                                        viewModel.activeTab = 0
+                                        viewModel.showGlobalSearch = false
+                                    })
+                                }
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+
+                        // Search Emergency Helplines
+                        try {
+                            val helplines = EmergencyDataProvider.getAllHelplines()
+                            helplines.forEach { item ->
+                                val matchName = item.titleBn.contains(query, ignoreCase = true) || item.titleEn.contains(query, ignoreCase = true)
+                                val matchNum = item.number.contains(normalizedQuery) || item.number.contains(query)
+                                val matchDesc = item.subtitle.contains(query, ignoreCase = true)
+                                if (matchName || matchNum || matchDesc) {
+                                    results.add(SearchResult.EmergencyHelpline(
+                                        name = if (language == AppLanguage.BENGALI) item.titleBn else item.titleEn,
+                                        number = item.number,
+                                        desc = item.subtitle
+                                    ) {
+                                        viewModel.selectedToolType = ToolType.EMERGENCY_HELPLINE
+                                        viewModel.activeTab = 0
+                                        viewModel.showGlobalSearch = false
+                                    })
+                                }
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+
                         results
                     }
                 }
             }
 
+                var selectedCategory by remember { mutableStateOf(SearchCategory.ALL) }
+                val filteredResults = remember(searchResults, selectedCategory) {
+                    if (selectedCategory == SearchCategory.ALL) {
+                        searchResults
+                    } else {
+                        searchResults.filter { it.category == selectedCategory }
+                    }
+                }
+
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(24.dp)
+                        .padding(20.dp)
                 ) {
                     // Header with Title and Close Button
                     Row(
@@ -451,15 +596,15 @@ fun GlobalSearchDialog(
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = if (language == AppLanguage.BENGALI) "স্মার্ট অনুসন্ধান" else "Smart Search",
-                                fontSize = 24.sp,
+                                fontSize = 22.sp,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = themeColors.displayText,
                                 fontFamily = FontFamily.SansSerif
                             )
-                            Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = if (language == AppLanguage.BENGALI) "সব তথ্য এক জায়গায় খুঁজুন" else "Find everything in one place",
-                                fontSize = 14.sp,
+                                text = if (language == AppLanguage.BENGALI) "টুলস, কনভার্টার, শব্দভাণ্ডার, নোটস ও সেবা খুঁজুন" else "Find tools, converters, vocabulary, notes & SOS",
+                                fontSize = 13.sp,
                                 color = themeColors.displayText.copy(alpha = 0.6f),
                                 fontFamily = FontFamily.SansSerif
                             )
@@ -482,16 +627,16 @@ fun GlobalSearchDialog(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
                     // Search Input Field
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(64.dp)
+                            .height(56.dp)
                             .background(themeColors.background, RoundedCornerShape(16.dp))
                             .border(1.5.dp, themeColors.buttonEqualBg.copy(alpha = 0.4f), RoundedCornerShape(16.dp))
-                            .padding(horizontal = 16.dp),
+                            .padding(horizontal = 14.dp),
                         contentAlignment = Alignment.CenterStart
                     ) {
                         Row(
@@ -502,16 +647,16 @@ fun GlobalSearchDialog(
                                 imageVector = Icons.Default.Search,
                                 contentDescription = null,
                                 tint = themeColors.buttonEqualBg,
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier.size(22.dp)
                             )
-                            Spacer(modifier = Modifier.width(12.dp))
+                            Spacer(modifier = Modifier.width(10.dp))
                             
                             BasicTextField(
                                 value = searchQuery,
                                 onValueChange = { searchQuery = it },
                                 modifier = Modifier.weight(1f),
                                 textStyle = TextStyle(
-                                    fontSize = 16.sp,
+                                    fontSize = 15.sp,
                                     color = themeColors.displayText,
                                     fontWeight = FontWeight.Medium
                                 ),
@@ -521,8 +666,8 @@ fun GlobalSearchDialog(
                                 decorationBox = { innerTextField ->
                                     if (searchQuery.isEmpty()) {
                                         Text(
-                                            text = if (language == AppLanguage.BENGALI) "সার্চ করুন..." else "Search here...",
-                                            fontSize = 16.sp,
+                                            text = if (language == AppLanguage.BENGALI) "শব্দ, টুলস, ইউনিট বা নোটস খুঁজুন..." else "Search words, tools, units, notes...",
+                                            fontSize = 14.sp,
                                             color = themeColors.displayText.copy(alpha = 0.4f),
                                             fontWeight = FontWeight.Medium
                                         )
@@ -534,32 +679,59 @@ fun GlobalSearchDialog(
                             if (searchQuery.isNotEmpty()) {
                                 IconButton(
                                     onClick = { searchQuery = "" },
-                                    modifier = Modifier.size(32.dp)
+                                    modifier = Modifier.size(30.dp)
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Close,
                                         contentDescription = "Clear",
                                         tint = themeColors.displayText.copy(alpha = 0.6f),
-                                        modifier = Modifier.size(18.dp)
+                                        modifier = Modifier.size(16.dp)
                                     )
                                 }
                             }
 
                             IconButton(
                                 onClick = { startGlobalVoiceSearch() },
-                                modifier = Modifier.size(36.dp)
+                                modifier = Modifier.size(34.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Mic,
                                     contentDescription = "Voice Search",
                                     tint = themeColors.buttonEqualBg,
-                                    modifier = Modifier.size(22.dp)
+                                    modifier = Modifier.size(20.dp)
                                 )
                             }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Category Filter Chips
+                    LazyRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        items(SearchCategory.values()) { cat ->
+                            val isSelected = selectedCategory == cat
+                            val label = if (language == AppLanguage.BENGALI) cat.titleBn else cat.titleEn
+                            Surface(
+                                modifier = Modifier.clickable { selectedCategory = cat },
+                                shape = RoundedCornerShape(16.dp),
+                                color = if (isSelected) themeColors.buttonEqualBg else themeColors.background,
+                                border = if (isSelected) null else BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.12f))
+                            ) {
+                                Text(
+                                    text = label,
+                                    fontSize = 11.5.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (isSelected) themeColors.buttonEqualText else themeColors.displayText.copy(alpha = 0.8f),
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     // Content Area (Results or Empty State)
                     Box(modifier = Modifier.weight(1f)) {
@@ -573,28 +745,28 @@ fun GlobalSearchDialog(
                                 Icon(
                                     imageVector = Icons.Default.Search,
                                     contentDescription = null,
-                                    modifier = Modifier.size(100.dp).graphicsLayer(alpha = 0.15f),
+                                    modifier = Modifier.size(80.dp).graphicsLayer(alpha = 0.15f),
                                     tint = themeColors.displayText
                                 )
-                                Spacer(modifier = Modifier.height(24.dp))
+                                Spacer(modifier = Modifier.height(16.dp))
                                 Text(
                                     text = if (language == AppLanguage.BENGALI) "খুঁজতে টাইপ করুন" else "Type to search",
-                                    fontSize = 18.sp,
+                                    fontSize = 17.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = themeColors.displayText.copy(alpha = 0.5f),
+                                    color = themeColors.displayText.copy(alpha = 0.6f),
                                     textAlign = TextAlign.Center
                                 )
-                                Spacer(modifier = Modifier.height(8.dp))
+                                Spacer(modifier = Modifier.height(6.dp))
                                 Text(
                                     text = if (language == AppLanguage.BENGALI) 
-                                        "যেমন: হিস্ট্রি, বিএমআই, বা তাপমাত্রা" 
-                                        else "Example: History, BMI, or Temperature",
-                                    fontSize = 13.sp,
+                                        "যেমন: ভোকাবুলারি, ম্যাগনিফায়ার, ৯৯৯, বিএমআই বা নোটস" 
+                                        else "Example: Vocabulary, Magnifier, 999, BMI or Notes",
+                                    fontSize = 12.5.sp,
                                     color = themeColors.displayText.copy(alpha = 0.4f),
                                     textAlign = TextAlign.Center
                                 )
                             }
-                        } else if (searchResults.isEmpty()) {
+                        } else if (filteredResults.isEmpty()) {
                             // No Results State
                             Column(
                                 modifier = Modifier.fillMaxSize(),
@@ -604,25 +776,25 @@ fun GlobalSearchDialog(
                                 Icon(
                                     imageVector = Icons.Default.SearchOff,
                                     contentDescription = null,
-                                    modifier = Modifier.size(80.dp),
+                                    modifier = Modifier.size(64.dp),
                                     tint = themeColors.displayText.copy(alpha = 0.2f)
                                 )
-                                Spacer(modifier = Modifier.height(16.dp))
+                                Spacer(modifier = Modifier.height(12.dp))
                                 Text(
                                     text = if (language == AppLanguage.BENGALI) "কোনো ফলাফল পাওয়া যায়নি" else "No results found",
                                     color = themeColors.displayText.copy(alpha = 0.5f),
-                                    fontSize = 18.sp
+                                    fontSize = 16.sp
                                 )
                             }
                         } else {
                             // Results List
                             LazyColumn(
                                 modifier = Modifier.fillMaxSize(),
-                                verticalArrangement = Arrangement.spacedBy(10.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
                                 contentPadding = PaddingValues(bottom = 16.dp)
                             ) {
-                                items(searchResults) { result ->
-                                    SearchResultItem(result, searchQuery, themeColors)
+                                items(filteredResults) { result ->
+                                    SearchResultItem(result, searchQuery, themeColors, language)
                                 }
                             }
                         }
@@ -637,47 +809,87 @@ fun GlobalSearchDialog(
 fun SearchResultItem(
     result: SearchResult,
     query: String,
-    themeColors: CalculatorThemeColors
+    themeColors: CalculatorThemeColors,
+    language: AppLanguage
 ) {
+    val categoryLabel = if (language == AppLanguage.BENGALI) result.category.titleBn else result.category.titleEn
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { result.onClick() },
         colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(14.dp),
+        border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.08f))
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
                     .size(40.dp)
-                    .background(themeColors.buttonEqualBg.copy(alpha = 0.1f), RoundedCornerShape(8.dp)),
+                    .background(themeColors.buttonEqualBg.copy(alpha = 0.12f), RoundedCornerShape(10.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(result.icon, contentDescription = null, tint = themeColors.buttonEqualBg, modifier = Modifier.size(24.dp))
-            }
-            
-            Spacer(modifier = Modifier.width(16.dp))
-            
-            Column {
-                Text(
-                    text = buildAnnotatedString {
-                        appendWithHighlight(result.title, query, themeColors.buttonEqualBg.copy(alpha = 0.3f))
-                    },
-                    color = themeColors.displayText,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
-                )
-                Text(
-                    text = buildAnnotatedString {
-                        appendWithHighlight(result.subTitle, query, themeColors.buttonEqualBg.copy(alpha = 0.3f))
-                    },
-                    color = themeColors.displayText.copy(alpha = 0.6f),
-                    fontSize = 14.sp
+                Icon(
+                    result.icon,
+                    contentDescription = null,
+                    tint = themeColors.buttonEqualBg,
+                    modifier = Modifier.size(22.dp)
                 )
             }
+            
+            Spacer(modifier = Modifier.width(12.dp))
+            
+            Column(modifier = Modifier.weight(1f)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        text = buildAnnotatedString {
+                            appendWithHighlight(result.title, query, themeColors.buttonEqualBg.copy(alpha = 0.35f))
+                        },
+                        color = themeColors.displayText,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
+                        modifier = Modifier.weight(1f, fill = false),
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    )
+                    Surface(
+                        color = themeColors.buttonEqualBg.copy(alpha = 0.12f),
+                        shape = RoundedCornerShape(6.dp)
+                    ) {
+                        Text(
+                            text = categoryLabel,
+                            fontSize = 9.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = themeColors.buttonEqualBg,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = buildAnnotatedString {
+                        appendWithHighlight(result.subTitle, query, themeColors.buttonEqualBg.copy(alpha = 0.25f))
+                    },
+                    color = themeColors.displayText.copy(alpha = 0.65f),
+                    fontSize = 13.sp,
+                    maxLines = 2,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                )
+            }
+
+            Spacer(modifier = Modifier.width(6.dp))
+
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = null,
+                tint = themeColors.displayText.copy(alpha = 0.3f),
+                modifier = Modifier.size(16.dp)
+            )
         }
     }
 }

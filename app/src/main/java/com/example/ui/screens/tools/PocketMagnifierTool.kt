@@ -20,6 +20,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -31,6 +33,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
@@ -92,7 +95,8 @@ fun PocketMagnifierTool(
     var camera by remember { mutableStateOf<Camera?>(null) }
     var previewView: PreviewView? by remember { mutableStateOf(null) }
     var zoomRatio by remember { mutableFloatStateOf(1.0f) }
-    var maxZoomRatio by remember { mutableFloatStateOf(8.0f) }
+    var hardwareMaxZoom by remember { mutableFloatStateOf(4.0f) }
+    var maxZoomRatio by remember { mutableFloatStateOf(25.0f) }
     var isTorchOn by remember { mutableStateOf(false) }
     var filterMode by remember { mutableStateOf(MagnifierFilterMode.NORMAL) }
     var showReadingGuide by remember { mutableStateOf(false) }
@@ -122,10 +126,17 @@ fun PocketMagnifierTool(
                             color = Color.White
                         )
                         Text(
-                            text = if (isFrozen) (if (isBn) "স্থির চিত্র মোড • জুম: ${String.format("%.1f", zoomRatio * frozenScale)}x" else "Frozen View • Zoom: ${String.format("%.1f", zoomRatio * frozenScale)}x")
-                            else (if (isBn) "লাইভ ভিউ • জুম: ${String.format("%.1f", zoomRatio)}x" else "Live Camera • Zoom: ${String.format("%.1f", zoomRatio)}x"),
+                            text = if (isFrozen) {
+                                if (isBn) "স্থির চিত্র মোড • জুম: ${String.format("%.1f", zoomRatio * frozenScale)}x"
+                                else "Frozen View • Zoom: ${String.format("%.1f", zoomRatio * frozenScale)}x"
+                            } else {
+                                val isSuper = zoomRatio > hardwareMaxZoom
+                                val modeTag = if (isSuper) (if (isBn) " [সুপার হাইব্রিড জুম]" else " [Super Hybrid Zoom]") else ""
+                                if (isBn) "লাইভ ভিউ • জুম: ${String.format("%.1f", zoomRatio)}x$modeTag"
+                                else "Live Camera • Zoom: ${String.format("%.1f", zoomRatio)}x$modeTag"
+                            },
                             style = MaterialTheme.typography.labelSmall,
-                            color = Color.White.copy(alpha = 0.7f)
+                            color = Color.White.copy(alpha = 0.75f)
                         )
                     }
                 },
@@ -218,13 +229,13 @@ fun PocketMagnifierTool(
             ) {
                 // Live Camera View or Frozen Bitmap View
                 if (isFrozen && frozenBitmap != null) {
-                    // Frozen Frame with interactive Pinch & Pan
+                    // Frozen Frame with interactive Pinch & Pan (up to 10x)
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
                             .pointerInput(Unit) {
                                 detectTransformGestures { _, pan, zoom, _ ->
-                                    frozenScale = (frozenScale * zoom).coerceIn(0.8f, 5f)
+                                    frozenScale = (frozenScale * zoom).coerceIn(0.8f, 10f)
                                     frozenOffset += pan
                                 }
                             },
@@ -244,44 +255,77 @@ fun PocketMagnifierTool(
                         )
                     }
                 } else {
-                    // Live CameraX Preview
-                    AndroidView(
-                        factory = { ctx ->
-                            PreviewView(ctx).apply {
-                                layoutParams = ViewGroup.LayoutParams(
-                                    ViewGroup.LayoutParams.MATCH_PARENT,
-                                    ViewGroup.LayoutParams.MATCH_PARENT
+                    // Live CameraX Preview with Super Hybrid Zoom & Pinch-to-Zoom
+                    val digitalMultiplier = if (zoomRatio > hardwareMaxZoom && hardwareMaxZoom > 0f) {
+                        zoomRatio / hardwareMaxZoom
+                    } else {
+                        1.0f
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clipToBounds()
+                            .pointerInput(hardwareMaxZoom, maxZoomRatio) {
+                                detectTransformGestures { _, _, zoom, _ ->
+                                    val newZoom = (zoomRatio * zoom).coerceIn(1.0f, maxZoomRatio)
+                                    zoomRatio = newZoom
+                                    val hwZoom = newZoom.coerceAtMost(hardwareMaxZoom)
+                                    camera?.cameraControl?.setZoomRatio(hwZoom)
+                                }
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .graphicsLayer(
+                                    scaleX = digitalMultiplier,
+                                    scaleY = digitalMultiplier
                                 )
-                                scaleType = PreviewView.ScaleType.FILL_CENTER
-                                previewView = this
-
-                                val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
-                                cameraProviderFuture.addListener({
-                                    val cameraProvider = cameraProviderFuture.get()
-                                    val preview = Preview.Builder().build().also {
-                                        it.setSurfaceProvider(surfaceProvider)
-                                    }
-
-                                    val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-
-                                    try {
-                                        cameraProvider.unbindAll()
-                                        val cam = cameraProvider.bindToLifecycle(
-                                            lifecycleOwner,
-                                            cameraSelector,
-                                            preview
+                        ) {
+                            AndroidView(
+                                factory = { ctx ->
+                                    PreviewView(ctx).apply {
+                                        layoutParams = ViewGroup.LayoutParams(
+                                            ViewGroup.LayoutParams.MATCH_PARENT,
+                                            ViewGroup.LayoutParams.MATCH_PARENT
                                         )
-                                        camera = cam
-                                        val zoomState = cam.cameraInfo.zoomState.value
-                                        maxZoomRatio = zoomState?.maxZoomRatio?.coerceAtMost(10f) ?: 8.0f
-                                    } catch (exc: Exception) {
-                                        exc.printStackTrace()
+                                        scaleType = PreviewView.ScaleType.FILL_CENTER
+                                        previewView = this
+
+                                        val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
+                                        cameraProviderFuture.addListener({
+                                            val cameraProvider = cameraProviderFuture.get()
+                                            val preview = Preview.Builder().build().also {
+                                                it.setSurfaceProvider(surfaceProvider)
+                                            }
+
+                                            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+                                            try {
+                                                cameraProvider.unbindAll()
+                                                val cam = cameraProvider.bindToLifecycle(
+                                                    lifecycleOwner,
+                                                    cameraSelector,
+                                                    preview
+                                                )
+                                                camera = cam
+                                                val zoomState = cam.cameraInfo.zoomState.value
+                                                val hwMax = zoomState?.maxZoomRatio ?: 4.0f
+                                                hardwareMaxZoom = hwMax
+                                                maxZoomRatio = maxOf(25.0f, hwMax)
+                                                cam.cameraControl.setZoomRatio(zoomRatio.coerceAtMost(hwMax))
+                                            } catch (exc: Exception) {
+                                                exc.printStackTrace()
+                                            }
+                                        }, ContextCompat.getMainExecutor(ctx))
                                     }
-                                }, ContextCompat.getMainExecutor(ctx))
-                            }
-                        },
-                        modifier = Modifier.fillMaxSize()
-                    )
+                                },
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                    }
                 }
 
                 // Filter Overlay for Reading (Invert, Mono, Sepia)
@@ -386,24 +430,31 @@ fun PocketMagnifierTool(
                         .background(Color.Black.copy(alpha = 0.78f))
                         .padding(horizontal = 16.dp, vertical = 12.dp)
                 ) {
-                    // Preset Zoom Chips Row
+                    val applyZoom: (Float) -> Unit = { targetZoom ->
+                        val clamped = targetZoom.coerceIn(1.0f, maxZoomRatio)
+                        zoomRatio = clamped
+                        val hwZoom = clamped.coerceAtMost(hardwareMaxZoom)
+                        camera?.cameraControl?.setZoomRatio(hwZoom)
+                    }
+
+                    // Preset Zoom Chips Row (Multi-step up to 25x Super Zoom)
+                    val zoomPresets = listOf(1.0f, 2.0f, 4.0f, 8.0f, 12.0f, 16.0f, 20.0f, 25.0f)
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        listOf(1.0f, 2.0f, 4.0f, 6.0f, 8.0f).forEach { preset ->
-                            val isCurrent = (zoomRatio - preset) in -0.2f..0.2f
+                        zoomPresets.forEach { preset ->
+                            val isCurrent = (zoomRatio - preset) in -0.3f..0.3f
                             Surface(
                                 shape = CircleShape,
                                 color = if (isCurrent) themeColors.accent else Color.White.copy(alpha = 0.15f),
                                 modifier = Modifier
                                     .size(38.dp)
                                     .clip(CircleShape)
-                                    .clickable {
-                                        zoomRatio = preset
-                                        camera?.cameraControl?.setZoomRatio(preset)
-                                    }
+                                    .clickable { applyZoom(preset) }
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Text(
@@ -418,7 +469,7 @@ fun PocketMagnifierTool(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    // Continuous Zoom Slider
+                    // Continuous Zoom Slider (1x to 25x+)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
@@ -428,8 +479,7 @@ fun PocketMagnifierTool(
                         Slider(
                             value = zoomRatio,
                             onValueChange = { newZoom ->
-                                zoomRatio = newZoom
-                                camera?.cameraControl?.setZoomRatio(newZoom)
+                                applyZoom(newZoom)
                             },
                             valueRange = 1.0f..maxZoomRatio,
                             modifier = Modifier.weight(1f),

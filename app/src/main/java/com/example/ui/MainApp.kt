@@ -2182,32 +2182,40 @@ fun MainContent(
                 },
                 text = {
                     val termsText = if (viewModel.selectedLanguage == AppLanguage.BENGALI) {
-                        "১. ব্যবহারের অনুমতি ও উদ্দেশ্যে:\n" +
-                        "ToolsMate অ্যাপটি আপনার দৈনন্দিন জীবনের বৈজ্ঞানিক হিসাব-নিকাশ, একক রূপান্তর, ইসলামিক ইবাদত সহায়ক ফিচার (কুরআন, হাদিস, নামাজের সময়সূচি) এবং নিত্যপ্রয়োজনীয় টুলস ব্যবহারের সুবিধার্থে তৈরি। অ্যাপটি সম্পূর্ণরূপে ব্যক্তিগত ও অ-বাণিজ্যিক ব্যবহারের জন্য উন্মুক্ত।\n\n" +
+                        "১. ব্যবহারের অনুমতি ও সার্বিক উদ্দেশ্য:\n" +
+                        "ToolsMate (টুলসমেট) একটি বহুমুখী অল-ইন-ওয়ান ইউটিলিটি, সায়েন্টিফিক ক্যালকুলেশন, একক রূপান্তর, ইসলামিক ইবাদত সহায়ক (কুরআন, হাদিস, নামাজের সময়সূচি, ক্বিবলা), পার্সোনাল ফাইন্যান্স খতিয়ান, শব্দভাণ্ডার মাস্টার (Vocabulary Master), প্রফেশনাল ATS সিভি বিল্ডার, সুপার জুম পকেট ম্যাগনিফায়ার ও জাতীয় জরুরি হেল্পলাইন ডিরেক্টরি অ্যাপ্লিকেশন। অ্যাপটি সম্পূর্ণরূপে ব্যক্তিগত, পারিবারিক ও শিক্ষামূলক ব্যবহারের জন্য উন্মুক্ত।\n\n" +
                         "২. গাণিতিক হিসাব ও তথ্যের নির্ভুলতা:\n" +
-                        "প্রতিটি হিসাব, গাণিতিক সূত্র, একক পরিবর্তন এবং বিষয়বস্তু নির্ভুল রাখার জন্য সর্বাত্মক প্রচেষ্টা করা হয়েছে। তবে কোনো অনিচ্ছাকৃত গাণিতিক বা তথ্যগত ভুলের জন্য ডেভেলপার সরাসরি বা পরোক্ষভাবে আইনি বা আর্থিক দায়ী থাকবে না। গুরুত্বপূর্ণ আর্থিক বা বৈজ্ঞানিক হিসাব ব্যবহারের পূর্বে পুনরায় যাচাই করার পরামর্শ দেওয়া হচ্ছে।\n\n" +
+                        "প্রতিটি বৈজ্ঞানিক সূত্র, কনভার্সন ইউনিট, কারেন্সি ও ফাইন্যান্সিয়াল অ্যালগরিদম নির্ভুল রাখার জন্য সর্বোচ্চ সতর্কতা অবলম্বন করা হয়েছে। তবে কোনো অনিচ্ছাকৃত তথ্যগত বা হিসাবের অমিলের জন্য ডেভেলপার প্রত্যক্ষ বা পরোক্ষভাবে আইনি বা আর্থিক দায়ী থাকবে না। গুরুত্বপূর্ণ পেশাগত বা আর্থিক চুক্তির ক্ষেত্রে ফলাফল পুনরায় যাচাই করা সমীচীন।\n\n" +
                         "৩. ইসলামিক তথ্য ও ওয়াক্তের সময়সূচি:\n" +
-                        "নামাজের সময়সূচি ও সেহরি-ইফতারের সময় অ্যাপে ব্যবহৃত ভৌগোলিক অ্যালগরিদম ও বাংলাদেশ ইসলামিক ফাউন্ডেশনের স্ট্যান্ডার্ড অনুযায়ী হিসাব করা হয়। স্থানীয় দূরত্বের কারণে সামান্য ২-১ মিনিটের পার্থক্য হতে পারে, তাই নিজ এলাকার মসজিদের আজান অনুসরণ করা উত্তম।\n\n" +
-                        "৪. অফলাইন সিস্টেম ও ব্যবহারকারীর ডেটা স্বত্ব:\n" +
-                        "এটি ১০০% অফলাইন ও প্রাইভেসি-বান্ধব অ্যাপ্লিকেশন। কোনো ব্যবহারকারীর ডেটা আমাদের কোনো সার্ভারে সংরক্ষণ বা প্রেরণ করা হয় না। অ্যাপটিতে সংরক্ষিত তথ্য (যেমন- হিস্ট্রি, মার্কেট লিস্ট, বুকমার্ক) সম্পূর্ণভাবে ব্যবহারকারীর নিজের ডিভাইসে জমা থাকে।\n\n" +
-                        "৫. শর্তাবলীর পরিবর্তন ও পরিমার্জন:\n" +
-                        "অ্যাপের সার্বিক মানোন্নয়ন, নতুন ফিচার সংযোজন বা টেকনিক্যাল আপডেটের প্রয়োজনে যেকোনো সময় এই শর্তাবলী পরিবর্তন বা পরিমার্জন করার পূর্ণ অধিকার কর্তৃপক্ষের সংরক্ষিত।"
+                        "নামাজের সময়সূচি ও সেহরি-ইফতারের সময় অ্যাপে ব্যবহৃত হাই-প্রিসিশন জিও-অ্যালগরিদম ও বাংলাদেশ ইসলামিক ফাউন্ডেশনের স্বীকৃত মানদণ্ড অনুযায়ী হিসাব করা হয়। স্থানীয় দূরত্বের কারণে ১-২ মিনিটের ব্যবধান হতে পারে, তাই নিজ এলাকার মসজিদের আজান অনুসরণ করা উত্তম।\n\n" +
+                        "৪. জরুরি হেল্পলাইন ও এসওএস সেবা (SOS & Emergency):\n" +
+                        "অ্যাপে প্রদত্ত জাতীয় জরুরি নম্বরগুলো (৯৯৯, ১৬২৬৩, ১০৯, ৩৩৩ ইত্যাদি) সরকারি ও অনুমোদিত সংস্থার পাবলিক ডিরেক্টরি অনুযায়ী সংকলিত। টেলিকম নেটওয়ার্ক ও সংশ্লিষ্ট সংস্থার সেবার প্রাপ্যতার উপর কল সংযোগ নির্ভর করে।\n\n" +
+                        "৫. পকেট ম্যাগনিফায়ার ও ক্যামেরা সেন্সর ব্যবহার:\n" +
+                        "ম্যাগনিফায়ার টুলটিতে ডিভাইসের ক্যামেরা হার্ডওয়্যার ও ডিজিটাল সুপার জুম প্রযুক্তি ব্যবহার করা হয়েছে। এটি ব্যক্তিগত পাঠ বা পর্যবেক্ষণের উদ্দেশ্যে তৈরি।\n\n" +
+                        "৬. অফলাইন সিস্টেম ও ব্যবহারকারীর ডেটা স্বত্ব:\n" +
+                        "অ্যাপটি সম্পূর্ণ অফলাইন-ফার্স্ট। ব্যবহারকারীর নোটস, হিসাব খতিয়ান, সিভি ড্রাফট, শব্দভাণ্ডার বুকমার্কস ও ব্যাকআপ ফাইল শতভাগ ব্যবহারকারীর নিজস্ব ডিভাইসে সংরক্ষিত থাকে।\n\n" +
+                        "৭. শর্তাবলীর পরিবর্তন ও পরিমার্জন:\n" +
+                        "ব্যবহারকারীর অভিজ্ঞতা ও মানোন্নয়নের স্বার্থে কর্তৃপক্ষ যেকোনো সময় শর্তাবলীর প্রয়োজনীয় আপডেট করার অধিকার সংরক্ষণ করে।"
                     } else {
-                        "1. Acceptance & Purpose of Use:\n" +
-                        "ToolsMate is designed to simplify your daily calculation needs, unit conversions, Islamic practice tools (Holy Quran, Hadith, Prayer Timings), and lifestyle utilities. The app is strictly intended for personal, non-commercial use.\n\n" +
-                        "2. Calculation Accuracy Disclaimer:\n" +
-                        "While every effort is made to ensure absolute accuracy across all scientific formulas, unit models, and tools, developers are not liable for any direct or indirect financial or calculation errors. Users are encouraged to double-check critical financial/mathematical figures.\n\n" +
-                        "3. Prayer Times & Islamic Guidance:\n" +
-                        "Namaz and Sehri/Iftar schedules are generated using local coordinate algorithms and recognized Islamic calculation standards. A variance of 1-2 minutes may occur due to hyper-local factors; always prioritize your local mosque calls.\n\n" +
-                        "4. Offline Security & User Data Ownership:\n" +
-                        "ToolsMate is a 100% offline-first application. All created data (history logs, shopping lists, Quran bookmarks) resides strictly on your local device storage. No user data is sent to external cloud servers.\n\n" +
-                        "5. Updates & Modifications:\n" +
-                        "The development team reserves the right to update, modify, or enhance features and terms of service at any time to ensure compliance and optimal performance."
+                        "1. Acceptance & Scope of Service:\n" +
+                        "ToolsMate is an all-in-one offline utility, scientific calculation, unit conversion, Islamic practice (Quran, Hadith, Prayer Timings, Qibla), personal finance ledger, Vocabulary Master, professional ATS CV Builder, Super Hybrid Pocket Magnifier, and National Emergency Helpline directory application. It is designed for personal, educational, and professional self-assistance.\n\n" +
+                        "2. Mathematical & Information Accuracy:\n" +
+                        "All algorithms, formulas, and conversion models are tested for precision. However, developers assume no legal or financial liability for incidental mathematical variances. Critical professional calculations should be cross-verified.\n\n" +
+                        "3. Prayer Times & Islamic Standards:\n" +
+                        "Prayer times and fasting schedules use high-precision local coordinate algorithms aligned with recognized standards. Minor differences may occur due to hyper-local elevation; local mosque announcements should always be respected.\n\n" +
+                        "4. Emergency Directory (SOS & Helplines):\n" +
+                        "Emergency contacts (999, 16263, 109, 333, etc.) are based on authentic public directories. Call connectivity is subject to telecom carrier network availability.\n\n" +
+                        "5. Camera & Magnifier Lens Usage:\n" +
+                        "The Pocket Magnifier tool uses device camera hardware and digital super-zoom for close visual inspection. Images are processed live on-screen.\n\n" +
+                        "6. 100% Offline Security & Data Ownership:\n" +
+                        "All saved data (transaction records, notes, CV drafts, vocabulary bookmarks, and backup files) resides strictly on your local device storage. No data is harvested or uploaded to external servers.\n\n" +
+                        "7. Policy Updates:\n" +
+                        "Terms and service guidelines may be updated periodically to maintain quality, security, and full platform compliance."
                     }
                     androidx.compose.foundation.lazy.LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(max = 320.dp)
+                            .heightIn(max = 340.dp)
                     ) {
                         item {
                             Text(
@@ -2260,32 +2268,40 @@ fun MainContent(
                 },
                 text = {
                     val privacyText = if (viewModel.selectedLanguage == AppLanguage.BENGALI) {
-                        "১. তথ্যের গোপনীয়তা ও সুরক্ষা (Zero Data Collection):\n" +
-                        "আমাদের প্রধান লক্ষ্য হলো আপনার তথ্যের সর্বোচ্চ নিরাপত্তা বজায় রাখা। ToolsMate অ্যাপটি আপনার কোনো নাম, ফোন নম্বর, ইমেইল, বা টাইপ করা সংবেদনশীল ডেটা সংগ্রহ বা সার্ভারে প্রেরণ করে না।\n\n" +
-                        "২. লোকাল ডাটাবেজ সংরক্ষণ (Local Room Database):\n" +
-                        "আপনার গণনার ইতিহাস (History Logs), পছন্দের থিম সেটিং, মার্কেট শপিং লিস্ট, কুরআনের আয়াতের বুকমার্ক ও তাসবীহ কাউন্ট শুধুমাত্র আপনার ফোনের নিজস্ব লোকাল এনক্রিপ্টেড স্থানে (Room DB & Preferences) জমা থাকে। আপনি চাইলে সেটিংস থেকে ১-ক্লিকে যেকোনো সময় এসব ডেটা মুছে ফেলতে পারেন।\n\n" +
-                        "৩. লোকেশন পারমিশন ও ক্বিবলা কম্পাস (GPS Usage):\n" +
-                        "আপনার নিখুঁত নামাজের সময়সূচি, সেহরি-ইফতারের সময় এবং ক্বিবলার সঠিক দিক নির্ণয়ের জন্য ডিভাইসের লোকেশন পারমিশন ব্যবহৃত হয়। এই লোকেশন তথ্য শুধুমাত্র আপনার নিজস্ব ডিভাইসেই প্রক্রিয়াজাত হয়, কখনো কোনো থার্ড-পার্টি বা দূরবর্তী সার্ভারে আপলোড হয় না।\n\n" +
-                        "৪. অডিও ও মিডিয়া পারমিশন (Local Audio Cache):\n" +
-                        "আল-কুরআনের তিলাওয়াত ও আজানের অ্যালার্ম প্লে করার জন্য লোকাল স্টোরেজ ব্যবহার করা হয়। অ্যাপটি ব্যাকগ্রাউন্ডে কোনো গোপন তথ্য প্রসেস করে না।\n\n" +
-                        "৫. থার্ড-পার্টি ট্র্যাকিং বা অ্যানালিটিক্স মুক্ত:\n" +
-                        "এই অ্যাপে কোনো প্রকার থার্ড-পার্টি ট্র্যাকার, গোপন ডাটা মাইনার বা বিজ্ঞাপন নেটওয়ার্ক যুক্ত নেই। আপনার অভিজ্ঞতা শতভাগ নিরাপদ, বিজ্ঞাপনমুক্ত ও স্বচ্ছন্দ রাখা আমাদের অগ্রাধিকার।"
+                        "১. শতভাগ শূন্য ডাটা সংগ্রহ (Zero Data Collection Policy):\n" +
+                        "আপনার ব্যক্তিগত তথ্যের গোপনীয়তা আমাদের সর্বোচ্চ অগ্রাধিকার। ToolsMate অ্যাপটি কোনো নাম, ফোন নম্বর, ইমেইল, পরিচয়পত্র, কিংবা টাইপ করা আর্থিক বা ব্যক্তিগত তথ্য আমাদের কোনো দূরবর্তী সার্ভারে পাঠায় না।\n\n" +
+                        "২. অন-ডিভাইস লোকাল স্টোরেজ (Room DB & Preferences):\n" +
+                        "আপনার গণনার ইতিহাস, দেনাপাওনা ও আয়-ব্যয় খতিয়ান, বাজার ও শপিং লিস্ট, সিভি ড্রাফট, শব্দভাণ্ডার অগ্রগতি ও বুকমার্কস শুধুমাত্র আপনার ফোনের নিজস্ব এনক্রিপ্টেড স্থানে জমা থাকে।\n\n" +
+                        "৩. ক্যামেরা পারমিশন (Camera Access):\n" +
+                        "পকেট ম্যাগনিফায়ারের রিয়েল-টাইম ম্যাগনিফিকেশন এবং কিউআর/বারকোড স্ক্যানিং সুবিধার জন্য ক্যামেরা অনুমতি ব্যবহৃত হয়। কোনো ছবি বা ভিডিও কোথাও সেভ বা ইন্টারনেটে প্রেরিত হয় না।\n\n" +
+                        "৪. লোকেশন পারমিশন ও ক্বিবলা কম্পাস (GPS Usage):\n" +
+                        "সঠিক নামাজের সময়সূচি, সেহরি-ইফতারের সময় এবং ক্বিবলার নির্ভুল দিক নির্ণয়ের জন্য ডিভাইসের লোকাল লোকেশন সার্ভিস ব্যবহৃত হয়। এই ডেটা সম্পূর্ণভাবে ডিভাইসের মধ্যেই সীমাবদ্ধ থাকে।\n\n" +
+                        "৫. মাইক্রোফোন ও অডিও অনুমতি:\n" +
+                        "সাউন্ড মিটার (ডেসিবেল পরিমাপক) ও অ্যাপের অভ্যন্তরীণ ভয়েস সার্চ পরিচালনার জন্য মাইক্রোফোন লোকালি ব্যবহৃত হয়। কোনো অডিও রেকর্ড করা বা দূরবর্তী সার্ভারে আপলোড করা হয় না।\n\n" +
+                        "৬. গ্লোবাল ব্যাকআপ ও রিস্টোর নিরাপত্তা:\n" +
+                        "ব্যাকআপ ফাইল জেনারেশন সম্পূর্ণ অফলাইনে সম্পন্ন হয়। আপনি আপনার পছন্দসই নিরাপদ স্টোরেজে ব্যাকআপ ফাইলটি সংরক্ষণ করতে পারেন এবং যেকোনো সময় এক ক্লিকে রিস্টোর করতে পারেন।\n\n" +
+                        "৭. বিজ্ঞাপন ও থার্ড-পার্টি ট্র্যাকিং মুক্ত:\n" +
+                        "অ্যাপটিতে কোনো থার্ড-পার্টি ডাটা ট্র্যাকার বা গোপন নজরদারি টুলস যুক্ত নেই। এটি ১০০% পরিষ্কার, বিজ্ঞাপনমুক্ত এবং নিরাপদ।"
                     } else {
                         "1. Absolute Zero Data Collection:\n" +
-                        "Your privacy is our utmost priority. ToolsMate does not request, collect, transmit, or sell any personal information, phone numbers, emails, or calculation records to external servers.\n\n" +
-                        "2. On-Device Local Storage (Room DB):\n" +
-                        "All calculation history, market lists, theme preferences, Quran bookmarks, and Tasbih counters are saved exclusively on your device's local storage (Room DB & Encrypted SharedPrefs). You can wipe this data at any moment in settings.\n\n" +
-                        "3. Location Access for Namaz & Qibla:\n" +
-                        "Location permission is accessed strictly locally to calculate precise Namaz prayer times, Sehri/Iftar bounds, and Qibla compass bearing. Your location coordinates are processed on-device and never uploaded anywhere.\n\n" +
-                        "4. Audio & Media System Usage:\n" +
-                        "Storage permissions are utilized solely to cache and stream local Quran audio files and prayer notification sounds offline smoothly.\n\n" +
-                        "5. No Analytics or Third-Party Trackers:\n" +
-                        "ToolsMate contains no user tracking software, invasive analytics, or background telemetry. Enjoy a clean, private, and secure application experience."
+                        "Your privacy is fundamental to our architecture. ToolsMate does not collect, record, or transmit any personal info, phone numbers, contact lists, financial logs, or resumes to external servers.\n\n" +
+                        "2. On-Device Local Storage (Room DB & Encrypted Prefs):\n" +
+                        "Calculation histories, personal ledger entries, market lists, CV drafts, vocabulary learning progress, and favorites are preserved exclusively on your device's internal storage.\n\n" +
+                        "3. Camera Sensor Permission:\n" +
+                        "Camera access is strictly utilized for the Pocket Magnifier tool's real-time optical zoom and QR/barcode scanning. No images or live video feeds are ever stored or uploaded remotely.\n\n" +
+                        "4. Location Access for Namaz & Qibla (GPS):\n" +
+                        "Precise astronomical prayer coordinates and Qibla compass bearing are calculated locally on your handset. Location telemetry is never sent to cloud servers.\n\n" +
+                        "5. Audio & Microphone Permission:\n" +
+                        "Microphone access is used solely for the real-time Sound Level Meter (Decibels) and smart on-device voice queries. No audio is recorded or stored.\n\n" +
+                        "6. Encrypted Global Backup & Restore:\n" +
+                        "Backup JSON archives are generated directly by your device and saved to your chosen folder. Only you have access to export or restore your personal data.\n\n" +
+                        "7. No Ads or Third-Party Trackers:\n" +
+                        "ToolsMate contains zero tracking SDKs, zero background analytics, and zero ads. Enjoy an uncompromised, secure, and private tool suite."
                     }
                     androidx.compose.foundation.lazy.LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(max = 320.dp)
+                            .heightIn(max = 340.dp)
                     ) {
                         item {
                             Text(
@@ -2388,9 +2404,9 @@ fun MainContent(
                         Spacer(modifier = Modifier.height(10.dp))
                         
                         val descText = if (isBn) {
-                            "ToolsMate (টুলসমেট) হলো একটি সর্বাধুনিক অল-ইন-ওয়ান ইউটিলিটি, ফাইন্যান্সিয়াল, সায়েন্টিফিক ও ইসলামিক লাইফস্টাইল অ্যাপ্লিকেশন। এতে রয়েছে এডভান্সড সায়েন্টিফিক ক্যালকুলেটর, মাল্টি-ইউনিট কনভার্টার, সম্পূর্ণ আল-কুরআন ও হাদিস গ্রন্থ, নির্ভুল নামাজের সময়সূচি, ক্বিবলা কম্পাস, বাজার লিস্ট, বয়স ও বিএমআই ক্যালকুলেটর এবং স্মার্ট অফলাইন এআই সহকারী।"
+                            "ToolsMate (টুলসমেট) হলো একটি অত্যাধুনিক অল-ইন-ওয়ান ইউটিলিটি ও প্রোডাক্টিভিটি স্যুট। এতে রয়েছে এডভান্সড সায়েন্টিফিক ক্যালকুলেটর, মাল্টি-ইউনিট কনভার্টার, আল-কুরআন ও হাদিস গ্রন্থ, নামাজের সঠিক সময়সূচি, ক্বিবলা কম্পাস, দেনাপাওনা ও আয়-ব্যয় খতিয়ান, শব্দভাণ্ডার মাস্টার (২৫০০+ শব্দ ও কুইজ), প্রফেশনাল ATS সিভি বিল্ডার, পকেট ম্যাগনিফায়ার (২৫x সুপার জুম) এবং ২৪/৭ জাতীয় জরুরি হেল্পলাইন ডিরেক্টরি।"
                         } else {
-                            "ToolsMate is an all-in-one modern utility, scientific, financial, and Islamic lifestyle suite. Features a comprehensive scientific calculator, multi-unit converters, complete Holy Quran & Hadith books, precise prayer timings, Qibla compass, market list, and offline AI tools."
+                            "ToolsMate is a comprehensive all-in-one offline utility & productivity suite. Featuring an advanced scientific calculator, unit converters, Holy Quran & Hadith, prayer times, Qibla compass, personal financial ledger, Vocabulary Master (2500+ words & quizzes), professional ATS CV Builder, Super Hybrid Pocket Magnifier, and 24/7 National Emergency Helplines."
                         }
                         Text(
                             text = descText,
@@ -2402,13 +2418,13 @@ fun MainContent(
 
                         Spacer(modifier = Modifier.height(12.dp))
                         
-                        // Highlights Row
+                        // Highlights Badges
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly
+                            horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally)
                         ) {
                             Surface(
-                                color = themeColors.buttonEqualBg.copy(alpha = 0.1f),
+                                color = themeColors.buttonEqualBg.copy(alpha = 0.12f),
                                 shape = RoundedCornerShape(20.dp)
                             ) {
                                 Text(
@@ -2416,19 +2432,31 @@ fun MainContent(
                                     fontSize = 10.5.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = themeColors.buttonEqualBg,
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                    modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp)
                                 )
                             }
                             Surface(
-                                color = themeColors.buttonEqualBg.copy(alpha = 0.1f),
+                                color = themeColors.buttonEqualBg.copy(alpha = 0.12f),
                                 shape = RoundedCornerShape(20.dp)
                             ) {
                                 Text(
-                                    text = if (isBn) "🔒 জিরো ডাটা ট্র্যাকিং" else "🔒 Zero Tracking",
+                                    text = if (isBn) "🔒 জিরো ট্র্যাকিং" else "🔒 Zero Tracking",
                                     fontSize = 10.5.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = themeColors.buttonEqualBg,
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                    modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp)
+                                )
+                            }
+                            Surface(
+                                color = themeColors.buttonEqualBg.copy(alpha = 0.12f),
+                                shape = RoundedCornerShape(20.dp)
+                            ) {
+                                Text(
+                                    text = if (isBn) "💾 ব্যাকআপ ও রিস্টোর" else "💾 Backup & Restore",
+                                    fontSize = 10.5.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = themeColors.buttonEqualBg,
+                                    modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp)
                                 )
                             }
                         }

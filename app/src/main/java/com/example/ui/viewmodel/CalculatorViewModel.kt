@@ -3449,9 +3449,25 @@ How can I help you today?"""
                 val financeContactsStr = financePrefs.getString("contact_persons", null)
                 val financeSettingsJson = if (financePrefs.all.isNotEmpty()) org.json.JSONObject(financePrefs.all as Map<*, *>).toString() else null
 
+                // Vocabulary Data (Bookmarks, favorites, quiz history)
+                val vocabPrefs = context.getSharedPreferences("vocab_prefs", Context.MODE_PRIVATE)
+                val vocabUserDataJson = if (vocabPrefs.all.isNotEmpty()) org.json.JSONObject(vocabPrefs.all as Map<*, *>).toString() else null
+
+                // CV Builder Data
+                val cvPrefs = context.getSharedPreferences("cv_prefs", Context.MODE_PRIVATE)
+                val cvHistoryPrefs = context.getSharedPreferences("cv_history_prefs", Context.MODE_PRIVATE)
+                val combinedCvMap = mutableMapOf<String, Any>()
+                if (cvPrefs.all.isNotEmpty()) combinedCvMap.putAll(cvPrefs.all as Map<String, Any>)
+                if (cvHistoryPrefs.all.isNotEmpty()) combinedCvMap.putAll(cvHistoryPrefs.all as Map<String, Any>)
+                val cvBuilderDataJson = if (combinedCvMap.isNotEmpty()) org.json.JSONObject(combinedCvMap as Map<*, *>).toString() else null
+
+                // Emergency Helpline Data
+                val emergencyPrefs = context.getSharedPreferences("emergency_prefs", Context.MODE_PRIVATE)
+                val emergencyContactsJson = if (emergencyPrefs.all.isNotEmpty()) org.json.JSONObject(emergencyPrefs.all as Map<*, *>).toString() else null
+
                 val dateFormat = SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault())
                 val backup = GlobalAppBackup(
-                    version = 5,
+                    version = 6,
                     appName = "ToolsMate All-in-One",
                     backupDate = dateFormat.format(Date()),
                     timestamp = System.currentTimeMillis(),
@@ -3473,7 +3489,10 @@ How can I help you today?"""
                     islamicLocationJson = islamicLocJson,
                     financeTransactions = financeTransactionsList,
                     financeContactsJson = financeContactsStr,
-                    financeSettingsJson = financeSettingsJson
+                    financeSettingsJson = financeSettingsJson,
+                    vocabUserDataJson = vocabUserDataJson,
+                    cvBuilderDataJson = cvBuilderDataJson,
+                    emergencyContactsJson = emergencyContactsJson
                 )
 
                 val adapter = moshi.adapter(GlobalAppBackup::class.java)
@@ -3486,9 +3505,9 @@ How can I help you today?"""
                 val isBn = selectedLanguage == AppLanguage.BENGALI
                 withContext(Dispatchers.Main) {
                     backupStatusMessage = if (isBn) {
-                        "✅ অ্যাপের সমস্ত ডেটা সফলভাবে ব্যাকআপ করা হয়েছে!\n\n• ক্যালকুলেটর হিস্টোরি: ${history.size}টি\n• আয়-ব্যয় ও দেনাপাওনা লেনদেন: ${financeTransactionsList.size}টি\n• বাজার ফর্দ, কেনাকাটা ও মেমো\n• সেভ করা নোটস ও এআই চ্যাট\n• কুরআন ও হাদিস বুকমার্কস\n• প্রিয় টুলস ও কাস্টম থিমস"
+                        "✅ অ্যাপের সমস্ত ডেটা সফলভাবে ব্যাকআপ করা হয়েছে!\n\n• ক্যালকুলেটর হিস্টোরি: ${history.size}টি\n• আয়-ব্যয় ও দেনাপাওনা লেনদেন: ${financeTransactionsList.size}টি\n• বাজার ফর্দ, কেনাকাটা ও মেমো\n• সেভ করা নোটস ও এআই চ্যাট\n• শব্দভাণ্ডার (Vocabulary) ও সিভি ডেটা\n• কুরআন ও হাদিস বুকমার্কস\n• প্রিয় টুলস ও কাস্টম থিমস"
                     } else {
-                        "✅ All app data successfully backed up!\n\n• Calculator History: ${history.size} items\n• Income, Expense & Debt records: ${financeTransactionsList.size}\n• Shopping lists & Memos\n• Saved Notes & AI Chat\n• Quran & Hadith Bookmarks\n• Favorite Tools & Custom Themes"
+                        "✅ All app data successfully backed up!\n\n• Calculator History: ${history.size} items\n• Income, Expense & Debt records: ${financeTransactionsList.size}\n• Shopping lists & Memos\n• Saved Notes & AI Chat\n• Vocabulary & CV Builder Data\n• Quran & Hadith Bookmarks\n• Favorite Tools & Custom Themes"
                     }
                     showBackupStatusDialog = true
                 }
@@ -3557,16 +3576,21 @@ How can I help you today?"""
                     notesCount = it.split("[NOTE_SEPARATOR]").filter { s -> s.isNotBlank() }.size
                 }
                 val financeCount = backupObj.financeTransactions.size
+                val hasVocab = !backupObj.vocabUserDataJson.isNullOrBlank()
+                val hasCv = !backupObj.cvBuilderDataJson.isNullOrBlank()
+                val hasEmergency = !backupObj.emergencyContactsJson.isNullOrBlank()
 
                 withContext(Dispatchers.Main) {
                     pendingGlobalRestoreBackup = backupObj
                     globalRestoreSummary = if (isBn) {
                         "তারিখ: ${backupObj.backupDate.ifBlank { "N/A" }}\n\n" +
                         "• ক্যালকুলেটর হিস্টোরি: ${backupObj.historyEntries.size}টি\n" +
-                        "• আয়-ব্যয় ও দেনাপাওনা লেনদেন: ${financeCount}টি\n" +
+                        "• আয়-ব্যয় ও লেনদেন: ${financeCount}টি\n" +
                         "• বাজার ফর্দ (Plans): ${planCount}টি\n" +
                         "• বাজার মেমো (Memos): ${memoCount}টি\n" +
                         "• সেভ করা নোটস: ${notesCount}টি\n" +
+                        "• শব্দভাণ্ডার (Vocabulary) বুকমার্কস: ${if (hasVocab) "সংরক্ষিত" else "নাই"}\n" +
+                        "• সিভি বিল্ডার ড্রাফট ও প্রোফাইল: ${if (hasCv) "সংরক্ষিত" else "নাই"}\n" +
                         "• প্রিয় টুলস ও কনভার্টার: ${backupObj.favoriteTools.size + backupObj.favoriteConverters.size}টি\n" +
                         "• কুরআন ও ইসলামিক ডেটা: ${if (backupObj.quranBookmarksJson != null || backupObj.hadithBookmarksJson != null) "সংরক্ষিত" else "নাই"}"
                     } else {
@@ -3576,6 +3600,8 @@ How can I help you today?"""
                         "• Market Plans: $planCount\n" +
                         "• Bazaar Memos: $memoCount\n" +
                         "• Saved Notes: $notesCount\n" +
+                        "• Vocabulary Bookmarks: ${if (hasVocab) "Included" else "None"}\n" +
+                        "• CV Builder Profiles: ${if (hasCv) "Included" else "None"}\n" +
                         "• Favorite Tools & Conv: ${backupObj.favoriteTools.size + backupObj.favoriteConverters.size}\n" +
                         "• Quran & Islamic Data: ${if (backupObj.quranBookmarksJson != null || backupObj.hadithBookmarksJson != null) "Included" else "None"}"
                     }
@@ -3739,6 +3765,30 @@ How can I help you today?"""
                     if (!backup.financeContactsJson.isNullOrBlank()) {
                         financePrefs.edit().putString("contact_persons", backup.financeContactsJson).apply()
                     }
+                }
+
+                // Restore Vocabulary data
+                if (!backup.vocabUserDataJson.isNullOrBlank()) {
+                    restoreSharedPreferencesFromJson(
+                        context.getSharedPreferences("vocab_prefs", Context.MODE_PRIVATE),
+                        backup.vocabUserDataJson
+                    )
+                }
+
+                // Restore CV Builder data
+                if (!backup.cvBuilderDataJson.isNullOrBlank()) {
+                    restoreSharedPreferencesFromJson(
+                        context.getSharedPreferences("cv_prefs", Context.MODE_PRIVATE),
+                        backup.cvBuilderDataJson
+                    )
+                }
+
+                // Restore Emergency Helpline data
+                if (!backup.emergencyContactsJson.isNullOrBlank()) {
+                    restoreSharedPreferencesFromJson(
+                        context.getSharedPreferences("emergency_prefs", Context.MODE_PRIVATE),
+                        backup.emergencyContactsJson
+                    )
                 }
 
                 val isBn = selectedLanguage == AppLanguage.BENGALI
@@ -4376,7 +4426,7 @@ data class ScanHistoryItem(
 
 @JsonClass(generateAdapter = true)
 data class GlobalAppBackup(
-    val version: Int = 5,
+    val version: Int = 6,
     val appName: String = "ToolsMate All-in-One",
     val backupDate: String = "",
     val timestamp: Long = System.currentTimeMillis(),
@@ -4398,5 +4448,8 @@ data class GlobalAppBackup(
     val islamicLocationJson: String? = null,
     val financeTransactions: List<com.example.data.model.FinanceTransaction> = emptyList(),
     val financeContactsJson: String? = null,
-    val financeSettingsJson: String? = null
+    val financeSettingsJson: String? = null,
+    val vocabUserDataJson: String? = null,
+    val cvBuilderDataJson: String? = null,
+    val emergencyContactsJson: String? = null
 )

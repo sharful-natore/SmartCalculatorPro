@@ -190,20 +190,20 @@
   {
     "id": 12,
     "word": "Able",
-    "pos": "Adverb",
-    "phonetic": "/able/ (Able)",
-    "meaningBn": "Adj",
+    "pos": "Adjective",
+    "phonetic": "এইবল",
+    "meaningBn": "সক্ষম, সমর্থ",
     "synonyms": [
-      "Perform",
-      "Do",
-      "Execute"
+      "Capable",
+      "Competent",
+      "Fit"
     ],
     "antonyms": [
-      "Stop",
-      "Cease"
+      "Unable",
+      "Incompetent"
     ],
-    "exampleEn": "She decided to able her career further.",
-    "exampleBn": "তিনি তার ক্যারিয়ারকে আরও Adj করার সিদ্ধান্ত নিয়েছেন।"
+    "exampleEn": "She is able to speak three languages fluently.",
+    "exampleBn": "তিনি তিনটি ভাষায় সাবলীলভাবে কথা বলতে সক্ষম।"
   },
   {
     "id": 13,
@@ -1657,21 +1657,21 @@
   },
   {
     "id": 95,
-    "word": "Al",
-    "pos": "Adverb",
-    "phonetic": "/al/ (Al)",
-    "meaningBn": "Adj",
+    "word": "Aid",
+    "pos": "Noun / Verb",
+    "phonetic": "এইড",
+    "meaningBn": "সাহায্য, সহায়তা বা ত্রাণ",
     "synonyms": [
-      "Perform",
-      "Do",
-      "Execute"
+      "Help",
+      "Assistance",
+      "Support"
     ],
     "antonyms": [
-      "Stop",
-      "Cease"
+      "Obstacle",
+      "Hindrance"
     ],
-    "exampleEn": "They want to al a better society.",
-    "exampleBn": "তারা একটি আরও ভালো সমাজ Adj করতে চায়।"
+    "exampleEn": "Emergency medical aid arrived at the scene quickly.",
+    "exampleBn": "জরুরি চিকিৎসা সহায়তা দ্রুত ঘটনাস্থলে পৌঁছেছিল।"
   },
   {
     "id": 96,
@@ -2625,21 +2625,21 @@
   },
   {
     "id": 151,
-    "word": "Anti",
-    "pos": "Adverb",
-    "phonetic": "/anti/ (Anti)",
-    "meaningBn": "Adj",
+    "word": "Antidote",
+    "pos": "Noun",
+    "phonetic": "অ্যান্টিডোট",
+    "meaningBn": "বিষনাশক ওষুধ, প্রতিকার",
     "synonyms": [
-      "Perform",
-      "Do",
-      "Execute"
+      "Remedy",
+      "Cure",
+      "Counteragent"
     ],
     "antonyms": [
-      "Stop",
-      "Cease"
+      "Poison",
+      "Toxin"
     ],
-    "exampleEn": "She decided to anti her career further.",
-    "exampleBn": "তিনি তার ক্যারিয়ারকে আরও Adj করার সিদ্ধান্ত নিয়েছেন।"
+    "exampleEn": "Doctors administered the antidote to neutralize the venom.",
+    "exampleBn": "বিষ নিষ্ক্রিয় করতে চিকিৎসকরা বিষনাশক ওষুধ প্রয়োগ করেছিলেন।"
   },
   {
     "id": 152,
@@ -9626,21 +9626,21 @@
   },
   {
     "id": 559,
-    "word": "Co",
-    "pos": "Adverb",
-    "phonetic": "/co/ (Co)",
-    "meaningBn": "Noun",
+    "word": "Clumsy",
+    "pos": "Adjective",
+    "phonetic": "ক্ল্যামজি",
+    "meaningBn": "আনাড়ি, অসাবধান বা অদক্ষ",
     "synonyms": [
-      "Perform",
-      "Do",
-      "Execute"
+      "Awkward",
+      "Ungainly",
+      "Careless"
     ],
     "antonyms": [
-      "Stop",
-      "Cease"
+      "Graceful",
+      "Adroit"
     ],
-    "exampleEn": "They want to co a better society.",
-    "exampleBn": "তারা একটি আরও ভালো সমাজ Noun করতে চায়।"
+    "exampleEn": "The clumsy puppy tripped over the living room rug.",
+    "exampleBn": "আনাড়ি কুকুরছানাটি বসার ঘরের গালিচায় হোঁচট খেল।"
   },
   {
     "id": 560,
@@ -14357,20 +14357,20 @@
   {
     "id": 835,
     "word": "Counter",
-    "pos": "Adverb",
-    "phonetic": "/counter/ (Counter)",
-    "meaningBn": "Noun",
+    "pos": "Verb",
+    "phonetic": "কাউন্টার",
+    "meaningBn": "পাল্টা জবাব দেওয়া বা প্রতিহত করা",
     "synonyms": [
-      "Perform",
-      "Do",
-      "Execute"
+      "Oppose",
+      "Resist",
+      "Refute"
     ],
     "antonyms": [
-      "Stop",
-      "Cease"
+      "Support",
+      "Agree"
     ],
-    "exampleEn": "She decided to counter her career further.",
-    "exampleBn": "তিনি তার ক্যারিয়ারকে আরও Noun করার সিদ্ধান্ত নিয়েছেন।"
+    "exampleEn": "She presented strong scientific facts to counter their claims.",
+    "exampleBn": "তাদের দাবি প্রতিহত করতে তিনি জোরালো বৈজ্ঞানিক তথ্য উপস্থাপন করেছিলেন।"
   },
   {
     "id": 836,
@@ -17304,21 +17304,21 @@
   },
   {
     "id": 1001,
-    "word": "Dis",
-    "pos": "Adverb",
-    "phonetic": "/dis/ (Dis)",
-    "meaningBn": "Adj",
+    "word": "Disadvantage",
+    "pos": "Noun",
+    "phonetic": "ডিসঅ্যাডভান্টেজ",
+    "meaningBn": "অসুবিধা, প্রতিকূলতা বা ক্ষতি",
     "synonyms": [
-      "Perform",
-      "Do",
-      "Execute"
+      "Drawback",
+      "Handicap",
+      "Downside"
     ],
     "antonyms": [
-      "Stop",
-      "Cease"
+      "Advantage",
+      "Benefit"
     ],
-    "exampleEn": "We need to dis our goals effectively.",
-    "exampleBn": "আমাদের লক্ষ্যগুলো কার্যকরভাবে Adj করা দরকার।"
+    "exampleEn": "A lack of computer knowledge is a major disadvantage today.",
+    "exampleBn": "কম্পিউটার জ্ঞানের অভাব বর্তমান যুগে একটি বড় অসুবিধা।"
   },
   {
     "id": 1002,

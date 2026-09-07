@@ -1,5 +1,7 @@
 package com.example.ui.screens
 
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.ui.unit.TextUnit
 
@@ -138,6 +140,7 @@ fun CalculatorScreen(
     viewModel: CalculatorViewModel,
     themeColors: CalculatorThemeColors
 ) {
+    val context = LocalContext.current
     val speechRecognizerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -1165,57 +1168,6 @@ fun CalculatorScreen(
                     shape = RoundedCornerShape(24.dp)
                 )
 
-                // Dialog to assign custom name / badge label
-                if (viewModel.showSaveDialog) {
-                    var saveLabelInput by remember { mutableStateOf("") }
-                    AlertDialog(
-                        onDismissRequest = { viewModel.showSaveDialog = false },
-                        title = {
-                            Text(
-                                text = if (isBn) "হিসাব সংরক্ষণ করুন" else "Save Calculation",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 16.sp,
-                                color = themeColors.displayText
-                            )
-                        },
-                        text = {
-                            Column {
-                                Text(
-                                    text = "${viewModel.expression} = ${viewModel.result}",
-                                    fontSize = 13.sp,
-                                    fontFamily = FontFamily.Monospace,
-                                    color = themeColors.displayText.copy(alpha = 0.75f)
-                                )
-                                Spacer(modifier = Modifier.height(10.dp))
-                                OutlinedTextField(
-                                    value = saveLabelInput,
-                                    onValueChange = { saveLabelInput = it },
-                                    label = { Text(if (isBn) "নাম / ট্যাগ দিন" else "Label / Name Tag") },
-                                    singleLine = true,
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                            }
-                        },
-                        confirmButton = {
-                            Button(
-                                onClick = {
-                                    viewModel.saveNamedCalculation(saveLabelInput.trim())
-                                    viewModel.showSaveDialog = false
-                                },
-                                colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg)
-                            ) {
-                                Text(if (isBn) "সংরক্ষণ" else "Save", color = Color.White)
-                            }
-                        },
-                        dismissButton = {
-                            TextButton(onClick = { viewModel.showSaveDialog = false }) {
-                                Text(if (isBn) "বাতিল" else "Cancel", color = themeColors.displayText)
-                            }
-                        },
-                        containerColor = themeColors.cardBg
-                    )
-                }
-
                 if (namingTargetEntry != null) {
                     val entryToName = namingTargetEntry!!
                     AlertDialog(
@@ -1290,6 +1242,58 @@ fun CalculatorScreen(
                         containerColor = themeColors.cardBg
                     )
                 }
+            }
+
+            // Dialog to assign custom name / badge label from Save button (outside history overlay)
+            if (viewModel.showSaveDialog) {
+                var saveLabelInput by remember { mutableStateOf("") }
+                AlertDialog(
+                    onDismissRequest = { viewModel.showSaveDialog = false },
+                    title = {
+                        Text(
+                            text = if (isBn) "হিসাব সংরক্ষণ করুন" else "Save Calculation",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            color = themeColors.displayText
+                        )
+                    },
+                    text = {
+                        Column {
+                            Text(
+                                text = "${viewModel.expression} = ${viewModel.result}",
+                                fontSize = 13.sp,
+                                fontFamily = FontFamily.Monospace,
+                                color = themeColors.displayText.copy(alpha = 0.75f)
+                            )
+                            Spacer(modifier = Modifier.height(10.dp))
+                            OutlinedTextField(
+                                value = saveLabelInput,
+                                onValueChange = { saveLabelInput = it },
+                                label = { Text(if (isBn) "নাম / ট্যাগ দিন" else "Label / Name Tag") },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                viewModel.saveNamedCalculation(saveLabelInput.trim())
+                                viewModel.showSaveDialog = false
+                                Toast.makeText(context, if (isBn) "হিসাব সফলভাবে সংরক্ষণ করা হয়েছে!" else "Calculation saved to history!", Toast.LENGTH_SHORT).show()
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg)
+                        ) {
+                            Text(if (isBn) "সংরক্ষণ" else "Save", color = Color.White)
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { viewModel.showSaveDialog = false }) {
+                            Text(if (isBn) "বাতিল" else "Cancel", color = themeColors.displayText)
+                        }
+                    },
+                    containerColor = themeColors.cardBg
+                )
             }
 
             // AC Undo Confirmation Dialog
