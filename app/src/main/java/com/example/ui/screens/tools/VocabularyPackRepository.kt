@@ -28,9 +28,9 @@ object VocabularyPackRepository {
     private val richWordMap: Map<String, VocabWord> by lazy {
         val map = mutableMapOf<String, VocabWord>()
         VocabularyDataPacks.starterWords.forEach { map[it.word.lowercase().trim()] = it }
-        VocabularyDataPacks.spokenWords.forEach { map[it.word.lowercase().trim()] = it }
-        VocabularyDataPacks.ieltsWords.forEach { map[it.word.lowercase().trim()] = it }
-        VocabularyDataPacks.bcsWords.forEach { map[it.word.lowercase().trim()] = it }
+        VocabularyHighFrequencyDataset.getSpoken3000Pack().forEach { map[it.word.lowercase().trim()] = it }
+        VocabularyHighFrequencyDataset.getIelts4000Pack().forEach { map[it.word.lowercase().trim()] = it }
+        VocabularyHighFrequencyDataset.getBcs5000Pack().forEach { map[it.word.lowercase().trim()] = it }
         VocabularyHighFrequencyDataset.getMega10000Pack().forEach {
             if (!map.containsKey(it.word.lowercase().trim())) {
                 map[it.word.lowercase().trim()] = it
@@ -211,7 +211,7 @@ object VocabularyPackRepository {
             onProgress(0.90f, "অফলাইন ডাটাবেজে সক্রিয় ও সংরক্ষণ করা হচ্ছে...")
             savePackToFile(context, packId, masterList)
 
-            onProgress(1.0f, "৬,০০০ টি অফলাইন মাস্টার শব্দভান্ডার সফলভাবে সক্রিয় হয়েছে!")
+            onProgress(1.0f, "সম্পূর্ণ অফলাইন মাস্টার শব্দভান্ডার সফলভাবে সক্রিয় হয়েছে!")
             masterList
         }
     }
@@ -432,9 +432,14 @@ object VocabularyPackRepository {
         val richMatch = richWordMap[wordLower]
 
         val finalPhonetic = when {
-            phonetic.isNotBlank() -> phonetic
+            richMatch != null && richMatch.phonetic.isNotBlank() && richMatch.phonetic.contains("(") -> richMatch.phonetic
+            phonetic.isNotBlank() && phonetic.contains("(") -> phonetic
             richMatch != null && richMatch.phonetic.isNotBlank() -> richMatch.phonetic
-            else -> "/${wordLower}/"
+            phonetic.isNotBlank() && !phonetic.equals("/${wordLower}/", ignoreCase = true) -> phonetic
+            else -> {
+                val bn = EnglishPronunciationEngine.generateBanglaPronunciation(word)
+                if (bn.isNotBlank()) "/${wordLower}/ ($bn)" else "/${wordLower}/"
+            }
         }
 
         val finalPos = when {

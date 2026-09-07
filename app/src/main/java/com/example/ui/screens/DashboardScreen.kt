@@ -1,5 +1,7 @@
 package com.example.ui.screens
 
+import com.example.ui.components.CategoryDashboardCard
+import com.example.ui.components.CategoryDetailToolsView
 import com.example.ui.theme.getToolIconGradient
 import com.example.ui.components.ToolInfoSection
 import com.example.ui.components.InfoToggleButton
@@ -2547,411 +2549,506 @@ fun DashboardCategoriesView(
 
         Spacer(modifier = Modifier.height(6.dp))
 
-        // Category Filter Chips
         val allTools = ToolType.values().toList()
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalBounceOverscroll()
-                .horizontalScroll(filterScrollState)
-                .padding(bottom = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            // "All" Chip
-            ToolFilterChipItem(
-                label = LanguageManager.getString("all", viewModel.selectedLanguage),
-                isSelected = selectedFilter == null,
-                icon = Icons.Default.GridView,
-                themeColors = themeColors,
-                count = allTools.size,
-                onClick = { viewModel.selectedToolCategoryFilter = null }
-            )
 
-            ToolCategory.values().forEach { cat ->
-                val catCount = allTools.count { it.category == cat }
-                ToolFilterChipItem(
-                    label = cat.getTitle(viewModel.selectedLanguage),
-                    isSelected = selectedFilter == cat,
-                    icon = cat.icon,
-                    themeColors = themeColors,
-                    count = catCount,
-                    onClick = {
-                        viewModel.selectedToolCategoryFilter = if (selectedFilter == cat) null else cat
-                    }
-                )
-            }
-        }
-
-        // Tools List Grouped by Category with Smooth Category Switch Animation
-        AnimatedContent(
-            targetState = selectedFilter,
-            transitionSpec = {
-                (fadeIn(animationSpec = tween(220)) + slideInVertically(animationSpec = tween(220)) { it / 8 }) togetherWith
-                fadeOut(animationSpec = tween(150))
-            },
-            label = "categorySortAnimation"
-        ) { currentFilter ->
-            val currentFilteredTools = if (currentFilter == null) {
-                allTools
-            } else {
-                allTools.filter { it.category == currentFilter }
-            }
-
-            if (currentFilteredTools.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = LanguageManager.getString("no_results", viewModel.selectedLanguage),
-                        color = themeColors.displayText.copy(alpha = 0.6f),
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Medium
+        if (viewModel.dashboardLayoutMode == com.example.ui.viewmodel.DashboardLayoutMode.MODERN) {
+            // Modern Layout: Redesigned Gradient Category Cards with Illustration Backgrounds & Round Stacked Tool Icons
+            AnimatedContent(
+                targetState = selectedFilter,
+                transitionSpec = {
+                    (fadeIn(animationSpec = tween(220)) + slideInVertically(animationSpec = tween(220)) { it / 8 }) togetherWith
+                    fadeOut(animationSpec = tween(150))
+                },
+                label = "modernCategoryAnimation"
+            ) { currentFilter ->
+                if (currentFilter != null) {
+                    // Specific Category Detail View with beautiful header, search, and tools grid
+                    val currentCategoryTools = viewModel.getAllOrderedToolsForCategory(currentFilter, toolUsage)
+                    CategoryDetailToolsView(
+                        category = currentFilter,
+                        categoryTools = currentCategoryTools,
+                        viewModel = viewModel,
+                        themeColors = themeColors,
+                        isBn = isBn,
+                        onBackClick = { viewModel.selectedToolCategoryFilter = null }
                     )
-                }
-            } else {
-                val isOverviewMode = currentFilter == null
-
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    // Category Active Banner when filtered
-                    if (!isOverviewMode && currentFilter != null) {
-                        Surface(
+                } else {
+                    // Overview Mode: Gradient Category Cards
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        // Category Section Header
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(bottom = 12.dp),
-                            shape = RoundedCornerShape(14.dp),
-                            color = themeColors.cardBg,
-                            border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.25f))
+                                .padding(horizontal = 4.dp, vertical = 2.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(28.dp)
+                                        .clip(CircleShape)
+                                        .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Widgets,
+                                        contentDescription = null,
+                                        tint = themeColors.buttonEqualBg,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                                Text(
+                                    text = if (isBn) "টুলস ও ক্যাটাগরি" else "Tools & Categories",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.displayText
+                                )
+                            }
+
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = themeColors.buttonEqualBg.copy(alpha = 0.12f),
+                                border = BorderStroke(0.5.dp, themeColors.buttonEqualBg.copy(alpha = 0.25f))
+                            ) {
+                                Text(
+                                    text = if (isBn) "${ToolCategory.values().size}টি ক্যাটাগরি • ${allTools.size}টি টুলস" 
+                                           else "${ToolCategory.values().size} Categories • ${allTools.size} Tools",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.buttonEqualBg,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
+
+                        // Render Gradient Category Cards for all categories
+                        ToolCategory.values().forEach { category ->
+                            val catTools = viewModel.getAllOrderedToolsForCategory(category, toolUsage)
+                            if (catTools.isNotEmpty()) {
+                                CategoryDashboardCard(
+                                    category = category,
+                                    categoryTools = catTools,
+                                    language = viewModel.selectedLanguage,
+                                    isBn = isBn,
+                                    onClick = {
+                                        viewModel.selectedToolCategoryFilter = category
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            // Classic Layout: Category Filter Chips + Grouped Horizontal/Vertical Tool Cards
+            // Category Filter Chips
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalBounceOverscroll()
+                    .horizontalScroll(filterScrollState)
+                    .padding(bottom = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // "All" Chip
+                ToolFilterChipItem(
+                    label = LanguageManager.getString("all", viewModel.selectedLanguage),
+                    isSelected = selectedFilter == null,
+                    icon = Icons.Default.GridView,
+                    themeColors = themeColors,
+                    count = allTools.size,
+                    onClick = { viewModel.selectedToolCategoryFilter = null }
+                )
+
+                ToolCategory.values().forEach { cat ->
+                    val catCount = allTools.count { it.category == cat }
+                    ToolFilterChipItem(
+                        label = cat.getTitle(viewModel.selectedLanguage),
+                        isSelected = selectedFilter == cat,
+                        icon = cat.icon,
+                        themeColors = themeColors,
+                        count = catCount,
+                        onClick = {
+                            viewModel.selectedToolCategoryFilter = if (selectedFilter == cat) null else cat
+                        }
+                    )
+                }
+            }
+
+            // Tools List Grouped by Category with Smooth Category Switch Animation
+            AnimatedContent(
+                targetState = selectedFilter,
+                transitionSpec = {
+                    (fadeIn(animationSpec = tween(220)) + slideInVertically(animationSpec = tween(220)) { it / 8 }) togetherWith
+                    fadeOut(animationSpec = tween(150))
+                },
+                label = "classicCategorySortAnimation"
+            ) { currentFilter ->
+                val currentFilteredTools = if (currentFilter == null) {
+                    allTools
+                } else {
+                    allTools.filter { it.category == currentFilter }
+                }
+
+                if (currentFilteredTools.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = LanguageManager.getString("no_results", viewModel.selectedLanguage),
+                            color = themeColors.displayText.copy(alpha = 0.6f),
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                } else {
+                    val isOverviewMode = currentFilter == null
+
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        // Category Active Banner when filtered
+                        if (!isOverviewMode && currentFilter != null) {
+                            Surface(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 14.dp, vertical = 10.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                                    .padding(bottom = 12.dp),
+                                shape = RoundedCornerShape(14.dp),
+                                color = themeColors.cardBg,
+                                border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.25f))
                             ) {
                                 Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(32.dp)
-                                            .clip(CircleShape)
-                                            .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = currentFilter.icon,
-                                            contentDescription = null,
-                                            tint = themeColors.buttonEqualBg,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.width(10.dp))
-                                    Column {
-                                        Text(
-                                            text = currentFilter.getTitle(viewModel.selectedLanguage),
-                                            fontSize = 15.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = themeColors.displayText
-                                        )
-                                        Text(
-                                            text = if (isBn) "মোট ${currentFilteredTools.size}টি টুলস" else "Total ${currentFilteredTools.size} Tools",
-                                            fontSize = 11.sp,
-                                            color = themeColors.buttonEqualBg,
-                                            fontWeight = FontWeight.SemiBold
-                                        )
-                                    }
-                                }
-
-                                Surface(
                                     modifier = Modifier
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .clickable { viewModel.selectedToolCategoryFilter = null },
-                                    color = themeColors.buttonEqualBg.copy(alpha = 0.12f),
-                                    shape = RoundedCornerShape(8.dp)
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Row(
-                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                                        verticalAlignment = Alignment.CenterVertically
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.weight(1f)
                                     ) {
-                                        Icon(
-                                            imageVector = Icons.Default.GridView,
-                                            contentDescription = null,
-                                            tint = themeColors.buttonEqualBg,
-                                            modifier = Modifier.size(14.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text(
-                                            text = if (isBn) "সকল টুলস" else "All Tools",
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = themeColors.buttonEqualBg
-                                        )
+                                        Box(
+                                            modifier = Modifier
+                                                .size(32.dp)
+                                                .clip(CircleShape)
+                                                .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = currentFilter.icon,
+                                                contentDescription = null,
+                                                tint = themeColors.buttonEqualBg,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(10.dp))
+                                        Column {
+                                            Text(
+                                                text = currentFilter.getTitle(viewModel.selectedLanguage),
+                                                fontSize = 15.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = themeColors.displayText
+                                            )
+                                            Text(
+                                                text = if (isBn) "মোট ${currentFilteredTools.size}টি টুলস" else "Total ${currentFilteredTools.size} Tools",
+                                                fontSize = 11.sp,
+                                                color = themeColors.buttonEqualBg,
+                                                fontWeight = FontWeight.SemiBold
+                                            )
+                                        }
+                                    }
+
+                                    Surface(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .clickable { viewModel.selectedToolCategoryFilter = null },
+                                        color = themeColors.buttonEqualBg.copy(alpha = 0.12f),
+                                        shape = RoundedCornerShape(8.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.GridView,
+                                                contentDescription = null,
+                                                tint = themeColors.buttonEqualBg,
+                                                modifier = Modifier.size(14.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(
+                                                text = if (isBn) "সকল টুলস" else "All Tools",
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = themeColors.buttonEqualBg
+                                            )
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
 
-                    val categoriesToShow = if (isOverviewMode) {
-                        ToolCategory.values().filter { cat ->
-                            currentFilteredTools.any { it.category == cat }
+                        val categoriesToShow = if (isOverviewMode) {
+                            ToolCategory.values().filter { cat ->
+                                currentFilteredTools.any { it.category == cat }
+                            }
+                        } else {
+                            listOfNotNull(currentFilter)
                         }
-                    } else {
-                        listOfNotNull(currentFilter)
-                    }
 
-                    val expandedCategories = viewModel.expandedToolCategories
-                    val topToolsMap = viewModel.categoryTopToolsMap
-                    categoriesToShow.forEach { category ->
-                        val orderedCatTools = viewModel.getAllOrderedToolsForCategory(category, toolUsage)
-                        val categoryTools = orderedCatTools.filter { currentFilteredTools.contains(it) }
+                        val expandedCategories = viewModel.expandedToolCategories
+                        categoriesToShow.forEach { category ->
+                            val orderedCatTools = viewModel.getAllOrderedToolsForCategory(category, toolUsage)
+                            val categoryTools = orderedCatTools.filter { currentFilteredTools.contains(it) }
 
-                        if (categoryTools.isNotEmpty()) {
-                            val isCategoryExpanded = expandedCategories.getOrDefault(category, false)
+                            if (categoryTools.isNotEmpty()) {
+                                val isCategoryExpanded = expandedCategories.getOrDefault(category, false)
 
-                            // Unified Category Container Card
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 6.dp),
-                                shape = RoundedCornerShape(18.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = if (themeColors.isDark) themeColors.cardBg.copy(alpha = 0.55f) else themeColors.buttonEqualBg.copy(alpha = 0.08f)
-                                ),
-                                border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.18f))
-                            ) {
-                                Column(
+                                // Unified Category Container Card
+                                Card(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(horizontal = 6.dp, vertical = 10.dp)
+                                        .padding(vertical = 6.dp),
+                                    shape = RoundedCornerShape(18.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = if (themeColors.isDark) themeColors.cardBg.copy(alpha = 0.55f) else themeColors.buttonEqualBg.copy(alpha = 0.08f)
+                                    ),
+                                    border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.18f))
                                 ) {
-                                    // Category Header Line (Direct Row inside Outer Card, no separate card color)
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                    Column(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(bottom = 10.dp, start = 2.dp, end = 2.dp)
+                                            .padding(horizontal = 6.dp, vertical = 10.dp)
                                     ) {
+                                        // Category Header Line
                                         Row(
                                             verticalAlignment = Alignment.CenterVertically,
-                                            modifier = Modifier.weight(1f, fill = false)
-                                        ) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(32.dp)
-                                                    .clip(CircleShape)
-                                                    .background(themeColors.buttonEqualBg.copy(alpha = 0.25f))
-                                                    .border(0.5.dp, themeColors.buttonEqualBg.copy(alpha = 0.40f), CircleShape),
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                Icon(
-                                                    imageVector = category.icon,
-                                                    contentDescription = category.titleEn,
-                                                    tint = themeColors.buttonEqualBg,
-                                                    modifier = Modifier.size(18.dp)
-                                                )
-                                            }
-                                            Spacer(modifier = Modifier.width(8.dp))
-                                            Text(
-                                                text = category.getTitle(viewModel.selectedLanguage),
-                                                fontSize = 15.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = themeColors.displayText,
-                                                maxLines = 1
-                                            )
-                                            Spacer(modifier = Modifier.width(6.dp))
-                                            Box(
-                                                modifier = Modifier
-                                                    .defaultMinSize(minWidth = 22.dp, minHeight = 22.dp)
-                                                    .clip(CircleShape)
-                                                    .background(themeColors.buttonEqualBg.copy(alpha = 0.26f))
-                                                    .border(0.5.dp, themeColors.buttonEqualBg.copy(alpha = 0.40f), CircleShape)
-                                                    .padding(horizontal = 6.dp, vertical = 2.dp),
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                Text(
-                                                    text = if (isBn) "${categoryTools.size}টি" else "${categoryTools.size}",
-                                                    fontSize = 11.sp,
-                                                    fontWeight = FontWeight.ExtraBold,
-                                                    color = themeColors.buttonEqualBg
-                                                )
-                                            }
-                                        }
-
-                                        if (isOverviewMode && categoryTools.size > 2) {
-                                            Row(
-                                                modifier = Modifier
-                                                    .clip(RoundedCornerShape(10.dp))
-                                                    .background(themeColors.buttonEqualBg.copy(alpha = 0.22f))
-                                                    .border(0.5.dp, themeColors.buttonEqualBg.copy(alpha = 0.35f), RoundedCornerShape(10.dp))
-                                                    .clickable { expandedCategories[category] = !isCategoryExpanded }
-                                                    .padding(horizontal = 10.dp, vertical = 5.dp),
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                Text(
-                                                    text = if (isCategoryExpanded) {
-                                                        if (isBn) "সংকুচিত করুন" else "Collapse"
-                                                    } else {
-                                                        if (isBn) "সব দেখুন" else "See all"
-                                                     },
-                                                    fontSize = 11.5.sp,
-                                                    fontWeight = FontWeight.ExtraBold,
-                                                    color = themeColors.buttonEqualBg
-                                                )
-                                                Spacer(modifier = Modifier.width(3.dp))
-                                                Icon(
-                                                    imageVector = if (isCategoryExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                                                    contentDescription = null,
-                                                    tint = themeColors.buttonEqualBg,
-                                                    modifier = Modifier.size(15.dp)
-                                                )
-                                            }
-                                        }
-                                    }
-
-                                    val categoryToolRankMap = remember(categoryTools) {
-                                        categoryTools.mapIndexed { index, tool -> tool.name to (if (index < 3) index + 1 else 0) }.toMap()
-                                    }
-
-                                    // Dynamic Layout: Horizontal Scrolling Row when collapsed in Overview Mode, Vertical Grid when expanded or filtered
-                                    AnimatedContent(
-                                        targetState = if (isOverviewMode) isCategoryExpanded else true,
-                                        transitionSpec = {
-                                            (expandVertically(animationSpec = tween(300)) + fadeIn(animationSpec = tween(280))) togetherWith
-                                                    (shrinkVertically(animationSpec = tween(260)) + fadeOut(animationSpec = tween(200)))
-                                        },
-                                        label = "ToolsDisplayMode_${category.name}"
-                                    ) { isExpandedState ->
-                                        if (isExpandedState) {
-                                            // 2-column Vertical Grid
-                                            Column(
-                                                verticalArrangement = Arrangement.spacedBy(10.dp),
-                                                modifier = Modifier.padding(bottom = 2.dp)
-                                            ) {
-                                                categoryTools.chunked(2).forEach { rowItems ->
-                                                    val isBn = viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI
-                                                    val isAnyTitleLongInRow = rowItems.any { isTitleLong(it.getTitle(viewModel.selectedLanguage), isBn) }
-                                                    val isAnySubtitleLongInRow = rowItems.any { isSubtitleLong(it.getDescription(viewModel.selectedLanguage), isBn) }
-                                                    val rowTitleLines = if (isAnyTitleLongInRow) 2 else 1
-                                                    val rowSubtitleLines = if (isAnySubtitleLongInRow) 2 else 1
-                                                    Row(
-                                                        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
-                                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                                                    ) {
-                                                        rowItems.forEach { tool ->
-                                                            key(tool.name) {
-                                                                Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
-                                                                    ToolGridCardItem(
-                                                                        toolType = tool,
-                                                                        viewModel = viewModel,
-                                                                        themeColors = themeColors,
-                                                                        modifier = Modifier.fillMaxHeight(),
-                                                                        categoryRank = categoryToolRankMap[tool.name] ?: 0,
-                                                                        titleLines = rowTitleLines,
-                                                                        subtitleLines = rowSubtitleLines,
-                                                                        onClick = { viewModel.openTool(tool) }
-                                                                    )
-                                                                }
-                                                            }
-                                                        }
-                                                        if (rowItems.size == 1) {
-                                                            Spacer(modifier = Modifier.weight(1f))
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        } else {
-                                            // Default Horizontal Scrolling Row
-                                            val isBn = viewModel.selectedLanguage == com.example.util.AppLanguage.BENGALI
-                                            val isAnyTitleLong = categoryTools.any { isTitleLong(it.getTitle(viewModel.selectedLanguage), isBn) }
-                                            val isAnySubtitleLong = categoryTools.any { isSubtitleLong(it.getDescription(viewModel.selectedLanguage), isBn) }
-                                            val titleLines = if (isAnyTitleLong) 2 else 1
-                                            val subtitleLines = if (isAnySubtitleLong) 2 else 1
-                                            val cardHeight = when {
-                                                titleLines == 2 && subtitleLines == 2 -> 135.dp
-                                                titleLines == 2 || subtitleLines == 2 -> 122.dp
-                                                else -> 110.dp
-                                            }
-                                            Row(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .horizontalBounceOverscroll()
-                                                    .horizontalScroll(
-                                                        remember(category.name) {
-                                                            categoryScrollStates.getOrPut(category.name) {
-                                                                androidx.compose.foundation.ScrollState(0)
-                                                            }
-                                                        }
-                                                    )
-                                                    .padding(bottom = 2.dp),
-                                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                                            ) {
-                                                categoryTools.forEach { tool ->
-                                                    key(tool.name) {
-                                                        Box(
-                                                            modifier = Modifier
-                                                                .width(152.dp)
-                                                                .height(cardHeight)
-                                                        ) {
-                                                            ToolGridCardItem(
-                                                                toolType = tool,
-                                                                viewModel = viewModel,
-                                                                themeColors = themeColors,
-                                                                modifier = Modifier.fillMaxSize(),
-                                                                categoryRank = categoryToolRankMap[tool.name] ?: 0,
-                                                                titleLines = titleLines,
-                                                                subtitleLines = subtitleLines,
-                                                                showFavoriteIcon = false,
-                                                                onClick = { viewModel.openTool(tool) }
-                                                            )
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    // Clean Collapse Button at the bottom of section when expanded in Overview mode
-                                    if (isOverviewMode && isCategoryExpanded) {
-                                        Surface(
+                                            horizontalArrangement = Arrangement.SpaceBetween,
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .padding(top = 8.dp)
-                                                .clip(RoundedCornerShape(12.dp))
-                                                .clickable { expandedCategories[category] = false },
-                                            shape = RoundedCornerShape(12.dp),
-                                            color = themeColors.cardBg,
-                                            border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.12f))
+                                                .padding(bottom = 10.dp, start = 2.dp, end = 2.dp)
                                         ) {
                                             Row(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(vertical = 8.dp, horizontal = 14.dp),
-                                                horizontalArrangement = Arrangement.Center,
-                                                verticalAlignment = Alignment.CenterVertically
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                modifier = Modifier.weight(1f, fill = false)
                                             ) {
-                                                Icon(
-                                                    imageVector = Icons.Default.KeyboardArrowUp,
-                                                    contentDescription = null,
-                                                    tint = themeColors.displayText.copy(alpha = 0.7f),
-                                                    modifier = Modifier.size(18.dp)
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(32.dp)
+                                                        .clip(CircleShape)
+                                                        .background(themeColors.buttonEqualBg.copy(alpha = 0.25f))
+                                                        .border(0.5.dp, themeColors.buttonEqualBg.copy(alpha = 0.40f), CircleShape),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Icon(
+                                                        imageVector = category.icon,
+                                                        contentDescription = category.titleEn,
+                                                        tint = themeColors.buttonEqualBg,
+                                                        modifier = Modifier.size(18.dp)
+                                                    )
+                                                }
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text(
+                                                    text = category.getTitle(viewModel.selectedLanguage),
+                                                    fontSize = 15.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = themeColors.displayText,
+                                                    maxLines = 1
                                                 )
                                                 Spacer(modifier = Modifier.width(6.dp))
-                                                Text(
-                                                    text = if (isBn) 
-                                                        "সংকুচিত করুন (কম দেখুন)" 
-                                                    else 
-                                                        "Collapse (Show Less)",
-                                                    fontSize = 12.sp,
-                                                    fontWeight = FontWeight.SemiBold,
-                                                    color = themeColors.displayText.copy(alpha = 0.75f)
-                                                )
+                                                Box(
+                                                    modifier = Modifier
+                                                        .defaultMinSize(minWidth = 22.dp, minHeight = 22.dp)
+                                                        .clip(CircleShape)
+                                                        .background(themeColors.buttonEqualBg.copy(alpha = 0.26f))
+                                                        .border(0.5.dp, themeColors.buttonEqualBg.copy(alpha = 0.40f), CircleShape)
+                                                        .padding(horizontal = 6.dp, vertical = 2.dp),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Text(
+                                                        text = if (isBn) "${categoryTools.size}টি" else "${categoryTools.size}",
+                                                        fontSize = 11.sp,
+                                                        fontWeight = FontWeight.ExtraBold,
+                                                        color = themeColors.buttonEqualBg
+                                                    )
+                                                }
+                                            }
+
+                                            if (isOverviewMode && categoryTools.size > 2) {
+                                                Row(
+                                                    modifier = Modifier
+                                                        .clip(RoundedCornerShape(10.dp))
+                                                        .background(themeColors.buttonEqualBg.copy(alpha = 0.22f))
+                                                        .border(0.5.dp, themeColors.buttonEqualBg.copy(alpha = 0.35f), RoundedCornerShape(10.dp))
+                                                        .clickable { expandedCategories[category] = !isCategoryExpanded }
+                                                        .padding(horizontal = 10.dp, vertical = 5.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Text(
+                                                        text = if (isCategoryExpanded) {
+                                                            if (isBn) "সংকুচিত করুন" else "Collapse"
+                                                        } else {
+                                                            if (isBn) "সব দেখুন" else "See all"
+                                                         },
+                                                        fontSize = 11.5.sp,
+                                                        fontWeight = FontWeight.ExtraBold,
+                                                        color = themeColors.buttonEqualBg
+                                                    )
+                                                    Spacer(modifier = Modifier.width(3.dp))
+                                                    Icon(
+                                                        imageVector = if (isCategoryExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                                        contentDescription = null,
+                                                        tint = themeColors.buttonEqualBg,
+                                                        modifier = Modifier.size(15.dp)
+                                                    )
+                                                }
+                                            }
+                                        }
+
+                                        val categoryToolRankMap = remember(categoryTools) {
+                                            categoryTools.mapIndexed { index, tool -> tool.name to (if (index < 3) index + 1 else 0) }.toMap()
+                                        }
+
+                                        // Dynamic Layout: Horizontal Scrolling Row when collapsed in Overview Mode, Vertical Grid when expanded or filtered
+                                        AnimatedContent(
+                                            targetState = if (isOverviewMode) isCategoryExpanded else true,
+                                            transitionSpec = {
+                                                (expandVertically(animationSpec = tween(300)) + fadeIn(animationSpec = tween(280))) togetherWith
+                                                        (shrinkVertically(animationSpec = tween(260)) + fadeOut(animationSpec = tween(200)))
+                                            },
+                                            label = "ClassicToolsDisplayMode_${category.name}"
+                                        ) { isExpandedState ->
+                                            if (isExpandedState) {
+                                                // 2-column Vertical Grid
+                                                Column(
+                                                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                                                    modifier = Modifier.padding(bottom = 2.dp)
+                                                ) {
+                                                    categoryTools.chunked(2).forEach { rowItems ->
+                                                        val isAnyTitleLongInRow = rowItems.any { isTitleLong(it.getTitle(viewModel.selectedLanguage), isBn) }
+                                                        val isAnySubtitleLongInRow = rowItems.any { isSubtitleLong(it.getDescription(viewModel.selectedLanguage), isBn) }
+                                                        val rowTitleLines = if (isAnyTitleLongInRow) 2 else 1
+                                                        val rowSubtitleLines = if (isAnySubtitleLongInRow) 2 else 1
+                                                        Row(
+                                                            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
+                                                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                                        ) {
+                                                            rowItems.forEach { tool ->
+                                                                key(tool.name) {
+                                                                    Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                                                                        ToolGridCardItem(
+                                                                            toolType = tool,
+                                                                            viewModel = viewModel,
+                                                                            themeColors = themeColors,
+                                                                            modifier = Modifier.fillMaxHeight(),
+                                                                            categoryRank = categoryToolRankMap[tool.name] ?: 0,
+                                                                            titleLines = rowTitleLines,
+                                                                            subtitleLines = rowSubtitleLines,
+                                                                            onClick = { viewModel.openTool(tool) }
+                                                                        )
+                                                                    }
+                                                                }
+                                                            }
+                                                            if (rowItems.size == 1) {
+                                                                Spacer(modifier = Modifier.weight(1f))
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            } else {
+                                                // Default Horizontal Scrolling Row
+                                                val isAnyTitleLong = categoryTools.any { isTitleLong(it.getTitle(viewModel.selectedLanguage), isBn) }
+                                                val isAnySubtitleLong = categoryTools.any { isSubtitleLong(it.getDescription(viewModel.selectedLanguage), isBn) }
+                                                val titleLines = if (isAnyTitleLong) 2 else 1
+                                                val subtitleLines = if (isAnySubtitleLong) 2 else 1
+                                                val cardHeight = when {
+                                                    titleLines == 2 && subtitleLines == 2 -> 135.dp
+                                                    titleLines == 2 || subtitleLines == 2 -> 122.dp
+                                                    else -> 110.dp
+                                                }
+                                                Row(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .horizontalBounceOverscroll()
+                                                        .horizontalScroll(
+                                                            remember(category.name) {
+                                                                categoryScrollStates.getOrPut(category.name) {
+                                                                    androidx.compose.foundation.ScrollState(0)
+                                                                }
+                                                            }
+                                                        )
+                                                        .padding(bottom = 2.dp),
+                                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                                ) {
+                                                    categoryTools.forEach { tool ->
+                                                        key(tool.name) {
+                                                            Box(
+                                                                modifier = Modifier
+                                                                    .width(152.dp)
+                                                                    .height(cardHeight)
+                                                            ) {
+                                                                ToolGridCardItem(
+                                                                    toolType = tool,
+                                                                    viewModel = viewModel,
+                                                                    themeColors = themeColors,
+                                                                    modifier = Modifier.fillMaxSize(),
+                                                                    categoryRank = categoryToolRankMap[tool.name] ?: 0,
+                                                                    titleLines = titleLines,
+                                                                    subtitleLines = subtitleLines,
+                                                                    showFavoriteIcon = false,
+                                                                    onClick = { viewModel.openTool(tool) }
+                                                                )
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        // Collapse Button at bottom when expanded
+                                        if (isOverviewMode && isCategoryExpanded) {
+                                            Surface(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(top = 8.dp)
+                                                    .clip(RoundedCornerShape(12.dp))
+                                                    .clickable { expandedCategories[category] = false },
+                                                shape = RoundedCornerShape(12.dp),
+                                                color = themeColors.cardBg,
+                                                border = BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.12f))
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(vertical = 8.dp, horizontal = 14.dp),
+                                                    horizontalArrangement = Arrangement.Center,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.KeyboardArrowUp,
+                                                        contentDescription = null,
+                                                        tint = themeColors.displayText.copy(alpha = 0.7f),
+                                                        modifier = Modifier.size(18.dp)
+                                                    )
+                                                    Spacer(modifier = Modifier.width(6.dp))
+                                                    Text(
+                                                        text = if (isBn) "সংকুচিত করুন (কম দেখুন)" else "Collapse (Show Less)",
+                                                        fontSize = 12.sp,
+                                                        fontWeight = FontWeight.SemiBold,
+                                                        color = themeColors.displayText.copy(alpha = 0.75f)
+                                                    )
+                                                }
                                             }
                                         }
                                     }

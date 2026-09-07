@@ -94,6 +94,13 @@ enum class VocabSortOption(val titleBn: String, val titleEn: String) {
     LENGTH("শব্দের দৈর্ঘ্য", "Word Length")
 }
 
+private fun formatNumberBnEn(count: Int, isBn: Boolean): String {
+    val formatted = java.text.NumberFormat.getIntegerInstance(java.util.Locale.US).format(count)
+    if (!isBn) return formatted
+    val bnDigits = charArrayOf('০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯')
+    return formatted.map { if (it in '0'..'9') bnDigits[it - '0'] else it }.joinToString("")
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VocabularyMasterTool(
@@ -255,7 +262,7 @@ fun VocabularyMasterTool(
                                 color = themeColors.onSurface
                             )
                             Text(
-                                text = if (isBn) "${allWords.size} টি শব্দ সক্রিয় • অফলাইন ডিকশনারি" else "${allWords.size} Words Active • Offline Ready",
+                                text = if (isBn) "${formatNumberBnEn(allWords.size, true)} টি শব্দ সক্রিয় • অফলাইন ডিকশনারি" else "${formatNumberBnEn(allWords.size, false)} Words Active • Offline Ready",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = themeColors.onSurface.copy(alpha = 0.7f)
                             )
@@ -397,7 +404,7 @@ fun VocabularyMasterTool(
                             }
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = if (isBn) "ভোকাবুলারি (${allWords.size})" else "Vocab (${allWords.size})",
+                                text = if (isBn) "ভোকাবুলারি (${formatNumberBnEn(allWords.size, true)})" else "Vocab (${formatNumberBnEn(allWords.size, false)})",
                                 style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                                 color = themeColors.onSurface
                             )
@@ -483,6 +490,7 @@ fun VocabularyMasterTool(
                         isBn = isBn
                     )
                     VocabTab.STORE -> VocabStoreTab(
+                        totalWordsCount = allWords.size,
                         installedPacks = installedPacks,
                         onInstallPack = { packId ->
                             coroutineScope.launch {
@@ -1833,6 +1841,7 @@ fun generateQuizOptions(target: VocabWord, allWords: List<VocabWord>, isBanglaTo
 
 @Composable
 fun VocabStoreTab(
+    totalWordsCount: Int = 7000,
     installedPacks: List<String>,
     onInstallPack: (String) -> Unit,
     onUninstallPack: (String) -> Unit,
@@ -1880,7 +1889,7 @@ fun VocabStoreTab(
                         color = themeColors.onSurface
                     )
                     Text(
-                        text = if (isBn) "বিসিএস, ব্যাংক ও বিশ্ববিদ্যালয় ভর্তি পরীক্ষার জন্য ১০,০০০+ শব্দ এক ক্লিকে সেটআপ করুন।" else "Set up 10,000+ high-yield words for BCS, Bank & University Admission in one tap.",
+                        text = if (isBn) "বিসিএস, ব্যাংক ও বিশ্ববিদ্যালয় ভর্তি পরীক্ষার জন্য ${formatNumberBnEn(totalWordsCount, true)}+ শব্দ এক ক্লিকে সক্রিয় করুন।" else "Activate ${formatNumberBnEn(totalWordsCount, false)}+ high-yield words for BCS, Bank & University Admission in one tap.",
                         style = MaterialTheme.typography.bodySmall,
                         color = themeColors.onSurface.copy(alpha = 0.7f)
                     )
@@ -1919,13 +1928,13 @@ fun VocabStoreTab(
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = if (isBn) "৭,০০০ টি অতি প্রয়োজনীয় অফলাইন ভোকাবুলারি" else "7,000 Essential Offline Vocabulary",
+                            text = if (isBn) "${formatNumberBnEn(totalWordsCount, true)} টি অতি প্রয়োজনীয় অফলাইন ভোকাবুলারি" else "${formatNumberBnEn(totalWordsCount, false)} Essential Offline Vocabulary",
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                             color = themeColors.onSurface
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = if (isBn) "৭,০০০ টি মাস্টার শব্দ • ১০০% অফলাইন সক্রিয়করণ" else "7,000 Master Words • 100% Offline Activation",
+                            text = if (isBn) "${formatNumberBnEn(totalWordsCount, true)} টি মাস্টার শব্দ • ১০০% অফলাইন সক্রিয়করণ" else "${formatNumberBnEn(totalWordsCount, false)} Master Words • 100% Offline Activation",
                             style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
                             color = themeColors.accent
                         )
@@ -1935,7 +1944,7 @@ fun VocabStoreTab(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = if (isBn) "ইংরেজি শব্দ, সঠিক উচ্চারণ সংকেত, স্পষ্ট বাংলা অর্থ, সমার্থক শব্দ (Synonyms), বিপরীত শব্দ (Antonyms), পদ প্রকরণ (Part of Speech) এবং বাংলা অনুবাদ সহ বাস্তবভিত্তিক উদাহরণ বাক্য সম্বলিত ৭,০০০ টি সবচেয়ে বেশি প্রয়োজনীয় শব্দভান্ডার। কোনো ইন্টারনেট কানেকশন ছাড়াই অফলাইন ফাইল থেকে সরাসরি সক্রিয় করুন।" else "Complete 7,000 high-yield vocabulary pack featuring full phonetics, Bangla meanings, synonyms, antonyms, parts of speech, and contextual example sentences with Bangla translations. Activates instantly from local offline files without internet.",
+                    text = if (isBn) "ইংরেজি শব্দ, সঠিক উচ্চারণ সংকেত, স্পষ্ট বাংলা অর্থ, সমার্থক শব্দ (Synonyms), বিপরীত শব্দ (Antonyms), পদ প্রকরণ (Part of Speech) এবং বাংলা অনুবাদ সহ বাস্তবভিত্তিক উদাহরণ বাক্য সম্বলিত ${formatNumberBnEn(totalWordsCount, true)} টি সবচেয়ে বেশি প্রয়োজনীয় শব্দভান্ডার। কোনো ইন্টারনেট কানেকশন ছাড়াই অফলাইন ফাইল থেকে সরাসরি সক্রিয় করুন।" else "Complete ${formatNumberBnEn(totalWordsCount, false)} high-yield vocabulary pack featuring full phonetics, Bangla meanings, synonyms, antonyms, parts of speech, and contextual example sentences with Bangla translations. Activates instantly from local offline files without internet.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = themeColors.onSurface.copy(alpha = 0.75f)
                 )
@@ -2138,20 +2147,26 @@ fun VocabFavoritesTab(
 object VocabularyDataProvider {
     @Volatile
     private var memoryCache: List<VocabWord>? = null
+    @Volatile
+    private var lastPackIds: Set<String>? = null
 
     fun getWordsForPacks(context: Context, installedPackIds: Set<String>): List<VocabWord> {
-        val hasMaster = installedPackIds.contains("master_dictionary") || installedPackIds.contains("all_100k_dict")
         val cached = memoryCache
-        if (cached != null && cached.isNotEmpty()) {
-            if (!hasMaster || cached.size >= 7000) {
-                return cached
-            }
+        if (cached != null && cached.isNotEmpty() && lastPackIds == installedPackIds) {
+            return cached
         }
 
         val list = mutableListOf<VocabWord>()
 
+        // 1. High-frequency authentic curated exam words (Spoken, IELTS, BCS, Mega)
+        list.addAll(VocabularyHighFrequencyDataset.getSpoken3000Pack())
+        list.addAll(VocabularyHighFrequencyDataset.getIelts4000Pack())
+        list.addAll(VocabularyHighFrequencyDataset.getBcs5000Pack())
+        list.addAll(VocabularyHighFrequencyDataset.getMega10000Pack())
+
+        val hasMaster = installedPackIds.contains("master_dictionary") || installedPackIds.contains("all_100k_dict")
         if (hasMaster) {
-            // Master dictionary is always loaded directly from assets to ensure full 7,000 words are active
+            // Master offline dictionary loaded directly from assets
             val masterWords = VocabularyPackRepository.loadPackFromAssetsSync(context, "dictionary_1000.json")
             if (!masterWords.isNullOrEmpty()) {
                 list.addAll(masterWords)
@@ -2176,18 +2191,18 @@ object VocabularyDataProvider {
             }
         }
 
-        val distinctList = list.distinctBy { it.word.lowercase() }
+        val distinctList = list.distinctBy { it.word.lowercase().trim() }
         val result = distinctList.mapIndexed { index, word ->
             word.copy(frequencyRank = index + 1)
         }
-        if (hasMaster) {
-            memoryCache = result
-        }
+        memoryCache = result
+        lastPackIds = installedPackIds
         return result
     }
 
     fun clearCache() {
         memoryCache = null
+        lastPackIds = null
     }
 }
 

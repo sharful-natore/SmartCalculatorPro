@@ -39,6 +39,11 @@ import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.*
 
+enum class DashboardLayoutMode {
+    MODERN,
+    CLASSIC
+}
+
 class CalculatorViewModel(
     private val repository: HistoryRepository,
     private val usageRepository: ToolUsageRepository,
@@ -241,6 +246,21 @@ class CalculatorViewModel(
     val expandedToolCategories = mutableStateMapOf<com.example.data.model.ToolCategory, Boolean>()
     val expandedConverterCategories = mutableStateMapOf<com.example.data.model.ConverterCategory, Boolean>()
     var isEvaluated by mutableStateOf(false)
+
+    var dashboardLayoutMode by mutableStateOf(
+        try {
+            DashboardLayoutMode.valueOf(
+                sharedPrefs.getString("dashboard_layout_mode", DashboardLayoutMode.MODERN.name) ?: DashboardLayoutMode.MODERN.name
+            )
+        } catch (_: Exception) {
+            DashboardLayoutMode.MODERN
+        }
+    )
+
+    fun setDashboardLayout(mode: DashboardLayoutMode) {
+        dashboardLayoutMode = mode
+        sharedPrefs.edit().putString("dashboard_layout_mode", mode.name).apply()
+    }
 
     var calculatorNavigationReasonEn by mutableStateOf("Initial Launch / Dashboard")
         private set

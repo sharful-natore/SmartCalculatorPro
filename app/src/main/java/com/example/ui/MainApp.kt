@@ -178,6 +178,7 @@ fun MainContent(
     var showSettingsDialog by remember { mutableStateOf(false) }
     var showTtsSettingsDialog by remember { mutableStateOf(false) }
     var showGlobalBackupDialog by remember { mutableStateOf(false) }
+    var showDashboardLayoutDialog by remember { mutableStateOf(false) }
     var showTermsDialog by remember { mutableStateOf(false) }
     var showPrivacyDialog by remember { mutableStateOf(false) }
     var showAboutDialog by remember { mutableStateOf(false) }
@@ -482,6 +483,28 @@ fun MainContent(
                                             onClick = {
                                                 isMoreMenuExpanded = false
                                                 showSettingsDialog = true
+                                            }
+                                        )
+                                        DropdownMenuItem(
+                                            text = { 
+                                                Text(
+                                                    if (viewModel.selectedLanguage == AppLanguage.BENGALI) 
+                                                        "ড্যাশবোর্ড লেআউট (${if (viewModel.dashboardLayoutMode == com.example.ui.viewmodel.DashboardLayoutMode.MODERN) "মডার্ন" else "ক্লাসিক"})" 
+                                                    else 
+                                                        "Dashboard Layout (${if (viewModel.dashboardLayoutMode == com.example.ui.viewmodel.DashboardLayoutMode.MODERN) "Modern" else "Classic"})", 
+                                                    color = themeColors.displayText
+                                                ) 
+                                            },
+                                            leadingIcon = { 
+                                                Icon(
+                                                    if (viewModel.dashboardLayoutMode == com.example.ui.viewmodel.DashboardLayoutMode.MODERN) Icons.Default.DashboardCustomize else Icons.Default.ViewAgenda, 
+                                                    contentDescription = null, 
+                                                    tint = themeColors.buttonEqualBg
+                                                ) 
+                                            },
+                                            onClick = {
+                                                isMoreMenuExpanded = false
+                                                showDashboardLayoutDialog = true
                                             }
                                         )
                                         DropdownMenuItem(
@@ -2003,6 +2026,194 @@ fun MainContent(
                 },
                 containerColor = themeColors.cardBg,
                 shape = RoundedCornerShape(16.dp)
+            )
+        }
+
+        // --- Dashboard Layout Switcher Dialog ---
+        if (showDashboardLayoutDialog) {
+            val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
+            AlertDialog(
+                onDismissRequest = { showDashboardLayoutDialog = false },
+                icon = {
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.DashboardCustomize,
+                            contentDescription = null,
+                            tint = themeColors.buttonEqualBg,
+                            modifier = Modifier.size(26.dp)
+                        )
+                    }
+                },
+                title = {
+                    Text(
+                        text = if (isBn) "ড্যাশবোর্ড লেআউট নির্বাচন" else "Select Dashboard Layout",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = themeColors.displayText,
+                        textAlign = TextAlign.Center
+                    )
+                },
+                text = {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = if (isBn) "আপনার পছন্দের ড্যাশবোর্ড ডিসপ্লে মোড সিলেক্ট করুন:" else "Choose your preferred dashboard display style:",
+                            fontSize = 12.5.sp,
+                            color = themeColors.displayText.copy(alpha = 0.7f)
+                        )
+
+                        // Option 1: Modern Layout
+                        val isModern = viewModel.dashboardLayoutMode == com.example.ui.viewmodel.DashboardLayoutMode.MODERN
+                        Surface(
+                            shape = RoundedCornerShape(14.dp),
+                            color = if (isModern) themeColors.buttonEqualBg.copy(alpha = 0.12f) else themeColors.background,
+                            border = BorderStroke(
+                                width = if (isModern) 1.5.dp else 1.dp,
+                                color = if (isModern) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.15f)
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(14.dp))
+                                .clickable {
+                                    viewModel.setDashboardLayout(com.example.ui.viewmodel.DashboardLayoutMode.MODERN)
+                                }
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(CircleShape)
+                                        .background(if (isModern) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.1f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.DashboardCustomize,
+                                        contentDescription = null,
+                                        tint = if (isModern) Color.White else themeColors.displayText,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = if (isBn) "মডার্ন লেআউট (Modern)" else "Modern Layout",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 14.sp,
+                                        color = if (isModern) themeColors.buttonEqualBg else themeColors.displayText
+                                    )
+                                    Text(
+                                        text = if (isBn) "গ্রাডিয়েন্ট ক্যাটাগরি কার্ড, রাউন্ড স্ট্যাকড আইকন ও এক্সপ্লোর ডিটেইল ভিউ" else "Gradient category cards, round stacked solid icons & explore detail view",
+                                        fontSize = 11.sp,
+                                        color = themeColors.displayText.copy(alpha = 0.65f),
+                                        lineHeight = 14.sp
+                                    )
+                                }
+                                RadioButton(
+                                    selected = isModern,
+                                    onClick = {
+                                        viewModel.setDashboardLayout(com.example.ui.viewmodel.DashboardLayoutMode.MODERN)
+                                    },
+                                    colors = RadioButtonDefaults.colors(
+                                        selectedColor = themeColors.buttonEqualBg,
+                                        unselectedColor = themeColors.displayText.copy(alpha = 0.4f)
+                                    )
+                                )
+                            }
+                        }
+
+                        // Option 2: Classic Layout
+                        val isClassic = viewModel.dashboardLayoutMode == com.example.ui.viewmodel.DashboardLayoutMode.CLASSIC
+                        Surface(
+                            shape = RoundedCornerShape(14.dp),
+                            color = if (isClassic) themeColors.buttonEqualBg.copy(alpha = 0.12f) else themeColors.background,
+                            border = BorderStroke(
+                                width = if (isClassic) 1.5.dp else 1.dp,
+                                color = if (isClassic) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.15f)
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(14.dp))
+                                .clickable {
+                                    viewModel.setDashboardLayout(com.example.ui.viewmodel.DashboardLayoutMode.CLASSIC)
+                                }
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(CircleShape)
+                                        .background(if (isClassic) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.1f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.ViewAgenda,
+                                        contentDescription = null,
+                                        tint = if (isClassic) Color.White else themeColors.displayText,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = if (isBn) "ক্লাসিক লেআউট (Classic)" else "Classic Layout",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 14.sp,
+                                        color = if (isClassic) themeColors.buttonEqualBg else themeColors.displayText
+                                    )
+                                    Text(
+                                        text = if (isBn) "ফিল্টার চিপস, ক্যাটাগরি সেকশন ও অনুভূমিক/উল্লম্ব এক্সপ্যান্ডেবল ভিউ" else "Filter chips, category sections & horizontal/vertical expandable view",
+                                        fontSize = 11.sp,
+                                        color = themeColors.displayText.copy(alpha = 0.65f),
+                                        lineHeight = 14.sp
+                                    )
+                                }
+                                RadioButton(
+                                    selected = isClassic,
+                                    onClick = {
+                                        viewModel.setDashboardLayout(com.example.ui.viewmodel.DashboardLayoutMode.CLASSIC)
+                                    },
+                                    colors = RadioButtonDefaults.colors(
+                                        selectedColor = themeColors.buttonEqualBg,
+                                        unselectedColor = themeColors.displayText.copy(alpha = 0.4f)
+                                    )
+                                )
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = { showDashboardLayoutDialog = false },
+                        colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text(
+                            text = if (isBn) "সম্পন্ন" else "Done",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                },
+                containerColor = themeColors.cardBg,
+                shape = RoundedCornerShape(18.dp)
             )
         }
 
