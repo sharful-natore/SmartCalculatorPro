@@ -18,7 +18,7 @@ enum class ToolCategory(
     ELECTRICITY("Electricity & Power", "বিদ্যুৎ ও শক্তি", Icons.Default.Bolt),
     VEHICLE("Smart & Vehicle Tools", "স্মার্ট ও যানবাহন", Icons.Default.DirectionsCar),
     EDUCATION("Education & Results", "শিক্ষা ও ফলাফল", Icons.Default.School),
-    AGRICULTURE("Agriculture & Farm", "কৃষি ও খামার", Icons.Default.Agriculture),
+    AGRICULTURE("Agriculture & Farm", "কৃষি ও খামার", Icons.Default.Eco),
     KIDS("Kids Learning & Fun", "কিডস লার্নিং ও খেলা", Icons.Default.ChildCare),
     DEVELOPER("Developer Tools", "ডেভেলপার টুলস", Icons.Default.Code),
     ENGINEERING("Engineering", "ইঞ্জিনিয়ারিং", Icons.Default.SettingsInputComponent);

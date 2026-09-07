@@ -383,218 +383,220 @@ fun DashboardCategoriesView(
             if (isBn) "আংশিক মেঘলা" else "Partly Cloudy"
         }
 
-        // Unified Greeting, Weather & Calendar Card
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 12.dp)
-                .border(
-                    width = 1.dp,
-                    color = if (themeColors.isDark) Color.White.copy(alpha = 0.22f) else themeColors.displayText.copy(alpha = 0.12f),
-                    shape = RoundedCornerShape(16.dp)
-                )
-                .themeCardShadow(themeColors, elevation = 1.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-        ) {
-            Box(
-                modifier = Modifier.fillMaxWidth()
+        // Unified Greeting, Weather & Calendar Card (Hidden when a category is opened)
+        if (selectedFilter == null) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp)
+                    .border(
+                        width = 1.dp,
+                        color = if (themeColors.isDark) Color.White.copy(alpha = 0.22f) else themeColors.displayText.copy(alpha = 0.12f),
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                    .themeCardShadow(themeColors, elevation = 1.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
-                val currentTimeMillis = remember { System.currentTimeMillis() }
-                val currentHourVal = remember(currentTimeMillis) {
-                    java.util.Calendar.getInstance().apply { timeInMillis = currentTimeMillis }.get(java.util.Calendar.HOUR_OF_DAY)
-                }
-                val weatherCodeVal = remember(viewModel.weatherData) {
-                    viewModel.weatherData?.current?.weather_code ?: 1
-                }
-                DynamicGreetingIllustrationBackground(
-                    currentHour = currentHourVal,
-                    weatherCode = weatherCodeVal,
-                    isDark = themeColors.isDark,
-                    modifier = Modifier.matchParentSize()
-                )
-
                 Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .background(
-                            Color(0xFF0F172A).copy(alpha = 0.42f)
-                        )
-                )
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(14.dp)
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                // Top section: Greeting & Weather Info
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Left Column: Greeting Title & English Date (Clickable to open Calendar)
-                    Column(
-                        modifier = Modifier
-                            .weight(1.05f)
-                            .clip(RoundedCornerShape(8.dp))
-                            .clickable { viewModel.openTool(ToolType.MULTI_CALENDAR) }
-                            .padding(2.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Start
-                        ) {
-                            Icon(
-                                imageVector = greetingIcon,
-                                contentDescription = "Greeting",
-                                tint = Color(0xFFFDE047),
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = greetingText,
-                                fontWeight = FontWeight.ExtraBold,
-                                fontSize = 15.sp,
-                                color = Color.White,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                softWrap = false
-                            )
-                        }
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = "${dateInfo.englishDayName}, ${dateInfo.englishDate}",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White.copy(alpha = 0.85f),
-                                lineHeight = 15.sp,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                softWrap = false
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Icon(
-                                imageVector = Icons.Default.CalendarMonth,
-                                contentDescription = "Calendar",
-                                tint = Color.White.copy(alpha = 0.7f),
-                                modifier = Modifier.size(13.dp)
-                            )
-                        }
+                    val currentTimeMillis = remember { System.currentTimeMillis() }
+                    val currentHourVal = remember(currentTimeMillis) {
+                        java.util.Calendar.getInstance().apply { timeInMillis = currentTimeMillis }.get(java.util.Calendar.HOUR_OF_DAY)
                     }
+                    val weatherCodeVal = remember(viewModel.weatherData) {
+                        viewModel.weatherData?.current?.weather_code ?: 1
+                    }
+                    DynamicGreetingIllustrationBackground(
+                        currentHour = currentHourVal,
+                        weatherCode = weatherCodeVal,
+                        isDark = themeColors.isDark,
+                        modifier = Modifier.matchParentSize()
+                    )
 
-                    // Spacer to keep balance
-                    Spacer(modifier = Modifier.width(12.dp))
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .background(
+                                Color(0xFF0F172A).copy(alpha = 0.42f)
+                            )
+                    )
 
-                    // Right Column: Weather Info (Clickable)
                     Column(
                         modifier = Modifier
-                            .weight(0.95f)
-                            .clickable { viewModel.openTool(ToolType.WEATHER) },
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                        horizontalAlignment = Alignment.End
+                            .fillMaxWidth()
+                            .padding(14.dp)
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.End
+                    // Top section: Greeting & Weather Info
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Left Column: Greeting Title & English Date (Clickable to open Calendar)
+                        Column(
+                            modifier = Modifier
+                                .weight(1.05f)
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable { viewModel.openTool(ToolType.MULTI_CALENDAR) }
+                                .padding(2.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Start
+                            ) {
+                                Icon(
+                                    imageVector = greetingIcon,
+                                    contentDescription = "Greeting",
+                                    tint = Color(0xFFFDE047),
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = greetingText,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    fontSize = 15.sp,
+                                    color = Color.White,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    softWrap = false
+                                )
+                            }
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "${dateInfo.englishDayName}, ${dateInfo.englishDate}",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White.copy(alpha = 0.85f),
+                                    lineHeight = 15.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    softWrap = false
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(
+                                    imageVector = Icons.Default.CalendarMonth,
+                                    contentDescription = "Calendar",
+                                    tint = Color.White.copy(alpha = 0.7f),
+                                    modifier = Modifier.size(13.dp)
+                                )
+                            }
+                        }
+
+                        // Spacer to keep balance
+                        Spacer(modifier = Modifier.width(12.dp))
+
+                        // Right Column: Weather Info (Clickable)
+                        Column(
+                            modifier = Modifier
+                                .weight(0.95f)
+                                .clickable { viewModel.openTool(ToolType.WEATHER) },
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                            horizontalAlignment = Alignment.End
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.End
+                            ) {
+                                Text(
+                                    text = "$weatherLocationName • $weatherTempText",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(
+                                    imageVector = weatherIcon,
+                                    contentDescription = "Weather",
+                                    tint = Color.White.copy(alpha = 0.95f),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
                             Text(
-                                text = "$weatherLocationName • $weatherTempText",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White,
+                                text = weatherConditionText,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.White.copy(alpha = 0.85f),
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
-                            Spacer(modifier = Modifier.width(4.dp))
+                        }
+                    }
+
+                    // Divider line
+                    Divider(
+                        modifier = Modifier.padding(vertical = 10.dp),
+                        color = Color.White.copy(alpha = 0.15f),
+                        thickness = 1.dp
+                    )
+
+                    // Bottom section: Bengali & Hijri Calendars
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Bengali Date (Left Aligned - Clickable)
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .clickable { viewModel.openTool(ToolType.MULTI_CALENDAR) }
+                                .padding(horizontal = 4.dp, vertical = 2.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Icon(
-                                imageVector = weatherIcon,
-                                contentDescription = "Weather",
-                                tint = Color.White.copy(alpha = 0.95f),
-                                modifier = Modifier.size(16.dp)
+                                imageVector = Icons.Default.WbSunny,
+                                contentDescription = "Bengali Calendar",
+                                tint = Color(0xFF34D399),
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = dateInfo.bengaliDate,
+                                fontSize = 11.sp,
+                                color = Color.White.copy(alpha = 0.85f),
+                                fontWeight = FontWeight.SemiBold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                softWrap = false
                             )
                         }
-                        Text(
-                            text = weatherConditionText,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color.White.copy(alpha = 0.85f),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                }
 
-                // Divider line
-                Divider(
-                    modifier = Modifier.padding(vertical = 10.dp),
-                    color = Color.White.copy(alpha = 0.15f),
-                    thickness = 1.dp
-                )
-
-                // Bottom section: Bengali & Hijri Calendars
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Bengali Date (Left Aligned - Clickable)
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .clickable { viewModel.openTool(ToolType.MULTI_CALENDAR) }
-                            .padding(horizontal = 4.dp, vertical = 2.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.WbSunny,
-                            contentDescription = "Bengali Calendar",
-                            tint = Color(0xFF34D399),
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = dateInfo.bengaliDate,
-                            fontSize = 11.sp,
-                            color = Color.White.copy(alpha = 0.85f),
-                            fontWeight = FontWeight.SemiBold,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            softWrap = false
-                        )
+                        // Hijri/Arabic Date (Right Aligned - Clickable)
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .clickable { viewModel.openTool(ToolType.MULTI_CALENDAR) }
+                                .padding(horizontal = 4.dp, vertical = 2.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Bedtime,
+                                contentDescription = "Hijri Calendar",
+                                tint = Color(0xFFFBBF24),
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = dateInfo.hijriDate,
+                                fontSize = 11.sp,
+                                color = Color.White.copy(alpha = 0.85f),
+                                fontWeight = FontWeight.SemiBold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                softWrap = false
+                            )
+                        }
                     }
-
-                    // Hijri/Arabic Date (Right Aligned - Clickable)
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .clickable { viewModel.openTool(ToolType.MULTI_CALENDAR) }
-                            .padding(horizontal = 4.dp, vertical = 2.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Bedtime,
-                            contentDescription = "Hijri Calendar",
-                            tint = Color(0xFFFBBF24),
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = dateInfo.hijriDate,
-                            fontSize = 11.sp,
-                            color = Color.White.copy(alpha = 0.85f),
-                            fontWeight = FontWeight.SemiBold,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            softWrap = false
-                        )
-                    }
-                }
-            } // Closes Column
-        } // Closes Box
-    } // Closes Card
+                } // Closes Column
+            } // Closes Box
+        } // Closes Card
+    }
 
 
         // Change Weather Location Dialog
@@ -904,59 +906,61 @@ fun DashboardCategoriesView(
             )
         }
 
-        // Search Bar (Placed at the top of the tools section)
-        OutlinedTextField(
-            value = viewModel.toolSearchQuery,
-            onValueChange = { viewModel.toolSearchQuery = it },
-            placeholder = {
-                Text(
-                    text = LanguageManager.getString("search_tools", viewModel.selectedLanguage),
-                    color = themeColors.displayText.copy(alpha = 0.5f),
-                    fontSize = 13.sp
-                )
-            },
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "Search",
-                    tint = themeColors.displayText.copy(alpha = 0.6f)
-                )
-            },
-            trailingIcon = {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (viewModel.toolSearchQuery.isNotEmpty()) {
-                        IconButton(onClick = { viewModel.toolSearchQuery = "" }) {
+        // Search Bar (Placed at the top of the tools section; hidden when a category filter is active)
+        if (selectedFilter == null) {
+            OutlinedTextField(
+                value = viewModel.toolSearchQuery,
+                onValueChange = { viewModel.toolSearchQuery = it },
+                placeholder = {
+                    Text(
+                        text = LanguageManager.getString("search_tools", viewModel.selectedLanguage),
+                        color = themeColors.displayText.copy(alpha = 0.5f),
+                        fontSize = 13.sp
+                    )
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Search",
+                        tint = themeColors.displayText.copy(alpha = 0.6f)
+                    )
+                },
+                trailingIcon = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (viewModel.toolSearchQuery.isNotEmpty()) {
+                            IconButton(onClick = { viewModel.toolSearchQuery = "" }) {
+                                Icon(
+                                    imageVector = Icons.Default.Clear,
+                                    contentDescription = "Clear search",
+                                    tint = themeColors.displayText.copy(alpha = 0.6f)
+                                )
+                            }
+                        }
+                        IconButton(onClick = { startVoiceSearch() }) {
                             Icon(
-                                imageVector = Icons.Default.Clear,
-                                contentDescription = "Clear search",
-                                tint = themeColors.displayText.copy(alpha = 0.6f)
+                                imageVector = Icons.Default.Mic,
+                                contentDescription = "Voice Input",
+                                tint = themeColors.buttonEqualBg
                             )
                         }
                     }
-                    IconButton(onClick = { startVoiceSearch() }) {
-                        Icon(
-                            imageVector = Icons.Default.Mic,
-                            contentDescription = "Voice Input",
-                            tint = themeColors.buttonEqualBg
-                        )
-                    }
-                }
-            },
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = themeColors.cardBg,
-                unfocusedContainerColor = themeColors.cardBg,
-                focusedBorderColor = themeColors.buttonEqualBg,
-                unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.15f),
-                focusedTextColor = themeColors.displayText,
-                unfocusedTextColor = themeColors.displayText
-            ),
-            shape = RoundedCornerShape(14.dp),
-            singleLine = true,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 4.dp)
-                .testTag("tool_search_input")
-        )
+                },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = themeColors.cardBg,
+                    unfocusedContainerColor = themeColors.cardBg,
+                    focusedBorderColor = themeColors.buttonEqualBg,
+                    unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.15f),
+                    focusedTextColor = themeColors.displayText,
+                    unfocusedTextColor = themeColors.displayText
+                ),
+                shape = RoundedCornerShape(14.dp),
+                singleLine = true,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 4.dp)
+                    .testTag("tool_search_input")
+            )
+        }
 
         if (searchQuery.isNotBlank()) {
             // Live Search Results View (Featured & Category sections hidden during search)
@@ -966,7 +970,7 @@ fun DashboardCategoriesView(
                 themeColors = themeColors,
                 isBn = isBn
             )
-        } else {
+        } else if (selectedFilter == null) {
             // Unified Featured & Favorites Section Header with Chips
             var activeDashboardTab by remember { mutableStateOf("FEATURED") }
 
@@ -2630,19 +2634,47 @@ fun DashboardCategoriesView(
                             }
                         }
 
-                        // Render Gradient Category Cards for all categories
-                        ToolCategory.values().forEach { category ->
-                            val catTools = viewModel.getAllOrderedToolsForCategory(category, toolUsage)
-                            if (catTools.isNotEmpty()) {
-                                CategoryDashboardCard(
-                                    category = category,
-                                    categoryTools = catTools,
-                                    language = viewModel.selectedLanguage,
-                                    isBn = isBn,
-                                    onClick = {
-                                        viewModel.selectedToolCategoryFilter = category
+                        // Render Gradient Category Cards in 2 columns
+                        val activeCategories = remember(toolUsage) {
+                            ToolCategory.values().filter { cat ->
+                                viewModel.getAllOrderedToolsForCategory(cat, toolUsage).isNotEmpty()
+                            }
+                        }
+
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            activeCategories.chunked(2).forEach { rowCategories ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(IntrinsicSize.Max),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    rowCategories.forEach { category ->
+                                        val catTools = viewModel.getAllOrderedToolsForCategory(category, toolUsage)
+                                        Box(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .fillMaxHeight()
+                                        ) {
+                                            CategoryDashboardCard(
+                                                category = category,
+                                                categoryTools = catTools,
+                                                language = viewModel.selectedLanguage,
+                                                isBn = isBn,
+                                                modifier = Modifier.fillMaxHeight(),
+                                                onClick = {
+                                                    viewModel.selectedToolCategoryFilter = category
+                                                }
+                                            )
+                                        }
                                     }
-                                )
+                                    if (rowCategories.size == 1) {
+                                        Spacer(modifier = Modifier.weight(1f))
+                                    }
+                                }
                             }
                         }
                     }
@@ -2719,6 +2751,7 @@ fun DashboardCategoriesView(
                     Column(modifier = Modifier.fillMaxWidth()) {
                         // Category Active Banner when filtered
                         if (!isOverviewMode && currentFilter != null) {
+                            val catFilter = currentFilter as ToolCategory
                             Surface(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -2746,7 +2779,7 @@ fun DashboardCategoriesView(
                                             contentAlignment = Alignment.Center
                                         ) {
                                             Icon(
-                                                imageVector = currentFilter.icon,
+                                                imageVector = catFilter.icon,
                                                 contentDescription = null,
                                                 tint = themeColors.buttonEqualBg,
                                                 modifier = Modifier.size(18.dp)
@@ -2755,7 +2788,7 @@ fun DashboardCategoriesView(
                                         Spacer(modifier = Modifier.width(10.dp))
                                         Column {
                                             Text(
-                                                text = currentFilter.getTitle(viewModel.selectedLanguage),
+                                                text = catFilter.getTitle(viewModel.selectedLanguage),
                                                 fontSize = 15.sp,
                                                 fontWeight = FontWeight.Bold,
                                                 color = themeColors.displayText

@@ -623,141 +623,102 @@ fun CategoryDashboardCard(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 14.dp)
+                    .padding(12.dp)
             ) {
-                // Top Row: Category Pill Badge on left & Frosted Icon Badge on right
+                // Top Row: Category Icon Badge on Left & Tool Count Pill on Right
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Top
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Left: Category Tag & Total Tools count
-                    Surface(
-                        shape = RoundedCornerShape(20.dp),
-                        color = Color.White.copy(alpha = 0.18f),
-                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.25f))
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 9.dp, vertical = 3.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Icon(
-                                imageVector = category.icon,
-                                contentDescription = null,
-                                tint = theme.accentColor,
-                                modifier = Modifier.size(12.dp)
-                            )
-                            Text(
-                                text = if (isBn) "${categoryTools.size}টি স্মার্ট টুলস" else "${categoryTools.size} Smart Tools",
-                                fontSize = 10.5.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                        }
-                    }
-
-                    // Right: Category Icon Badge
+                    // Category Icon Badge
                     Box(
                         modifier = Modifier
-                            .size(42.dp)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(Color.White.copy(alpha = 0.18f))
-                            .border(1.dp, Color.White.copy(alpha = 0.35f), RoundedCornerShape(14.dp)),
+                            .size(36.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color.White.copy(alpha = 0.20f))
+                            .border(1.dp, Color.White.copy(alpha = 0.35f), RoundedCornerShape(12.dp)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = category.icon,
                             contentDescription = category.getTitle(language),
                             tint = Color.White,
-                            modifier = Modifier.size(22.dp)
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
+                    // Tool count pill on top right
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = Color.White.copy(alpha = 0.20f),
+                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.30f))
+                    ) {
+                        Text(
+                            text = if (isBn) "${categoryTools.size}টি" else "${categoryTools.size}",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Color.White,
+                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-                // Middle: Category Name & Subtitle
+                // Middle: Category Title & Subtitle
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth(0.84f)
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
                         text = category.getTitle(language),
-                        fontSize = 18.sp,
+                        fontSize = 15.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = Color.White,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
 
-                    Spacer(modifier = Modifier.height(3.dp))
+                    Spacer(modifier = Modifier.height(2.dp))
 
                     Text(
                         text = if (isBn) theme.subtitleBn else theme.subtitleEn,
-                        fontSize = 11.5.sp,
+                        fontSize = 10.5.sp,
                         fontWeight = FontWeight.Normal,
-                        color = Color.White.copy(alpha = 0.86f),
+                        color = Color.White.copy(alpha = 0.88f),
                         maxLines = 2,
-                        lineHeight = 15.sp,
+                        lineHeight = 14.sp,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
 
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
-                // Bottom Row: Action pill on Left & Round Stack Tool Icons on Right
+                // Bottom Row: Solid Round Stack Tool Icons on Right
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Left Action Pill: "Explore Tools →"
-                    Surface(
-                        shape = RoundedCornerShape(20.dp),
-                        color = Color.White,
-                        shadowElevation = 2.dp
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 11.dp, vertical = 5.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Text(
-                                text = if (isBn) "টুলস দেখুন" else "Explore",
-                                fontSize = 11.5.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = theme.gradients.first()
-                            )
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                                contentDescription = null,
-                                tint = theme.gradients.first(),
-                                modifier = Modifier.size(13.dp)
-                            )
-                        }
-                    }
-
-                    // Right: Round Stack Tool Icons + "+N" badge
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy((-8).dp)
+                        horizontalArrangement = Arrangement.spacedBy((-6).dp)
                     ) {
                         top3Tools.forEachIndexed { index, tool ->
                             Box(
                                 modifier = Modifier
-                                    .size(32.dp)
+                                    .size(28.dp)
                                     .zIndex((4 - index).toFloat())
                                     .clip(CircleShape)
                                     .background(Color.White)
-                                    .border(1.5.dp, Color(0xFFE2E8F0), CircleShape),
+                                    .border(1.dp, Color(0xFFE2E8F0), CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     imageVector = tool.icon,
                                     contentDescription = tool.getTitle(language),
                                     tint = theme.gradients.first(),
-                                    modifier = Modifier.size(16.dp)
+                                    modifier = Modifier.size(15.dp)
                                 )
                             }
                         }
@@ -765,17 +726,17 @@ fun CategoryDashboardCard(
                         if (remainingCount > 0) {
                             Box(
                                 modifier = Modifier
-                                    .size(32.dp)
+                                    .size(28.dp)
                                     .zIndex(0f)
                                     .clip(CircleShape)
                                     .background(Color.White)
-                                    .border(1.5.dp, Color(0xFFE2E8F0), CircleShape),
+                                    .border(1.dp, Color(0xFFE2E8F0), CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
                                     text = "+$remainingCount",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Black,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.ExtraBold,
                                     color = theme.gradients.first()
                                 )
                             }
