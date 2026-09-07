@@ -200,7 +200,10 @@ fun VocabularyMasterTool(
         }
     }
 
-    val hasActiveStateForBack = searchQuery.isNotEmpty() ||
+    var isSearchVisible by remember { mutableStateOf(false) }
+
+    val hasActiveStateForBack = isSearchVisible ||
+            searchQuery.isNotEmpty() ||
             selectedLetterFilter != null ||
             selectedCategoryFilter != "All" ||
             selectedPosFilter != "All" ||
@@ -208,7 +211,8 @@ fun VocabularyMasterTool(
             selectedTab != VocabTab.EXPLORE
 
     BackHandler(enabled = hasActiveStateForBack) {
-        if (searchQuery.isNotEmpty()) {
+        if (isSearchVisible || searchQuery.isNotEmpty()) {
+            isSearchVisible = false
             searchQuery = ""
         } else if (selectedLetterFilter != null || selectedCategoryFilter != "All" || selectedPosFilter != "All" || top1000Only) {
             selectedLetterFilter = null
@@ -267,6 +271,18 @@ fun VocabularyMasterTool(
                         }
                     },
                     actions = {
+                        IconButton(onClick = {
+                            isSearchVisible = !isSearchVisible
+                            if (!isSearchVisible) {
+                                searchQuery = ""
+                            }
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = if (isSearchVisible) "Hide Search" else "Show Search",
+                                tint = themeColors.accent
+                            )
+                        }
                         IconButton(onClick = {
                             val randomWord = allWords.randomOrNull()
                             if (randomWord != null) {
@@ -426,6 +442,11 @@ fun VocabularyMasterTool(
                         words = allWords,
                         searchQuery = searchQuery,
                         onSearchChange = { searchQuery = it },
+                        isSearchVisible = isSearchVisible,
+                        onHideSearch = {
+                            isSearchVisible = false
+                            searchQuery = ""
+                        },
                         categoryFilter = selectedCategoryFilter,
                         onCategoryChange = { selectedCategoryFilter = it },
                         posFilter = selectedPosFilter,
@@ -520,6 +541,8 @@ fun VocabExploreTab(
     words: List<VocabWord>,
     searchQuery: String,
     onSearchChange: (String) -> Unit,
+    isSearchVisible: Boolean = false,
+    onHideSearch: () -> Unit = {},
     categoryFilter: String,
     onCategoryChange: (String) -> Unit,
     posFilter: String,
@@ -546,11 +569,15 @@ fun VocabExploreTab(
     val filteredAndSortedWords = remember(
         words, searchQuery, categoryFilter, posFilter, sortOption, letterFilter, top1000Only
     ) {
-        var list = words.filter { item ->
-            val matchesQuery = searchQuery.isBlank() ||
-                    item.word.contains(searchQuery, ignoreCase = true) ||
-                    item.meaningBn.contains(searchQuery, ignoreCase = true) ||
-                    item.synonyms.any { it.contains(searchQuery, ignoreCase = true) }
+        val q = searchQuery.trim()
+        val qLower = q.lowercase()
+
+        val list = words.filter { item ->
+            val matchesQuery = q.isEmpty() ||
+                    item.word.contains(q, ignoreCase = true) ||
+                    item.meaningBn.contains(q, ignoreCase = true) ||
+                    item.synonyms.any { it.contains(q, ignoreCase = true) } ||
+                    item.antonyms.any { it.contains(q, ignoreCase = true) }
 
             val matchesCategory = when (categoryFilter) {
                 "All" -> true
@@ -564,14 +591,43 @@ fun VocabExploreTab(
             matchesQuery && matchesCategory && matchesPos && matchesLetter && matchesTop1000
         }
 
-        list = when (sortOption) {
-            VocabSortOption.TOP_1000 -> list.sortedBy { it.frequencyRank }.take(1000)
-            VocabSortOption.FREQUENCY -> list.sortedBy { it.frequencyRank }
-            VocabSortOption.ALPHABETICAL_AZ -> list.sortedBy { it.word.lowercase() }
-            VocabSortOption.ALPHABETICAL_ZA -> list.sortedByDescending { it.word.lowercase() }
-            VocabSortOption.LENGTH -> list.sortedBy { it.word.length }
+        if (q.isNotEmpty()) {
+            list.sortedWith(
+                compareBy<VocabWord> { item ->
+                    val wordLower = item.word.lowercase()
+                    when {
+                        // Priority 1: Exact word match
+                        wordLower == qLower -> 1
+                        // Priority 2: Word starts with query
+                        wordLower.startsWith(qLower) -> 2
+                        // Priority 3: Word contains query
+                        wordLower.contains(qLower) -> 3
+                        // Priority 4: Bangla meaning contains query
+                        item.meaningBn.contains(q, ignoreCase = true) -> 4
+                        // Priority 5: Synonyms or Antonyms match query
+                        else -> 5
+                    }
+                }
+                .thenBy { item ->
+                    val wordLower = item.word.lowercase()
+                    if (wordLower.startsWith(qLower)) item.word.length else 0
+                }
+                .thenBy { item ->
+                    val wordLower = item.word.lowercase()
+                    if (wordLower.contains(qLower)) wordLower.indexOf(qLower) else 0
+                }
+                .thenBy { it.word.length }
+                .thenBy { it.word.lowercase() }
+            )
+        } else {
+            when (sortOption) {
+                VocabSortOption.TOP_1000 -> list.sortedBy { it.frequencyRank }.take(1000)
+                VocabSortOption.FREQUENCY -> list.sortedBy { it.frequencyRank }
+                VocabSortOption.ALPHABETICAL_AZ -> list.sortedBy { it.word.lowercase() }
+                VocabSortOption.ALPHABETICAL_ZA -> list.sortedByDescending { it.word.lowercase() }
+                VocabSortOption.LENGTH -> list.sortedBy { it.word.length }
+            }
         }
-        list
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -591,48 +647,65 @@ fun VocabExploreTab(
             Spacer(modifier = Modifier.height(8.dp))
         }
 
-        // Search Input Bar (Always visible at top)
-        val searchTextColor = if (themeColors.isDark) Color.White else Color(0xFF191C1E)
-        OutlinedTextField(
-            value = searchQuery,
-            onValueChange = onSearchChange,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 6.dp),
-            placeholder = {
-                Text(
-                    text = if (isBn) "শব্দ বা বাংলা অর্থ খুঁজুন..." else "Search word or meaning...",
-                    color = searchTextColor.copy(alpha = 0.5f)
-                )
-            },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = themeColors.accent) },
-            trailingIcon = {
-                if (searchQuery.isNotEmpty()) {
-                    IconButton(onClick = { onSearchChange("") }) {
-                        Icon(Icons.Default.Close, contentDescription = "Clear", tint = searchTextColor.copy(alpha = 0.7f))
+        // Search Input Bar (Visible when toggled from header search icon)
+        AnimatedVisibility(
+            visible = isSearchVisible,
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut()
+        ) {
+            val searchTextColor = if (themeColors.isDark) Color.White else Color(0xFF191C1E)
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = onSearchChange,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 6.dp),
+                placeholder = {
+                    Text(
+                        text = if (isBn) "শব্দ বা বাংলা অর্থ খুঁজুন..." else "Search word or meaning...",
+                        color = searchTextColor.copy(alpha = 0.5f)
+                    )
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Search",
+                        tint = themeColors.accent,
+                        modifier = Modifier.padding(start = 12.dp)
+                    )
+                },
+                trailingIcon = {
+                    IconButton(onClick = {
+                        if (searchQuery.isNotEmpty()) {
+                            onSearchChange("")
+                        } else {
+                            onHideSearch()
+                        }
+                    }) {
+                        Icon(Icons.Default.Close, contentDescription = "Clear or Close Search", tint = searchTextColor.copy(alpha = 0.7f))
                     }
-                }
-            },
-            singleLine = true,
-            shape = RoundedCornerShape(12.dp),
-            textStyle = androidx.compose.ui.text.TextStyle(
-                color = searchTextColor,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium
-            ),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = searchTextColor,
-                unfocusedTextColor = searchTextColor,
-                focusedPlaceholderColor = searchTextColor.copy(alpha = 0.5f),
-                unfocusedPlaceholderColor = searchTextColor.copy(alpha = 0.5f),
-                focusedBorderColor = themeColors.accent,
-                unfocusedBorderColor = searchTextColor.copy(alpha = 0.3f),
-                focusedContainerColor = themeColors.surface,
-                unfocusedContainerColor = themeColors.surface,
-                focusedLeadingIconColor = themeColors.accent,
-                unfocusedLeadingIconColor = themeColors.accent
+                },
+                singleLine = true,
+                shape = RoundedCornerShape(12.dp),
+                textStyle = androidx.compose.ui.text.TextStyle(
+                    color = searchTextColor,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium
+                ),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = searchTextColor,
+                    unfocusedTextColor = searchTextColor,
+                    focusedPlaceholderColor = searchTextColor.copy(alpha = 0.5f),
+                    unfocusedPlaceholderColor = searchTextColor.copy(alpha = 0.5f),
+                    focusedBorderColor = themeColors.accent,
+                    unfocusedBorderColor = searchTextColor.copy(alpha = 0.3f),
+                    focusedContainerColor = themeColors.surface,
+                    unfocusedContainerColor = themeColors.surface,
+                    focusedLeadingIconColor = themeColors.accent,
+                    unfocusedLeadingIconColor = themeColors.accent
+                )
             )
-        )
+        }
 
         // Collapsible Top Sub-Header Section (Hides A-Z scroller, Chips & Sort on Scroll Down)
         AnimatedVisibility(
@@ -809,6 +882,98 @@ fun VocabExploreTab(
                         style = MaterialTheme.typography.bodySmall,
                         color = themeColors.onSurface.copy(alpha = 0.5f)
                     )
+                }
+            }
+        } else if (searchQuery.isNotBlank()) {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(bottom = 16.dp)
+            ) {
+                items(filteredAndSortedWords, key = { it.id }) { vocab ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable {
+                                onSpeak(vocab.word)
+                                onOpenRandomWordDialog(vocab)
+                            },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = themeColors.surface),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 14.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = vocab.word,
+                                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                        color = themeColors.onSurface
+                                    )
+                                    if (vocab.partOfSpeech.isNotBlank()) {
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Surface(
+                                            shape = RoundedCornerShape(6.dp),
+                                            color = themeColors.accent.copy(alpha = 0.12f)
+                                        ) {
+                                            Text(
+                                                text = vocab.partOfSpeech,
+                                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+                                                color = themeColors.accent,
+                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = vocab.meaningBn,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = themeColors.accent,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+
+                                val qTrim = searchQuery.trim()
+                                val wordMatches = vocab.word.contains(qTrim, ignoreCase = true)
+                                val meaningMatches = vocab.meaningBn.contains(qTrim, ignoreCase = true)
+                                val matchedSynonym = if (!wordMatches && !meaningMatches && qTrim.isNotEmpty()) {
+                                    vocab.synonyms.firstOrNull { it.contains(qTrim, ignoreCase = true) }
+                                } else null
+
+                                if (matchedSynonym != null) {
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = if (isBn) "সমার্থক শব্দ ম্যাচ: $matchedSynonym" else "Synonym match: $matchedSynonym",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = themeColors.onSurface.copy(alpha = 0.55f)
+                                    )
+                                }
+                            }
+                            IconButton(
+                                onClick = {
+                                    onSpeak(vocab.word)
+                                    onOpenRandomWordDialog(vocab)
+                                },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ChevronRight,
+                                    contentDescription = "Details",
+                                    tint = themeColors.accent,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                        }
+                    }
                 }
             }
         } else {
@@ -1754,13 +1919,13 @@ fun VocabStoreTab(
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = if (isBn) "২,৪৭৭ টি অতি প্রয়োজনীয় অফলাইন ভোকাবুলারি" else "2,477 Essential Offline Vocabulary",
+                            text = if (isBn) "৬,০০০ টি অতি প্রয়োজনীয় অফলাইন ভোকাবুলারি" else "6,000 Essential Offline Vocabulary",
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                             color = themeColors.onSurface
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = if (isBn) "২,৪৭৭ টি মাস্টার শব্দ • ১০০% অফলাইন সক্রিয়করণ" else "2,477 Master Words • 100% Offline Activation",
+                            text = if (isBn) "৬,০০০ টি মাস্টার শব্দ • ১০০% অফলাইন সক্রিয়করণ" else "6,000 Master Words • 100% Offline Activation",
                             style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
                             color = themeColors.accent
                         )
@@ -1770,7 +1935,7 @@ fun VocabStoreTab(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = if (isBn) "ইংরেজি শব্দ, সঠিক উচ্চারণ সংকেত, স্পষ্ট বাংলা অর্থ, সমার্থক শব্দ (Synonyms), বিপরীত শব্দ (Antonyms), পদ প্রকরণ (Part of Speech) এবং বাংলা অনুবাদ সহ বাস্তবভিত্তিক উদাহরণ বাক্য সম্বলিত ২,৪৭৭ টি সবচেয়ে বেশি প্রয়োজনীয় শব্দভান্ডার। কোনো ইন্টারনেট কানেকশন ছাড়াই অফলাইন ফাইল থেকে সরাসরি সক্রিয় করুন।" else "Complete 2,477 high-yield vocabulary pack featuring full phonetics, Bangla meanings, synonyms, antonyms, parts of speech, and contextual example sentences with Bangla translations. Activates instantly from local offline files without internet.",
+                    text = if (isBn) "ইংরেজি শব্দ, সঠিক উচ্চারণ সংকেত, স্পষ্ট বাংলা অর্থ, সমার্থক শব্দ (Synonyms), বিপরীত শব্দ (Antonyms), পদ প্রকরণ (Part of Speech) এবং বাংলা অনুবাদ সহ বাস্তবভিত্তিক উদাহরণ বাক্য সম্বলিত ৬,০০০ টি সবচেয়ে বেশি প্রয়োজনীয় শব্দভান্ডার। কোনো ইন্টারনেট কানেকশন ছাড়াই অফলাইন ফাইল থেকে সরাসরি সক্রিয় করুন।" else "Complete 6,000 high-yield vocabulary pack featuring full phonetics, Bangla meanings, synonyms, antonyms, parts of speech, and contextual example sentences with Bangla translations. Activates instantly from local offline files without internet.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = themeColors.onSurface.copy(alpha = 0.75f)
                 )
@@ -1883,7 +2048,7 @@ fun VocabStoreTab(
                                         onInstallPack(masterPackId)
                                         Toast.makeText(
                                             context,
-                                            if (isBn) "২,৪৭৭ টি শব্দের ডিকশনারি সফলভাবে সক্রিয় করা হয়েছে!" else "Activated ${words.size} words successfully!",
+                                            if (isBn) "৬,০০০ টি শব্দের ডিকশনারি সফলভাবে সক্রিয় করা হয়েছে!" else "Activated ${words.size} words successfully!",
                                             Toast.LENGTH_LONG
                                         ).show()
                                     } else {
@@ -1978,7 +2143,7 @@ object VocabularyDataProvider {
         val hasMaster = installedPackIds.contains("master_dictionary") || installedPackIds.contains("all_100k_dict")
         val cached = memoryCache
         if (cached != null && cached.isNotEmpty()) {
-            if (!hasMaster || cached.size >= 2477) {
+            if (!hasMaster || cached.size >= 6000) {
                 return cached
             }
         }
@@ -1986,7 +2151,7 @@ object VocabularyDataProvider {
         val list = mutableListOf<VocabWord>()
 
         if (hasMaster) {
-            // Master dictionary is always loaded directly from assets to ensure full 2,477 words are active
+            // Master dictionary is always loaded directly from assets to ensure full 6,000 words are active
             val masterWords = VocabularyPackRepository.loadPackFromAssetsSync(context, "dictionary_1000.json")
             if (!masterWords.isNullOrEmpty()) {
                 list.addAll(masterWords)

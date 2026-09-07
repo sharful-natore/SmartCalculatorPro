@@ -1,0 +1,4691 @@
+[
+  {
+    "id": 5051,
+    "word": "Abeyant",
+    "pos": "Adj",
+    "phonetic": "/əˈbeɪ.ənt/",
+    "meaningBn": "স্থগিত, নিষ্ক্রিয় অবস্থায় থাকা",
+    "exampleEn": "The project remains in an abeyant state.",
+    "exampleBn": "প্রকল্পটি একটি স্থগিত অবস্থায় রয়েছে।",
+    "synonyms": [
+      "Dormant",
+      "Pending"
+    ],
+    "antonyms": [
+      "Active"
+    ],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5052,
+    "word": "Actuarial",
+    "pos": "Adj",
+    "phonetic": "/ˌæk.tʃuˈeə.ri.əl/",
+    "meaningBn": "বীমা বা পরিসংখ্যান সংক্রান্ত",
+    "exampleEn": "She is preparing for actuarial exams.",
+    "exampleBn": "তিনি বীমা পরিসংখ্যান সংক্রান্ত পরীক্ষার প্রস্তুতি নিচ্ছেন।",
+    "synonyms": [
+      "Statistical"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5053,
+    "word": "Advancement",
+    "pos": "Noun",
+    "phonetic": "/ədˈvɑːns.mənt/",
+    "meaningBn": "অগ্রগতি, উন্নতি",
+    "exampleEn": "Technology aids in human advancement.",
+    "exampleBn": "প্রযুক্তি মানুষের অগ্রগতিতে সহায়তা করে।",
+    "synonyms": [
+      "Progress",
+      "Growth"
+    ],
+    "antonyms": [
+      "Decline"
+    ],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5054,
+    "word": "Afflatus",
+    "pos": "Noun",
+    "phonetic": "/əˈfleɪ.təs/",
+    "meaningBn": "ঐশ্বরিক অনুপ্রেরণা",
+    "exampleEn": "Poets seek divine afflatus.",
+    "exampleBn": "কবিরা ঐশ্বরিক অনুপ্রেরণা খুঁজে বেড়ান।",
+    "synonyms": [
+      "Inspiration",
+      "Impulse"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5055,
+    "word": "Aficionado",
+    "pos": "Noun",
+    "phonetic": "/əˌfɪʃ.i.əˈnɑː.dəʊ/",
+    "meaningBn": "অনুরাগী, ভক্ত",
+    "exampleEn": "He is an art aficionado.",
+    "exampleBn": "তিনি শিল্পের একজন অনুরাগী।",
+    "synonyms": [
+      "Enthusiast",
+      "Fan"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5056,
+    "word": "Agnomen",
+    "pos": "Noun",
+    "phonetic": "/æɡˈnəʊ.men/",
+    "meaningBn": "বিশেষ উপাধি",
+    "exampleEn": "He received an agnomen for valor.",
+    "exampleBn": "বীরত্বের জন্য তিনি একটি বিশেষ উপাধি পেয়েছিলেন।",
+    "synonyms": [
+      "Nickname",
+      "Title"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5057,
+    "word": "Agronomy",
+    "pos": "Noun",
+    "phonetic": "/əˈɡrɒn.ə.mi/",
+    "meaningBn": "কৃষিবিজ্ঞান",
+    "exampleEn": "She studied agronomy in college.",
+    "exampleBn": "তিনি কলেজে কৃষিবিজ্ঞান পড়েছিলেন।",
+    "synonyms": [
+      "Agriculture",
+      "Farming science"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5058,
+    "word": "Ague",
+    "pos": "Noun",
+    "phonetic": "/ˈeɪ.ɡjuː/",
+    "meaningBn": "কম্পজ্বর, কাঁপুনি",
+    "exampleEn": "He was suffering from a high ague.",
+    "exampleBn": "তিনি তীব্র কম্পজ্বরে ভুগছিলেন।",
+    "synonyms": [
+      "Fever",
+      "Chills"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5059,
+    "word": "Alchemize",
+    "pos": "Verb",
+    "phonetic": "/ˈæl.kə.maɪz/",
+    "meaningBn": "রূপান্তরিত করা, সোনায় রূপান্তর করা",
+    "exampleEn": "Poetry can alchemize sadness into beauty.",
+    "exampleBn": "কবিতা দুঃখকে সৌন্দর্যে রূপান্তরিত করতে পারে।",
+    "synonyms": [
+      "Transform",
+      "Convert"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5060,
+    "word": "Alcove",
+    "pos": "Noun",
+    "phonetic": "/ˈæl.kəʊv/",
+    "meaningBn": "ছোট কুঠুরি, দেয়াল সংলগ্ন তাক",
+    "exampleEn": "A cozy alcove served as reading spot.",
+    "exampleBn": "একটি আরামদায়ক কুঠুরি পড়ার স্থান হিসেবে ব্যবহৃত হতো।",
+    "synonyms": [
+      "Nook",
+      "Recess"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5061,
+    "word": "Alembic",
+    "pos": "Noun",
+    "phonetic": "/əˈlem.bɪk/",
+    "meaningBn": "পরিশোধন পাত্র, রূপান্তরের মাধ্যম",
+    "exampleEn": "Trial served as alembic for his soul.",
+    "exampleBn": "পরীক্ষাটি তার আত্মার পরিশোধনের মাধ্যম হয়েছিল।",
+    "synonyms": [
+      "Purifier",
+      "Refining pot"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5062,
+    "word": "Alienist",
+    "pos": "Noun",
+    "phonetic": "/ˈeɪ.li.ə.nɪst/",
+    "meaningBn": "মনোরোগ বিশেষজ্ঞ (পুরাতন শব্দ)",
+    "exampleEn": "Court summoned an alienist.",
+    "exampleBn": "আদালত একজন মনোরোগ বিশেষজ্ঞকে ডেকেছিল।",
+    "synonyms": [
+      "Psychiatrist"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5063,
+    "word": "Alimony",
+    "pos": "Noun",
+    "phonetic": "/ˈæl.ɪ.mə.ni/",
+    "meaningBn": "খোরপোশ, জীবনধারণ ভাতা",
+    "exampleEn": "Court ordered him to pay alimony.",
+    "exampleBn": "আদালত তাকে খোরপোশ দেওয়ার নির্দেশ দেয়।",
+    "synonyms": [
+      "Maintenance",
+      "Support"
+    ],
+    "antonyms": [],
+    "category": "BCS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5064,
+    "word": "Allocative",
+    "pos": "Adj",
+    "phonetic": "/ˈæl.ə.keɪ.tɪv/",
+    "meaningBn": "বরাদ্দ সংক্রান্ত",
+    "exampleEn": "Allocative efficiency brings profits.",
+    "exampleBn": "বরাদ্দ সংক্রান্ত দক্ষতা মুনাফা আনে।",
+    "synonyms": [
+      "Distributive"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5065,
+    "word": "Allotropism",
+    "pos": "Noun",
+    "phonetic": "/əˈlɒt.rə.pɪ.zəm/",
+    "meaningBn": "বহুরূপতা (রসায়ন)",
+    "exampleEn": "Carbon shows allotropism.",
+    "exampleBn": "কার্বন বহুরূপতা প্রদর্শন করে।",
+    "synonyms": [
+      "Variation"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5066,
+    "word": "Alluvial",
+    "pos": "Adj",
+    "phonetic": "/əˈluː.vi.əl/",
+    "meaningBn": "পলিগঠিত, পলিমাটির",
+    "exampleEn": "Bangladesh has rich alluvial soil.",
+    "exampleBn": "বাংলাদেশের পলিমাটি অত্যন্ত উর্বর।",
+    "synonyms": [
+      "Clayey",
+      "Silty"
+    ],
+    "antonyms": [],
+    "category": "BCS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5067,
+    "word": "Alternator",
+    "pos": "Noun",
+    "phonetic": "/ˈɒl.tə.neɪ.tər/",
+    "meaningBn": "পর্যাবৃত্ত বিদ্যুৎ উৎপাদক, অল্টারনেটর",
+    "exampleEn": "Car alternator charges battery.",
+    "exampleBn": "গাড়ির অল্টারনেটর ব্যাটারি চার্জ করে।",
+    "synonyms": [
+      "Generator"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5068,
+    "word": "Altimeter",
+    "pos": "Noun",
+    "phonetic": "/ˈæl.tɪ.miː.tər/",
+    "meaningBn": "উচ্চতামাপক যন্ত্র",
+    "exampleEn": "Pilot checked altimeter.",
+    "exampleBn": "পাইলট উচ্চতামাপক যন্ত্রটি পরীক্ষা করেছিলেন।",
+    "synonyms": [
+      "Gauge"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5069,
+    "word": "Amanuensis",
+    "pos": "Noun",
+    "phonetic": "/əˌmæn.juˈen.sɪs/",
+    "meaningBn": "অনুলিপিকার, সহকারী যে দেখে লেখে",
+    "exampleEn": "He worked as amanuensis for poet.",
+    "exampleBn": "তিনি কবির অনুলিপিকার হিসেবে কাজ করেছিলেন।",
+    "synonyms": [
+      "Scribe",
+      "Secretary"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5070,
+    "word": "Amaranthine",
+    "pos": "Adj",
+    "phonetic": "/ˌæm.əˈræn.θaɪn/",
+    "meaningBn": "অমর, অম্লান",
+    "exampleEn": "She possessed amaranthine beauty.",
+    "exampleBn": "তার অম্লান সৌন্দর্য ছিল।",
+    "synonyms": [
+      "Undying",
+      "Immortal"
+    ],
+    "antonyms": [
+      "Fading"
+    ],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5071,
+    "word": "Amblative",
+    "pos": "Adj",
+    "phonetic": "/ˈæm.blə.tɪv/",
+    "meaningBn": "ধীরে হেঁটে যাওয়ার উপযোগী",
+    "exampleEn": "We enjoyed an amblative walk.",
+    "exampleBn": "আমরা এক আরামদায়ক হাঁটা উপভোগ করেছিলাম।",
+    "synonyms": [
+      "Leisurely"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5072,
+    "word": "Ambrosial",
+    "pos": "Adj",
+    "phonetic": "/æmˈbrəʊ.zi.əl/",
+    "meaningBn": "স্বর্গীয় সুস্বাদু বা সুবাসিত",
+    "exampleEn": "Meal had an ambrosial flavor.",
+    "exampleBn": "খাবারটিতে স্বর্গীয় স্বাদ ছিল।",
+    "synonyms": [
+      "Delicious",
+      "Heavenly"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5073,
+    "word": "Amiability",
+    "pos": "Noun",
+    "phonetic": "/ˌeɪ.mi.əˈbɪl.ə.ti/",
+    "meaningBn": "অমায়িকতা, সুমিষ্ট স্বভাব",
+    "exampleEn": "Her amiability won friends.",
+    "exampleBn": "তার অমায়িকতা সবাইকে বন্ধু বানিয়েছিল।",
+    "synonyms": [
+      "Friendliness",
+      "Geniality"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5074,
+    "word": "Amortize",
+    "pos": "Verb",
+    "phonetic": "/əˈmɔː.taɪz/",
+    "meaningBn": "ঋণ পরিশোধ করা, কিস্তিতে শোধ করা",
+    "exampleEn": "Company will amortize the debt.",
+    "exampleBn": "কোম্পানিটি কিস্তিতে ঋণ শোধ করবে।",
+    "synonyms": [
+      "Pay off",
+      "Liquidate"
+    ],
+    "antonyms": [],
+    "category": "BCS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5075,
+    "word": "Anacoluthon",
+    "pos": "Noun",
+    "phonetic": "/ˌæn.ə.kəˈluː.θɒন/",
+    "meaningBn": "বাক্যরীতির অসংগতি",
+    "exampleEn": "Poet used anacoluthon for effect.",
+    "exampleBn": "কবি বিশেষ প্রভাবের জন্য বাক্যরীতির অসংগতি ব্যবহার করেন।",
+    "synonyms": [
+      "Inconsistency"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5076,
+    "word": "Anent",
+    "pos": "Preposition",
+    "phonetic": "/əˈnent/",
+    "meaningBn": "সম্পর্কে, বিষয়ে (পুরাতন)",
+    "exampleEn": "I spoke to him anent the plan.",
+    "exampleBn": "পরিকল্পনার বিষয়ে আমি তার সাথে কথা বলেছিলাম।",
+    "synonyms": [
+      "Regarding",
+      "About"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5077,
+    "word": "Anhedonia",
+    "pos": "Noun",
+    "phonetic": "/ˌæn.hiːˈdəʊ.ni.ə/",
+    "meaningBn": "আনন্দ বা অনুভূতি হীনতা",
+    "exampleEn": "Depression causes anhedonia.",
+    "exampleBn": "হতাশা আনন্দ অনুভূতির অভাব ঘটায়।",
+    "synonyms": [
+      "Numbness"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5078,
+    "word": "Animadversion",
+    "pos": "Noun",
+    "phonetic": "/ˌæn.ɪ.mædˈvɜː.ʃən/",
+    "meaningBn": "কঠোর সমালোচনা, ভর্ৎসনা",
+    "exampleEn": "Article drew fierce animadversion.",
+    "exampleBn": "প্রবন্ধটি তীব্র সমালোচনার মুখে পড়েছিল।",
+    "synonyms": [
+      "Censure",
+      "Criticism"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5079,
+    "word": "Anodize",
+    "pos": "Verb",
+    "phonetic": "/ˈæn.ə.daɪz/",
+    "meaningBn": "ধাতুর প্রলেপ দেওয়া",
+    "exampleEn": "Factory anodizes aluminum sheets.",
+    "exampleBn": "কারখানাটি অ্যালুমিনিয়াম পাতে প্রলেপ দেয়।",
+    "synonyms": [
+      "Coat",
+      "Plated"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5080,
+    "word": "Anointment",
+    "pos": "Noun",
+    "phonetic": "/əˈnɔɪnt.mənt/",
+    "meaningBn": "অভিষেক, পবিত্র তেল লেপন",
+    "exampleEn": "King received holy anointment.",
+    "exampleBn": "রাজা পবিত্র রাজকীয় অভিষেক গ্রহণ করেছিলেন।",
+    "synonyms": [
+      "Consecration"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5081,
+    "word": "Anomie",
+    "pos": "Noun",
+    "phonetic": "/ˈæn.ə.mi/",
+    "meaningBn": "সামাজিক বিশৃঙ্খলা, নীতিহীনতা",
+    "exampleEn": "War caused widespread anomie.",
+    "exampleBn": "যুদ্ধ ব্যাপক নীতিহীনতার জন্ম দিয়েছিল।",
+    "synonyms": [
+      "Lawlessness"
+    ],
+    "antonyms": [],
+    "category": "BCS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5082,
+    "word": "Antemortem",
+    "pos": "Adj",
+    "phonetic": "/ˌæn.tiˈmɔː.təm/",
+    "meaningBn": "মৃত্যুর আগের",
+    "exampleEn": "Doctor examined antemortem injuries.",
+    "exampleBn": "ডাক্তার মৃত্যুর আগের আঘাতগুলো পরীক্ষা করেছিলেন।",
+    "synonyms": [
+      "Prior to death"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5083,
+    "word": "Anthelion",
+    "pos": "Noun",
+    "phonetic": "/ænˈθiː.li.ən/",
+    "meaningBn": "সূর্যের বিপরীত পাশের বলয়",
+    "exampleEn": "They saw a rare anthelion.",
+    "exampleBn": "তারা একটি বিরল বলয় দেখেছিল।",
+    "synonyms": [
+      "Halo"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5084,
+    "word": "Anthologize",
+    "pos": "Verb",
+    "phonetic": "/ænˈθɒl.ə.dʒaɪz/",
+    "meaningBn": "সংকলনে অন্তর্ভুক্ত করা",
+    "exampleEn": "His poem was anthologized.",
+    "exampleBn": "তার কবিতাটি সংকলনে অন্তর্ভুক্ত করা হয়েছিল।",
+    "synonyms": [
+      "Compile",
+      "Collect"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5085,
+    "word": "Anthropocentric",
+    "pos": "Adj",
+    "phonetic": "/ˌæn.θrə.pəˈsen.trɪক/",
+    "meaningBn": "মানবকেন্দ্রিক",
+    "exampleEn": "View is highly anthropocentric.",
+    "exampleBn": "দৃষ্টিভঙ্গিটি অত্যন্ত মানবকেন্দ্রিক।",
+    "synonyms": [
+      "Human-centered"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5086,
+    "word": "Anthropogenic",
+    "pos": "Adj",
+    "phonetic": "/ˌæn.θrə.pəˈdʒen.ɪক/",
+    "meaningBn": "মানুষের দ্বারা সৃষ্ট (পরিবেশ)",
+    "exampleEn": "Global warming is anthropogenic.",
+    "exampleBn": "বৈশ্বিক উষ্ণায়ন মানুষের দ্বারা সৃষ্ট।",
+    "synonyms": [
+      "Human-caused"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5087,
+    "word": "Antihero",
+    "pos": "Noun",
+    "phonetic": "/ˈæn.tiˌhɪə.rəʊ/",
+    "meaningBn": "নায়কসুলভ গুণহীন প্রধান চরিত্র",
+    "exampleEn": "Novel features an antihero.",
+    "exampleBn": "উপন্যাসটিতে এক অপ্রতিম প্রধান চরিত্র রয়েছে।",
+    "synonyms": [
+      "Flawed protagonist"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5088,
+    "word": "Antinepotism",
+    "pos": "Noun",
+    "phonetic": "/ˌæn.tiˈnep.ə.tɪ.zəm/",
+    "meaningBn": "স্বজনপ্রীতি বিরোধী নীতি",
+    "exampleEn": "Company enforces antinepotism rule.",
+    "exampleBn": "প্রতিষ্ঠানটি স্বজনপ্রীতি বিরোধী নীতি প্রয়োগ করে।",
+    "synonyms": [
+      "Fairness"
+    ],
+    "antonyms": [],
+    "category": "BCS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5089,
+    "word": "Antiphrasis",
+    "pos": "Noun",
+    "phonetic": "/ænˈtɪf.rə.sɪs/",
+    "meaningBn": "বিপরীত অর্থে শব্দের ব্যবহার",
+    "exampleEn": "Sarcasm uses antiphrasis.",
+    "exampleBn": "ব্যঙ্গাত্মক কথায় বিপরীত অর্থের ব্যবহার হয়।",
+    "synonyms": [
+      "Irony"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5090,
+    "word": "Aperiodicity",
+    "pos": "Noun",
+    "phonetic": "/ˌeɪ.pɪə.ri.əˈdɪs.ə.ti/",
+    "meaningBn": "অনিয়মিততা",
+    "exampleEn": "Signal showed aperiodicity.",
+    "exampleBn": "সংকেতটি অনিয়মিততা দেখিয়েছিল।",
+    "synonyms": [
+      "Irregularity"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5091,
+    "word": "Aphasia",
+    "pos": "Noun",
+    "phonetic": "/əˈfeɪ.ʒə/",
+    "meaningBn": "বাকশক্তি লোপ, কথা বলতে না পারা",
+    "exampleEn": "Stroke led to aphasia.",
+    "exampleBn": "স্ট্রোকের কারণে বাকশক্তি লোপ পেয়েছিল।",
+    "synonyms": [
+      "Speechlessness"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5092,
+    "word": "Apoplexy",
+    "pos": "Noun",
+    "phonetic": "/ˈæp.ə.plek.si/",
+    "meaningBn": "মস্তিষ্কে রক্তক্ষরণ, চরম রাগ",
+    "exampleEn": "He was red with apoplexy.",
+    "exampleBn": "তিনি প্রচণ্ড রাগে লাল হয়ে গিয়েছিলেন।",
+    "synonyms": [
+      "Furious anger",
+      "Stroke"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5093,
+    "word": "Appurtenances",
+    "pos": "Noun",
+    "phonetic": "/əˈpɜː.tɪ.nən.sɪz/",
+    "meaningBn": "আনুষঙ্গিক জিনিসপত্র, অধিকার",
+    "exampleEn": "House sold with all appurtenances.",
+    "exampleBn": "বাড়িটি সব আনুষঙ্গিক জিনিসসহ বিক্রি হয়েছিল।",
+    "synonyms": [
+      "Accessories",
+      "Belongings"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5094,
+    "word": "Arbitrage",
+    "pos": "Noun",
+    "phonetic": "/ˈɑː.bɪ.trɑːʒ/",
+    "meaningBn": "ব্যবসায়িক সুযোগ গ্রহণ, একই পণ্য ভিন্ন দামে কেনাবেচা",
+    "exampleEn": "Traders profit from arbitrage.",
+    "exampleBn": "ব্যবসায়ীরা দর পার্থক্যের সুবিধা থেকে লাভ করে।",
+    "synonyms": [
+      "Trading strategy"
+    ],
+    "antonyms": [],
+    "category": "BCS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5095,
+    "word": "Arcadian",
+    "pos": "Adj",
+    "phonetic": "/ɑːˈkeɪ.di.ən/",
+    "meaningBn": "শান্ত ও মনোরম গ্রাম্য",
+    "exampleEn": "They lived in Arcadian peace.",
+    "exampleBn": "তারা চমৎকার শান্ত গ্রাম্য শান্তিতে বাস করতো।",
+    "synonyms": [
+      "Rural",
+      "Pastoral"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5096,
+    "word": "Archivist",
+    "pos": "Noun",
+    "phonetic": "/ˈɑː.kɪ.vɪst/",
+    "meaningBn": "মহাফেজখানার রক্ষক, আর্কাইভ প্রধান",
+    "exampleEn": "The archivist found old map.",
+    "exampleBn": "আর্কাইভ প্রধান পুরোনো মানচিত্র খুঁজে পান।",
+    "synonyms": [
+      "Record keeper"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5097,
+    "word": "Argumentation",
+    "pos": "Noun",
+    "phonetic": "/ˌɑː.ɡjə.menˈteɪ.ʃən/",
+    "meaningBn": "যুক্তিপ্রদর্শন, বিতর্ক উপস্থাপন",
+    "exampleEn": "His argumentation was logical.",
+    "exampleBn": "তার যুক্তিপ্রদর্শন ছিল অত্যন্ত যৌক্তিক।",
+    "synonyms": [
+      "Reasoning",
+      "Debate"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5098,
+    "word": "Arriviste",
+    "pos": "Noun",
+    "phonetic": "/ˌær.iːˈviːst/",
+    "meaningBn": "হঠাৎ বড়লোক হওয়া উচ্চাকাঙ্ক্ষী",
+    "exampleEn": "Society disliked the arriviste.",
+    "exampleBn": "সমাজ হঠাৎ বড়লোক হওয়া লোকটিকে অপছন্দ করতো।",
+    "synonyms": [
+      "Upstart",
+      "Social climber"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5099,
+    "word": "Assiduousness",
+    "pos": "Noun",
+    "phonetic": "/əˈsɪdʒ.u.əs.nəs/",
+    "meaningBn": "একনিষ্ঠতা, পরিশ্রমী মনোভাব",
+    "exampleEn": "Her assiduousness brought success.",
+    "exampleBn": "তার একনিষ্ঠতা সাফল্য এনে দিয়েছিল।",
+    "synonyms": [
+      "Diligence",
+      "Perseverance"
+    ],
+    "antonyms": [],
+    "category": "BCS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5100,
+    "word": "Assuetude",
+    "pos": "Noun",
+    "phonetic": "/ˈæs.wɪ.tʃuːd/",
+    "meaningBn": "অভ্যাস, অভ্যস্ততা",
+    "exampleEn": "Assuetude made job easy.",
+    "exampleBn": "অভ্যস্ততা কাজটিকে সহজ করে দিয়েছিল।",
+    "synonyms": [
+      "Habit",
+      "Custom"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5101,
+    "word": "Astriction",
+    "pos": "Noun",
+    "phonetic": "/əˈstrɪk.ʃən/",
+    "meaningBn": "সংকোচন, সীমাবদ্ধতা",
+    "exampleEn": "Strict rules placed astriction.",
+    "exampleBn": "কঠোর নিয়ম সীমাবদ্ধতা আরোপ করেছিল।",
+    "synonyms": [
+      "Restriction",
+      "Binding"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5102,
+    "word": "Atavism",
+    "pos": "Noun",
+    "phonetic": "/ˈæt.ə.vɪ.zəm/",
+    "meaningBn": "পূর্বপুরুষের গুণাবলীর পুনরাভির্ভাব",
+    "exampleEn": "Behavior was an atavism.",
+    "exampleBn": "আচরণটি ছিল পূর্বপুরুষের গুণের পুনরাবৃত্তি।",
+    "synonyms": [
+      "Reversion",
+      "Throwback"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5103,
+    "word": "Ataraxia",
+    "pos": "Noun",
+    "phonetic": "/ˌæt.əˈræk.si.ə/",
+    "meaningBn": "মানসিক প্রশান্তি, দুশ্চিন্তাহীনতা",
+    "exampleEn": "Meditation leads to ataraxia.",
+    "exampleBn": "ধ্যান মানসিক প্রশান্তির দিকে নিয়ে যায়।",
+    "synonyms": [
+      "Tranquility",
+      "Serenity"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5104,
+    "word": "Athematic",
+    "pos": "Adj",
+    "phonetic": "/ˌeɪ.θɪˈmæt.ɪk/",
+    "meaningBn": "মূলভাবহীন",
+    "exampleEn": "Book was written in athematic style.",
+    "exampleBn": "বইটি মূলভাবহীন শৈলীতে লেখা হয়েছিল।",
+    "synonyms": [
+      "Theme-less"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5105,
+    "word": "Attritional",
+    "pos": "Adj",
+    "phonetic": "/əˈtrɪʃ.ən.əl/",
+    "meaningBn": "ক্ষয়কারী, দীর্ঘ ক্লান্তিকর",
+    "exampleEn": "War became an attritional struggle.",
+    "exampleBn": "যুদ্ধটি এক দীর্ঘ ক্লান্তিকর লড়াইয়ে পরিণত হয়।",
+    "synonyms": [
+      "Exhausting",
+      "Wearing down"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5106,
+    "word": "Autodidact",
+    "pos": "Noun",
+    "phonetic": "/ˌɔː.təʊˈdaɪ.dækt/",
+    "meaningBn": "স্বশিক্ষিত ব্যক্তি",
+    "exampleEn": "He was a brilliant autodidact.",
+    "exampleBn": "তিনি ছিলেন এক অত্যন্ত মেধাবী স্বশিক্ষিত ব্যক্তি।",
+    "synonyms": [
+      "Self-taught person"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5107,
+    "word": "Autoimmune",
+    "pos": "Adj",
+    "phonetic": "/ˌɔː.təʊ.ɪˈmjuːn/",
+    "meaningBn": "স্বয়ংপ্রতিরোধী (চিকিৎসা)",
+    "exampleEn": "She treats autoimmune conditions.",
+    "exampleBn": "তিনি স্বয়ংপ্রতিরোধী রোগের চিকিৎসা করেন।",
+    "synonyms": [
+      "Self-attacking"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5108,
+    "word": "Avengeful",
+    "pos": "Adj",
+    "phonetic": "/əˈvendʒ.fəl/",
+    "meaningBn": "প্রতিশোধপরায়ণ",
+    "exampleEn": "He harbored avengeful thoughts.",
+    "exampleBn": "সে মনে প্রতিশোধপরায়ণ চিন্তা পোষণ করেছিল।",
+    "synonyms": [
+      "Vindictive",
+      "Revengeful"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5109,
+    "word": "Avoirdupois",
+    "pos": "Noun",
+    "phonetic": "/ˌæv.ə.dəˈpwaɪz/",
+    "meaningBn": "ওজন, স্থূলতা",
+    "exampleEn": "He tried to reduce his avoirdupois.",
+    "exampleBn": "সে তার অতিরিক্ত ওজন কমানোর চেষ্টা করেছিল।",
+    "synonyms": [
+      "Weight",
+      "Heaviness"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5110,
+    "word": "Avro",
+    "pos": "Noun",
+    "phonetic": "/ˈæv.rəʊ/",
+    "meaningBn": "টাইপিং লেআউট বা বিমান প্রস্তুতকারক",
+    "exampleEn": "Avro layout is popular in Bangla typing.",
+    "exampleBn": "বাংলা টাইপিংয়ে অভ্র অত্যন্ত জনপ্রিয়।",
+    "synonyms": [
+      "Software layout"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5111,
+    "word": "Bacchanal",
+    "pos": "Noun",
+    "phonetic": "/ˈbæk.ə.nəl/",
+    "meaningBn": "উন্মত্ত পান উৎসব",
+    "exampleEn": "Party turned into a bacchanal.",
+    "exampleBn": "পার্টিটি একটি উন্মত্ত পান উৎসবে পরিণত হয়।",
+    "synonyms": [
+      "Drunken party",
+      "Revelry"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5112,
+    "word": "Backslide",
+    "pos": "Verb",
+    "phonetic": "/ˈbæk.slaɪd/",
+    "meaningBn": "কুঅভ্যাসে ফিরে যাওয়া, নৈতিক পতন",
+    "exampleEn": "Don't backslide into old habits.",
+    "exampleBn": "পুরোনো বাজে অভ্যাসে ফিরে যেও না।",
+    "synonyms": [
+      "Lapse",
+      "Relapse"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5113,
+    "word": "Badinage",
+    "pos": "Noun",
+    "phonetic": "/ˈbæd.ɪ.nɑːʒ/",
+    "meaningBn": "হালকা পরিহাস, কৌতুক আলাপ",
+    "exampleEn": "They exchanged playful badinage.",
+    "exampleBn": "তারা হালকা পরিহাসমূলক কৌতুক বিনিময় করে।",
+    "synonyms": [
+      "Banter",
+      "Teasing"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5114,
+    "word": "Bailiwick",
+    "pos": "Noun",
+    "phonetic": "/ˈbeɪ.lɪ.wɪk/",
+    "meaningBn": "বিশেষ দক্ষতার ক্ষেত্র",
+    "exampleEn": "Finance is outside my bailiwick.",
+    "exampleBn": "অর্থনীতি আমার দক্ষতার ক্ষেত্রের বাইরে।",
+    "synonyms": [
+      "Domain",
+      "Sphere"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5115,
+    "word": "Balky",
+    "pos": "Adj",
+    "phonetic": "/ˈbɔː.ki/",
+    "meaningBn": "একগুঁয়ে, যা সহজে চলতে চায় না",
+    "exampleEn": "Mule was balky and refused to move.",
+    "exampleBn": "খচ্চরটি ছিল একগুঁয়ে এবং নড়তে অস্বীকার করেছিল।",
+    "synonyms": [
+      "Stubborn",
+      "Obstinate"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5116,
+    "word": "Ballyhoo",
+    "pos": "Noun",
+    "phonetic": "/ˈbæl.i.huː/",
+    "meaningBn": "অতিরঞ্জিত প্রচার, হট্টগোল",
+    "exampleEn": "Product was sold with much ballyhoo.",
+    "exampleBn": "পণ্যটি অতিরঞ্জিত প্রচারের মাধ্যমে বিক্রি হয়।",
+    "synonyms": [
+      "Hype",
+      "Publicity"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5117,
+    "word": "Balneology",
+    "pos": "Noun",
+    "phonetic": "/ˌbæl.niˈɒl.ə.dʒi/",
+    "meaningBn": "স্নানচিকিৎসা বিজ্ঞান",
+    "exampleEn": "He studied balneology in Germany.",
+    "exampleBn": "তিনি জার্মানিতে স্নানচিকিৎসা বিজ্ঞান পড়েছিলেন।",
+    "synonyms": [
+      "Bath therapy"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5118,
+    "word": "Bambino",
+    "pos": "Noun",
+    "phonetic": "/bæmˈbiː.nəʊ/",
+    "meaningBn": "ছোট শিশু বা বাচ্চা",
+    "exampleEn": "Mother held the cute bambino.",
+    "exampleBn": "মা সুন্দর ছোট শিশুটিকে কোলে নিয়েছিলেন।",
+    "synonyms": [
+      "Baby",
+      "Infant"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5119,
+    "word": "Banderole",
+    "pos": "Noun",
+    "phonetic": "/ˈbæn.də.rəʊl/",
+    "meaningBn": "ছোট দীর্ঘ পতাকা",
+    "exampleEn": "Castle was decorated with banderoles.",
+    "exampleBn": "দুর্গটি ছোট পতাকা দিয়ে সাজানো হয়েছিল।",
+    "synonyms": [
+      "Streamer",
+      "Banner"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5120,
+    "word": "Baneful",
+    "pos": "Adj",
+    "phonetic": "/ˈbeɪn.fəl/",
+    "meaningBn": "ক্ষতিকর, বিষাক্ত, ধ্বংসাত্মক",
+    "exampleEn": "Envy has a baneful influence.",
+    "exampleBn": "ঈর্ষার একটি ধ্বংসাত্মক প্রভাব রয়েছে।",
+    "synonyms": [
+      "Harmful",
+      "Ruinous"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5121,
+    "word": "Bantering",
+    "pos": "Adj",
+    "phonetic": "/ˈbæn.tər.ɪŋ/",
+    "meaningBn": "ঠাট্টাসুলভ, কৌতুকপূর্ণ",
+    "exampleEn": "He spoke in a bantering tone.",
+    "exampleBn": "তিনি ঠাট্টাসুলভ গলায় কথা বলেছিলেন।",
+    "synonyms": [
+      "Joking",
+      "Playful"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5122,
+    "word": "Barbarity",
+    "pos": "Noun",
+    "phonetic": "/bɑːˈbær.ə.ti/",
+    "meaningBn": "বর্বরতা, নির্মমতা",
+    "exampleEn": "War brought terrible barbarity.",
+    "exampleBn": "যুদ্ধ ভয়াবহ নম্বরতা ডেকে এনেছিল।",
+    "synonyms": [
+      "Cruelty",
+      "Savage behavior"
+    ],
+    "antonyms": [
+      "Kindness"
+    ],
+    "category": "BCS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5123,
+    "word": "Bardic",
+    "pos": "Adj",
+    "phonetic": "/ˈbɑː.dɪk/",
+    "meaningBn": "কবি বা চারণ কবি সংক্রান্ত",
+    "exampleEn": "He sang a bardic poem.",
+    "exampleBn": "তিনি একটি চারণ কবির গান গেয়েছিলেন।",
+    "synonyms": [
+      "Poetic"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5124,
+    "word": "Bargainee",
+    "pos": "Noun",
+    "phonetic": "/ˌbɑː.ɡəˈniː/",
+    "meaningBn": "চুক্তির ক্রেতা বা পক্ষ",
+    "exampleEn": "Bargainee signed the contract.",
+    "exampleBn": "চুক্তির ক্রেতা দলিলে সই করেছিলেন।",
+    "synonyms": [
+      "Buyer"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5125,
+    "word": "Barmecide",
+    "pos": "Adj",
+    "phonetic": "/ˈbɑː.mɪ.saɪd/",
+    "meaningBn": "কাল্পনিক বা ভুয়া (আপ্যায়ন)",
+    "exampleEn": "Feast turned out to be barmecide.",
+    "exampleBn": "ভোজটি কাল্পনিক বলে প্রমাণিত হয়েছিল।",
+    "synonyms": [
+      "Illusory",
+      "Fake"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5126,
+    "word": "Baroceptor",
+    "pos": "Noun",
+    "phonetic": "/ˌbær.əʊˈsep.tər/",
+    "meaningBn": "রক্তচাপ সংবেদক অঙ্গ (জীববিজ্ঞান)",
+    "exampleEn": "Baroceptors regulate blood pressure.",
+    "exampleBn": "রক্তচাপ সংবেদক রক্তচাপ নিয়ন্ত্রণ করে।",
+    "synonyms": [
+      "Pressure sensor"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5127,
+    "word": "Baronage",
+    "pos": "Noun",
+    "phonetic": "/ˈbær.ən.ɪdʒ/",
+    "meaningBn": "অভিজাত বর্গ, ব্যারন সম্প্রদায়",
+    "exampleEn": "King met the baronage.",
+    "exampleBn": "রাজা অভিজাত সম্প্রদায়ের সাথে দেখা করেন।",
+    "synonyms": [
+      "Nobility"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5128,
+    "word": "Barouche",
+    "pos": "Noun",
+    "phonetic": "/bəˈruːʃ/",
+    "meaningBn": "চার চাকার বিলাসবহুল ঘোড়ার গাড়ি",
+    "exampleEn": "Queen rode in a barouche.",
+    "exampleBn": "রানী চার চাকার ঘোড়ার গাড়িতে চড়েছিলেন।",
+    "synonyms": [
+      "Carriage"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5129,
+    "word": "Barratry",
+    "pos": "Noun",
+    "phonetic": "/ˈbær.ə.tri/",
+    "meaningBn": "জাহাজের নাবিকের বেআইনি কাজ বা অপ্রয়োজনীয় মামলাবাজি",
+    "exampleEn": "Lawyer was charged with barratry.",
+    "exampleBn": "আইনজীবীর বিরুদ্ধে অপ্রয়োজনীয় মামলাবাজির অভিযোগ আনা হয়।",
+    "synonyms": [
+      "Legal offense"
+    ],
+    "antonyms": [],
+    "category": "BCS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5130,
+    "word": "Barricado",
+    "pos": "Verb",
+    "phonetic": "/ˌbær.ɪˈkɑː.dəʊ/",
+    "meaningBn": "ব্যারিকেড দেওয়া, পথ রুদ্ধ করা",
+    "exampleEn": "Troops barricadoed the gateway.",
+    "exampleBn": "সেনাদল গেটে পথ রুদ্ধ করেছিল।",
+    "synonyms": [
+      "Blockade",
+      "Fortify"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5131,
+    "word": "Barrenness",
+    "pos": "Noun",
+    "phonetic": "/ˈbær.ən.নəs/",
+    "meaningBn": "বন্ধ্যাত্ব, উর্বরতাহীনতা",
+    "exampleEn": "Drought caused barrenness of land.",
+    "exampleBn": "খরা জমির উর্বরতাহীনতা ঘটিয়েছিল।",
+    "synonyms": [
+      "Infertility",
+      "Sterility"
+    ],
+    "antonyms": [
+      "Fertility"
+    ],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5132,
+    "word": "Baryton",
+    "pos": "Noun",
+    "phonetic": "/ˈbær.ɪ.tən/",
+    "meaningBn": "এক ধরনের প্রাচীন তারের বাদ্যযন্ত্র",
+    "exampleEn": "Musician played the baryton.",
+    "exampleBn": "সঙ্গীতশিল্পী প্রাচীন বাদ্যযন্ত্রটি বাজিয়েছিলেন।",
+    "synonyms": [
+      "Musical instrument"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5133,
+    "word": "Bashi-bazouk",
+    "pos": "Noun",
+    "phonetic": "/ˌbæʃ.i.bəˈzuːk/",
+    "meaningBn": "অনিয়মিত উগ্র সৈনিক",
+    "exampleEn": "City was looted by bashi-bazouks.",
+    "exampleBn": "শহরটি উগ্র সৈন্যদের দ্বারা লুণ্ঠিত হয়েছিল।",
+    "synonyms": [
+      "Irregular soldier"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5134,
+    "word": "Basophilic",
+    "pos": "Adj",
+    "phonetic": "/ˌbeɪ.səˈfɪl.ɪk/",
+    "meaningBn": "ক্ষার অনুরাগী (জীববিজ্ঞান)",
+    "exampleEn": "Cells showed basophilic staining.",
+    "exampleBn": "কোষগুলো ক্ষার অনুরাগী রঙ দেখিয়েছিল।",
+    "synonyms": [
+      "Stain-absorbing"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5135,
+    "word": "Bathos",
+    "pos": "Noun",
+    "phonetic": "/ˈbeɪ.θɒs/",
+    "meaningBn": "আবেগের হঠাৎ পতন, হাস্যকর পতন",
+    "exampleEn": "Movie ended in pure bathos.",
+    "exampleBn": "চলচ্চিত্রটি এক অদ্ভুত আবেগের পতনে শেষ হয়।",
+    "synonyms": [
+      "Anticlimax"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5136,
+    "word": "Bathyal",
+    "pos": "Adj",
+    "phonetic": "/ˈbæθ.i.əl/",
+    "meaningBn": "গভীর সমুদ্র সংক্রান্ত",
+    "exampleEn": "They studied bathyal sea life.",
+    "exampleBn": "তারা গভীর সমুদ্রের জীবন নিয়ে গবেষণা করেন।",
+    "synonyms": [
+      "Deep-sea"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5137,
+    "word": "Battening",
+    "pos": "Noun",
+    "phonetic": "/ˈbæt.ən.ɪŋ/",
+    "meaningBn": "অন্যের খরচে মোটা হওয়া বা তক্তা বাঁধা",
+    "exampleEn": "Battening on government funds is wrong.",
+    "exampleBn": "সরকারি অর্থে হৃষ্টপুষ্ট হওয়া অন্যায়।",
+    "synonyms": [
+      "Gaining wealth"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5138,
+    "word": "Batrachian",
+    "pos": "Adj",
+    "phonetic": "/bəˈtreɪ.ki.ən/",
+    "meaningBn": "উভচর বা ব্যাঙ সংক্রান্ত",
+    "exampleEn": "Frogs are batrachian creatures.",
+    "exampleBn": "ব্যাঙ হলো উভচর প্রাণী।",
+    "synonyms": [
+      "Amphibian"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5139,
+    "word": "Battology",
+    "pos": "Noun",
+    "phonetic": "/bəˈtɒl.ə.dʒi/",
+    "meaningBn": "অপ্রয়োজনীয় অনর্থক শব্দের পুনরাবৃত্তি",
+    "exampleEn": "Avoid battology in public speech.",
+    "exampleBn": "বক্তব্যে অনর্থক শব্দের পুনরাবৃত্তি এড়িয়ে চলুন।",
+    "synonyms": [
+      "Redundancy",
+      "Repetition"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5140,
+    "word": "Beautician",
+    "pos": "Noun",
+    "phonetic": "/bjuːˈtɪʃ.ən/",
+    "meaningBn": "রূপচর্চাকারী, রূপবিশেষজ্ঞ",
+    "exampleEn": "Beautician styled her hair.",
+    "exampleBn": "রূপবিশেষজ্ঞ তার চুল সাজিয়েছিলেন।",
+    "synonyms": [
+      "Cosmetologist"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5141,
+    "word": "Beckoning",
+    "pos": "Noun",
+    "phonetic": "/ˈbek.ən.ɪŋ/",
+    "meaningBn": "হাতছানি, আহ্বান",
+    "exampleEn": "Future was beckoning him.",
+    "exampleBn": "ভবিষ্যৎ তাকে হাতছানি দিচ্ছিল।",
+    "synonyms": [
+      "Signaling",
+      "Calling"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5142,
+    "word": "Bedazzle",
+    "pos": "Verb",
+    "phonetic": "/bɪˈdæz.əl/",
+    "meaningBn": "মুগ্ধ করা, চকচক করে চোখ ধাঁধানো",
+    "exampleEn": "Performance bedazzled the audience.",
+    "exampleBn": "পরিবেশনাটি দর্শকদের মুগ্ধ করেছিল।",
+    "synonyms": [
+      "Enchant",
+      "Dazzle"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5143,
+    "word": "Bedevil",
+    "pos": "Verb",
+    "phonetic": "/bɪˈdev.əl/",
+    "meaningBn": "জর্জরিত বা অতিষ্ঠ করা",
+    "exampleEn": "Doubts bedevil his mind.",
+    "exampleBn": "সন্দেহ তার মনকে অতিষ্ঠ করে।",
+    "synonyms": [
+      "Torment",
+      "Plague"
+    ],
+    "antonyms": [],
+    "category": "IELTS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5144,
+    "word": "Bedlamite",
+    "pos": "Noun",
+    "phonetic": "/ˈbed.lə.maɪt/",
+    "meaningBn": "উন্মাদ ব্যক্তি, পাগল",
+    "exampleEn": "He shouted like a bedlamite.",
+    "exampleBn": "সে উন্মাদের মতো চিৎকার করেছিল।",
+    "synonyms": [
+      "Madman",
+      "Lunatic"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5145,
+    "word": "Befogged",
+    "pos": "Adj",
+    "phonetic": "/bɪˈfɒɡd/",
+    "meaningBn": "কুয়াশাচ্ছন্ন, বিভ্রান্ত",
+    "exampleEn": "His mind was befogged with sleep.",
+    "exampleBn": "ঘুমের কারণে তার মন বিভ্রান্ত ছিল।",
+    "synonyms": [
+      "Confused",
+      "Clouded"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5146,
+    "word": "Behest",
+    "pos": "Noun",
+    "phonetic": "/bɪˈhest/",
+    "meaningBn": "আদেশ, ফরমায়েশ",
+    "exampleEn": "He acted at king's behest.",
+    "exampleBn": "তিনি রাজার আদেশে কাজ করেছিলেন।",
+    "synonyms": [
+      "Command",
+      "Order"
+    ],
+    "antonyms": [],
+    "category": "BCS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5147,
+    "word": "Beleaguerment",
+    "pos": "Noun",
+    "phonetic": "/bɪˈliː.ɡər.mənt/",
+    "meaningBn": "অবরুদ্ধ দশা, কোণঠাসা অবস্থা",
+    "exampleEn": "City suffered under beleaguerment.",
+    "exampleBn": "শহরটি অবরুদ্ধ দশায় কষ্ট পেয়েছিল।",
+    "synonyms": [
+      "Siege",
+      "Harassment"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5148,
+    "word": "Belfry",
+    "pos": "Noun",
+    "phonetic": "/ˈbel.fri/",
+    "meaningBn": "গির্জার ঘণ্টাঘর",
+    "exampleEn": "Bats flew from the belfry.",
+    "exampleBn": "ঘণ্টাঘর থেকে বাদুড় উড়েছিল।",
+    "synonyms": [
+      "Bell tower"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5149,
+    "word": "Belial",
+    "pos": "Noun",
+    "phonetic": "/ˈbeɪ.li.əl/",
+    "meaningBn": "শয়তান, পাপাচারী লোক",
+    "exampleEn": "He was referred to as Belial.",
+    "exampleBn": "তাকে পাপাচারী লোক হিসেবে উল্লেখ করা হয়।",
+    "synonyms": [
+      "Demon",
+      "Wicked person"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5150,
+    "word": "Bellwether",
+    "pos": "Noun",
+    "phonetic": "/ˈbelˌweð.ər/",
+    "meaningBn": "পথপ্রদর্শক, প্রবণতার নির্দেশক",
+    "exampleEn": "Stock market is economic bellwether.",
+    "exampleBn": "শেয়ারবাজার হলো অর্থনীতির প্রবণতার নির্দেশক।",
+    "synonyms": [
+      "Indicator",
+      "Trendsetter"
+    ],
+    "antonyms": [],
+    "category": "IELTS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5151,
+    "word": "Bemoaning",
+    "pos": "Noun",
+    "phonetic": "/bɪˈməʊn.ɪŋ/",
+    "meaningBn": "আক্ষেপ, অনুশোচনা প্রকাশ",
+    "exampleEn": "Stop bemoaning your fate.",
+    "exampleBn": "ভাগ্যের আক্ষেপ করা বন্ধ করুন।",
+    "synonyms": [
+      "Lamentation"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5152,
+    "word": "Benshee",
+    "pos": "Noun",
+    "phonetic": "/ˈbæn.ʃiː/",
+    "meaningBn": "মৃত্যুর সংকেত দেওয়া প্রেতাত্মা",
+    "exampleEn": "Wind howled like a banshee.",
+    "exampleBn": "বাতাস প্রেতাত্মার মতো গর্জন করছিল।",
+    "synonyms": [
+      "Spirit",
+      "Wailing spirit"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5153,
+    "word": "Benedictory",
+    "pos": "Adj",
+    "phonetic": "/ˌben.ɪˈdɪk.tər.i/",
+    "meaningBn": "আশীর্বাদসূচক",
+    "exampleEn": "Priest gave benedictory prayer.",
+    "exampleBn": "পুরোহিত আশীর্বাদসূচক প্রার্থনা করেছিলেন।",
+    "synonyms": [
+      "Blessing"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5154,
+    "word": "Benevolency",
+    "pos": "Noun",
+    "phonetic": "/bəˈnev.əl.ən.si/",
+    "meaningBn": "পরাপোকারি মনোভাব, দয়া",
+    "exampleEn": "His benevolency was recognized.",
+    "exampleBn": "তার পরাপোকারি মনোভাব স্বীকৃতি পেয়েছিল।",
+    "synonyms": [
+      "Kindness"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5155,
+    "word": "Benison",
+    "pos": "Noun",
+    "phonetic": "/ˈben.ɪ.sən/",
+    "meaningBn": "আশীর্বাদ, মঙ্গলকামনা",
+    "exampleEn": "Receive the elder's benison.",
+    "exampleBn": "মুরুব্বিদের আশীর্বাদ গ্রহণ করুন।",
+    "synonyms": [
+      "Blessing",
+      "Benediction"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5156,
+    "word": "Benthamism",
+    "pos": "Noun",
+    "phonetic": "/ˈben.θəm.ɪ.zəm/",
+    "meaningBn": "উপযোগবাদ (দর্শন)",
+    "exampleEn": "Benthamism focuses on utility.",
+    "exampleBn": "উপযোগবাদ ব্যবহারের ওপর জোর দেয়।",
+    "synonyms": [
+      "Utilitarianism"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5157,
+    "word": "Bequest",
+    "pos": "Noun",
+    "phonetic": "/bɪˈkwest/",
+    "meaningBn": "উইলকৃত সম্পত্তি, ওসিয়ত",
+    "exampleEn": "He left a large bequest to charity.",
+    "exampleBn": "তিনি দাতব্য প্রতিষ্ঠানে বিশাল সম্পত্তি উইল করে যান।",
+    "synonyms": [
+      "Legacy",
+      "Inheritance"
+    ],
+    "antonyms": [],
+    "category": "BCS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5158,
+    "word": "Berating",
+    "pos": "Noun",
+    "phonetic": "/bɪˈreɪt.ɪŋ/",
+    "meaningBn": "তীব্র ভর্ৎসনা, বকাঝকা",
+    "exampleEn": "Teacher stopped the berating.",
+    "exampleBn": "শিক্ষক বকাঝকা বন্ধ করেছিলেন।",
+    "synonyms": [
+      "Scolding",
+      "Chiding"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5159,
+    "word": "Bergamasque",
+    "pos": "Noun",
+    "phonetic": "/ˈbɜː.ɡə.mæsk/",
+    "meaningBn": "এক ধরনের প্রাচীন ইতালীয় নৃত্য",
+    "exampleEn": "Dancers performed a bergamasque.",
+    "exampleBn": "নর্তকরা প্রাচীন নৃত্য পরিবেশন করেছিল।",
+    "synonyms": [
+      "Rustic dance"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5160,
+    "word": "Beseeching",
+    "pos": "Adj",
+    "phonetic": "/bɪˈsiː.tʃɪŋ/",
+    "meaningBn": "মিনতিপূর্ণ, আকুল",
+    "exampleEn": "She cast a beseeching glance.",
+    "exampleBn": "সে এক আকুল মিনতিপূর্ণ দৃষ্টি ফেলেছিল।",
+    "synonyms": [
+      "Pleading",
+      "Begging"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5161,
+    "word": "Bespeak",
+    "pos": "Verb",
+    "phonetic": "/bɪˈspiːক/",
+    "meaningBn": "প্রদর্শন করা, নির্দেশ করা",
+    "exampleEn": "His manners bespeak good upbringing.",
+    "exampleBn": "তার আচরণ ভালো লালন-পালনের নির্দেশ দেয়।",
+    "synonyms": [
+      "Indicate",
+      "Manifest"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5162,
+    "word": "Bestial",
+    "pos": "Adj",
+    "phonetic": "/ˈbes.ti.əl/",
+    "meaningBn": "পশুসুলভ, পাসবিক",
+    "exampleEn": "Attacks were of bestial nature.",
+    "exampleBn": "হামলাগুলো ছিল পশুসুলভ প্রকৃতির।",
+    "synonyms": [
+      "Brutal",
+      "Beastly"
+    ],
+    "antonyms": [
+      "Humanitarian"
+    ],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5163,
+    "word": "Bestowal",
+    "pos": "Noun",
+    "phonetic": "/bɪˈstəʊ.əl/",
+    "meaningBn": "প্রদান, অর্পণ",
+    "exampleEn": "Bestowal of honors took place.",
+    "exampleBn": "সম্মাননা প্রদান অনুষ্ঠান সম্পন্ন হয়।",
+    "synonyms": [
+      "Conferment",
+      "Granting"
+    ],
+    "antonyms": [],
+    "category": "BCS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5164,
+    "word": "Bibliotheca",
+    "pos": "Noun",
+    "phonetic": "/ˌbɪb.li.əˈθiː.kə/",
+    "meaningBn": "গ্রন্থগার, বইয়ের সংগ্রহশাল",
+    "exampleEn": "Library holds a vast bibliotheca.",
+    "exampleBn": "গ্রন্থাগারে এক বিশাল বইয়ের সংগ্রহ রয়েছে।",
+    "synonyms": [
+      "Library",
+      "Collection"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5165,
+    "word": "Bicameralism",
+    "pos": "Noun",
+    "phonetic": "/baɪˈkæm.ər.əl.ɪ.zəm/",
+    "meaningBn": "দ্বিকক্ষবিশিষ্ট আইনসভা ব্যবস্থা",
+    "exampleEn": "Nation practices bicameralism.",
+    "exampleBn": "দেশটিতে দ্বিকক্ষবিশিষ্ট সংসদ ব্যবস্থা চালু।",
+    "synonyms": [
+      "Two-chamber system"
+    ],
+    "antonyms": [],
+    "category": "BCS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5166,
+    "word": "Bickerer",
+    "pos": "Noun",
+    "phonetic": "/ˈbɪk.ər.ər/",
+    "meaningBn": "ঝগড়াটে লোক",
+    "exampleEn": "He is a constant bickerer.",
+    "exampleBn": "সে একজন অনবরত ঝগড়াটে লোক।",
+    "synonyms": [
+      "Quarreler"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5167,
+    "word": "Bilateralism",
+    "pos": "Noun",
+    "phonetic": "/baɪˈlæt.ər.əl.ɪ.zəm/",
+    "meaningBn": "দ্বিপাক্ষিক নীতি",
+    "exampleEn": "Trade rests on bilateralism.",
+    "exampleBn": "বাণিজ্য দ্বিপাক্ষিক নীতির ওপর নির্ভরশীল।",
+    "synonyms": [
+      "Two-sided policy"
+    ],
+    "antonyms": [],
+    "category": "BCS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5168,
+    "word": "Bilingualism",
+    "pos": "Noun",
+    "phonetic": "/baɪˈlɪŋ.ɡwəl.ɪ.zəm/",
+    "meaningBn": "দ্বিভাষিকতা, দুই ভাষায় দক্ষতা",
+    "exampleEn": "Bilingualism enhances brain function.",
+    "exampleBn": "দ্বিভাষিকতা মস্তিষ্কের কার্যক্ষমতা বাড়ায়।",
+    "synonyms": [
+      "Dual language skill"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5169,
+    "word": "Billet-doux",
+    "pos": "Noun",
+    "phonetic": "/ˌbɪl.eɪˈduː/",
+    "meaningBn": "প্রেমপত্র",
+    "exampleEn": "He sent her a sweet billet-doux.",
+    "exampleBn": "সে তাকে একটি মিষ্টি প্রেমপত্র পাঠিয়েছিল।",
+    "synonyms": [
+      "Love letter"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5170,
+    "word": "Bimonthly",
+    "pos": "Adj",
+    "phonetic": "/baɪˈmʌnθ.li/",
+    "meaningBn": "দ্বিমাসিক, দুই মাসে একবার",
+    "exampleEn": "Journal is a bimonthly publication.",
+    "exampleBn": "পত্রিকাটি একটি দ্বিমাসিক প্রকাশনা।",
+    "synonyms": [
+      "Every two months"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5171,
+    "word": "Bioacoustics",
+    "pos": "Noun",
+    "phonetic": "/ˌbaɪ.əʊ.əˈkuː.stɪks/",
+    "meaningBn": "জৈব শব্দবিজ্ঞান",
+    "exampleEn": "They study bioacoustics of whales.",
+    "exampleBn": "তারা তিমি মাছের শব্দবিজ্ঞান নিয়ে গবেষণা করেন।",
+    "synonyms": [
+      "Animal sound science"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5172,
+    "word": "Biocentric",
+    "pos": "Adj",
+    "phonetic": "/ˌbaɪ.əʊˈsen.trɪক/",
+    "meaningBn": "জীবকেন্দ্রিক",
+    "exampleEn": "Adopt a biocentric worldview.",
+    "exampleBn": "একটি জীবকেন্দ্রিক দৃষ্টিভঙ্গি গ্রহণ করুন।",
+    "synonyms": [
+      "Life-centered"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5173,
+    "word": "Biographer",
+    "pos": "Noun",
+    "phonetic": "/baɪˈɒɡ.rə.fər/",
+    "meaningBn": "জীবনীকার",
+    "exampleEn": "Biographer wrote author's life.",
+    "exampleBn": "জীবনীকার লেখকের জীবনবৃত্তান্ত লিখেছিলেন।",
+    "synonyms": [
+      "Life writer"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5174,
+    "word": "Bipartisanship",
+    "pos": "Noun",
+    "phonetic": "/baɪˌpɑː.tɪˈzæn.ʃɪp/",
+    "meaningBn": "দ্বিদলীয় সমঝোতা",
+    "exampleEn": "Bill passed with bipartisanship.",
+    "exampleBn": "বিলটি দ্বিদলীয় সমঝোতায় পাস হয়েছিল।",
+    "synonyms": [
+      "Cross-party cooperation"
+    ],
+    "antonyms": [],
+    "category": "BCS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5175,
+    "word": "Bipedalism",
+    "pos": "Noun",
+    "phonetic": "/baɪˈpiː.də.lɪ.zəm/",
+    "meaningBn": "দ্বিপদী হাঁটার ক্ষমতা",
+    "exampleEn": "Bipedalism is unique to humans.",
+    "exampleBn": "দ্বিপদে হাঁটার ক্ষমতা মানুষের জন্য অনন্য।",
+    "synonyms": [
+      "Two-legged walking"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5176,
+    "word": "Bipolarity",
+    "pos": "Noun",
+    "phonetic": "/ˌbaɪ.pəʊˈlær.ə.ti/",
+    "meaningBn": "দ্বিমেরুকরণ, মেরুকরণ অবস্থা",
+    "exampleEn": "Cold war created bipolarity.",
+    "exampleBn": "শীতল যুদ্ধ বিশ্বব্যাপী মেরুকরণ সৃষ্টি করেছিল।",
+    "synonyms": [
+      "Dual polarity"
+    ],
+    "antonyms": [],
+    "category": "BCS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5177,
+    "word": "Bivouac",
+    "pos": "Noun",
+    "phonetic": "/ˈbɪv.u.æk/",
+    "meaningBn": "অস্থায়ী তাঁবু বা শিবির",
+    "exampleEn": "Soldiers set up a bivouac.",
+    "exampleBn": "সৈন্যরা একটি অস্থায়ী শিবির স্থাপন করেছিল।",
+    "synonyms": [
+      "Camp",
+      "Encampment"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5178,
+    "word": "Bizarrely",
+    "pos": "Adv",
+    "phonetic": "/bɪˈzɑː.li/",
+    "meaningBn": "অদ্ভুতভাবে, খাপছাড়াভাবে",
+    "exampleEn": "He behaved bizarrely at dinner.",
+    "exampleBn": "নৈশভোজে সে অদ্ভুতভাবে আচরণ করেছিল।",
+    "synonyms": [
+      "Strangely",
+      "Oddly"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5179,
+    "word": "Blasphemer",
+    "pos": "Noun",
+    "phonetic": "/blæsˈfiː.mər/",
+    "meaningBn": "ধর্মনিন্দক, ঈশ্বরনিন্দক",
+    "exampleEn": "He was branded as a blasphemer.",
+    "exampleBn": "তাকে একজন ধর্মনিন্দক হিসেবে আখ্যা দেওয়া হয়েছিল।",
+    "synonyms": [
+      "Heretic",
+      "Profaner"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5180,
+    "word": "Blazonry",
+    "pos": "Noun",
+    "phonetic": "/ˈbleɪ.zən.ri/",
+    "meaningBn": "কোট অব আর্মস বা জাঁকজমকপূর্ণ সজ্জা",
+    "exampleEn": "Shield displayed rich blazonry.",
+    "exampleBn": "ঢালটিতে জাঁকজমকপূর্ণ সজ্জা প্রদর্শিত হয়েছিল।",
+    "synonyms": [
+      "Heraldry",
+      "Display"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5181,
+    "word": "Blemished",
+    "pos": "Adj",
+    "phonetic": "/ˈblem.ɪʃt/",
+    "meaningBn": "কলঙ্কিত, ত্রুটিযুক্ত",
+    "exampleEn": "He had a blemished reputation.",
+    "exampleBn": "তার একটি কলঙ্কিত সুনাম ছিল।",
+    "synonyms": [
+      "Flawed",
+      "Tarnished"
+    ],
+    "antonyms": [
+      "Flawless"
+    ],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5182,
+    "word": "Blesbok",
+    "pos": "Noun",
+    "phonetic": "/ˈbles.bɒk/",
+    "meaningBn": "এক ধরনের আফ্রিকান হরিণ",
+    "exampleEn": "Blesbok grazed on savannah.",
+    "exampleBn": "হরিণটি তৃণভূমিতে ঘাস খাচ্ছিল।",
+    "synonyms": [
+      "Antelope"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5183,
+    "word": "Blipping",
+    "pos": "Noun",
+    "phonetic": "/ˈblɪp.ɪŋ/",
+    "meaningBn": "পর্দায় ছোট আলোর ঝলক বা সংকেত",
+    "exampleEn": "Radar showed blipping dot.",
+    "exampleBn": "রাডারে আলোর সংকেতের ফোঁটা দেখা যাচ্ছিল।",
+    "synonyms": [
+      "Flashing signal"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5184,
+    "word": "Blithely",
+    "pos": "Adv",
+    "phonetic": "/ˈblaɪð.li/",
+    "meaningBn": "চিন্তাহীনভাবে, আনন্দে",
+    "exampleEn": "She blithely ignored warnings.",
+    "exampleBn": "সে চিন্তাহীনভাবে সতর্কবার্তা উপেক্ষা করেছিল।",
+    "synonyms": [
+      "Carelessly",
+      "Cheerfully"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5185,
+    "word": "Blithesomeness",
+    "pos": "Noun",
+    "phonetic": "/ˈblaɪð.səm.nəs/",
+    "meaningBn": "উচ্ছ্বল আনন্দ, প্রফুল্লতা",
+    "exampleEn": "Her blithesomeness warmed room.",
+    "exampleBn": "তার প্রফুল্লতা ঘরটিকে প্রাণবন্ত করেছিল।",
+    "synonyms": [
+      "Cheerfulness",
+      "Joy"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5186,
+    "word": "Blockbuster",
+    "pos": "Noun",
+    "phonetic": "/ˈblɒkˌbʌs.tər/",
+    "meaningBn": "সুপারহিট চলচ্চিত্র বা বই",
+    "exampleEn": "Movie became a global blockbuster.",
+    "exampleBn": "চলচ্চিত্রটি একটি বিশ্বব্যাপী সুপারহিট হয়েছিল।",
+    "synonyms": [
+      "Hit",
+      "Success"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5187,
+    "word": "Blockholder",
+    "pos": "Noun",
+    "phonetic": "/ˈblɒkˌhəʊl.dər/",
+    "meaningBn": "বড় অঙ্কের শেয়ারহোল্ডার",
+    "exampleEn": "Blockholder voted against merger.",
+    "exampleBn": "বড় শেয়ারহোল্ডারটি একীভূতকরণের বিরুদ্ধে ভোট দেন।",
+    "synonyms": [
+      "Major shareholder"
+    ],
+    "antonyms": [],
+    "category": "BCS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5188,
+    "word": "Bloodguilt",
+    "pos": "Noun",
+    "phonetic": "/ˈblʌd.ɡɪlt/",
+    "meaningBn": "রক্তপাত বা হত্যার পাপের দায়",
+    "exampleEn": "Ruler felt heavy bloodguilt.",
+    "exampleBn": "শাসক হত্যার পাপের ভারী দায় অনুভব করেছিলেন।",
+    "synonyms": [
+      "Guilt of murder"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5189,
+    "word": "Blusterer",
+    "pos": "Noun",
+    "phonetic": "/ˈblʌs.tər.ər/",
+    "meaningBn": "ফাঁকা হুংকার দেওয়া লোক",
+    "exampleEn": "Don't listen to that blusterer.",
+    "exampleBn": "ঐ ফাঁকা হুংকার দেওয়া লোকের কথা শুনবেন না।",
+    "synonyms": [
+      "Boaster",
+      "Bully"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5190,
+    "word": "Blusterous",
+    "pos": "Adj",
+    "phonetic": "/ˈblʌs.tər.əs/",
+    "meaningBn": "ঝড়ো, আসফালনকারী",
+    "exampleEn": "It was a blusterous winter wind.",
+    "exampleBn": "এটি ছিল একটি ঝড়ো শীতের বাতাস।",
+    "synonyms": [
+      "Stormy",
+      "Boisterous"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5191,
+    "word": "Bobsledder",
+    "pos": "Noun",
+    "phonetic": "/ˈbɒb.sled.ər/",
+    "meaningBn": "তুষার গাড়ির চালক ক্রীড়াবিদ",
+    "exampleEn": "Bobsledder won the winter race.",
+    "exampleBn": "তুষার গাড়ির চালক প্রতিযোগিতায় জিতেছিল।",
+    "synonyms": [
+      "Racer"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5192,
+    "word": "Bodiless",
+    "pos": "Adj",
+    "phonetic": "/ˈbɒd.i.ləs/",
+    "meaningBn": "অশারীরী, দেমহীন",
+    "exampleEn": "A bodiless voice echoed in dark.",
+    "exampleBn": "অন্ধকারে এক অশারীরী কণ্ঠ প্রতিধ্বনিত হয়েছিল।",
+    "synonyms": [
+      "Incorporeal",
+      "Formless"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5193,
+    "word": "Bodie",
+    "pos": "Noun",
+    "phonetic": "/ˈbəʊ.di/",
+    "meaningBn": "ব্যক্তি বা কায়া (আঞ্চলিক)",
+    "exampleEn": "Every bodie joined the feast.",
+    "exampleBn": "প্রত্যেকেই ভোজে যোগ দিয়েছিল।",
+    "synonyms": [
+      "Person"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5194,
+    "word": "Bogeyman",
+    "pos": "Noun",
+    "phonetic": "/ˈbəʊ.ɡi.mæn/",
+    "meaningBn": "জুজু বুড়ো, কাল্পনিক ভীতিপ্রদ মূর্তি",
+    "exampleEn": "Parents warned child of bogeyman.",
+    "exampleBn": "বাবা-মা সন্তানকে জুজু বুড়োর ভয় দেখিয়েছিলেন।",
+    "synonyms": [
+      "Monster",
+      "Bugbear"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5195,
+    "word": "Boggart",
+    "pos": "Noun",
+    "phonetic": "/ˈbɒɡ.ət/",
+    "meaningBn": "দুষ্ট উপকথা বা প্রেতাত্মা",
+    "exampleEn": "Story described a hidden boggart.",
+    "exampleBn": "গল্পে এক লুকানো প্রেতাত্মার বর্ণনা ছিল।",
+    "synonyms": [
+      "Goblin"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5196,
+    "word": "Boggle",
+    "pos": "Verb",
+    "phonetic": "/ˈbɒɡ.əl/",
+    "meaningBn": "হতবুদ্ধি হওয়া, চমকে যাওয়া",
+    "exampleEn": "Mind boggles at huge numbers.",
+    "exampleBn": "বিশাল সংখ্যা দেখে মন হতবুদ্ধি হয়ে যায়।",
+    "synonyms": [
+      "Amaze",
+      "Baffle"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5197,
+    "word": "Bohemianism",
+    "pos": "Noun",
+    "phonetic": "/bəʊˈhiː.mi.ən.ɪ.zəm/",
+    "meaningBn": "প্রথাভাঙা স্বাধীন জীবনধারা",
+    "exampleEn": "Artist embraced bohemianism.",
+    "exampleBn": "শিল্পী প্রথাভাঙা স্বাধীন জীবনধারা গ্রহণ করেছিলেন।",
+    "synonyms": [
+      "Unconventional lifestyle"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5198,
+    "word": "Bole",
+    "pos": "Noun",
+    "phonetic": "/bəʊl/",
+    "meaningBn": "গাছের গুঁড়ি, কাণ্ড",
+    "exampleEn": "Moss grew on tree's bole.",
+    "exampleBn": "গাছের গুঁড়িতে শেওলা জন্মেছিল।",
+    "synonyms": [
+      "Trunk",
+      "Stem"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5199,
+    "word": "Bolo",
+    "pos": "Noun",
+    "phonetic": "/ˈbəʊ.ləʊ/",
+    "meaningBn": "এক ধরনের ধারালো লম্বা ছুরি",
+    "exampleEn": "Farmer cleared brush with bolo.",
+    "exampleBn": "কৃষক লম্বা ছুরি দিয়ে ঝোপঝাড় পরিষ্কার করেছেন।",
+    "synonyms": [
+      "Machete",
+      "Knife"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5200,
+    "word": "Bolshevism",
+    "pos": "Noun",
+    "phonetic": "/ˈbɒl.ʃə.vɪ.zəm/",
+    "meaningBn": "বলশেভিক সাম্যবাদ মতবাদ",
+    "exampleEn": "History covers the rise of Bolshevism.",
+    "exampleBn": "ইতিহাসে বলশেভিক সাম্যবাদের উত্থান তুলে ধরা হয়েছে।",
+    "synonyms": [
+      "Communism"
+    ],
+    "antonyms": [],
+    "category": "BCS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5201,
+    "word": "Bolstering",
+    "pos": "Noun",
+    "phonetic": "/ˈbəʊl.stər.ɪŋ/",
+    "meaningBn": "শক্তিবৃদ্ধি, সুসংহতকরণ",
+    "exampleEn": "Bolstering of army was necessary.",
+    "exampleBn": "সেনাবাহিনীর শক্তিবৃদ্ধি অত্যন্ত প্রয়োজনীয় ছিল।",
+    "synonyms": [
+      "Strengthening",
+      "Supporting"
+    ],
+    "antonyms": [],
+    "category": "IELTS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5202,
+    "word": "Bombasticness",
+    "pos": "Noun",
+    "phonetic": "/bɒmˈbæs.tɪk.nəs/",
+    "meaningBn": "আড়ম্বরপূর্ণ জাঁকজমক কথা",
+    "exampleEn": "Audience disliked his bombasticness.",
+    "exampleBn": "শ্রোতারা তার আড়ম্বরপূর্ণ কথা অপছন্দ করেছিল।",
+    "synonyms": [
+      "Pompousness"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5203,
+    "word": "Bondholder",
+    "pos": "Noun",
+    "phonetic": "/ˈbɒndˌhəʊl.dər/",
+    "meaningBn": "বন্ডের মালিক, ঋণপত্রের অধিকারী",
+    "exampleEn": "Bondholder collected interest.",
+    "exampleBn": "ঋণপত্রের অধিকারী সুদ আদায় করেছিলেন।",
+    "synonyms": [
+      "Investor"
+    ],
+    "antonyms": [],
+    "category": "BCS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5204,
+    "word": "Bookbinding",
+    "pos": "Noun",
+    "phonetic": "/ˈbʊkˌbaɪn.dɪŋ/",
+    "meaningBn": "বই বাঁধাই শিল্প",
+    "exampleEn": "He learned traditional bookbinding.",
+    "exampleBn": "তিনি ঐতিহ্যবাহী বই বাঁধাই শিল্প শিখেছিলেন।",
+    "synonyms": [
+      "Craft"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5205,
+    "word": "Bookishness",
+    "pos": "Noun",
+    "phonetic": "/ˈbʊk.ɪʃ.nəs/",
+    "meaningBn": "পড়ুয়া স্বভাব, বইয়ের প্রতি ঝোঁক",
+    "exampleEn": "Her bookishness impressed teacher.",
+    "exampleBn": "তার পড়ুয়া স্বভাব শিক্ষককে মুগ্ধ করেছিল।",
+    "synonyms": [
+      "Studiousness"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5206,
+    "word": "Bookkeeper",
+    "pos": "Noun",
+    "phonetic": "/ˈbʊkˌkiː.pər/",
+    "meaningBn": "হিসাবরক্ষক",
+    "exampleEn": "Bookkeeper updated ledger.",
+    "exampleBn": "হিসাবরক্ষক খাতা হালনাগাদ করেছিলেন।",
+    "synonyms": [
+      "Accountant"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5207,
+    "word": "Boomerang",
+    "pos": "Noun",
+    "phonetic": "/ˈbuː.mə.ræŋ/",
+    "meaningBn": "নিজের দিকে ফিরে আসা অস্ত্র বা কৌশল",
+    "exampleEn": "Lie proved to be a boomerang.",
+    "exampleBn": "মিথ্যাটি নিজের দিকে ফিরে আসা অস্ত্র হিসেবে প্রমাণিত হয়।",
+    "synonyms": [
+      "Backfire tool"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5208,
+    "word": "Bootless",
+    "pos": "Adj",
+    "phonetic": "/ˈbuːt.ləs/",
+    "meaningBn": "ব্যর্থ, নিষ্ফল, অনর্থক",
+    "exampleEn": "They made a bootless attempt.",
+    "exampleBn": "তারা একটি নিষ্ফল প্রচেষ্টা চালিয়েছিল।",
+    "synonyms": [
+      "Futile",
+      "Useless"
+    ],
+    "antonyms": [
+      "Effective"
+    ],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5209,
+    "word": "Bootstrapping",
+    "pos": "Noun",
+    "phonetic": "/ˈbuːtˌstræp.ɪŋ/",
+    "meaningBn": "নিজস্ব অর্থায়নে ব্যবসা দাঁড় করানো",
+    "exampleEn": "Startup succeeded through bootstrapping.",
+    "exampleBn": "স্টার্টআপটি নিজস্ব অর্থায়নে সফল হয়েছিল।",
+    "synonyms": [
+      "Self-funding"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5210,
+    "word": "Boreal",
+    "pos": "Adj",
+    "phonetic": "/ˈbɔː.ri.əl/",
+    "meaningBn": "উত্তর দিকসংক্রান্ত, শীতল বনাঞ্চল",
+    "exampleEn": "Boreal forest covered the North.",
+    "exampleBn": "শীতল বনাঞ্চল উত্তর দিক ঢেকে রেখেছিল।",
+    "synonyms": [
+      "Northern"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5211,
+    "word": "Borough",
+    "pos": "Noun",
+    "phonetic": "/ˈbʌr.ə/",
+    "meaningBn": "স্বায়ত্তশাসিত শহর বা এলাকা",
+    "exampleEn": "He lives in borough of Brooklyn.",
+    "exampleBn": "তিনি ব্রুকলিন স্বায়ত্তশাসিত এলাকায় বাস করেন।",
+    "synonyms": [
+      "Town",
+      "District"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5212,
+    "word": "Bosky",
+    "pos": "Adj",
+    "phonetic": "/ˈbɒs.ki/",
+    "meaningBn": "ঝোপঝাড়ে ঢাকা, ঘন গাছের",
+    "exampleEn": "Walked through bosky woods.",
+    "exampleBn": "ঘন গাছের বনের মধ্য দিয়ে হেঁটেছিলেন।",
+    "synonyms": [
+      "Wooded",
+      "Bushy"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5213,
+    "word": "Bossiness",
+    "pos": "Noun",
+    "phonetic": "/ˈbɒs.i.nəs/",
+    "meaningBn": "মাতব্বরি মনোভাব",
+    "exampleEn": "Her bossiness annoyed friends.",
+    "exampleBn": "তার মাতব্বরি মনোভাব বন্ধুদের বিরক্ত করেছিল।",
+    "synonyms": [
+      "Domineering behavior"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5214,
+    "word": "Botanist",
+    "pos": "Noun",
+    "phonetic": "/ˈbɒt.ən.ɪst/",
+    "meaningBn": "উদ্ভিদবিজ্ঞানী",
+    "exampleEn": "Botanist discovered new orchid.",
+    "exampleBn": "উদ্ভিদবিজ্ঞানী নতুন অর্কিড আবিষ্কার করেন।",
+    "synonyms": [
+      "Plant scientist"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5215,
+    "word": "Botcher",
+    "pos": "Noun",
+    "phonetic": "/ˈbɒtʃ.ər/",
+    "meaningBn": "আনাড়িভাবে কাজ পণ্ড করা লোক",
+    "exampleEn": "Repairman was a total botcher.",
+    "exampleBn": "মেরামতকারী লোকটা ছিল পুরোপুরি আনাড়ি।",
+    "synonyms": [
+      "Bungler"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5216,
+    "word": "Bottleneck",
+    "pos": "Noun",
+    "phonetic": "/ˈbɒt.əl.nek/",
+    "meaningBn": "গতিরোধ, চলাচলের সংকীর্ণ পথ",
+    "exampleEn": "Traffic formed a tight bottleneck.",
+    "exampleBn": "যানজট একটি সংকীর্ণ পথ তৈরি করেছিল।",
+    "synonyms": [
+      "Obstruction",
+      "Blockage"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5217,
+    "word": "Bottomland",
+    "pos": "Noun",
+    "phonetic": "/ˈbɒt.əm.lænd/",
+    "meaningBn": "নদীর তীরবর্তী নিচু প্লাবনভূমি",
+    "exampleEn": "Crops thrived on rich bottomland.",
+    "exampleBn": "উর্বর প্লাবনভূমিতে ভালো শস্য হয়েছিল।",
+    "synonyms": [
+      "Floodplain"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5218,
+    "word": "Bottomless",
+    "pos": "Adj",
+    "phonetic": "/ˈbɒt.əm.ləs/",
+    "meaningBn": "অতল,সীমাহীন",
+    "exampleEn": "His generosity was bottomless.",
+    "exampleBn": "তার বদান্যতা ছিল সীমাহীন।",
+    "synonyms": [
+      "Boundless",
+      "Endless"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5219,
+    "word": "Boulevard",
+    "pos": "Noun",
+    "phonetic": "/ˈbuː.lə.vɑːd/",
+    "meaningBn": "বৃক্ষশোভিত চওড়া রাস্তা",
+    "exampleEn": "Trees lined the grand boulevard.",
+    "exampleBn": "চওড়া রাস্তার দুপাশে গাছ সারি বেঁধে ছিল।",
+    "synonyms": [
+      "Avenue",
+      "Broad street"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5220,
+    "word": "Bourgeoisie",
+    "pos": "Noun",
+    "phonetic": "/ˌbʊəʒ.wɑːˈziː/",
+    "meaningBn": "মধ্যবিত্ত শ্রেণী",
+    "exampleEn": "Marx written about bourgeoisie.",
+    "exampleBn": "মার্ক্স মধ্যবিত্ত শ্রেণী নিয়ে লিখেছিলেন।",
+    "synonyms": [
+      "Middle class"
+    ],
+    "antonyms": [],
+    "category": "BCS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5221,
+    "word": "Bowler",
+    "pos": "Noun",
+    "phonetic": "/ˈbəʊ.lər/",
+    "meaningBn": "ক্রিকেটের বোলার বা গোলাকার টুপি",
+    "exampleEn": "Bowler took three wickets.",
+    "exampleBn": "বোলারটি তিনটি উইকেট পেয়েছিল।",
+    "synonyms": [
+      "Cricket player"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5222,
+    "word": "Bracketed",
+    "pos": "Adj",
+    "phonetic": "/ˈbræk.ɪ.tɪd/",
+    "meaningBn": "বন্ধনীতে আবদ্ধ, শ্রেণীবদ্ধ",
+    "exampleEn": "Names were bracketed together.",
+    "exampleBn": "নামগুলো একসাথে শ্রেণীবদ্ধ করা হয়েছিল।",
+    "synonyms": [
+      "Grouped",
+      "Categorized"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5223,
+    "word": "Braggadocio",
+    "pos": "Noun",
+    "phonetic": "/ˌbræɡ.əˈdəʊ.tʃi.əʊ/",
+    "meaningBn": "ফাঁকা অহংকার, বড়াই",
+    "exampleEn": "His speech was full of braggadocio.",
+    "exampleBn": "তার বক্তব্য ফাঁকা বড়াইয়ে ভরা ছিল।",
+    "synonyms": [
+      "Boasting",
+      "Swagger"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5224,
+    "word": "Brahminism",
+    "pos": "Noun",
+    "phonetic": "/ˈbrɑː.mɪ.nɪ.zəm/",
+    "meaningBn": "ব্রাহ্মণ্যবাদ",
+    "exampleEn": "Scholar researched Brahminism.",
+    "exampleBn": "পণ্ডিত ব্যক্তিটি ব্রাহ্মণ্যবাদ নিয়ে গবেষণা করেন।",
+    "synonyms": [
+      "Traditional doctrine"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5225,
+    "word": "Brainchild",
+    "pos": "Noun",
+    "phonetic": "/ˈbreɪn.tʃaɪld/",
+    "meaningBn": "মস্তিষ্কপ্রসূত ধারণা বা উদ্ভাবন",
+    "exampleEn": "App was the brainchild of two friends.",
+    "exampleBn": "অ্যাপটি দুই বন্ধুর মস্তিষ্কপ্রসূত উদ্ভাবন ছিল।",
+    "synonyms": [
+      "Invention",
+      "Creation"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5226,
+    "word": "Brainstorming",
+    "pos": "Noun",
+    "phonetic": "/ˈbreɪnˌstɔː.mɪŋ/",
+    "meaningBn": "যৌথ নতুন ধারণা উদ্ভাবন বৈঠক",
+    "exampleEn": "Team held a brainstorming session.",
+    "exampleBn": "দলটি নতুন ধারণা উদ্ভাবনের বৈঠক করেছিল।",
+    "synonyms": [
+      "Group discussion"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5227,
+    "word": "Brainwashing",
+    "pos": "Noun",
+    "phonetic": "/ˈbreɪnˌwɒʃ.ɪŋ/",
+    "meaningBn": "মস্তিষ্ক প্রক্ষালন, জোরপূর্বক মত পরিবর্তন",
+    "exampleEn": "Cult used brainwashing techniques.",
+    "exampleBn": "অপসম্প্রদায়টি মস্তিষ্ক প্রক্ষালনের কৌশল ব্যবহার করেছিল।",
+    "synonyms": [
+      "Indoctrination"
+    ],
+    "antonyms": [],
+    "category": "BCS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5228,
+    "word": "Brainwave",
+    "pos": "Noun",
+    "phonetic": "/ˈbreɪn.weɪv/",
+    "meaningBn": "হঠাৎ মাথায় আসা দারুণ বুদ্ধি",
+    "exampleEn": "She had a sudden brainwave.",
+    "exampleBn": "তার মাথায় হঠাৎ এক দারুণ বুদ্ধি এসেছিল।",
+    "synonyms": [
+      "Inspiration",
+      "Bright idea"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5229,
+    "word": "Bramble",
+    "pos": "Noun",
+    "phonetic": "/ˈbræm.bəl/",
+    "meaningBn": "কাঁটাঝোপ",
+    "exampleEn": "Scratched by wild bramble.",
+    "exampleBn": "বুনো কাঁটাঝোপে আঁচড় লেগেছিল।",
+    "synonyms": [
+      "Thorn bush"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5230,
+    "word": "Branching",
+    "pos": "Noun",
+    "phonetic": "/ˈbrɑːn.tʃɪŋ/",
+    "meaningBn": "শাখা-প্রশাখা বিস্তার",
+    "exampleEn": "Tree shows wide branching.",
+    "exampleBn": "গাছটি বিস্তৃত শাখা-প্রশাখা দেখাচ্ছে।",
+    "synonyms": [
+      "Ramification",
+      "Diverging"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5231,
+    "word": "Brandishing",
+    "pos": "Noun",
+    "phonetic": "/ˈbræn.dɪʃ.ɪŋ/",
+    "meaningBn": "অস্ত্র বা বস্তু উঁচিয়ে ধরা",
+    "exampleEn": "He entered brandishing a sword.",
+    "exampleBn": "সে তলোয়ার উঁচিয়ে ভেতরে প্রবেশ করেছিল।",
+    "synonyms": [
+      "Flourishing",
+      "Waving"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5232,
+    "word": "Brasher",
+    "pos": "Adj",
+    "phonetic": "/ˈbræʃ.ər/",
+    "meaningBn": "আরও বেপরোয়া, ঔদ্ধত্যপূর্ণ",
+    "exampleEn": "He became brasher with age.",
+    "exampleBn": "বয়সের সাথে সে আরও বেপরোয়া হয়ে উঠেছিল।",
+    "synonyms": [
+      "Bolder",
+      "Rash"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5233,
+    "word": "Brashness",
+    "pos": "Noun",
+    "phonetic": "/ˈbræʃ.নəs/",
+    "meaningBn": "উদ্ধত বেপরোয়াপনা",
+    "exampleEn": "His brashness got him in trouble.",
+    "exampleBn": "তার উদ্ধত বেপরোয়াপনা তাকে বিপদে ফেলেছিল।",
+    "synonyms": [
+      "Audacity",
+      "Impudence"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5234,
+    "word": "Brawl",
+    "pos": "Noun",
+    "phonetic": "/brɔːl/",
+    "meaningBn": "গোলমালযুক্ত মারামারি",
+    "exampleEn": "Police broke up street brawl.",
+    "exampleBn": "পুলিশ রাস্তার মারামারি ভেঙে দিয়েছিল।",
+    "synonyms": [
+      "Fight",
+      "Scuffle"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5235,
+    "word": "Brawniness",
+    "pos": "Noun",
+    "phonetic": "/ˈbrɔː.ni.নəs/",
+    "meaningBn": "পেশীবহুল শক্তি",
+    "exampleEn": "Wrestler showed great brawniness.",
+    "exampleBn": "কুস্তিগীর তার পেশীবহুল শক্তি দেখিয়েছিল।",
+    "synonyms": [
+      "Muscularity",
+      "Strength"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5236,
+    "word": "Breadwinner",
+    "pos": "Noun",
+    "phonetic": "/ˈbredˌwɪn.ər/",
+    "meaningBn": "পরিবারের প্রধান উপার্জনকারী",
+    "exampleEn": "Father was sole breadwinner.",
+    "exampleBn": "বাবাই ছিলেন পরিবারের একমাত্র উপার্জনকারী।",
+    "synonyms": [
+      "Provider",
+      "Earner"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5237,
+    "word": "Breakneck",
+    "pos": "Adj",
+    "phonetic": "/ˈbreɪk.nek/",
+    "meaningBn": "বিপজ্জনক দ্রুতগতির",
+    "exampleEn": "Drove at breakneck speed.",
+    "exampleBn": "বিপজ্জনক দ্রুতগতিতে গাড়ি চালিয়েছিল।",
+    "synonyms": [
+      "Extremely fast",
+      "Dangerous"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5238,
+    "word": "Breastwork",
+    "pos": "Noun",
+    "phonetic": "/ˈbreast.wɜːk/",
+    "meaningBn": "বুক সমান নিচু প্রতিরক্ষা প্রাচীর",
+    "exampleEn": "Soldiers built a breastwork.",
+    "exampleBn": "সৈন্যরা একটি নিচু প্রতিরক্ষা প্রাচীর বানিয়েছিল।",
+    "synonyms": [
+      "Parapet",
+      "Fortification"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5239,
+    "word": "Breathing",
+    "pos": "Noun",
+    "phonetic": "/ˈbriː.ðɪŋ/",
+    "meaningBn": "শ্বাসপ্রশ্বাস",
+    "exampleEn": "Deep breathing calms mind.",
+    "exampleBn": "গভীর শ্বাসপ্রশ্বাস মন শান্ত করে।",
+    "synonyms": [
+      "Respiration"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5240,
+    "word": "Breathtakingly",
+    "pos": "Adv",
+    "phonetic": "/ˈbreθˌteɪ.kɪŋ.li/",
+    "meaningBn": "শ্বাসরুদ্ধকরভাবে, অত্যন্ত চোখ ধাঁধানোভাবে",
+    "exampleEn": "Scenery was breathtakingly beautiful.",
+    "exampleBn": "দৃশ্যপটটি শ্বাসরুদ্ধকরভাবে সুন্দর ছিল।",
+    "synonyms": [
+      "Stunningly",
+      "Amazingly"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5241,
+    "word": "Brethren",
+    "pos": "Noun",
+    "phonetic": "/ˈbreð.rən/",
+    "meaningBn": "ধর্মীয় বা সামাজিক সহোদরবৃন্দ",
+    "exampleEn": "He addressed his brethren.",
+    "exampleBn": "তিনি তার সহোদরদের উদ্দেশ্যে বক্তব্য রাখেন।",
+    "synonyms": [
+      "Brothers",
+      "Comrades"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5242,
+    "word": "Briefing",
+    "pos": "Noun",
+    "phonetic": "/ˈbriː.fɪŋ/",
+    "meaningBn": "সংক্ষিপ্ত নির্দেশনামূলক বৈঠক",
+    "exampleEn": "General held a news briefing.",
+    "exampleBn": "জেনারেল এক সংবাদ নির্দেশনামূলক বৈঠক করেছিলেন।",
+    "synonyms": [
+      "Information session"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5243,
+    "word": "Brimful",
+    "pos": "Adj",
+    "phonetic": "/ˈbrɪm.fʊl/",
+    "meaningBn": "কানায় কানায় পূর্ণ",
+    "exampleEn": "Cup was brimful of milk.",
+    "exampleBn": "কাপটি দুধে কানায় কানায় পূর্ণ ছিল।",
+    "synonyms": [
+      "Overflowing",
+      "Full"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5244,
+    "word": "Briquette",
+    "pos": "Noun",
+    "phonetic": "/brɪˈket/",
+    "meaningBn": "জ্বালানি কোলার ইট বা দলা",
+    "exampleEn": "He burned charcoal briquette.",
+    "exampleBn": "সে কয়লার ইট জ্বালিয়েছিল।",
+    "synonyms": [
+      "Block of coal"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5245,
+    "word": "Briskness",
+    "pos": "Noun",
+    "phonetic": "/ˈbrɪsk.nəs/",
+    "meaningBn": "ক্ষিপ্রতা, চটপটে গতি",
+    "exampleEn": "She worked with briskness.",
+    "exampleBn": "তিনি ক্ষিপ্রতার সাথে কাজ করেছিলেন।",
+    "synonyms": [
+      "Quickness",
+      "Liveliness"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5246,
+    "word": "Bristling",
+    "pos": "Adj",
+    "phonetic": "/ˈbrɪs.lɪŋ/",
+    "meaningBn": "কাঁটায় বা খাড়া চুলে ঢাকা, রাগে পরিপূর্ণ",
+    "exampleEn": "Dog stood bristling at intruder.",
+    "exampleBn": "কুকুরটি অনুপ্রবেশকারীর দিকে চুল খাড়া করে দাঁড়ায়।",
+    "synonyms": [
+      "Prickly",
+      "Angry"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5247,
+    "word": "Brittleness",
+    "pos": "Noun",
+    "phonetic": "/ˈbrɪt.əl.নəs/",
+    "meaningBn": "ভঙ্গুরতা",
+    "exampleEn": "Test measured brittleness of glass.",
+    "exampleBn": "পরীক্ষায় কাঁচের ভঙ্গুরতা মাপা হয়েছিল।",
+    "synonyms": [
+      "Fragility"
+    ],
+    "antonyms": [
+      "Toughness"
+    ],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5248,
+    "word": "Broadminded",
+    "pos": "Adj",
+    "phonetic": "/ˌbrɔːdˈmaɪn.dɪd/",
+    "meaningBn": "উদারমনা, মুক্তমনের",
+    "exampleEn": "He is a broadminded teacher.",
+    "exampleBn": "তিনি একজন উদারমনা শিক্ষক।",
+    "synonyms": [
+      "Tolerant",
+      "Open-minded"
+    ],
+    "antonyms": [
+      "Narrow-minded"
+    ],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5249,
+    "word": "Brocade",
+    "pos": "Noun",
+    "phonetic": "/brəˈkeɪd/",
+    "meaningBn": "সোনালী বা রূপালী নকশা করা রেশমী কাপড়",
+    "exampleEn": "Dress was made of rich brocade.",
+    "exampleBn": "পোশাকটি জমকালো নকশা করা রেশমী কাপড়ের ছিল।",
+    "synonyms": [
+      "Woven fabric"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5250,
+    "word": "Brokerage",
+    "pos": "Noun",
+    "phonetic": "/ˈbrəʊ.kər.ɪdʒ/",
+    "meaningBn": "দালালী প্রতিষ্ঠান বা ফি",
+    "exampleEn": "Brokerage fee was paid.",
+    "exampleBn": "দালালী ফি পরিশোধ করা হয়েছিল।",
+    "synonyms": [
+      "Commission",
+      "Agency"
+    ],
+    "antonyms": [],
+    "category": "BCS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5251,
+    "word": "Bromide",
+    "pos": "Noun",
+    "phonetic": "/ˈbrəʊ.maɪd/",
+    "meaningBn": "মামুলি গতানুগতিক উক্তি বা শান্তকারক বস্তু",
+    "exampleEn": "He recited dull bromides.",
+    "exampleBn": "সে একঘেয়ে গতানুগতিক উক্তি আওড়েছিল।",
+    "synonyms": [
+      "Trite remark",
+      "Platitude"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5252,
+    "word": "Bronchial",
+    "pos": "Adj",
+    "phonetic": "/ˈbrɒŋ.ki.əl/",
+    "meaningBn": "শ্বাসনালী সংক্রান্ত",
+    "exampleEn": "Patient has bronchial infection.",
+    "exampleBn": "রোগীর শ্বাসনালীতে সংক্রমণ রয়েছে।",
+    "synonyms": [
+      "Respiratory"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5253,
+    "word": "Bronzing",
+    "pos": "Noun",
+    "phonetic": "/ˈbrɒn.zɪŋ/",
+    "meaningBn": "তামাটে রঙে রূপান্তর",
+    "exampleEn": "Sun caused bronzing of skin.",
+    "exampleBn": "সূর্য ত্বক তামাটে রঙে রূপান্তর করেছিল।",
+    "synonyms": [
+      "Tanning"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5254,
+    "word": "Brooding",
+    "pos": "Adj",
+    "phonetic": "/ˈbruː.dɪŋ/",
+    "meaningBn": "চিন্তামগ্ন, বিষণ্ণভাবে ভাবছে এমন",
+    "exampleEn": "He sat in brooding silence.",
+    "exampleBn": "সে চিন্তামগ্ন নীরবতায় বসেছিল।",
+    "synonyms": [
+      "Pensive",
+      "Somber"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5255,
+    "word": "Brougham",
+    "pos": "Noun",
+    "phonetic": "/ˈbruː.əm/",
+    "meaningBn": "এক ধরনের প্রাচীন বন্ধ ঘোড়ার গাড়ি",
+    "exampleEn": "A black brougham arrived.",
+    "exampleBn": "একটি কালো বন্ধ ঘোড়ার গাড়ি এসেছিল।",
+    "synonyms": [
+      "Carriage"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5256,
+    "word": "Browbeating",
+    "pos": "Noun",
+    "phonetic": "/ˈbraʊˌbiː.tɪŋ/",
+    "meaningBn": "ভয়ভীতি প্রদর্শন, ধমকানো",
+    "exampleEn": "Witness resisted browbeating.",
+    "exampleBn": "সাক্ষী ভয়ভীতি প্রদর্শন প্রতিরোধ করেছিলেন।",
+    "synonyms": [
+      "Bullying",
+      "Intimidation"
+    ],
+    "antonyms": [],
+    "category": "BCS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5257,
+    "word": "Brownfield",
+    "pos": "Adj",
+    "phonetic": "/ˈbraʊn.fiːld/",
+    "meaningBn": "পুনর্ব্যবহারযোগ্য পরিত্যক্ত শিল্প এলাকা",
+    "exampleEn": "City redeveloped brownfield site.",
+    "exampleBn": "শহরটি পরিত্যক্ত শিল্প এলাকা পুনর্নির্মাণ করে।",
+    "synonyms": [
+      "Industrial site"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5258,
+    "word": "Browsing",
+    "pos": "Noun",
+    "phonetic": "/ˈbraʊ.zɪŋ/",
+    "meaningBn": "পাতা উল্টানো, ঘুরে দেখা",
+    "exampleEn": "I spent hour browsing in shop.",
+    "exampleBn": "আমি দোকানে ঘুরে দেখে এক ঘণ্টা কাটিয়েছি।",
+    "synonyms": [
+      "Scanning",
+      "Looking through"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5259,
+    "word": "Bruising",
+    "pos": "Noun",
+    "phonetic": "/ˈbruː.zɪŋ/",
+    "meaningBn": "আঘাতের কালো দাগ, ক্ষত",
+    "exampleEn": "Fall caused severe bruising.",
+    "exampleBn": "পড়ে যাওয়ার কারণে মারাত্মক ক্ষত হয়েছিল।",
+    "synonyms": [
+      "Contusion",
+      "Injury"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5260,
+    "word": "Brummagem",
+    "pos": "Adj",
+    "phonetic": "/ˈbrʌm.ə.dʒəm/",
+    "meaningBn": "সস্তা ও নকল সজ্জা",
+    "exampleEn": "He wore brummagem jewelry.",
+    "exampleBn": "সে নকল সস্তা গয়না পরেছিল।",
+    "synonyms": [
+      "Cheap",
+      "Showy"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5261,
+    "word": "Brunette",
+    "pos": "Noun",
+    "phonetic": "/bruːˈnet/",
+    "meaningBn": "কালো বা গাঢ় বাদামী চুলের নারী",
+    "exampleEn": "Brunette won beauty contest.",
+    "exampleBn": "গাঢ় বাদামী চুলের নারীটি সুন্দরী প্রতিযোগিতায় জিতেছিল।",
+    "synonyms": [
+      "Dark-haired woman"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5262,
+    "word": "Brunt",
+    "pos": "Noun",
+    "phonetic": "/brʌnt/",
+    "meaningBn": "আঘাতের প্রধান চাপ বা ধাক্কা",
+    "exampleEn": "Coast bore brunt of cyclone.",
+    "exampleBn": "উপকূল ঘূর্ণিঝড়ের প্রধান ধাক্কা সামলেছিল।",
+    "synonyms": [
+      "Main force",
+      "Impact"
+    ],
+    "antonyms": [],
+    "category": "IELTS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5263,
+    "word": "Brutalize",
+    "pos": "Verb",
+    "phonetic": "/ˈbruː.təl.aɪz/",
+    "meaningBn": "পশুতুল্য করা, নিষ্ঠুর আচরণ করা",
+    "exampleEn": "War brutalizes human spirit.",
+    "exampleBn": "যুদ্ধ মানুষের আত্মাকে পশুতুল্য করে।",
+    "synonyms": [
+      "Dehumanize"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5264,
+    "word": "Brutishness",
+    "pos": "Noun",
+    "phonetic": "/ˈbruː.tɪʃ.নəs/",
+    "meaningBn": "পশুত্ব, নির্মমতা",
+    "exampleEn": "Act showed pure brutishness.",
+    "exampleBn": "কাজটি খাঁটি পশুত্ব দেখিয়েছিল।",
+    "synonyms": [
+      "Savagery",
+      "Brutality"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5265,
+    "word": "Bryology",
+    "pos": "Noun",
+    "phonetic": "/braɪˈɒl.ə.dʒi/",
+    "meaningBn": "শেওলা বিজ্ঞান",
+    "exampleEn": "Professor researched bryology.",
+    "exampleBn": "অধ্যাপক শেওলা বিজ্ঞান নিয়ে গবেষণা করেন।",
+    "synonyms": [
+      "Moss study"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5266,
+    "word": "Bucolicism",
+    "pos": "Noun",
+    "phonetic": "/bjuːˈkɒl.ɪ.sɪ.zəm/",
+    "meaningBn": "পল্লী জীবনের আদর্শ রূপ",
+    "exampleEn": "Poetry praised bucolicism.",
+    "exampleBn": "কবিতা পল্লী জীবনের আদর্শের প্রশংসা করে।",
+    "synonyms": [
+      "Pastoralism"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5267,
+    "word": "Bugbear",
+    "pos": "Noun",
+    "phonetic": "/ˈbʌɡ.beər/",
+    "meaningBn": "অহেতুক ভয়ের বস্তু, জুজু",
+    "exampleEn": "Math is a bugbear for many.",
+    "exampleBn": "গণিত অনেকের জন্য এক অহেতুক ভয়ের বস্তু।",
+    "synonyms": [
+      "Dreaded thing",
+      "Hobgoblin"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5268,
+    "word": "Buldge",
+    "pos": "Noun",
+    "phonetic": "/bʌldʒ/",
+    "meaningBn": "স্ফীতি, ফুলে ওঠা অংশ",
+    "exampleEn": "Bag showed a huge bulge.",
+    "exampleBn": "ব্যাগটিতে একটি বিশাল স্ফীত অংশ দেখা যাচ্ছিল।",
+    "synonyms": [
+      "Swelling",
+      "Protrusion"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5269,
+    "word": "Bulimia",
+    "pos": "Noun",
+    "phonetic": "/bʊˈlɪm.i.ə/",
+    "meaningBn": "ক্ষুধার আধিক্য রোগ (চিকিৎসা)",
+    "exampleEn": "Patient is treated for bulimia.",
+    "exampleBn": "রোগীকে ক্ষুধার আধিক্য রোগের চিকিৎসা দেওয়া হচ্ছে।",
+    "synonyms": [
+      "Eating disorder"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5270,
+    "word": "Bulkhead",
+    "pos": "Noun",
+    "phonetic": "/ˈbʌlk.hed/",
+    "meaningBn": "জাহাজ বা বিমানের অভ্যন্তরীণ বিভাজক দেয়াল",
+    "exampleEn": "Water broke through bulkhead.",
+    "exampleBn": "পানি বিভাজক দেয়াল ভেঙে ঢুকেছিল।",
+    "synonyms": [
+      "Partition wall"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5271,
+    "word": "Bulldozing",
+    "pos": "Noun",
+    "phonetic": "/ˈbʊl.dəʊ.zɪŋ/",
+    "meaningBn": "জোরপূর্বক গুঁড়িয়ে দেওয়া বা জবরদখল",
+    "exampleEn": "Bulldozing of slum caused outcry.",
+    "exampleBn": "বস্তি গুঁড়িয়ে দেওয়া ক্ষোভের জন্ম দেয়।",
+    "synonyms": [
+      "Demolishing"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5272,
+    "word": "Bullseye",
+    "pos": "Noun",
+    "phonetic": "/ˈbʊl.zaɪ/",
+    "meaningBn": "লক্ষ্যবিন্দুর কেন্দ্র",
+    "exampleEn": "Arrow hit the bullseye.",
+    "exampleBn": "তীরটি ঠিক লক্ষ্যবিন্দুর কেন্দ্রে লেগেছিল।",
+    "synonyms": [
+      "Center of target"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5273,
+    "word": "Bulwarking",
+    "pos": "Noun",
+    "phonetic": "/ˈbʊl.wək.ɪŋ/",
+    "meaningBn": "প্রতিরক্ষা প্রাচীর নির্মাণ, প্রতিরক্ষা প্রদান",
+    "exampleEn": "Bulwarking coast prevented flooding.",
+    "exampleBn": "উপকূল প্রতিরক্ষা প্লাবন রোধ করেছিল।",
+    "synonyms": [
+      "Fortifying",
+      "Shielding"
+    ],
+    "antonyms": [],
+    "category": "BCS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5274,
+    "word": "Bumbling",
+    "pos": "Adj",
+    "phonetic": "/ˈbʌm.blɪŋ/",
+    "meaningBn": "আনাড়ি, ভুলভাল করা",
+    "exampleEn": "He is a bumbling assistant.",
+    "exampleBn": "সে একজন আনাড়ি সহকারী।",
+    "synonyms": [
+      "Clumsy",
+      "Awkward"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5275,
+    "word": "Bumpkin",
+    "pos": "Noun",
+    "phonetic": "/ˈbʌmp.kɪন/",
+    "meaningBn": "পল্লী গাঁইয়া লোক",
+    "exampleEn": "Townsfolk mocked the bumpkin.",
+    "exampleBn": "শহরের লোকেরা গাঁইয়া লোকটিকে বিদ্রূপ করেছিল।",
+    "synonyms": [
+      "Rustic",
+      "Country bumpkin"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5276,
+    "word": "Bungeeing",
+    "pos": "Noun",
+    "phonetic": "/ˈbʌn.dʒiː.ɪŋ/",
+    "meaningBn": "রশি বেঁধে উঁচুতে লাফ দেওয়া ক্রীড়া",
+    "exampleEn": "They went bungeeing off bridge.",
+    "exampleBn": "তারা সেতু থেকে রশি লাফ দিতে গিয়েছিল।",
+    "synonyms": [
+      "Bungee jumping"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5277,
+    "word": "Bungler",
+    "pos": "Noun",
+    "phonetic": "/ˈbʌŋ.ɡlər/",
+    "meaningBn": "কাজ বিগড়ে দেওয়া লোক",
+    "exampleEn": "Don't hire that bungler.",
+    "exampleBn": "ঐ কাজ বিগড়ে দেওয়া লোকটিকে নিয়োগ দেবেন না।",
+    "synonyms": [
+      "Botcher",
+      "Blunderer"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5278,
+    "word": "Burdensomeness",
+    "pos": "Noun",
+    "phonetic": "/ˈbɜː.dən.səm.নəs/",
+    "meaningBn": "বোঝাস্বরূপ হওয়া, ভারাক্রান্ততা",
+    "exampleEn": "He felt burdensomeness of debt.",
+    "exampleBn": "সে ঋণের ভারাক্রান্ততা অনুভব করেছিল।",
+    "synonyms": [
+      "Heaviness"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5279,
+    "word": "Burglarize",
+    "pos": "Verb",
+    "phonetic": "/ˈbɜː.ɡlə.raɪz/",
+    "meaningBn": "সিঁধ কেটে চুরি করা",
+    "exampleEn": "Thieves burglarized the museum.",
+    "exampleBn": "চোরেরা সিঁধ কেটে জাদুঘরে চুরি করেছিল।",
+    "synonyms": [
+      "Rob",
+      "Ransack"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5280,
+    "word": "Burnishing",
+    "pos": "Noun",
+    "phonetic": "/ˈbɜː.nɪʃ.ɪŋ/",
+    "meaningBn": "ঘষে উজ্জ্বলকরণ, মসৃণকরণ",
+    "exampleEn": "Burnishing gave metal a high shine.",
+    "exampleBn": "ঘষে মসৃণকরণ ধাতুকে উজ্জ্বলতা দিয়েছিল।",
+    "synonyms": [
+      "Polishing"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5281,
+    "word": "Bursar",
+    "pos": "Noun",
+    "phonetic": "/ˈbɜː.sər/",
+    "meaningBn": "শিক্ষা প্রতিষ্ঠানের ক্যাশিয়ার বা কোষাধ্যক্ষ",
+    "exampleEn": "Pay tuition to bursar.",
+    "exampleBn": "কোষাধ্যক্ষকে টিউশন ফি দিন।",
+    "synonyms": [
+      "Treasurer"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5282,
+    "word": "Bursary",
+    "pos": "Noun",
+    "phonetic": "/ˈbɜː.sər.i/",
+    "meaningBn": "শিক্ষা উপবৃত্তি, স্কলারশিপ",
+    "exampleEn": "Student won a bursary.",
+    "exampleBn": "ছাত্রটি একটি উপবৃত্তি জিতেছিল।",
+    "synonyms": [
+      "Scholarship",
+      "Grant"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5283,
+    "word": "Bustling",
+    "pos": "Adj",
+    "phonetic": "/ˈbʌs.lɪŋ/",
+    "meaningBn": "ব্যস্ত ও কোলাহলপূর্ণ",
+    "exampleEn": "Market was bustling with buyers.",
+    "exampleBn": "বাজারটি ক্রেতাদের উপস্থিতিতে কোলাহলপূর্ণ ছিল।",
+    "synonyms": [
+      "Lively",
+      "Busy"
+    ],
+    "antonyms": [
+      "Quiet"
+    ],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5284,
+    "word": "Busybody",
+    "pos": "Noun",
+    "phonetic": "/ˈbɪz.iˌbɒd.i/",
+    "meaningBn": "পরের চর্চা করে বেড়ানো কৌতূহলী লোক",
+    "exampleEn": "Neighborhood busybody spread news.",
+    "exampleBn": "পাড়ার কৌতূহলী লোকটা খবর ছড়িয়েছিল।",
+    "synonyms": [
+      "Nosy person",
+      "Meddler"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5285,
+    "word": "Butchery",
+    "pos": "Noun",
+    "phonetic": "/ˈbʊtʃ.ər.i/",
+    "meaningBn": "কসাইয়ের কাজ, গণহত্যা",
+    "exampleEn": "War was a scene of butchery.",
+    "exampleBn": "যুদ্ধ ছিল এক গণহত্যার দৃশ্য।",
+    "synonyms": [
+      "Slaughter",
+      "Massacre"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5286,
+    "word": "Buttressing",
+    "pos": "Noun",
+    "phonetic": "/ˈbʌt.rəs.ɪŋ/",
+    "meaningBn": "ভিত্তি দান, জোরদারকরণ",
+    "exampleEn": "Buttressing of bridge was needed.",
+    "exampleBn": "সেতুর ভিত্তি জোরদারকরণ প্রয়োজন ছিল।",
+    "synonyms": [
+      "Reinforcement",
+      "Supporting"
+    ],
+    "antonyms": [],
+    "category": "IELTS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5287,
+    "word": "Buxom",
+    "pos": "Adj",
+    "phonetic": "/ˈbʌk.səm/",
+    "meaningBn": "সাস্থবতী ও উৎফুল্ল নারী",
+    "exampleEn": "Buxom lady greeted guests.",
+    "exampleBn": "সাস্থবতী নারীটি অতিথিদের অভ্যর্থনা জানায়।",
+    "synonyms": [
+      "Plump and healthy"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5288,
+    "word": "Buzzword",
+    "pos": "Noun",
+    "phonetic": "/ˈbʌz.wɜːd/",
+    "meaningBn": "বহুল প্রচারিত জনপ্রিয় শব্দ",
+    "exampleEn": "Synergy is a popular buzzword.",
+    "exampleBn": "সিনার্জি একটি বহুল প্রচারিত জনপ্রিয় শব্দ।",
+    "synonyms": [
+      "Vogue word"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5289,
+    "word": "Bygone",
+    "pos": "Adj",
+    "phonetic": "/ˈbaɪ.ɡɒn/",
+    "meaningBn": "অতীতের, অতীত ঘটনা",
+    "exampleEn": "Relics belong to bygone era.",
+    "exampleBn": "প্রত্নবস্তুগুলো অতীতের যুগের।",
+    "synonyms": [
+      "Past",
+      "Former"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5290,
+    "word": "Bystander",
+    "pos": "Noun",
+    "phonetic": "/ˈbaɪˌstænd.ər/",
+    "meaningBn": "পথচারী দর্শক, প্রত্যক্ষদর্শী",
+    "exampleEn": "Innocent bystander was injured.",
+    "exampleBn": "নির্দোষ পথচারী দর্শকটি আহত হয়েছিল।",
+    "synonyms": [
+      "Witness",
+      "Onlooker"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5291,
+    "word": "Byword",
+    "pos": "Noun",
+    "phonetic": "/ˈbaɪ.wɜːd/",
+    "meaningBn": "প্রবাদের দৃষ্টান্ত, প্রতিশব্দ",
+    "exampleEn": "His name is a byword for honesty.",
+    "exampleBn": "তার নাম সততার এক প্রবাদের দৃষ্টান্ত।",
+    "synonyms": [
+      "Epitome",
+      "Symbol"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5292,
+    "word": "Cabalistic",
+    "pos": "Adj",
+    "phonetic": "/ˌkæb.əˈlɪs.tɪk/",
+    "meaningBn": "রহস্যময়, গূঢ় অর্থপূর্ণ",
+    "exampleEn": "Ancient scrolls had cabalistic signs.",
+    "exampleBn": "প্রাচীন স্ক্রলে গূঢ় অর্থপূর্ণ চিহ্ন ছিল।",
+    "synonyms": [
+      "Mystical",
+      "Esoteric"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5293,
+    "word": "Cachet",
+    "pos": "Noun",
+    "phonetic": "/kæˈʃeɪ/",
+    "meaningBn": "মর্যাদার প্রতীক, বিশেষ ছাপ",
+    "exampleEn": "Brand carries a high prestige cachet.",
+    "exampleBn": "ব্র্যান্ডটি উচ্চ মর্যাদার প্রতীক বহন করে।",
+    "synonyms": [
+      "Prestige",
+      "Seal"
+    ],
+    "antonyms": [],
+    "category": "IELTS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5294,
+    "word": "Cacographer",
+    "pos": "Noun",
+    "phonetic": "/kæˈkɒɡ.rə.fər/",
+    "meaningBn": "যার হাতের লেখা বা বানান খুব খারাপ",
+    "exampleEn": "He admitted to being a cacographer.",
+    "exampleBn": "সে স্বীকার করে যে তার হাতের লেখা খুব খারাপ।",
+    "synonyms": [
+      "Bad writer"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5295,
+    "word": "Cadaverousness",
+    "pos": "Noun",
+    "phonetic": "/kəˈdæv.ər.əs.nəs/",
+    "meaningBn": "শবতুল্য ফ্যাকাশে ভাব",
+    "exampleEn": "Illness caused cadaverousness.",
+    "exampleBn": "অসুখ তার মুখে শবতুল্য ফ্যাকাশে ভাব এনেছিল।",
+    "synonyms": [
+      "Pallor",
+      "Ghastliness"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5296,
+    "word": "Cajolery",
+    "pos": "Noun",
+    "phonetic": "/kəˈdʒəʊ.lər.i/",
+    "meaningBn": "মিষ্টি কথার প্রলোভন, তোষামোদ",
+    "exampleEn": "She won through clever cajolery.",
+    "exampleBn": "সে চতুর তোষামোদের মাধ্যমে জিতেছিল।",
+    "synonyms": [
+      "Coaxing",
+      "Flattery"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5297,
+    "word": "Calamitousness",
+    "pos": "Noun",
+    "phonetic": "/kəˈlæm.ɪ.təs.নəs/",
+    "meaningBn": "বিপর্যয়কর অবস্থা, ধ্বংসাত্মকতা",
+    "exampleEn": "War brought calamitousness to region.",
+    "exampleBn": "যুদ্ধ অঞ্চলে বিপর্যয়কর অবস্থা ডেকে এনেছিল।",
+    "synonyms": [
+      "Disastrousness"
+    ],
+    "antonyms": [],
+    "category": "BCS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5298,
+    "word": "Calcification",
+    "pos": "Noun",
+    "phonetic": "/ˌkæl.sɪ.fɪˈkeɪ.ʃən/",
+    "meaningBn": "ক্যালসিয়াম জমে শক্ত হওয়া",
+    "exampleEn": "X-ray revealed bone calcification.",
+    "exampleBn": "এক্স-রেতে হাড় শক্ত হওয়ার লক্ষণ দেখা যায়।",
+    "synonyms": [
+      "Hardening"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5299,
+    "word": "Calculatedness",
+    "pos": "Noun",
+    "phonetic": "/ˈkæl.kjə.leɪ.tɪd.nəs/",
+    "meaningBn": "পরিকল্পিত উদ্দেশ্যমূলক ভাব",
+    "exampleEn": "Action showed cold calculatedness.",
+    "exampleBn": "কাজটি ঠান্ডা পরিকল্পিত মনোভাব দেখিয়েছিল।",
+    "synonyms": [
+      "Deliberateness"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5300,
+    "word": "Calefaction",
+    "pos": "Noun",
+    "phonetic": "/ˌkæl.ɪˈfæk.ʃən/",
+    "meaningBn": "উত্তপ্তকরণ, তাপপ্রদান",
+    "exampleEn": "Sun provided gentle calefaction.",
+    "exampleBn": "সূর্য মৃদু তাপপ্রদান করেছিল।",
+    "synonyms": [
+      "Warming",
+      "Heating"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5301,
+    "word": "Calisthenics",
+    "pos": "Noun",
+    "phonetic": "/ˌkæl.əsˈθen.ɪks/",
+    "meaningBn": "দৈহিক কসরত ব্যায়াম",
+    "exampleEn": "He performs morning calisthenics.",
+    "exampleBn": "তিনি সকালে দৈহিক কসরত ব্যায়াম করেন।",
+    "synonyms": [
+      "Gymnastics",
+      "Exercises"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5302,
+    "word": "Cameo",
+    "pos": "Noun",
+    "phonetic": "/ˈkæm.i.əʊ/",
+    "meaningBn": "সংক্ষিপ্ত কিন্তু আকর্ষণীয় অভিনয় বা নকশা",
+    "exampleEn": "Actor made a cameo appearance.",
+    "exampleBn": "অভিনেতা সংক্ষিপ্ত অতিথি চরিত্রে অভিনয় করেন।",
+    "synonyms": [
+      "Brief role"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5303,
+    "word": "Cannibalism",
+    "pos": "Noun",
+    "phonetic": "/ˈkæn.ɪ.bəl.ɪ.zəm/",
+    "meaningBn": "স্বজাতি ভক্ষণ বা নরমাংস ভক্ষণ",
+    "exampleEn": "Tribe abandoned cannibalism.",
+    "exampleBn": "উপজাতিটি নরমাংস ভক্ষণ ত্যাগ করেছিল।",
+    "synonyms": [
+      "Man-eating"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5304,
+    "word": "Canniness",
+    "pos": "Noun",
+    "phonetic": "/ˈkæn.i.nəs/",
+    "meaningBn": "বিচক্ষণ চতুরতা",
+    "exampleEn": "Business success due to canniness.",
+    "exampleBn": "বিচক্ষণ চতুরতার কারণে ব্যবসায়িক সাফল্য আসে।",
+    "synonyms": [
+      "Shrewdness",
+      "Cleverness"
+    ],
+    "antonyms": [],
+    "category": "BCS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5305,
+    "word": "Carcinogenic",
+    "pos": "Adj",
+    "phonetic": "/ˌkɑː.sɪ.nəˈdʒen.ɪk/",
+    "meaningBn": "ক্যান্সার সৃষ্টিকারী",
+    "exampleEn": "Tobacco smoke is carcinogenic.",
+    "exampleBn": "তামাকের ধোঁয়া ক্যান্সার সৃষ্টিকারী।",
+    "synonyms": [
+      "Cancer-causing"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5306,
+    "word": "Cardinality",
+    "pos": "Noun",
+    "phonetic": "/ˌkɑː.dɪˈnæl.ə.ti/",
+    "meaningBn": "উপাদান সংখ্যা (গণিত/ডাটাবেজ)",
+    "exampleEn": "Set has a high cardinality.",
+    "exampleBn": "সেটটির উপাদান সংখ্যা অনেক বেশি।",
+    "synonyms": [
+      "Number of elements"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5307,
+    "word": "Carelessness",
+    "pos": "Noun",
+    "phonetic": "/ˈkeə.ləs.nəs/",
+    "meaningBn": "অসাবধানতা, অবহেলা",
+    "exampleEn": "Accident was caused by carelessness.",
+    "exampleBn": "দুর্ঘটনাটি অসাবধানতার কারণে ঘটেছিল।",
+    "synonyms": [
+      "Negligence",
+      "Inattention"
+    ],
+    "antonyms": [
+      "Carefulness"
+    ],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5308,
+    "word": "Caricaturist",
+    "pos": "Noun",
+    "phonetic": "/ˈkær.ɪ.kə.tʃʊə.rɪst/",
+    "meaningBn": "ব্যঙ্গচিত্রশিল্পী",
+    "exampleEn": "Caricaturist drew funny portrait.",
+    "exampleBn": "ব্যঙ্গচিত্রশিল্পী মজার প্রতিকৃতি এঁকেছিলেন।",
+    "synonyms": [
+      "Cartoonist"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5309,
+    "word": "Carnivorousness",
+    "pos": "Noun",
+    "phonetic": "/kɑːˈnɪv.ər.əs.নəs/",
+    "meaningBn": "মাংসাশী স্বভাব",
+    "exampleEn": "Lions show carnivorousness.",
+    "exampleBn": "সিংহ মাংসাশী স্বভাব প্রদর্শন করে।",
+    "synonyms": [
+      "Meat-eating nature"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5310,
+    "word": "Carping",
+    "pos": "Noun",
+    "phonetic": "/ˈkɑː.pɪŋ/",
+    "meaningBn": "অহেতুক খুঁত ধরা, গোলমেলে সমালোচনা",
+    "exampleEn": "Ignore his constant carping.",
+    "exampleBn": "তার অনবরত অহেতুক খুঁত ধরা উপেক্ষা করুন।",
+    "synonyms": [
+      "Fault-finding",
+      "Caviling"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5311,
+    "word": "Cataclysmic",
+    "pos": "Adj",
+    "phonetic": "/ˌkæt.əˈklɪz.mɪk/",
+    "meaningBn": "প্রলয়ঙ্করী, ধ্বংসাত্মক",
+    "exampleEn": "Volcano led to cataclysmic damage.",
+    "exampleBn": "আগ্নেয়গিরি প্রলয়ঙ্করী ক্ষতি সাধন করেছিল।",
+    "synonyms": [
+      "Disastrous",
+      "Devastating"
+    ],
+    "antonyms": [],
+    "category": "IELTS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5312,
+    "word": "Catheter",
+    "pos": "Noun",
+    "phonetic": "/ˈkæθ.ə.tər/",
+    "meaningBn": "চিকিৎসায় ব্যবহৃত নমনীয় নল",
+    "exampleEn": "Nurse inserted a catheter.",
+    "exampleBn": "নার্স একটি নমনীয় নল প্রবেশ করিয়েছিলেন।",
+    "synonyms": [
+      "Medical tube"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5313,
+    "word": "Cavalierly",
+    "pos": "Adv",
+    "phonetic": "/ˌkæv.əˈlɪə.li/",
+    "meaningBn": "উদ্ধতভাবে, অবহেলার সাথে",
+    "exampleEn": "He treated warning cavalierly.",
+    "exampleBn": "সে সতর্কবার্তা অবহেলার সাথে বিবেচনা করেছিল।",
+    "synonyms": [
+      "Arrogantly",
+      "Dismissively"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5314,
+    "word": "Celestialness",
+    "pos": "Noun",
+    "phonetic": "/səˈles.ti.əl.নəs/",
+    "meaningBn": "স্বর্গীয় ভাব, আলৌকিক সৌন্দর্য",
+    "exampleEn": "Stars exhibited celestialness.",
+    "exampleBn": "তারাগুলো স্বর্গীয় শোভা প্রদর্শন করেছিল।",
+    "synonyms": [
+      "Heavenliness"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5315,
+    "word": "Celibacy",
+    "pos": "Noun",
+    "phonetic": "/ˈsel.ə.bə.si/",
+    "meaningBn": "কৌমার্য, চিরকুমার ব্রত",
+    "exampleEn": "Monks take a vow of celibacy.",
+    "exampleBn": "সন্ন্যাসীরা চিরকুমার ব্রতের শপথ নেন।",
+    "synonyms": [
+      "Chastity",
+      "Singlehood"
+    ],
+    "antonyms": [],
+    "category": "BCS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5316,
+    "word": "Censorial",
+    "pos": "Adj",
+    "phonetic": "/senˈsɔː.ri.əl/",
+    "meaningBn": "সেন্সরশিপ সংক্রান্ত",
+    "exampleEn": "Board exercised censorial power.",
+    "exampleBn": "পর্ষদ সেন্সরশিপ ক্ষমতা প্রয়োগ করেছিল।",
+    "synonyms": [
+      "Censoring"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5317,
+    "word": "Censoriousness",
+    "pos": "Noun",
+    "phonetic": "/senˈsɔː.ri.əs.নəs/",
+    "meaningBn": "ছিদ্রান্বেষী মনোভাব, সমালোচনাপ্রবণতা",
+    "exampleEn": "Avoid censoriousness towards others.",
+    "exampleBn": "অন্যদের প্রতি সমালোচনাপ্রবণতা এড়িয়ে চলুন।",
+    "synonyms": [
+      "Fault-finding"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5318,
+    "word": "Cerebration",
+    "pos": "Noun",
+    "phonetic": "/ˌser.əˈbreɪ.ʃən/",
+    "meaningBn": "চিন্তন প্রক্রিয়া, মস্তিষ্কের কাজ",
+    "exampleEn": "Problem required deep cerebration.",
+    "exampleBn": "সমস্যাটির জন্য গভীর চিন্তন প্রক্রিয়ার প্রয়োজন ছিল।",
+    "synonyms": [
+      "Thinking",
+      "Reasoning"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5319,
+    "word": "Ceremoniousness",
+    "pos": "Noun",
+    "phonetic": "/ˌser.ɪˈməʊ.ni.əs.নəs/",
+    "meaningBn": "আনুষ্ঠানিকতা, কেতাদুরস্ত ভাব",
+    "exampleEn": "Greeting lacked ceremoniousness.",
+    "exampleBn": "অভ্যর্থনায় আনুষ্ঠানিকতার অভাব ছিল।",
+    "synonyms": [
+      "Formality"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5320,
+    "word": "Chamberlain",
+    "pos": "Noun",
+    "phonetic": "/ˈtʃeɪm.bə.lɪn/",
+    "meaningBn": "রাজপ্রাসাদের কোষাধ্যক্ষ বা কর্মকর্তা",
+    "exampleEn": "Chamberlain managed royal house.",
+    "exampleBn": "কর্মকর্তা রাজকীয় গৃহ পরিচালনা করতেন।",
+    "synonyms": [
+      "Royal official"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5321,
+    "word": "Chameleonic",
+    "pos": "Adj",
+    "phonetic": "/kəˌmiː.liˈɒn.ɪk/",
+    "meaningBn": "বহুরূপী, দ্রুত পরিবর্তনশীল",
+    "exampleEn": "Politician has a chameleonic nature.",
+    "exampleBn": "রাজনীতিবিদটির বহুরূপী স্বভাব রয়েছে।",
+    "synonyms": [
+      "Changeable",
+      "Adaptable"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5322,
+    "word": "Chaperonage",
+    "pos": "Noun",
+    "phonetic": "/ˈʃæp.ə.rəʊ.nɪdʒ/",
+    "meaningBn": "অভিভাবকত্ব, দেখাশোনার দায়িত্ব",
+    "exampleEn": "Girls traveled under chaperonage.",
+    "exampleBn": "মেয়েরা অভিভাবকত্বে ভ্রমণ করেছিল।",
+    "synonyms": [
+      "Supervision",
+      "Escort"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5323,
+    "word": "Charlatanry",
+    "pos": "Noun",
+    "phonetic": "/ˈʃɑː.lə.tən.ri/",
+    "meaningBn": "ভণ্ডামি, প্রতারণা",
+    "exampleEn": "Doctor exposed charlatanry.",
+    "exampleBn": "ডাক্তার প্রতারণা ফাঁস করেছিলেন।",
+    "synonyms": [
+      "Fraud",
+      "Quackery"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5324,
+    "word": "Chasten",
+    "pos": "Verb",
+    "phonetic": "/ˈtʃeɪ.sən/",
+    "meaningBn": "শাস্তি দিয়ে সংশোধন করা, সংযত করা",
+    "exampleEn": "Hardship chastened his pride.",
+    "exampleBn": "কষ্ট তার অহংকার সংযত করেছিল।",
+    "synonyms": [
+      "Subdue",
+      "Humble"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5325,
+    "word": "Chastisement",
+    "pos": "Noun",
+    "phonetic": "/ˈtʃæs.taɪz.məнт/",
+    "meaningBn": "শাস্তিপ্রদান, ভর্ৎসনা",
+    "exampleEn": "Child received mild chastisement.",
+    "exampleBn": "শিশুটি মৃদু বকাঝকা পেয়েছিল।",
+    "synonyms": [
+      "Punishment",
+      "Rebuke"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5326,
+    "word": "Chauvinistic",
+    "pos": "Adj",
+    "phonetic": "/ˌʃəʊ.vɪˈnɪs.tɪk/",
+    "meaningBn": "উগ্র অন্ধ পক্ষপাতী",
+    "exampleEn": "Remarks were chauvinistic.",
+    "exampleBn": "মন্তব্যগুলো উগ্র পক্ষপাতমূলক ছিল।",
+    "synonyms": [
+      "Jingoistic",
+      "Biased"
+    ],
+    "antonyms": [],
+    "category": "BCS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5327,
+    "word": "Chivalrousness",
+    "pos": "Noun",
+    "phonetic": "/ˈʃɪv.əl.rəs.নəs/",
+    "meaningBn": "বীরোচিত ভদ্রতা ও উদারতা",
+    "exampleEn": "Knight acted with chivalrousness.",
+    "exampleBn": "বীর নাইট ভদ্রতা ও উদারতার সাথে কাজ করে।",
+    "synonyms": [
+      "Gallantry",
+      "Courtesy"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5328,
+    "word": "Choreography",
+    "pos": "Noun",
+    "phonetic": "/ˌkɒr.iˈɒɡ.rə.fi/",
+    "meaningBn": "নৃত্য পরিচালনা, নাচের মুদ্রা পরিকল্পনা",
+    "exampleEn": "Choreography was mesmerizing.",
+    "exampleBn": "নৃত্য পরিচালনা ছিল মনোমুগ্ধকর।",
+    "synonyms": [
+      "Dance design"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5329,
+    "word": "Churlishness",
+    "pos": "Noun",
+    "phonetic": "/ˈtʃɜː.lɪʃ.নəs/",
+    "meaningBn": "অসভ্য রুক্ষতা",
+    "exampleEn": "He was punished for churlishness.",
+    "exampleBn": "অসভ্য রুক্ষতার জন্য তাকে শাস্তি দেওয়া হয়।",
+    "synonyms": [
+      "Boorishness",
+      "Rudeness"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5330,
+    "word": "Cinematography",
+    "pos": "Noun",
+    "phonetic": "/ˌsɪn.ə.məˈtɒɡ.rə.fi/",
+    "meaningBn": "চিত্রগ্রহণ বিদ্যা",
+    "exampleEn": "Film won award for cinematography.",
+    "exampleBn": "চলচ্চিত্রটি চিত্রগ্রহণের জন্য পুরস্কার জিতেছিল।",
+    "synonyms": [
+      "Camerawork"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5331,
+    "word": "Circumvention",
+    "pos": "Noun",
+    "phonetic": "/ˌsɜː.kəmˈven.ʃən/",
+    "meaningBn": "চতুরতার সাথে এড়ানো",
+    "exampleEn": "Tax circumvention is punishable.",
+    "exampleBn": "কর ফাঁকি বা এড়ানো দণ্ডনীয়।",
+    "synonyms": [
+      "Evasion",
+      "Avoidance"
+    ],
+    "antonyms": [],
+    "category": "BCS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5332,
+    "word": "Clairvoyance",
+    "pos": "Noun",
+    "phonetic": "/kleəˈvɔɪ.əns/",
+    "meaningBn": "দূরদৃষ্টি, অলৌকিক দর্শন ক্ষমতা",
+    "exampleEn": "She claimed to have clairvoyance.",
+    "exampleBn": "তিনি অলৌকিক দূরদৃষ্টির দাবি করেন।",
+    "synonyms": [
+      "Insight",
+      "Telepathy"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5333,
+    "word": "Clandestineness",
+    "pos": "Noun",
+    "phonetic": "/klænˈdes.tɪn.নəs/",
+    "meaningBn": "গোপনীয়তা",
+    "exampleEn": "Clandestineness of meeting raised doubts.",
+    "exampleBn": "বৈঠকের গোপনীয়তা সন্দেহ বাড়িয়েছিল।",
+    "synonyms": [
+      "Secrecy"
+    ],
+    "antonyms": [],
+    "category": "IELTS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5334,
+    "word": "Coarseness",
+    "pos": "Noun",
+    "phonetic": "/ˈkɔːs.nəs/",
+    "meaningBn": "রুক্ষতা, অমসৃণতা",
+    "exampleEn": "Coarseness of cloth irritated skin.",
+    "exampleBn": "কাপড়ের রুক্ষতা ত্বকে অস্বস্তি দেয়।",
+    "synonyms": [
+      "Roughness",
+      "Harshness"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5335,
+    "word": "Coerciveness",
+    "pos": "Noun",
+    "phonetic": "/kəʊˈɜː.sɪv.নəs/",
+    "meaningBn": "জোরজবরদস্তি মনোভাব",
+    "exampleEn": "Law lacks coerciveness.",
+    "exampleBn": "আইনে জোরজবরদস্তির অভাব রয়েছে।",
+    "synonyms": [
+      "Forcefulness",
+      "Compulsion"
+    ],
+    "antonyms": [],
+    "category": "BCS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5336,
+    "word": "Collusiveness",
+    "pos": "Noun",
+    "phonetic": "/kəˈluː.sɪv.নəs/",
+    "meaningBn": "গোপন আঁতাতমূলক ভাব",
+    "exampleEn": "Collusiveness in bidding was proved.",
+    "exampleBn": "দরপত্রে গোপন আঁতাতের প্রমাণ হয়েছিল।",
+    "synonyms": [
+      "Conspiratorial nature"
+    ],
+    "antonyms": [],
+    "category": "BCS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5337,
+    "word": "Colorfulness",
+    "pos": "Noun",
+    "phonetic": "/ˈkʌl.ə.fəl.নəs/",
+    "meaningBn": "রঙিনতা, বৈচিত্র্যময়তা",
+    "exampleEn": "Festival was praised for colorfulness.",
+    "exampleBn": "উৎসবটির বর্ণিলতার প্রশংসা করা হয়েছিল।",
+    "synonyms": [
+      "Vibrancy"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5338,
+    "word": "Comeliness",
+    "pos": "Noun",
+    "phonetic": "/ˈkʌm.li.নəs/",
+    "meaningBn": "শ্রী, মনোহর সৌন্দর্য",
+    "exampleEn": "Her natural comeliness drew praise.",
+    "exampleBn": "তার প্রাকৃতিক শ্রী প্রশংসা কুড়িয়েছিল।",
+    "synonyms": [
+      "Attractiveness",
+      "Beauty"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5339,
+    "word": "Commemoration",
+    "pos": "Noun",
+    "phonetic": "/kəˌmem.əˈreɪ.ʃən/",
+    "meaningBn": "স্মরণোৎসব, স্মৃতিতর্পণ",
+    "exampleEn": "Event held in commemoration of heroes.",
+    "exampleBn": "বীরদের স্মরণে অনুষ্ঠানটি অনুষ্ঠিত হয়েছিল।",
+    "synonyms": [
+      "Remembrance",
+      "Honor"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5340,
+    "word": "Commensurateness",
+    "pos": "Noun",
+    "phonetic": "/kəˈmen.sjər.ət.নəs/",
+    "meaningBn": "সমানুপাতিকতা",
+    "exampleEn": "Reward matched effort commensurateness.",
+    "exampleBn": "পুরস্কার চেষ্টার সমানুপাতিক ছিল।",
+    "synonyms": [
+      "Proportionality"
+    ],
+    "antonyms": [],
+    "category": "IELTS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5341,
+    "word": "Commodiousness",
+    "pos": "Noun",
+    "phonetic": "/kəˈməʊ.di.əs.নəs/",
+    "meaningBn": "প্রশস্ততা, আরামদায়ক বড় পরিসর",
+    "exampleEn": "Loved the commodiousness of hall.",
+    "exampleBn": "হলঘরের প্রশস্ততা সবাই পছন্দ করেছিল।",
+    "synonyms": [
+      "Spaciousness"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5342,
+    "word": "Communalism",
+    "pos": "Noun",
+    "phonetic": "/kəˈmjuː.nəl.ɪ.zəm/",
+    "meaningBn": "সাম্প্রদায়িকতা",
+    "exampleEn": "We must eradicate communalism.",
+    "exampleBn": "আমাদের অবশ্যই সাম্প্রদায়িকতা উপড়ে ফেলতে হবে।",
+    "synonyms": [
+      "Sectarianism"
+    ],
+    "antonyms": [],
+    "category": "BCS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5343,
+    "word": "Compassionateness",
+    "pos": "Noun",
+    "phonetic": "/kəmˈpæʃ.ən.ət.নəs/",
+    "meaningBn": "দয়াশীলতা, সহানুভূতি",
+    "exampleEn": "Daughter showed great compassionateness.",
+    "exampleBn": "কন্যা গভীর সহানুভূতি দেখিয়েছিল।",
+    "synonyms": [
+      "Kindness",
+      "Mercy"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5344,
+    "word": "Compendiousness",
+    "pos": "Noun",
+    "phonetic": "/kəmˈpen.di.əs.নəs/",
+    "meaningBn": "সংক্ষিপ্ত কিন্তু সারগর্ভ ভাব",
+    "exampleEn": "Book had remarkable compendiousness.",
+    "exampleBn": "বইটির সারগর্ভ সংক্ষিপ্ততা প্রশংসনীয়।",
+    "synonyms": [
+      "Conciseness",
+      "Summary nature"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5345,
+    "word": "Complexion",
+    "pos": "Noun",
+    "phonetic": "/kəmˈplek.ʃən/",
+    "meaningBn": "ত্বকের গায়ের রঙ বা সার্বিক অবস্থা",
+    "exampleEn": "Exercise gives healthy complexion.",
+    "exampleBn": "ব্যায়াম স্বাস্থ্যকর গায়ের রঙ এনে দেয়।",
+    "synonyms": [
+      "Skin tone",
+      "Appearance"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5346,
+    "word": "Composedness",
+    "pos": "Noun",
+    "phonetic": "/kəmˈpəʊ.zɪd.নəs/",
+    "meaningBn": "ধীরস্থির ভাব, মানসিক প্রশান্তি",
+    "exampleEn": "Maintained composedness in danger.",
+    "exampleBn": "বিপদে ধীরস্থির ভাব বজায় রেখেছিলেন।",
+    "synonyms": [
+      "Calmness",
+      "Poise"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5347,
+    "word": "Comprehensiveness",
+    "pos": "Noun",
+    "phonetic": "/ˌkɒm.prɪˈhen.sɪv.নəs/",
+    "meaningBn": "ব্যাপকতা, সর্বাঙ্গীনতা",
+    "exampleEn": "Report was praised for comprehensiveness.",
+    "exampleBn": "প্রতিবেদনটির ব্যাপকতার প্রশংসা করা হয়।",
+    "synonyms": [
+      "Thoroughness",
+      "Completeness"
+    ],
+    "antonyms": [],
+    "category": "IELTS",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5348,
+    "word": "Compressibility",
+    "pos": "Noun",
+    "phonetic": "/kəmˌpres.əˈbɪl.ə.ti/",
+    "meaningBn": "সংকোচনশীলতা",
+    "exampleEn": "Gas has high compressibility.",
+    "exampleBn": "গ্যাসের উচ্চ সংকোচনশীলতা রয়েছে।",
+    "synonyms": [
+      "Condensability"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5349,
+    "word": "Compulsiveness",
+    "pos": "Noun",
+    "phonetic": "/kəmˈpʌl.sɪv.নəs/",
+    "meaningBn": "অনিবার্য বাধ্যবাধকতার ভাব",
+    "exampleEn": "Habit showed psychological compulsiveness.",
+    "exampleBn": "অভ্যাসটি মানসিক বাধ্যবাধকতা দেখিয়েছিল।",
+    "synonyms": [
+      "Obsessiveness"
+    ],
+    "antonyms": [],
+    "category": "Spoken",
+    "packId": "extra_300_pack"
+  },
+  {
+    "id": 5350,
+    "word": "Concatenation",
+    "pos": "Noun",
+    "phonetic": "/kənˌkæt.ənˈeɪ.ʃən/",
+    "meaningBn": "পর পর ধারাবাহিক শৃঙ্খল",
+    "exampleEn": "A concatenation of events led to fall.",
+    "exampleBn": "ঘটনার শৃঙ্খল পতনের দিকে নিয়ে যায়।",
+    "synonyms": [
+      "Chain",
+      "Series"
+    ],
+    "antonyms": [],
+    "category": "Academic",
+    "packId": "extra_300_pack"
+  }
+]

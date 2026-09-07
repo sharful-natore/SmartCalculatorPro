@@ -115,10 +115,10 @@ object VocabularyPackRepository {
                         when (key) {
                             "id" -> id = jsonReader.nextString()
                             "word" -> word = jsonReader.nextString()
-                            "phonetic" -> phonetic = jsonReader.nextString()
-                            "pos" -> pos = jsonReader.nextString()
-                            "meaningBn" -> meaningBn = jsonReader.nextString()
-                            "exampleEn" -> exampleEn = jsonReader.nextString()
+                            "phonetic", "pronunciation" -> phonetic = jsonReader.nextString()
+                            "pos", "partOfSpeech" -> pos = jsonReader.nextString()
+                            "meaningBn", "meaning" -> meaningBn = jsonReader.nextString()
+                            "exampleEn", "example" -> exampleEn = jsonReader.nextString()
                             "exampleBn" -> exampleBn = jsonReader.nextString()
                             "synonyms" -> {
                                 if (jsonReader.peek() == android.util.JsonToken.BEGIN_ARRAY) {
@@ -211,7 +211,7 @@ object VocabularyPackRepository {
             onProgress(0.90f, "অফলাইন ডাটাবেজে সক্রিয় ও সংরক্ষণ করা হচ্ছে...")
             savePackToFile(context, packId, masterList)
 
-            onProgress(1.0f, "২,৪৭৭ টি অফলাইন মাস্টার শব্দভান্ডার সফলভাবে সক্রিয় হয়েছে!")
+            onProgress(1.0f, "৬,০০০ টি অফলাইন মাস্টার শব্দভান্ডার সফলভাবে সক্রিয় হয়েছে!")
             masterList
         }
     }
@@ -251,10 +251,10 @@ object VocabularyPackRepository {
                                 }
                             }
                             "word" -> word = jsonReader.nextString()
-                            "phonetic" -> phonetic = jsonReader.nextString()
-                            "pos" -> pos = jsonReader.nextString()
-                            "meaningBn" -> meaningBn = jsonReader.nextString()
-                            "exampleEn" -> exampleEn = jsonReader.nextString()
+                            "phonetic", "pronunciation" -> phonetic = jsonReader.nextString()
+                            "pos", "partOfSpeech" -> pos = jsonReader.nextString()
+                            "meaningBn", "meaning" -> meaningBn = jsonReader.nextString()
+                            "exampleEn", "example" -> exampleEn = jsonReader.nextString()
                             "exampleBn" -> exampleBn = jsonReader.nextString()
                             "synonyms" -> {
                                 if (jsonReader.peek() == android.util.JsonToken.BEGIN_ARRAY) {
