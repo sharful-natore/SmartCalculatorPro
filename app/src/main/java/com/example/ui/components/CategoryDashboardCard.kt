@@ -40,8 +40,13 @@ import kotlin.math.sin
  * Metadata and visual styling for each category card.
  */
 data class CategoryCardTheme(
-    val gradients: List<Color>,
+    val bgLight: Color,
+    val bgDark: Color,
     val accentColor: Color,
+    val titleColorLight: Color,
+    val subtitleColorLight: Color,
+    val iconBadgeBgLight: Color,
+    val iconBadgeTintLight: Color,
     val subtitleBn: String,
     val subtitleEn: String
 )
@@ -50,123 +55,123 @@ object CategoryThemeRegistry {
     fun getTheme(category: ToolCategory): CategoryCardTheme {
         return when (category) {
             ToolCategory.HEALTH -> CategoryCardTheme(
-                gradients = listOf(
-                    Color(0xFF881337),
-                    Color(0xFFBE123C),
-                    Color(0xFFE11D48),
-                    Color(0xFFFB7185)
-                ),
-                accentColor = Color(0xFFFDA4AF),
+                bgLight = Color(0xFFFFF1F2),
+                bgDark = Color(0xFF381119),
+                accentColor = Color(0xFFE11D48),
+                titleColorLight = Color(0xFF881337),
+                subtitleColorLight = Color(0xFF9F1239),
+                iconBadgeBgLight = Color(0xFFFFE4E6),
+                iconBadgeTintLight = Color(0xFFE11D48),
                 subtitleBn = "বিএমআই, ক্যালোরি, আদর্শ ওজন, রক্তদান ও স্বাস্থ্য ট্র্যাকার",
                 subtitleEn = "BMI, Calorie, Ideal Weight, Blood Donation & Health Trackers"
             )
             ToolCategory.FINANCE -> CategoryCardTheme(
-                gradients = listOf(
-                    Color(0xFF0F172A),
-                    Color(0xFF1E3A8A),
-                    Color(0xFF1D4ED8),
-                    Color(0xFF3B82F6)
-                ),
-                accentColor = Color(0xFFFBBF24),
+                bgLight = Color(0xFFEFF6FF),
+                bgDark = Color(0xFF101E38),
+                accentColor = Color(0xFF2563EB),
+                titleColorLight = Color(0xFF1E3A8A),
+                subtitleColorLight = Color(0xFF1D4ED8),
+                iconBadgeBgLight = Color(0xFFDBEAFE),
+                iconBadgeTintLight = Color(0xFF2563EB),
                 subtitleBn = "ঋণ ইএমআই, লাভ-ক্ষতি, ভ্যাট, যাকাত, সেভিংস ও সুদ হিসাব",
                 subtitleEn = "EMI Loan, Profit & Loss, VAT, Zakat, Savings & Interest"
             )
             ToolCategory.ISLAMIC -> CategoryCardTheme(
-                gradients = listOf(
-                    Color(0xFF022C22),
-                    Color(0xFF064E3B),
-                    Color(0xFF047857),
-                    Color(0xFF10B981)
-                ),
-                accentColor = Color(0xFFFCD34D),
+                bgLight = Color(0xFFECFDF5),
+                bgDark = Color(0xFF0A2B1D),
+                accentColor = Color(0xFF059669),
+                titleColorLight = Color(0xFF065F46),
+                subtitleColorLight = Color(0xFF047857),
+                iconBadgeBgLight = Color(0xFFD1FAE5),
+                iconBadgeTintLight = Color(0xFF059669),
                 subtitleBn = "নামাজের সময়সূচি, কিবলা কম্পাস, ডিজিটাল তসবিহ ও দোয়া",
                 subtitleEn = "Prayer Times, Qibla Compass, Digital Tasbih & Duas"
             )
             ToolCategory.UTILITY -> CategoryCardTheme(
-                gradients = listOf(
-                    Color(0xFF042F2E),
-                    Color(0xFF0F766E),
-                    Color(0xFF0E7490),
-                    Color(0xFF06B6D4)
-                ),
-                accentColor = Color(0xFF67E8F9),
+                bgLight = Color(0xFFECFEFF),
+                bgDark = Color(0xFF0B2D33),
+                accentColor = Color(0xFF0891B2),
+                titleColorLight = Color(0xFF155E75),
+                subtitleColorLight = Color(0xFF0E7490),
+                iconBadgeBgLight = Color(0xFFCFFAFE),
+                iconBadgeTintLight = Color(0xFF0891B2),
                 subtitleBn = "বয়স ক্যালকুলেটর, বাজার লিস্ট, ক্যামেরা লেভেল ও প্রয়োজনীয় টুলস",
                 subtitleEn = "Age Calculator, Market List, Camera Level & Essential Tools"
             )
             ToolCategory.ELECTRICITY -> CategoryCardTheme(
-                gradients = listOf(
-                    Color(0xFF451A03),
-                    Color(0xFF7C2D12),
-                    Color(0xFFC2410C),
-                    Color(0xFFF97316)
-                ),
-                accentColor = Color(0xFFFDE047),
+                bgLight = Color(0xFFFFFBEB),
+                bgDark = Color(0xFF332009),
+                accentColor = Color(0xFFD97706),
+                titleColorLight = Color(0xFF78350F),
+                subtitleColorLight = Color(0xFF92400E),
+                iconBadgeBgLight = Color(0xFFFEF3C7),
+                iconBadgeTintLight = Color(0xFFD97706),
                 subtitleBn = "বিদ্যুৎ বিল, জেনারেটর, সোলার প্যানেল, ভোল্টেজ ও লোড ক্যালকুলেশন",
                 subtitleEn = "Electricity Bill, Generator, Solar Panel, Voltage & Load"
             )
             ToolCategory.VEHICLE -> CategoryCardTheme(
-                gradients = listOf(
-                    Color(0xFF0F172A),
-                    Color(0xFF1E293B),
-                    Color(0xFF0369A1),
-                    Color(0xFF0EA5E9)
-                ),
-                accentColor = Color(0xFF7DD3FC),
+                bgLight = Color(0xFFF0F9FF),
+                bgDark = Color(0xFF0C2538),
+                accentColor = Color(0xFF0284C7),
+                titleColorLight = Color(0xFF075985),
+                subtitleColorLight = Color(0xFF0369A1),
+                iconBadgeBgLight = Color(0xFFE0F2FE),
+                iconBadgeTintLight = Color(0xFF0284C7),
                 subtitleBn = "মাইলেজ, ফুয়েল ট্রিপ খরচ, স্পিডোমিটার, পার্কিং ও টোল হিসাব",
                 subtitleEn = "Mileage, Fuel Cost, Speedometer, Parking & Trip Cost"
             )
             ToolCategory.EDUCATION -> CategoryCardTheme(
-                gradients = listOf(
-                    Color(0xFF3B0764),
-                    Color(0xFF581C87),
-                    Color(0xFF7E22CE),
-                    Color(0xFFA855F7)
-                ),
-                accentColor = Color(0xFFF472B6),
+                bgLight = Color(0xFFFAF5FF),
+                bgDark = Color(0xFF2B123D),
+                accentColor = Color(0xFF9333EA),
+                titleColorLight = Color(0xFF581C87),
+                subtitleColorLight = Color(0xFF6B21A8),
+                iconBadgeBgLight = Color(0xFFF3E8FF),
+                iconBadgeTintLight = Color(0xFF9333EA),
                 subtitleBn = "জিপিএ, সিজিপিএ, শতকরা গ্রেড, উপস্থিতি ও ফলাফল হিসাব",
                 subtitleEn = "GPA, CGPA, Percentage, Grade & Attendance Calculator"
             )
             ToolCategory.AGRICULTURE -> CategoryCardTheme(
-                gradients = listOf(
-                    Color(0xFF052E16),
-                    Color(0xFF14532D),
-                    Color(0xFF15803D),
-                    Color(0xFF22C55E)
-                ),
-                accentColor = Color(0xFF86EFAC),
+                bgLight = Color(0xFFF0FDF4),
+                bgDark = Color(0xFF0F2E1B),
+                accentColor = Color(0xFF16A34A),
+                titleColorLight = Color(0xFF14532D),
+                subtitleColorLight = Color(0xFF166534),
+                iconBadgeBgLight = Color(0xFFDCFCE7),
+                iconBadgeTintLight = Color(0xFF16A34A),
                 subtitleBn = "সার প্রয়োগ, জমির হিসাব, পুকুরের মাছ চাষ ও ফসল বীজ গণনা",
                 subtitleEn = "Fertilizer, Land Measurement, Fish Farming & Seed Count"
             )
             ToolCategory.KIDS -> CategoryCardTheme(
-                gradients = listOf(
-                    Color(0xFF500724),
-                    Color(0xFF831843),
-                    Color(0xFFBE185D),
-                    Color(0xFFF43F5E)
-                ),
-                accentColor = Color(0xFFFDE047),
+                bgLight = Color(0xFFFDF2F8),
+                bgDark = Color(0xFF3B0E23),
+                accentColor = Color(0xFFDB2777),
+                titleColorLight = Color(0xFF831843),
+                subtitleColorLight = Color(0xFF9D174D),
+                iconBadgeBgLight = Color(0xFFFCE7F3),
+                iconBadgeTintLight = Color(0xFFDB2777),
                 subtitleBn = "বর্ণমালা, ছোটদের অংক শেখা, ছড়া, নামতা ও মজার কুইজ",
                 subtitleEn = "Alphabet, Math for Kids, Rhymes, Multiplication & Fun Quiz"
             )
             ToolCategory.DEVELOPER -> CategoryCardTheme(
-                gradients = listOf(
-                    Color(0xFF030712),
-                    Color(0xFF111827),
-                    Color(0xFF1E1B4B),
-                    Color(0xFF4338CA)
-                ),
-                accentColor = Color(0xFF22D3EE),
+                bgLight = Color(0xFFEEF2FF),
+                bgDark = Color(0xFF141838),
+                accentColor = Color(0xFF4F46E5),
+                titleColorLight = Color(0xFF312E81),
+                subtitleColorLight = Color(0xFF3730A3),
+                iconBadgeBgLight = Color(0xFFE0E7FF),
+                iconBadgeTintLight = Color(0xFF4F46E5),
                 subtitleBn = "বেস কনভার্টার, কালার কোড পিকার, হ্যাশ ও রেগুলার এক্সপ্রেশন",
                 subtitleEn = "Base Converter, Color Picker, Hash & Regex Tools"
             )
             ToolCategory.ENGINEERING -> CategoryCardTheme(
-                gradients = listOf(
-                    Color(0xFF1C1917),
-                    Color(0xFF292524),
-                    Color(0xFF334155),
-                    Color(0xFF475569)
-                ),
-                accentColor = Color(0xFF93C5FD),
+                bgLight = Color(0xFFF8FAFC),
+                bgDark = Color(0xFF1B222E),
+                accentColor = Color(0xFF475569),
+                titleColorLight = Color(0xFF0F172A),
+                subtitleColorLight = Color(0xFF1E293B),
+                iconBadgeBgLight = Color(0xFFF1F5F9),
+                iconBadgeTintLight = Color(0xFF334155),
                 subtitleBn = "সিভিল, মেকানিক্যাল, পাইপ ফ্লো, বিম লোড ও স্ট্রাকচারাল গণনা",
                 subtitleEn = "Civil, Mechanical, Pipe Flow, Beam Load & Structural Calculations"
             )
@@ -573,7 +578,7 @@ private fun DrawScope.drawEngineeringIllustration(w: Float, h: Float) {
 }
 
 /**
- * The redesigned, high-end Gradient Category Card with round-stack tool icons.
+ * The redesigned, high-end soft-background Category Card with round icon badge & stacked tool icons.
  */
 @Composable
 fun CategoryDashboardCard(
@@ -581,6 +586,7 @@ fun CategoryDashboardCard(
     categoryTools: List<ToolType>,
     language: AppLanguage,
     isBn: Boolean,
+    themeColors: CalculatorThemeColors? = null,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
@@ -589,6 +595,14 @@ fun CategoryDashboardCard(
 
     val top3Tools = remember(categoryTools) { categoryTools.take(3) }
     val remainingCount = remember(categoryTools) { (categoryTools.size - 3).coerceAtLeast(0) }
+
+    val isDark = themeColors?.isDark == true
+    val cardBgColor = if (isDark) theme.bgDark else theme.bgLight
+    val titleTextColor = if (isDark) Color.White else theme.titleColorLight
+    val subtitleTextColor = if (isDark) Color.White.copy(alpha = 0.82f) else theme.subtitleColorLight
+    val iconBadgeBg = if (isDark) theme.accentColor.copy(alpha = 0.25f) else theme.iconBadgeBgLight
+    val iconBadgeTint = if (isDark) theme.accentColor else theme.iconBadgeTintLight
+    val cardBorderColor = theme.accentColor.copy(alpha = if (isDark) 0.35f else 0.25f)
 
     Card(
         modifier = modifier
@@ -600,19 +614,13 @@ fun CategoryDashboardCard(
                 onClick = onClick
             ),
         shape = RoundedCornerShape(22.dp),
-        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.20f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        border = BorderStroke(1.dp, cardBorderColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(
-                    Brush.linearGradient(
-                        colors = theme.gradients,
-                        start = Offset(0f, 0f),
-                        end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
-                    )
-                )
+                .background(cardBgColor)
         ) {
             // Background artistic illustration matching the category
             CategoryIllustrationBackground(
@@ -623,102 +631,51 @@ fun CategoryDashboardCard(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(12.dp)
+                    .padding(horizontal = 10.dp, vertical = 9.dp)
             ) {
-                // Top Row: Category Icon Badge on Left & Tool Count Pill on Right
+                // Top Row: Category Icon Badge on Left & Tool Icons Stack on Top Right
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Category Icon Badge
+                    // Category Icon Badge - Round Shape
                     Box(
                         modifier = Modifier
-                            .size(36.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(Color.White.copy(alpha = 0.20f))
-                            .border(1.dp, Color.White.copy(alpha = 0.35f), RoundedCornerShape(12.dp)),
+                            .size(28.dp)
+                            .clip(CircleShape)
+                            .background(iconBadgeBg)
+                            .border(0.8.dp, theme.accentColor.copy(alpha = 0.35f), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = category.icon,
                             contentDescription = category.getTitle(language),
-                            tint = Color.White,
-                            modifier = Modifier.size(20.dp)
+                            tint = iconBadgeTint,
+                            modifier = Modifier.size(15.dp)
                         )
                     }
 
-                    // Tool count pill on top right
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = Color.White.copy(alpha = 0.20f),
-                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.30f))
-                    ) {
-                        Text(
-                            text = if (isBn) "${categoryTools.size}টি" else "${categoryTools.size}",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = Color.White,
-                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Middle: Category Title & Subtitle
-                Column(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = category.getTitle(language),
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = Color.White,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-
-                    Spacer(modifier = Modifier.height(2.dp))
-
-                    Text(
-                        text = if (isBn) theme.subtitleBn else theme.subtitleEn,
-                        fontSize = 10.5.sp,
-                        fontWeight = FontWeight.Normal,
-                        color = Color.White.copy(alpha = 0.88f),
-                        maxLines = 2,
-                        lineHeight = 14.sp,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // Bottom Row: Solid Round Stack Tool Icons on Right
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                    // Tool Icons Stack on Top Right (Gaps reduced / tightly stacked: spacedBy(-10.dp))
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy((-6).dp)
+                        horizontalArrangement = Arrangement.spacedBy((-10).dp)
                     ) {
                         top3Tools.forEachIndexed { index, tool ->
                             Box(
                                 modifier = Modifier
-                                    .size(28.dp)
+                                    .size(22.dp)
                                     .zIndex((4 - index).toFloat())
                                     .clip(CircleShape)
                                     .background(Color.White)
-                                    .border(1.dp, Color(0xFFE2E8F0), CircleShape),
+                                    .border(0.8.dp, theme.accentColor.copy(alpha = 0.35f), CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     imageVector = tool.icon,
                                     contentDescription = tool.getTitle(language),
-                                    tint = theme.gradients.first(),
-                                    modifier = Modifier.size(15.dp)
+                                    tint = theme.accentColor,
+                                    modifier = Modifier.size(12.dp)
                                 )
                             }
                         }
@@ -726,22 +683,50 @@ fun CategoryDashboardCard(
                         if (remainingCount > 0) {
                             Box(
                                 modifier = Modifier
-                                    .size(28.dp)
+                                    .size(22.dp)
                                     .zIndex(0f)
                                     .clip(CircleShape)
-                                    .background(Color.White)
-                                    .border(1.dp, Color(0xFFE2E8F0), CircleShape),
+                                    .background(theme.accentColor.copy(alpha = 0.18f))
+                                    .border(0.8.dp, theme.accentColor.copy(alpha = 0.40f), CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
                                     text = "+$remainingCount",
-                                    fontSize = 10.sp,
+                                    fontSize = 8.sp,
                                     fontWeight = FontWeight.ExtraBold,
-                                    color = theme.gradients.first()
+                                    color = theme.accentColor
                                 )
                             }
                         }
                     }
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                // Title & Subtitle
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = category.getTitle(language),
+                        fontSize = 13.5.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = titleTextColor,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+
+                    Spacer(modifier = Modifier.height(1.5.dp))
+
+                    Text(
+                        text = if (isBn) theme.subtitleBn else theme.subtitleEn,
+                        fontSize = 9.5.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = subtitleTextColor,
+                        maxLines = 2,
+                        lineHeight = 12.5.sp,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
             }
         }
@@ -793,22 +778,23 @@ fun CategoryDetailToolsView(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         // Hero Category Header Banner
+        val isDark = themeColors.isDark
+        val headerBg = if (isDark) theme.bgDark else theme.bgLight
+        val headerTitleColor = if (isDark) Color.White else theme.titleColorLight
+        val headerSubtitleColor = if (isDark) Color.White.copy(alpha = 0.85f) else theme.subtitleColorLight
+        val iconBadgeBg = if (isDark) theme.accentColor.copy(alpha = 0.25f) else theme.iconBadgeBgLight
+        val iconBadgeTint = if (isDark) theme.accentColor else theme.iconBadgeTintLight
+
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(20.dp),
-            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.20f)),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            border = BorderStroke(1.dp, theme.accentColor.copy(alpha = if (isDark) 0.35f else 0.25f)),
+            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(
-                        Brush.linearGradient(
-                            colors = theme.gradients,
-                            start = Offset(0f, 0f),
-                            end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
-                        )
-                    )
+                    .background(headerBg)
             ) {
                 CategoryIllustrationBackground(
                     category = category,
@@ -829,8 +815,8 @@ fun CategoryDetailToolsView(
                         Surface(
                             onClick = onBackClick,
                             shape = RoundedCornerShape(12.dp),
-                            color = Color.White.copy(alpha = 0.22f),
-                            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.35f))
+                            color = theme.accentColor.copy(alpha = if (isDark) 0.25f else 0.15f),
+                            border = BorderStroke(1.dp, theme.accentColor.copy(alpha = 0.35f))
                         ) {
                             Row(
                                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
@@ -840,14 +826,14 @@ fun CategoryDetailToolsView(
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                     contentDescription = "Back",
-                                    tint = Color.White,
+                                    tint = if (isDark) Color.White else theme.titleColorLight,
                                     modifier = Modifier.size(15.dp)
                                 )
                                 Text(
                                     text = if (isBn) "সকল ক্যাটাগরি" else "All Categories",
                                     fontSize = 11.5.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color.White
+                                    color = if (isDark) Color.White else theme.titleColorLight
                                 )
                             }
                         }
@@ -855,13 +841,13 @@ fun CategoryDetailToolsView(
                         // Total count pill
                         Surface(
                             shape = RoundedCornerShape(12.dp),
-                            color = Color.White.copy(alpha = 0.20f)
+                            color = theme.accentColor.copy(alpha = if (isDark) 0.20f else 0.12f)
                         ) {
                             Text(
                                 text = if (isBn) "${categoryTools.size}টি টুলস" else "${categoryTools.size} Tools",
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White,
+                                color = if (isDark) Color.White else theme.titleColorLight,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             )
                         }
@@ -876,15 +862,15 @@ fun CategoryDetailToolsView(
                         Box(
                             modifier = Modifier
                                 .size(44.dp)
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(Color.White.copy(alpha = 0.20f))
-                                .border(1.dp, Color.White.copy(alpha = 0.40f), RoundedCornerShape(14.dp)),
+                                .clip(CircleShape)
+                                .background(iconBadgeBg)
+                                .border(1.dp, theme.accentColor.copy(alpha = 0.35f), CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = category.icon,
                                 contentDescription = null,
-                                tint = Color.White,
+                                tint = iconBadgeTint,
                                 modifier = Modifier.size(24.dp)
                             )
                         }
@@ -896,13 +882,13 @@ fun CategoryDetailToolsView(
                                 text = category.getTitle(viewModel.selectedLanguage),
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.ExtraBold,
-                                color = Color.White
+                                color = headerTitleColor
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = if (isBn) theme.subtitleBn else theme.subtitleEn,
                                 fontSize = 11.sp,
-                                color = Color.White.copy(alpha = 0.85f),
+                                color = headerSubtitleColor,
                                 lineHeight = 14.5.sp
                             )
                         }

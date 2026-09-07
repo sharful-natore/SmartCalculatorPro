@@ -256,6 +256,7 @@ fun DashboardCategoriesView(
     val toolUsage by viewModel.allToolUsage.collectAsStateWithLifecycle()
     val searchQuery = viewModel.toolSearchQuery.lowercase().trim()
     val selectedFilter = viewModel.selectedToolCategoryFilter
+
     var showWeatherDialog by remember { mutableStateOf(false) }
     var unfavoriteConfirmTool by remember { mutableStateOf<ToolType?>(null) }
     var showAllFeaturedDialog by remember { mutableStateOf(false) }
@@ -298,17 +299,213 @@ fun DashboardCategoriesView(
         toolUsage
     )
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(themeColors.background)
-            .nestedScroll(nestedScrollConnection)
-            .graphicsLayer {
-                translationY = bounceAnimatable.value
+    AnimatedContent(
+        targetState = selectedFilter,
+        transitionSpec = {
+            if (targetState != null) {
+                // Opening category view: Slide up slightly + Fade in + Scale in
+                (slideInVertically(animationSpec = spring(stiffness = Spring.StiffnessMediumLow, dampingRatio = Spring.DampingRatioLowBouncy)) { it / 8 } +
+                 fadeIn(animationSpec = tween(280)) +
+                 scaleIn(initialScale = 0.95f, animationSpec = tween(280))) togetherWith
+                (fadeOut(animationSpec = tween(180)) +
+                 scaleOut(targetScale = 0.97f, animationSpec = tween(180)))
+            } else {
+                // Closing category view (returning to overview): Fade in overview + Slide down detail
+                (fadeIn(animationSpec = tween(260)) +
+                 scaleIn(initialScale = 0.97f, animationSpec = tween(260))) togetherWith
+                (slideOutVertically(animationSpec = tween(220)) { it / 8 } +
+                 fadeOut(animationSpec = tween(180)) +
+                 scaleOut(targetScale = 0.95f, animationSpec = tween(180)))
             }
-            .verticalScroll(scrollState)
-            .padding(horizontal = 6.dp, vertical = 10.dp)
-    ) {
+        },
+        label = "categoryOpenCloseTransition",
+        modifier = Modifier.fillMaxSize()
+    ) { currentFilterState ->
+        if (currentFilterState != null) {
+            val categoryDetailScrollState = remember(currentFilterState) { androidx.compose.foundation.ScrollState(0) }
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(themeColors.background)
+                    .nestedScroll(nestedScrollConnection)
+                    .graphicsLayer {
+                        translationY = bounceAnimatable.value
+                    }
+                    .verticalScroll(categoryDetailScrollState)
+                    .padding(horizontal = 6.dp, vertical = 10.dp)
+            ) {
+                val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
+                if (viewModel.dashboardLayoutMode == com.example.ui.viewmodel.DashboardLayoutMode.MODERN) {
+                    val currentCategoryTools = viewModel.getAllOrderedToolsForCategory(currentFilterState, toolUsage)
+                    CategoryDetailToolsView(
+                        category = currentFilterState,
+                        categoryTools = currentCategoryTools,
+                        viewModel = viewModel,
+                        themeColors = themeColors,
+                        isBn = isBn,
+                        onBackClick = { viewModel.selectedToolCategoryFilter = null }
+                    )
+                } else {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalBounceOverscroll()
+                        .horizontalScroll(filterScrollState)
+                        .padding(bottom = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    ToolFilterChipItem(
+                        label = LanguageManager.getString("all", viewModel.selectedLanguage),
+                        isSelected = false,
+                        icon = Icons.Default.GridView,
+                        themeColors = themeColors,
+                        count = allTools.size,
+                        onClick = { viewModel.selectedToolCategoryFilter = null }
+                    )
+                    ToolCategory.values().forEach { cat ->
+                        val catCount = allTools.count { it.category == cat }
+                        ToolFilterChipItem(
+                            label = cat.getTitle(viewModel.selectedLanguage),
+                            isSelected = selectedFilter == cat,
+                            icon = cat.icon,
+                            themeColors = themeColors,
+                            count = catCount,
+                            onClick = {
+                                viewModel.selectedToolCategoryFilter = if (selectedFilter == cat) null else cat
+                            }
+                        )
+                    }
+                }
+
+                val currentCategoryTools = allTools.filter { it.category == currentFilterState }
+                val catFilter = currentFilterState
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    color = themeColors.cardBg,
+                    border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.25f))
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp, vertical = 10.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .clip(CircleShape)
+                                    .background(themeColors.buttonEqualBg.copy(alpha = 0.15f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = catFilter.icon,
+                                    contentDescription = null,
+                                    tint = themeColors.buttonEqualBg,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = catFilter.getTitle(viewModel.selectedLanguage),
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.displayText
+                                )
+                                Text(
+                                    text = if (isBn) "মোট ${currentCategoryTools.size}টি টুলস" else "Total ${currentCategoryTools.size} Tools",
+                                    fontSize = 11.sp,
+                                    color = themeColors.buttonEqualBg,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        }
+
+                        Surface(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable { viewModel.selectedToolCategoryFilter = null },
+                            color = themeColors.buttonEqualBg.copy(alpha = 0.12f),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.GridView,
+                                    contentDescription = null,
+                                    tint = themeColors.buttonEqualBg,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = if (isBn) "সকল টুলস" else "All Tools",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.buttonEqualBg
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    currentCategoryTools.chunked(2).forEach { rowItems ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(IntrinsicSize.Max),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            rowItems.forEach { tool ->
+                                key(tool.name) {
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .fillMaxHeight()
+                                    ) {
+                                        ToolGridCardItem(
+                                            toolType = tool,
+                                            viewModel = viewModel,
+                                            themeColors = themeColors,
+                                            modifier = Modifier.fillMaxHeight(),
+                                            onClick = { viewModel.openTool(tool) }
+                                        )
+                                    }
+                                }
+                            }
+                            if (rowItems.size == 1) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(themeColors.background)
+                .nestedScroll(nestedScrollConnection)
+                .graphicsLayer {
+                    translationY = bounceAnimatable.value
+                }
+                .verticalScroll(scrollState)
+                .padding(horizontal = 6.dp, vertical = 10.dp)
+        ) {
         val isBn = viewModel.selectedLanguage == AppLanguage.BENGALI
 
         // Time-based Greeting & Multi-Date Header Banner
@@ -2557,33 +2754,12 @@ fun DashboardCategoriesView(
 
         if (viewModel.dashboardLayoutMode == com.example.ui.viewmodel.DashboardLayoutMode.MODERN) {
             // Modern Layout: Redesigned Gradient Category Cards with Illustration Backgrounds & Round Stacked Tool Icons
-            AnimatedContent(
-                targetState = selectedFilter,
-                transitionSpec = {
-                    (fadeIn(animationSpec = tween(220)) + slideInVertically(animationSpec = tween(220)) { it / 8 }) togetherWith
-                    fadeOut(animationSpec = tween(150))
-                },
-                label = "modernCategoryAnimation"
-            ) { currentFilter ->
-                if (currentFilter != null) {
-                    // Specific Category Detail View with beautiful header, search, and tools grid
-                    val currentCategoryTools = viewModel.getAllOrderedToolsForCategory(currentFilter, toolUsage)
-                    CategoryDetailToolsView(
-                        category = currentFilter,
-                        categoryTools = currentCategoryTools,
-                        viewModel = viewModel,
-                        themeColors = themeColors,
-                        isBn = isBn,
-                        onBackClick = { viewModel.selectedToolCategoryFilter = null }
-                    )
-                } else {
-                    // Overview Mode: Gradient Category Cards
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
                         // Category Section Header
                         Row(
                             modifier = Modifier
@@ -2610,8 +2786,13 @@ fun DashboardCategoriesView(
                                         modifier = Modifier.size(16.dp)
                                     )
                                 }
+                                val isModern = viewModel.dashboardLayoutMode == com.example.ui.viewmodel.DashboardLayoutMode.MODERN
                                 Text(
-                                    text = if (isBn) "টুলস ও ক্যাটাগরি" else "Tools & Categories",
+                                    text = if (isModern) {
+                                        if (isBn) "টুলস ক্যাটাগরি" else "Tools Categories"
+                                    } else {
+                                        if (isBn) "টুলস ও ক্যাটাগরি" else "Tools & Categories"
+                                    },
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = themeColors.displayText
@@ -2664,6 +2845,7 @@ fun DashboardCategoriesView(
                                                 categoryTools = catTools,
                                                 language = viewModel.selectedLanguage,
                                                 isBn = isBn,
+                                                themeColors = themeColors,
                                                 modifier = Modifier.fillMaxHeight(),
                                                 onClick = {
                                                     viewModel.selectedToolCategoryFilter = category
@@ -2678,8 +2860,6 @@ fun DashboardCategoriesView(
                             }
                         }
                     }
-                }
-            }
         } else {
             // Classic Layout: Category Filter Chips + Grouped Horizontal/Vertical Tool Cards
             // Category Filter Chips
@@ -3092,8 +3272,10 @@ fun DashboardCategoriesView(
                 }
             }
         }
-        } // End of else block for searchQuery
     }
+}
+}
+}
 }
 
 @Composable
