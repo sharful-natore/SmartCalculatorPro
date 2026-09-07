@@ -3256,7 +3256,14 @@ fun ToolDetailView(
                          toolType == com.example.data.model.ToolType.KIDS_BALLOON ||
                          toolType == com.example.data.model.ToolType.KIDS_PUZZLE ||
                          toolType == com.example.data.model.ToolType.KIDS_HABITS ||
-                         toolType == com.example.data.model.ToolType.KIDS_STORIES
+                         toolType == com.example.data.model.ToolType.KIDS_STORIES ||
+                         toolType == com.example.data.model.ToolType.CROP_CALENDAR ||
+                         toolType == com.example.data.model.ToolType.CROP_DISEASES ||
+                         toolType == com.example.data.model.ToolType.FERTILIZER_PESTICIDE ||
+                         toolType == com.example.data.model.ToolType.LIVESTOCK_DISEASES ||
+                         toolType == com.example.data.model.ToolType.LIVESTOCK_FEED ||
+                         toolType == com.example.data.model.ToolType.VACCINATION_SCHEDULE ||
+                         toolType == com.example.data.model.ToolType.AQUACULTURE_GUIDE
 
     val isFullWidthTool = toolType == com.example.data.model.ToolType.MARKET_LIST || isQuranOrNamaz
 
@@ -3504,6 +3511,48 @@ fun ToolDetailView(
                 viewModel = viewModel,
                 themeColors = themeColors,
                 initialTab = com.example.ui.screens.tools.kids.KidsSectionTab.STORIES,
+                onBackClick = { viewModel.selectedToolType = null }
+            )
+            ToolType.CROP_CALENDAR -> com.example.ui.screens.tools.agro.AgroFarmToolScreen(
+                viewModel = viewModel,
+                themeColors = themeColors,
+                initialSection = com.example.ui.screens.tools.agro.AgroSection.CROP_CALENDAR,
+                onBackClick = { viewModel.selectedToolType = null }
+            )
+            ToolType.CROP_DISEASES -> com.example.ui.screens.tools.agro.AgroFarmToolScreen(
+                viewModel = viewModel,
+                themeColors = themeColors,
+                initialSection = com.example.ui.screens.tools.agro.AgroSection.CROP_DISEASES,
+                onBackClick = { viewModel.selectedToolType = null }
+            )
+            ToolType.FERTILIZER_PESTICIDE -> com.example.ui.screens.tools.agro.AgroFarmToolScreen(
+                viewModel = viewModel,
+                themeColors = themeColors,
+                initialSection = com.example.ui.screens.tools.agro.AgroSection.FERTILIZERS_PESTICIDES,
+                onBackClick = { viewModel.selectedToolType = null }
+            )
+            ToolType.LIVESTOCK_DISEASES -> com.example.ui.screens.tools.agro.AgroFarmToolScreen(
+                viewModel = viewModel,
+                themeColors = themeColors,
+                initialSection = com.example.ui.screens.tools.agro.AgroSection.LIVESTOCK_DISEASES,
+                onBackClick = { viewModel.selectedToolType = null }
+            )
+            ToolType.LIVESTOCK_FEED -> com.example.ui.screens.tools.agro.AgroFarmToolScreen(
+                viewModel = viewModel,
+                themeColors = themeColors,
+                initialSection = com.example.ui.screens.tools.agro.AgroSection.LIVESTOCK_FEED,
+                onBackClick = { viewModel.selectedToolType = null }
+            )
+            ToolType.VACCINATION_SCHEDULE -> com.example.ui.screens.tools.agro.AgroFarmToolScreen(
+                viewModel = viewModel,
+                themeColors = themeColors,
+                initialSection = com.example.ui.screens.tools.agro.AgroSection.VACCINATION_SCHEDULE,
+                onBackClick = { viewModel.selectedToolType = null }
+            )
+            ToolType.AQUACULTURE_GUIDE -> com.example.ui.screens.tools.agro.AgroFarmToolScreen(
+                viewModel = viewModel,
+                themeColors = themeColors,
+                initialSection = com.example.ui.screens.tools.agro.AgroSection.AQUACULTURE_GUIDE,
                 onBackClick = { viewModel.selectedToolType = null }
             )
         }
@@ -4209,6 +4258,83 @@ private fun getToolInfoItems(toolType: ToolType, isBn: Boolean): List<Pair<Strin
             listOf(
                 "1. Arabic Alphabets & Makhraj" to "Learn the precise origin and pronunciation of all 29 Arabic letters with audio.",
                 "2. Tajweed Rules & Practice Quiz" to "Master Tajweed rules (Gunnah, Ikhfa, Idgham, Madd) and test your knowledge with interactive quizzes."
+            )
+        }
+        ToolType.CROP_CALENDAR -> if (isBn) {
+            listOf(
+                "১. ফসল ক্যালেন্ডার কী?" to "মৌসুম ভিত্তিক (রবি, খরিপ-১, খরিপ-২) বিভিন্ন প্রধান ও শাকসবজি ফসলের বীজ বপন, চারা রোপণ ও ফসল কাটার সঠিক সময়সূচি নির্দেশিকা।",
+                "২. সঠিক সময়ের গুরুত্ব" to "যথাসময়ে বীজ বপন ও চারার সঠিক বয়স বজায় রাখলে ফলন ২০-৩০% পর্যন্ত বৃদ্ধি পায় এবং রোগবালাই ও প্রাকৃতিক দুর্যোগের ঝুঁকি কমে।"
+            )
+        } else {
+            listOf(
+                "1. Seasonal Crop Calendar" to "Comprehensive sowing, seedling transplantation, and harvesting timetable for Rabi, Kharif-1, and Kharif-2 cropping seasons.",
+                "2. Timely Cultivation" to "Transplanting seedlings at the recommended age ensures optimal root establishment, higher yields, and reduces climate risks."
+            )
+        }
+        ToolType.CROP_DISEASES -> if (isBn) {
+            listOf(
+                "১. ফসলের রোগ ডাক্তার" to "ধান, গম, আলু, টমেটো, বেগুন সহ প্রধান ফসলের ক্ষতিকর রোগবালাই, আক্রমণের লক্ষণ ও সমন্বিত বালাই দমন (IPM) নির্দেশিকা।",
+                "২. নিরাপদ বালাইনাশক প্রয়োগ" to "রোগের প্রাথমিক পর্যায়ে জৈব পদ্ধতি ও প্রয়োজনে অনুমোদিত সঠিক গ্রুপের ছত্রাকনাশক/কীটনাশক সঠিক মাত্রায় স্প্রে করুন।"
+            )
+        } else {
+            listOf(
+                "1. Crop Diseases & Pest Doctor" to "Detailed symptom diagnosis and integrated pest management (IPM) guidelines for major cereal, vegetable, and cash crops.",
+                "2. Remedy Best Practices" to "Apply organic cultural controls first, and administer approved chemical fungicides/insecticides at proper dosage."
+            )
+        }
+        ToolType.FERTILIZER_PESTICIDE -> if (isBn) {
+            listOf(
+                "১. সার ও বালাইনাশকের সঠিক ব্যবহার" to "ইউরিয়া, টিএসপি, ডিএপি, এমওপি, জিপসাম, জিংক সহ সারের সঠিক কাজ, প্রয়োগের সময় ও কীটনাশক গ্রুপ স্প্রে মাপক ক্যালকুলেটর।",
+                "২. সারের সুষম মাত্রা" to "অতিরিক্ত সার অপচয় ও মাটির ক্ষতি করে। শতাংশ প্রতি সুষম মাত্রায় সার প্রয়োগ করুন এবং কীটনাশকের সাথে সাবান পানি মিশাবেন না।"
+            )
+        } else {
+            listOf(
+                "1. Fertilizer & Pesticide Guide" to "Functions of primary, secondary, and micronutrients along with deficiency symptoms and pesticide active ingredient spray dilution calculator.",
+                "2. Safe Application" to "Avoid fertilizer over-application and follow recommended withholding periods (PHI) before harvesting."
+            )
+        }
+        ToolType.LIVESTOCK_DISEASES -> if (isBn) {
+            listOf(
+                "১. গবাদিপশুর স্বাস্থ্য ও চিকিৎসা" to "গরু, ছাগল ও মহিষের ক্ষুরারোগ, বাদলা, তড়কা, ওলান ফোলা ও অ্যান্থ্রাক্সের লক্ষণ, তাৎক্ষণিক প্রাথমিক চিকিৎসা ও প্রতিরোধ।",
+                "২. বায়োসিকিউরিটি ও সতর্কতা" to "আক্রান্ত পশুকে আলাদা রাখুন, ফার্ম সবসময় শুষ্ক ও জীবাণুমুক্ত রাখুন এবং জটিল অবস্থায় দ্রুত নিকটস্থ প্রাণিসম্পদ কর্মকর্তার পরামর্শ নিন।"
+            )
+        } else {
+            listOf(
+                "1. Livestock Health Care" to "Identification, initial veterinary treatment, and biosecurity prevention for FMD, Black Quarter, Anthrax, and Mastitis.",
+                "2. Safety Precautions" to "Isolate sick animals immediately, sanitize sheds daily, and consult an accredited veterinary officer."
+            )
+        }
+        ToolType.LIVESTOCK_FEED -> if (isBn) {
+            listOf(
+                "১. সুষম খাদ্য তৈরি" to "১০০ কেজি দানাদার খাদ্য প্রস্তুত প্রণালী, ইউরিয়া মোলাসেস খড় (UMS), ভুট্টা সাইলেজ তৈরি ও বডি ওয়েট অনুযায়ী খাদ্য ক্যালকুলেটর।",
+                "২. দুধ ও মাংস বৃদ্ধির নিয়ম" to "দুধের গাভীকে প্রতি ৩ লিটার দুধের জন্য ১ কেজি অতিরিক্ত দানাদার এবং পর্যাপ্ত কাঁচা ঘাস ও পরিষ্কার পানি সরবরাহ করুন।"
+            )
+        } else {
+            listOf(
+                "1. Livestock Feed Formulation" to "Step-by-step 100 kg balanced dairy & beef feed mixing, Urea Molasses Straw (UMS), and maize silage preparation.",
+                "2. Balanced Nutrition" to "Feed 2.5-3.0% of body weight in dry matter with adequate green fodder and ad-libitum clean drinking water."
+            )
+        }
+        ToolType.VACCINATION_SCHEDULE -> if (isBn) {
+            listOf(
+                "১. পশুপাখির টিকাদান ও কৃমিনাশক" to "গরু-ছাগলের ক্ষুরা, তড়কা, বাদলা ভ্যাকসিন এবং হাঁস-মুরগির রানিক্ষেত, গামবোরো ও ফাউল পক্সের পূর্ণাঙ্গ শিডিউল।",
+                "২. ভ্যাকসিন প্রয়োগের নিয়ম" to "সুস্থ পশুপাখিকে কেবল ভ্যাকসিন দিন। ভ্যাকসিন দেওয়ার ৭ দিন আগে কৃমিনাশক খাওয়ানো এবং কোল্ড চেইন বজায় রাখা বাধ্যতামূলক।"
+            )
+        } else {
+            listOf(
+                "1. Livestock & Poultry Immunization" to "Complete vaccination schedules for FMD, Anthrax, BQ, PPR, Newcastle (Ranikhet), and Gumboro diseases.",
+                "2. Vaccination Rules" to "Only vaccinate healthy stock, deworm 7 days prior to vaccination, and preserve vaccine cold chain (2-8°C)."
+            )
+        }
+        ToolType.AQUACULTURE_GUIDE -> if (isBn) {
+            listOf(
+                "১. আধুনিক মাছ চাষ" to "পুকুর প্রস্তুতি (চুন ও সার প্রয়োগ), রুই জাতীয় মাছ ও মিশ্র চাষে শতকে পোনা মজুদের অনুপাত এবং পানি পরীক্ষা।",
+                "২. মাছের দৈনিক খাদ্য ও রোগ নিয়ন্ত্রণ" to "মাছের মোট ওজনের ২-৫% সম্পূরক খাদ্য দিন। পানি অতিরিক্ত সবুজ হলে চুন ও লবণ প্রয়োগ করুন এবং গ্যাস কমাতে হররা টানুন।"
+            )
+        } else {
+            listOf(
+                "1. Modern Aquaculture Guide" to "Pond preparation with lime and fertilizers, carp polyculture stocking ratios, and water quality parameters.",
+                "2. Feeding & Health" to "Feed 2-5% of total fish biomass daily, test dissolved oxygen and pH regularly, and treat water with lime and salt as preventive care."
             )
         }
     }

@@ -18,6 +18,7 @@ enum class ToolCategory(
     ELECTRICITY("Electricity & Power", "বিদ্যুৎ ও শক্তি", Icons.Default.Bolt),
     VEHICLE("Smart & Vehicle Tools", "স্মার্ট ও যানবাহন", Icons.Default.DirectionsCar),
     EDUCATION("Education & Results", "শিক্ষা ও ফলাফল", Icons.Default.School),
+    AGRICULTURE("Agriculture & Farm", "কৃষি ও খামার", Icons.Default.Agriculture),
     KIDS("Kids Learning & Fun", "কিডস লার্নিং ও খেলা", Icons.Default.ChildCare),
     DEVELOPER("Developer Tools", "ডেভেলপার টুলস", Icons.Default.Code),
     ENGINEERING("Engineering", "ইঞ্জিনিয়ারিং", Icons.Default.SettingsInputComponent);
@@ -37,6 +38,7 @@ enum class ToolCategory(
                 ISLAMIC -> "इस्लामिक सेवाएं"
                 DEVELOPER -> "डेवलपर टूल्स"
                 ENGINEERING -> "इंजीनियरिंग"
+                AGRICULTURE -> "कृषि एवं फार्म"
             }
             AppLanguage.ARABIC -> when (this) {
                 HEALTH -> "الصحة واللياقة"
@@ -49,6 +51,7 @@ enum class ToolCategory(
                 ISLAMIC -> "الخدمات الإسلامية"
                 DEVELOPER -> "أدوات المطور"
                 ENGINEERING -> "الهندسة"
+                AGRICULTURE -> "الزراعة والمزرعة"
             }
             AppLanguage.FRENCH -> when (this) {
                 HEALTH -> "Santé et Forme"
@@ -61,6 +64,7 @@ enum class ToolCategory(
                 ISLAMIC -> "Services Islamiques"
                 DEVELOPER -> "Outils Développeur"
                 ENGINEERING -> "Ingénierie"
+                AGRICULTURE -> "Agriculture et Ferme"
             }
             AppLanguage.SPANISH -> when (this) {
                 HEALTH -> "Salud y Bienestar"
@@ -73,6 +77,7 @@ enum class ToolCategory(
                 ISLAMIC -> "Servicios Islámicos"
                 DEVELOPER -> "Herramientas de Desarrollador"
                 ENGINEERING -> "Ingeniería"
+                AGRICULTURE -> "Agricultura y Granja"
             }
             AppLanguage.GERMAN -> when (this) {
                 HEALTH -> "Gesundheit & Fitness"
@@ -85,6 +90,7 @@ enum class ToolCategory(
                 ISLAMIC -> "Islamische Dienste"
                 DEVELOPER -> "Entwickler-Tools"
                 ENGINEERING -> "Ingenieurwesen"
+                AGRICULTURE -> "Landwirtschaft & Farm"
             }
             AppLanguage.CHINESE -> when (this) {
                 HEALTH -> "健康与健身"
@@ -97,6 +103,7 @@ enum class ToolCategory(
                 ISLAMIC -> "伊斯兰服务"
                 DEVELOPER -> "开发者工具"
                 ENGINEERING -> "工程"
+                AGRICULTURE -> "农业与农场"
             }
         }
     }
@@ -470,6 +477,43 @@ enum class ToolType(
         "Learn Quran", "কুরআন শিক্ষা",
         "সহজ নিয়মে আরবি হরফ, মাখরাজ, হরকত, তাশদীদ, তাজভীদ ও অডিও সহ প্র্যাকটিস",
         ToolCategory.ISLAMIC, Icons.Default.RecordVoiceOver
+    ),
+
+    // 11. Agriculture & Farm (কৃষি ও খামার)
+    CROP_CALENDAR(
+        "Crop Planting Calendar", "ফসল রোপণ ক্যালেন্ডার",
+        "কোন ফসল কোন সময় রোপণ করতে হবে, মৌসুম ভিত্তিক চার্ট ও উৎপাদন গাইড",
+        ToolCategory.AGRICULTURE, Icons.Default.CalendarMonth
+    ),
+    CROP_DISEASES(
+        "Crop Diseases & Remedies", "ফসলের রোগবালাই ও প্রতিকার",
+        "ফসলের প্রধান রোগবালাই, আক্রমণের লক্ষণ, সমন্বিত দমন ও বালাইনাশক চিকিৎসা",
+        ToolCategory.AGRICULTURE, Icons.Default.PestControl
+    ),
+    FERTILIZER_PESTICIDE(
+        "Fertilizers & Pesticides Guide", "সার ও বালাইনাশক নির্দেশিকা",
+        "কোন সারের কী কাজ, অভাবজনিত লক্ষণ ও কীটনাশক গ্রুপ স্প্রে মাপক ক্যালকুলেটর",
+        ToolCategory.AGRICULTURE, Icons.Default.Science
+    ),
+    LIVESTOCK_DISEASES(
+        "Livestock Health & Diseases", "গবাদিপশুর রোগবালাই ও চিকিৎসা",
+        "গরু, ছাগল ও মহিষের প্রধান রোগ, প্রাথমিক লক্ষণ, চিকিৎসা ও প্রতিরোধ ব্যবস্থা",
+        ToolCategory.AGRICULTURE, Icons.Default.Pets
+    ),
+    LIVESTOCK_FEED(
+        "Livestock Feed & Care", "গবাদিপশুর খাদ্য তৈরি ও যত্ন",
+        "১০০ কেজি সুষম দানাদার খাদ্য তৈরি, UMS, সাইলেজ প্রস্তুত ও খাদ্য ক্যালকুলেটর",
+        ToolCategory.AGRICULTURE, Icons.Default.Grass
+    ),
+    VACCINATION_SCHEDULE(
+        "Vaccination & Deworming", "পশুপাখির ভ্যাকসিন ও কৃমিনাশক",
+        "গরু, ছাগল ও মুরগির পূর্ণাঙ্গ টিকাদান তালিকা, বয়স ভিত্তিক শিডিউল ও কৃমিনাশক চার্ট",
+        ToolCategory.AGRICULTURE, Icons.Default.Vaccines
+    ),
+    AQUACULTURE_GUIDE(
+        "Modern Fish Farming", "আধুনিক মাছ চাষ নির্দেশিকা",
+        "পুকুর প্রস্তুতি, পোনা মজুদ অনুপাত, মাছের দৈনিক খাবার ও রোগ নিরাময়",
+        ToolCategory.AGRICULTURE, Icons.Default.WaterDrop
     );
 
     fun getTitle(language: AppLanguage): String {
@@ -553,6 +597,13 @@ enum class ToolType(
                 POCKET_MAGNIFIER -> "Pocket magnifying glass with camera zoom, bright torch, freeze frame, and high-contrast reading filters"
                 EMERGENCY_HELPLINE -> "Bangladesh emergency directory with 1-tap call to 999, 16263, police, fire, hospitals, and location SOS"
                 SOUND_METER -> "Real-time decibel noise meter with analog gauge, live waveform chart, and environmental exposure guide"
+                CROP_CALENDAR -> "Seasonal crop planting timetable, sowing dates, transplanting age, and yield guide"
+                CROP_DISEASES -> "Comprehensive crop pest and disease doctor with symptoms, IPM, and chemical remedies"
+                FERTILIZER_PESTICIDE -> "Nutrient functions, deficiency signs, pesticide active ingredients, and spray calculator"
+                LIVESTOCK_DISEASES -> "Cattle and livestock disease diagnosis, symptoms, first-aid, and veterinary treatments"
+                LIVESTOCK_FEED -> "100 kg balanced dairy and beef feed formulation, UMS, silage, and ration calculator"
+                VACCINATION_SCHEDULE -> "Poultry and livestock immunization timetable, booster schedules, and deworming guide"
+                AQUACULTURE_GUIDE -> "Modern fish farming handbook, pond preparation, stocking density, and daily feeding rates"
             }
         }
     }

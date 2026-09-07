@@ -1919,13 +1919,13 @@ fun VocabStoreTab(
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = if (isBn) "৬,০০০ টি অতি প্রয়োজনীয় অফলাইন ভোকাবুলারি" else "6,000 Essential Offline Vocabulary",
+                            text = if (isBn) "৭,০০০ টি অতি প্রয়োজনীয় অফলাইন ভোকাবুলারি" else "7,000 Essential Offline Vocabulary",
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                             color = themeColors.onSurface
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = if (isBn) "৬,০০০ টি মাস্টার শব্দ • ১০০% অফলাইন সক্রিয়করণ" else "6,000 Master Words • 100% Offline Activation",
+                            text = if (isBn) "৭,০০০ টি মাস্টার শব্দ • ১০০% অফলাইন সক্রিয়করণ" else "7,000 Master Words • 100% Offline Activation",
                             style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
                             color = themeColors.accent
                         )
@@ -1935,7 +1935,7 @@ fun VocabStoreTab(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = if (isBn) "ইংরেজি শব্দ, সঠিক উচ্চারণ সংকেত, স্পষ্ট বাংলা অর্থ, সমার্থক শব্দ (Synonyms), বিপরীত শব্দ (Antonyms), পদ প্রকরণ (Part of Speech) এবং বাংলা অনুবাদ সহ বাস্তবভিত্তিক উদাহরণ বাক্য সম্বলিত ৬,০০০ টি সবচেয়ে বেশি প্রয়োজনীয় শব্দভান্ডার। কোনো ইন্টারনেট কানেকশন ছাড়াই অফলাইন ফাইল থেকে সরাসরি সক্রিয় করুন।" else "Complete 6,000 high-yield vocabulary pack featuring full phonetics, Bangla meanings, synonyms, antonyms, parts of speech, and contextual example sentences with Bangla translations. Activates instantly from local offline files without internet.",
+                    text = if (isBn) "ইংরেজি শব্দ, সঠিক উচ্চারণ সংকেত, স্পষ্ট বাংলা অর্থ, সমার্থক শব্দ (Synonyms), বিপরীত শব্দ (Antonyms), পদ প্রকরণ (Part of Speech) এবং বাংলা অনুবাদ সহ বাস্তবভিত্তিক উদাহরণ বাক্য সম্বলিত ৭,০০০ টি সবচেয়ে বেশি প্রয়োজনীয় শব্দভান্ডার। কোনো ইন্টারনেট কানেকশন ছাড়াই অফলাইন ফাইল থেকে সরাসরি সক্রিয় করুন।" else "Complete 7,000 high-yield vocabulary pack featuring full phonetics, Bangla meanings, synonyms, antonyms, parts of speech, and contextual example sentences with Bangla translations. Activates instantly from local offline files without internet.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = themeColors.onSurface.copy(alpha = 0.75f)
                 )
@@ -2048,7 +2048,7 @@ fun VocabStoreTab(
                                         onInstallPack(masterPackId)
                                         Toast.makeText(
                                             context,
-                                            if (isBn) "৬,০০০ টি শব্দের ডিকশনারি সফলভাবে সক্রিয় করা হয়েছে!" else "Activated ${words.size} words successfully!",
+                                            if (isBn) "৬,৬০০ টি শব্দের ডিকশনারি সফলভাবে সক্রিয় করা হয়েছে!" else "Activated ${words.size} words successfully!",
                                             Toast.LENGTH_LONG
                                         ).show()
                                     } else {
@@ -2143,7 +2143,7 @@ object VocabularyDataProvider {
         val hasMaster = installedPackIds.contains("master_dictionary") || installedPackIds.contains("all_100k_dict")
         val cached = memoryCache
         if (cached != null && cached.isNotEmpty()) {
-            if (!hasMaster || cached.size >= 6000) {
+            if (!hasMaster || cached.size >= 7000) {
                 return cached
             }
         }
@@ -2151,7 +2151,7 @@ object VocabularyDataProvider {
         val list = mutableListOf<VocabWord>()
 
         if (hasMaster) {
-            // Master dictionary is always loaded directly from assets to ensure full 6,000 words are active
+            // Master dictionary is always loaded directly from assets to ensure full 7,000 words are active
             val masterWords = VocabularyPackRepository.loadPackFromAssetsSync(context, "dictionary_1000.json")
             if (!masterWords.isNullOrEmpty()) {
                 list.addAll(masterWords)
