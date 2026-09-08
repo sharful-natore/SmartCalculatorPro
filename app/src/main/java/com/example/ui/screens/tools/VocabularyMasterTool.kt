@@ -2191,7 +2191,27 @@ object VocabularyDataProvider {
             }
         }
 
-        val distinctList = list.distinctBy { it.word.lowercase().trim() }
+        val distinctList = list.groupBy { it.word.lowercase().trim() }
+            .map { (key, group) ->
+                group.maxByOrNull { word ->
+                    var score = 0
+                    if (word.synonyms.isNotEmpty()) score += 15
+                    if (word.antonyms.isNotEmpty()) score += 15
+                    
+                    val hasRealExample = word.exampleEn.isNotBlank() && 
+                            !word.exampleEn.contains("widely used", ignoreCase = true) && 
+                            !word.exampleEn.contains("standard English", ignoreCase = true) &&
+                            !word.exampleEn.contains("clear sense of", ignoreCase = true) // exclude our POS fallbacks too
+                    if (hasRealExample) score += 30
+                    
+                    val isRealPhonetic = word.phonetic.isNotBlank() && 
+                            !word.phonetic.startsWith("/${word.word.lowercase()}/") && 
+                            word.phonetic.contains(Regex("[əɪæɒʊθʃʒŋɜːˈˌ]"))
+                    if (isRealPhonetic) score += 10
+                    
+                    score
+                } ?: group.first()
+            }
         val result = distinctList.mapIndexed { index, word ->
             word.copy(frequencyRank = index + 1)
         }

@@ -29,8 +29,37 @@ object VocabularyHighFrequencyDataset {
             val bn = EnglishPronunciationEngine.generateBanglaPronunciation(word)
             if (bn.isNotBlank()) "/${wordLower}/ ($bn)" else phonetic
         }
-        val finalExampleEn = if (exampleEn.isNotBlank()) exampleEn else "The word '$word' is widely used in standard English."
-        val finalExampleBn = if (exampleBn.isNotBlank()) exampleBn else "'$word' শব্দটি ইংরেজিতে বহুল ব্যবহৃত।"
+        val finalExampleEn: String
+        val finalExampleBn: String
+        if (exampleEn.isNotBlank()) {
+            finalExampleEn = exampleEn
+            finalExampleBn = exampleBn
+        } else {
+            // Clean up meaning for sentence integration
+            val cleanMeaning = meaningBn.split(",").firstOrNull()?.trim() ?: meaningBn
+            when (pos.lowercase().trim()) {
+                "noun" -> {
+                    finalExampleEn = "Having a clear sense of $wordLower is important in our daily lives."
+                    finalExampleBn = "আমাদের দৈনন্দিন জীবনে $cleanMeaning এর একটি স্পষ্ট ধারণা থাকা গুরুত্বপূর্ণ।"
+                }
+                "verb" -> {
+                    finalExampleEn = "We should try to $wordLower whenever we face any difficult challenge."
+                    finalExampleBn = "যখনই আমরা কোনো কঠিন চ্যালেঞ্জের মুখোমুখি হই, তখনই আমাদের $cleanMeaning করার চেষ্টা করা উচিত।"
+                }
+                "adj", "adjective" -> {
+                    finalExampleEn = "She always tries to maintain a very $wordLower approach in her professional work."
+                    finalExampleBn = "তিনি সর্বদা তার পেশাগত কাজে অত্যন্ত $cleanMeaning দৃষ্টিভঙ্গি বজায় রাখার চেষ্টা করেন।"
+                }
+                "adv", "adverb" -> {
+                    finalExampleEn = "He managed to complete the task $wordLower without any major mistakes."
+                    finalExampleBn = "তিনি কোনো বড় ভুল ছাড়াই অত্যন্ত $cleanMeaning কাজটি সম্পন্ন করতে পেরেছেন।"
+                }
+                else -> {
+                    finalExampleEn = "The professor explained the significance of $wordLower in a very simple manner."
+                    finalExampleBn = "অধ্যাপক অত্যন্ত সহজ উপায়ে $cleanMeaning শব্দটির গুরুত্ব ব্যাখ্যা করেছিলেন।"
+                }
+            }
+        }
         return VocabWord(
             id = id,
             word = word,
