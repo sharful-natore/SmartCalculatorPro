@@ -188,26 +188,7 @@ fun CategoryIllustrationBackground(
     isDark: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val theme = remember(category) { CategoryThemeRegistry.getTheme(category) }
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-        val accent = theme.accentColor
-
-        when (category) {
-            ToolCategory.HEALTH -> drawHealthIllustration(w, h, accent, isDark)
-            ToolCategory.FINANCE -> drawFinanceIllustration(w, h, accent, isDark)
-            ToolCategory.ISLAMIC -> drawIslamicIllustration(w, h, accent, isDark)
-            ToolCategory.UTILITY -> drawUtilityIllustration(w, h, accent, isDark)
-            ToolCategory.ELECTRICITY -> drawElectricityIllustration(w, h, accent, isDark)
-            ToolCategory.VEHICLE -> drawVehicleIllustration(w, h, accent, isDark)
-            ToolCategory.EDUCATION -> drawEducationIllustration(w, h, accent, isDark)
-            ToolCategory.AGRICULTURE -> drawAgricultureIllustration(w, h, accent, isDark)
-            ToolCategory.KIDS -> drawKidsIllustration(w, h, accent, isDark)
-            ToolCategory.DEVELOPER -> drawDeveloperIllustration(w, h, accent, isDark)
-            ToolCategory.ENGINEERING -> drawEngineeringIllustration(w, h, accent, isDark)
-        }
-    }
+    // Disabled as requested to remove category illustrations
 }
 
 private fun DrawScope.drawHealthIllustration(w: Float, h: Float, accentColor: Color, isDark: Boolean) {
@@ -683,12 +664,14 @@ fun CategoryDashboardCard(
     val remainingCount = remember(categoryTools) { (categoryTools.size - 3).coerceAtLeast(0) }
 
     val isDark = themeColors?.isDark == true
-    val cardBgColor = if (isDark) theme.bgDark else theme.bgLight
-    val titleTextColor = if (isDark) Color.White else theme.titleColorLight
-    val subtitleTextColor = if (isDark) Color.White.copy(alpha = 0.82f) else theme.subtitleColorLight
-    val iconBadgeBg = if (isDark) theme.accentColor.copy(alpha = 0.25f) else theme.iconBadgeBgLight
-    val iconBadgeTint = if (isDark) theme.accentColor else theme.iconBadgeTintLight
-    val cardBorderColor = theme.accentColor.copy(alpha = if (isDark) 0.35f else 0.25f)
+    val cardBgColor = themeColors?.cardBg ?: (if (isDark) Color(0xFF1E293B) else Color(0xFFF1F5F9))
+    val unifiedThemeColor = themeColors?.buttonEqualBg ?: Color(0xFF6366F1)
+
+    val titleTextColor = unifiedThemeColor
+    val subtitleTextColor = unifiedThemeColor.copy(alpha = 0.8f)
+    val iconBadgeBg = unifiedThemeColor.copy(alpha = 0.15f)
+    val iconBadgeTint = unifiedThemeColor
+    val cardBorderColor = unifiedThemeColor.copy(alpha = if (isDark) 0.35f else 0.25f)
 
     Card(
         modifier = modifier
@@ -732,7 +715,7 @@ fun CategoryDashboardCard(
                             .size(28.dp)
                             .clip(CircleShape)
                             .background(iconBadgeBg)
-                            .border(0.8.dp, theme.accentColor.copy(alpha = 0.35f), CircleShape),
+                            .border(0.8.dp, unifiedThemeColor.copy(alpha = 0.35f), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -754,14 +737,14 @@ fun CategoryDashboardCard(
                                     .size(22.dp)
                                     .zIndex((4 - index).toFloat())
                                     .clip(CircleShape)
-                                    .background(Color.White)
-                                    .border(0.8.dp, theme.accentColor.copy(alpha = 0.35f), CircleShape),
+                                    .background(cardBgColor)
+                                    .border(0.8.dp, unifiedThemeColor.copy(alpha = 0.35f), CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     imageVector = tool.icon,
                                     contentDescription = tool.getTitle(language),
-                                    tint = theme.accentColor,
+                                    tint = unifiedThemeColor,
                                     modifier = Modifier.size(12.dp)
                                 )
                             }
@@ -773,15 +756,15 @@ fun CategoryDashboardCard(
                                     .size(22.dp)
                                     .zIndex(0f)
                                     .clip(CircleShape)
-                                    .background(theme.accentColor.copy(alpha = 0.18f))
-                                    .border(0.8.dp, theme.accentColor.copy(alpha = 0.40f), CircleShape),
+                                    .background(unifiedThemeColor.copy(alpha = 0.18f))
+                                    .border(0.8.dp, unifiedThemeColor.copy(alpha = 0.40f), CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
                                     text = "+$remainingCount",
                                     fontSize = 8.sp,
                                     fontWeight = FontWeight.ExtraBold,
-                                    color = theme.accentColor
+                                    color = unifiedThemeColor
                                 )
                             }
                         }
@@ -866,16 +849,20 @@ fun CategoryDetailToolsView(
     ) {
         // Hero Category Header Banner
         val isDark = themeColors.isDark
-        val headerBg = if (isDark) theme.bgDark else theme.bgLight
-        val headerTitleColor = if (isDark) Color.White else theme.titleColorLight
-        val headerSubtitleColor = if (isDark) Color.White.copy(alpha = 0.85f) else theme.subtitleColorLight
-        val iconBadgeBg = if (isDark) theme.accentColor.copy(alpha = 0.25f) else theme.iconBadgeBgLight
-        val iconBadgeTint = if (isDark) theme.accentColor else theme.iconBadgeTintLight
+        val cardBgColor = themeColors.cardBg
+        val unifiedThemeColor = themeColors.buttonEqualBg
+
+        val headerBg = cardBgColor
+        val headerTitleColor = unifiedThemeColor
+        val headerSubtitleColor = unifiedThemeColor.copy(alpha = 0.8f)
+        val iconBadgeBg = unifiedThemeColor.copy(alpha = 0.15f)
+        val iconBadgeTint = unifiedThemeColor
+        val cardBorderColor = unifiedThemeColor.copy(alpha = if (isDark) 0.35f else 0.25f)
 
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(20.dp),
-            border = BorderStroke(1.dp, theme.accentColor.copy(alpha = if (isDark) 0.35f else 0.25f)),
+            border = BorderStroke(1.dp, cardBorderColor),
             elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
         ) {
             Box(
@@ -903,8 +890,8 @@ fun CategoryDetailToolsView(
                         Surface(
                             onClick = onBackClick,
                             shape = RoundedCornerShape(12.dp),
-                            color = theme.accentColor.copy(alpha = if (isDark) 0.25f else 0.15f),
-                            border = BorderStroke(1.dp, theme.accentColor.copy(alpha = 0.35f))
+                            color = unifiedThemeColor.copy(alpha = if (isDark) 0.25f else 0.15f),
+                            border = BorderStroke(1.dp, unifiedThemeColor.copy(alpha = 0.35f))
                         ) {
                             Row(
                                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
@@ -914,14 +901,14 @@ fun CategoryDetailToolsView(
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                     contentDescription = "Back",
-                                    tint = if (isDark) Color.White else theme.titleColorLight,
+                                    tint = unifiedThemeColor,
                                     modifier = Modifier.size(15.dp)
                                 )
                                 Text(
                                     text = if (isBn) "সকল ক্যাটাগরি" else "All Categories",
                                     fontSize = 11.5.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (isDark) Color.White else theme.titleColorLight
+                                    color = unifiedThemeColor
                                 )
                             }
                         }
@@ -929,13 +916,13 @@ fun CategoryDetailToolsView(
                         // Total count pill
                         Surface(
                             shape = RoundedCornerShape(12.dp),
-                            color = theme.accentColor.copy(alpha = if (isDark) 0.20f else 0.12f)
+                            color = unifiedThemeColor.copy(alpha = if (isDark) 0.20f else 0.12f)
                         ) {
                             Text(
                                 text = if (isBn) "${categoryTools.size}টি টুলস" else "${categoryTools.size} Tools",
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (isDark) Color.White else theme.titleColorLight,
+                                color = unifiedThemeColor,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             )
                         }
@@ -952,7 +939,7 @@ fun CategoryDetailToolsView(
                                 .size(44.dp)
                                 .clip(CircleShape)
                                 .background(iconBadgeBg)
-                                .border(1.dp, theme.accentColor.copy(alpha = 0.35f), CircleShape),
+                                .border(1.dp, unifiedThemeColor.copy(alpha = 0.35f), CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(

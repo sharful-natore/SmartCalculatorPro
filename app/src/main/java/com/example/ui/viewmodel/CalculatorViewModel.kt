@@ -250,10 +250,10 @@ class CalculatorViewModel(
     var dashboardLayoutMode by mutableStateOf(
         try {
             DashboardLayoutMode.valueOf(
-                sharedPrefs.getString("dashboard_layout_mode", DashboardLayoutMode.MODERN.name) ?: DashboardLayoutMode.MODERN.name
+                sharedPrefs.getString("dashboard_layout_mode", DashboardLayoutMode.CLASSIC.name) ?: DashboardLayoutMode.CLASSIC.name
             )
         } catch (_: Exception) {
-            DashboardLayoutMode.MODERN
+            DashboardLayoutMode.CLASSIC
         }
     )
 
