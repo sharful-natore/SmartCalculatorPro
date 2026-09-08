@@ -34,3 +34,25 @@
 -keepclassmembers class * {
     @com.squareup.moshi.Json *;
 }
+
+# PDFBox Android Proguard & R8 Rules
+-dontwarn com.tom_roush.pdfbox.**
+-dontwarn com.gemalto.jp2.**
+-dontwarn org.bouncycastle.**
+-dontwarn org.apache.harmony.awt.**
+-dontwarn org.apache.commons.logging.**
+-dontwarn javax.imageio.**
+-dontwarn java.awt.**
+-dontwarn org.slf4j.**
+-dontwarn org.spongycastle.**
+-dontwarn org.apache.fontbox.**
+-dontwarn org.apache.pdfbox.**
+-dontwarn com.github.barteksc.pdfviewer.**
+
+-keep class com.tom_roush.pdfbox.** { *; }
+-keep interface com.tom_roush.pdfbox.** { *; }
+-keepclassmembers class com.tom_roush.pdfbox.** { *; }
+
+-ignorewarnings
+
+
