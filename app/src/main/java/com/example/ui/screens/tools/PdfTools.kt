@@ -73,9 +73,13 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -103,6 +107,43 @@ import java.util.Date
 import java.util.Locale
 import kotlin.math.max
 import kotlin.math.min
+
+private fun buildHighlightedText(
+    fullText: String,
+    query: String,
+    highlightColor: Color = Color(0xFFFFEB3B)
+): AnnotatedString {
+    val cleanQuery = query.trim()
+    if (cleanQuery.isBlank()) {
+        return AnnotatedString(fullText)
+    }
+    return buildAnnotatedString {
+        val lowerText = fullText.lowercase()
+        val lowerQuery = cleanQuery.lowercase()
+        var startIndex = 0
+        while (startIndex < fullText.length) {
+            val matchIndex = lowerText.indexOf(lowerQuery, startIndex)
+            if (matchIndex == -1) {
+                append(fullText.substring(startIndex))
+                break
+            }
+            if (matchIndex > startIndex) {
+                append(fullText.substring(startIndex, matchIndex))
+            }
+            val endIndex = matchIndex + cleanQuery.length
+            withStyle(
+                SpanStyle(
+                    background = highlightColor,
+                    color = Color.Black,
+                    fontWeight = FontWeight.ExtraBold
+                )
+            ) {
+                append(fullText.substring(matchIndex, endIndex))
+            }
+            startIndex = endIndex
+        }
+    }
+}
 
 // ================= DATA MODELS =================
 data class PdfFileItem(
@@ -1616,65 +1657,172 @@ fun PdfReaderTool(
                                     items(pageCount) { pageIdx ->
                                         val isMatchPage = isSearchActive && pdfSearchQuery.isNotBlank() && searchMatches.contains(pageIdx)
                                         val isCurrentMatchPage = isSearchActive && searchMatches.getOrNull(currentMatchIndex) == pageIdx
+                                        val isPageSelected = showTextSelectDialogPage == pageIdx
+                                        val pageText = pdfTextPages.getOrNull(pageIdx) ?: ""
 
-                                        Surface(
+                                        Column(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .combinedClickable(
-                                                    onClick = {
-                                                        if (isFullscreen) {
-                                                            isFullscreen = false
-                                                            isControlsVisible = true
-                                                        } else {
-                                                            isControlsVisible = !isControlsVisible
-                                                        }
-                                                    },
-                                                    onLongClick = {
-                                                        showTextSelectDialogPage = pageIdx
-                                                    }
-                                                ),
-                                            shape = RoundedCornerShape(4.dp),
-                                            shadowElevation = 4.dp,
-                                            border = if (isCurrentMatchPage) {
-                                                BorderStroke(2.5.dp, Color(0xFFEAB308))
-                                            } else if (isMatchPage) {
-                                                BorderStroke(1.5.dp, themeColors.buttonEqualBg)
-                                            } else null,
-                                            color = if (isNightMode) Color(0xFF1E293B) else Color.White
+                                                .padding(vertical = 4.dp)
                                         ) {
-                                            Box {
-                                                PdfPageViewerItem(
-                                                    context = context,
-                                                    pdfUri = pdfUri!!,
-                                                    pageIndex = pageIdx,
-                                                    isNightMode = isNightMode,
-                                                    rotationDegrees = rotationDegrees,
-                                                    density = density,
-                                                    themeColors = themeColors,
-                                                    isBn = isBn
-                                                )
-                                                if (isMatchPage) {
-                                                    Surface(
-                                                        shape = RoundedCornerShape(bottomStart = 8.dp),
-                                                        color = if (isCurrentMatchPage) Color(0xFFEAB308) else themeColors.buttonEqualBg,
-                                                        modifier = Modifier.align(Alignment.TopEnd)
-                                                    ) {
-                                                        Row(
-                                                            verticalAlignment = Alignment.CenterVertically,
-                                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                            Surface(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .combinedClickable(
+                                                        onClick = {
+                                                            if (isFullscreen) {
+                                                                isFullscreen = false
+                                                                isControlsVisible = true
+                                                            } else {
+                                                                isControlsVisible = !isControlsVisible
+                                                            }
+                                                        },
+                                                        onLongClick = {
+                                                            showTextSelectDialogPage = if (showTextSelectDialogPage == pageIdx) null else pageIdx
+                                                        }
+                                                    ),
+                                                shape = RoundedCornerShape(8.dp),
+                                                shadowElevation = 4.dp,
+                                                border = if (isCurrentMatchPage) {
+                                                    BorderStroke(2.5.dp, Color(0xFFEAB308))
+                                                } else if (isMatchPage) {
+                                                    BorderStroke(1.5.dp, themeColors.buttonEqualBg)
+                                                } else null,
+                                                color = if (isNightMode) Color(0xFF1E293B) else Color.White
+                                            ) {
+                                                Box {
+                                                    PdfPageViewerItem(
+                                                        context = context,
+                                                        pdfUri = pdfUri!!,
+                                                        pageIndex = pageIdx,
+                                                        isNightMode = isNightMode,
+                                                        rotationDegrees = rotationDegrees,
+                                                        density = density,
+                                                        themeColors = themeColors,
+                                                        isBn = isBn
+                                                    )
+                                                    if (isMatchPage) {
+                                                        Surface(
+                                                            shape = RoundedCornerShape(bottomStart = 8.dp),
+                                                            color = if (isCurrentMatchPage) Color(0xFFEAB308) else themeColors.buttonEqualBg,
+                                                            modifier = Modifier.align(Alignment.TopEnd)
                                                         ) {
-                                                            Icon(
-                                                                imageVector = Icons.Default.Search,
-                                                                contentDescription = null,
-                                                                tint = Color.White,
-                                                                modifier = Modifier.size(12.dp)
-                                                            )
-                                                            Spacer(modifier = Modifier.width(4.dp))
+                                                            Row(
+                                                                verticalAlignment = Alignment.CenterVertically,
+                                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                                            ) {
+                                                                Icon(
+                                                                    imageVector = Icons.Default.Search,
+                                                                    contentDescription = null,
+                                                                    tint = Color.White,
+                                                                    modifier = Modifier.size(12.dp)
+                                                                )
+                                                                Spacer(modifier = Modifier.width(4.dp))
+                                                                Text(
+                                                                    text = if (isBn) "ম্যাচ" else "Match",
+                                                                    fontSize = 10.5.sp,
+                                                                    fontWeight = FontWeight.Bold,
+                                                                    color = Color.White
+                                                                )
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                            // INLINE SELECTABLE TEXT & SEARCH HIGHLIGHT OVERLAY (GOOGLE DRIVE STYLE - NO POPUP)
+                                            if (isPageSelected || (isSearchActive && pdfSearchQuery.isNotBlank() && isMatchPage)) {
+                                                Spacer(modifier = Modifier.height(6.dp))
+                                                Surface(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .border(
+                                                            BorderStroke(
+                                                                1.2.dp,
+                                                                if (isCurrentMatchPage) Color(0xFFEAB308) else themeColors.buttonEqualBg.copy(alpha = 0.6f)
+                                                            ),
+                                                            RoundedCornerShape(10.dp)
+                                                        ),
+                                                    shape = RoundedCornerShape(10.dp),
+                                                    color = if (isNightMode) Color(0xFF0F172A) else Color(0xFFF8FAFC),
+                                                    shadowElevation = 2.dp
+                                                ) {
+                                                    Column(modifier = Modifier.padding(10.dp)) {
+                                                        Row(
+                                                            modifier = Modifier.fillMaxWidth(),
+                                                            verticalAlignment = Alignment.CenterVertically,
+                                                            horizontalArrangement = Arrangement.SpaceBetween
+                                                        ) {
+                                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                                Icon(
+                                                                    imageVector = if (isSearchActive) Icons.Default.Search else Icons.Default.ContentCopy,
+                                                                    contentDescription = null,
+                                                                    tint = themeColors.buttonEqualBg,
+                                                                    modifier = Modifier.size(16.dp)
+                                                                )
+                                                                Spacer(modifier = Modifier.width(6.dp))
+                                                                Text(
+                                                                    text = if (isSearchActive) {
+                                                                        if (isBn) "সার্চ ফলাফল (হাইলাইটেড)" else "Search Result (Highlighted)"
+                                                                    } else {
+                                                                        if (isBn) "টেক্সট মার্ক ও কপি করুন" else "Select & Copy Text"
+                                                                    },
+                                                                    fontSize = 12.sp,
+                                                                    fontWeight = FontWeight.Bold,
+                                                                    color = themeColors.displayText
+                                                                )
+                                                            }
+
+                                                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                                                if (pageText.isNotBlank()) {
+                                                                    Surface(
+                                                                        shape = RoundedCornerShape(6.dp),
+                                                                        color = themeColors.buttonEqualBg,
+                                                                        modifier = Modifier.clickable {
+                                                                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                                                                            val clip = android.content.ClipData.newPlainText("PDF Page ${pageIdx + 1}", pageText)
+                                                                            clipboard.setPrimaryClip(clip)
+                                                                            android.widget.Toast.makeText(
+                                                                                context,
+                                                                                if (isBn) "পৃষ্ঠার সম্পূর্ণ টেক্সট কপি করা হয়েছে" else "Page text copied to clipboard",
+                                                                                android.widget.Toast.LENGTH_SHORT
+                                                                            ).show()
+                                                                        }
+                                                                    ) {
+                                                                        Row(
+                                                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                                                            verticalAlignment = Alignment.CenterVertically
+                                                                        ) {
+                                                                            Icon(Icons.Default.ContentCopy, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
+                                                                            Spacer(modifier = Modifier.width(4.dp))
+                                                                            Text(if (isBn) "সব কপি" else "Copy All", fontSize = 10.5.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                                                                        }
+                                                                    }
+                                                                }
+                                                                IconButton(
+                                                                    onClick = { showTextSelectDialogPage = null },
+                                                                    modifier = Modifier.size(22.dp)
+                                                                ) {
+                                                                    Icon(Icons.Default.Close, contentDescription = "Close", tint = themeColors.displayText.copy(alpha = 0.6f), modifier = Modifier.size(14.dp))
+                                                                }
+                                                            }
+                                                        }
+
+                                                        Spacer(modifier = Modifier.height(8.dp))
+
+                                                        SelectionContainer {
+                                                            val highlightedAnnotatedString = remember(pageText, pdfSearchQuery) {
+                                                                buildHighlightedText(
+                                                                    fullText = if (pageText.isNotBlank()) pageText else (if (isBn) "এই পৃষ্ঠায় কোনো নির্বাচনযোগ্য টেক্সট পাওয়া যায়নি।" else "No selectable text on this page."),
+                                                                    query = if (isSearchActive) pdfSearchQuery else ""
+                                                                )
+                                                            }
                                                             Text(
-                                                                text = if (isBn) "ম্যাচ" else "Match",
-                                                                fontSize = 10.5.sp,
-                                                                fontWeight = FontWeight.Bold,
-                                                                color = Color.White
+                                                                text = highlightedAnnotatedString,
+                                                                fontSize = 13.sp,
+                                                                lineHeight = 19.sp,
+                                                                color = if (pageText.isNotBlank()) themeColors.displayText else themeColors.displayText.copy(alpha = 0.5f),
+                                                                modifier = Modifier.fillMaxWidth()
                                                             )
                                                         }
                                                     }
@@ -1796,22 +1944,18 @@ fun PdfReaderTool(
                             .padding(bottom = if (isFullscreen) 24.dp else 16.dp)
                     ) {
                         Surface(
-                            shape = RoundedCornerShape(26.dp),
-                            color = if (isNightMode) {
-                                Color(0xFF1E293B).copy(alpha = 0.88f)
-                            } else {
-                                Color.White.copy(alpha = 0.88f)
-                            },
-                            shadowElevation = 12.dp,
+                            shape = CircleShape,
+                            color = Color(0xFF0F172A).copy(alpha = 0.88f),
+                            shadowElevation = 8.dp,
                             border = BorderStroke(
-                                1.5.dp,
-                                if (isNightMode) Color.White.copy(alpha = 0.20f)
-                                else Color.Black.copy(alpha = 0.12f)
+                                1.2.dp,
+                                if (isNightMode) Color.White.copy(alpha = 0.25f)
+                                else Color.White.copy(alpha = 0.20f)
                             )
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp)
                             ) {
                                 // Previous Page Button
                                 IconButton(
@@ -1823,38 +1967,37 @@ fun PdfReaderTool(
                                         }
                                     },
                                     enabled = visibleCurrentPage > 0,
-                                    modifier = Modifier.size(38.dp)
+                                    modifier = Modifier.size(36.dp)
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.ChevronLeft,
                                         contentDescription = "Previous Page",
-                                        tint = if (visibleCurrentPage > 0) {
-                                            if (isNightMode) Color.White else Color(0xFF0F172A)
-                                        } else {
-                                            if (isNightMode) Color.White.copy(alpha = 0.3f) else Color(0xFF0F172A).copy(alpha = 0.3f)
-                                        },
-                                        modifier = Modifier.size(24.dp)
+                                        tint = if (visibleCurrentPage > 0) Color.White else Color.White.copy(alpha = 0.3f),
+                                        modifier = Modifier.size(22.dp)
                                     )
                                 }
 
                                 // Frosted Page Counter Pill (Tap opens "Jump to Page" Dialog)
-                                Surface(
-                                    shape = RoundedCornerShape(16.dp),
-                                    color = themeColors.buttonEqualBg.copy(alpha = if (isNightMode) 0.25f else 0.15f),
-                                    border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.3f)),
+                                Box(
                                     modifier = Modifier
                                         .padding(horizontal = 4.dp)
+                                        .clip(CircleShape)
+                                        .background(Color.White.copy(alpha = 0.15f))
+                                        .border(1.dp, Color.White.copy(alpha = 0.25f), CircleShape)
                                         .clickable { showJumpDialog = true }
+                                        .padding(horizontal = 14.dp, vertical = 6.dp),
+                                    contentAlignment = Alignment.Center
                                 ) {
+                                    val curPageStr = if (isBn) com.example.util.CalendarUtils.toBengaliDigits(visibleCurrentPage + 1) else "${visibleCurrentPage + 1}"
+                                    val totPageStr = if (isBn) com.example.util.CalendarUtils.toBengaliDigits(pageCount) else "$pageCount"
                                     Text(
                                         text = if (isBn)
-                                            "পৃষ্ঠা ${visibleCurrentPage + 1} / $pageCount"
+                                            "পৃষ্ঠা $curPageStr / $totPageStr"
                                         else
-                                            "Page ${visibleCurrentPage + 1} of $pageCount",
+                                            "Page $curPageStr of $totPageStr",
                                         fontSize = 12.5.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = if (isNightMode) Color.White else Color(0xFF0F172A),
-                                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
+                                        color = Color.White
                                     )
                                 }
 
@@ -1868,17 +2011,13 @@ fun PdfReaderTool(
                                         }
                                     },
                                     enabled = visibleCurrentPage < pageCount - 1,
-                                    modifier = Modifier.size(38.dp)
+                                    modifier = Modifier.size(36.dp)
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.ChevronRight,
                                         contentDescription = "Next Page",
-                                        tint = if (visibleCurrentPage < pageCount - 1) {
-                                            if (isNightMode) Color.White else Color(0xFF0F172A)
-                                        } else {
-                                            if (isNightMode) Color.White.copy(alpha = 0.3f) else Color(0xFF0F172A).copy(alpha = 0.3f)
-                                        },
-                                        modifier = Modifier.size(24.dp)
+                                        tint = if (visibleCurrentPage < pageCount - 1) Color.White else Color.White.copy(alpha = 0.3f),
+                                        modifier = Modifier.size(22.dp)
                                     )
                                 }
 
@@ -1887,13 +2026,13 @@ fun PdfReaderTool(
                                     Spacer(modifier = Modifier.width(4.dp))
                                     IconButton(
                                         onClick = { isFullscreen = false },
-                                        modifier = Modifier.size(38.dp)
+                                        modifier = Modifier.size(36.dp)
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.FullscreenExit,
                                             contentDescription = "Exit Fullscreen",
-                                            tint = if (isNightMode) Color.White else Color(0xFF0F172A),
-                                            modifier = Modifier.size(22.dp)
+                                            tint = Color.White,
+                                            modifier = Modifier.size(20.dp)
                                         )
                                     }
                                 }
@@ -2071,182 +2210,7 @@ fun PdfReaderTool(
         )
     }
 
-    // 3. Select & Copy Page Text Dialog (PdfBox Powered)
-    if (showTextSelectDialogPage != null) {
-        val pageIdx = showTextSelectDialogPage!!
-        var pageText by remember(pageIdx, pdfTextPages) {
-            mutableStateOf(pdfTextPages.getOrNull(pageIdx) ?: "")
-        }
-        var isExtractingPageText by remember(pageIdx) {
-            mutableStateOf(pageText.isBlank())
-        }
-
-        LaunchedEffect(pageIdx) {
-            if (pageText.isBlank() && pdfUri != null) {
-                isExtractingPageText = true
-                withContext(Dispatchers.IO) {
-                    try {
-                        try {
-                            com.tom_roush.pdfbox.android.PDFBoxResourceLoader.init(context.applicationContext)
-                        } catch (_: Exception) {}
-                        val inputStream = context.contentResolver.openInputStream(pdfUri!!)
-                        if (inputStream != null) {
-                            val pdDoc = com.tom_roush.pdfbox.pdmodel.PDDocument.load(inputStream)
-                            pdDoc.use { doc ->
-                                val stripper = com.tom_roush.pdfbox.text.PDFTextStripper()
-                                stripper.startPage = pageIdx + 1
-                                stripper.endPage = pageIdx + 1
-                                val extracted = stripper.getText(doc)?.trim() ?: ""
-                                withContext(Dispatchers.Main) {
-                                    if (extracted.isNotBlank()) {
-                                        pageText = extracted
-                                    }
-                                }
-                            }
-                        }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    } finally {
-                        withContext(Dispatchers.Main) {
-                            isExtractingPageText = false
-                        }
-                    }
-                }
-            } else {
-                isExtractingPageText = false
-            }
-        }
-
-        AlertDialog(
-            onDismissRequest = { showTextSelectDialogPage = null },
-            containerColor = themeColors.cardBg,
-            title = {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = if (isBn) "পৃষ্ঠা ${pageIdx + 1} - টেক্সট নির্বাচন ও কপি" else "Page ${pageIdx + 1} - Select & Copy",
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = themeColors.displayText
-                    )
-                    IconButton(
-                        onClick = { showTextSelectDialogPage = null },
-                        modifier = Modifier.size(24.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Close",
-                            tint = themeColors.displayText.copy(alpha = 0.6f)
-                        )
-                    }
-                }
-            },
-            text = {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = 350.dp)
-                ) {
-                    Text(
-                        text = if (isBn) "নিচের টেক্সট সিলেক্ট করুন অথবা এক ক্লিকে সম্পূর্ণ কপি করুন:" else "Select text below or tap Copy All:",
-                        fontSize = 12.sp,
-                        color = themeColors.displayText.copy(alpha = 0.7f),
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-
-                    Surface(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxWidth()
-                            .border(BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.15f)), RoundedCornerShape(8.dp)),
-                        shape = RoundedCornerShape(8.dp),
-                        color = if (isNightMode) Color(0xFF0F172A) else Color(0xFFF1F5F9)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(12.dp)
-                                .verticalScroll(rememberScrollState())
-                        ) {
-                            if (isExtractingPageText) {
-                                Column(
-                                    modifier = Modifier.align(Alignment.Center),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    CircularProgressIndicator(
-                                        color = themeColors.buttonEqualBg,
-                                        modifier = Modifier.size(28.dp),
-                                        strokeWidth = 2.5.dp
-                                    )
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text(
-                                        text = if (isBn) "টেক্সট লোড হচ্ছে..." else "Extracting page text...",
-                                        fontSize = 11.5.sp,
-                                        color = themeColors.displayText.copy(alpha = 0.7f)
-                                    )
-                                }
-                            } else if (pageText.isNotBlank()) {
-                                SelectionContainer {
-                                    Text(
-                                        text = pageText,
-                                        fontSize = 13.5.sp,
-                                        lineHeight = 20.sp,
-                                        color = themeColors.displayText
-                                    )
-                                }
-                            } else {
-                                Text(
-                                    text = if (isBn) "এই পৃষ্ঠা থেকে কোনো টেক্সট উদ্ধার করা যায়নি (হতে পারে এটি স্ক্যান করা ইমেজ)।" else "No selectable text found on this page (it may be a scanned image).",
-                                    fontSize = 12.sp,
-                                    color = themeColors.displayText.copy(alpha = 0.5f),
-                                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
-                                    modifier = Modifier.align(Alignment.Center)
-                                )
-                            }
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    if (pageText.isNotBlank()) {
-                        Button(
-                            onClick = {
-                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-                                val clip = android.content.ClipData.newPlainText("PDF Page ${pageIdx + 1}", pageText)
-                                clipboard.setPrimaryClip(clip)
-                                android.widget.Toast.makeText(
-                                    context,
-                                    if (isBn) "সম্পূর্ণ টেক্সট ক্লিপবোর্ডে কপি করা হয়েছে" else "Copied all page text to clipboard",
-                                    android.widget.Toast.LENGTH_SHORT
-                                ).show()
-                                showTextSelectDialogPage = null
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg, contentColor = Color.White),
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(10.dp)
-                        ) {
-                            Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(if (isBn) "সব কপি করুন" else "Copy All")
-                        }
-                    }
-                    TextButton(
-                        onClick = { showTextSelectDialogPage = null },
-                        modifier = Modifier.weight(if (pageText.isNotBlank()) 0.5f else 1f)
-                    ) {
-                        Text(if (isBn) "বন্ধ করুন" else "Cancel", color = themeColors.displayText)
-                    }
-                }
-            }
-        )
-    }
+    // 3. Select & Copy Page Text is now rendered directly inline on each page item (Google Drive style - no modal popup)
 
     // 4. Long-Press / More Options Bottom Sheet
     if (selectedFileForAction != null) {
@@ -4827,13 +4791,21 @@ private fun deletePdfFromHistory(context: Context, item: PdfFileItem) {
 
 private class PdfObject(val id: Int, val dict: String, val streamBytes: ByteArray?)
 
+private fun isPdfWhitespace(b: Byte): Boolean {
+    return b == ' '.code.toByte() || b == '\r'.code.toByte() || b == '\n'.code.toByte() || b == '\t'.code.toByte()
+}
+
+private fun isPdfDigit(b: Byte): Boolean {
+    return b >= '0'.code.toByte() && b <= '9'.code.toByte()
+}
+
 private fun parsePdfObjects(bytes: ByteArray): Map<Int, PdfObject> {
     val objects = HashMap<Int, PdfObject>()
     var pos = 0
     val size = bytes.size
     
     while (pos < size - 10) {
-        if (bytes[pos] == 'o'.toByte() && bytes[pos+1] == 'b'.toByte() && bytes[pos+2] == 'j'.toByte() && (pos == 0 || isPdfWhitespace(bytes[pos-1]))) {
+        if (bytes[pos] == 'o'.code.toByte() && bytes[pos+1] == 'b'.code.toByte() && bytes[pos+2] == 'j'.code.toByte() && (pos == 0 || isPdfWhitespace(bytes[pos-1]))) {
             var backtrack = pos - 1
             while (backtrack >= 0 && isPdfWhitespace(bytes[backtrack])) backtrack--
             var endOfGen = backtrack
@@ -4851,12 +4823,12 @@ private fun parsePdfObjects(bytes: ByteArray): Map<Int, PdfObject> {
                     var endObjPos = pos + 3
                     var foundEnd = false
                     while (endObjPos < size - 6) {
-                        if (bytes[endObjPos] == 'e'.toByte() &&
-                            bytes[endObjPos+1] == 'n'.toByte() &&
-                            bytes[endObjPos+2] == 'd'.toByte() &&
-                            bytes[endObjPos+3] == 'o'.toByte() &&
-                            bytes[endObjPos+4] == 'b'.toByte() &&
-                            bytes[endObjPos+5] == 'j'.toByte()) {
+                        if (bytes[endObjPos] == 'e'.code.toByte() &&
+                            bytes[endObjPos+1] == 'n'.code.toByte() &&
+                            bytes[endObjPos+2] == 'd'.code.toByte() &&
+                            bytes[endObjPos+3] == 'o'.code.toByte() &&
+                            bytes[endObjPos+4] == 'b'.code.toByte() &&
+                            bytes[endObjPos+5] == 'j'.code.toByte()) {
                             foundEnd = true
                             break
                         }
@@ -4870,7 +4842,7 @@ private fun parsePdfObjects(bytes: ByteArray): Map<Int, PdfObject> {
                         var dictEnd = -1
                         var search = startContent
                         while (search < endContent - 1) {
-                            if (bytes[search] == '<'.toByte() && bytes[search+1] == '<'.toByte()) {
+                            if (bytes[search] == '<'.code.toByte() && bytes[search+1] == '<'.code.toByte()) {
                                 dictStart = search
                                 break
                             }
@@ -4879,7 +4851,7 @@ private fun parsePdfObjects(bytes: ByteArray): Map<Int, PdfObject> {
                         if (dictStart != -1) {
                             var searchEnd = endContent - 2
                             while (searchEnd > dictStart) {
-                                if (bytes[searchEnd] == '>'.toByte() && bytes[searchEnd+1] == '>'.toByte()) {
+                                if (bytes[searchEnd] == '>'.code.toByte() && bytes[searchEnd+1] == '>'.code.toByte()) {
                                     dictEnd = searchEnd + 2
                                     break
                                 }
@@ -4895,15 +4867,15 @@ private fun parsePdfObjects(bytes: ByteArray): Map<Int, PdfObject> {
                         var streamEnd = -1
                         var sSearch = startContent
                         while (sSearch < endContent - 6) {
-                            if (bytes[sSearch] == 's'.toByte() &&
-                                bytes[sSearch+1] == 't'.toByte() &&
-                                bytes[sSearch+2] == 'r'.toByte() &&
-                                bytes[sSearch+3] == 'e'.toByte() &&
-                                bytes[sSearch+4] == 'a'.toByte() &&
-                                bytes[sSearch+5] == 'm'.toByte()) {
+                            if (bytes[sSearch] == 's'.code.toByte() &&
+                                bytes[sSearch+1] == 't'.code.toByte() &&
+                                bytes[sSearch+2] == 'r'.code.toByte() &&
+                                bytes[sSearch+3] == 'e'.code.toByte() &&
+                                bytes[sSearch+4] == 'a'.code.toByte() &&
+                                bytes[sSearch+5] == 'm'.code.toByte()) {
                                 var sPos = sSearch + 6
-                                if (bytes[sPos] == '\r'.toByte()) sPos++
-                                if (bytes[sPos] == '\n'.toByte()) sPos++
+                                if (bytes[sPos] == '\r'.code.toByte()) sPos++
+                                if (bytes[sPos] == '\n'.code.toByte()) sPos++
                                 streamStart = sPos
                                 break
                             }
@@ -4912,18 +4884,18 @@ private fun parsePdfObjects(bytes: ByteArray): Map<Int, PdfObject> {
                         if (streamStart != -1) {
                             var esSearch = endContent - 9
                             while (esSearch > streamStart) {
-                                if (bytes[esSearch] == 'e'.toByte() &&
-                                    bytes[esSearch+1] == 'n'.toByte() &&
-                                    bytes[esSearch+2] == 'd'.toByte() &&
-                                    bytes[esSearch+3] == 's'.toByte() &&
-                                    bytes[esSearch+4] == 't'.toByte() &&
-                                    bytes[esSearch+5] == 'r'.toByte() &&
-                                    bytes[esSearch+6] == 'e'.toByte() &&
-                                    bytes[esSearch+7] == 'a'.toByte() &&
-                                    bytes[esSearch+8] == 'm'.toByte()) {
+                                if (bytes[esSearch] == 'e'.code.toByte() &&
+                                    bytes[esSearch+1] == 'n'.code.toByte() &&
+                                    bytes[esSearch+2] == 'd'.code.toByte() &&
+                                    bytes[esSearch+3] == 's'.code.toByte() &&
+                                    bytes[esSearch+4] == 't'.code.toByte() &&
+                                    bytes[esSearch+5] == 'r'.code.toByte() &&
+                                    bytes[esSearch+6] == 'e'.code.toByte() &&
+                                    bytes[esSearch+7] == 'a'.code.toByte() &&
+                                    bytes[esSearch+8] == 'm'.code.toByte()) {
                                     var ePos = esSearch
-                                    if (bytes[ePos - 1] == '\n'.toByte()) ePos--
-                                    if (bytes[ePos - 1] == '\r'.toByte()) ePos--
+                                    if (bytes[ePos - 1] == '\n'.code.toByte()) ePos--
+                                    if (bytes[ePos - 1] == '\r'.code.toByte()) ePos--
                                     streamEnd = ePos
                                     break
                                 }
@@ -4949,14 +4921,6 @@ private fun parsePdfObjects(bytes: ByteArray): Map<Int, PdfObject> {
     return objects
 }
 
-private fun isPdfWhitespace(b: Byte): Boolean {
-    return b == ' '.toByte() || b == '\r'.toByte() || b == '\n'.toByte() || b == '\t'.toByte()
-}
-
-private fun isPdfDigit(b: Byte): Boolean {
-    return b >= '0'.toByte() && b <= '9'.toByte()
-}
-
 private fun extractContentsIds(dict: String): List<Int> {
     val ids = ArrayList<Int>()
     val contentsIndex = dict.indexOf("/Contents")
@@ -4964,7 +4928,7 @@ private fun extractContentsIds(dict: String): List<Int> {
         val sub = dict.substring(contentsIndex + 9)
         val bracketOpen = sub.indexOf('[')
         val bracketClose = sub.indexOf(']')
-        if (bracketOpen != -1 && bracketClose != -1 && bracketOpen < 15) {
+        if (bracketOpen != -1 && bracketClose != -1 && bracketOpen < 20) {
             val listText = sub.substring(bracketOpen + 1, bracketClose)
             val regex = Regex("(\\d+)\\s+\\d+\\s+R")
             regex.findAll(listText).forEach { match ->
@@ -4985,7 +4949,7 @@ private fun decompressFlateDecode(compressedBytes: ByteArray): ByteArray? {
     val inflater = java.util.zip.Inflater()
     inflater.setInput(compressedBytes)
     val outputStream = java.io.ByteArrayOutputStream(compressedBytes.size * 2)
-    val buffer = ByteArray(1024)
+    val buffer = ByteArray(2048)
     try {
         while (!inflater.finished()) {
             val count = inflater.inflate(buffer)
@@ -5008,142 +4972,341 @@ private fun decompressFlateDecode(compressedBytes: ByteArray): ByteArray? {
             inflaterNoHeader.end()
             return outputStream2.toByteArray()
         } catch (e2: Exception) {
-            e2.printStackTrace()
+            // Ignore decompression failure and return null
         }
     }
     return null
 }
 
-private fun extractTextFromContentStream(decompressedText: String): String {
+private fun decodeHexPdfString(hex: String, cmap: Map<Int, String>? = null): String {
+    val clean = hex.replace("\\s+".toRegex(), "")
+    if (clean.isEmpty()) return ""
+    val padded = if (clean.length % 2 != 0) clean + "0" else clean
+    val byteCount = padded.length / 2
+    val bytes = ByteArray(byteCount)
+    for (i in 0 until byteCount) {
+        val byteStr = padded.substring(i * 2, i * 2 + 2)
+        bytes[i] = byteStr.toIntOrNull(16)?.toByte() ?: 0
+    }
+
+    if (cmap != null && cmap.isNotEmpty()) {
+        val sb = StringBuilder()
+        if (clean.length % 4 == 0) {
+            for (i in 0 until clean.length step 4) {
+                val code = clean.substring(i, i + 4).toIntOrNull(16) ?: 0
+                val mapped = cmap[code]
+                if (mapped != null) {
+                    sb.append(mapped)
+                } else if (code > 0) {
+                    sb.append(code.toChar())
+                }
+            }
+            val res = sb.toString().replace("\u0000", "").trim()
+            if (res.isNotBlank()) return res
+        } else {
+            for (b in bytes) {
+                val code = b.toInt() and 0xFF
+                val mapped = cmap[code]
+                if (mapped != null) sb.append(mapped) else if (code in 32..126) sb.append(code.toChar())
+            }
+            val res = sb.toString().replace("\u0000", "").trim()
+            if (res.isNotBlank()) return res
+        }
+    }
+
+    // Check for UTF-16BE BOM (\xFE\xFF)
+    if (bytes.size >= 2 && bytes[0] == 0xFE.toByte() && bytes[1] == 0xFF.toByte()) {
+        val str = String(bytes, 2, bytes.size - 2, Charsets.UTF_16BE)
+        return str.replace("\u0000", "").replace("[\\r\\n\\v\\f]".toRegex(), " ")
+    }
+
+    // Check 16-bit UTF-16BE / CID character pairs
+    if (bytes.size >= 2 && bytes.size % 2 == 0) {
+        var nullsAtEven = 0
+        var nullsAtOdd = 0
+        for (k in 0 until bytes.size step 2) {
+            if (bytes[k] == 0.toByte()) nullsAtEven++
+            if (bytes[k+1] == 0.toByte()) nullsAtOdd++
+        }
+        if (nullsAtEven > 0 || nullsAtOdd > 0) {
+            val sb = StringBuilder()
+            for (k in 0 until bytes.size step 2) {
+                val code = ((bytes[k].toInt() and 0xFF) shl 8) or (bytes[k+1].toInt() and 0xFF)
+                if (code in 0x20..0xFFFD && code != 0xFEFF) {
+                    sb.append(code.toChar())
+                } else if (code in 0x0A..0x0D) {
+                    sb.append(" ")
+                }
+            }
+            val res = sb.toString().replace("\u0000", "").trim()
+            if (res.isNotBlank()) return res
+        }
+    }
+
+    return String(bytes, Charsets.UTF_8).replace("\u0000", "")
+}
+
+private fun extractTextFromContentStream(decompressedText: String, cmap: Map<Int, String>? = null): String {
     val sb = StringBuilder()
     var i = 0
     val len = decompressedText.length
     while (i < len) {
-        if (decompressedText[i] == '(') {
+        val c = decompressedText[i]
+        // Literal string in parens: ( ... )
+        if (c == '(') {
             i++
-            val pagePiece = StringBuilder()
-            while (i < len) {
-                val c = decompressedText[i]
-                if (c == ')') {
-                    if (i > 0 && decompressedText[i-1] == '\\') {
-                        pagePiece.append(')')
-                        i++
-                        continue
-                    }
-                    break
-                } else if (c == '\\') {
+            val piece = StringBuilder()
+            var depth = 1
+            while (i < len && depth > 0) {
+                val ch = decompressedText[i]
+                if (ch == '\\') {
                     i++
                     if (i < len) {
-                        val nextC = decompressedText[i]
-                        if (nextC.isDigit()) {
-                            var octalVal = nextC.toString()
+                        val esc = decompressedText[i]
+                        if (esc.isDigit()) {
+                            var octal = esc.toString()
                             if (i + 1 < len && decompressedText[i+1].isDigit()) {
-                                octalVal += decompressedText[i+1]
+                                octal += decompressedText[i+1]
                                 i++
                                 if (i + 1 < len && decompressedText[i+1].isDigit()) {
-                                    octalVal += decompressedText[i+1]
+                                    octal += decompressedText[i+1]
                                     i++
                                 }
                             }
-                            val charVal = octalVal.toIntOrNull(8)?.toChar()
-                            if (charVal != null) {
-                                pagePiece.append(charVal)
-                            }
+                            octal.toIntOrNull(8)?.toChar()?.let { piece.append(it) }
                         } else {
-                            when (nextC) {
-                                'n' -> pagePiece.append('\n')
-                                'r' -> pagePiece.append('\r')
-                                't' -> pagePiece.append('\t')
-                                'b' -> pagePiece.append('\b')
-                                'f' -> pagePiece.append('\u000C')
-                                else -> pagePiece.append(nextC)
+                            when (esc) {
+                                'n' -> piece.append('\n')
+                                'r' -> piece.append('\r')
+                                't' -> piece.append('\t')
+                                'b' -> piece.append('\b')
+                                'f' -> piece.append('\u000C')
+                                '(' -> piece.append('(')
+                                ')' -> piece.append(')')
+                                '\\' -> piece.append('\\')
+                                else -> piece.append(esc)
                             }
                         }
                     }
+                } else if (ch == '(') {
+                    depth++
+                    piece.append('(')
+                } else if (ch == ')') {
+                    depth--
+                    if (depth > 0) piece.append(')')
                 } else {
-                    pagePiece.append(c)
+                    piece.append(ch)
                 }
                 i++
             }
-            sb.append(pagePiece.toString()).append(" ")
+            val resStr = piece.toString().replace("\u0000", "")
+            if (resStr.isNotBlank()) {
+                sb.append(resStr).append(" ")
+            }
+            continue
+        }
+        // Hexadecimal string: < ... > (ignoring dictionary tags << and >>)
+        else if (c == '<' && (i + 1 < len && decompressedText[i+1] != '<') && (i == 0 || decompressedText[i-1] != '<')) {
+            i++
+            val hexSb = StringBuilder()
+            while (i < len && decompressedText[i] != '>') {
+                hexSb.append(decompressedText[i])
+                i++
+            }
+            if (i < len && decompressedText[i] == '>') {
+                i++
+            }
+            val decoded = decodeHexPdfString(hexSb.toString(), cmap)
+            if (decoded.isNotBlank()) {
+                sb.append(decoded).append(" ")
+            }
+            continue
+        }
+        // Line feed or spacing hints: T*, Td, TD
+        else if (c == 'T' && i + 1 < len) {
+            val next = decompressedText[i+1]
+            if (next == '*' || next == 'd' || next == 'D') {
+                sb.append("\n")
+                i += 2
+                continue
+            }
         }
         i++
     }
-    return sb.toString().replace("\\s+".toRegex(), " ").trim()
+    return sb.toString().replace("[ \\t]+".toRegex(), " ").replace("\n\\s*\n+".toRegex(), "\n").replace("\u0000", "").trim()
 }
 
-private suspend fun extractPdfTextByPage(context: Context, pdfUri: Uri, pageCount: Int): List<String> = withContext(Dispatchers.IO) {
-    val results = ArrayList<String>(pageCount)
-    var successWithPdfBox = false
+private fun extractCMapFromObjects(objects: Map<Int, PdfObject>): Map<Int, String> {
+    val cmapMap = mutableMapOf<Int, String>()
+    for (obj in objects.values) {
+        if (obj.dict.contains("/ToUnicode") || obj.dict.contains("/CMap")) {
+            val streamBytes = obj.streamBytes
+            if (streamBytes != null) {
+                val decompressed = decompressFlateDecode(streamBytes)
+                val cmapText = if (decompressed != null) String(decompressed, Charsets.UTF_8) else String(streamBytes, Charsets.ISO_8859_1)
 
-    // Primary High-Accuracy Extractor: PDFBox Android
+                val bfcharRegex = Regex("beginbfchar[\\s\\S]*?endbfchar")
+                for (match in bfcharRegex.findAll(cmapText)) {
+                    val entryRegex = Regex("<([0-9a-fA-F]+)>\\s+<([0-9a-fA-F]+)>")
+                    for (line in match.value.lines()) {
+                        val m = entryRegex.find(line)
+                        if (m != null) {
+                            val srcCode = m.groupValues[1].toIntOrNull(16)
+                            val dstHex = m.groupValues[2]
+                            if (srcCode != null && dstHex.isNotEmpty()) {
+                                val cleanDst = decodeHexPdfString(dstHex)
+                                if (cleanDst.isNotEmpty()) cmapMap[srcCode] = cleanDst
+                            }
+                        }
+                    }
+                }
+
+                val bfrangeRegex = Regex("beginbfrange[\\s\\S]*?endbfrange")
+                for (match in bfrangeRegex.findAll(cmapText)) {
+                    val rangeRegex = Regex("<([0-9a-fA-F]+)>\\s+<([0-9a-fA-F]+)>\\s+<([0-9a-fA-F]+)>")
+                    for (line in match.value.lines()) {
+                        val m = rangeRegex.find(line)
+                        if (m != null) {
+                            val startCode = m.groupValues[1].toIntOrNull(16)
+                            val endCode = m.groupValues[2].toIntOrNull(16)
+                            val dstStart = m.groupValues[3].toIntOrNull(16)
+                            if (startCode != null && endCode != null && dstStart != null) {
+                                for (c in startCode..endCode) {
+                                    val mappedChar = (dstStart + (c - startCode)).toChar().toString()
+                                    cmapMap[c] = mappedChar
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return cmapMap
+}
+
+private fun extractPageObjectsInOrder(objects: Map<Int, PdfObject>): List<PdfObject> {
+    val catalog = objects.values.find { it.dict.contains("/Type") && it.dict.contains("/Catalog") }
+        ?: objects.values.find { it.dict.contains("/Pages") && it.dict.contains("/Root") }
+
+    val orderedPages = ArrayList<PdfObject>()
+
+    fun collectPagesFromNode(nodeObj: PdfObject) {
+        val dict = nodeObj.dict
+        if (dict.contains("/Type /Page") && !dict.contains("/Type /Pages") && !dict.contains("/Type/Pages")) {
+            orderedPages.add(nodeObj)
+            return
+        }
+        val kidsIdx = dict.indexOf("/Kids")
+        if (kidsIdx != -1) {
+            val sub = dict.substring(kidsIdx + 5)
+            val open = sub.indexOf('[')
+            val close = sub.indexOf(']')
+            if (open != -1 && close != -1 && open < 15) {
+                val kidsContent = sub.substring(open + 1, close)
+                val refRegex = Regex("(\\d+)\\s+\\d+\\s+R")
+                refRegex.findAll(kidsContent).forEach { m ->
+                    val childId = m.groupValues[1].toIntOrNull()
+                    if (childId != null && objects.containsKey(childId)) {
+                        collectPagesFromNode(objects[childId]!!)
+                    }
+                }
+            }
+        }
+    }
+
+    if (catalog != null) {
+        val pagesRefRegex = Regex("/Pages\\s+(\\d+)\\s+\\d+\\s+R")
+        val match = pagesRefRegex.find(catalog.dict)
+        if (match != null) {
+            val pagesId = match.groupValues[1].toIntOrNull()
+            if (pagesId != null && objects.containsKey(pagesId)) {
+                collectPagesFromNode(objects[pagesId]!!)
+            }
+        }
+    }
+
+    if (orderedPages.isEmpty()) {
+        val fallback = objects.values.filter { 
+            (it.dict.contains("/Type /Page") || it.dict.contains("/Type/Page")) && 
+            !it.dict.contains("/Type /Pages") && !it.dict.contains("/Type/Pages") 
+        }.sortedBy { it.id }
+        orderedPages.addAll(fallback)
+    }
+
+    return orderedPages
+}
+
+private fun extractTextFromPageObject(pageObj: PdfObject, objects: Map<Int, PdfObject>): String {
+    val cmapMap = extractCMapFromObjects(objects)
+    val contentIds = extractContentsIds(pageObj.dict)
+    val sb = StringBuilder()
+
+    if (pageObj.streamBytes != null) {
+        val decompressed = decompressFlateDecode(pageObj.streamBytes)
+        val textStr = if (decompressed != null) String(decompressed, Charsets.UTF_8) else String(pageObj.streamBytes, Charsets.ISO_8859_1)
+        val txt = extractTextFromContentStream(textStr, cmapMap)
+        if (txt.isNotBlank()) sb.append(txt).append(" ")
+    }
+
+    for (cid in contentIds) {
+        val streamObj = objects[cid]
+        if (streamObj != null && streamObj.streamBytes != null) {
+            val decompressed = decompressFlateDecode(streamObj.streamBytes)
+            val textStr = if (decompressed != null) {
+                String(decompressed, Charsets.UTF_8)
+            } else {
+                String(streamObj.streamBytes, Charsets.ISO_8859_1)
+            }
+            val pageTxt = extractTextFromContentStream(textStr, cmapMap)
+            if (pageTxt.isNotBlank()) {
+                sb.append(pageTxt).append(" ")
+            }
+        }
+    }
+    return sb.toString().replace("\u0000", "").trim()
+}
+
+private suspend fun extractPdfTextForSinglePage(context: Context, pdfUri: Uri, pageIndex: Int): String = withContext(Dispatchers.IO) {
     try {
-        try {
-            com.tom_roush.pdfbox.android.PDFBoxResourceLoader.init(context.applicationContext)
-        } catch (_: Exception) {}
-
         val inputStream = context.contentResolver.openInputStream(pdfUri)
-        if (inputStream != null) {
-            val pdDoc = com.tom_roush.pdfbox.pdmodel.PDDocument.load(inputStream)
-            pdDoc.use { doc ->
-                val actualPageCount = doc.numberOfPages
-                val stripper = com.tom_roush.pdfbox.text.PDFTextStripper()
-                for (p in 1..actualPageCount) {
-                    stripper.startPage = p
-                    stripper.endPage = p
-                    val text = stripper.getText(doc)?.trim() ?: ""
-                    results.add(text)
-                }
-                if (results.any { it.isNotBlank() }) {
-                    successWithPdfBox = true
-                }
+        val bytes = inputStream?.readBytes()
+        inputStream?.close()
+        if (bytes != null) {
+            val objects = parsePdfObjects(bytes)
+            val pages = extractPageObjectsInOrder(objects)
+            val pageObj = pages.getOrNull(pageIndex)
+            if (pageObj != null) {
+                return@withContext extractTextFromPageObject(pageObj, objects)
             }
         }
     } catch (e: Exception) {
         e.printStackTrace()
     }
+    ""
+}
 
-    // Secondary / Fallback Extractor: Direct Byte Object Parsing
-    if (!successWithPdfBox || results.isEmpty()) {
-        results.clear()
-        try {
-            val inputStream = context.contentResolver.openInputStream(pdfUri)
-            val bytes = inputStream?.readBytes()
-            inputStream?.close()
-            if (bytes != null) {
-                val objects = parsePdfObjects(bytes)
-                val pageObjects = objects.values.filter { it.dict.contains("/Page") && !it.dict.contains("/Pages") }
-                
-                if (pageObjects.isNotEmpty()) {
-                    val sortedPages = pageObjects.sortedBy { it.id }
-                    for (p in 0 until pageCount) {
-                        val pageObj = sortedPages.getOrNull(p)
-                        if (pageObj != null) {
-                            val contentIds = extractContentsIds(pageObj.dict)
-                            val sbPageText = StringBuilder()
-                            for (cid in contentIds) {
-                                val streamObj = objects[cid]
-                                if (streamObj != null && streamObj.streamBytes != null) {
-                                    val decompressed = decompressFlateDecode(streamObj.streamBytes)
-                                    if (decompressed != null) {
-                                        val textStr = String(decompressed, Charsets.UTF_8)
-                                        val pageTxt = extractTextFromContentStream(textStr)
-                                        sbPageText.append(pageTxt).append(" ")
-                                    } else {
-                                        val textStr = String(streamObj.streamBytes, Charsets.ISO_8859_1)
-                                        val pageTxt = extractTextFromContentStream(textStr)
-                                        sbPageText.append(pageTxt).append(" ")
-                                    }
-                                }
-                            }
-                            results.add(sbPageText.toString().trim())
-                        }
-                    }
+private suspend fun extractPdfTextByPage(context: Context, pdfUri: Uri, pageCount: Int): List<String> = withContext(Dispatchers.IO) {
+    val results = ArrayList<String>(pageCount)
+
+    try {
+        val inputStream = context.contentResolver.openInputStream(pdfUri)
+        val bytes = inputStream?.readBytes()
+        inputStream?.close()
+        if (bytes != null) {
+            val objects = parsePdfObjects(bytes)
+            val pages = extractPageObjectsInOrder(objects)
+            for (p in 0 until pageCount) {
+                val pageObj = pages.getOrNull(p)
+                if (pageObj != null) {
+                    results.add(extractTextFromPageObject(pageObj, objects))
+                } else {
+                    results.add("")
                 }
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
         }
+    } catch (e: Exception) {
+        e.printStackTrace()
     }
 
     while (results.size < pageCount) {

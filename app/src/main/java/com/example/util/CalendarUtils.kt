@@ -41,6 +41,23 @@ object CalendarUtils {
         return number.toString().map { if (it in '0'..'9') BENGALI_DIGITS[it - '0'] else it }.joinToString("")
     }
 
+    fun getBengaliDaySuffix(day: Int): String {
+        return when (day) {
+            1 -> "লা"
+            2, 3 -> "রা"
+            4 -> "ঠা"
+            in 5..18 -> "ই"
+            in 19..31 -> "শে"
+            else -> ""
+        }
+    }
+
+    fun formatBengaliDateWithSuffix(day: Int, monthNameBn: String): String {
+        val dayBn = toBengaliDigits(day)
+        val suffix = getBengaliDaySuffix(day)
+        return "$dayBn$suffix $monthNameBn"
+    }
+
     fun getMultiDateInfo(calendar: Calendar = Calendar.getInstance(), isBn: Boolean = true): MultiDateInfo {
         val gDay = calendar.get(Calendar.DAY_OF_MONTH)
         val gMonth = calendar.get(Calendar.MONTH) // 0-indexed

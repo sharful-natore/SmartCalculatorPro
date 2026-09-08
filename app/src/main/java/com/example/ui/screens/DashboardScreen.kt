@@ -2355,7 +2355,7 @@ fun DashboardCategoriesView(
             val monthNamesBn = listOf("জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল", "মে", "জুন", "জুলাই", "আগস্ট", "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর")
             val monthNamesEn = listOf("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December")
             val dateStr = if (isBn) {
-                "${event.day}শে ${monthNamesBn.getOrElse(event.month - 1) { "" }}"
+                com.example.util.CalendarUtils.formatBengaliDateWithSuffix(event.day, monthNamesBn.getOrElse(event.month - 1) { "" })
             } else {
                 "${monthNamesEn.getOrElse(event.month - 1) { "" }} ${event.day}"
             }
@@ -2642,7 +2642,7 @@ fun DashboardCategoriesView(
                             ) {
                                 items(filteredEvents) { evt ->
                                     val dateStr = if (isBn) {
-                                        "${evt.day}শে ${monthNamesBn.getOrElse(evt.month - 1) { "" }}"
+                                        com.example.util.CalendarUtils.formatBengaliDateWithSuffix(evt.day, monthNamesBn.getOrElse(evt.month - 1) { "" })
                                     } else {
                                         "${monthNamesEn.getOrElse(evt.month - 1) { "" }} ${evt.day}"
                                     }
