@@ -495,7 +495,14 @@ class CalculatorViewModel(
             com.example.data.model.ToolType.ATS_CV_BUILDER,
             com.example.data.model.ToolType.POCKET_MAGNIFIER,
             com.example.data.model.ToolType.EMERGENCY_HELPLINE,
-            com.example.data.model.ToolType.SOUND_METER
+            com.example.data.model.ToolType.SOUND_METER,
+            com.example.data.model.ToolType.CROP_CALENDAR,
+            com.example.data.model.ToolType.CROP_DISEASES,
+            com.example.data.model.ToolType.FERTILIZER_PESTICIDE,
+            com.example.data.model.ToolType.LIVESTOCK_DISEASES,
+            com.example.data.model.ToolType.LIVESTOCK_FEED,
+            com.example.data.model.ToolType.VACCINATION_SCHEDULE,
+            com.example.data.model.ToolType.AQUACULTURE_GUIDE
         )
         if (!newlyAddedTools.contains(toolType)) return false
         val usage = usageList.find { it.toolId == "TOOL_${toolType.name}" }

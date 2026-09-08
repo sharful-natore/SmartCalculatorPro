@@ -49,6 +49,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -82,13 +83,21 @@ import androidx.core.content.FileProvider
 import com.example.ui.theme.CalculatorThemeColors
 import com.example.ui.viewmodel.CalculatorViewModel
 import com.example.util.AppLanguage
+import android.os.CancellationSignal
+import android.print.PageRange
+import android.print.PrintAttributes
+import android.print.PrintDocumentAdapter
+import android.print.PrintDocumentInfo
+import android.print.PrintManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
+import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -108,6 +117,17 @@ data class PdfImageItem(
     val uri: Uri,
     val title: String = ""
 )
+
+enum class PdfListFilterTab(val titleBn: String, val titleEn: String) {
+    ALL("সব ফাইল", "All Files"),
+    FAVORITES("ফেভারিট", "Favorites"),
+    HISTORY("সাম্প্রতিক", "Recent")
+}
+
+sealed class PdfOpenResult {
+    data class Success(val pageCount: Int, val textPages: List<String>) : PdfOpenResult()
+    data class Error(val reasonBn: String, val reasonEn: String) : PdfOpenResult()
+}
 
 enum class PdfSortOption(val titleBn: String, val titleEn: String) {
     DATE_DESC("নতুন ফাইল আগে (তারিখ ↓)", "Newest First"),
@@ -219,6 +239,8 @@ fun PdfReaderTool(
     var showJumpDialog by remember { mutableStateOf(false) }
     var showDetailsDialog by remember { mutableStateOf(false) }
     var showTextSelectDialogPage by remember { mutableStateOf<Int?>(null) }
+    var showViewerOverflowMenu by remember { mutableStateOf(false) }
+    var showDeleteCurrentFileDialog by remember { mutableStateOf(false) }
 
     // Files List View States
     var pdfFileList by remember { mutableStateOf<List<PdfFileItem>>(emptyList()) }
@@ -227,6 +249,21 @@ fun PdfReaderTool(
     var searchQuery by remember { mutableStateOf("") }
     var selectedSort by remember { mutableStateOf(PdfSortOption.DATE_DESC) }
     var showSortMenu by remember { mutableStateOf(false) }
+
+    // Tab Filter & Storage State (All, Favorites, History)
+    var activeTab by remember { mutableStateOf(PdfListFilterTab.ALL) }
+    var favoritePdfList by remember { mutableStateOf<List<PdfFileItem>>(emptyList()) }
+    var historyPdfList by remember { mutableStateOf<List<PdfFileItem>>(emptyList()) }
+
+    // Robust Loading & Error States
+    var isPdfLoading by remember { mutableStateOf(false) }
+    var pdfErrorMessage by remember { mutableStateOf<String?>(null) }
+
+    // Action Menus & Operations (Rename, Delete, Long-press)
+    var selectedFileForAction by remember { mutableStateOf<PdfFileItem?>(null) }
+    var fileToRename by remember { mutableStateOf<PdfFileItem?>(null) }
+    var fileToDelete by remember { mutableStateOf<PdfFileItem?>(null) }
+    var newRenameText by remember { mutableStateOf("") }
 
     // Collapsing Top Header on scroll (like Quran & Hadith screen)
     var isHeaderVisible by remember { mutableStateOf(true) }
@@ -246,9 +283,20 @@ fun PdfReaderTool(
         }
     }
 
-    // Intercept Back Press: If reading a document, return to the PDF list; if already in list, go back to tools menu
+    // Intercept Back Press: Handled systematically for all dialogs, errors, tabs, and viewer states
     BackHandler {
-        if (showJumpDialog) {
+        if (pdfErrorMessage != null) {
+            pdfErrorMessage = null
+            pdfUri = null
+            pageCount = 0
+            isPdfLoading = false
+        } else if (selectedFileForAction != null) {
+            selectedFileForAction = null
+        } else if (fileToRename != null) {
+            fileToRename = null
+        } else if (fileToDelete != null) {
+            fileToDelete = null
+        } else if (showJumpDialog) {
             showJumpDialog = false
         } else if (showDetailsDialog) {
             showDetailsDialog = false
@@ -262,14 +310,23 @@ fun PdfReaderTool(
             docScale = 1.0f
             docOffset = Offset.Zero
         } else if (pdfUri != null) {
+            val closingUri = pdfUri
+            if (closingUri != null && pageCount > 0) {
+                val docKey = getPdfUniqueKey(closingUri, filePath, fileName)
+                saveLastReadPdfPage(context, docKey, visibleCurrentPage)
+            }
             pdfUri = null
             pageCount = 0
             currentPageScale = 1.0f
             docScale = 1.0f
             docOffset = Offset.Zero
             rotationDegrees = 0
+            isPdfLoading = false
+            pdfErrorMessage = null
         } else if (searchQuery.isNotEmpty()) {
             searchQuery = ""
+        } else if (activeTab != PdfListFilterTab.ALL) {
+            activeTab = PdfListFilterTab.ALL
         } else {
             onBackClick()
         }
@@ -339,8 +396,12 @@ fun PdfReaderTool(
             isScanningFiles = true
             withContext(Dispatchers.IO) {
                 val scanned = scanDevicePdfFiles(context)
+                val favs = getFavoritePdfs(context)
+                val recents = getRecentPdfHistory(context)
                 withContext(Dispatchers.Main) {
                     pdfFileList = scanned
+                    favoritePdfList = favs
+                    historyPdfList = recents
                     isScanningFiles = false
                 }
             }
@@ -349,7 +410,19 @@ fun PdfReaderTool(
         }
     }
 
-    // Load PDF Page Count when a document is selected
+    // Refresh favorites & history when tab changes
+    LaunchedEffect(activeTab) {
+        withContext(Dispatchers.IO) {
+            val favs = getFavoritePdfs(context)
+            val recents = getRecentPdfHistory(context)
+            withContext(Dispatchers.Main) {
+                favoritePdfList = favs
+                historyPdfList = recents
+            }
+        }
+    }
+
+    // Load PDF Page Count safely when a document is selected (Never gets stuck on corrupted file)
     LaunchedEffect(pdfUri) {
         val currentUri = pdfUri
         if (currentUri == null) {
@@ -357,41 +430,85 @@ fun PdfReaderTool(
             pdfSearchQuery = ""
             currentMatchIndex = 0
             isSearchActive = false
+            isPdfLoading = false
+            pdfErrorMessage = null
             return@LaunchedEffect
         }
-        withContext(Dispatchers.IO) {
-            try {
-                val pfd = openPdfParcelFileDescriptor(context, currentUri)
-                if (pfd != null) {
-                    val renderer = PdfRenderer(pfd)
-                    val count = renderer.pageCount
-                    renderer.close()
-                    pfd.close()
-                    
-                    // Extract text content from each page of the PDF to enable searching
-                    val textList = extractPdfTextByPage(context, currentUri, count)
-                    
+        isPdfLoading = true
+        pdfErrorMessage = null
+        val result = loadPdfDocument(context, currentUri)
+        when (result) {
+            is PdfOpenResult.Success -> {
+                pageCount = result.pageCount
+                pdfTextPages = result.textPages
+                pdfSearchQuery = ""
+                currentMatchIndex = 0
+                isSearchActive = false
+                isPdfLoading = false
+                pdfErrorMessage = null
+                val recordedItem = PdfFileItem(
+                    name = fileName.ifBlank { "Document.pdf" },
+                    uri = currentUri,
+                    sizeBytes = fileSizeBytes,
+                    dateModifiedMs = if (fileLastModifiedMs > 0) fileLastModifiedMs else System.currentTimeMillis(),
+                    path = filePath
+                )
+                withContext(Dispatchers.IO) {
+                    recordPdfToRecentHistory(context, recordedItem)
+                    val recents = getRecentPdfHistory(context)
                     withContext(Dispatchers.Main) {
-                        pageCount = count
-                        pdfTextPages = textList
-                        pdfSearchQuery = ""
-                        currentMatchIndex = 0
-                        isSearchActive = false
+                        historyPdfList = recents
                     }
                 }
-            } catch (e: Exception) {
-                e.printStackTrace()
+
+                // Restore last read page state automatically
+                val docKey = getPdfUniqueKey(currentUri, filePath, fileName)
+                val savedPage = getLastReadPdfPage(context, docKey)
+                if (savedPage in 1 until pageCount) {
+                    withContext(Dispatchers.Main) {
+                        verticalLazyListState.scrollToItem(savedPage)
+                        Toast.makeText(
+                            context,
+                            if (isBn) "পৃষ্ঠা ${savedPage + 1}-এ ফিরিয়ে আনা হয়েছে" else "Resumed from page ${savedPage + 1}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
             }
+            is PdfOpenResult.Error -> {
+                isPdfLoading = false
+                pageCount = 0
+                pdfTextPages = emptyList()
+                pdfErrorMessage = if (isBn) result.reasonBn else result.reasonEn
+            }
+        }
+    }
+
+    // Continuously persist the last read page as user scrolls
+    LaunchedEffect(visibleCurrentPage, pdfUri, pageCount) {
+        val currentUri = pdfUri
+        if (currentUri != null && pageCount > 0) {
+            val docKey = getPdfUniqueKey(currentUri, filePath, fileName)
+            saveLastReadPdfPage(context, docKey, visibleCurrentPage)
         }
     }
 
     val density = LocalDensity.current.density
 
+    // Determine current active list (All, Favorites, or Recent History)
+    val currentSourceList = remember(activeTab, pdfFileList, favoritePdfList, historyPdfList) {
+        when (activeTab) {
+            PdfListFilterTab.ALL -> pdfFileList
+            PdfListFilterTab.FAVORITES -> favoritePdfList
+            PdfListFilterTab.HISTORY -> historyPdfList
+        }
+    }
+
     // Filter and Sort PDF List
-    val filteredAndSortedPdfs by remember(pdfFileList, searchQuery, selectedSort) {
+    val filteredAndSortedPdfs by remember(currentSourceList, searchQuery, selectedSort) {
         derivedStateOf {
             val query = searchQuery.trim().lowercase()
-            pdfFileList
+            currentSourceList
                 .filter {
                     query.isEmpty() ||
                             it.name.lowercase().contains(query) ||
@@ -435,10 +552,18 @@ fun PdfReaderTool(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                                .padding(horizontal = 10.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            IconButton(onClick = onBackClick) {
+                            IconButton(
+                                onClick = {
+                                    if (activeTab != PdfListFilterTab.ALL) {
+                                        activeTab = PdfListFilterTab.ALL
+                                    } else {
+                                        onBackClick()
+                                    }
+                                }
+                            ) {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                     contentDescription = "Back",
@@ -446,29 +571,95 @@ fun PdfReaderTool(
                                 )
                             }
 
-                            Spacer(modifier = Modifier.width(4.dp))
+                            Spacer(modifier = Modifier.width(2.dp))
 
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = if (isBn) "পিডিএফ রিডার" else "PDF Reader",
-                                    fontSize = 17.sp,
+                                    text = when (activeTab) {
+                                        PdfListFilterTab.ALL -> if (isBn) "পিডিএফ রিডার" else "PDF Reader"
+                                        PdfListFilterTab.FAVORITES -> if (isBn) "প্রিয় PDF নথি" else "Favorite PDFs"
+                                        PdfListFilterTab.HISTORY -> if (isBn) "পড়ার ইতিহাস" else "Recent History"
+                                    },
+                                    fontSize = 16.5.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = themeColors.displayText
+                                    color = themeColors.displayText,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                                 Text(
-                                    text = if (isBn) "${pdfFileList.size}টি PDF নথি পাওয়া গেছে" else "${pdfFileList.size} PDF files found",
+                                    text = when (activeTab) {
+                                        PdfListFilterTab.ALL -> if (isBn) "${pdfFileList.size}টি PDF নথি পাওয়া গেছে" else "${pdfFileList.size} PDF files found"
+                                        PdfListFilterTab.FAVORITES -> if (isBn) "${favoritePdfList.size}টি প্রিয় নথি সংরক্ষিত" else "${favoritePdfList.size} favorites saved"
+                                        PdfListFilterTab.HISTORY -> if (isBn) "${historyPdfList.size}টি সম্প্রতি পড়া ফাইল" else "${historyPdfList.size} recent files"
+                                    },
                                     fontSize = 11.sp,
                                     color = themeColors.buttonEqualBg,
-                                    fontWeight = FontWeight.Medium
+                                    fontWeight = FontWeight.Medium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                             }
 
-                            // Refresh Scan button
+                            // Header Action 1: Favorite List Toggle
+                            IconButton(
+                                onClick = {
+                                    activeTab = if (activeTab == PdfListFilterTab.FAVORITES) {
+                                        PdfListFilterTab.ALL
+                                    } else {
+                                        PdfListFilterTab.FAVORITES
+                                    }
+                                },
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        if (activeTab == PdfListFilterTab.FAVORITES)
+                                            Color(0xFFEF4444).copy(alpha = 0.16f)
+                                        else
+                                            Color.Transparent
+                                    )
+                            ) {
+                                Icon(
+                                    imageVector = if (activeTab == PdfListFilterTab.FAVORITES) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                    contentDescription = "Favorites",
+                                    tint = if (activeTab == PdfListFilterTab.FAVORITES) Color(0xFFEF4444) else themeColors.displayText.copy(alpha = 0.8f),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+
+                            // Header Action 2: History List Toggle
+                            IconButton(
+                                onClick = {
+                                    activeTab = if (activeTab == PdfListFilterTab.HISTORY) {
+                                        PdfListFilterTab.ALL
+                                    } else {
+                                        PdfListFilterTab.HISTORY
+                                    }
+                                },
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        if (activeTab == PdfListFilterTab.HISTORY)
+                                            themeColors.buttonEqualBg.copy(alpha = 0.18f)
+                                        else
+                                            Color.Transparent
+                                    )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.History,
+                                    contentDescription = "History",
+                                    tint = if (activeTab == PdfListFilterTab.HISTORY) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.8f),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+
+                            // Header Action 3: Refresh Scan button
                             IconButton(
                                 onClick = {
                                     scanTrigger++
                                 },
-                                modifier = Modifier.size(38.dp)
+                                modifier = Modifier.size(36.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Refresh,
@@ -478,10 +669,10 @@ fun PdfReaderTool(
                                 )
                             }
 
-                            // Open System File Picker
+                            // Header Action 4: Open System File Picker
                             IconButton(
                                 onClick = { filePickerLauncher.launch("application/pdf") },
-                                modifier = Modifier.size(38.dp)
+                                modifier = Modifier.size(36.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.FolderOpen,
@@ -656,6 +847,51 @@ fun PdfReaderTool(
                         }
                     }
 
+                    // Tab Filter Active Banner
+                    AnimatedVisibility(visible = activeTab != PdfListFilterTab.ALL) {
+                        Surface(
+                            color = (if (activeTab == PdfListFilterTab.FAVORITES) Color(0xFFEF4444) else themeColors.buttonEqualBg).copy(alpha = 0.12f),
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = if (activeTab == PdfListFilterTab.FAVORITES) Icons.Default.Favorite else Icons.Default.History,
+                                    contentDescription = null,
+                                    tint = if (activeTab == PdfListFilterTab.FAVORITES) Color(0xFFEF4444) else themeColors.buttonEqualBg,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = if (activeTab == PdfListFilterTab.FAVORITES)
+                                        (if (isBn) "শুধুমাত্র প্রিয় ফাইলগুলো প্রদর্শিত হচ্ছে" else "Showing favorite files only")
+                                    else
+                                        (if (isBn) "সম্প্রতি পড়া ফাইলগুলো প্রদর্শিত হচ্ছে" else "Showing recently opened files only"),
+                                    fontSize = 11.5.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = themeColors.displayText,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                TextButton(
+                                    onClick = { activeTab = PdfListFilterTab.ALL },
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                                ) {
+                                    Text(
+                                        text = if (isBn) "সব দেখুন" else "Show All",
+                                        fontSize = 11.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = themeColors.buttonEqualBg
+                                    )
+                                }
+                            }
+                        }
+                    }
+
                     // List Content or Empty State
                     if (isScanningFiles) {
                         Box(
@@ -687,47 +923,74 @@ fun PdfReaderTool(
                             ) {
                                 Surface(
                                     shape = CircleShape,
-                                    color = themeColors.buttonEqualBg.copy(alpha = 0.1f),
+                                    color = (if (activeTab == PdfListFilterTab.FAVORITES) Color(0xFFEF4444) else themeColors.buttonEqualBg).copy(alpha = 0.1f),
                                     modifier = Modifier.size(72.dp)
                                 ) {
                                     Box(contentAlignment = Alignment.Center) {
                                         Icon(
-                                            imageVector = Icons.Default.PictureAsPdf,
+                                            imageVector = when (activeTab) {
+                                                PdfListFilterTab.ALL -> Icons.Default.PictureAsPdf
+                                                PdfListFilterTab.FAVORITES -> Icons.Default.FavoriteBorder
+                                                PdfListFilterTab.HISTORY -> Icons.Default.History
+                                            },
                                             contentDescription = null,
-                                            tint = themeColors.buttonEqualBg,
+                                            tint = if (activeTab == PdfListFilterTab.FAVORITES) Color(0xFFEF4444) else themeColors.buttonEqualBg,
                                             modifier = Modifier.size(36.dp)
                                         )
                                     }
                                 }
                                 Spacer(modifier = Modifier.height(14.dp))
                                 Text(
-                                    text = if (searchQuery.isNotEmpty())
-                                        (if (isBn) "কোনো মিল পাওয়া যায়নি" else "No matching PDF found")
-                                    else
-                                        (if (isBn) "ফোনে কোনো PDF ফাইল পাওয়া যায়নি" else "No PDF files found"),
+                                    text = if (searchQuery.isNotEmpty()) {
+                                        if (isBn) "কোনো মিল পাওয়া যায়নি" else "No matching PDF found"
+                                    } else {
+                                        when (activeTab) {
+                                            PdfListFilterTab.ALL -> if (isBn) "ফোনে কোনো PDF ফাইল পাওয়া যায়নি" else "No PDF files found"
+                                            PdfListFilterTab.FAVORITES -> if (isBn) "কোনো প্রিয় PDF নথি সংরক্ষিত নেই" else "No favorite PDFs saved yet"
+                                            PdfListFilterTab.HISTORY -> if (isBn) "সাম্প্রতিক কোনো পড়ার ইতিহাস নেই" else "No recent PDF history yet"
+                                        }
+                                    },
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = themeColors.displayText
+                                    color = themeColors.displayText,
+                                    textAlign = TextAlign.Center
                                 )
                                 Spacer(modifier = Modifier.height(6.dp))
                                 Text(
-                                    text = if (isBn)
-                                        "উপরের ব্রাউজ বাটন চেপে সিস্টেম ফাইল ম্যানেজার থেকে যেকোনো PDF ওপেন করুন।"
-                                    else
-                                        "Tap the Browse button above to open any PDF from system storage.",
+                                    text = if (searchQuery.isNotEmpty()) {
+                                        if (isBn) "অন্য কোনো নাম দিয়ে অনুসন্ধান করুন" else "Try searching with a different name"
+                                    } else {
+                                        when (activeTab) {
+                                            PdfListFilterTab.ALL -> if (isBn) "উপরের ব্রাউজ বাটন চেপে সিস্টেম ফাইল ম্যানেজার থেকে যেকোনো PDF ওপেন করুন।" else "Tap the Browse button above to open any PDF from system storage."
+                                            PdfListFilterTab.FAVORITES -> if (isBn) "তালিকার যেকোনো ফাইলে লং-প্রেস করে প্রিয় তালিকায় যোগ করতে পারেন।" else "Long-press any file in the list to add it to your favorites."
+                                            PdfListFilterTab.HISTORY -> if (isBn) "কোনো PDF ফাইল ওপেন করলে তা স্বয়ংক্রিয়ভাবে এখানে তালিকাভুক্ত হবে।" else "Any PDF file you open will be automatically remembered here."
+                                        }
+                                    },
                                     fontSize = 12.sp,
                                     color = themeColors.displayText.copy(alpha = 0.6f),
                                     textAlign = TextAlign.Center
                                 )
                                 Spacer(modifier = Modifier.height(14.dp))
-                                Button(
-                                    onClick = { filePickerLauncher.launch("application/pdf") },
-                                    colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg, contentColor = Color.White),
-                                    shape = RoundedCornerShape(12.dp)
-                                ) {
-                                    Icon(Icons.Default.FolderOpen, contentDescription = null, modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(if (isBn) "ফাইল ব্রাউজ করুন" else "Browse Files")
+                                if (activeTab != PdfListFilterTab.ALL) {
+                                    Button(
+                                        onClick = { activeTab = PdfListFilterTab.ALL },
+                                        colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg, contentColor = Color.White),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Icon(Icons.Default.List, contentDescription = null, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(if (isBn) "সব PDF ফাইল দেখুন" else "View All PDFs")
+                                    }
+                                } else {
+                                    Button(
+                                        onClick = { filePickerLauncher.launch("application/pdf") },
+                                        colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg, contentColor = Color.White),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Icon(Icons.Default.FolderOpen, contentDescription = null, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(if (isBn) "ফাইল ব্রাউজ করুন" else "Browse Files")
+                                    }
                                 }
                             }
                         }
@@ -741,38 +1004,47 @@ fun PdfReaderTool(
                             contentPadding = PaddingValues(bottom = 16.dp)
                         ) {
                             items(filteredAndSortedPdfs, key = { it.path.ifBlank { it.uri.toString() } }) { item ->
+                                val isItemFavorite = favoritePdfList.any { fav ->
+                                    (fav.path.isNotBlank() && fav.path == item.path) || (fav.path.isBlank() && fav.uri == item.uri)
+                                }
+
                                 Card(
                                     shape = RoundedCornerShape(14.dp),
                                     colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clickable {
-                                            pdfUri = item.uri
-                                            fileName = item.name
-                                            fileSizeBytes = item.sizeBytes
-                                            fileLastModifiedMs = item.dateModifiedMs
-                                            filePath = item.path
-                                            currentPageScale = 1.0f
-                                            rotationDegrees = 0
-                                        }
+                                        .combinedClickable(
+                                            onClick = {
+                                                pdfUri = item.uri
+                                                fileName = item.name
+                                                fileSizeBytes = item.sizeBytes
+                                                fileLastModifiedMs = item.dateModifiedMs
+                                                filePath = item.path
+                                                currentPageScale = 1.0f
+                                                rotationDegrees = 0
+                                            },
+                                            onLongClick = {
+                                                selectedFileForAction = item
+                                            }
+                                        )
                                 ) {
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(12.dp),
+                                            .padding(horizontal = 12.dp, vertical = 10.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Surface(
                                             shape = RoundedCornerShape(10.dp),
                                             color = Color(0xFFEF4444).copy(alpha = 0.14f),
-                                            modifier = Modifier.size(46.dp)
+                                            modifier = Modifier.size(44.dp)
                                         ) {
                                             Box(contentAlignment = Alignment.Center) {
                                                 Icon(
                                                     imageVector = Icons.Default.PictureAsPdf,
                                                     contentDescription = "PDF",
                                                     tint = Color(0xFFEF4444),
-                                                    modifier = Modifier.size(26.dp)
+                                                    modifier = Modifier.size(24.dp)
                                                 )
                                             }
                                         }
@@ -780,14 +1052,26 @@ fun PdfReaderTool(
                                         Spacer(modifier = Modifier.width(12.dp))
 
                                         Column(modifier = Modifier.weight(1f)) {
-                                            Text(
-                                                text = item.name,
-                                                fontSize = 14.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = themeColors.displayText,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis
-                                            )
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Text(
+                                                    text = item.name,
+                                                    fontSize = 14.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = themeColors.displayText,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis,
+                                                    modifier = Modifier.weight(1f, fill = false)
+                                                )
+                                                if (isItemFavorite) {
+                                                    Spacer(modifier = Modifier.width(6.dp))
+                                                    Icon(
+                                                        imageVector = Icons.Default.Favorite,
+                                                        contentDescription = "Favorite",
+                                                        tint = Color(0xFFEF4444),
+                                                        modifier = Modifier.size(13.dp)
+                                                    )
+                                                }
+                                            }
                                             Spacer(modifier = Modifier.height(3.dp))
                                             Row(verticalAlignment = Alignment.CenterVertically) {
                                                 Text(
@@ -805,14 +1089,32 @@ fun PdfReaderTool(
                                                         overflow = TextOverflow.Ellipsis
                                                     )
                                                 }
+                                                val savedLastPage = getLastReadPdfPage(context, getPdfUniqueKey(item.uri, item.path, item.name))
+                                                if (savedLastPage > 0) {
+                                                    Text(
+                                                        text = " • " + (if (isBn) "পৃষ্ঠা ${savedLastPage + 1}-এ ছিলেন" else "Page ${savedLastPage + 1}"),
+                                                        fontSize = 11.sp,
+                                                        color = Color(0xFF10B981),
+                                                        fontWeight = FontWeight.SemiBold,
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis
+                                                    )
+                                                }
                                             }
                                         }
 
-                                        Icon(
-                                            imageVector = Icons.Default.ChevronRight,
-                                            contentDescription = "Open",
-                                            tint = themeColors.displayText.copy(alpha = 0.4f)
-                                        )
+                                        // Long-press or click 3-dots to show full management options
+                                        IconButton(
+                                            onClick = { selectedFileForAction = item },
+                                            modifier = Modifier.size(34.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.MoreVert,
+                                                contentDescription = "Options",
+                                                tint = themeColors.displayText.copy(alpha = 0.65f),
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -847,6 +1149,11 @@ fun PdfReaderTool(
                             ) {
                                 IconButton(
                                     onClick = {
+                                        val closingUri = pdfUri
+                                        if (closingUri != null && pageCount > 0) {
+                                            val docKey = getPdfUniqueKey(closingUri, filePath, fileName)
+                                            saveLastReadPdfPage(context, docKey, visibleCurrentPage)
+                                        }
                                         pdfUri = null
                                         pageCount = 0
                                         currentPageScale = 1.0f
@@ -864,11 +1171,11 @@ fun PdfReaderTool(
                                 Column(
                                     modifier = Modifier
                                         .weight(1f)
-                                        .padding(horizontal = 4.dp)
+                                        .padding(horizontal = 6.dp)
                                 ) {
                                     Text(
                                         text = fileName.ifBlank { "PDF Document" },
-                                        fontSize = 13.5.sp,
+                                        fontSize = 14.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = themeColors.displayText,
                                         maxLines = 1,
@@ -881,7 +1188,7 @@ fun PdfReaderTool(
                                         } else {
                                             formatFileSize(fileSizeBytes)
                                         },
-                                        fontSize = 11.sp,
+                                        fontSize = 11.5.sp,
                                         color = themeColors.buttonEqualBg,
                                         fontWeight = FontWeight.Medium,
                                         maxLines = 1,
@@ -889,7 +1196,7 @@ fun PdfReaderTool(
                                     )
                                 }
 
-                                // Search Text Toggle Button
+                                // Search Text Toggle Button (Left of 3-dot menu)
                                 IconButton(
                                     onClick = {
                                         isSearchActive = !isSearchActive
@@ -903,63 +1210,135 @@ fun PdfReaderTool(
                                     )
                                 }
 
-                                // Share PDF
-                                IconButton(
-                                    onClick = {
-                                        sharePdfFromUri(context, pdfUri!!, fileName)
+                                // 3-Dot Overflow Action Menu
+                                Box {
+                                    IconButton(
+                                        onClick = { showViewerOverflowMenu = true }
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.MoreVert,
+                                            contentDescription = "More Options",
+                                            tint = themeColors.displayText
+                                        )
                                     }
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Share,
-                                        contentDescription = "Share",
-                                        tint = themeColors.buttonEqualBg
-                                    )
-                                }
 
-                                // Night Mode Toggle
-                                IconButton(
-                                    onClick = { isNightMode = !isNightMode }
-                                ) {
-                                    Icon(
-                                        imageVector = if (isNightMode) Icons.Default.LightMode else Icons.Default.DarkMode,
-                                        contentDescription = "Night Mode",
-                                        tint = if (isNightMode) Color(0xFFFBBF24) else themeColors.displayText
-                                    )
-                                }
+                                    DropdownMenu(
+                                        expanded = showViewerOverflowMenu,
+                                        onDismissRequest = { showViewerOverflowMenu = false },
+                                        modifier = Modifier.background(themeColors.cardBg)
+                                    ) {
+                                        // 1. Share
+                                        DropdownMenuItem(
+                                            text = { Text(if (isBn) "শেয়ার করুন" else "Share", color = themeColors.displayText) },
+                                            leadingIcon = {
+                                                Icon(Icons.Default.Share, contentDescription = null, tint = themeColors.buttonEqualBg)
+                                            },
+                                            onClick = {
+                                                showViewerOverflowMenu = false
+                                                pdfUri?.let { sharePdfFromUri(context, it, fileName) }
+                                            }
+                                        )
 
-                                // Rotate
-                                IconButton(
-                                    onClick = {
-                                        rotationDegrees = (rotationDegrees + 90) % 360
+                                        // 2. Night / Day Mode Toggle
+                                        DropdownMenuItem(
+                                            text = {
+                                                Text(
+                                                    text = if (isNightMode) {
+                                                        if (isBn) "লাইট মোড" else "Light Mode"
+                                                    } else {
+                                                        if (isBn) "নাইট মোড" else "Night Mode"
+                                                    },
+                                                    color = themeColors.displayText
+                                                )
+                                            },
+                                            leadingIcon = {
+                                                Icon(
+                                                    imageVector = if (isNightMode) Icons.Default.LightMode else Icons.Default.DarkMode,
+                                                    contentDescription = null,
+                                                    tint = if (isNightMode) Color(0xFFFBBF24) else themeColors.buttonEqualBg
+                                                )
+                                            },
+                                            onClick = {
+                                                showViewerOverflowMenu = false
+                                                isNightMode = !isNightMode
+                                            }
+                                        )
+
+                                        // 3. Rotate 90 deg
+                                        DropdownMenuItem(
+                                            text = { Text(if (isBn) "ঘোরান (৯০°)" else "Rotate (90°)", color = themeColors.displayText) },
+                                            leadingIcon = {
+                                                Icon(Icons.Default.RotateRight, contentDescription = null, tint = themeColors.buttonEqualBg)
+                                            },
+                                            onClick = {
+                                                showViewerOverflowMenu = false
+                                                rotationDegrees = (rotationDegrees + 90) % 360
+                                            }
+                                        )
+
+                                        // 4. Print
+                                        DropdownMenuItem(
+                                            text = { Text(if (isBn) "প্রিন্ট করুন" else "Print PDF", color = themeColors.displayText) },
+                                            leadingIcon = {
+                                                Icon(Icons.Default.Print, contentDescription = null, tint = themeColors.buttonEqualBg)
+                                            },
+                                            onClick = {
+                                                showViewerOverflowMenu = false
+                                                pdfUri?.let { printPdfDocument(context, it, fileName) }
+                                            }
+                                        )
+
+                                        // 5. Fullscreen
+                                        DropdownMenuItem(
+                                            text = { Text(if (isBn) "ফুলস্ক্রিন" else "Fullscreen", color = themeColors.displayText) },
+                                            leadingIcon = {
+                                                Icon(Icons.Default.Fullscreen, contentDescription = null, tint = themeColors.buttonEqualBg)
+                                            },
+                                            onClick = {
+                                                showViewerOverflowMenu = false
+                                                isFullscreen = true
+                                            }
+                                        )
+
+                                        // 6. File Details
+                                        DropdownMenuItem(
+                                            text = { Text(if (isBn) "ফাইলের তথ্য" else "File Info", color = themeColors.displayText) },
+                                            leadingIcon = {
+                                                Icon(Icons.Default.Info, contentDescription = null, tint = themeColors.buttonEqualBg)
+                                            },
+                                            onClick = {
+                                                showViewerOverflowMenu = false
+                                                showDetailsDialog = true
+                                            }
+                                        )
+
+                                        HorizontalDivider(
+                                            modifier = Modifier.padding(vertical = 4.dp),
+                                            color = themeColors.displayText.copy(alpha = 0.12f)
+                                        )
+
+                                        // 7. Delete File
+                                        DropdownMenuItem(
+                                            text = {
+                                                Text(
+                                                    text = if (isBn) "ফাইল মুছুন" else "Delete File",
+                                                    color = MaterialTheme.colorScheme.error,
+                                                    fontWeight = FontWeight.SemiBold
+                                                )
+                                            },
+                                            leadingIcon = {
+                                                Icon(
+                                                    imageVector = Icons.Default.Delete,
+                                                    contentDescription = null,
+                                                    tint = MaterialTheme.colorScheme.error
+                                                )
+                                            },
+                                            onClick = {
+                                                showViewerOverflowMenu = false
+                                                showDeleteCurrentFileDialog = true
+                                            }
+                                        )
                                     }
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.RotateRight,
-                                        contentDescription = "Rotate",
-                                        tint = themeColors.displayText
-                                    )
-                                }
-
-                                // Details Dialog
-                                IconButton(
-                                    onClick = { showDetailsDialog = true }
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Info,
-                                        contentDescription = "Details",
-                                        tint = themeColors.displayText
-                                    )
-                                }
-
-                                // Fullscreen Toggle
-                                IconButton(
-                                    onClick = { isFullscreen = true }
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Fullscreen,
-                                        contentDescription = "Fullscreen",
-                                        tint = themeColors.displayText
-                                    )
                                 }
                             }
 
@@ -1235,6 +1614,9 @@ fun PdfReaderTool(
                                     contentPadding = PaddingValues(vertical = 10.dp, horizontal = 6.dp)
                                 ) {
                                     items(pageCount) { pageIdx ->
+                                        val isMatchPage = isSearchActive && pdfSearchQuery.isNotBlank() && searchMatches.contains(pageIdx)
+                                        val isCurrentMatchPage = isSearchActive && searchMatches.getOrNull(currentMatchIndex) == pageIdx
+
                                         Surface(
                                             modifier = Modifier
                                                 .fillMaxWidth()
@@ -1253,18 +1635,120 @@ fun PdfReaderTool(
                                                 ),
                                             shape = RoundedCornerShape(4.dp),
                                             shadowElevation = 4.dp,
+                                            border = if (isCurrentMatchPage) {
+                                                BorderStroke(2.5.dp, Color(0xFFEAB308))
+                                            } else if (isMatchPage) {
+                                                BorderStroke(1.5.dp, themeColors.buttonEqualBg)
+                                            } else null,
                                             color = if (isNightMode) Color(0xFF1E293B) else Color.White
                                         ) {
-                                            PdfPageViewerItem(
-                                                context = context,
-                                                pdfUri = pdfUri!!,
-                                                pageIndex = pageIdx,
-                                                isNightMode = isNightMode,
-                                                rotationDegrees = rotationDegrees,
-                                                density = density,
-                                                themeColors = themeColors,
-                                                isBn = isBn
-                                            )
+                                            Box {
+                                                PdfPageViewerItem(
+                                                    context = context,
+                                                    pdfUri = pdfUri!!,
+                                                    pageIndex = pageIdx,
+                                                    isNightMode = isNightMode,
+                                                    rotationDegrees = rotationDegrees,
+                                                    density = density,
+                                                    themeColors = themeColors,
+                                                    isBn = isBn
+                                                )
+                                                if (isMatchPage) {
+                                                    Surface(
+                                                        shape = RoundedCornerShape(bottomStart = 8.dp),
+                                                        color = if (isCurrentMatchPage) Color(0xFFEAB308) else themeColors.buttonEqualBg,
+                                                        modifier = Modifier.align(Alignment.TopEnd)
+                                                    ) {
+                                                        Row(
+                                                            verticalAlignment = Alignment.CenterVertically,
+                                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                                        ) {
+                                                            Icon(
+                                                                imageVector = Icons.Default.Search,
+                                                                contentDescription = null,
+                                                                tint = Color.White,
+                                                                modifier = Modifier.size(12.dp)
+                                                            )
+                                                            Spacer(modifier = Modifier.width(4.dp))
+                                                            Text(
+                                                                text = if (isBn) "ম্যাচ" else "Match",
+                                                                fontSize = 10.5.sp,
+                                                                fontWeight = FontWeight.Bold,
+                                                                color = Color.White
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        } else if (pdfErrorMessage != null) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(24.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Card(
+                                    colors = CardDefaults.cardColors(containerColor = themeColors.cardBg),
+                                    shape = RoundedCornerShape(16.dp),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 12.dp)
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(20.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Surface(
+                                            shape = CircleShape,
+                                            color = Color(0xFFEF4444).copy(alpha = 0.12f),
+                                            modifier = Modifier.size(60.dp)
+                                        ) {
+                                            Box(contentAlignment = Alignment.Center) {
+                                                Icon(
+                                                    imageVector = Icons.Default.WarningAmber,
+                                                    contentDescription = "Error",
+                                                    tint = Color(0xFFEF4444),
+                                                    modifier = Modifier.size(32.dp)
+                                                )
+                                            }
+                                        }
+                                        Spacer(modifier = Modifier.height(14.dp))
+                                        Text(
+                                            text = if (isBn) "PDF ফাইলটি ওপেন করা সম্ভব হয়নি" else "Failed to Open PDF",
+                                            fontSize = 15.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = themeColors.displayText,
+                                            textAlign = TextAlign.Center
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text(
+                                            text = pdfErrorMessage ?: "",
+                                            fontSize = 12.5.sp,
+                                            color = themeColors.displayText.copy(alpha = 0.7f),
+                                            textAlign = TextAlign.Center
+                                        )
+                                        Spacer(modifier = Modifier.height(18.dp))
+                                        Button(
+                                            onClick = {
+                                                pdfUri = null
+                                                pdfErrorMessage = null
+                                                pageCount = 0
+                                                isPdfLoading = false
+                                            },
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = themeColors.buttonEqualBg,
+                                                contentColor = Color.White
+                                            ),
+                                            shape = RoundedCornerShape(10.dp)
+                                        ) {
+                                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, modifier = Modifier.size(16.dp))
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(if (isBn) "তালিকায় ফিরে যান" else "Return to List")
                                         }
                                     }
                                 }
@@ -1282,14 +1766,27 @@ fun PdfReaderTool(
                                         fontSize = 12.sp,
                                         color = Color.White.copy(alpha = 0.8f)
                                     )
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    TextButton(
+                                        onClick = {
+                                            pdfUri = null
+                                            isPdfLoading = false
+                                            pageCount = 0
+                                            pdfErrorMessage = null
+                                        }
+                                    ) {
+                                        Text(
+                                            text = if (isBn) "বাতিল করুন" else "Cancel",
+                                            color = Color.White.copy(alpha = 0.7f),
+                                            fontSize = 12.sp
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
 
-
-
-                    // BOTTOM GOOGLE DRIVE FLOATING PAGE PILL & SCRUBBER
+                    // BOTTOM FROSTED GLASS FLOATING PAGE PILL & SCRUBBER
                     androidx.compose.animation.AnimatedVisibility(
                         visible = isControlsVisible && pageCount > 0 && !isFullscreen,
                         enter = slideInVertically { it } + fadeIn(),
@@ -1299,10 +1796,18 @@ fun PdfReaderTool(
                             .padding(bottom = if (isFullscreen) 24.dp else 16.dp)
                     ) {
                         Surface(
-                            shape = RoundedCornerShape(28.dp),
-                            color = Color.Black.copy(alpha = 0.85f),
-                            shadowElevation = 8.dp,
-                            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.15f))
+                            shape = RoundedCornerShape(26.dp),
+                            color = if (isNightMode) {
+                                Color(0xFF1E293B).copy(alpha = 0.88f)
+                            } else {
+                                Color.White.copy(alpha = 0.88f)
+                            },
+                            shadowElevation = 12.dp,
+                            border = BorderStroke(
+                                1.5.dp,
+                                if (isNightMode) Color.White.copy(alpha = 0.20f)
+                                else Color.Black.copy(alpha = 0.12f)
+                            )
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -1318,20 +1823,25 @@ fun PdfReaderTool(
                                         }
                                     },
                                     enabled = visibleCurrentPage > 0,
-                                    modifier = Modifier.size(36.dp)
+                                    modifier = Modifier.size(38.dp)
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.ChevronLeft,
                                         contentDescription = "Previous Page",
-                                        tint = if (visibleCurrentPage > 0) Color.White else Color.White.copy(alpha = 0.3f),
-                                        modifier = Modifier.size(22.dp)
+                                        tint = if (visibleCurrentPage > 0) {
+                                            if (isNightMode) Color.White else Color(0xFF0F172A)
+                                        } else {
+                                            if (isNightMode) Color.White.copy(alpha = 0.3f) else Color(0xFF0F172A).copy(alpha = 0.3f)
+                                        },
+                                        modifier = Modifier.size(24.dp)
                                     )
                                 }
 
-                                // Page Counter Pill (Tap opens "Jump to Page" Dialog)
+                                // Frosted Page Counter Pill (Tap opens "Jump to Page" Dialog)
                                 Surface(
                                     shape = RoundedCornerShape(16.dp),
-                                    color = Color.White.copy(alpha = 0.18f),
+                                    color = themeColors.buttonEqualBg.copy(alpha = if (isNightMode) 0.25f else 0.15f),
+                                    border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.3f)),
                                     modifier = Modifier
                                         .padding(horizontal = 4.dp)
                                         .clickable { showJumpDialog = true }
@@ -1341,10 +1851,10 @@ fun PdfReaderTool(
                                             "পৃষ্ঠা ${visibleCurrentPage + 1} / $pageCount"
                                         else
                                             "Page ${visibleCurrentPage + 1} of $pageCount",
-                                        fontSize = 12.sp,
+                                        fontSize = 12.5.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = Color.White,
-                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                        color = if (isNightMode) Color.White else Color(0xFF0F172A),
+                                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
                                     )
                                 }
 
@@ -1358,13 +1868,17 @@ fun PdfReaderTool(
                                         }
                                     },
                                     enabled = visibleCurrentPage < pageCount - 1,
-                                    modifier = Modifier.size(36.dp)
+                                    modifier = Modifier.size(38.dp)
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.ChevronRight,
                                         contentDescription = "Next Page",
-                                        tint = if (visibleCurrentPage < pageCount - 1) Color.White else Color.White.copy(alpha = 0.3f),
-                                        modifier = Modifier.size(22.dp)
+                                        tint = if (visibleCurrentPage < pageCount - 1) {
+                                            if (isNightMode) Color.White else Color(0xFF0F172A)
+                                        } else {
+                                            if (isNightMode) Color.White.copy(alpha = 0.3f) else Color(0xFF0F172A).copy(alpha = 0.3f)
+                                        },
+                                        modifier = Modifier.size(24.dp)
                                     )
                                 }
 
@@ -1373,13 +1887,13 @@ fun PdfReaderTool(
                                     Spacer(modifier = Modifier.width(4.dp))
                                     IconButton(
                                         onClick = { isFullscreen = false },
-                                        modifier = Modifier.size(36.dp)
+                                        modifier = Modifier.size(38.dp)
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.FullscreenExit,
                                             contentDescription = "Exit Fullscreen",
-                                            tint = Color.White,
-                                            modifier = Modifier.size(20.dp)
+                                            tint = if (isNightMode) Color.White else Color(0xFF0F172A),
+                                            modifier = Modifier.size(22.dp)
                                         )
                                     }
                                 }
@@ -1557,10 +2071,52 @@ fun PdfReaderTool(
         )
     }
 
-    // 3. Select & Copy Page Text Dialog
+    // 3. Select & Copy Page Text Dialog (PdfBox Powered)
     if (showTextSelectDialogPage != null) {
         val pageIdx = showTextSelectDialogPage!!
-        val pageText = pdfTextPages.getOrNull(pageIdx) ?: ""
+        var pageText by remember(pageIdx, pdfTextPages) {
+            mutableStateOf(pdfTextPages.getOrNull(pageIdx) ?: "")
+        }
+        var isExtractingPageText by remember(pageIdx) {
+            mutableStateOf(pageText.isBlank())
+        }
+
+        LaunchedEffect(pageIdx) {
+            if (pageText.isBlank() && pdfUri != null) {
+                isExtractingPageText = true
+                withContext(Dispatchers.IO) {
+                    try {
+                        try {
+                            com.tom_roush.pdfbox.android.PDFBoxResourceLoader.init(context.applicationContext)
+                        } catch (_: Exception) {}
+                        val inputStream = context.contentResolver.openInputStream(pdfUri!!)
+                        if (inputStream != null) {
+                            val pdDoc = com.tom_roush.pdfbox.pdmodel.PDDocument.load(inputStream)
+                            pdDoc.use { doc ->
+                                val stripper = com.tom_roush.pdfbox.text.PDFTextStripper()
+                                stripper.startPage = pageIdx + 1
+                                stripper.endPage = pageIdx + 1
+                                val extracted = stripper.getText(doc)?.trim() ?: ""
+                                withContext(Dispatchers.Main) {
+                                    if (extracted.isNotBlank()) {
+                                        pageText = extracted
+                                    }
+                                }
+                            }
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    } finally {
+                        withContext(Dispatchers.Main) {
+                            isExtractingPageText = false
+                        }
+                    }
+                }
+            } else {
+                isExtractingPageText = false
+            }
+        }
+
         AlertDialog(
             onDismissRequest = { showTextSelectDialogPage = null },
             containerColor = themeColors.cardBg,
@@ -1571,7 +2127,7 @@ fun PdfReaderTool(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = if (isBn) "পৃষ্ঠা ${pageIdx + 1} - টেক্সট কপি" else "Page ${pageIdx + 1} Text Selection",
+                        text = if (isBn) "পৃষ্ঠা ${pageIdx + 1} - টেক্সট নির্বাচন ও কপি" else "Page ${pageIdx + 1} - Select & Copy",
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
                         color = themeColors.displayText
@@ -1595,7 +2151,7 @@ fun PdfReaderTool(
                         .heightIn(max = 350.dp)
                 ) {
                     Text(
-                        text = if (isBn) "নিচের টেক্সট সিলেক্ট করুন অথবা কপি করুন:" else "Press and hold to select text, or click Copy All:",
+                        text = if (isBn) "নিচের টেক্সট সিলেক্ট করুন অথবা এক ক্লিকে সম্পূর্ণ কপি করুন:" else "Select text below or tap Copy All:",
                         fontSize = 12.sp,
                         color = themeColors.displayText.copy(alpha = 0.7f),
                         modifier = Modifier.padding(bottom = 8.dp)
@@ -1605,28 +2161,45 @@ fun PdfReaderTool(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxWidth()
-                            .border(androidx.compose.foundation.BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.15f)), RoundedCornerShape(8.dp)),
+                            .border(BorderStroke(1.dp, themeColors.displayText.copy(alpha = 0.15f)), RoundedCornerShape(8.dp)),
                         shape = RoundedCornerShape(8.dp),
                         color = if (isNightMode) Color(0xFF0F172A) else Color(0xFFF1F5F9)
                     ) {
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .padding(10.dp)
+                                .padding(12.dp)
                                 .verticalScroll(rememberScrollState())
                         ) {
-                            if (pageText.isNotBlank()) {
-                                androidx.compose.foundation.text.selection.SelectionContainer {
+                            if (isExtractingPageText) {
+                                Column(
+                                    modifier = Modifier.align(Alignment.Center),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    CircularProgressIndicator(
+                                        color = themeColors.buttonEqualBg,
+                                        modifier = Modifier.size(28.dp),
+                                        strokeWidth = 2.5.dp
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = if (isBn) "টেক্সট লোড হচ্ছে..." else "Extracting page text...",
+                                        fontSize = 11.5.sp,
+                                        color = themeColors.displayText.copy(alpha = 0.7f)
+                                    )
+                                }
+                            } else if (pageText.isNotBlank()) {
+                                SelectionContainer {
                                     Text(
                                         text = pageText,
-                                        fontSize = 13.sp,
-                                        lineHeight = 18.sp,
+                                        fontSize = 13.5.sp,
+                                        lineHeight = 20.sp,
                                         color = themeColors.displayText
                                     )
                                 }
                             } else {
                                 Text(
-                                    text = if (isBn) "এই পৃষ্ঠা থেকে কোনো টেক্সট উদ্ধার করা যায়নি।" else "No selectable text found on this page.",
+                                    text = if (isBn) "এই পৃষ্ঠা থেকে কোনো টেক্সট উদ্ধার করা যায়নি (হতে পারে এটি স্ক্যান করা ইমেজ)।" else "No selectable text found on this page (it may be a scanned image).",
                                     fontSize = 12.sp,
                                     color = themeColors.displayText.copy(alpha = 0.5f),
                                     fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
@@ -1670,6 +2243,396 @@ fun PdfReaderTool(
                     ) {
                         Text(if (isBn) "বন্ধ করুন" else "Cancel", color = themeColors.displayText)
                     }
+                }
+            }
+        )
+    }
+
+    // 4. Long-Press / More Options Bottom Sheet
+    if (selectedFileForAction != null) {
+        val activeItem = selectedFileForAction!!
+        val isItemFav = favoritePdfList.any { fav ->
+            (fav.path.isNotBlank() && fav.path == activeItem.path) || (fav.path.isBlank() && fav.uri == activeItem.uri)
+        }
+
+        ModalBottomSheet(
+            onDismissRequest = { selectedFileForAction = null },
+            containerColor = themeColors.cardBg,
+            shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+            dragHandle = {
+                Surface(
+                    modifier = Modifier.padding(top = 10.dp, bottom = 6.dp),
+                    color = themeColors.displayText.copy(alpha = 0.25f),
+                    shape = RoundedCornerShape(4.dp)
+                ) {
+                    Box(modifier = Modifier.size(width = 38.dp, height = 4.dp))
+                }
+            }
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 18.dp, vertical = 8.dp)
+            ) {
+                // Header: File Info Preview
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = Color(0xFFEF4444).copy(alpha = 0.14f),
+                        modifier = Modifier.size(42.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Default.PictureAsPdf,
+                                contentDescription = null,
+                                tint = Color(0xFFEF4444),
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = activeItem.name,
+                            fontSize = 14.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = themeColors.displayText,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "${formatFileSize(activeItem.sizeBytes)}${if (activeItem.dateModifiedMs > 0) " • " + formatFormattedDateTime(activeItem.dateModifiedMs, isBn) else ""}",
+                            fontSize = 11.sp,
+                            color = themeColors.buttonEqualBg,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+
+                HorizontalDivider(color = themeColors.displayText.copy(alpha = 0.1f))
+                Spacer(modifier = Modifier.height(6.dp))
+
+                // Action 1: Open PDF
+                PdfActionOptionItem(
+                    icon = Icons.Default.Visibility,
+                    title = if (isBn) "পিডিএফ ওপেন করুন" else "Open PDF",
+                    color = themeColors.buttonEqualBg,
+                    textColor = themeColors.displayText,
+                    onClick = {
+                        pdfUri = activeItem.uri
+                        fileName = activeItem.name
+                        fileSizeBytes = activeItem.sizeBytes
+                        fileLastModifiedMs = activeItem.dateModifiedMs
+                        filePath = activeItem.path
+                        currentPageScale = 1.0f
+                        rotationDegrees = 0
+                        selectedFileForAction = null
+                    }
+                )
+
+                // Action 2: Rename PDF
+                PdfActionOptionItem(
+                    icon = Icons.Default.Edit,
+                    title = if (isBn) "ফাইলের নাম পরিবর্তন (রিনেম)" else "Rename File",
+                    color = themeColors.buttonEqualBg,
+                    textColor = themeColors.displayText,
+                    onClick = {
+                        val baseName = activeItem.name.removeSuffix(".pdf").removeSuffix(".PDF")
+                        newRenameText = baseName
+                        fileToRename = activeItem
+                        selectedFileForAction = null
+                    }
+                )
+
+                // Action 3: Toggle Favorite
+                PdfActionOptionItem(
+                    icon = if (isItemFav) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                    title = if (isItemFav) {
+                        if (isBn) "প্রিয় তালিকা থেকে বাদ দিন" else "Remove from Favorites"
+                    } else {
+                        if (isBn) "প্রিয় তালিকায় যোগ করুন" else "Add to Favorites"
+                    },
+                    color = if (isItemFav) Color(0xFFEF4444) else themeColors.displayText.copy(alpha = 0.8f),
+                    textColor = themeColors.displayText,
+                    onClick = {
+                        val nowFav = toggleFavoritePdf(context, activeItem)
+                        selectedFileForAction = null
+                        coroutineScope.launch {
+                            val favs = getFavoritePdfs(context)
+                            favoritePdfList = favs
+                        }
+                        android.widget.Toast.makeText(
+                            context,
+                            if (nowFav) {
+                                if (isBn) "প্রিয় তালিকায় যুক্ত করা হয়েছে" else "Added to favorites"
+                            } else {
+                                if (isBn) "প্রিয় তালিকা থেকে বাদ দেওয়া হয়েছে" else "Removed from favorites"
+                            },
+                            android.widget.Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                )
+
+                // Action 4: Share PDF
+                PdfActionOptionItem(
+                    icon = Icons.Default.Share,
+                    title = if (isBn) "পিডিএফ শেয়ার করুন" else "Share PDF",
+                    color = themeColors.buttonEqualBg,
+                    textColor = themeColors.displayText,
+                    onClick = {
+                        sharePdfItem(context, activeItem)
+                        selectedFileForAction = null
+                    }
+                )
+
+                // Action 5: Print PDF
+                PdfActionOptionItem(
+                    icon = Icons.Default.Print,
+                    title = if (isBn) "প্রিন্ট করুন" else "Print PDF",
+                    color = themeColors.buttonEqualBg,
+                    textColor = themeColors.displayText,
+                    onClick = {
+                        printPdfDocument(context, activeItem)
+                        selectedFileForAction = null
+                    }
+                )
+
+                // Action 6: Delete PDF
+                PdfActionOptionItem(
+                    icon = Icons.Default.Delete,
+                    title = if (isBn) "ডিলেট করুন" else "Delete File",
+                    color = Color(0xFFEF4444),
+                    textColor = Color(0xFFEF4444),
+                    onClick = {
+                        fileToDelete = activeItem
+                        selectedFileForAction = null
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(18.dp))
+            }
+        }
+    }
+
+    // 5. Rename Dialog
+    if (fileToRename != null) {
+        val targetItem = fileToRename!!
+        AlertDialog(
+            onDismissRequest = { fileToRename = null },
+            containerColor = themeColors.cardBg,
+            title = {
+                Text(
+                    text = if (isBn) "ফাইলের নাম পরিবর্তন করুন" else "Rename PDF File",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = themeColors.displayText
+                )
+            },
+            text = {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = if (isBn) "নতুন নাম লিখুন (.pdf স্বয়ংক্রিয়ভাবে যুক্ত হবে):" else "Enter new name (.pdf will be added automatically):",
+                        fontSize = 12.sp,
+                        color = themeColors.displayText.copy(alpha = 0.7f),
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    OutlinedTextField(
+                        value = newRenameText,
+                        onValueChange = { newRenameText = it },
+                        singleLine = true,
+                        placeholder = { Text(if (isBn) "ফাইলের নাম..." else "File name...") },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = themeColors.buttonEqualBg,
+                            focusedTextColor = themeColors.displayText,
+                            unfocusedTextColor = themeColors.displayText,
+                            cursorColor = themeColors.buttonEqualBg
+                        )
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val trimmed = newRenameText.trim()
+                        if (trimmed.isNotBlank()) {
+                            val success = renamePdfFileItem(context, targetItem, trimmed)
+                            if (success) {
+                                val newFullName = if (trimmed.endsWith(".pdf", ignoreCase = true)) trimmed else "$trimmed.pdf"
+                                pdfFileList = pdfFileList.map {
+                                    if (it.path == targetItem.path || it.uri == targetItem.uri) {
+                                        it.copy(name = newFullName)
+                                    } else it
+                                }
+                                coroutineScope.launch {
+                                    val favs = getFavoritePdfs(context)
+                                    val recents = getRecentPdfHistory(context)
+                                    favoritePdfList = favs
+                                    historyPdfList = recents
+                                }
+                                android.widget.Toast.makeText(
+                                    context,
+                                    if (isBn) "ফাইলের নাম সফলভাবে পরিবর্তন করা হয়েছে" else "File renamed successfully",
+                                    android.widget.Toast.LENGTH_SHORT
+                                ).show()
+                            } else {
+                                android.widget.Toast.makeText(
+                                    context,
+                                    if (isBn) "ফাইলের নাম পরিবর্তন করা যায়নি (স্টোরেজ অনুমতি চেক করুন)" else "Failed to rename file",
+                                    android.widget.Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                        fileToRename = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg, contentColor = Color.White)
+                ) {
+                    Text(if (isBn) "সংরক্ষণ করুন" else "Save")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { fileToRename = null }) {
+                    Text(if (isBn) "বাতিল" else "Cancel", color = themeColors.displayText)
+                }
+            }
+        )
+    }
+
+    // 6. Delete Confirmation Dialog
+    if (fileToDelete != null) {
+        val targetItem = fileToDelete!!
+        AlertDialog(
+            onDismissRequest = { fileToDelete = null },
+            containerColor = themeColors.cardBg,
+            title = {
+                Text(
+                    text = if (isBn) "ফাইল ডিলেট নিশ্চিতকরণ" else "Confirm Delete",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFEF4444)
+                )
+            },
+            text = {
+                Text(
+                    text = if (isBn)
+                        "আপনি কি নিশ্চিত যে '${targetItem.name}' ফাইলটি মুছে ফেলতে চান? এটি ডিভাইস এবং পড়ার ইতিহাস থেকে মুছে যাবে।"
+                    else
+                        "Are you sure you want to delete '${targetItem.name}'? This will remove the file from storage and history.",
+                    fontSize = 13.sp,
+                    color = themeColors.displayText
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val deleted = removePdfFromStorageAndTracking(context, targetItem)
+                        pdfFileList = pdfFileList.filterNot { it.path == targetItem.path || it.uri == targetItem.uri }
+                        coroutineScope.launch {
+                            val favs = getFavoritePdfs(context)
+                            val recents = getRecentPdfHistory(context)
+                            favoritePdfList = favs
+                            historyPdfList = recents
+                        }
+                        android.widget.Toast.makeText(
+                            context,
+                            if (deleted) {
+                                if (isBn) "ফাইলটি সফলভাবে মুছে ফেলা হয়েছে" else "File deleted successfully"
+                            } else {
+                                if (isBn) "তালিকা থেকে সরিয়ে দেওয়া হয়েছে" else "Removed from list"
+                            },
+                            android.widget.Toast.LENGTH_SHORT
+                        ).show()
+                        fileToDelete = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444), contentColor = Color.White)
+                ) {
+                    Text(if (isBn) "ডিলেট করুন" else "Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { fileToDelete = null }) {
+                    Text(if (isBn) "বাতিল" else "Cancel", color = themeColors.displayText)
+                }
+            }
+        )
+    }
+
+    // 7. Delete Currently Viewed PDF in Reader
+    if (showDeleteCurrentFileDialog && pdfUri != null) {
+        val currentFileName = fileName.ifBlank { "PDF Document" }
+        AlertDialog(
+            onDismissRequest = { showDeleteCurrentFileDialog = false },
+            containerColor = themeColors.cardBg,
+            title = {
+                Text(
+                    text = if (isBn) "ফাইল ডিলেট নিশ্চিতকরণ" else "Confirm Delete",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFEF4444)
+                )
+            },
+            text = {
+                Text(
+                    text = if (isBn)
+                        "আপনি কি নিশ্চিত যে '$currentFileName' ফাইলটি মুছে ফেলতে চান? এটি ডিভাইস এবং পড়ার ইতিহাস থেকে মুছে যাবে।"
+                    else
+                        "Are you sure you want to delete '$currentFileName'? This will remove the file from storage and history.",
+                    fontSize = 13.sp,
+                    color = themeColors.displayText
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val currentItem = PdfFileItem(
+                            name = fileName,
+                            uri = pdfUri!!,
+                            sizeBytes = fileSizeBytes,
+                            dateModifiedMs = fileLastModifiedMs,
+                            path = filePath
+                        )
+                        val deleted = removePdfFromStorageAndTracking(context, currentItem)
+                        pdfFileList = pdfFileList.filterNot { it.path == currentItem.path || it.uri == currentItem.uri }
+                        coroutineScope.launch {
+                            val favs = getFavoritePdfs(context)
+                            val recents = getRecentPdfHistory(context)
+                            favoritePdfList = favs
+                            historyPdfList = recents
+                        }
+                        android.widget.Toast.makeText(
+                            context,
+                            if (deleted) {
+                                if (isBn) "ফাইলটি সফলভাবে মুছে ফেলা হয়েছে" else "File deleted successfully"
+                            } else {
+                                if (isBn) "তালিকা থেকে সরিয়ে দেওয়া হয়েছে" else "Removed from list"
+                            },
+                            android.widget.Toast.LENGTH_SHORT
+                        ).show()
+
+                        // Close reader
+                        pdfUri = null
+                        pageCount = 0
+                        isPdfLoading = false
+                        isSearchActive = false
+                        pdfSearchQuery = ""
+                        showDeleteCurrentFileDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444), contentColor = Color.White)
+                ) {
+                    Text(if (isBn) "ডিলেট করুন" else "Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteCurrentFileDialog = false }) {
+                    Text(if (isBn) "বাতিল" else "Cancel", color = themeColors.displayText)
                 }
             }
         )
@@ -1770,16 +2733,17 @@ private fun renderPdfPageBitmap(
     rotationDegrees: Int,
     density: Float
 ): Bitmap? {
+    var pfd: ParcelFileDescriptor? = null
+    var renderer: PdfRenderer? = null
+    var page: PdfRenderer.Page? = null
     return try {
-        val pfd = openPdfParcelFileDescriptor(context, uri) ?: return null
-        val renderer = PdfRenderer(pfd)
+        pfd = openPdfParcelFileDescriptor(context, uri) ?: return null
+        renderer = PdfRenderer(pfd)
         val safeIdx = pageIndex.coerceIn(0, max(0, renderer.pageCount - 1))
         if (safeIdx !in 0 until renderer.pageCount) {
-            renderer.close()
-            pfd.close()
             return null
         }
-        val page = renderer.openPage(safeIdx)
+        page = renderer.openPage(safeIdx)
         val renderFactor = (density * 1.5f).coerceIn(2.0f, 3.5f)
         val targetWidth = (page.width * renderFactor).toInt().coerceIn(400, 3000)
         val targetHeight = (page.height * renderFactor).toInt().coerceIn(400, 4200)
@@ -1788,9 +2752,12 @@ private fun renderPdfPageBitmap(
         val canvas = Canvas(rawBmp)
         canvas.drawColor(AndroidColor.WHITE)
         page.render(rawBmp, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-        page.close()
-        renderer.close()
-        pfd.close()
+        try { page.close() } catch (_: Exception) {}
+        page = null
+        try { renderer.close() } catch (_: Exception) {}
+        renderer = null
+        try { pfd.close() } catch (_: Exception) {}
+        pfd = null
 
         val rotatedBmp = if (rotationDegrees % 360 != 0) {
             val matrix = Matrix().apply { postRotate(rotationDegrees.toFloat()) }
@@ -1823,6 +2790,10 @@ private fun renderPdfPageBitmap(
     } catch (e: Exception) {
         e.printStackTrace()
         null
+    } finally {
+        try { page?.close() } catch (_: Exception) {}
+        try { renderer?.close() } catch (_: Exception) {}
+        try { pfd?.close() } catch (_: Exception) {}
     }
 }
 
@@ -1846,6 +2817,43 @@ private fun DetailRow(label: String, value: String, themeColors: CalculatorTheme
             color = themeColors.displayText.copy(alpha = 0.08f),
             modifier = Modifier.padding(top = 6.dp)
         )
+    }
+}
+
+@Composable
+private fun PdfActionOptionItem(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    color: Color,
+    textColor: Color,
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        color = Color.Transparent,
+        shape = RoundedCornerShape(10.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 11.dp, horizontal = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = color,
+                modifier = Modifier.size(22.dp)
+            )
+            Spacer(modifier = Modifier.width(14.dp))
+            Text(
+                text = title,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = textColor
+            )
+        }
     }
 }
 
@@ -2999,10 +4007,453 @@ private fun openPdfParcelFileDescriptor(context: Context, uri: Uri): ParcelFileD
         val path = uri.path
         val file = if (!path.isNullOrEmpty()) File(path) else null
         if (file != null && file.exists()) {
-            ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
+            try {
+                ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
+            } catch (_: Exception) {
+                null
+            }
         } else {
             null
         }
+    }
+}
+
+internal fun doesPdfFileExist(context: Context, uri: Uri, path: String = ""): Boolean {
+    return try {
+        if (path.isNotBlank()) {
+            val f = File(path)
+            if (f.exists() && f.length() > 0) return true
+        }
+        if (uri.scheme == "file") {
+            val f = uri.path?.let { File(it) }
+            if (f != null && f.exists() && f.length() > 0) return true
+        }
+        context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
+            pfd.statSize > 0
+        } ?: false
+    } catch (_: Exception) {
+        false
+    }
+}
+
+internal suspend fun loadPdfDocument(context: Context, uri: Uri): PdfOpenResult = withContext(Dispatchers.IO) {
+    var pfd: ParcelFileDescriptor? = null
+    var renderer: PdfRenderer? = null
+    try {
+        pfd = openPdfParcelFileDescriptor(context, uri)
+        if (pfd == null) {
+            return@withContext PdfOpenResult.Error(
+                reasonBn = "ফাইলটি খুঁজে পাওয়া যায়নি বা স্টোরেজ থেকে মুছে ফেলা হয়েছে।",
+                reasonEn = "File not found or has been deleted from storage."
+            )
+        }
+        val fileSize = try { pfd.statSize } catch (_: Exception) { -1L }
+        if (fileSize == 0L) {
+            return@withContext PdfOpenResult.Error(
+                reasonBn = "ফাইলটি সম্পূর্ণ খালি (০ বাইট) অথবা ক্ষতিগ্রস্ত।",
+                reasonEn = "The file is completely empty (0 bytes) or corrupted."
+            )
+        }
+        try {
+            renderer = PdfRenderer(pfd)
+        } catch (se: SecurityException) {
+            return@withContext PdfOpenResult.Error(
+                reasonBn = "ফাইলটি পাসওয়ার্ড দ্বারা সুরক্ষিত (Password Protected), যা বর্তমানে সমর্থিত নয়।",
+                reasonEn = "The file is password protected, which is currently not supported."
+            )
+        } catch (ioe: IOException) {
+            return@withContext PdfOpenResult.Error(
+                reasonBn = "ফাইলটি ক্ষতিগ্রস্ত (Corrupted) বা এটি কোনো বৈধ PDF নথি নয়।",
+                reasonEn = "The file is corrupted or not a valid PDF document."
+            )
+        } catch (e: Exception) {
+            return@withContext PdfOpenResult.Error(
+                reasonBn = "ফাইলটি লোড করতে সমস্যা হয়েছে: ${e.localizedMessage ?: "অজানা ত্রুটি"}",
+                reasonEn = "Failed to load document: ${e.localizedMessage ?: "Unknown error"}"
+            )
+        }
+        val count = renderer.pageCount
+        if (count <= 0) {
+            return@withContext PdfOpenResult.Error(
+                reasonBn = "PDF নথিতে কোনো পাতা পাওয়া যায়নি।",
+                reasonEn = "No pages found in this PDF document."
+            )
+        }
+        try { renderer.close() } catch (_: Exception) {}
+        renderer = null
+        try { pfd.close() } catch (_: Exception) {}
+        pfd = null
+
+        val textList = try {
+            extractPdfTextByPage(context, uri, count)
+        } catch (_: Exception) {
+            emptyList()
+        }
+
+        PdfOpenResult.Success(pageCount = count, textPages = textList)
+    } catch (e: Exception) {
+        PdfOpenResult.Error(
+            reasonBn = "ফাইলটি ওপেন করতে ব্যর্থ: ${e.localizedMessage ?: "ক্ষতিগ্রস্ত ফাইল"}",
+            reasonEn = "Failed to open file: ${e.localizedMessage ?: "Corrupted file"}"
+        )
+    } finally {
+        try { renderer?.close() } catch (_: Exception) {}
+        try { pfd?.close() } catch (_: Exception) {}
+    }
+}
+
+internal fun getFavoritePdfs(context: Context): List<PdfFileItem> {
+    val list = mutableListOf<PdfFileItem>()
+    try {
+        val prefs = context.getSharedPreferences("pdf_reader_prefs", Context.MODE_PRIVATE)
+        val jsonString = prefs.getString("favorite_pdfs", "[]") ?: "[]"
+        val arr = JSONArray(jsonString)
+        for (i in 0 until arr.length()) {
+            val obj = arr.getJSONObject(i)
+            val path = obj.optString("path", "")
+            val uriStr = obj.optString("uri", "")
+            val uri = if (uriStr.isNotEmpty()) Uri.parse(uriStr) else if (path.isNotEmpty()) Uri.fromFile(File(path)) else null
+            if (uri != null && doesPdfFileExist(context, uri, path)) {
+                list.add(
+                    PdfFileItem(
+                        name = obj.optString("name", "Document.pdf"),
+                        uri = uri,
+                        sizeBytes = obj.optLong("size", 0L),
+                        dateModifiedMs = obj.optLong("date", 0L),
+                        path = path
+                    )
+                )
+            }
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+    return list
+}
+
+internal fun toggleFavoritePdf(context: Context, item: PdfFileItem): Boolean {
+    try {
+        val prefs = context.getSharedPreferences("pdf_reader_prefs", Context.MODE_PRIVATE)
+        val jsonString = prefs.getString("favorite_pdfs", "[]") ?: "[]"
+        val arr = JSONArray(jsonString)
+        val targetKey = if (item.path.isNotBlank()) item.path else item.uri.toString()
+        var foundIndex = -1
+        for (i in 0 until arr.length()) {
+            val obj = arr.getJSONObject(i)
+            val key = if (obj.optString("path", "").isNotBlank()) obj.optString("path") else obj.optString("uri")
+            if (key == targetKey) {
+                foundIndex = i
+                break
+            }
+        }
+        val isNowFavorite: Boolean
+        val newArr = JSONArray()
+        if (foundIndex != -1) {
+            for (i in 0 until arr.length()) {
+                if (i != foundIndex) newArr.put(arr.getJSONObject(i))
+            }
+            isNowFavorite = false
+        } else {
+            val newObj = JSONObject().apply {
+                put("name", item.name)
+                put("path", item.path)
+                put("uri", item.uri.toString())
+                put("size", item.sizeBytes)
+                put("date", item.dateModifiedMs)
+            }
+            newArr.put(newObj)
+            for (i in 0 until arr.length()) {
+                newArr.put(arr.getJSONObject(i))
+            }
+            isNowFavorite = true
+        }
+        prefs.edit().putString("favorite_pdfs", newArr.toString()).apply()
+        return isNowFavorite
+    } catch (e: Exception) {
+        e.printStackTrace()
+        return false
+    }
+}
+
+internal fun recordPdfToRecentHistory(context: Context, item: PdfFileItem) {
+    try {
+        val prefs = context.getSharedPreferences("pdf_reader_prefs", Context.MODE_PRIVATE)
+        val jsonString = prefs.getString("recent_opened_pdfs", "[]") ?: "[]"
+        val arr = JSONArray(jsonString)
+        val targetKey = if (item.path.isNotBlank()) item.path else item.uri.toString()
+        val newArr = JSONArray()
+        val newObj = JSONObject().apply {
+            put("name", item.name)
+            put("path", item.path)
+            put("uri", item.uri.toString())
+            put("size", item.sizeBytes)
+            put("date", item.dateModifiedMs)
+            put("lastOpenedMs", System.currentTimeMillis())
+        }
+        newArr.put(newObj)
+        for (i in 0 until arr.length()) {
+            val obj = arr.getJSONObject(i)
+            val key = if (obj.optString("path", "").isNotBlank()) obj.optString("path") else obj.optString("uri")
+            if (key != targetKey && newArr.length() < 60) {
+                newArr.put(obj)
+            }
+        }
+        prefs.edit().putString("recent_opened_pdfs", newArr.toString()).apply()
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+}
+
+internal fun getRecentPdfHistory(context: Context): List<PdfFileItem> {
+    val list = mutableListOf<PdfFileItem>()
+    try {
+        val prefs = context.getSharedPreferences("pdf_reader_prefs", Context.MODE_PRIVATE)
+        val jsonString = prefs.getString("recent_opened_pdfs", "[]") ?: "[]"
+        val arr = JSONArray(jsonString)
+        for (i in 0 until arr.length()) {
+            val obj = arr.getJSONObject(i)
+            val path = obj.optString("path", "")
+            val uriStr = obj.optString("uri", "")
+            val uri = if (uriStr.isNotEmpty()) Uri.parse(uriStr) else if (path.isNotEmpty()) Uri.fromFile(File(path)) else null
+            if (uri != null && doesPdfFileExist(context, uri, path)) {
+                list.add(
+                    PdfFileItem(
+                        name = obj.optString("name", "Document.pdf"),
+                        uri = uri,
+                        sizeBytes = obj.optLong("size", 0L),
+                        dateModifiedMs = obj.optLong("lastOpenedMs", obj.optLong("date", 0L)),
+                        path = path
+                    )
+                )
+            }
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+    return list
+}
+
+internal fun printPdfDocument(context: Context, uri: Uri, fileName: String) {
+    try {
+        val printManager = context.getSystemService(Context.PRINT_SERVICE) as? PrintManager
+        if (printManager != null) {
+            val cleanTitle = fileName.ifBlank { "PDF_Document" }.replace(".pdf", "")
+            printManager.print(cleanTitle, object : PrintDocumentAdapter() {
+                override fun onLayout(
+                    oldAttributes: PrintAttributes?,
+                    newAttributes: PrintAttributes?,
+                    cancellationSignal: CancellationSignal?,
+                    callback: LayoutResultCallback?,
+                    extras: android.os.Bundle?
+                ) {
+                    if (cancellationSignal?.isCanceled == true) {
+                        callback?.onLayoutCancelled()
+                        return
+                    }
+                    val info = PrintDocumentInfo.Builder("$cleanTitle.pdf")
+                        .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
+                        .build()
+                    callback?.onLayoutFinished(info, true)
+                }
+
+                override fun onWrite(
+                    pages: Array<out PageRange>?,
+                    destination: ParcelFileDescriptor?,
+                    cancellationSignal: CancellationSignal?,
+                    callback: WriteResultCallback?
+                ) {
+                    var inPfd: ParcelFileDescriptor? = null
+                    try {
+                        inPfd = openPdfParcelFileDescriptor(context, uri)
+                        if (inPfd == null || destination == null) {
+                            callback?.onWriteFailed("Cannot access document for printing")
+                            return
+                        }
+                        val inStream = FileInputStream(inPfd.fileDescriptor)
+                        val outStream = FileOutputStream(destination.fileDescriptor)
+                        val buffer = ByteArray(16384)
+                        var read: Int
+                        while (inStream.read(buffer).also { read = it } >= 0) {
+                            if (cancellationSignal?.isCanceled == true) {
+                                callback?.onWriteCancelled()
+                                inStream.close()
+                                outStream.close()
+                                return
+                            }
+                            outStream.write(buffer, 0, read)
+                        }
+                        inStream.close()
+                        outStream.close()
+                        callback?.onWriteFinished(arrayOf(PageRange.ALL_PAGES))
+                    } catch (e: Exception) {
+                        callback?.onWriteFailed(e.message)
+                    } finally {
+                        try { inPfd?.close() } catch (_: Exception) {}
+                    }
+                }
+            }, null)
+        } else {
+            Toast.makeText(context, "প্রিন্ট সেবা ডিভাইসে উপলব্ধ নয়", Toast.LENGTH_SHORT).show()
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
+        Toast.makeText(context, "প্রিন্ট করতে সমস্যা হয়েছে: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+    }
+}
+
+internal fun printPdfDocument(context: Context, item: PdfFileItem) {
+    printPdfDocument(context, item.uri, item.name)
+}
+
+internal fun sharePdfItem(context: Context, item: PdfFileItem) {
+    try {
+        val shareUri = if (item.path.isNotEmpty()) {
+            val f = File(item.path)
+            if (f.exists()) {
+                try {
+                    FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", f)
+                } catch (_: Exception) {
+                    item.uri
+                }
+            } else {
+                item.uri
+            }
+        } else {
+            item.uri
+        }
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "application/pdf"
+            putExtra(Intent.EXTRA_STREAM, shareUri)
+            putExtra(Intent.EXTRA_SUBJECT, item.name)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        context.startActivity(Intent.createChooser(intent, "পিডিএফ ফাইল শেয়ার করুন"))
+    } catch (e: Exception) {
+        e.printStackTrace()
+        Toast.makeText(context, "শেয়ার করতে সমস্যা হয়েছে", Toast.LENGTH_SHORT).show()
+    }
+}
+
+private fun removeFromPreferences(context: Context, prefKey: String, item: PdfFileItem) {
+    try {
+        val prefs = context.getSharedPreferences("pdf_reader_prefs", Context.MODE_PRIVATE)
+        val jsonString = prefs.getString(prefKey, "[]") ?: "[]"
+        val arr = JSONArray(jsonString)
+        val targetKey = if (item.path.isNotBlank()) item.path else item.uri.toString()
+        val newArr = JSONArray()
+        for (i in 0 until arr.length()) {
+            val obj = arr.getJSONObject(i)
+            val key = if (obj.optString("path", "").isNotBlank()) obj.optString("path") else obj.optString("uri")
+            if (key != targetKey) {
+                newArr.put(obj)
+            }
+        }
+        prefs.edit().putString(prefKey, newArr.toString()).apply()
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+}
+
+private fun updateNameInPreferences(context: Context, item: PdfFileItem, newName: String, newPath: String) {
+    listOf("favorite_pdfs", "recent_opened_pdfs").forEach { prefKey ->
+        try {
+            val prefs = context.getSharedPreferences("pdf_reader_prefs", Context.MODE_PRIVATE)
+            val jsonString = prefs.getString(prefKey, "[]") ?: "[]"
+            val arr = JSONArray(jsonString)
+            val targetKey = if (item.path.isNotBlank()) item.path else item.uri.toString()
+            val newArr = JSONArray()
+            for (i in 0 until arr.length()) {
+                val obj = arr.getJSONObject(i)
+                val key = if (obj.optString("path", "").isNotBlank()) obj.optString("path") else obj.optString("uri")
+                if (key == targetKey) {
+                    obj.put("name", newName)
+                    if (newPath.isNotBlank()) {
+                        obj.put("path", newPath)
+                    }
+                }
+                newArr.put(obj)
+            }
+            prefs.edit().putString(prefKey, newArr.toString()).apply()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+}
+
+internal fun removePdfFromStorageAndTracking(context: Context, item: PdfFileItem): Boolean {
+    var deleted = false
+    try {
+        if (item.path.isNotBlank()) {
+            val f = File(item.path)
+            if (f.exists()) {
+                deleted = f.delete()
+            }
+        }
+        if (!deleted) {
+            try {
+                val rows = context.contentResolver.delete(item.uri, null, null)
+                if (rows > 0) deleted = true
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+    removeFromPreferences(context, "favorite_pdfs", item)
+    removeFromPreferences(context, "recent_opened_pdfs", item)
+    return deleted || true
+}
+
+internal fun renamePdfFileItem(context: Context, item: PdfFileItem, newNameWithoutExt: String): Boolean {
+    val cleanName = if (newNameWithoutExt.endsWith(".pdf", ignoreCase = true)) newNameWithoutExt else "$newNameWithoutExt.pdf"
+    try {
+        if (item.path.isNotBlank()) {
+            val currentFile = File(item.path)
+            if (currentFile.exists()) {
+                val newFile = File(currentFile.parentFile, cleanName)
+                if (currentFile.renameTo(newFile)) {
+                    updateNameInPreferences(context, item, cleanName, newFile.absolutePath)
+                    return true
+                }
+            }
+        }
+        val values = android.content.ContentValues().apply {
+            put(MediaStore.Files.FileColumns.DISPLAY_NAME, cleanName)
+        }
+        val rows = context.contentResolver.update(item.uri, values, null, null)
+        if (rows > 0) {
+            updateNameInPreferences(context, item, cleanName, "")
+            return true
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+    return false
+}
+
+internal fun getPdfUniqueKey(uri: Uri, path: String, fileName: String): String {
+    val key = if (path.isNotBlank()) path else "${uri}_$fileName"
+    return (key.hashCode().toLong() and 0xFFFFFFFFL).toString(16)
+}
+
+internal fun saveLastReadPdfPage(context: Context, key: String, pageIndex: Int) {
+    if (key.isBlank() || pageIndex < 0) return
+    try {
+        val prefs = context.getSharedPreferences("pdf_reader_prefs", Context.MODE_PRIVATE)
+        prefs.edit().putInt("last_page_$key", pageIndex).apply()
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+}
+
+internal fun getLastReadPdfPage(context: Context, key: String): Int {
+    if (key.isBlank()) return 0
+    return try {
+        val prefs = context.getSharedPreferences("pdf_reader_prefs", Context.MODE_PRIVATE)
+        prefs.getInt("last_page_$key", 0)
+    } catch (e: Exception) {
+        0
     }
 }
 
@@ -3623,44 +5074,78 @@ private fun extractTextFromContentStream(decompressedText: String): String {
 
 private suspend fun extractPdfTextByPage(context: Context, pdfUri: Uri, pageCount: Int): List<String> = withContext(Dispatchers.IO) {
     val results = ArrayList<String>(pageCount)
+    var successWithPdfBox = false
+
+    // Primary High-Accuracy Extractor: PDFBox Android
     try {
+        try {
+            com.tom_roush.pdfbox.android.PDFBoxResourceLoader.init(context.applicationContext)
+        } catch (_: Exception) {}
+
         val inputStream = context.contentResolver.openInputStream(pdfUri)
-        val bytes = inputStream?.readBytes()
-        inputStream?.close()
-        if (bytes != null) {
-            val objects = parsePdfObjects(bytes)
-            val pageObjects = objects.values.filter { it.dict.contains("/Page") && !it.dict.contains("/Pages") }
-            
-            if (pageObjects.isNotEmpty()) {
-                val sortedPages = pageObjects.sortedBy { it.id }
-                for (p in 0 until pageCount) {
-                    val pageObj = sortedPages.getOrNull(p)
-                    if (pageObj != null) {
-                        val contentIds = extractContentsIds(pageObj.dict)
-                        val sbPageText = StringBuilder()
-                        for (cid in contentIds) {
-                            val streamObj = objects[cid]
-                            if (streamObj != null && streamObj.streamBytes != null) {
-                                val decompressed = decompressFlateDecode(streamObj.streamBytes)
-                                if (decompressed != null) {
-                                    val textStr = String(decompressed, Charsets.UTF_8)
-                                    val pageTxt = extractTextFromContentStream(textStr)
-                                    sbPageText.append(pageTxt).append(" ")
-                                } else {
-                                    val textStr = String(streamObj.streamBytes, Charsets.ISO_8859_1)
-                                    val pageTxt = extractTextFromContentStream(textStr)
-                                    sbPageText.append(pageTxt).append(" ")
-                                }
-                            }
-                        }
-                        results.add(sbPageText.toString().trim())
-                    }
+        if (inputStream != null) {
+            val pdDoc = com.tom_roush.pdfbox.pdmodel.PDDocument.load(inputStream)
+            pdDoc.use { doc ->
+                val actualPageCount = doc.numberOfPages
+                val stripper = com.tom_roush.pdfbox.text.PDFTextStripper()
+                for (p in 1..actualPageCount) {
+                    stripper.startPage = p
+                    stripper.endPage = p
+                    val text = stripper.getText(doc)?.trim() ?: ""
+                    results.add(text)
+                }
+                if (results.any { it.isNotBlank() }) {
+                    successWithPdfBox = true
                 }
             }
         }
     } catch (e: Exception) {
         e.printStackTrace()
     }
+
+    // Secondary / Fallback Extractor: Direct Byte Object Parsing
+    if (!successWithPdfBox || results.isEmpty()) {
+        results.clear()
+        try {
+            val inputStream = context.contentResolver.openInputStream(pdfUri)
+            val bytes = inputStream?.readBytes()
+            inputStream?.close()
+            if (bytes != null) {
+                val objects = parsePdfObjects(bytes)
+                val pageObjects = objects.values.filter { it.dict.contains("/Page") && !it.dict.contains("/Pages") }
+                
+                if (pageObjects.isNotEmpty()) {
+                    val sortedPages = pageObjects.sortedBy { it.id }
+                    for (p in 0 until pageCount) {
+                        val pageObj = sortedPages.getOrNull(p)
+                        if (pageObj != null) {
+                            val contentIds = extractContentsIds(pageObj.dict)
+                            val sbPageText = StringBuilder()
+                            for (cid in contentIds) {
+                                val streamObj = objects[cid]
+                                if (streamObj != null && streamObj.streamBytes != null) {
+                                    val decompressed = decompressFlateDecode(streamObj.streamBytes)
+                                    if (decompressed != null) {
+                                        val textStr = String(decompressed, Charsets.UTF_8)
+                                        val pageTxt = extractTextFromContentStream(textStr)
+                                        sbPageText.append(pageTxt).append(" ")
+                                    } else {
+                                        val textStr = String(streamObj.streamBytes, Charsets.ISO_8859_1)
+                                        val pageTxt = extractTextFromContentStream(textStr)
+                                        sbPageText.append(pageTxt).append(" ")
+                                    }
+                                }
+                            }
+                            results.add(sbPageText.toString().trim())
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
     while (results.size < pageCount) {
         results.add("")
     }

@@ -157,6 +157,7 @@ dependencies {
   implementation(libs.androidx.media3.exoplayer)
   implementation(libs.androidx.media3.ui)
   implementation("androidx.media:media:1.7.0")
+  implementation("com.tom-roush:pdfbox-android:2.0.27.0")
   implementation(libs.androidx.work.runtime.ktx)
   implementation(libs.adhan)
   implementation(libs.coil.compose)

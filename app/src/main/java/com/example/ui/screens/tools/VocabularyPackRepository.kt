@@ -510,12 +510,18 @@ object ExpandedThesaurusEngine {
         return str.any { it in '\u0980'..'\u09FF' }
     }
 
+    private val JUNK_WORDS = setOf(
+        "concept", "aspect", "subject", "perform", "do", "execute", "item", "entity",
+        "excellent", "notable", "distinctive", "ordinary", "poor", "opposite", "stop", "cease", "none", "thing"
+    )
+
     fun cleanEnglishList(list: List<String>): List<String> {
         return list
             .map { it.trim() }
             .filter { str ->
                 str.isNotBlank() &&
                         !isBengali(str) &&
+                        !JUNK_WORDS.contains(str.lowercase()) &&
                         str.length < 40 &&
                         !str.startsWith("In a ", ignoreCase = true) &&
                         !str.startsWith("With ", ignoreCase = true) &&

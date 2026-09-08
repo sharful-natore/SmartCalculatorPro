@@ -35,30 +35,8 @@ object VocabularyHighFrequencyDataset {
             finalExampleEn = exampleEn
             finalExampleBn = exampleBn
         } else {
-            // Clean up meaning for sentence integration
-            val cleanMeaning = meaningBn.split(",").firstOrNull()?.trim() ?: meaningBn
-            when (pos.lowercase().trim()) {
-                "noun" -> {
-                    finalExampleEn = "Having a clear sense of $wordLower is important in our daily lives."
-                    finalExampleBn = "আমাদের দৈনন্দিন জীবনে $cleanMeaning এর একটি স্পষ্ট ধারণা থাকা গুরুত্বপূর্ণ।"
-                }
-                "verb" -> {
-                    finalExampleEn = "We should try to $wordLower whenever we face any difficult challenge."
-                    finalExampleBn = "যখনই আমরা কোনো কঠিন চ্যালেঞ্জের মুখোমুখি হই, তখনই আমাদের $cleanMeaning করার চেষ্টা করা উচিত।"
-                }
-                "adj", "adjective" -> {
-                    finalExampleEn = "She always tries to maintain a very $wordLower approach in her professional work."
-                    finalExampleBn = "তিনি সর্বদা তার পেশাগত কাজে অত্যন্ত $cleanMeaning দৃষ্টিভঙ্গি বজায় রাখার চেষ্টা করেন।"
-                }
-                "adv", "adverb" -> {
-                    finalExampleEn = "He managed to complete the task $wordLower without any major mistakes."
-                    finalExampleBn = "তিনি কোনো বড় ভুল ছাড়াই অত্যন্ত $cleanMeaning কাজটি সম্পন্ন করতে পেরেছেন।"
-                }
-                else -> {
-                    finalExampleEn = "The professor explained the significance of $wordLower in a very simple manner."
-                    finalExampleBn = "অধ্যাপক অত্যন্ত সহজ উপায়ে $cleanMeaning শব্দটির গুরুত্ব ব্যাখ্যা করেছিলেন।"
-                }
-            }
+            finalExampleEn = ""
+            finalExampleBn = ""
         }
         return VocabWord(
             id = id,
@@ -795,40 +773,40 @@ object VocabularyHighFrequencyDataset {
             Triple("Breathtaking", "Adj", "চোখ জুড়ানো ও শ্বাসরুদ্ধকর সুন্দর"),
             Triple("Brisk", "Adj", "দ্রুত ও প্রাণবন্ত গতিসম্পন্ন হাঁটা"),
             Triple("Bystander", "Noun", "পাশ থেকে দৃশ্য অবলোকনকারী পথচারী"),
-            Triple("Ambiguous", "Verb", "অস্পষ্ট বা দ্ব্যর্থবোধক"),
-            Triple("Amiable", "Verb", "বন্ধুমভাবাপন্ন"),
-            Triple("Amoral", "Verb", "নীতিহীন বা নীতিবহির্ভূত"),
+            Triple("Ambiguous", "Adj", "অস্পষ্ট বা দ্ব্যর্থবোধক"),
+            Triple("Amiable", "Adj", "বন্ধুমভাবাপন্ন"),
+            Triple("Amoral", "Adj", "নীতিহীন বা নীতিবহির্ভূত"),
             Triple("Amplify", "Verb", "বর্ধিত করা"),
-            Triple("Ancestry", "Verb", "বংশধর বা পূর্বপুরুষ"),
+            Triple("Ancestry", "Noun", "বংশধর বা পূর্বপুরুষ"),
             Triple("Annex", "Verb", "সংযুক্ত করা"),
             Triple("Annotate", "Verb", "টীকাভাষ্য যোগ করা"),
             Triple("Annul", "Verb", "বাতিল করা"),
-            Triple("Anonymous", "Verb", "বেনামী"),
-            Triple("Antagonism", "Verb", "শত্রুতা বা বিরোধিতা"),
-            Triple("Antagonist", "Verb", "শত্রু বা প্রতিপক্ষ"),
-            Triple("Aphorism", "Verb", "প্রবাদ বা সংক্ষিপ্ত সত্য বচন"),
-            Triple("Aplomb", "Verb", "আত্মবিশ্বাস বা মানসিক স্থিরতা"),
+            Triple("Anonymous", "Adj", "বেনামী"),
+            Triple("Antagonism", "Noun", "শত্রুতা বা বিরোধিতা"),
+            Triple("Antagonist", "Noun", "শত্রু বা প্রতিপক্ষ"),
+            Triple("Aphorism", "Noun", "প্রবাদ বা সংক্ষিপ্ত সত্য বচন"),
+            Triple("Aplomb", "Noun", "আত্মবিশ্বাস বা মানসিক স্থিরতা"),
             Triple("Appall", "Verb", "আতঙ্কিত বা মর্মাহত করা"),
             Triple("Append", "Verb", "সংযুক্ত করা বা জুড়ে দেওয়া"),
             Triple("Appraise", "Verb", "মূল্য বা গুণ নির্ধারণ করা"),
             Triple("Apprehend", "Verb", "গ্রেপ্তার করা বা উপলব্ধি করা"),
             Triple("Apprise", "Verb", "অবহিত বা জানানো"),
-            Triple("Approving", "Verb", "অনুমোদনসূচক"),
-            Triple("Approximate", "Verb", "অনূমিত বা কাছাকাছি"),
-            Triple("Aptitude", "Verb", "সহজাত মেধা বা প্রবণতা"),
-            Triple("Arable", "Verb", "চাষযোগ্য"),
-            Triple("Arbiter", "Verb", "বিচারক বা সালিশকারী"),
-            Triple("Ardent", "Verb", "আবেগময় বা তীব্র"),
-            Triple("Arid", "Verb", "শুষ্ক বা অনূর্বর"),
-            Triple("Aristocracy", "Verb", "অভিজাত শ্রেণী"),
-            Triple("Aromatic", "Verb", "সুগন্ধযুক্ত"),
+            Triple("Approving", "Adj", "অনুমোদনসূচক"),
+            Triple("Approximate", "Adj", "অনূমিত বা কাছাকাছি"),
+            Triple("Aptitude", "Noun", "সহজাত মেধা বা প্রবণতা"),
+            Triple("Arable", "Adj", "চাষযোগ্য"),
+            Triple("Arbiter", "Noun", "বিচারক বা সালিশকারী"),
+            Triple("Ardent", "Adj", "আবেগময় বা তীব্র"),
+            Triple("Arid", "Adj", "শুষ্ক বা অনূর্বর"),
+            Triple("Aristocracy", "Noun", "অভিজাত শ্রেণী"),
+            Triple("Aromatic", "Adj", "সুগন্ধযুক্ত"),
             Triple("Arraign", "Verb", "অভিযুক্ত করা"),
-            Triple("Array", "Verb", "সজ্জা বা সমারোহ"),
-            Triple("Arrears", "Verb", "বকেয়া ঋণ"),
-            Triple("Artisan", "Verb", "কারিগর"),
+            Triple("Array", "Noun", "সজ্জা বা সমারোহ"),
+            Triple("Arrears", "Noun", "বকেয়া ঋণ"),
+            Triple("Artisan", "Noun", "কারিগর"),
             Triple("Ascend", "Verb", "উপরে আরোহণ করা"),
             Triple("Ascribe", "Verb", "আরোপ করা বা উৎস হিসেবে গণ্য করা"),
-            Triple("Ashen", "Verb", "ফ্যাকাশে বা ছাই রঙের")
+            Triple("Ashen", "Adj", "ফ্যাকাশে বা ছাই রঙের")
         )
 
         spokenData.forEachIndexed { index, (word, pos, meaning) ->

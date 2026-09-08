@@ -143,7 +143,7 @@ fun VocabularyMasterTool(
     val prefs = remember { context.getSharedPreferences("vocab_prefs", Context.MODE_PRIVATE) }
     val installedPacks = remember {
         mutableStateListOf<String>().apply {
-            val saved = prefs.getStringSet("installed_packs", setOf("starter")) ?: setOf("starter")
+            val saved = prefs.getStringSet("installed_packs", setOf("starter", "master_dictionary")) ?: setOf("starter", "master_dictionary")
             addAll(saved)
         }
     }
@@ -2164,29 +2164,18 @@ object VocabularyDataProvider {
         list.addAll(VocabularyHighFrequencyDataset.getBcs5000Pack())
         list.addAll(VocabularyHighFrequencyDataset.getMega10000Pack())
 
-        val hasMaster = installedPackIds.contains("master_dictionary") || installedPackIds.contains("all_100k_dict")
-        if (hasMaster) {
-            // Master offline dictionary loaded directly from assets
-            val masterWords = VocabularyPackRepository.loadPackFromAssetsSync(context, "dictionary_1000.json")
-            if (!masterWords.isNullOrEmpty()) {
-                list.addAll(masterWords)
-            }
-            for (packId in installedPackIds) {
-                if (packId != "master_dictionary" && packId != "all_100k_dict" && packId != "starter") {
-                    val fileWords = VocabularyPackRepository.loadPackFromFileSync(context, packId)
-                    if (!fileWords.isNullOrEmpty()) {
-                        list.addAll(fileWords)
-                    }
-                }
-            }
-        } else {
-            list.addAll(VocabularyDataPacks.starterWords)
-            for (packId in installedPackIds) {
-                if (packId != "starter") {
-                    val fileWords = VocabularyPackRepository.loadPackFromFileSync(context, packId)
-                    if (!fileWords.isNullOrEmpty()) {
-                        list.addAll(fileWords)
-                    }
+        // Always load master 7,000 offline dictionary from assets as the bedrock database
+        val masterWords = VocabularyPackRepository.loadPackFromAssetsSync(context, "dictionary_1000.json")
+        if (!masterWords.isNullOrEmpty()) {
+            list.addAll(masterWords)
+        }
+        list.addAll(VocabularyDataPacks.starterWords)
+
+        for (packId in installedPackIds) {
+            if (packId != "master_dictionary" && packId != "all_100k_dict" && packId != "starter") {
+                val fileWords = VocabularyPackRepository.loadPackFromFileSync(context, packId)
+                if (!fileWords.isNullOrEmpty()) {
+                    list.addAll(fileWords)
                 }
             }
         }
