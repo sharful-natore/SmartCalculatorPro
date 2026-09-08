@@ -185,102 +185,122 @@ object CategoryThemeRegistry {
 @Composable
 fun CategoryIllustrationBackground(
     category: ToolCategory,
+    isDark: Boolean,
     modifier: Modifier = Modifier
 ) {
+    val theme = remember(category) { CategoryThemeRegistry.getTheme(category) }
     Canvas(modifier = modifier) {
         val w = size.width
         val h = size.height
+        val accent = theme.accentColor
 
         when (category) {
-            ToolCategory.HEALTH -> drawHealthIllustration(w, h)
-            ToolCategory.FINANCE -> drawFinanceIllustration(w, h)
-            ToolCategory.ISLAMIC -> drawIslamicIllustration(w, h)
-            ToolCategory.UTILITY -> drawUtilityIllustration(w, h)
-            ToolCategory.ELECTRICITY -> drawElectricityIllustration(w, h)
-            ToolCategory.VEHICLE -> drawVehicleIllustration(w, h)
-            ToolCategory.EDUCATION -> drawEducationIllustration(w, h)
-            ToolCategory.AGRICULTURE -> drawAgricultureIllustration(w, h)
-            ToolCategory.KIDS -> drawKidsIllustration(w, h)
-            ToolCategory.DEVELOPER -> drawDeveloperIllustration(w, h)
-            ToolCategory.ENGINEERING -> drawEngineeringIllustration(w, h)
+            ToolCategory.HEALTH -> drawHealthIllustration(w, h, accent, isDark)
+            ToolCategory.FINANCE -> drawFinanceIllustration(w, h, accent, isDark)
+            ToolCategory.ISLAMIC -> drawIslamicIllustration(w, h, accent, isDark)
+            ToolCategory.UTILITY -> drawUtilityIllustration(w, h, accent, isDark)
+            ToolCategory.ELECTRICITY -> drawElectricityIllustration(w, h, accent, isDark)
+            ToolCategory.VEHICLE -> drawVehicleIllustration(w, h, accent, isDark)
+            ToolCategory.EDUCATION -> drawEducationIllustration(w, h, accent, isDark)
+            ToolCategory.AGRICULTURE -> drawAgricultureIllustration(w, h, accent, isDark)
+            ToolCategory.KIDS -> drawKidsIllustration(w, h, accent, isDark)
+            ToolCategory.DEVELOPER -> drawDeveloperIllustration(w, h, accent, isDark)
+            ToolCategory.ENGINEERING -> drawEngineeringIllustration(w, h, accent, isDark)
         }
     }
 }
 
-private fun DrawScope.drawHealthIllustration(w: Float, h: Float) {
-    val alpha = 0.14f
-    val strokeColor = Color.White.copy(alpha = alpha)
+private fun DrawScope.drawHealthIllustration(w: Float, h: Float, accentColor: Color, isDark: Boolean) {
+    val lineAlpha = if (isDark) 0.22f else 0.18f
+    val strokeColor = accentColor.copy(alpha = lineAlpha)
+    val fillAlpha = if (isDark) 0.12f else 0.08f
+    val fillColor = accentColor.copy(alpha = fillAlpha)
 
     // ECG Heartbeat line across the card
     val path = Path().apply {
-        moveTo(w * 0.1f, h * 0.75f)
-        lineTo(w * 0.40f, h * 0.75f)
-        lineTo(w * 0.45f, h * 0.60f)
-        lineTo(w * 0.50f, h * 0.90f)
-        lineTo(w * 0.56f, h * 0.30f)
-        lineTo(w * 0.62f, h * 0.85f)
-        lineTo(w * 0.67f, h * 0.70f)
-        lineTo(w * 0.72f, h * 0.75f)
+        moveTo(w * 0.05f, h * 0.75f)
+        lineTo(w * 0.35f, h * 0.75f)
+        lineTo(w * 0.40f, h * 0.60f)
+        lineTo(w * 0.45f, h * 0.90f)
+        lineTo(w * 0.51f, h * 0.30f)
+        lineTo(w * 0.57f, h * 0.85f)
+        lineTo(w * 0.62f, h * 0.70f)
+        lineTo(w * 0.67f, h * 0.75f)
         lineTo(w * 0.95f, h * 0.75f)
     }
-    drawPath(path, strokeColor, style = Stroke(width = 2.5f, cap = StrokeCap.Round, join = StrokeJoin.Round))
+    drawPath(path, strokeColor, style = Stroke(width = 3f, cap = StrokeCap.Round, join = StrokeJoin.Round))
 
     // Faint Medical Cross Symbol on the right
-    val cx = w * 0.82f
-    val cy = h * 0.45f
-    val size = 26f
-    drawRect(
-        color = Color.White.copy(alpha = 0.08f),
-        topLeft = Offset(cx - size / 3, cy - size),
-        size = Size(size * 2 / 3, size * 2)
+    val cx = w * 0.80f
+    val cy = h * 0.48f
+    val crossSize = 30f
+    drawRoundRect(
+        color = fillColor,
+        topLeft = Offset(cx - crossSize / 3, cy - crossSize),
+        size = Size(crossSize * 2 / 3, crossSize * 2),
+        cornerRadius = androidx.compose.ui.geometry.CornerRadius(4f, 4f)
     )
-    drawRect(
-        color = Color.White.copy(alpha = 0.08f),
-        topLeft = Offset(cx - size, cy - size / 3),
-        size = Size(size * 2, size * 2 / 3)
+    drawRoundRect(
+        color = fillColor,
+        topLeft = Offset(cx - crossSize, cy - crossSize / 3),
+        size = Size(crossSize * 2, crossSize * 2 / 3),
+        cornerRadius = androidx.compose.ui.geometry.CornerRadius(4f, 4f)
     )
 
-    // Heart pulse circles
-    drawCircle(Color.White.copy(alpha = 0.06f), radius = 45f, center = Offset(w * 0.56f, h * 0.30f))
+    // Heart pulse circles on the right
+    drawCircle(accentColor.copy(alpha = if (isDark) 0.06f else 0.04f), radius = 55f, center = Offset(cx, cy))
+    drawCircle(accentColor.copy(alpha = if (isDark) 0.12f else 0.08f), radius = 35f, center = Offset(cx, cy), style = Stroke(width = 1.5f))
 }
 
-private fun DrawScope.drawFinanceIllustration(w: Float, h: Float) {
-    val alpha = 0.15f
+private fun DrawScope.drawFinanceIllustration(w: Float, h: Float, accentColor: Color, isDark: Boolean) {
+    val lineAlpha = if (isDark) 0.22f else 0.18f
+    val strokeColor = accentColor.copy(alpha = lineAlpha)
+    val fillAlpha = if (isDark) 0.12f else 0.08f
+    val fillColor = accentColor.copy(alpha = fillAlpha)
+
     // Trending upward chart line
     val chartPath = Path().apply {
         moveTo(w * 0.15f, h * 0.85f)
         cubicTo(w * 0.35f, h * 0.80f, w * 0.45f, h * 0.55f, w * 0.60f, h * 0.50f)
         cubicTo(w * 0.70f, h * 0.45f, w * 0.75f, h * 0.30f, w * 0.92f, h * 0.22f)
     }
-    drawPath(chartPath, Color.White.copy(alpha = alpha), style = Stroke(width = 3f, cap = StrokeCap.Round))
+    drawPath(chartPath, strokeColor, style = Stroke(width = 3.5f, cap = StrokeCap.Round))
 
     // Chart bar columns
     val barWidth = 14f
     val bars = listOf(
-        Pair(w * 0.55f, h * 0.40f),
-        Pair(w * 0.63f, h * 0.55f),
-        Pair(w * 0.71f, h * 0.68f),
-        Pair(w * 0.79f, h * 0.80f)
+        Pair(w * 0.50f, h * 0.38f),
+        Pair(w * 0.58f, h * 0.50f),
+        Pair(w * 0.66f, h * 0.65f),
+        Pair(w * 0.74f, h * 0.78f)
     )
     bars.forEach { (x, barH) ->
         drawRoundRect(
-            color = Color.White.copy(alpha = 0.08f),
+            color = fillColor,
             topLeft = Offset(x, h - barH),
             size = Size(barWidth, barH),
             cornerRadius = androidx.compose.ui.geometry.CornerRadius(4f, 4f)
         )
     }
 
-    // Glowing coin circles
-    drawCircle(Color(0xFFFBBF24).copy(alpha = 0.10f), radius = 28f, center = Offset(w * 0.85f, h * 0.35f))
-    drawCircle(Color(0xFFFBBF24).copy(alpha = 0.18f), radius = 18f, center = Offset(w * 0.85f, h * 0.35f), style = Stroke(width = 2f))
+    // Glowing coin circles on the right
+    val cx = w * 0.80f
+    val cy = h * 0.45f
+    drawCircle(accentColor.copy(alpha = if (isDark) 0.14f else 0.10f), radius = 30f, center = Offset(cx, cy))
+    drawCircle(accentColor.copy(alpha = if (isDark) 0.22f else 0.16f), radius = 20f, center = Offset(cx, cy), style = Stroke(width = 2.5f))
+    drawCircle(accentColor.copy(alpha = if (isDark) 0.22f else 0.16f), radius = 10f, center = Offset(cx, cy), style = Stroke(width = 1.5f))
 }
 
-private fun DrawScope.drawIslamicIllustration(w: Float, h: Float) {
+private fun DrawScope.drawIslamicIllustration(w: Float, h: Float, accentColor: Color, isDark: Boolean) {
+    val lineAlpha = if (isDark) 0.24f else 0.18f
+    val strokeColor = accentColor.copy(alpha = lineAlpha)
+    val fillAlpha = if (isDark) 0.12f else 0.08f
+    val fillColor = accentColor.copy(alpha = fillAlpha)
+
     // Islamic Crescent Moon
-    val moonCenterX = w * 0.84f
-    val moonCenterY = h * 0.42f
-    val moonRadius = 32f
+    val moonCenterX = w * 0.80f
+    val moonCenterY = h * 0.48f
+    val moonRadius = 36f
 
     val outerCircle = Path().apply {
         addOval(androidx.compose.ui.geometry.Rect(moonCenterX - moonRadius, moonCenterY - moonRadius, moonCenterX + moonRadius, moonCenterY + moonRadius))
@@ -291,22 +311,22 @@ private fun DrawScope.drawIslamicIllustration(w: Float, h: Float) {
     val crescent = Path().apply {
         op(outerCircle, innerCircle, PathOperation.Difference)
     }
-    drawPath(crescent, Color(0xFFFCD34D).copy(alpha = 0.16f))
+    drawPath(crescent, strokeColor)
 
     // 8-pointed Islamic Star near moon
-    drawIslamicStar(moonCenterX - 22f, moonCenterY - 18f, 9f, Color(0xFFFCD34D).copy(alpha = 0.22f))
-    drawIslamicStar(w * 0.65f, h * 0.25f, 6f, Color.White.copy(alpha = 0.15f))
-    drawIslamicStar(w * 0.45f, h * 0.70f, 7f, Color.White.copy(alpha = 0.10f))
+    drawIslamicStar(moonCenterX - 25f, moonCenterY - 22f, 10f, accentColor.copy(alpha = if (isDark) 0.26f else 0.20f))
+    drawIslamicStar(w * 0.62f, h * 0.28f, 7f, accentColor.copy(alpha = if (isDark) 0.18f else 0.12f))
+    drawIslamicStar(w * 0.45f, h * 0.72f, 8f, accentColor.copy(alpha = if (isDark) 0.15f else 0.10f))
 
     // Arch dome silhouette
     val domePath = Path().apply {
-        moveTo(w * 0.65f, h)
-        lineTo(w * 0.65f, h * 0.65f)
-        cubicTo(w * 0.65f, h * 0.48f, w * 0.76f, h * 0.40f, w * 0.76f, h * 0.35f)
-        cubicTo(w * 0.76f, h * 0.40f, w * 0.87f, h * 0.48f, w * 0.87f, h * 0.65f)
-        lineTo(w * 0.87f, h)
+        moveTo(w * 0.60f, h)
+        lineTo(w * 0.60f, h * 0.65f)
+        cubicTo(w * 0.60f, h * 0.48f, w * 0.72f, h * 0.40f, w * 0.72f, h * 0.35f)
+        cubicTo(w * 0.72f, h * 0.40f, w * 0.84f, h * 0.48f, w * 0.84f, h * 0.65f)
+        lineTo(w * 0.84f, h)
     }
-    drawPath(domePath, Color.White.copy(alpha = 0.05f))
+    drawPath(domePath, fillColor)
 }
 
 private fun DrawScope.drawIslamicStar(cx: Float, cy: Float, radius: Float, color: Color) {
@@ -332,249 +352,315 @@ private fun DrawScope.drawIslamicStar(cx: Float, cy: Float, radius: Float, color
     drawPath(path2, color)
 }
 
-private fun DrawScope.drawUtilityIllustration(w: Float, h: Float) {
-    // Interlocking gear geometry
-    val cx = w * 0.82f
-    val cy = h * 0.48f
-    val r = 36f
+private fun DrawScope.drawUtilityIllustration(w: Float, h: Float, accentColor: Color, isDark: Boolean) {
+    val lineAlpha = if (isDark) 0.22f else 0.18f
+    val strokeColor = accentColor.copy(alpha = lineAlpha)
+    val fillAlpha = if (isDark) 0.12f else 0.08f
+    val fillColor = accentColor.copy(alpha = fillAlpha)
 
-    drawCircle(Color.White.copy(alpha = 0.08f), radius = r, center = Offset(cx, cy))
-    drawCircle(Color.White.copy(alpha = 0.12f), radius = r * 0.55f, center = Offset(cx, cy), style = Stroke(width = 2.5f))
+    // Interlocking gear geometry
+    val cx = w * 0.80f
+    val cy = h * 0.48f
+    val r = 38f
+
+    drawCircle(fillColor, radius = r, center = Offset(cx, cy))
+    drawCircle(strokeColor, radius = r * 0.55f, center = Offset(cx, cy), style = Stroke(width = 3f))
 
     // Gear cogs
     for (i in 0 until 8) {
         val angle = i * (PI.toFloat() / 4f)
         val toothX = cx + (r + 5f) * cos(angle)
         val toothY = cy + (r + 5f) * sin(angle)
-        drawCircle(Color.White.copy(alpha = 0.14f), radius = 5f, center = Offset(toothX, toothY))
+        drawCircle(accentColor.copy(alpha = if (isDark) 0.20f else 0.14f), radius = 6f, center = Offset(toothX, toothY))
     }
 
     // Ruler measurement ticks along top right
     for (i in 0 until 8) {
-        val x = w * 0.50f + i * 14f
-        val len = if (i % 2 == 0) 12f else 6f
+        val x = w * 0.48f + i * 14f
+        val len = if (i % 2 == 0) 14f else 7f
         drawLine(
-            color = Color.White.copy(alpha = 0.12f),
-            start = Offset(x, h * 0.20f),
-            end = Offset(x, h * 0.20f + len),
-            strokeWidth = 2f
+            color = strokeColor,
+            start = Offset(x, h * 0.18f),
+            end = Offset(x, h * 0.18f + len),
+            strokeWidth = 2.5f
         )
     }
 }
 
-private fun DrawScope.drawElectricityIllustration(w: Float, h: Float) {
+private fun DrawScope.drawElectricityIllustration(w: Float, h: Float, accentColor: Color, isDark: Boolean) {
+    val lineAlpha = if (isDark) 0.25f else 0.18f
+    val strokeColor = accentColor.copy(alpha = lineAlpha)
+    val fillAlpha = if (isDark) 0.15f else 0.10f
+    val fillColor = accentColor.copy(alpha = fillAlpha)
+
+    val cx = w * 0.80f
+    val cy = h * 0.48f
+
     // High-voltage lightning bolt
     val boltPath = Path().apply {
-        moveTo(w * 0.82f, h * 0.12f)
-        lineTo(w * 0.74f, h * 0.46f)
-        lineTo(w * 0.80f, h * 0.46f)
-        lineTo(w * 0.70f, h * 0.88f)
-        lineTo(w * 0.88f, h * 0.42f)
-        lineTo(w * 0.81f, h * 0.42f)
+        moveTo(cx + 10f, h * 0.15f)
+        lineTo(cx - 12f, cy + 2f)
+        lineTo(cx + 2f, cy + 2f)
+        lineTo(cx - 15f, h * 0.85f)
+        lineTo(cx + 18f, cy - 2f)
+        lineTo(cx + 4f, cy - 2f)
         close()
     }
-    drawPath(boltPath, Color(0xFFFDE047).copy(alpha = 0.22f))
-    drawPath(boltPath, Color.White.copy(alpha = 0.35f), style = Stroke(width = 1.5f))
+    drawPath(boltPath, fillColor)
+    drawPath(boltPath, strokeColor, style = Stroke(width = 2.5f, cap = StrokeCap.Round, join = StrokeJoin.Round))
 
     // Electric energy rings
-    drawCircle(Color(0xFFF97316).copy(alpha = 0.10f), radius = 48f, center = Offset(w * 0.78f, h * 0.50f))
-    drawCircle(Color(0xFFFDE047).copy(alpha = 0.15f), radius = 64f, center = Offset(w * 0.78f, h * 0.50f), style = Stroke(width = 1.5f))
+    drawCircle(accentColor.copy(alpha = if (isDark) 0.08f else 0.05f), radius = 54f, center = Offset(cx, cy))
+    drawCircle(accentColor.copy(alpha = if (isDark) 0.16f else 0.12f), radius = 70f, center = Offset(cx, cy), style = Stroke(width = 2f))
 }
 
-private fun DrawScope.drawVehicleIllustration(w: Float, h: Float) {
+private fun DrawScope.drawVehicleIllustration(w: Float, h: Float, accentColor: Color, isDark: Boolean) {
+    val lineAlpha = if (isDark) 0.24f else 0.18f
+    val strokeColor = accentColor.copy(alpha = lineAlpha)
+    val fillAlpha = if (isDark) 0.12f else 0.08f
+    val fillColor = accentColor.copy(alpha = fillAlpha)
+
     // Speedometer Arc
-    val cx = w * 0.82f
-    val cy = h * 0.58f
-    val r = 40f
+    val cx = w * 0.80f
+    val cy = h * 0.55f
+    val r = 42f
 
     drawArc(
-        color = Color(0xFF7DD3FC).copy(alpha = 0.22f),
+        color = strokeColor,
         startAngle = 140f,
         sweepAngle = 260f,
         useCenter = false,
         topLeft = Offset(cx - r, cy - r),
         size = Size(r * 2, r * 2),
-        style = Stroke(width = 4f, cap = StrokeCap.Round)
+        style = Stroke(width = 4.5f, cap = StrokeCap.Round)
     )
 
     // Gauge Needle
-    val needleAngle = 230f * (PI.toFloat() / 180f)
+    val needleAngle = 220f * (PI.toFloat() / 180f)
     drawLine(
-        color = Color(0xFFF43F5E).copy(alpha = 0.35f),
+        color = accentColor.copy(alpha = if (isDark) 0.35f else 0.25f),
         start = Offset(cx, cy),
-        end = Offset(cx + (r - 6f) * cos(needleAngle), cy + (r - 6f) * sin(needleAngle)),
-        strokeWidth = 3f,
+        end = Offset(cx + (r - 4f) * cos(needleAngle), cy + (r - 4f) * sin(needleAngle)),
+        strokeWidth = 3.5f,
         cap = StrokeCap.Round
     )
-    drawCircle(Color.White.copy(alpha = 0.30f), radius = 5f, center = Offset(cx, cy))
+    drawCircle(accentColor.copy(alpha = if (isDark) 0.30f else 0.20f), radius = 6f, center = Offset(cx, cy))
 
     // Motion speed lines
     for (i in 0 until 4) {
-        val y = h * 0.35f + i * 10f
-        val startX = w * 0.50f + i * 8f
+        val y = h * 0.32f + i * 11f
+        val startX = w * 0.45f + i * 8f
         drawLine(
-            color = Color.White.copy(alpha = 0.12f),
+            color = strokeColor,
             start = Offset(startX, y),
-            end = Offset(startX + 40f, y),
-            strokeWidth = 2f,
+            end = Offset(startX + 45f, y),
+            strokeWidth = 2.5f,
             cap = StrokeCap.Round
         )
     }
 }
 
-private fun DrawScope.drawEducationIllustration(w: Float, h: Float) {
+private fun DrawScope.drawEducationIllustration(w: Float, h: Float, accentColor: Color, isDark: Boolean) {
+    val lineAlpha = if (isDark) 0.24f else 0.18f
+    val strokeColor = accentColor.copy(alpha = lineAlpha)
+    val fillAlpha = if (isDark) 0.12f else 0.08f
+    val fillColor = accentColor.copy(alpha = fillAlpha)
+
     // Graduation Cap (Mortarboard)
-    val cx = w * 0.82f
-    val cy = h * 0.38f
+    val cx = w * 0.80f
+    val cy = h * 0.40f
     val capPath = Path().apply {
-        moveTo(cx, cy - 14f)
-        lineTo(cx + 30f, cy)
-        lineTo(cx, cy + 14f)
-        lineTo(cx - 30f, cy)
+        moveTo(cx, cy - 16f)
+        lineTo(cx + 34f, cy)
+        lineTo(cx, cy + 16f)
+        lineTo(cx - 34f, cy)
         close()
     }
-    drawPath(capPath, Color.White.copy(alpha = 0.20f))
+    drawPath(capPath, fillColor)
+    drawPath(capPath, strokeColor, style = Stroke(width = 2.5f, join = StrokeJoin.Round))
 
     // Cap base
     val baseArch = Path().apply {
-        moveTo(cx - 16f, cy + 7f)
-        lineTo(cx - 16f, cy + 18f)
-        cubicTo(cx - 16f, cy + 26f, cx + 16f, cy + 26f, cx + 16f, cy + 18f)
-        lineTo(cx + 16f, cy + 7f)
+        moveTo(cx - 18f, cy + 8f)
+        lineTo(cx - 18f, cy + 20f)
+        cubicTo(cx - 18f, cy + 28f, cx + 18f, cy + 20f, cx + 18f, cy + 8f)
     }
-    drawPath(baseArch, Color.White.copy(alpha = 0.14f))
+    drawPath(baseArch, fillColor)
+    drawPath(baseArch, strokeColor, style = Stroke(width = 2f))
 
     // Tassel string
     val tassel = Path().apply {
         moveTo(cx, cy)
-        lineTo(cx + 28f, cy + 10f)
-        lineTo(cx + 28f, cy + 24f)
+        lineTo(cx + 32f, cy + 11f)
+        lineTo(cx + 32f, cy + 26f)
     }
-    drawPath(tassel, Color(0xFFF472B6).copy(alpha = 0.35f), style = Stroke(width = 2f, cap = StrokeCap.Round))
+    drawPath(tassel, strokeColor, style = Stroke(width = 2.5f, cap = StrokeCap.Round))
 
     // Open book pages at bottom
     val bookPath = Path().apply {
-        moveTo(w * 0.60f, h * 0.85f)
-        cubicTo(w * 0.68f, h * 0.80f, w * 0.72f, h * 0.82f, w * 0.76f, h * 0.86f)
-        cubicTo(w * 0.80f, h * 0.82f, w * 0.84f, h * 0.80f, w * 0.92f, h * 0.85f)
+        moveTo(w * 0.58f, h * 0.85f)
+        cubicTo(w * 0.66f, h * 0.79f, w * 0.71f, h * 0.81f, w * 0.76f, h * 0.86f)
+        cubicTo(w * 0.81f, h * 0.81f, w * 0.86f, h * 0.79f, w * 0.94f, h * 0.85f)
     }
-    drawPath(bookPath, Color.White.copy(alpha = 0.16f), style = Stroke(width = 2.5f, cap = StrokeCap.Round))
+    drawPath(bookPath, strokeColor, style = Stroke(width = 3f, cap = StrokeCap.Round))
 }
 
-private fun DrawScope.drawAgricultureIllustration(w: Float, h: Float) {
-    // Sprouting Leaf and Wheat stalk
-    val cx = w * 0.82f
+private fun DrawScope.drawAgricultureIllustration(w: Float, h: Float, accentColor: Color, isDark: Boolean) {
+    val lineAlpha = if (isDark) 0.24f else 0.18f
+    val strokeColor = accentColor.copy(alpha = lineAlpha)
+    val fillAlpha = if (isDark) 0.12f else 0.08f
+    val fillColor = accentColor.copy(alpha = fillAlpha)
+
+    val cx = w * 0.80f
     val cy = h * 0.50f
 
     // Main stalk
     drawLine(
-        color = Color(0xFF86EFAC).copy(alpha = 0.25f),
+        color = strokeColor,
         start = Offset(cx, h * 0.88f),
-        end = Offset(cx, h * 0.25f),
-        strokeWidth = 2.5f,
+        end = Offset(cx, h * 0.22f),
+        strokeWidth = 3f,
         cap = StrokeCap.Round
     )
 
-    // Wheat grains on both sides
+    // Wheat grains on both sides (highly detailed)
     for (i in 0 until 5) {
-        val y = h * 0.32f + i * 11f
+        val y = h * 0.28f + i * 12f
         // Left grain
         drawOval(
-            color = Color(0xFF86EFAC).copy(alpha = 0.20f),
-            topLeft = Offset(cx - 16f, y - 4f),
-            size = Size(14f, 8f)
+            color = fillColor,
+            topLeft = Offset(cx - 18f, y - 4f),
+            size = Size(16f, 9f)
+        )
+        drawOval(
+            color = strokeColor,
+            topLeft = Offset(cx - 18f, y - 4f),
+            size = Size(16f, 9f),
+            style = Stroke(width = 1.5f)
         )
         // Right grain
         drawOval(
-            color = Color(0xFF86EFAC).copy(alpha = 0.20f),
+            color = fillColor,
             topLeft = Offset(cx + 2f, y - 8f),
-            size = Size(14f, 8f)
+            size = Size(16f, 9f)
+        )
+        drawOval(
+            color = strokeColor,
+            topLeft = Offset(cx + 2f, y - 8f),
+            size = Size(16f, 9f),
+            style = Stroke(width = 1.5f)
         )
     }
 
     // Furrow hills curve at bottom
-    val hillPath = Path().apply {
-        moveTo(w * 0.40f, h)
-        cubicTo(w * 0.55f, h * 0.75f, w * 0.70f, h * 0.85f, w * 0.95f, h * 0.70f)
+    val hillPath1 = Path().apply {
+        moveTo(w * 0.35f, h)
+        cubicTo(w * 0.52f, h * 0.72f, w * 0.68f, h * 0.82f, w * 0.95f, h * 0.68f)
     }
-    drawPath(hillPath, Color.White.copy(alpha = 0.12f), style = Stroke(width = 2f, cap = StrokeCap.Round))
+    val hillPath2 = Path().apply {
+        moveTo(w * 0.45f, h)
+        cubicTo(w * 0.60f, h * 0.80f, w * 0.75f, h * 0.88f, w * 0.95f, h * 0.78f)
+    }
+    drawPath(hillPath1, strokeColor, style = Stroke(width = 2.5f, cap = StrokeCap.Round))
+    drawPath(hillPath2, strokeColor, style = Stroke(width = 1.5f, cap = StrokeCap.Round))
 }
 
-private fun DrawScope.drawKidsIllustration(w: Float, h: Float) {
+private fun DrawScope.drawKidsIllustration(w: Float, h: Float, accentColor: Color, isDark: Boolean) {
+    val lineAlpha = if (isDark) 0.24f else 0.18f
+    val strokeColor = accentColor.copy(alpha = lineAlpha)
+    val fillAlpha = if (isDark) 0.12f else 0.08f
+    val fillColor = accentColor.copy(alpha = fillAlpha)
+
     // Colorful floating balloons with strings
-    val b1x = w * 0.78f
-    val b1y = h * 0.32f
-    drawOval(Color(0xFFFDE047).copy(alpha = 0.25f), topLeft = Offset(b1x - 14f, b1y - 18f), size = Size(28f, 36f))
-    drawLine(Color.White.copy(alpha = 0.20f), start = Offset(b1x, b1y + 18f), end = Offset(b1x - 8f, b1y + 48f), strokeWidth = 1.5f)
+    val b1x = w * 0.76f
+    val b1y = h * 0.34f
+    drawOval(fillColor, topLeft = Offset(b1x - 15f, b1y - 20f), size = Size(30f, 40f))
+    drawOval(strokeColor, topLeft = Offset(b1x - 15f, b1y - 20f), size = Size(30f, 40f), style = Stroke(width = 2.5f))
+    drawLine(strokeColor, start = Offset(b1x, b1y + 20f), end = Offset(b1x - 10f, b1y + 54f), strokeWidth = 2f)
 
-    val b2x = w * 0.88f
-    val b2y = h * 0.45f
-    drawOval(Color(0xFFF472B6).copy(alpha = 0.25f), topLeft = Offset(b2x - 12f, b2y - 16f), size = Size(24f, 32f))
-    drawLine(Color.White.copy(alpha = 0.20f), start = Offset(b2x, b2y + 16f), end = Offset(b2x - 4f, b2y + 42f), strokeWidth = 1.5f)
+    val b2x = w * 0.86f
+    val b2y = h * 0.46f
+    drawOval(fillColor, topLeft = Offset(b2x - 13f, b2y - 18f), size = Size(26f, 36f))
+    drawOval(strokeColor, topLeft = Offset(b2x - 13f, b2y - 18f), size = Size(26f, 36f), style = Stroke(width = 2f))
+    drawLine(strokeColor, start = Offset(b2x, b2y + 18f), end = Offset(b2x - 5f, b2y + 46f), strokeWidth = 1.5f)
 
-    // Playful starbursts
-    drawCircle(Color.White.copy(alpha = 0.15f), radius = 6f, center = Offset(w * 0.65f, h * 0.30f))
-    drawCircle(Color.White.copy(alpha = 0.10f), radius = 10f, center = Offset(w * 0.60f, h * 0.65f))
+    // Playful starbursts & Twinkle stars
+    drawCircle(strokeColor, radius = 6f, center = Offset(w * 0.62f, h * 0.28f))
+    drawCircle(fillColor, radius = 10f, center = Offset(w * 0.58f, h * 0.68f))
 }
 
-private fun DrawScope.drawDeveloperIllustration(w: Float, h: Float) {
-    // Code brackets and terminal prompt
+private fun DrawScope.drawDeveloperIllustration(w: Float, h: Float, accentColor: Color, isDark: Boolean) {
+    val lineAlpha = if (isDark) 0.24f else 0.18f
+    val strokeColor = accentColor.copy(alpha = lineAlpha)
+    val fillAlpha = if (isDark) 0.12f else 0.08f
+    val fillColor = accentColor.copy(alpha = fillAlpha)
+
     val cx = w * 0.80f
     val cy = h * 0.45f
 
     // Terminal window outline
     drawRoundRect(
-        color = Color(0xFF22D3EE).copy(alpha = 0.14f),
-        topLeft = Offset(cx - 35f, cy - 25f),
-        size = Size(70f, 50f),
+        color = fillColor,
+        topLeft = Offset(cx - 38f, cy - 26f),
+        size = Size(76f, 52f),
+        cornerRadius = androidx.compose.ui.geometry.CornerRadius(6f, 6f)
+    )
+    drawRoundRect(
+        color = strokeColor,
+        topLeft = Offset(cx - 38f, cy - 26f),
+        size = Size(76f, 52f),
         cornerRadius = androidx.compose.ui.geometry.CornerRadius(6f, 6f),
-        style = Stroke(width = 1.5f)
+        style = Stroke(width = 2.5f)
     )
 
     // Top window dots
-    drawCircle(Color(0xFFEF4444).copy(alpha = 0.30f), radius = 2.5f, center = Offset(cx - 26f, cy - 18f))
-    drawCircle(Color(0xFFF59E0B).copy(alpha = 0.30f), radius = 2.5f, center = Offset(cx - 18f, cy - 18f))
-    drawCircle(Color(0xFF10B981).copy(alpha = 0.30f), radius = 2.5f, center = Offset(cx - 10f, cy - 18f))
+    drawCircle(strokeColor, radius = 3f, center = Offset(cx - 26f, cy - 18f))
+    drawCircle(strokeColor, radius = 3f, center = Offset(cx - 16f, cy - 18f))
+    drawCircle(strokeColor, radius = 3f, center = Offset(cx - 6f, cy - 18f))
 
     // Prompt > _
     val promptPath = Path().apply {
-        moveTo(cx - 25f, cy - 5f)
-        lineTo(cx - 18f, cy + 2f)
-        lineTo(cx - 25f, cy + 9f)
+        moveTo(cx - 26f, cy - 3f)
+        lineTo(cx - 18f, cy + 4f)
+        lineTo(cx - 26f, cy + 11f)
     }
-    drawPath(promptPath, Color(0xFF22D3EE).copy(alpha = 0.35f), style = Stroke(width = 2f, cap = StrokeCap.Round, join = StrokeJoin.Round))
+    drawPath(promptPath, strokeColor, style = Stroke(width = 3f, cap = StrokeCap.Round, join = StrokeJoin.Round))
     drawLine(
-        color = Color(0xFF22D3EE).copy(alpha = 0.35f),
-        start = Offset(cx - 14f, cy + 9f),
-        end = Offset(cx - 4f, cy + 9f),
-        strokeWidth = 2f,
+        color = strokeColor,
+        start = Offset(cx - 12f, cy + 11f),
+        end = Offset(cx - 2f, cy + 11f),
+        strokeWidth = 3f,
         cap = StrokeCap.Round
     )
 }
 
-private fun DrawScope.drawEngineeringIllustration(w: Float, h: Float) {
-    // Blueprint grid & Technical drafting compass
-    val cx = w * 0.82f
+private fun DrawScope.drawEngineeringIllustration(w: Float, h: Float, accentColor: Color, isDark: Boolean) {
+    val lineAlpha = if (isDark) 0.24f else 0.18f
+    val strokeColor = accentColor.copy(alpha = lineAlpha)
+    val fillAlpha = if (isDark) 0.12f else 0.08f
+    val fillColor = accentColor.copy(alpha = fillAlpha)
+
+    val cx = w * 0.80f
     val cy = h * 0.45f
 
     // Grid lines
-    for (i in 0 until 4) {
-        val y = cy - 25f + i * 16f
-        drawLine(Color.White.copy(alpha = 0.07f), start = Offset(cx - 35f, y), end = Offset(cx + 35f, y), strokeWidth = 1f)
+    for (i in 0 until 5) {
+        val y = cy - 28f + i * 14f
+        drawLine(strokeColor.copy(alpha = lineAlpha * 0.4f), start = Offset(cx - 38f, y), end = Offset(cx + 38f, y), strokeWidth = 1f)
     }
-    for (i in 0 until 4) {
-        val x = cx - 25f + i * 16f
-        drawLine(Color.White.copy(alpha = 0.07f), start = Offset(x, cy - 30f), end = Offset(x, cy + 30f), strokeWidth = 1f)
+    for (i in 0 until 5) {
+        val x = cx - 28f + i * 14f
+        drawLine(strokeColor.copy(alpha = lineAlpha * 0.4f), start = Offset(x, cy - 34f), end = Offset(x, cy + 34f), strokeWidth = 1f)
     }
 
     // Compass angle divider
     val compass = Path().apply {
-        moveTo(cx - 18f, cy + 20f)
-        lineTo(cx, cy - 16f)
-        lineTo(cx + 18f, cy + 20f)
+        moveTo(cx - 20f, cy + 22f)
+        lineTo(cx, cy - 18f)
+        lineTo(cx + 20f, cy + 22f)
     }
-    drawPath(compass, Color(0xFF93C5FD).copy(alpha = 0.28f), style = Stroke(width = 2f, cap = StrokeCap.Round, join = StrokeJoin.Round))
-    drawCircle(Color.White.copy(alpha = 0.30f), radius = 3.5f, center = Offset(cx, cy - 16f))
+    drawPath(compass, strokeColor, style = Stroke(width = 3f, cap = StrokeCap.Round, join = StrokeJoin.Round))
+    drawCircle(strokeColor, radius = 4f, center = Offset(cx, cy - 18f))
 }
 
 /**
@@ -625,6 +711,7 @@ fun CategoryDashboardCard(
             // Background artistic illustration matching the category
             CategoryIllustrationBackground(
                 category = category,
+                isDark = isDark,
                 modifier = Modifier.matchParentSize()
             )
 
@@ -798,6 +885,7 @@ fun CategoryDetailToolsView(
             ) {
                 CategoryIllustrationBackground(
                     category = category,
+                    isDark = isDark,
                     modifier = Modifier.matchParentSize()
                 )
 
