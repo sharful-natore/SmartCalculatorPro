@@ -1047,7 +1047,7 @@ private fun SaveProfileDialog(
                 OutlinedTextField(
                     value = profileName,
                     onValueChange = { profileName = it },
-                    label = { Text(if (isBn) "প্রোফাইলের নাম (e.g., Shariful - Bank Job CV)" else "Profile Label (e.g., Shariful - Officer Profile)") },
+                    label = { Text(if (isBn) "প্রোফাইলের নাম (e.g., Rahim - Bank Job CV)" else "Profile Label (e.g., John - Officer Profile)") },
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = themeColors.buttonEqualBg,
@@ -3256,11 +3256,11 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
         null
     }
 
-    fun drawPhotoAt(px: Float, py: Float, size: Float, shape: String = data.photoShape, borderColor: Int = primaryColor) {
-        if (photoBitmap == null) return
+    fun drawPhotoAt(px: Float, py: Float, size: Float, shape: String = data.photoShape, borderColor: Int = primaryColor): Float {
+        if (photoBitmap == null) return 0f
         val bw = photoBitmap.width.toFloat()
         val bh = photoBitmap.height.toFloat()
-        if (bw <= 0f || bh <= 0f) return
+        if (bw <= 0f || bh <= 0f) return 0f
 
         val widthRatio = (data.photoWidth.coerceIn(50, 130)) / 80f
         val heightRatio = (data.photoHeight.coerceIn(50, 140)) / 80f
@@ -3327,6 +3327,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                 else -> canvas.drawRect(photoRect, borderPaint)
             }
         }
+        return ph
     }
 
     // ================= BRANCH 1: EXECUTIVE TWO-COLUMN SIDEBAR =================
@@ -3360,8 +3361,8 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
         if (photoBitmap != null) {
             val pSize = 75f
             val px = (sidebarWidth - pSize) / 2f
-            drawPhotoAt(px, sideY, pSize, data.photoShape, AndroidColor.WHITE)
-            sideY += pSize + 16f
+            val actualPh = drawPhotoAt(px, sideY, pSize, data.photoShape, AndroidColor.WHITE)
+            sideY += actualPh + 16f
         }
 
         fun drawSideHeader(title: String) {
@@ -3380,13 +3381,16 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
         fun drawSideContactItem(text: String, iconType: String) {
             if (text.isBlank()) return
             val iy = sideY + 1f
-            drawMaterialVectorIcon(canvas, iconType, margin / 2f + 4f, iy, iconSize, AndroidColor.parseColor("#94A3B8"))
-            val layout = StaticLayout.Builder.obtain(text, 0, text.length, sideTextPaint, (sidebarWidth - margin - 20f).toInt()).setLineSpacing(0f, data.customLineSpacing).build()
+            val startX = margin / 2f + 4f
+            val iconOffset = iconSize + 6f
+            val availW = (sidebarWidth - startX - iconOffset - 8f).coerceAtLeast(80f).toInt()
+            drawMaterialVectorIcon(canvas, iconType, startX, iy, iconSize, AndroidColor.parseColor("#94A3B8"))
+            val layout = StaticLayout.Builder.obtain(text, 0, text.length, sideTextPaint, availW).setLineSpacing(0f, data.customLineSpacing).build()
             canvas.save()
-            canvas.translate(margin / 2f + 4f + iconSize + 6f, sideY)
+            canvas.translate(startX + iconOffset, sideY)
             layout.draw(canvas)
             canvas.restore()
-            sideY += layout.height + 6f
+            sideY += maxOf(layout.height.toFloat(), iconSize) + 6f
         }
 
         drawSideContactItem(data.phone, "phone")
@@ -3731,8 +3735,36 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
         currentY = headY + 6f
     } else if (pdfStyle == CvTemplateStyle.BANKING_FINANCE_SPECIALIST) {
         // ================= BRANCH 4: BANKING & FINANCE SPECIALIST =================
-        val boxHeight = 72f
-        val boxRect = android.graphics.RectF(margin, currentY, pageWidth - margin, currentY + boxHeight)
+        val halfW = (contentWidth - 28f) / 2f
+
+        // Calculate Left Height
+        var leftH = 0f
+        val leftNameLayout = if (data.fullName.isNotBlank()) StaticLayout.Builder.obtain(data.fullName.uppercase(), 0, data.fullName.length, titlePaint, halfW.toInt()).setLineSpacing(0f, data.customLineSpacing).build() else null
+        val leftTitleLayout = if (data.jobTitle.isNotBlank()) StaticLayout.Builder.obtain(data.jobTitle, 0, data.jobTitle.length, subtitlePaint, halfW.toInt()).setLineSpacing(0f, data.customLineSpacing).build() else null
+
+        if (leftNameLayout != null) leftH += leftNameLayout.height + 4f
+        if (leftTitleLayout != null) leftH += leftTitleLayout.height
+
+        // Calculate Right Height
+        var rightH = 0f
+        val rPaint = TextPaint().apply {
+            isAntiAlias = true
+            color = subTextColor
+            textSize = 8.8f
+            typeface = CleanPdfTypefaces.sansRegular
+        }
+        val rightTextW = (halfW - 20f).coerceAtLeast(100f).toInt()
+        val phoneLayout = if (data.phone.isNotBlank()) StaticLayout.Builder.obtain(data.phone, 0, data.phone.length, rPaint, rightTextW).setLineSpacing(0f, data.customLineSpacing).build() else null
+        val emailLayout = if (data.email.isNotBlank()) StaticLayout.Builder.obtain(data.email, 0, data.email.length, rPaint, rightTextW).setLineSpacing(0f, data.customLineSpacing).build() else null
+        val addrLayout = if (data.address.isNotBlank()) StaticLayout.Builder.obtain(data.address, 0, data.address.length, rPaint, rightTextW).setLineSpacing(0f, data.customLineSpacing).build() else null
+
+        if (phoneLayout != null) rightH += maxOf(phoneLayout.height.toFloat(), 10f) + 4f
+        if (emailLayout != null) rightH += maxOf(emailLayout.height.toFloat(), 10f) + 4f
+        if (addrLayout != null) rightH += maxOf(addrLayout.height.toFloat(), 10f)
+
+        val paddingVert = 12f
+        val computedBoxH = maxOf(leftH, rightH) + paddingVert * 2f
+        val boxRect = android.graphics.RectF(margin, currentY, pageWidth - margin, currentY + computedBoxH)
         val boxFillPaint = Paint().apply {
             color = AndroidColor.parseColor("#F8FAFC")
             style = Paint.Style.FILL
@@ -3745,55 +3777,85 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
         canvas.drawRoundRect(boxRect, 4f, 4f, boxFillPaint)
         canvas.drawRoundRect(boxRect, 4f, 4f, boxStrokePaint)
 
-        val halfW = (contentWidth - 24f) / 2f
-        var by = currentY + 16f
-        if (data.fullName.isNotBlank()) {
-            canvas.drawText(data.fullName.uppercase(), margin + 12f, by + 4f, titlePaint)
-            by += 16f
+        // Draw Left Content
+        var ly = currentY + paddingVert
+        if (leftNameLayout != null) {
+            canvas.save()
+            canvas.translate(margin + 12f, ly)
+            leftNameLayout.draw(canvas)
+            canvas.restore()
+            ly += leftNameLayout.height + 4f
         }
-        if (data.jobTitle.isNotBlank()) {
-            canvas.drawText(data.jobTitle, margin + 12f, by + 4f, subtitlePaint)
-        }
-
-        var rby = currentY + 14f
-        val rPaint = TextPaint().apply {
-            isAntiAlias = true
-            color = subTextColor
-            textSize = 8.8f
-            typeface = CleanPdfTypefaces.sansRegular
-        }
-        if (data.phone.isNotBlank()) {
-            drawMaterialVectorIcon(canvas, "phone", margin + halfW + 12f, rby - 8f, 8.5f, primaryColor)
-            canvas.drawText(data.phone, margin + halfW + 24f, rby, rPaint)
-            rby += 13f
-        }
-        if (data.email.isNotBlank()) {
-            drawMaterialVectorIcon(canvas, "email", margin + halfW + 12f, rby - 8f, 8.5f, primaryColor)
-            canvas.drawText(data.email, margin + halfW + 24f, rby, rPaint)
-            rby += 13f
-        }
-        if (data.address.isNotBlank()) {
-            drawMaterialVectorIcon(canvas, "location", margin + halfW + 12f, rby - 8f, 8.5f, primaryColor)
-            canvas.drawText(data.address, margin + halfW + 24f, rby, rPaint)
+        if (leftTitleLayout != null) {
+            canvas.save()
+            canvas.translate(margin + 12f, ly)
+            leftTitleLayout.draw(canvas)
+            canvas.restore()
         }
 
-        currentY += boxHeight + 14f
+        // Draw Right Content
+        var ry = currentY + paddingVert
+        val rightX = margin + halfW + 12f
+        if (phoneLayout != null) {
+            drawMaterialVectorIcon(canvas, "phone", rightX, ry + 1f, 8.5f, primaryColor)
+            canvas.save()
+            canvas.translate(rightX + 14f, ry)
+            phoneLayout.draw(canvas)
+            canvas.restore()
+            ry += maxOf(phoneLayout.height.toFloat(), 10f) + 4f
+        }
+        if (emailLayout != null) {
+            drawMaterialVectorIcon(canvas, "email", rightX, ry + 1f, 8.5f, primaryColor)
+            canvas.save()
+            canvas.translate(rightX + 14f, ry)
+            emailLayout.draw(canvas)
+            canvas.restore()
+            ry += maxOf(emailLayout.height.toFloat(), 10f) + 4f
+        }
+        if (addrLayout != null) {
+            drawMaterialVectorIcon(canvas, "location", rightX, ry + 1f, 8.5f, primaryColor)
+            canvas.save()
+            canvas.translate(rightX + 14f, ry)
+            addrLayout.draw(canvas)
+            canvas.restore()
+        }
+
+        currentY += computedBoxH + 14f
     } else if (pdfStyle == CvTemplateStyle.NGO_DEVELOPMENT_HUMANITARIAN) {
         // ================= BRANCH 5: NGO & HUMANITARIAN =================
+        val photoSize = 60f
+        val hasPhoto = photoBitmap != null
+        val actualPw = if (hasPhoto) photoSize * ((data.photoWidth.coerceIn(50, 130)) / 80f) else 0f
+        val headerTextW = if (hasPhoto) contentWidth - actualPw - 18f else contentWidth
+
+        var actualPh = 0f
+        if (hasPhoto) {
+            val px = pageWidth - margin - actualPw
+            actualPh = drawPhotoAt(px, currentY, photoSize, data.photoShape, primaryColor)
+        }
+
         val barPaint = Paint().apply {
             color = primaryColor
             style = Paint.Style.FILL
         }
-        canvas.drawRect(margin, currentY, margin + 4f, currentY + 54f, barPaint)
 
         var hy = currentY + 4f
-        if (data.fullName.isNotBlank()) {
-            canvas.drawText(data.fullName.uppercase(), margin + 14f, hy + 14f, titlePaint)
-            hy += 20f
+        val nameLayout = if (data.fullName.isNotBlank()) StaticLayout.Builder.obtain(data.fullName.uppercase(), 0, data.fullName.length, titlePaint, headerTextW.toInt()).setLineSpacing(0f, data.customLineSpacing).build() else null
+        val titleLayout = if (data.jobTitle.isNotBlank()) StaticLayout.Builder.obtain(data.jobTitle, 0, data.jobTitle.length, subtitlePaint, headerTextW.toInt()).setLineSpacing(0f, data.customLineSpacing).build() else null
+
+        if (nameLayout != null) {
+            canvas.save()
+            canvas.translate(margin + 14f, hy)
+            nameLayout.draw(canvas)
+            canvas.restore()
+            hy += nameLayout.height + 4f
         }
-        if (data.jobTitle.isNotBlank()) {
-            canvas.drawText(data.jobTitle, margin + 14f, hy + 10f, subtitlePaint)
-            hy += 16f
+        if (titleLayout != null) {
+            canvas.save()
+            canvas.translate(margin + 14f, hy)
+            titleLayout.draw(canvas)
+            canvas.restore()
+            hy += titleLayout.height + 6f
         }
 
         val contactLine = listOfNotNull(
@@ -3802,23 +3864,25 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
             data.address.takeIf { it.isNotBlank() }?.let { "Base: $it" }
         ).joinToString("  |  ")
         if (contactLine.isNotBlank()) {
-            canvas.drawText(contactLine, margin + 14f, hy + 8f, contactPaint)
+            val cLayout = StaticLayout.Builder.obtain(contactLine, 0, contactLine.length, contactPaint, headerTextW.toInt()).setLineSpacing(0f, data.customLineSpacing).build()
+            canvas.save()
+            canvas.translate(margin + 14f, hy)
+            cLayout.draw(canvas)
+            canvas.restore()
+            hy += cLayout.height + 4f
         }
 
-        if (photoBitmap != null) {
-            val pSize = 60f
-            val px = pageWidth - margin - pSize
-            drawPhotoAt(px, currentY, pSize, data.photoShape, primaryColor)
-        }
+        val barH = maxOf(hy - currentY, actualPh)
+        canvas.drawRect(margin, currentY, margin + 4f, currentY + barH, barPaint)
 
-        currentY += 66f
+        currentY += barH + 14f
     } else if (pdfStyle == CvTemplateStyle.CANVA_MINIMALIST_CLEAN) {
         // ================= BRANCH 6: CANVA MINIMALIST CLEAN (CENTERED MODERN) =================
         var headY = currentY
         if (photoBitmap != null) {
             val pSize = 58f
-            drawPhotoAt((pageWidth - pSize) / 2f, headY, pSize, data.photoShape, primaryColor)
-            headY += pSize + 10f
+            val actualPh = drawPhotoAt((pageWidth - pSize) / 2f, headY, pSize, data.photoShape, primaryColor)
+            headY += actualPh + 12f
         }
 
         if (data.fullName.isNotBlank()) {
@@ -3872,11 +3936,21 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
         currentY = headY + 14f
     } else if (pdfStyle == CvTemplateStyle.SILICON_VALLEY_TECH_LEAD) {
         // ================= BRANCH 7: SILICON VALLEY TECH LEAD =================
+        val photoSize = 56f
+        val hasPhoto = photoBitmap != null
+        val actualPw = if (hasPhoto) photoSize * ((data.photoWidth.coerceIn(50, 130)) / 80f) else 0f
+        val headerTextW = if (hasPhoto) contentWidth - actualPw - 18f else contentWidth
+
+        var actualPh = 0f
+        if (hasPhoto) {
+            val px = pageWidth - margin - actualPw
+            actualPh = drawPhotoAt(px, currentY, photoSize, data.photoShape, primaryColor)
+        }
+
         val techAccentPaint = Paint().apply {
             color = primaryColor
             style = Paint.Style.FILL
         }
-        canvas.drawRect(margin, currentY, margin + 4.5f, currentY + 54f, techAccentPaint)
 
         var ty = currentY + 4f
         val tTitlePaint = TextPaint().apply {
@@ -3885,13 +3959,23 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
             textSize = 20f
             typeface = CleanPdfTypefaces.sansMedium
         }
-        if (data.fullName.isNotBlank()) {
-            canvas.drawText(data.fullName.uppercase(), margin + 14f, ty + 15f, tTitlePaint)
-            ty += 21f
+
+        val nameLayout = if (data.fullName.isNotBlank()) StaticLayout.Builder.obtain(data.fullName.uppercase(), 0, data.fullName.length, tTitlePaint, headerTextW.toInt()).setLineSpacing(0f, data.customLineSpacing).build() else null
+        val titleLayout = if (data.jobTitle.isNotBlank()) StaticLayout.Builder.obtain(data.jobTitle, 0, data.jobTitle.length, subtitlePaint, headerTextW.toInt()).setLineSpacing(0f, data.customLineSpacing).build() else null
+
+        if (nameLayout != null) {
+            canvas.save()
+            canvas.translate(margin + 14f, ty)
+            nameLayout.draw(canvas)
+            canvas.restore()
+            ty += nameLayout.height + 4f
         }
-        if (data.jobTitle.isNotBlank()) {
-            canvas.drawText(data.jobTitle, margin + 14f, ty + 10f, subtitlePaint)
-            ty += 15f
+        if (titleLayout != null) {
+            canvas.save()
+            canvas.translate(margin + 14f, ty)
+            titleLayout.draw(canvas)
+            canvas.restore()
+            ty += titleLayout.height + 6f
         }
 
         val contactLine = listOfNotNull(
@@ -3907,16 +3991,18 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                 textSize = 8.6f
                 typeface = Typeface.create(Typeface.MONOSPACE, Typeface.NORMAL)
             }
-            canvas.drawText(contactLine, margin + 14f, ty + 8f, tcPaint)
+            val tcLayout = StaticLayout.Builder.obtain(contactLine, 0, contactLine.length, tcPaint, headerTextW.toInt()).setLineSpacing(0f, data.customLineSpacing).build()
+            canvas.save()
+            canvas.translate(margin + 14f, ty)
+            tcLayout.draw(canvas)
+            canvas.restore()
+            ty += tcLayout.height + 4f
         }
 
-        if (photoBitmap != null) {
-            val pSize = 56f
-            val px = pageWidth - margin - pSize
-            drawPhotoAt(px, currentY, pSize, data.photoShape, primaryColor)
-        }
+        val barH = maxOf(ty - currentY, actualPh)
+        canvas.drawRect(margin, currentY, margin + 4.5f, currentY + barH, techAccentPaint)
 
-        currentY += 66f
+        currentY += barH + 14f
     } else if (pdfStyle == CvTemplateStyle.EXECUTIVE_MONOCHROME_LUXE) {
         // ================= BRANCH 8: EXECUTIVE MONOCHROME LUXE =================
         var ey = currentY
@@ -3968,39 +4054,39 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
         canvas.drawLine(margin, ey + 2f, pageWidth - margin, ey + 2f, rulePaint)
         currentY = ey + 12f
     } else if (pdfStyle != CvTemplateStyle.CREATIVE_MARKETING) {
-        // ================= BRANCH 9: STANDARD HEADER (CLASSIC_CORPORATE, SINGLE_COLUMN_HIGH_IMPACT_ATS, NORDIC_SLATE_MODERN, CLEAN_TECH_STARTUP, MODERN_MINIMALIST, ELEGANT_PREMIUM) =================
+        // ================= BRANCH 9: STANDARD HEADER =================
         val photoSize = 65f
-        val photoMargin = 14f
         val hasTopPhoto = photoBitmap != null
-        val headerTextWidth = if (hasTopPhoto) (contentWidth - photoSize - photoMargin) else contentWidth
+        val widthRatio = (data.photoWidth.coerceIn(50, 130)) / 80f
+        val actualPw = if (hasTopPhoto) photoSize * widthRatio else 0f
+        val photoMargin = 16f
+        val headerTextWidth = if (hasTopPhoto) (contentWidth - actualPw - photoMargin) else contentWidth
 
-        // Draw Profile Photo on Top Right
+        var actualPh = 0f
         if (hasTopPhoto) {
-            val px = pageWidth - margin - photoSize
-            drawPhotoAt(px, currentY, photoSize, data.photoShape, primaryColor)
+            val px = pageWidth - margin - actualPw
+            actualPh = drawPhotoAt(px, currentY, photoSize, data.photoShape, primaryColor)
         }
 
-        // Full Name (Bold Uppercase)
+        var textY = currentY
         if (data.fullName.isNotBlank()) {
             val nameLayout = StaticLayout.Builder.obtain(data.fullName.uppercase(), 0, data.fullName.length, titlePaint, headerTextWidth.toInt()).setLineSpacing(0f, data.customLineSpacing).build()
             canvas.save()
-            canvas.translate(margin, currentY)
+            canvas.translate(margin, textY)
             nameLayout.draw(canvas)
             canvas.restore()
-            currentY += nameLayout.height + 2f
+            textY += nameLayout.height + 2f
         }
 
-        // Designation / Job Title
         if (data.jobTitle.isNotBlank()) {
             val subLayout = StaticLayout.Builder.obtain(data.jobTitle, 0, data.jobTitle.length, subtitlePaint, headerTextWidth.toInt()).setLineSpacing(0f, data.customLineSpacing).build()
             canvas.save()
-            canvas.translate(margin, currentY)
+            canvas.translate(margin, textY)
             subLayout.draw(canvas)
             canvas.restore()
-            currentY += subLayout.height + 6f
+            textY += subLayout.height + 6f
         }
 
-        // Contact Lines formatted cleanly with pipes (|) as requested
         val contactLines = mutableListOf<String>()
         val phoneEmailLine = listOfNotNull(
             data.phone.takeIf { it.isNotBlank() }?.let { "Phone: $it" },
@@ -4026,13 +4112,13 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
         contactLines.forEach { line ->
             val cLayout = StaticLayout.Builder.obtain(line, 0, line.length, contactPaint, headerTextWidth.toInt()).setLineSpacing(0f, data.customLineSpacing).build()
             canvas.save()
-            canvas.translate(margin, currentY)
+            canvas.translate(margin, textY)
             cLayout.draw(canvas)
             canvas.restore()
-            currentY += cLayout.height + 3f
+            textY += cLayout.height + 3f
         }
 
-        currentY = maxOf(currentY + 4f, if (hasTopPhoto) margin + photoSize + 10f else currentY)
+        currentY = maxOf(textY + 6f, if (hasTopPhoto) currentY + actualPh + 10f else textY)
     }
 
     val fontScaleMultiplier = when (data.fontScale) {
@@ -6891,7 +6977,7 @@ private fun ProfileAndPersonasTab(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 CvCustomTextField(
-                    label = if (isBn) "সক্রিয় প্রোফাইলের নাম (যেমন: Md. Shariful - Officer Profile)" else "Active Profile Name / Preset Label",
+                    label = if (isBn) "সক্রিয় প্রোফাইলের নাম (যেমন: Rahim - Officer Profile)" else "Active Profile Name / Preset Label",
                     value = cvData.profileLabel,
                     onValueChange = { onCvDataChange(cvData.copy(profileLabel = it)) },
                     themeColors = themeColors,
@@ -7379,7 +7465,7 @@ private fun ProfileAndPersonasTab(
             value = cvData.fullName,
             onValueChange = { onCvDataChange(cvData.copy(fullName = it)) },
             themeColors = themeColors, isLiveEdit = isLiveEdit, isBn = isBn,
-            placeholderText = if (isBn) "যেমন: মোঃ শরিফ্ল ইসলাম" else "e.g., Md. Shariful Islam"
+            placeholderText = if (isBn) "যেমন: মোঃ রহিম আহমেদ" else "e.g., John Doe"
         )
  
         Spacer(modifier = Modifier.height(8.dp))
