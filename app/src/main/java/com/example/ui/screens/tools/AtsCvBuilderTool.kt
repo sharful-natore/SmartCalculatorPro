@@ -6192,9 +6192,16 @@ fun AtsCvBuilderTool(
                 }
             },
             onDeletePdf = { item ->
-                deleteCvHistoryItem(context, item.id)
-                historyList = loadCvHistory(context)
-                showToast(if (isBn) "হিস্টোরি আইটেম মোছা হয়েছে" else "History item deleted")
+                val name = item.fileName.ifBlank { item.candidateName }
+                deleteConfirmDialogState = DeleteConfirmState(
+                    title = if (isBn) "হিস্টোরি ডিলিট নিশ্চিত করুন" else "Confirm History Deletion",
+                    message = if (isBn) "আপনি কি নিশ্চিত যে '$name' ইতিহাস থেকে মুছে ফেলতে চান?" else "Are you sure you want to delete '$name' from history?",
+                    onConfirm = {
+                        deleteCvHistoryItem(context, item.id)
+                        historyList = loadCvHistory(context)
+                        showToast(if (isBn) "হিস্টোরি আইটেম মোছা হয়েছে" else "History item deleted")
+                    }
+                )
             },
             onEditProfile = { item ->
                 val profile = profilesList.find { it.profileLabel == item.profileLabel || it.fullName == item.candidateName }
@@ -6210,9 +6217,15 @@ fun AtsCvBuilderTool(
                 }
             },
             onClearAllHistory = {
-                clearAllCvHistory(context)
-                historyList = emptyList()
-                showToast(if (isBn) "সমস্ত ইতিহাস মোছা হয়েছে" else "All history cleared")
+                deleteConfirmDialogState = DeleteConfirmState(
+                    title = if (isBn) "সকল ইতিহাস মুছে ফেলা" else "Clear All History",
+                    message = if (isBn) "আপনি কি নিশ্চিত যে সমস্ত ইতিহাস মুছে ফেলতে চান?" else "Are you sure you want to clear all history?",
+                    onConfirm = {
+                        clearAllCvHistory(context)
+                        historyList = emptyList()
+                        showToast(if (isBn) "সমস্ত ইতিহাস মোছা হয়েছে" else "All history cleared")
+                    }
+                )
             }
         )
     }
@@ -6306,15 +6319,22 @@ fun AtsCvBuilderTool(
                 showToast(if (isBn) "প্রোফাইল লোড ও অটো-ইনপুট করা হয়েছে!" else "Profile loaded & auto-filled!")
             },
             onDeleteProfile = { toDelete ->
-                val updatedList = profilesList.filter { it.id != toDelete.id }
-                profilesList = updatedList
-                saveAllCvProfiles(context, updatedList)
-                if (activeProfileId == toDelete.id && updatedList.isNotEmpty()) {
-                    activeProfileId = updatedList.first().id
-                    saveActiveProfileId(context, activeProfileId)
-                    cvData = updatedList.first()
-                }
-                showToast(if (isBn) "প্রোফাইল মোছা হয়েছে!" else "Profile deleted!")
+                val label = toDelete.profileLabel.ifBlank { toDelete.fullName }
+                deleteConfirmDialogState = DeleteConfirmState(
+                    title = if (isBn) "প্রোফাইল ডিলিট নিশ্চিত করুন" else "Confirm Profile Deletion",
+                    message = if (isBn) "আপনি কি নিশ্চিত যে '$label' প্রোফাইলটি মুছে ফেলতে চান?" else "Are you sure you want to delete '$label'?",
+                    onConfirm = {
+                        val updatedList = profilesList.filter { it.id != toDelete.id }
+                        profilesList = updatedList
+                        saveAllCvProfiles(context, updatedList)
+                        if (activeProfileId == toDelete.id && updatedList.isNotEmpty()) {
+                            activeProfileId = updatedList.first().id
+                            saveActiveProfileId(context, activeProfileId)
+                            cvData = updatedList.first()
+                        }
+                        showToast(if (isBn) "প্রোফাইল মোছা হয়েছে!" else "Profile deleted!")
+                    }
+                )
             },
             onRenameProfile = { profile, newName ->
                 val updated = profile.copy(profileLabel = newName)
@@ -6818,19 +6838,27 @@ fun AtsCvBuilderTool(
                                 showToast(if (isBn) "নতুন প্রোফাইল তৈরি হয়েছে!" else "New CV profile created!")
                             },
                             onDeleteProfile = { idToDelete ->
-                                val updatedList = profilesList.filter { it.id != idToDelete }
-                                profilesList = updatedList
-                                saveAllCvProfiles(context, updatedList)
-                                if (activeProfileId == idToDelete) {
-                                    val remFiltered = updatedList.filter {
-                                        it.id.startsWith("custom_profile_") ||
-                                        it.id.startsWith("profile_import_") ||
-                                        (!it.id.startsWith("profile_") && it.id.isNotBlank())
+                                val profileToDelete = profilesList.find { it.id == idToDelete }
+                                val label = profileToDelete?.profileLabel?.ifBlank { profileToDelete.fullName } ?: "Profile"
+                                deleteConfirmDialogState = DeleteConfirmState(
+                                    title = if (isBn) "প্রোফাইল ডিলিট নিশ্চিত করুন" else "Confirm Profile Deletion",
+                                    message = if (isBn) "আপনি কি নিশ্চিত যে '$label' প্রোফাইলটি মুছে ফেলতে চান?" else "Are you sure you want to delete '$label'?",
+                                    onConfirm = {
+                                        val updatedList = profilesList.filter { it.id != idToDelete }
+                                        profilesList = updatedList
+                                        saveAllCvProfiles(context, updatedList)
+                                        if (activeProfileId == idToDelete) {
+                                            val remFiltered = updatedList.filter {
+                                                it.id.startsWith("custom_profile_") ||
+                                                it.id.startsWith("profile_import_") ||
+                                                (!it.id.startsWith("profile_") && it.id.isNotBlank())
+                                            }
+                                            activeProfileId = remFiltered.firstOrNull()?.id ?: (updatedList.firstOrNull()?.id ?: "")
+                                            saveActiveProfileId(context, activeProfileId)
+                                        }
+                                        showToast(if (isBn) "প্রোফাইলটি মুছে ফেলা হয়েছে!" else "CV profile deleted successfully!")
                                     }
-                                    activeProfileId = remFiltered.firstOrNull()?.id ?: (updatedList.firstOrNull()?.id ?: "")
-                                    saveActiveProfileId(context, activeProfileId)
-                                }
-                                showToast(if (isBn) "প্রোফাইলটি মুছে ফেলা হয়েছে!" else "CV profile deleted successfully!")
+                                )
                             },
                         themeColors = themeColors,
                         isBn = isBn,

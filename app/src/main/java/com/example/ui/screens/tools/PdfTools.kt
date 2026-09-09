@@ -1194,16 +1194,19 @@ fun PdfReaderTool(
             }
         } else {
             // ================= 2. GOOGLE DRIVE STYLE VERTICAL MULTI-PAGE VIEWER =================
-            Column(
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(if (isNightMode) Color(0xFF0B0F19) else Color(0xFF1E293B))
             ) {
-                // TOP ACTION TOOLBAR (Google Drive Style)
+                // TOP ACTION TOOLBAR (Google Drive Style Floating Overlay)
                 AnimatedVisibility(
                     visible = isControlsVisible && !isFullscreen,
-                    enter = slideInVertically { -it } + fadeIn(),
-                    exit = slideOutVertically { -it } + fadeOut()
+                    enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
+                    exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut(),
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .fillMaxWidth()
                 ) {
                     Surface(
                         color = themeColors.cardBg,
@@ -1546,8 +1549,7 @@ fun PdfReaderTool(
                 // MAIN VIEWPORT FOR PDF PAGES (Google Drive Vertical Scroll & Document-Level Zoom)
                 BoxWithConstraints(
                     modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth()
+                        .fillMaxSize()
                         .clipToBounds()
                 ) {
                     val containerWidth = constraints.maxWidth.toFloat()
@@ -1683,7 +1685,12 @@ fun PdfReaderTool(
                                         .fillMaxSize()
                                         .nestedScroll(pdfViewerNestedScrollConnection),
                                     verticalArrangement = Arrangement.spacedBy(10.dp),
-                                    contentPadding = PaddingValues(vertical = 10.dp, horizontal = 6.dp)
+                                    contentPadding = PaddingValues(
+                                        start = 6.dp,
+                                        top = if (isControlsVisible && !isFullscreen) 58.dp else 10.dp,
+                                        end = 6.dp,
+                                        bottom = 16.dp
+                                    )
                                 ) {
                                     items(pageCount) { pageIdx ->
                                         val isMatchPage = isSearchActive && pdfSearchQuery.isNotBlank() && searchMatches.contains(pageIdx)
@@ -1965,7 +1972,7 @@ fun PdfReaderTool(
                         }
                     }
 
-                    // BOTTOM FROSTED GLASS FLOATING PAGE PILL & SCRUBBER
+                    // BOTTOM LIGHT COLOR GLASSMORPHISM FLOATING PAGE PILL & SCRUBBER
                     androidx.compose.animation.AnimatedVisibility(
                         visible = isControlsVisible && pageCount > 0 && !isFullscreen,
                         enter = slideInVertically { it } + fadeIn(),
@@ -1974,15 +1981,26 @@ fun PdfReaderTool(
                             .align(Alignment.BottomCenter)
                             .padding(bottom = if (isFullscreen) 24.dp else 16.dp)
                     ) {
+                        val pillBgColor = if (isNightMode) {
+                            Color(0xFF0F172A).copy(alpha = 0.88f)
+                        } else {
+                            Color.White.copy(alpha = 0.85f)
+                        }
+                        val pillBorderColor = if (isNightMode) {
+                            Color.White.copy(alpha = 0.25f)
+                        } else {
+                            Color.White.copy(alpha = 0.95f)
+                        }
+                        val pillContentColor = if (isNightMode) Color.White else themeColors.buttonEqualBg
+                        val innerPillBg = if (isNightMode) Color.White.copy(alpha = 0.15f) else themeColors.buttonEqualBg.copy(alpha = 0.12f)
+                        val innerPillBorder = if (isNightMode) Color.White.copy(alpha = 0.30f) else themeColors.buttonEqualBg.copy(alpha = 0.35f)
+
                         Surface(
                             shape = CircleShape,
-                            color = Color(0xFF0F172A).copy(alpha = 0.88f),
-                            shadowElevation = 8.dp,
-                            border = BorderStroke(
-                                1.2.dp,
-                                if (isNightMode) Color.White.copy(alpha = 0.25f)
-                                else Color.White.copy(alpha = 0.20f)
-                            )
+                            color = pillBgColor,
+                            shadowElevation = 10.dp,
+                            border = BorderStroke(1.5.dp, pillBorderColor),
+                            modifier = Modifier.graphicsLayer { alpha = 0.98f }
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -2003,18 +2021,18 @@ fun PdfReaderTool(
                                     Icon(
                                         imageVector = Icons.Default.ChevronLeft,
                                         contentDescription = "Previous Page",
-                                        tint = if (visibleCurrentPage > 0) Color.White else Color.White.copy(alpha = 0.3f),
+                                        tint = if (visibleCurrentPage > 0) pillContentColor else pillContentColor.copy(alpha = 0.3f),
                                         modifier = Modifier.size(22.dp)
                                     )
                                 }
 
-                                // Frosted Page Counter Pill (Tap opens "Jump to Page" Dialog)
+                                // Frosted Glassmorphism Page Counter Pill (Tap opens "Jump to Page" Dialog)
                                 Box(
                                     modifier = Modifier
                                         .padding(horizontal = 4.dp)
                                         .clip(CircleShape)
-                                        .background(Color.White.copy(alpha = 0.15f))
-                                        .border(1.dp, Color.White.copy(alpha = 0.25f), CircleShape)
+                                        .background(innerPillBg)
+                                        .border(1.dp, innerPillBorder, CircleShape)
                                         .clickable { showJumpDialog = true }
                                         .padding(horizontal = 14.dp, vertical = 6.dp),
                                     contentAlignment = Alignment.Center
@@ -2027,8 +2045,8 @@ fun PdfReaderTool(
                                         else
                                             "Page $curPageStr of $totPageStr",
                                         fontSize = 12.5.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.White
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = pillContentColor
                                     )
                                 }
 
@@ -2047,7 +2065,7 @@ fun PdfReaderTool(
                                     Icon(
                                         imageVector = Icons.Default.ChevronRight,
                                         contentDescription = "Next Page",
-                                        tint = if (visibleCurrentPage < pageCount - 1) Color.White else Color.White.copy(alpha = 0.3f),
+                                        tint = if (visibleCurrentPage < pageCount - 1) pillContentColor else pillContentColor.copy(alpha = 0.3f),
                                         modifier = Modifier.size(22.dp)
                                     )
                                 }
