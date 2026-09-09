@@ -546,6 +546,58 @@ private fun saveCvHistory(context: Context, historyList: List<CvHistoryItem>) {
     prefs.edit().putString(CV_HISTORY_KEY, arr.toString()).apply()
 }
 
+private const val CV_COPILOT_PREFS = "ats_cv_copilot_chat_prefs"
+private const val CV_COPILOT_CHAT_KEY = "copilot_chat_history_v1"
+
+private fun saveCvCoPilotChat(context: Context, messages: List<CoPilotMessage>) {
+    try {
+        val prefs = context.getSharedPreferences(CV_COPILOT_PREFS, Context.MODE_PRIVATE)
+        val arr = JSONArray()
+        val recent = if (messages.size > 60) messages.takeLast(60) else messages
+        recent.forEach { msg ->
+            val obj = JSONObject()
+            obj.put("id", msg.id)
+            obj.put("sender", msg.sender)
+            obj.put("text", msg.text)
+            obj.put("timestamp", msg.timestamp)
+            arr.put(obj)
+        }
+        prefs.edit().putString(CV_COPILOT_CHAT_KEY, arr.toString()).apply()
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+}
+
+private fun loadCvCoPilotChat(context: Context, isBn: Boolean): List<CoPilotMessage> {
+    val defaultWelcome = CoPilotMessage(
+        sender = "ai",
+        text = if (isBn) "স্বাগতম! আমি আপনার এআই সিভি কো-পাইলট। সার্কুলারের সাথে সিভির গরমিল ঠিক করতে অথবা কোনো সেকশন উন্নত করতে আমাকে বলুন।"
+        else "Welcome! I am your AI CV Co-Pilot. Ask me to tailor your summary, skills, or bullet points to match any job circular."
+    )
+    try {
+        val prefs = context.getSharedPreferences(CV_COPILOT_PREFS, Context.MODE_PRIVATE)
+        val jsonStr = prefs.getString(CV_COPILOT_CHAT_KEY, null) ?: return listOf(defaultWelcome)
+        val arr = JSONArray(jsonStr)
+        if (arr.length() == 0) return listOf(defaultWelcome)
+        val list = mutableListOf<CoPilotMessage>()
+        for (i in 0 until arr.length()) {
+            val obj = arr.getJSONObject(i)
+            list.add(
+                CoPilotMessage(
+                    id = obj.optString("id", UUID.randomUUID().toString()),
+                    sender = obj.optString("sender", "ai"),
+                    text = obj.optString("text", ""),
+                    timestamp = obj.optLong("timestamp", System.currentTimeMillis())
+                )
+            )
+        }
+        return if (list.isNotEmpty()) list else listOf(defaultWelcome)
+    } catch (e: Exception) {
+        e.printStackTrace()
+        return listOf(defaultWelcome)
+    }
+}
+
 private fun loadCvHistory(context: Context): List<CvHistoryItem> {
     val prefs = context.getSharedPreferences(CV_HISTORY_PREFS, Context.MODE_PRIVATE)
     val jsonStr = prefs.getString(CV_HISTORY_KEY, null) ?: return emptyList()
@@ -1074,10 +1126,58 @@ private fun ProfileManagerDialog(
     onDismiss: () -> Unit,
     onSelectProfile: (CvData) -> Unit,
     onDeleteProfile: (CvData) -> Unit,
+    onRenameProfile: (CvData, String) -> Unit = { _, _ -> },
     onImportPdfResume: () -> Unit
 ) {
     var profileToDelete by remember { mutableStateOf<CvData?>(null) }
     var profileToSelect by remember { mutableStateOf<CvData?>(null) }
+    var profileToRename by remember { mutableStateOf<CvData?>(null) }
+    var renameInputText by remember { mutableStateOf("") }
+
+    if (profileToRename != null) {
+        AlertDialog(
+            onDismissRequest = { profileToRename = null },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        profileToRename?.let { p ->
+                            if (renameInputText.isNotBlank()) {
+                                onRenameProfile(p, renameInputText.trim())
+                            }
+                        }
+                        profileToRename = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg)
+                ) {
+                    Text(if (isBn) "সেভ করুন" else "Save Name", color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { profileToRename = null }) {
+                    Text(if (isBn) "বাতিল" else "Cancel", color = themeColors.displayText.copy(alpha = 0.7f))
+                }
+            },
+            title = { Text(if (isBn) "প্রোফাইলের নাম পরিবর্তন করুন" else "Rename Profile", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = themeColors.displayText) },
+            text = {
+                OutlinedTextField(
+                    value = renameInputText,
+                    onValueChange = { renameInputText = it },
+                    singleLine = true,
+                    label = { Text(if (isBn) "নতুন নাম" else "New Profile Label") },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = themeColors.buttonEqualBg,
+                        unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.3f),
+                        focusedTextColor = themeColors.displayText,
+                        unfocusedTextColor = themeColors.displayText
+                    ),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            containerColor = themeColors.cardBg,
+            shape = RoundedCornerShape(14.dp)
+        )
+    }
     
     if (profileToDelete != null) {
         AlertDialog(
@@ -1208,11 +1308,22 @@ private fun ProfileManagerDialog(
                                             overflow = TextOverflow.Ellipsis
                                         )
                                     }
-                                    IconButton(
-                                        onClick = { profileToDelete = profile },
-                                        modifier = Modifier.size(24.dp)
-                                    ) {
-                                        Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red.copy(alpha = 0.7f), modifier = Modifier.size(16.dp))
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                                        IconButton(
+                                            onClick = {
+                                                profileToRename = profile
+                                                renameInputText = profile.profileLabel
+                                            },
+                                            modifier = Modifier.size(24.dp)
+                                        ) {
+                                            Icon(imageVector = Icons.Default.Edit, contentDescription = "Rename", tint = themeColors.buttonEqualBg, modifier = Modifier.size(15.dp))
+                                        }
+                                        IconButton(
+                                            onClick = { profileToDelete = profile },
+                                            modifier = Modifier.size(24.dp)
+                                        ) {
+                                            Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red.copy(alpha = 0.7f), modifier = Modifier.size(15.dp))
+                                        }
                                     }
                                 }
 
@@ -4747,8 +4858,11 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                 if (data.permanentAddress.isNotBlank()) rightColList.add("Permanent Address" to data.permanentAddress)
 
                 if (leftColList.isNotEmpty() || rightColList.isNotEmpty()) {
-                    drawSectionHeader("PERSONAL INFORMATION", "ðŸ‘¤")
-                    val halfW = contentWidth / 2f - 10f
+                    drawSectionHeader("PERSONAL INFORMATION", "👤")
+                    val personalPaint = TextPaint(bodyPaint).apply {
+                        textSize = 8.6f
+                    }
+                    val halfW = (contentWidth - 12f) / 2f
                     val maxRows = maxOf(leftColList.size, rightColList.size)
 
                     for (i in 0 until maxRows) {
@@ -4758,16 +4872,16 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                         val leftStr = if (leftItem != null) "${leftItem.first} : ${leftItem.second}" else ""
                         val rightStr = if (rightItem != null) "${rightItem.first} : ${rightItem.second}" else ""
 
-                        val lLayout = StaticLayout.Builder.obtain(leftStr, 0, leftStr.length, bodyPaint, halfW.toInt()).setLineSpacing(0f, data.customLineSpacing).build()
-                        val rLayout = StaticLayout.Builder.obtain(rightStr, 0, rightStr.length, bodyPaint, halfW.toInt()).setLineSpacing(0f, data.customLineSpacing).build()
-                        val rowH = maxOf(lLayout.height, rLayout.height).toFloat() + 3f
+                        val lLayout = StaticLayout.Builder.obtain(leftStr, 0, leftStr.length, personalPaint, halfW.toInt()).setLineSpacing(0f, 0.95f).build()
+                        val rLayout = StaticLayout.Builder.obtain(rightStr, 0, rightStr.length, personalPaint, halfW.toInt()).setLineSpacing(0f, 0.95f).build()
+                        val rowH = maxOf(lLayout.height, rLayout.height).toFloat() + 1f
 
                         checkAndAddNewPage(rowH)
                         if (leftStr.isNotBlank()) {
                             canvas.save(); canvas.translate(margin, currentY); lLayout.draw(canvas); canvas.restore()
                         }
                         if (rightStr.isNotBlank()) {
-                            canvas.save(); canvas.translate(margin + halfW + 20f, currentY); rLayout.draw(canvas); canvas.restore()
+                            canvas.save(); canvas.translate(margin + halfW + 12f, currentY); rLayout.draw(canvas); canvas.restore()
                         }
                         currentY += rowH
                     }
@@ -5433,6 +5547,25 @@ fun AtsCvBuilderTool(
     var showHistoryDialog by remember { mutableStateOf(false) }
     var deleteConfirmDialogState by remember { mutableStateOf<DeleteConfirmState?>(null) }
 
+    // AI CoPilot Chat Messages State (Persistent across tabs and sessions)
+    var coPilotMessages by remember { mutableStateOf(loadCvCoPilotChat(context, isBn)) }
+
+    fun updateCoPilotMessagesState(newList: List<CoPilotMessage>) {
+        coPilotMessages = newList
+        saveCvCoPilotChat(context, newList)
+    }
+
+    fun resetCoPilotMessagesState() {
+        val defaultWelcome = CoPilotMessage(
+            sender = "ai",
+            text = if (isBn) "স্বাগতম! আমি আপনার এআই সিভি কো-পাইলট। সার্কুলারের সাথে সিভির গরমিল ঠিক করতে অথবা কোনো সেকশন উন্নত করতে আমাকে বলুন।"
+            else "Welcome! I am your AI CV Co-Pilot. Ask me to tailor your summary, skills, or bullet points to match any job circular."
+        )
+        coPilotMessages = listOf(defaultWelcome)
+        saveCvCoPilotChat(context, listOf(defaultWelcome))
+        Toast.makeText(context, if (isBn) "নতুন চ্যাট শুরু হয়েছে!" else "New chat started!", Toast.LENGTH_SHORT).show()
+    }
+
     var undoStack by remember { mutableStateOf(listOf<CvData>()) }
     var redoStack by remember { mutableStateOf(listOf<CvData>()) }
 
@@ -6060,6 +6193,16 @@ fun AtsCvBuilderTool(
                 }
                 showToast(if (isBn) "প্রোফাইল মোছা হয়েছে!" else "Profile deleted!")
             },
+            onRenameProfile = { profile, newName ->
+                val updated = profile.copy(profileLabel = newName)
+                val updatedList = profilesList.map { if (it.id == profile.id) updated else it }
+                profilesList = updatedList
+                saveAllCvProfiles(context, updatedList)
+                if (activeProfileId == profile.id) {
+                    cvData = updated
+                }
+                showToast(if (isBn) "প্রোফাইলের নাম সফলভাবে পরিবর্তন করা হয়েছে!" else "Profile renamed successfully!")
+            },
             onImportPdfResume = {
                 showProfileManagerDialog = false
                 pdfImportLauncher.launch("application/pdf")
@@ -6596,6 +6739,14 @@ fun AtsCvBuilderTool(
                                     targetField = "SUMMARY"
                                 )
                             }
+                        },
+                        onSaveProfile = {
+                            val targetId = if (cvData.id.isNotBlank() && !cvData.id.startsWith("profile_")) cvData.id else "custom_profile_" + java.util.UUID.randomUUID().toString()
+                            val updated = cvData.copy(id = targetId)
+                            updateCvDataState(updated)
+                            activeProfileId = targetId
+                            saveActiveProfileId(context, targetId)
+                            showToast(if (isBn) "বর্তমান ছবি সহ সিভি প্রোফাইল সফলভাবে সেভ করা হয়েছে!" else "Current CV profile saved with photo successfully!")
                         }
                     )
                     }
@@ -6660,7 +6811,10 @@ fun AtsCvBuilderTool(
                         },
                         callGeminiAiApi = { prompt, sysPrompt ->
                             callGeminiAiMultiModal(prompt = prompt, systemInstruction = sysPrompt)
-                        }
+                        },
+                        coPilotMessages = coPilotMessages,
+                        onCoPilotMessagesChange = { updateCoPilotMessagesState(it) },
+                        onNewChat = { resetCoPilotMessagesState() }
                     )
 
                     4 -> CustomizationTab(
@@ -6834,6 +6988,7 @@ private fun ProfileAndPersonasTab(
     isBn: Boolean,
     onOpenPdfInViewer: (CvData) -> Unit,
     onGenerateSummaryAi: () -> Unit,
+    onSaveProfile: () -> Unit = {},
     isScrollable: Boolean = true,
     isLiveEdit: Boolean = false
 ) {
@@ -6891,16 +7046,30 @@ private fun ProfileAndPersonasTab(
                         }
                     }
 
-                    Button(
-                        onClick = { showAddDialog = true },
-                        colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        modifier = Modifier.height(28.dp)
-                    ) {
-                        Icon(imageVector = Icons.Default.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(13.dp))
-                        Spacer(modifier = Modifier.width(3.dp))
-                        Text(text = if (isBn) "নতুন" else "New", color = Color.White, fontSize = 10.5.sp, fontWeight = FontWeight.Bold)
+                    Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                        Button(
+                            onClick = onSaveProfile,
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier.height(28.dp)
+                        ) {
+                            Icon(imageVector = Icons.Default.Save, contentDescription = null, tint = Color.White, modifier = Modifier.size(13.dp))
+                            Spacer(modifier = Modifier.width(3.dp))
+                            Text(text = if (isBn) "সেভ" else "Save", color = Color.White, fontSize = 10.5.sp, fontWeight = FontWeight.Bold)
+                        }
+
+                        Button(
+                            onClick = { showAddDialog = true },
+                            colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg),
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier.height(28.dp)
+                        ) {
+                            Icon(imageVector = Icons.Default.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(13.dp))
+                            Spacer(modifier = Modifier.width(3.dp))
+                            Text(text = if (isBn) "নতুন" else "New", color = Color.White, fontSize = 10.5.sp, fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
 
@@ -11078,6 +11247,9 @@ private fun AiJobCircularMatchTab(
     onNavigateToTab: (Int) -> Unit = {},
     onRequestAiPrompt: (title: String, defaultPrompt: String, targetField: String, expIndex: Int) -> Unit = { _, _, _, _ -> },
     callGeminiAiApi: (suspend (prompt: String, sysPrompt: String) -> String)? = null,
+    coPilotMessages: List<CoPilotMessage> = emptyList(),
+    onCoPilotMessagesChange: (List<CoPilotMessage>) -> Unit = {},
+    onNewChat: () -> Unit = {},
     isScrollable: Boolean = true
 ) {
     val context = LocalContext.current
@@ -11094,18 +11266,7 @@ private fun AiJobCircularMatchTab(
     var newCircularCompany by remember { mutableStateOf("") }
     var activeAiSection by remember { mutableStateOf("ATS_SCORE") }
 
-    // Chatbot State
-    var coPilotMessages by remember {
-        mutableStateOf(
-            listOf(
-                CoPilotMessage(
-                    sender = "ai",
-                    text = if (isBn) "স্বাগতম! আমি আপনার এআই সিভি কো-পাইলট। সার্কুলারের সাথে সিভির গরমিল ঠিক করতে অথবা কোনো সেকশন উন্নত করতে আমাকে বলুন।"
-                    else "Welcome! I am your AI CV Co-Pilot. Ask me to tailor your summary, skills, or bullet points to match any job circular."
-                )
-            )
-        )
-    }
+    // Chatbot Input & Loading State
     var userMessageText by remember { mutableStateOf("") }
     var isChatLoading by remember { mutableStateOf(false) }
 
@@ -12552,7 +12713,7 @@ private fun AiJobCircularMatchTab(
             }
 
             val userMsg = CoPilotMessage(sender = "user", text = displayPrompt)
-            coPilotMessages = coPilotMessages + userMsg
+            onCoPilotMessagesChange(coPilotMessages + userMsg)
             userMessageText = ""
             isChatLoading = true
 
@@ -12669,13 +12830,13 @@ private fun AiJobCircularMatchTab(
                         text = cleanResponse.ifBlank { aiResponseText },
                         proposedCvData = proposedCvData
                     )
-                    coPilotMessages = coPilotMessages + aiMsg
+                    onCoPilotMessagesChange(coPilotMessages + aiMsg)
                 } catch (e: Exception) {
                     val errorMsg = CoPilotMessage(
                         sender = "ai",
                         text = if (isBn) "দুঃখিত, কো-পাইলট রেসপন্স পেতে সমস্যা হয়েছে: ${e.message}" else "Sorry, failed to get response from Co-Pilot: ${e.message}"
                     )
-                    coPilotMessages = coPilotMessages + errorMsg
+                    onCoPilotMessagesChange(coPilotMessages + errorMsg)
                 } finally {
                     isChatLoading = false
                 }
@@ -12698,7 +12859,8 @@ private fun AiJobCircularMatchTab(
             onCvDataChange = onCvDataChange,
             onCompareClick = { suggestionItem ->
                 selectedComparisonSuggestion = suggestionItem
-            }
+            },
+            onNewChat = onNewChat
         )
 
         // Fix Now Action Modal Dialog

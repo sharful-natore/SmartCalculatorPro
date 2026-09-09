@@ -43,7 +43,8 @@ fun AiCoPilotChatbotSection(
     isChatLoading: Boolean,
     onSendMessage: (query: String, attachmentUri: Uri?, attachmentName: String?, attachmentBytes: ByteArray?, mimeType: String?) -> Unit,
     onCvDataChange: (CvData) -> Unit,
-    onCompareClick: (AiSuggestionItem) -> Unit
+    onCompareClick: (AiSuggestionItem) -> Unit,
+    onNewChat: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
@@ -185,6 +186,28 @@ fun AiCoPilotChatbotSection(
                             color = themeColors.displayText.copy(alpha = 0.65f)
                         )
                     }
+                }
+
+                Button(
+                    onClick = onNewChat,
+                    colors = ButtonDefaults.buttonColors(containerColor = themeColors.buttonEqualBg.copy(alpha = 0.12f)),
+                    shape = RoundedCornerShape(12.dp),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                    modifier = Modifier.height(28.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "New Chat",
+                        tint = themeColors.buttonEqualBg,
+                        modifier = Modifier.size(13.dp)
+                    )
+                    Spacer(modifier = Modifier.width(3.dp))
+                    Text(
+                        text = if (isBn) "নতুন চ্যাট" else "New Chat",
+                        fontSize = 10.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.buttonEqualBg
+                    )
                 }
             }
 
