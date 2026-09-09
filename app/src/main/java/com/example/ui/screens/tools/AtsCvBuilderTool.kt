@@ -5515,6 +5515,104 @@ private fun downloadDocxFile(context: Context, docxFile: File, customFileName: S
     }
 }
 
+private fun downloadCvImages(context: Context, pdfFile: File, baseName: String, isBn: Boolean) {
+    if (!pdfFile.exists() || pdfFile.length() == 0L) return
+    try {
+        val bitmaps = renderAllPdfPagesToBitmaps(pdfFile)
+        if (bitmaps.isEmpty()) {
+            Toast.makeText(context, if (isBn) "ছবি তৈরি করা যায়নি" else "Failed to render images", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+        val cleanBase = baseName.removeSuffix(".png").removeSuffix(".jpg").removeSuffix(".pdf").removeSuffix(".docx").ifBlank { "CV_Image" }
+        val savedFileNames = mutableListOf<String>()
+
+        if (bitmaps.size == 1) {
+            val fileName = "${cleanBase}.png"
+            var destFile = File(downloadsDir, fileName)
+            var counter = 1
+            while (destFile.exists()) {
+                destFile = File(downloadsDir, "${cleanBase}_$counter.png")
+                counter++
+            }
+            FileOutputStream(destFile).use { out ->
+                bitmaps[0].compress(Bitmap.CompressFormat.PNG, 100, out)
+            }
+            savedFileNames.add(destFile.name)
+        } else {
+            // Multiple pages: save each page as HD image
+            bitmaps.forEachIndexed { index, bitmap ->
+                val fileName = "${cleanBase}_Page_${index + 1}.png"
+                var destFile = File(downloadsDir, fileName)
+                var counter = 1
+                while (destFile.exists()) {
+                    destFile = File(downloadsDir, "${cleanBase}_Page_${index + 1}_$counter.png")
+                    counter++
+                }
+                FileOutputStream(destFile).use { out ->
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+                }
+                savedFileNames.add(destFile.name)
+            }
+        }
+        val msg = if (isBn) {
+            if (savedFileNames.size == 1) "ছবি '${savedFileNames[0]}' ডাউনলোড ফোল্ডারে সেভ হয়েছে!"
+            else "${savedFileNames.size}টি ছবি ডাউনলোড ফোল্ডারে সেভ হয়েছে!"
+        } else {
+            if (savedFileNames.size == 1) "Image '${savedFileNames[0]}' saved to Downloads!"
+            else "${savedFileNames.size} images saved to Downloads!"
+        }
+        Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+    } catch (e: Exception) {
+        Toast.makeText(context, "Image save failed: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+    }
+}
+
+private fun shareCvImages(context: Context, pdfFile: File, baseName: String, isBn: Boolean) {
+    if (!pdfFile.exists() || pdfFile.length() == 0L) return
+    try {
+        val bitmaps = renderAllPdfPagesToBitmaps(pdfFile)
+        if (bitmaps.isEmpty()) {
+            Toast.makeText(context, if (isBn) "ছবি তৈরি করা যায়নি" else "Failed to render images", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val cleanBase = baseName.removeSuffix(".png").removeSuffix(".jpg").removeSuffix(".pdf").removeSuffix(".docx").ifBlank { "CV_Image" }
+        val shareDir = File(context.cacheDir, "shared_cv_images").apply { mkdirs() }
+
+        if (bitmaps.size == 1) {
+            val imageFile = File(shareDir, "${cleanBase}.png")
+            FileOutputStream(imageFile).use { out ->
+                bitmaps[0].compress(Bitmap.CompressFormat.PNG, 100, out)
+            }
+            val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", imageFile)
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "image/png"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            context.startActivity(Intent.createChooser(intent, if (isBn) "সিভি ছবি শেয়ার করুন" else "Share CV Image"))
+        } else {
+            val uris = ArrayList<Uri>()
+            bitmaps.forEachIndexed { index, bitmap ->
+                val imageFile = File(shareDir, "${cleanBase}_Page_${index + 1}.png")
+                FileOutputStream(imageFile).use { out ->
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+                }
+                val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", imageFile)
+                uris.add(uri)
+            }
+            val intent = Intent(Intent.ACTION_SEND_MULTIPLE).apply {
+                type = "image/png"
+                putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            context.startActivity(Intent.createChooser(intent, if (isBn) "সিভি ছবিগুলো শেয়ার করুন" else "Share CV Images"))
+        }
+    } catch (e: Exception) {
+        Toast.makeText(context, "Image share error: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+    }
+}
+
 // ================= MAIN TOOL COMPOSABLE =================
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -6912,6 +7010,24 @@ fun AtsCvBuilderTool(
                                 val docx = generateCvDocxFile(context, cvData)
                                 withContext(Dispatchers.Main) {
                                     shareDocxFile(context, docx)
+                                }
+                            }
+                        },
+                        onDownloadImage = { customName ->
+                            val file = generatedPdfFile ?: return@PreviewAndExportTab
+                            scope.launch(Dispatchers.IO) {
+                                val validName = if (customName.isNotBlank()) customName.trim() else "CV_${cvData.fullName.ifBlank { "Resume" }.replace(" ", "_")}_ATS"
+                                withContext(Dispatchers.Main) {
+                                    downloadCvImages(context, file, validName, isBn)
+                                }
+                            }
+                        },
+                        onShareImage = {
+                            val file = generatedPdfFile ?: return@PreviewAndExportTab
+                            scope.launch(Dispatchers.IO) {
+                                val validName = "CV_${cvData.fullName.ifBlank { "Resume" }.replace(" ", "_")}_ATS"
+                                withContext(Dispatchers.Main) {
+                                    shareCvImages(context, file, validName, isBn)
                                 }
                             }
                         },
@@ -12942,6 +13058,8 @@ private fun PreviewAndExportTab(
     onSharePdf: () -> Unit,
     onDownloadDocx: (String) -> Unit = {},
     onShareDocx: () -> Unit,
+    onDownloadImage: (String) -> Unit = {},
+    onShareImage: () -> Unit = {},
     onOpenPdfInAppViewer: () -> Unit,
     onSaveProfile: () -> Unit = {},
     isScrollable: Boolean = true,
@@ -12954,11 +13072,15 @@ private fun PreviewAndExportTab(
     var previewMode by remember { mutableStateOf("PREVIEW") } // "PREVIEW" or "LIVE_EDIT"
     var showDownloadMenu by remember { mutableStateOf(false) }
     var showShareMenu by remember { mutableStateOf(false) }
-    var pendingCustomDownloadType by remember { mutableStateOf<String?>(null) } // "pdf" or "docx"
+    var pendingCustomDownloadType by remember { mutableStateOf<String?>(null) } // "pdf", "docx", or "image"
 
     // Custom Name Dialog for Download
     if (pendingCustomDownloadType != null) {
-        val ext = if (pendingCustomDownloadType == "pdf") ".pdf" else ".docx"
+        val ext = when (pendingCustomDownloadType) {
+            "pdf" -> ".pdf"
+            "docx" -> ".docx"
+            else -> ".png"
+        }
         val defaultBaseName = "CV_${cvData.fullName.ifBlank { "Resume" }.replace(" ", "_")}_ATS"
         SaveAsCustomNameDialog(
             initialName = defaultBaseName,
@@ -12966,10 +13088,10 @@ private fun PreviewAndExportTab(
             isBn = isBn,
             themeColors = themeColors,
             onConfirm = { customFileName ->
-                if (pendingCustomDownloadType == "pdf") {
-                    onDownloadPdf(customFileName)
-                } else {
-                    onDownloadDocx(customFileName)
+                when (pendingCustomDownloadType) {
+                    "pdf" -> onDownloadPdf(customFileName)
+                    "docx" -> onDownloadDocx(customFileName)
+                    else -> onDownloadImage(customFileName)
                 }
                 pendingCustomDownloadType = null
             },
@@ -13047,6 +13169,23 @@ private fun PreviewAndExportTab(
                             pendingCustomDownloadType = "docx"
                         }
                     )
+                    Divider(color = themeColors.displayText.copy(alpha = 0.08f))
+                    DropdownMenuItem(
+                        text = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(imageVector = Icons.Default.Image, contentDescription = null, tint = Color(0xFF10B981), modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column {
+                                    Text(text = if (isBn) "Download as Image (.png)" else "Download as Image (.png)", fontWeight = FontWeight.Bold, fontSize = 12.5.sp, color = themeColors.displayText)
+                                    Text(text = if (isBn) "হাই ডেফিনিশন ছবি হিসেবে সেভ করুন" else "High Definition Image (PNG)", fontSize = 10.sp, color = themeColors.displayText.copy(alpha = 0.6f))
+                                }
+                            }
+                        },
+                        onClick = {
+                            showDownloadMenu = false
+                            pendingCustomDownloadType = "image"
+                        }
+                    )
                 }
             }
 
@@ -13102,6 +13241,20 @@ private fun PreviewAndExportTab(
                         onClick = {
                             showShareMenu = false
                             onShareDocx()
+                        }
+                    )
+                    Divider(color = themeColors.displayText.copy(alpha = 0.08f))
+                    DropdownMenuItem(
+                        text = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(imageVector = Icons.Default.Image, contentDescription = null, tint = Color(0xFF10B981), modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Text(text = if (isBn) "Share as Image (HD)" else "Share as Image (HD)", fontWeight = FontWeight.Bold, fontSize = 12.5.sp, color = themeColors.displayText)
+                            }
+                        },
+                        onClick = {
+                            showShareMenu = false
+                            onShareImage()
                         }
                     )
                 }

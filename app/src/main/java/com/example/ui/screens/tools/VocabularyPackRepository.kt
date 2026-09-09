@@ -431,21 +431,39 @@ object VocabularyPackRepository {
         val wordLower = word.lowercase().trim()
         val richMatch = richWordMap[wordLower]
 
+        val isRealIpa = { str: String ->
+            str.isNotBlank() && !str.startsWith("/${wordLower}/") &&
+                (str.contains(Regex("[əɪæɒʊθʃʒŋɜːˈˌɑːɔːeɪaɪɔɪaʊəʊ]")) || (str.contains("(") && !str.contains(Regex("[a-zA-Z]{3,}\\)"))))
+        }
+
         val finalPhonetic = when {
-            richMatch != null && richMatch.phonetic.isNotBlank() && richMatch.phonetic.contains("(") -> richMatch.phonetic
-            phonetic.isNotBlank() && phonetic.contains("(") -> phonetic
-            richMatch != null && richMatch.phonetic.isNotBlank() -> richMatch.phonetic
+            isRealIpa(phonetic) -> phonetic
+            richMatch != null && isRealIpa(richMatch.phonetic) -> richMatch.phonetic
+            phonetic.isNotBlank() && phonetic.contains("(") && !phonetic.startsWith("/${wordLower}/") -> phonetic
+            richMatch != null && richMatch.phonetic.isNotBlank() && richMatch.phonetic.contains("(") && !richMatch.phonetic.startsWith("/${wordLower}/") -> richMatch.phonetic
             phonetic.isNotBlank() && !phonetic.equals("/${wordLower}/", ignoreCase = true) -> phonetic
+            richMatch != null && richMatch.phonetic.isNotBlank() -> richMatch.phonetic
             else -> {
                 val bn = EnglishPronunciationEngine.generateBanglaPronunciation(word)
-                if (bn.isNotBlank()) "/${wordLower}/ ($bn)" else "/${wordLower}/"
+                val ipa = EnglishPronunciationEngine.generateIpaPhonetic(word)
+                if (bn.isNotBlank()) "$ipa ($bn)" else ipa
             }
         }
 
-        val finalPos = when {
-            pos.isNotBlank() && !pos.equals("Noun", ignoreCase = true) -> pos.replaceFirstChar { it.uppercase() }
-            richMatch != null -> richMatch.partOfSpeech
+        val rawPos = when {
+            pos.isNotBlank() && !pos.equals("Noun", ignoreCase = true) -> pos
+            richMatch != null && richMatch.partOfSpeech.isNotBlank() -> richMatch.partOfSpeech
+            pos.isNotBlank() -> pos
             else -> "Noun"
+        }
+        val finalPos = when (rawPos.trim()) {
+            "Adj" -> "Adjective"
+            "Adv" -> "Adverb"
+            "Prep" -> "Preposition"
+            "Conj" -> "Conjunction"
+            "Pron" -> "Pronoun"
+            "Interj" -> "Interjection"
+            else -> rawPos.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
         }
 
         val finalExampleEn = when {

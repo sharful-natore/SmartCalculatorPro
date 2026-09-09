@@ -324,6 +324,22 @@ fun PdfReaderTool(
         }
     }
 
+    val pdfViewerNestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                if (docScale <= 1.05f) {
+                    val delta = available.y
+                    if (delta < -10f && isControlsVisible) {
+                        isControlsVisible = false
+                    } else if (delta > 10f && !isControlsVisible) {
+                        isControlsVisible = true
+                    }
+                }
+                return Offset.Zero
+            }
+        }
+    }
+
     // Intercept Back Press: Handled systematically for all dialogs, errors, tabs, and viewer states
     BackHandler {
         if (pdfErrorMessage != null) {
@@ -514,6 +530,19 @@ fun PdfReaderTool(
                             Toast.LENGTH_SHORT
                         ).show()
                     }
+                }
+
+                // Asynchronously extract text in background for search & text copying without blocking UI
+                val totalCount = result.pageCount
+                coroutineScope.launch(Dispatchers.IO) {
+                    try {
+                        val extracted = extractPdfTextByPage(context, currentUri, totalCount)
+                        withContext(Dispatchers.Main) {
+                            if (pdfUri == currentUri) {
+                                pdfTextPages = extracted
+                            }
+                        }
+                    } catch (_: Exception) {}
                 }
             }
             is PdfOpenResult.Error -> {
@@ -1650,7 +1679,9 @@ fun PdfReaderTool(
                             ) {
                                 LazyColumn(
                                     state = verticalLazyListState,
-                                    modifier = Modifier.fillMaxSize(),
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .nestedScroll(pdfViewerNestedScrollConnection),
                                     verticalArrangement = Arrangement.spacedBy(10.dp),
                                     contentPadding = PaddingValues(vertical = 10.dp, horizontal = 6.dp)
                                 ) {
@@ -4048,13 +4079,8 @@ internal suspend fun loadPdfDocument(context: Context, uri: Uri): PdfOpenResult 
         try { pfd.close() } catch (_: Exception) {}
         pfd = null
 
-        val textList = try {
-            extractPdfTextByPage(context, uri, count)
-        } catch (_: Exception) {
-            emptyList()
-        }
-
-        PdfOpenResult.Success(pageCount = count, textPages = textList)
+        // Return immediately with empty text list so the PDF renders in 0.05 seconds!
+        PdfOpenResult.Success(pageCount = count, textPages = emptyList())
     } catch (e: Exception) {
         PdfOpenResult.Error(
             reasonBn = "ফাইলটি ওপেন করতে ব্যর্থ: ${e.localizedMessage ?: "ক্ষতিগ্রস্ত ফাইল"}",

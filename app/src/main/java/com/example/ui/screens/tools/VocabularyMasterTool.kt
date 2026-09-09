@@ -248,65 +248,59 @@ fun VocabularyMasterTool(
 
     Scaffold(
         topBar = {
-            AnimatedVisibility(
-                visible = isHeaderVisible,
-                enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut()
-            ) {
-                TopAppBar(
-                    title = {
-                        Column {
-                            Text(
-                                text = if (isBn) "ভোকাবুলারি মাস্টার" else "Vocabulary Master",
-                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                color = themeColors.onSurface
-                            )
-                            Text(
-                                text = if (isBn) "${formatNumberBnEn(allWords.size, true)} টি শব্দ সক্রিয় • অফলাইন ডিকশনারি" else "${formatNumberBnEn(allWords.size, false)} Words Active • Offline Ready",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = themeColors.onSurface.copy(alpha = 0.7f)
-                            )
+            TopAppBar(
+                title = {
+                    Column {
+                        Text(
+                            text = if (isBn) "ভোকাবুলারি মাস্টার" else "Vocabulary Master",
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                            color = themeColors.onSurface
+                        )
+                        Text(
+                            text = if (isBn) "${formatNumberBnEn(allWords.size, true)} টি শব্দ সক্রিয় • অফলাইন ডিকশনারি" else "${formatNumberBnEn(allWords.size, false)} Words Active • Offline Ready",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = themeColors.onSurface.copy(alpha = 0.7f)
+                        )
+                    }
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = themeColors.onSurface
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = {
+                        isSearchVisible = !isSearchVisible
+                        if (!isSearchVisible) {
+                            searchQuery = ""
                         }
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = onBackClick) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back",
-                                tint = themeColors.onSurface
-                            )
+                    }) {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = if (isSearchVisible) "Hide Search" else "Show Search",
+                            tint = themeColors.accent
+                        )
+                    }
+                    IconButton(onClick = {
+                        val randomWord = allWords.randomOrNull()
+                        if (randomWord != null) {
+                            speakWord(randomWord.word)
+                            randomWordDialog = randomWord
                         }
-                    },
-                    actions = {
-                        IconButton(onClick = {
-                            isSearchVisible = !isSearchVisible
-                            if (!isSearchVisible) {
-                                searchQuery = ""
-                            }
-                        }) {
-                            Icon(
-                                imageVector = Icons.Default.Search,
-                                contentDescription = if (isSearchVisible) "Hide Search" else "Show Search",
-                                tint = themeColors.accent
-                            )
-                        }
-                        IconButton(onClick = {
-                            val randomWord = allWords.randomOrNull()
-                            if (randomWord != null) {
-                                speakWord(randomWord.word)
-                                randomWordDialog = randomWord
-                            }
-                        }) {
-                            Icon(
-                                imageVector = Icons.Default.Shuffle,
-                                contentDescription = "Random Word",
-                                tint = themeColors.accent
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = themeColors.surface)
-                )
-            }
+                    }) {
+                        Icon(
+                            imageVector = Icons.Default.Shuffle,
+                            contentDescription = "Random Word",
+                            tint = themeColors.accent
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = themeColors.surface)
+            )
         },
         containerColor = themeColors.background
     ) { innerPadding ->
@@ -316,7 +310,7 @@ fun VocabularyMasterTool(
                 .padding(innerPadding)
                 .nestedScroll(nestedScrollConnection)
         ) {
-            // Main Tab Navigation Chips (Hides with header on scroll down)
+            // Main Tab Navigation Chips (Hides with sub-elements on scroll down)
             AnimatedVisibility(
                 visible = isHeaderVisible,
                 enter = expandVertically() + fadeIn(),
@@ -345,11 +339,11 @@ fun VocabularyMasterTool(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 val icon = when (tab) {
-                                    VocabTab.EXPLORE -> Icons.Default.MenuBook
-                                    VocabTab.FLASHCARD -> Icons.Default.Style
-                                    VocabTab.QUIZ -> Icons.Default.Quiz
-                                    VocabTab.STORE -> Icons.Default.CloudDownload
-                                    VocabTab.FAVORITES -> Icons.Default.Favorite
+                                     VocabTab.EXPLORE -> Icons.Default.MenuBook
+                                     VocabTab.FLASHCARD -> Icons.Default.Style
+                                     VocabTab.QUIZ -> Icons.Default.Quiz
+                                     VocabTab.STORE -> Icons.Default.CloudDownload
+                                     VocabTab.FAVORITES -> Icons.Default.Favorite
                                 }
                                 Icon(
                                     imageVector = icon,
@@ -364,71 +358,6 @@ fun VocabularyMasterTool(
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                                     ),
                                     color = if (isSelected) themeColors.onAccent else themeColors.onSurface
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Compact 1-line chip indicator when header is hidden
-            AnimatedVisibility(
-                visible = !isHeaderVisible,
-                enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut()
-            ) {
-                Surface(
-                    color = themeColors.surface,
-                    border = BorderStroke(0.5.dp, themeColors.onSurface.copy(alpha = 0.12f)),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { isHeaderVisible = true }
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            IconButton(
-                                onClick = onBackClick,
-                                modifier = Modifier.size(28.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                    contentDescription = "Back",
-                                    tint = themeColors.onSurface
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = if (isBn) "ভোকাবুলারি (${formatNumberBnEn(allWords.size, true)})" else "Vocab (${formatNumberBnEn(allWords.size, false)})",
-                                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                                color = themeColors.onSurface
-                            )
-                        }
-
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = themeColors.accent.copy(alpha = 0.15f)
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = if (isBn) selectedTab.titleBn else selectedTab.titleEn,
-                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                                    color = themeColors.accent
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Icon(
-                                    imageVector = Icons.Default.ExpandMore,
-                                    contentDescription = "Expand Header",
-                                    tint = themeColors.accent,
-                                    modifier = Modifier.size(16.dp)
                                 )
                             }
                         }
@@ -1433,9 +1362,19 @@ fun VocabFlashcardTab(
                         if (currentWord.synonyms.isNotEmpty()) {
                             Spacer(modifier = Modifier.height(14.dp))
                             Text(
-                                text = "Synonyms: " + currentWord.synonyms.joinToString(", "),
-                                style = MaterialTheme.typography.bodyMedium,
+                                text = (if (isBn) "সমার্থক শব্দ (Synonyms): " else "Synonyms: ") + currentWord.synonyms.joinToString(", "),
+                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
                                 color = Color(0xFF4CAF50),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+
+                        if (currentWord.antonyms.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = (if (isBn) "বিপরীত শব্দ (Antonyms): " else "Antonyms: ") + currentWord.antonyms.joinToString(", "),
+                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                                color = Color(0xFFEF5350),
                                 textAlign = TextAlign.Center
                             )
                         }
@@ -2180,26 +2119,80 @@ object VocabularyDataProvider {
             }
         }
 
+        val isRealPhonetic = { ph: String, w: String ->
+            ph.isNotBlank() && 
+            !ph.startsWith("/${w.lowercase()}/") && 
+            (ph.contains(Regex("[əɪæɒʊθʃʒŋɜːˈˌɑːɔːeɪaɪɔɪaʊəʊ]")) || (ph.contains("(") && !ph.contains(Regex("[a-zA-Z]{3,}\\)"))))
+        }
+
         val distinctList = list.groupBy { it.word.lowercase().trim() }
             .map { (key, group) ->
-                group.maxByOrNull { word ->
-                    var score = 0
-                    if (word.synonyms.isNotEmpty()) score += 15
-                    if (word.antonyms.isNotEmpty()) score += 15
-                    
-                    val hasRealExample = word.exampleEn.isNotBlank() && 
-                            !word.exampleEn.contains("widely used", ignoreCase = true) && 
-                            !word.exampleEn.contains("standard English", ignoreCase = true) &&
-                            !word.exampleEn.contains("clear sense of", ignoreCase = true) // exclude our POS fallbacks too
-                    if (hasRealExample) score += 30
-                    
-                    val isRealPhonetic = word.phonetic.isNotBlank() && 
-                            !word.phonetic.startsWith("/${word.word.lowercase()}/") && 
-                            word.phonetic.contains(Regex("[əɪæɒʊθʃʒŋɜːˈˌ]"))
-                    if (isRealPhonetic) score += 10
-                    
-                    score
+                // Preferred Category: retain specific high-value filter tag if present
+                val preferredCategory = group.firstOrNull { 
+                    it.category.equals("IELTS", ignoreCase = true) ||
+                    it.category.equals("Spoken", ignoreCase = true) ||
+                    it.category.equals("BCS", ignoreCase = true) ||
+                    it.category.equals("Academic", ignoreCase = true) ||
+                    it.category.equals("Idioms", ignoreCase = true)
+                }?.category ?: group.first().category
+
+                // Best Phonetic: Prioritize real IPA containing IPA symbols and Bengali in parens
+                val realPhoneticWord = group.firstOrNull { isRealPhonetic(it.phonetic, it.word) }
+                val resolvedPhonetic = if (realPhoneticWord != null) {
+                    realPhoneticWord.phonetic
+                } else {
+                    val candidate = group.firstOrNull { it.phonetic.isNotBlank() && !it.phonetic.startsWith("/${key}/") }?.phonetic
+                    if (candidate != null && candidate.isNotBlank()) {
+                        candidate
+                    } else {
+                        val bn = EnglishPronunciationEngine.generateBanglaPronunciation(group.first().word)
+                        val ipa = EnglishPronunciationEngine.generateIpaPhonetic(group.first().word)
+                        if (bn.isNotBlank()) "$ipa ($bn)" else ipa
+                    }
+                }
+
+                // Best Meaning
+                val bestMeaning = group.maxByOrNull { it.meaningBn.length }?.meaningBn ?: group.first().meaningBn
+
+                // Best Examples
+                val exampleWord = group.firstOrNull { 
+                    it.exampleEn.isNotBlank() && 
+                    !it.exampleEn.contains("widely used", ignoreCase = true) && 
+                    !it.exampleEn.contains("standard English", ignoreCase = true) &&
+                    !it.exampleEn.contains("clear sense of", ignoreCase = true)
                 } ?: group.first()
+
+                // Best Synonyms and Antonyms (Deduplicated, self-synonyms removed)
+                val allSynonyms = group.flatMap { it.synonyms }
+                    .filter { it.isNotBlank() && !it.equals(key, ignoreCase = true) }
+                    .distinct()
+                val allAntonyms = group.flatMap { it.antonyms }
+                    .filter { it.isNotBlank() && !it.equals(key, ignoreCase = true) }
+                    .distinct()
+
+                // Best Part of Speech: Normalized
+                val rawPos = group.firstOrNull { it.partOfSpeech.isNotBlank() && !it.partOfSpeech.equals("Noun", ignoreCase = true) }?.partOfSpeech ?: group.first().partOfSpeech
+                val normalizedPos = when (rawPos.trim()) {
+                    "Adj" -> "Adjective"
+                    "Adv" -> "Adverb"
+                    "Prep" -> "Preposition"
+                    "Conj" -> "Conjunction"
+                    "Pron" -> "Pronoun"
+                    "Interj" -> "Interjection"
+                    else -> rawPos.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+                }
+
+                val primary = group.first()
+                primary.copy(
+                    partOfSpeech = normalizedPos,
+                    phonetic = resolvedPhonetic,
+                    meaningBn = bestMeaning,
+                    exampleEn = exampleWord.exampleEn,
+                    exampleBn = exampleWord.exampleBn,
+                    synonyms = allSynonyms,
+                    antonyms = allAntonyms,
+                    category = preferredCategory
+                )
             }
         val result = distinctList.mapIndexed { index, word ->
             word.copy(frequencyRank = index + 1)

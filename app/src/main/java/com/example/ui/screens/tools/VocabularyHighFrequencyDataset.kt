@@ -23,11 +23,15 @@ object VocabularyHighFrequencyDataset {
         exampleBn: String = ""
     ): VocabWord {
         val wordLower = word.lowercase().trim()
-        val finalPhonetic = if (phonetic.contains("(")) {
-            phonetic
-        } else {
-            val bn = EnglishPronunciationEngine.generateBanglaPronunciation(word)
-            if (bn.isNotBlank()) "/${wordLower}/ ($bn)" else phonetic
+        val finalPhonetic = if (phonetic.isNotBlank()) phonetic else "/$wordLower/"
+        val normalizedPos = when (pos.trim()) {
+            "Adj" -> "Adjective"
+            "Adv" -> "Adverb"
+            "Prep" -> "Preposition"
+            "Conj" -> "Conjunction"
+            "Pron" -> "Pronoun"
+            "Interj" -> "Interjection"
+            else -> pos.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
         }
         val finalExampleEn: String
         val finalExampleBn: String
@@ -42,7 +46,7 @@ object VocabularyHighFrequencyDataset {
             id = id,
             word = word,
             phonetic = finalPhonetic,
-            partOfSpeech = pos,
+            partOfSpeech = normalizedPos,
             meaningBn = meaningBn,
             exampleEn = finalExampleEn,
             exampleBn = finalExampleBn,
@@ -256,7 +260,7 @@ object VocabularyHighFrequencyDataset {
             Triple("Desire", "Noun", "তীব্র ইচ্ছা, আকাঙ্ক্ষা"),
             Triple("Despair", "Noun", "হতাশা, নিরাশা"),
             Triple("Desperate", "Adj", "বেপরোয়া, মরিয়া"),
-            Triple("Despite", "Prep", "সত্ত্বেও"),
+            Triple("Despite", "Preposition", "সত্ত্বেও"),
             Triple("Destroy", "Verb", "ধ্বংস করা"),
             Triple("Detail", "Noun", "বিস্তারিত বিবরণ"),
             Triple("Detect", "Verb", "শনাক্ত করা, খোঁজ পাওয়া"),
@@ -1304,34 +1308,34 @@ object VocabularyHighFrequencyDataset {
             Triple("Extirpate", "Verb", "সমূলে বিনষ্ট করা"),
             Triple("Extrinsic", "Adj", "বহিরাগত, বাহ্যিক"),
             Triple("Exuberance", "Noun", "উচ্ছ্বাস, প্রাচুর্য"),
-            Triple("Un", "অ-", "Adj"),
-            Triple("Re", "পুনরায়", "Verb"),
-            Triple("Pre", "পূর্ব", "Adj"),
-            Triple("Dis", "অ-", "Adj"),
-            Triple("Mis", "ভুল", "Verb"),
-            Triple("Over", "অতিরিক্ত", "Adj"),
-            Triple("Sub", "উপ-", "Noun"),
-            Triple("Inter", "আন্তঃ", "Adj"),
-            Triple("Anti", "বিরোধী", "Adj"),
-            Triple("Pro", "সমর্থক", "Adj"),
-            Triple("Super", "অতি", "Adj"),
-            Triple("Trans", "রূপান্তরিত", "Adj"),
-            Triple("Non", "অ-", "Adj"),
-            Triple("Co", "সহ-", "Noun"),
-            Triple("Counter", "পাল্টা", "Noun"),
-            Triple("able", "যোগ্য", "Adj"),
-            Triple("ment", "করণ/ব্যবস্থা", "Noun"),
-            Triple("ness", "তা/ভাব", "Noun"),
-            Triple("tion", "প্রক্রিয়া", "Noun"),
-            Triple("ful", "পূর্ণ", "Adj"),
-            Triple("less", "হীন", "Adj"),
-            Triple("ive", "মূলক", "Adj"),
-            Triple("ly", "ভাবে", "Adv"),
-            Triple("ity", "ত্ব/তা", "Noun"),
-            Triple("ous", "ময়", "Adj"),
-            Triple("ize", "করা", "Verb"),
-            Triple("al", "সংক্রান্ত", "Adj"),
-            Triple("ic", "বিষয়ক", "Adj"),
+            Triple("Unprecedented", "Adj", "অভূতপূর্ব, নজিরবিহীন"),
+            Triple("Redundant", "Adj", "অপ্রয়োজনীয় বা বাড়তি"),
+            Triple("Precaution", "Noun", "সতর্কতামূলক ব্যবস্থা"),
+            Triple("Discrepancy", "Noun", "গরমিল বা অমিল"),
+            Triple("Misleading", "Adj", "বিভ্রান্তিকর বা ভুল পথে চালিতকারী"),
+            Triple("Overwhelm", "Verb", "অভিভূত করা বা বিহ্বল করা"),
+            Triple("Subsequent", "Adj", "পরবর্তী বা উত্তরকালীন"),
+            Triple("Intervene", "Verb", "হস্তক্ষেপ করা বা মধ্যস্থতা করা"),
+            Triple("Anticipate", "Verb", "প্রত্যাশা করা বা পূর্বানুমান করা"),
+            Triple("Proliferate", "Verb", "দ্রুত বিস্তার লাভ করা"),
+            Triple("Superfluous", "Adj", "অপ্রয়োজনীয় বা বাহুল্যযুক্ত"),
+            Triple("Transcendent", "Adj", "সর্বশ্রেষ্ঠ বা সাধারণ সীমার ঊর্ধ্বে"),
+            Triple("Nonchalant", "Adj", "উদাসীন, নির্লিপ্ত বা শান্ত"),
+            Triple("Cohesive", "Adj", "সুসংবদ্ধ বা ঐক্যবদ্ধ"),
+            Triple("Counterpart", "Noun", "সমকক্ষ ব্যক্তি বা প্রতিরূপ"),
+            Triple("Applicable", "Adj", "প্রযোজ্য বা উপযোগী"),
+            Triple("Amendment", "Noun", "সংশোধনী বা পরিবর্তন"),
+            Triple("Awareness", "Noun", "সচেতনতা বা উপলব্ধি"),
+            Triple("Aspiration", "Noun", "উচ্চাকাঙ্ক্ষা বা তীব্র আকাঙ্ক্ষা"),
+            Triple("Fulfillment", "Noun", "পরিপূর্ণতা বা উদ্দেশ্যসাধন"),
+            Triple("Relentless", "Adj", "অবিরাম, ক্লান্তিহীন বা নির্মম"),
+            Triple("Comprehensive", "Adj", "সামগ্রিক, বিস্তৃত বা ব্যাপক"),
+            Triple("Substantially", "Adv", "যথেষ্ট পরিমাণে বা সারবত্তার সাথে"),
+            Triple("Authenticity", "Noun", "খাঁটি ভাব বা প্রামাণিকতা"),
+            Triple("Courteous", "Adj", "ভদ্র, মার্জিত বা বিনয়ী"),
+            Triple("Standardize", "Verb", "মানসম্মত বা নির্দিষ্ট মানে আনা"),
+            Triple("Equivocal", "Adj", "দ্ব্যর্থবোধক বা অস্পষ্ট"),
+            Triple("Empirical", "Adj", "বাস্তব অভিজ্ঞতাভিত্তিক বা পরীক্ষালব্ধ"),
             Triple("Quarantine", "Noun", "রোগ সংক্রমণ রোধে অন্তরীণ অবস্থা বা সঙ্গরোধ"),
             Triple("Quash", "Verb", "আইনগতভাবে বাতিল বা দমন করা"),
             Triple("Querulous", "Adj", "সর্বদা অভিযোগকারী, খিটখিটে স্বভাব"),
