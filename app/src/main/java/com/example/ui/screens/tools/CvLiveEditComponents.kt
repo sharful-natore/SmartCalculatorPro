@@ -648,6 +648,92 @@ fun CvLiveEditPanel(
                     }
                 }
 
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Box(modifier = Modifier.weight(1f)) {
+                        OutlinedTextField(
+                            value = localData.fatherName,
+                            onValueChange = { localData = localData.copy(fatherName = it) },
+                            label = { Text(if (isBn) "পিতার নাম" else "Father's Name", fontSize = 11.sp) },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                    }
+                    Box(modifier = Modifier.weight(1f)) {
+                        OutlinedTextField(
+                            value = localData.motherName,
+                            onValueChange = { localData = localData.copy(motherName = it) },
+                            label = { Text(if (isBn) "মাতার নাম" else "Mother's Name", fontSize = 11.sp) },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Box(modifier = Modifier.weight(1f)) {
+                        OutlinedTextField(
+                            value = localData.dateOfBirth,
+                            onValueChange = { localData = localData.copy(dateOfBirth = it) },
+                            label = { Text(if (isBn) "জন্ম তারিখ (DOB)" else "Date of Birth", fontSize = 11.sp) },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                    }
+                    Box(modifier = Modifier.weight(1f)) {
+                        OutlinedTextField(
+                            value = localData.religion,
+                            onValueChange = { localData = localData.copy(religion = it) },
+                            label = { Text(if (isBn) "ধর্ম" else "Religion", fontSize = 11.sp) },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Box(modifier = Modifier.weight(1f)) {
+                        OutlinedTextField(
+                            value = localData.bloodGroup,
+                            onValueChange = { localData = localData.copy(bloodGroup = it) },
+                            label = { Text(if (isBn) "রক্তের গ্রুপ" else "Blood Group", fontSize = 11.sp) },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                    }
+                    Box(modifier = Modifier.weight(1f)) {
+                        OutlinedTextField(
+                            value = localData.presentAddress,
+                            onValueChange = { localData = localData.copy(presentAddress = it) },
+                            label = { Text(if (isBn) "বর্তমান ঠিকানা" else "Present Address", fontSize = 11.sp) },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                OutlinedTextField(
+                    value = localData.permanentAddress,
+                    onValueChange = { localData = localData.copy(permanentAddress = it) },
+                    label = { Text(if (isBn) "স্থায়ী ঠিকানা" else "Permanent Address", fontSize = 11.sp) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    shape = RoundedCornerShape(8.dp)
+                )
+
                 Spacer(modifier = Modifier.height(8.dp))
 
                 // Photo actions and preview in Live Edit

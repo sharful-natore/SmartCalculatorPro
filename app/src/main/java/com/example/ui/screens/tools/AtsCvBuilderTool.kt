@@ -257,6 +257,7 @@ data class Skill(
 data class PersonalDetails(
     val fatherName: String,
     val motherName: String,
+    val dateOfBirth: String,
     val religion: String,
     val bloodGroup: String,
     val permanentAddress: String,
@@ -1359,6 +1360,7 @@ data class CvData(
     val photoCornerRadius: Int = 10,
     val fatherName: String = "",
     val motherName: String = "",
+    val dateOfBirth: String = "",
     val religion: String = "",
     val bloodGroup: String = "",
     val permanentAddress: String = "",
@@ -2393,6 +2395,7 @@ private fun saveAllCvProfiles(context: Context, profiles: List<CvData>) {
                 // Corporate personal details
                 put("fatherName", profile.fatherName)
                 put("motherName", profile.motherName)
+                put("dateOfBirth", profile.dateOfBirth)
                 put("religion", profile.religion)
                 put("bloodGroup", profile.bloodGroup)
                 put("permanentAddress", profile.permanentAddress)
@@ -2675,6 +2678,7 @@ private fun loadAllCvProfiles(context: Context): List<CvData> {
                     photoCornerRadius = obj.optInt("photoCornerRadius", 10),
                     fatherName = obj.optString("fatherName", "Md. Nazrul Islam"),
                     motherName = obj.optString("motherName", "Mrs. Sufia Begum"),
+                    dateOfBirth = obj.optString("dateOfBirth", "15 January 1998"),
                     religion = obj.optString("religion", "Islam"),
                     bloodGroup = obj.optString("bloodGroup", "B+"),
                     permanentAddress = obj.optString("permanentAddress", "House 12, Road 4, Sector 1, Uttara, Dhaka"),
@@ -3428,6 +3432,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
         val sidePersonal = mutableListOf<String>()
         if (data.bloodGroup.isNotBlank()) sidePersonal.add("Blood Group: ${data.bloodGroup}")
         if (data.religion.isNotBlank()) sidePersonal.add("Religion: ${data.religion}")
+        if (data.dateOfBirth.isNotBlank()) sidePersonal.add("DOB: ${data.dateOfBirth}")
         if (data.fatherName.isNotBlank()) sidePersonal.add("Father: ${data.fatherName}")
         if (data.motherName.isNotBlank()) sidePersonal.add("Mother: ${data.motherName}")
         if (sidePersonal.isNotEmpty()) {
@@ -4647,6 +4652,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                 val leftColList = mutableListOf<Pair<String, String>>()
                 if (data.fatherName.isNotBlank()) leftColList.add("Father's Name" to data.fatherName)
                 if (data.motherName.isNotBlank()) leftColList.add("Mother's Name" to data.motherName)
+                if (data.dateOfBirth.isNotBlank()) leftColList.add("Date of Birth" to data.dateOfBirth)
                 if (data.bloodGroup.isNotBlank()) leftColList.add("Blood Group" to data.bloodGroup)
 
                 val rightColList = mutableListOf<Pair<String, String>>()
@@ -4808,37 +4814,162 @@ private fun renderAllPdfPagesToBitmaps(pdfFile: File): List<Bitmap> {
     }
 }
 
+private fun combineBitmapsVertically(bitmaps: List<Bitmap>): Bitmap? {
+    if (bitmaps.isEmpty()) return null
+    if (bitmaps.size == 1) return bitmaps[0]
+    return try {
+        val maxWidth = bitmaps.maxOf { it.width }
+        val totalHeight = bitmaps.sumOf { it.height }
+        val combined = Bitmap.createBitmap(maxWidth, totalHeight, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(combined)
+        canvas.drawColor(AndroidColor.WHITE)
+        var currentY = 0f
+        for (bmp in bitmaps) {
+            canvas.drawBitmap(bmp, 0f, currentY, null)
+            currentY += bmp.height.toFloat()
+        }
+        combined
+    } catch (e: Exception) {
+        e.printStackTrace()
+        bitmaps.firstOrNull()
+    }
+}
+
 private fun parseImportedJsonToCvData(jsonStr: String): CvData {
-    val cleanJson = jsonStr.trim().removePrefix("```json").removeSuffix("```").trim()
+    var cleanJson = jsonStr.trim()
+    if (cleanJson.contains("```json")) {
+        cleanJson = cleanJson.substringAfter("```json").substringBefore("```").trim()
+    } else if (cleanJson.contains("```")) {
+        cleanJson = cleanJson.substringAfter("```").substringBefore("```").trim()
+    }
     try {
         val json = JSONObject(cleanJson)
-        val name = json.optString("fullName", "")
-        val title = json.optString("jobTitle", "")
+        val name = json.optString("fullName", json.optString("name", ""))
+        val title = json.optString("jobTitle", json.optString("title", json.optString("designation", "")))
         val email = json.optString("email", "")
-        val phone = json.optString("phone", "")
-        val address = json.optString("presentAddress", json.optString("address", ""))
-        val summary = json.optString("summary", "")
+        val phone = json.optString("phone", json.optString("mobile", ""))
+        val presentAddr = json.optString("presentAddress", json.optString("present_address", json.optString("address", "")))
+        val permanentAddr = json.optString("permanentAddress", json.optString("permanent_address", ""))
+        val summary = json.optString("summary", json.optString("careerObjective", json.optString("objective", "")))
 
+        val father = json.optString("fatherName", json.optString("father_name", json.optString("father", json.optString("fathersName", ""))))
+        val mother = json.optString("motherName", json.optString("mother_name", json.optString("mother", json.optString("mothersName", ""))))
+        val dob = json.optString("dateOfBirth", json.optString("date_of_birth", json.optString("dob", json.optString("birthDate", ""))))
+        val religion = json.optString("religion", "")
+        val bloodGroup = json.optString("bloodGroup", json.optString("blood_group", ""))
+        val linkedin = json.optString("linkedin", json.optString("linkedinUrl", ""))
+        val githubOrPortfolio = json.optString("githubOrPortfolio", json.optString("github", json.optString("portfolio", json.optString("website", ""))))
+
+        // Certifications parsing (supports string or JSONArray)
+        var certificationsStr = json.optString("certifications", json.optString("certification", ""))
+        if (certificationsStr.isBlank()) {
+            val certArr = json.optJSONArray("certifications")
+            if (certArr != null) {
+                val certList = mutableListOf<String>()
+                for (i in 0 until certArr.length()) {
+                    val item = certArr.opt(i)
+                    if (item is JSONObject) {
+                        val cTitle = item.optString("title", item.optString("name", ""))
+                        val cIssuer = item.optString("issuer", item.optString("institution", item.optString("organization", "")))
+                        val cYear = item.optString("year", item.optString("date", ""))
+                        val line = buildString {
+                            if (cTitle.isNotBlank()) append("• $cTitle")
+                            if (cIssuer.isNotBlank()) append(" - $cIssuer")
+                            if (cYear.isNotBlank()) append(" ($cYear)")
+                        }
+                        if (line.isNotBlank()) certList.add(line)
+                    } else if (item != null && item.toString().isNotBlank()) {
+                        certList.add("• ${item.toString()}")
+                    }
+                }
+                certificationsStr = certList.joinToString("\n")
+            }
+        }
+
+        // References parsing (supports string or JSONArray)
+        var referencesStr = json.optString("references", json.optString("reference", ""))
+        if (referencesStr.isBlank()) {
+            val refArr = json.optJSONArray("references")
+            if (refArr != null) {
+                val refList = mutableListOf<String>()
+                for (i in 0 until refArr.length()) {
+                    val item = refArr.opt(i)
+                    if (item is JSONObject) {
+                        val rName = item.optString("name", "")
+                        val rTitle = item.optString("designation", item.optString("role", item.optString("title", "")))
+                        val rComp = item.optString("company", item.optString("organization", ""))
+                        val rPhone = item.optString("phone", item.optString("mobile", ""))
+                        val rEmail = item.optString("email", "")
+                        val line = buildString {
+                            if (rName.isNotBlank()) append(rName)
+                            if (rTitle.isNotBlank()) append(", $rTitle")
+                            if (rComp.isNotBlank()) append(" - $rComp")
+                            if (rPhone.isNotBlank() || rEmail.isNotBlank()) {
+                                append(" (")
+                                if (rPhone.isNotBlank()) append("Phone: $rPhone")
+                                if (rPhone.isNotBlank() && rEmail.isNotBlank()) append(" | ")
+                                if (rEmail.isNotBlank()) append("Email: $rEmail")
+                                append(")")
+                            }
+                        }
+                        if (line.isNotBlank()) refList.add(line)
+                    } else if (item != null && item.toString().isNotBlank()) {
+                        refList.add(item.toString())
+                    }
+                }
+                referencesStr = refList.joinToString("\n\n")
+            }
+        }
+
+        // Languages parsing
+        var languagesStr = json.optString("languages", json.optString("language", ""))
+        if (languagesStr.isBlank()) {
+            val langArr = json.optJSONArray("languages")
+            if (langArr != null) {
+                val langList = mutableListOf<String>()
+                for (i in 0 until langArr.length()) {
+                    val item = langArr.opt(i)
+                    if (item is JSONObject) {
+                        val lName = item.optString("language", item.optString("name", ""))
+                        val lProf = item.optString("proficiency", item.optString("level", ""))
+                        if (lName.isNotBlank()) {
+                            langList.add(if (lProf.isNotBlank()) "$lName ($lProf)" else lName)
+                        }
+                    } else if (item != null && item.toString().isNotBlank()) {
+                        langList.add(item.toString())
+                    }
+                }
+                languagesStr = langList.joinToString(", ")
+            }
+        }
+
+        // Experiences parsing
         val expList = mutableListOf<CvExperienceItem>()
         val expArr = json.optJSONArray("experiences")
         if (expArr != null) {
             for (i in 0 until expArr.length()) {
-                val eObj = expArr.getJSONObject(i)
+                val eObj = expArr.optJSONObject(i) ?: continue
+                val startDate = eObj.optString("startDate", "")
+                val endDate = eObj.optString("endDate", "")
                 val duration = eObj.optString("duration", "")
-                var start = "2020"
-                var end = "Present"
-                var isCurr = true
-                if (duration.contains("-")) {
-                    val parts = duration.split("-")
-                    start = parts.getOrNull(0)?.trim() ?: "2020"
-                    end = parts.getOrNull(1)?.trim() ?: "Present"
-                    isCurr = end.lowercase().contains("present") || end.lowercase().contains("current")
+                var start = startDate.ifBlank { "2020" }
+                var end = endDate.ifBlank { "Present" }
+                var isCurr = false
+                if (duration.isNotBlank() && (startDate.isBlank() || endDate.isBlank())) {
+                    if (duration.contains("-")) {
+                        val parts = duration.split("-")
+                        start = parts.getOrNull(0)?.trim() ?: start
+                        end = parts.getOrNull(1)?.trim() ?: end
+                    } else {
+                        end = duration
+                    }
                 }
+                isCurr = eObj.optBoolean("isCurrent", end.lowercase().contains("present") || end.lowercase().contains("current"))
                 expList.add(
                     CvExperienceItem(
                         id = UUID.randomUUID().toString(),
                         company = eObj.optString("companyName", eObj.optString("company", "")),
-                        role = eObj.optString("jobTitle", eObj.optString("role", "")),
+                        role = eObj.optString("jobTitle", eObj.optString("role", eObj.optString("designation", ""))),
                         startDate = start,
                         endDate = end,
                         isCurrent = isCurr,
@@ -4849,36 +4980,73 @@ private fun parseImportedJsonToCvData(jsonStr: String): CvData {
             }
         }
 
+        // Educations parsing
         val eduList = mutableListOf<CvEducationItem>()
         val eduArr = json.optJSONArray("educations")
         if (eduArr != null) {
             for (i in 0 until eduArr.length()) {
-                val edObj = eduArr.getJSONObject(i)
+                val edObj = eduArr.optJSONObject(i) ?: continue
                 eduList.add(
                     CvEducationItem(
                         id = UUID.randomUUID().toString(),
                         degree = edObj.optString("degreeName", edObj.optString("degree", "")),
                         institution = edObj.optString("institution", edObj.optString("institute", "")),
-                        passingYear = edObj.optString("passingYear", ""),
+                        passingYear = edObj.optString("passingYear", edObj.optString("year", "")),
                         result = edObj.optString("resultValue", edObj.optString("result", "")),
                         examLevel = edObj.optString("examLevel", ""),
-                        subjectMajor = edObj.optString("subjectMajor", edObj.optString("groupOrSubject", "")),
+                        subjectMajor = edObj.optString("subjectMajor", edObj.optString("groupOrSubject", edObj.optString("major", ""))),
                         resultType = edObj.optString("resultType", "CGPA")
                     )
                 )
             }
         }
 
+        // Skills parsing (supports object array and string array)
         val skillList = mutableListOf<CvSkillItem>()
         val skillArr = json.optJSONArray("skills")
         if (skillArr != null) {
             for (i in 0 until skillArr.length()) {
-                val sObj = skillArr.getJSONObject(i)
-                skillList.add(
-                    CvSkillItem(
+                val item = skillArr.opt(i)
+                if (item is JSONObject) {
+                    val sName = item.optString("name", item.optString("skill", ""))
+                    if (sName.isNotBlank()) {
+                        skillList.add(
+                            CvSkillItem(
+                                id = UUID.randomUUID().toString(),
+                                name = sName,
+                                level = item.optString("level", "Proficient"),
+                                category = item.optString("category", "").ifBlank { findBestCategoryForSkill(sName) },
+                                description = item.optString("description", "")
+                            )
+                        )
+                    }
+                } else if (item != null && item.toString().isNotBlank()) {
+                    val sName = item.toString().trim()
+                    skillList.add(
+                        CvSkillItem(
+                            id = UUID.randomUUID().toString(),
+                            name = sName,
+                            level = "Proficient",
+                            category = findBestCategoryForSkill(sName),
+                            description = ""
+                        )
+                    )
+                }
+            }
+        }
+
+        // Projects parsing
+        val projectList = mutableListOf<CvProjectItem>()
+        val projArr = json.optJSONArray("projects")
+        if (projArr != null) {
+            for (i in 0 until projArr.length()) {
+                val pObj = projArr.optJSONObject(i) ?: continue
+                projectList.add(
+                    CvProjectItem(
                         id = UUID.randomUUID().toString(),
-                        name = sObj.optString("name", ""),
-                        description = sObj.optString("description", "")
+                        title = pObj.optString("title", pObj.optString("name", "")),
+                        description = pObj.optString("description", ""),
+                        link = pObj.optString("link", pObj.optString("url", ""))
                     )
                 )
             }
@@ -4886,17 +5054,29 @@ private fun parseImportedJsonToCvData(jsonStr: String): CvData {
 
         return CvData(
             id = "profile_import_" + UUID.randomUUID().toString().take(6),
-            profileLabel = "Imported: " + (title.ifBlank { "Resume Profile" }),
+            profileLabel = "Imported: " + (title.ifBlank { name.ifBlank { "Resume Profile" } }),
             fullName = name,
             jobTitle = title,
             email = email,
             phone = phone,
-            address = address,
-            presentAddress = address,
+            address = presentAddr.ifBlank { permanentAddr },
+            presentAddress = presentAddr,
+            permanentAddress = permanentAddr,
+            fatherName = father,
+            motherName = mother,
+            dateOfBirth = dob,
+            religion = religion,
+            bloodGroup = bloodGroup,
+            linkedin = linkedin,
+            githubOrPortfolio = githubOrPortfolio,
             summary = summary,
+            certifications = certificationsStr,
+            references = referencesStr,
+            languages = languagesStr,
             experiences = expList,
             educations = eduList,
-            skills = skillList
+            skills = skillList,
+            projects = projectList
         )
     } catch (e: Exception) {
         e.printStackTrace()
@@ -5246,13 +5426,42 @@ fun AtsCvBuilderTool(
                     val tempFile = File(context.cacheDir, "temp_import_${System.currentTimeMillis()}.pdf")
                     tempFile.outputStream().use { out -> inputStream?.copyTo(out) }
                     val bitmaps = renderAllPdfPagesToBitmaps(tempFile)
-                    val firstBmp = bitmaps.firstOrNull()
+                    val fullBmp = combineBitmapsVertically(bitmaps)
 
-                    if (firstBmp != null) {
+                    if (fullBmp != null) {
                         val baos = java.io.ByteArrayOutputStream()
-                        firstBmp.compress(Bitmap.CompressFormat.JPEG, 80, baos)
+                        fullBmp.compress(Bitmap.CompressFormat.JPEG, 80, baos)
 
-                        val sysPrompt = "You are an expert resume parser. Extract candidate details from this resume image. Return valid JSON only with keys: fullName, jobTitle, email, phone, presentAddress, summary, skills (array of {name, description}), experiences (array of {jobTitle, companyName, duration, description}), educations (array of {examLevel, subjectMajor, institution, passingYear, resultType, resultValue})."
+                        val sysPrompt = """
+                            You are an expert resume parser. Extract ALL candidate details from this resume image accurately into valid JSON without missing any section. Return ONLY a valid JSON object.
+                            
+                            JSON Keys to extract:
+                            - fullName (String)
+                            - jobTitle (String)
+                            - email (String)
+                            - phone (String)
+                            - presentAddress (String)
+                            - permanentAddress (String)
+                            - fatherName (String: Father's Name / Pita)
+                            - motherName (String: Mother's Name / Mata)
+                            - dateOfBirth (String: Date of Birth / DOB / Birthdate)
+                            - religion (String: Religion / Faith)
+                            - bloodGroup (String: Blood Group e.g. A+, B+, O+, AB-)
+                            - summary (String: Professional Summary or Career Objective)
+                            - linkedin (String: LinkedIn profile URL)
+                            - githubOrPortfolio (String: GitHub / Portfolio / Website URL)
+                            - certifications (JSON array of strings or formatted string listing all certifications and training)
+                            - languages (JSON array of strings or formatted string listing all known languages)
+                            - references (JSON array of objects or formatted string listing references)
+                            - skills (JSON array of objects with {name, level, category, description} OR array of skill strings)
+                            - experiences (JSON array of objects with {companyName, jobTitle, duration, startDate, endDate, description, location})
+                            - educations (JSON array of objects with {examLevel, degreeName, subjectMajor, institution, passingYear, resultType, resultValue})
+                            - projects (JSON array of objects with {title, description, link})
+                            
+                            If a field is not present in the resume, set its value to empty string "" or empty array [].
+                            Do NOT omit personal details like Father's Name, Mother's Name, Date of Birth, Religion, Blood Group, Certifications, or Skills if they exist in the resume image.
+                        """.trimIndent()
+
                         val jsonResult = callGeminiAiMultiModal(
                             prompt = "Extract candidate resume details into JSON.",
                             systemInstruction = sysPrompt,
@@ -5268,7 +5477,7 @@ fun AtsCvBuilderTool(
                         activeProfileId = importedCv.id
                         saveActiveProfileId(context, importedCv.id)
                         cvData = importedCv
-                        Toast.makeText(context, if (isBn) "পিডিএফ সিভি থেকে নতুন প্রোফাইল তৈরি হয়েছে!" else "New profile imported successfully from PDF!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, if (isBn) "পিডিএফ সিভি থেকে পিতা-মাতার নাম, জন্ম তারিখ, স্কিল ও সার্টিফিকেশনসহ সম্পূর্ণ প্রোফাইল ইমপোর্ট হয়েছে!" else "Imported complete profile with personal info, skills & certifications!", Toast.LENGTH_LONG).show()
                     }
                 } catch (e: Exception) {
                     Toast.makeText(context, "PDF Import Error: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
@@ -7252,6 +7461,7 @@ private fun ProfileAndPersonasTab(
 
         Spacer(modifier = Modifier.height(8.dp))
 
+        val context = androidx.compose.ui.platform.LocalContext.current
         Row(modifier = Modifier.fillMaxWidth()) {
             Box(modifier = Modifier.weight(1f)) {
                 CvCustomTextField(
@@ -7277,13 +7487,53 @@ private fun ProfileAndPersonasTab(
         Row(modifier = Modifier.fillMaxWidth()) {
             Box(modifier = Modifier.weight(1f)) {
                 CvCustomTextField(
+                    label = if (isBn) "জন্ম তারিখ" else "Date of Birth",
+                    value = cvData.dateOfBirth,
+                    onValueChange = { onCvDataChange(cvData.copy(dateOfBirth = it)) },
+                    placeholderText = if (isBn) "যেমন: 15 Jan 1998" else "e.g., 15 Jan 1998",
+                    themeColors = themeColors, isLiveEdit = isLiveEdit, isBn = isBn,
+                    trailingIcon = {
+                        IconButton(
+                            onClick = {
+                                val cal = java.util.Calendar.getInstance()
+                                android.app.DatePickerDialog(
+                                    context,
+                                    { _, year, month, dayOfMonth ->
+                                        val months = arrayOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+                                        val formatted = "$dayOfMonth ${months.getOrElse(month) { "" }} $year"
+                                        onCvDataChange(cvData.copy(dateOfBirth = formatted))
+                                    },
+                                    cal.get(java.util.Calendar.YEAR),
+                                    cal.get(java.util.Calendar.MONTH),
+                                    cal.get(java.util.Calendar.DAY_OF_MONTH)
+                                ).show()
+                            },
+                            modifier = Modifier.size(28.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CalendarToday,
+                                contentDescription = "Pick Date",
+                                tint = themeColors.buttonEqualBg,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                )
+            }
+            Spacer(modifier = Modifier.width(10.dp))
+            Box(modifier = Modifier.weight(1f)) {
+                CvCustomTextField(
                     label = if (isBn) "ধর্ম" else "Religion",
                     value = cvData.religion,
                     onValueChange = { onCvDataChange(cvData.copy(religion = it)) },
                     themeColors = themeColors, isLiveEdit = isLiveEdit, isBn = isBn
                 )
             }
-            Spacer(modifier = Modifier.width(10.dp))
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(modifier = Modifier.fillMaxWidth()) {
             Box(modifier = Modifier.weight(1f)) {
                 CvCustomTextField(
                     label = if (isBn) "রক্তের গ্রুপ" else "Blood Group",
@@ -7291,6 +7541,10 @@ private fun ProfileAndPersonasTab(
                     onValueChange = { onCvDataChange(cvData.copy(bloodGroup = it)) },
                     themeColors = themeColors, isLiveEdit = isLiveEdit, isBn = isBn
                 )
+            }
+            Spacer(modifier = Modifier.width(10.dp))
+            Box(modifier = Modifier.weight(1f)) {
+                Spacer(modifier = Modifier.width(1.dp))
             }
         }
 
@@ -9981,6 +10235,13 @@ private fun parseUpdatedCvData(jsonStr: String, currentCv: CvData): Pair<String,
             linkedin = updatedObj.optString("linkedin", currentCv.linkedin),
             githubOrPortfolio = updatedObj.optString("githubOrPortfolio", currentCv.githubOrPortfolio),
             summary = updatedObj.optString("summary", currentCv.summary),
+            fatherName = updatedObj.optString("fatherName", currentCv.fatherName),
+            motherName = updatedObj.optString("motherName", currentCv.motherName),
+            dateOfBirth = updatedObj.optString("dateOfBirth", currentCv.dateOfBirth),
+            religion = updatedObj.optString("religion", currentCv.religion),
+            bloodGroup = updatedObj.optString("bloodGroup", currentCv.bloodGroup),
+            presentAddress = updatedObj.optString("presentAddress", currentCv.presentAddress),
+            permanentAddress = updatedObj.optString("permanentAddress", currentCv.permanentAddress),
             certifications = updatedObj.optString("certifications", currentCv.certifications),
             references = updatedObj.optString("references", currentCv.references),
             languages = updatedObj.optString("languages", currentCv.languages)
@@ -12898,7 +13159,8 @@ fun CvCustomTextField(
     placeholderText: String? = null,
     isLiveEdit: Boolean = false,
     isBn: Boolean = false,
-    onAiPrompt: (() -> Unit)? = null
+    onAiPrompt: (() -> Unit)? = null,
+    trailingIcon: (@Composable () -> Unit)? = null
 ) {
     var draftValue by remember(value) { mutableStateOf(value) }
     var showConfirmDialog by remember { mutableStateOf(false) }
@@ -12956,6 +13218,7 @@ fun CvCustomTextField(
                 fontWeight = FontWeight.Medium
             ),
             placeholder = placeholderText?.let { { Text(it, color = placeholderColor, fontSize = 11.5.sp) } },
+            trailingIcon = trailingIcon,
             shape = RoundedCornerShape(10.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = themeColors.buttonEqualBg,
