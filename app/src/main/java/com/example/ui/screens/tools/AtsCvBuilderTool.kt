@@ -4860,32 +4860,57 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                 if (leftColList.isNotEmpty() || rightColList.isNotEmpty()) {
                     drawSectionHeader("PERSONAL INFORMATION", "👤")
                     val personalPaint = TextPaint(bodyPaint).apply {
-                        textSize = 8.6f
+                        textSize = 8.5f
                     }
-                    val halfW = (contentWidth - 12f) / 2f
-                    val maxRows = maxOf(leftColList.size, rightColList.size)
+                    val colGap = 12f
+                    val leftW = minOf(contentWidth * 0.42f, 210f)
+                    val rightW = contentWidth - leftW - colGap
 
-                    for (i in 0 until maxRows) {
-                        val leftItem = leftColList.getOrNull(i)
-                        val rightItem = rightColList.getOrNull(i)
-
-                        val leftStr = if (leftItem != null) "${leftItem.first} : ${leftItem.second}" else ""
-                        val rightStr = if (rightItem != null) "${rightItem.first} : ${rightItem.second}" else ""
-
-                        val lLayout = StaticLayout.Builder.obtain(leftStr, 0, leftStr.length, personalPaint, halfW.toInt()).setLineSpacing(0f, 0.95f).build()
-                        val rLayout = StaticLayout.Builder.obtain(rightStr, 0, rightStr.length, personalPaint, halfW.toInt()).setLineSpacing(0f, 0.95f).build()
-                        val rowH = maxOf(lLayout.height, rLayout.height).toFloat() + 1f
-
-                        checkAndAddNewPage(rowH)
-                        if (leftStr.isNotBlank()) {
-                            canvas.save(); canvas.translate(margin, currentY); lLayout.draw(canvas); canvas.restore()
-                        }
-                        if (rightStr.isNotBlank()) {
-                            canvas.save(); canvas.translate(margin + halfW + 12f, currentY); rLayout.draw(canvas); canvas.restore()
-                        }
-                        currentY += rowH
+                    // Pre-build layouts for left column
+                    var leftTotalH = 0f
+                    val leftLayouts = leftColList.map { item ->
+                        val str = "${item.first} : ${item.second}"
+                        val layout = StaticLayout.Builder.obtain(str, 0, str.length, personalPaint, leftW.toInt())
+                            .setLineSpacing(0f, 0.90f)
+                            .build()
+                        leftTotalH += layout.height.toFloat() + 1.2f
+                        layout
                     }
-                    currentY += 2f
+
+                    // Pre-build layouts for right column
+                    var rightTotalH = 0f
+                    val rightLayouts = rightColList.map { item ->
+                        val str = "${item.first} : ${item.second}"
+                        val layout = StaticLayout.Builder.obtain(str, 0, str.length, personalPaint, rightW.toInt())
+                            .setLineSpacing(0f, 0.90f)
+                            .build()
+                        rightTotalH += layout.height.toFloat() + 1.2f
+                        layout
+                    }
+
+                    val totalH = maxOf(leftTotalH, rightTotalH)
+                    checkAndAddNewPage(totalH + 2f)
+
+                    val startY = currentY
+                    var leftY = startY
+                    for (layout in leftLayouts) {
+                        canvas.save()
+                        canvas.translate(margin, leftY)
+                        layout.draw(canvas)
+                        canvas.restore()
+                        leftY += layout.height.toFloat() + 1.2f
+                    }
+
+                    var rightY = startY
+                    for (layout in rightLayouts) {
+                        canvas.save()
+                        canvas.translate(margin + leftW + colGap, rightY)
+                        layout.draw(canvas)
+                        canvas.restore()
+                        rightY += layout.height.toFloat() + 1.2f
+                    }
+
+                    currentY = maxOf(leftY, rightY) + 2f
                 }
             }
 
@@ -6741,12 +6766,7 @@ fun AtsCvBuilderTool(
                             }
                         },
                         onSaveProfile = {
-                            val targetId = if (cvData.id.isNotBlank() && !cvData.id.startsWith("profile_")) cvData.id else "custom_profile_" + java.util.UUID.randomUUID().toString()
-                            val updated = cvData.copy(id = targetId)
-                            updateCvDataState(updated)
-                            activeProfileId = targetId
-                            saveActiveProfileId(context, targetId)
-                            showToast(if (isBn) "বর্তমান ছবি সহ সিভি প্রোফাইল সফলভাবে সেভ করা হয়েছে!" else "Current CV profile saved with photo successfully!")
+                            showSaveProfileDialog = true
                         }
                     )
                     }
@@ -12738,17 +12758,43 @@ private fun AiJobCircularMatchTab(
                         - Educations: $cvEduText
                         - Projects: ${cvData.projects.joinToString("; ") { "${it.title}: ${it.description}" }}
                         - Certifications: ${cvData.certifications}
+                        - Father's Name: ${cvData.fatherName}
+                        - Mother's Name: ${cvData.motherName}
+                        - Date of Birth: ${cvData.dateOfBirth}
+                        - Blood Group: ${cvData.bloodGroup}
+                        - Religion: ${cvData.religion}
+                        - Present Address: ${cvData.presentAddress}
+                        - Permanent Address: ${cvData.permanentAddress}
 
                         Target Job Circular Context:
                         - Circular Details: ${circularTextInput.ifBlank { "No explicit circular provided yet." }}
                         - Last ATS Match Score: ${cvData.lastAtsScoreFromGemini}%
 
-                        If you suggest modifications or rephrase/generate content for ANY part of the CV (such as updating the Summary, Job Title, adding/removing/editing Skills, Experience, Education, Projects, etc.), wrap a JSON block in ```json ... ``` containing ONLY the modified fields with any of these keys:
+                        CRITICAL MANDATE - SPECIFICITY & STRICT GRANULARITY:
+                        1. You MUST strictly obey the user's intent. When the user asks to fix, improve, or change a SPECIFIC section or item (for example: ONLY the Summary, or ONLY Work Experiences, or ONLY Skills, or ONLY a specific job bullet, or ONLY Job Title):
+                           - You MUST ONLY modify that exact requested section or item.
+                           - You are STRICTLY FORBIDDEN from modifying, rewriting, or replacing any other sections of their CV that they did not ask you to touch!
+                           - If the user asks to improve the summary, do NOT alter their skills, experience, or job title.
+                           - If the user asks to add or fix skills, do NOT touch their summary or work experience.
+                        2. In the ```json ... ``` block at the end, include ONLY the specific key(s) that were explicitly requested and modified. Do NOT include unchanged keys.
+                        3. For list items:
+                           - If updating "experiences", provide the array preserving all existing unaffected experiences and only updating the specific entry requested.
+                           - If updating "skills", provide the array preserving existing skills while adding/updating requested skills.
+                        4. If the user only asks a question or for advice without asking to edit/apply changes to the CV, explain conversationally and DO NOT output any ```json ... ``` block.
+
+                        Allowed JSON keys for modified items:
                         - "fullName": string
                         - "jobTitle": string
                         - "email": string
                         - "phone": string
                         - "address": string
+                        - "fatherName": string
+                        - "motherName": string
+                        - "dateOfBirth": string
+                        - "bloodGroup": string
+                        - "religion": string
+                        - "presentAddress": string
+                        - "permanentAddress": string
                         - "linkedin": string
                         - "githubOrPortfolio": string
                         - "summary": string
@@ -12765,7 +12811,7 @@ private fun AiJobCircularMatchTab(
                         - "educations": array of objects with keys: degree (string), institution (string), passingYear (string), result (string), examLevel (string), subjectMajor (string), resultType (string)
                         - "projects": array of objects with keys: title (string), description (string), link (string)
 
-                        Always provide a friendly explanation first, write out the complete, rephrased/generated text clearly in your main conversational message (so the candidate can see, read and copy it directly if they want), and then include the ```json ... ``` block at the very end of your response so the system can let them click "Apply" or "Compare" to automatically update their master CV data.
+                        Always provide a friendly explanation first, write out the complete, rephrased/generated text clearly in your main conversational message (so the candidate can read and copy it directly), and then include the ```json ... ``` block containing ONLY the targeted modified fields at the very end of your response.
                     """.trimIndent()
 
                     val historyBuilder = StringBuilder()
@@ -14618,6 +14664,15 @@ internal fun jsonStringToCvData(jsonStr: String, baseCv: CvData): CvData {
         if (jsonObj.has("fresherLeadershipClubs")) currentCv = currentCv.copy(fresherLeadershipClubs = jsonObj.getString("fresherLeadershipClubs"))
         if (jsonObj.has("fresherKeyCoursework")) currentCv = currentCv.copy(fresherKeyCoursework = jsonObj.getString("fresherKeyCoursework"))
         
+        // Personal Information fields
+        if (jsonObj.has("fatherName")) currentCv = currentCv.copy(fatherName = jsonObj.getString("fatherName"))
+        if (jsonObj.has("motherName")) currentCv = currentCv.copy(motherName = jsonObj.getString("motherName"))
+        if (jsonObj.has("dateOfBirth")) currentCv = currentCv.copy(dateOfBirth = jsonObj.getString("dateOfBirth"))
+        if (jsonObj.has("bloodGroup")) currentCv = currentCv.copy(bloodGroup = jsonObj.getString("bloodGroup"))
+        if (jsonObj.has("religion")) currentCv = currentCv.copy(religion = jsonObj.getString("religion"))
+        if (jsonObj.has("presentAddress")) currentCv = currentCv.copy(presentAddress = jsonObj.getString("presentAddress"))
+        if (jsonObj.has("permanentAddress")) currentCv = currentCv.copy(permanentAddress = jsonObj.getString("permanentAddress"))
+        
         if (jsonObj.has("experiences")) {
             val arr = jsonObj.getJSONArray("experiences")
             val expList = mutableListOf<CvExperienceItem>()
@@ -14633,7 +14688,26 @@ internal fun jsonStringToCvData(jsonStr: String, baseCv: CvData): CvData {
                     location = itemObj.optString("location", "Dhaka, Bangladesh")
                 ))
             }
-            currentCv = currentCv.copy(experiences = expList)
+            if (expList.isNotEmpty()) {
+                if (expList.size < baseCv.experiences.size && baseCv.experiences.isNotEmpty()) {
+                    // Update matching experience or first, keeping all other untouched
+                    val mergedExp = baseCv.experiences.toMutableList()
+                    for (newItem in expList) {
+                        val matchIdx = mergedExp.indexOfFirst {
+                            it.company.equals(newItem.company, ignoreCase = true) ||
+                            it.role.equals(newItem.role, ignoreCase = true)
+                        }
+                        if (matchIdx != -1) {
+                            mergedExp[matchIdx] = newItem.copy(id = mergedExp[matchIdx].id)
+                        } else {
+                            mergedExp[0] = newItem.copy(id = mergedExp[0].id)
+                        }
+                    }
+                    currentCv = currentCv.copy(experiences = mergedExp)
+                } else {
+                    currentCv = currentCv.copy(experiences = expList)
+                }
+            }
         }
         
         if (jsonObj.has("educations")) {
@@ -14651,7 +14725,25 @@ internal fun jsonStringToCvData(jsonStr: String, baseCv: CvData): CvData {
                     resultType = itemObj.optString("resultType", "")
                 ))
             }
-            currentCv = currentCv.copy(educations = eduList)
+            if (eduList.isNotEmpty()) {
+                if (eduList.size < baseCv.educations.size && baseCv.educations.isNotEmpty()) {
+                    val mergedEdu = baseCv.educations.toMutableList()
+                    for (newItem in eduList) {
+                        val matchIdx = mergedEdu.indexOfFirst {
+                            it.degree.equals(newItem.degree, ignoreCase = true) ||
+                            it.institution.equals(newItem.institution, ignoreCase = true)
+                        }
+                        if (matchIdx != -1) {
+                            mergedEdu[matchIdx] = newItem.copy(id = mergedEdu[matchIdx].id)
+                        } else {
+                            mergedEdu[0] = newItem.copy(id = mergedEdu[0].id)
+                        }
+                    }
+                    currentCv = currentCv.copy(educations = mergedEdu)
+                } else {
+                    currentCv = currentCv.copy(educations = eduList)
+                }
+            }
         }
         
         if (jsonObj.has("skills")) {
@@ -14660,14 +14752,31 @@ internal fun jsonStringToCvData(jsonStr: String, baseCv: CvData): CvData {
             for (i in 0 until arr.length()) {
                 val itemObj = arr.getJSONObject(i)
                 val skName = itemObj.optString("name", "")
-                skillList.add(CvSkillItem(
-                    name = skName,
-                    level = itemObj.optString("level", "Proficient"),
-                    category = itemObj.optString("category", "").ifBlank { findBestCategoryForSkill(skName) },
-                    description = itemObj.optString("description", "")
-                ))
+                if (skName.isNotBlank()) {
+                    skillList.add(CvSkillItem(
+                        name = skName,
+                        level = itemObj.optString("level", "Proficient"),
+                        category = itemObj.optString("category", "").ifBlank { findBestCategoryForSkill(skName) },
+                        description = itemObj.optString("description", "")
+                    ))
+                }
             }
-            currentCv = currentCv.copy(skills = skillList)
+            if (skillList.isNotEmpty()) {
+                if (skillList.size < baseCv.skills.size && baseCv.skills.isNotEmpty()) {
+                    val mergedSkills = baseCv.skills.toMutableList()
+                    for (sk in skillList) {
+                        val idx = mergedSkills.indexOfFirst { it.name.trim().equals(sk.name.trim(), ignoreCase = true) }
+                        if (idx != -1) {
+                            mergedSkills[idx] = sk
+                        } else {
+                            mergedSkills.add(sk)
+                        }
+                    }
+                    currentCv = currentCv.copy(skills = mergedSkills)
+                } else {
+                    currentCv = currentCv.copy(skills = skillList)
+                }
+            }
         }
         
         if (jsonObj.has("projects")) {
@@ -14720,6 +14829,27 @@ internal fun getOriginalDifferencesSummary(original: CvData, proposed: CvData): 
     if (original.references != proposed.references) {
         sb.append("• References: ${original.references.take(80)}...\n")
     }
+    if (original.fatherName != proposed.fatherName) {
+        sb.append("• Father's Name: ${original.fatherName}\n")
+    }
+    if (original.motherName != proposed.motherName) {
+        sb.append("• Mother's Name: ${original.motherName}\n")
+    }
+    if (original.dateOfBirth != proposed.dateOfBirth) {
+        sb.append("• Date of Birth: ${original.dateOfBirth}\n")
+    }
+    if (original.bloodGroup != proposed.bloodGroup) {
+        sb.append("• Blood Group: ${original.bloodGroup}\n")
+    }
+    if (original.religion != proposed.religion) {
+        sb.append("• Religion: ${original.religion}\n")
+    }
+    if (original.presentAddress != proposed.presentAddress) {
+        sb.append("• Present Address: ${original.presentAddress}\n")
+    }
+    if (original.permanentAddress != proposed.permanentAddress) {
+        sb.append("• Permanent Address: ${original.permanentAddress}\n")
+    }
     if (original.skills != proposed.skills) {
         sb.append("• Skills: ${original.skills.joinToString { it.name }}\n")
     }
@@ -14763,6 +14893,27 @@ internal fun getProposedDifferencesSummary(original: CvData, proposed: CvData, i
     }
     if (original.references != proposed.references) {
         sb.append(if (isBn) "• নতুন রেফারেন্স: ${proposed.references}\n" else "• New References: ${proposed.references}\n")
+    }
+    if (original.fatherName != proposed.fatherName) {
+        sb.append(if (isBn) "• পিতার নাম: ${proposed.fatherName}\n" else "• Father's Name: ${proposed.fatherName}\n")
+    }
+    if (original.motherName != proposed.motherName) {
+        sb.append(if (isBn) "• মাতার নাম: ${proposed.motherName}\n" else "• Mother's Name: ${proposed.motherName}\n")
+    }
+    if (original.dateOfBirth != proposed.dateOfBirth) {
+        sb.append(if (isBn) "• জন্ম তারিখ: ${proposed.dateOfBirth}\n" else "• Date of Birth: ${proposed.dateOfBirth}\n")
+    }
+    if (original.bloodGroup != proposed.bloodGroup) {
+        sb.append(if (isBn) "• রক্তের গ্রুপ: ${proposed.bloodGroup}\n" else "• Blood Group: ${proposed.bloodGroup}\n")
+    }
+    if (original.religion != proposed.religion) {
+        sb.append(if (isBn) "• ধর্ম: ${proposed.religion}\n" else "• Religion: ${proposed.religion}\n")
+    }
+    if (original.presentAddress != proposed.presentAddress) {
+        sb.append(if (isBn) "• বর্তমান ঠিকানা: ${proposed.presentAddress}\n" else "• Present Address: ${proposed.presentAddress}\n")
+    }
+    if (original.permanentAddress != proposed.permanentAddress) {
+        sb.append(if (isBn) "• স্থায়ী ঠিকানা: ${proposed.permanentAddress}\n" else "• Permanent Address: ${proposed.permanentAddress}\n")
     }
     if (original.skills != proposed.skills) {
         sb.append(if (isBn) "• নতুন স্কিলসমূহ: ${proposed.skills.joinToString { it.name }}\n" else "• New Skills: ${proposed.skills.joinToString { it.name }}\n")
