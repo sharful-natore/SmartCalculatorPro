@@ -4273,7 +4273,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
         if (!isFirstSection) currentY += sectionGap
         isFirstSection = false
         checkAndAddNewPage(28f)
-        val headerText = if (data.showSectionIcons && defaultIconKey.isNotBlank()) "$defaultIconKey $title" else title
+        val headerText = title.trim()
         val titleTextSize = data.sectionTitleSize * fontScaleMultiplier
         when (pdfStyle) {
             CvTemplateStyle.HARVARD_CLASSIC -> {
