@@ -155,7 +155,8 @@ object VocabularyPackRepository {
                                 rawSyns = syns,
                                 rawAnts = ants,
                                 packId = pack,
-                                index = index
+                                index = index,
+                                category = category
                             )
                         )
                     }
@@ -250,20 +251,20 @@ object VocabularyPackRepository {
                                     id = jsonReader.nextInt().toString()
                                 }
                             }
-                            "word" -> word = jsonReader.nextString()
-                            "phonetic", "pronunciation" -> phonetic = jsonReader.nextString()
+                            "word", "en", "en_word" -> word = jsonReader.nextString()
+                            "phonetic", "pronunciation", "pron", "p" -> phonetic = jsonReader.nextString()
                             "pos", "partOfSpeech" -> pos = jsonReader.nextString()
-                            "meaningBn", "meaning" -> meaningBn = jsonReader.nextString()
-                            "exampleEn", "example" -> exampleEn = jsonReader.nextString()
+                            "meaningBn", "meaning", "bn" -> meaningBn = jsonReader.nextString()
+                            "exampleEn", "example", "ex" -> exampleEn = jsonReader.nextString()
                             "exampleBn" -> exampleBn = jsonReader.nextString()
-                            "synonyms" -> {
+                            "synonyms", "syns" -> {
                                 if (jsonReader.peek() == android.util.JsonToken.BEGIN_ARRAY) {
                                     jsonReader.beginArray()
                                     while (jsonReader.hasNext()) syns.add(jsonReader.nextString())
                                     jsonReader.endArray()
                                 } else jsonReader.skipValue()
                             }
-                            "antonyms" -> {
+                            "antonyms", "ants" -> {
                                 if (jsonReader.peek() == android.util.JsonToken.BEGIN_ARRAY) {
                                     jsonReader.beginArray()
                                     while (jsonReader.hasNext()) ants.add(jsonReader.nextString())
@@ -291,7 +292,8 @@ object VocabularyPackRepository {
                                 rawSyns = syns,
                                 rawAnts = ants,
                                 packId = pack,
-                                index = index
+                                index = index,
+                                category = category
                             )
                         )
                     }
@@ -361,6 +363,7 @@ object VocabularyPackRepository {
         var phonetic = ""
         var exampleEn = ""
         var exampleBn = ""
+        var category = "General"
         val rawSyns = mutableListOf<String>()
         val rawAnts = mutableListOf<String>()
 
@@ -373,6 +376,7 @@ object VocabularyPackRepository {
                 "phonetic", "pron", "p" -> phonetic = reader.nextString().trim()
                 "exampleEn", "example", "ex" -> exampleEn = reader.nextString().trim()
                 "exampleBn" -> exampleBn = reader.nextString().trim()
+                "category" -> category = reader.nextString().trim()
                 "synonyms", "syns" -> {
                     if (reader.peek() == android.util.JsonToken.BEGIN_ARRAY) {
                         reader.beginArray()
@@ -411,7 +415,8 @@ object VocabularyPackRepository {
             rawSyns = rawSyns,
             rawAnts = rawAnts,
             packId = packId,
-            index = index
+            index = index,
+            category = category
         )
     }
 
@@ -426,7 +431,8 @@ object VocabularyPackRepository {
         rawSyns: List<String>,
         rawAnts: List<String>,
         packId: String,
-        index: Int
+        index: Int,
+        category: String = ""
     ): VocabWord {
         val wordLower = word.lowercase().trim()
         val richMatch = richWordMap[wordLower]
@@ -497,7 +503,9 @@ object VocabularyPackRepository {
             existingAnts = rawAntList
         )
 
-        val category = when {
+        val finalCategory = when {
+            category.isNotBlank() && !category.equals("General", ignoreCase = true) -> category
+            category.isNotBlank() -> category
             word.contains(" ") || word.contains("-") -> "Idioms"
             index < 1000 -> "Spoken"
             index < 4000 -> "IELTS"
@@ -515,7 +523,7 @@ object VocabularyPackRepository {
             exampleBn = finalExampleBn,
             synonyms = finalSyns,
             antonyms = finalAnts,
-            category = category,
+            category = finalCategory,
             packId = packId,
             frequencyRank = index + 1
         )

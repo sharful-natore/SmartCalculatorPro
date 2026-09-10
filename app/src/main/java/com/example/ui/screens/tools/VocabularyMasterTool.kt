@@ -701,8 +701,13 @@ fun VocabExploreTab(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Category filter chips
-                    val categories = listOf("All", "Top 1000", "Spoken", "IELTS", "BCS", "Academic", "Idioms")
+                    // Category filter chips dynamically extracted from words
+                    val categories = remember(words) {
+                        val customCats = words.map { it.category }
+                            .filter { it.isNotBlank() && !it.equals("All", ignoreCase = true) && !it.equals("Top 1000", ignoreCase = true) && !it.equals("General", ignoreCase = true) }
+                            .distinct()
+                        listOf("All", "Top 1000") + customCats
+                    }
                     LazyRow(
                         modifier = Modifier.weight(1f),
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -722,6 +727,11 @@ fun VocabExploreTab(
                                             "BCS" -> if (isBn) "বিসিএস" else "BCS"
                                             "Academic" -> if (isBn) "একাডেমিক" else "Academic"
                                             "Idioms" -> if (isBn) "বাগধারা" else "Idioms"
+                                            "BCS & Govt Jobs High-Frequency" -> if (isBn) "বিসিএস ও জব" else "BCS & Govt Jobs"
+                                            "IELTS & Higher Studies" -> if (isBn) "আইইএলটিএস" else "IELTS"
+                                            "Spoken & Daily Expressions" -> if (isBn) "স্পোকেন" else "Spoken"
+                                            "Academic & Scholarly" -> if (isBn) "একাডেমিক" else "Academic"
+                                            "Idioms & Phrases" -> if (isBn) "বাগধারা" else "Idioms"
                                             else -> cat
                                         },
                                         style = MaterialTheme.typography.labelSmall
@@ -1145,12 +1155,17 @@ fun VocabFlashcardTab(
             .verticalScroll(rememberScrollState())
             .padding(vertical = 4.dp)
     ) {
-        // Category Filter Chips
+        // Category Filter Chips dynamically extracted from words
+        val categories = remember(words) {
+            val customCats = words.map { it.category }
+                .filter { it.isNotBlank() && !it.equals("All", ignoreCase = true) && !it.equals("Top 1000", ignoreCase = true) && !it.equals("General", ignoreCase = true) }
+                .distinct()
+            listOf("All", "Top 1000") + customCats
+        }
         LazyRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            val categories = listOf("All", "Top 1000", "Spoken", "IELTS", "BCS", "Academic", "Idioms")
             items(categories) { cat ->
                 val isSelected = selectedCategory == cat
                 FilterChip(
@@ -1170,6 +1185,11 @@ fun VocabFlashcardTab(
                                 "BCS" -> if (isBn) "বিসিএস" else "BCS"
                                 "Academic" -> if (isBn) "একাডেমিক" else "Academic"
                                 "Idioms" -> if (isBn) "বাগধারা" else "Idioms"
+                                "BCS & Govt Jobs High-Frequency" -> if (isBn) "বিসিএস ও জব" else "BCS & Govt Jobs"
+                                "IELTS & Higher Studies" -> if (isBn) "আইইএলটিএস" else "IELTS"
+                                "Spoken & Daily Expressions" -> if (isBn) "স্পোকেন" else "Spoken"
+                                "Academic & Scholarly" -> if (isBn) "একাডেমিক" else "Academic"
+                                "Idioms & Phrases" -> if (isBn) "বাগধারা" else "Idioms"
                                 else -> cat
                             },
                             style = MaterialTheme.typography.labelSmall
@@ -1460,11 +1480,9 @@ fun VocabQuizTab(
     val activeQuizPool = remember(words, selectedSource, selectedLetter) {
         val pool = words.filter { w ->
             val matchesSource = when (selectedSource) {
-                "Top1000" -> w.frequencyRank <= 1000
-                "BCS" -> w.category.equals("BCS", ignoreCase = true)
-                "IELTS" -> w.category.equals("IELTS", ignoreCase = true)
-                "Spoken" -> w.category.equals("Spoken", ignoreCase = true)
-                else -> true
+                "All" -> true
+                "Top1000", "Top 1000" -> w.frequencyRank <= 1000
+                else -> w.category.equals(selectedSource, ignoreCase = true)
             }
             val matchesLetter = selectedLetter == null || w.word.startsWith(selectedLetter!!, ignoreCase = true)
             matchesSource && matchesLetter
@@ -1499,12 +1517,17 @@ fun VocabQuizTab(
             .verticalScroll(rememberScrollState())
             .padding(vertical = 4.dp)
     ) {
-        // Quiz Customization Chips
+        // Quiz Customization Chips dynamically extracted from words
+        val sources = remember(words) {
+            val customCats = words.map { it.category }
+                .filter { it.isNotBlank() && !it.equals("All", ignoreCase = true) && !it.equals("Top 1000", ignoreCase = true) && !it.equals("Top1000", ignoreCase = true) && !it.equals("General", ignoreCase = true) }
+                .distinct()
+            listOf("All", "Top1000") + customCats
+        }
         LazyRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            val sources = listOf("All", "Top1000", "Spoken", "IELTS", "BCS")
             items(sources) { src ->
                 val isSelected = selectedSource == src
                 FilterChip(
@@ -1521,6 +1544,11 @@ fun VocabQuizTab(
                                 "Spoken" -> if (isBn) "স্পোকেন" else "Spoken"
                                 "IELTS" -> "IELTS"
                                 "BCS" -> if (isBn) "বিসিএস ও জব" else "BCS & Job"
+                                "BCS & Govt Jobs High-Frequency" -> if (isBn) "বিসিএস ও জব" else "BCS & Govt Jobs"
+                                "IELTS & Higher Studies" -> if (isBn) "আইইএলটিএস" else "IELTS"
+                                "Spoken & Daily Expressions" -> if (isBn) "স্পোকেন" else "Spoken"
+                                "Academic & Scholarly" -> if (isBn) "একাডেমিক" else "Academic"
+                                "Idioms & Phrases" -> if (isBn) "বাগধারা" else "Idioms"
                                 else -> src
                             },
                             style = MaterialTheme.typography.labelSmall
@@ -2097,18 +2125,11 @@ object VocabularyDataProvider {
 
         val list = mutableListOf<VocabWord>()
 
-        // 1. High-frequency authentic curated exam words (Spoken, IELTS, BCS, Mega)
-        list.addAll(VocabularyHighFrequencyDataset.getSpoken3000Pack())
-        list.addAll(VocabularyHighFrequencyDataset.getIelts4000Pack())
-        list.addAll(VocabularyHighFrequencyDataset.getBcs5000Pack())
-        list.addAll(VocabularyHighFrequencyDataset.getMega10000Pack())
-
-        // Always load master 7,000 offline dictionary from assets as the bedrock database
+        // Load master vocabulary dataset from assets
         val masterWords = VocabularyPackRepository.loadPackFromAssetsSync(context, "dictionary_1000.json")
         if (!masterWords.isNullOrEmpty()) {
             list.addAll(masterWords)
         }
-        list.addAll(VocabularyDataPacks.starterWords)
 
         for (packId in installedPackIds) {
             if (packId != "master_dictionary" && packId != "all_100k_dict" && packId != "starter") {
@@ -2127,13 +2148,9 @@ object VocabularyDataProvider {
 
         val distinctList = list.groupBy { it.word.lowercase().trim() }
             .map { (key, group) ->
-                // Preferred Category: retain specific high-value filter tag if present
+                // Preferred Category: retain specific high-value filter tag if present from dataset
                 val preferredCategory = group.firstOrNull { 
-                    it.category.equals("IELTS", ignoreCase = true) ||
-                    it.category.equals("Spoken", ignoreCase = true) ||
-                    it.category.equals("BCS", ignoreCase = true) ||
-                    it.category.equals("Academic", ignoreCase = true) ||
-                    it.category.equals("Idioms", ignoreCase = true)
+                    it.category.isNotBlank() && !it.category.equals("General", ignoreCase = true)
                 }?.category ?: group.first().category
 
                 // Best Phonetic: Prioritize real IPA containing IPA symbols and Bengali in parens
