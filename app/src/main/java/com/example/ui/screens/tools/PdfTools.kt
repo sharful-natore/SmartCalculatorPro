@@ -1985,38 +1985,21 @@ fun PdfReaderTool(
                             .padding(bottom = if (isFullscreen) 24.dp else 16.dp)
                             .zIndex(10f)
                     ) {
-                        val pillBgColor = if (isNightMode) {
-                            Color(0xFF1E293B).copy(alpha = 0.85f)
-                        } else {
-                            Color.White.copy(alpha = 0.80f)
-                        }
-                        val pillBorderColor = if (isNightMode) {
-                            Color.White.copy(alpha = 0.25f)
-                        } else {
-                            Color.White.copy(alpha = 0.90f)
-                        }
-                        val pillContentColor = if (isNightMode) Color.White else themeColors.buttonEqualBg
-                        val innerPillBg = if (isNightMode) Color.White.copy(alpha = 0.15f) else themeColors.buttonEqualBg.copy(alpha = 0.12f)
-                        val innerPillBorder = if (isNightMode) Color.White.copy(alpha = 0.30f) else themeColors.buttonEqualBg.copy(alpha = 0.35f)
+                        val pillBgColor = Color(0xFFE0F7FA).copy(alpha = 0.88f)
+                        val pillBorderColor = Color(0xFF80DEEA).copy(alpha = 0.95f)
+                        val pillContentColor = themeColors.buttonEqualBg
+                        val innerPillBg = Color(0xFFB2EBF2).copy(alpha = 0.95f)
+                        val innerPillBorder = Color(0xFF4DD0E1).copy(alpha = 0.85f)
 
-                        Surface(
-                            shape = CircleShape,
-                            color = pillBgColor,
-                            shadowElevation = 8.dp,
-                            border = BorderStroke(1.2.dp, pillBorderColor),
+                        Box(
                             modifier = Modifier
                                 .clip(CircleShape)
-                                .graphicsLayer {
-                                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-                                        renderEffect = android.graphics.RenderEffect.createBlurEffect(
-                                            25f, 25f, android.graphics.Shader.TileMode.CLAMP
-                                        ).asComposeRenderEffect()
-                                    }
-                                }
+                                .background(pillBgColor)
+                                .border(1.2.dp, pillBorderColor, CircleShape)
+                                .padding(horizontal = 10.dp, vertical = 8.dp)
                         ) {
                             Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
                                 // Previous Page Button
                                 IconButton(
@@ -2033,12 +2016,12 @@ fun PdfReaderTool(
                                     Icon(
                                         imageVector = Icons.Default.ChevronLeft,
                                         contentDescription = "Previous Page",
-                                        tint = if (visibleCurrentPage > 0) pillContentColor else pillContentColor.copy(alpha = 0.3f),
-                                        modifier = Modifier.size(22.dp)
+                                        tint = if (visibleCurrentPage > 0) pillContentColor else pillContentColor.copy(alpha = 0.35f),
+                                        modifier = Modifier.size(26.dp)
                                     )
                                 }
 
-                                // Frosted Glassmorphism Page Counter Pill Badge (Tap opens "Jump to Page" Dialog)
+                                // Inner Page Counter Badge
                                 Box(
                                     modifier = Modifier
                                         .padding(horizontal = 6.dp)
@@ -2046,7 +2029,7 @@ fun PdfReaderTool(
                                         .background(innerPillBg)
                                         .border(1.dp, innerPillBorder, CircleShape)
                                         .clickable { showJumpDialog = true }
-                                        .padding(horizontal = 14.dp, vertical = 6.dp),
+                                        .padding(horizontal = 16.dp, vertical = 7.dp),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     val curPageStr = if (isBn) com.example.util.CalendarUtils.toBengaliDigits(visibleCurrentPage + 1) else "${visibleCurrentPage + 1}"
@@ -2056,8 +2039,8 @@ fun PdfReaderTool(
                                             "পৃষ্ঠা $curPageStr / $totPageStr"
                                         else
                                             "Page $curPageStr of $totPageStr",
-                                        fontSize = 12.5.sp,
-                                        fontWeight = FontWeight.ExtraBold,
+                                        fontSize = 13.5.sp,
+                                        fontWeight = FontWeight.Bold,
                                         color = pillContentColor
                                     )
                                 }
@@ -2077,8 +2060,8 @@ fun PdfReaderTool(
                                     Icon(
                                         imageVector = Icons.Default.ChevronRight,
                                         contentDescription = "Next Page",
-                                        tint = if (visibleCurrentPage < pageCount - 1) pillContentColor else pillContentColor.copy(alpha = 0.3f),
-                                        modifier = Modifier.size(22.dp)
+                                        tint = if (visibleCurrentPage < pageCount - 1) pillContentColor else pillContentColor.copy(alpha = 0.35f),
+                                        modifier = Modifier.size(26.dp)
                                     )
                                 }
 
@@ -2093,7 +2076,7 @@ fun PdfReaderTool(
                                             imageVector = Icons.Default.FullscreenExit,
                                             contentDescription = "Exit Fullscreen",
                                             tint = pillContentColor,
-                                            modifier = Modifier.size(20.dp)
+                                            modifier = Modifier.size(22.dp)
                                         )
                                     }
                                 }

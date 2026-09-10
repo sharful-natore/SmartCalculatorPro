@@ -4295,7 +4295,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                     textSize = titleTextSize
                     typeface = Typeface.create("serif", Typeface.BOLD)
                 }
-                canvas.drawText("▪  ${headerText.uppercase()}", margin, currentY + 11f, exePaint)
+                canvas.drawText(headerText.uppercase(), margin, currentY + 11f, exePaint)
                 currentY += 15f
                 drawHeaderDividerLine(currentY, AndroidColor.BLACK, 1f)
                 currentY += 8f
@@ -4354,7 +4354,7 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                     textSize = titleTextSize
                     typeface = Typeface.create("serif", Typeface.BOLD)
                 }
-                canvas.drawText("◆  ${headerText.uppercase()}", margin, currentY + 11f, dPaint)
+                canvas.drawText(headerText.uppercase(), margin, currentY + 11f, dPaint)
                 currentY += 15f
                 drawHeaderDividerLine(currentY, primaryColor, 1.2f)
                 currentY += 8f
