@@ -361,15 +361,70 @@ object HadithRepository {
                 }
             }
             "muslim" -> {
-                (1..56).map { idx ->
+                val muslimChapters = listOf(
+                    Pair("কিতাবুল ঈমান (ঈমান ও তাওহীদ)", "The Book of Faith"),
+                    Pair("কিতাবুত তাহারাত (পবিত্রতা ও ওযু)", "The Book of Purification"),
+                    Pair("কিতাবুল হায়িজ (ঋতুস্রাব ও তাহারাত)", "The Book of Menstruation"),
+                    Pair("কিতাবুস সালাত (সালাত ও নামাজের বিধান)", "The Book of Prayer"),
+                    Pair("কিতাবুল মাসাজিদ (মসজিদ ও নামাজের স্থান)", "The Book of Mosques"),
+                    Pair("কিতাবু সালাতিল মুসাফিরীন (মুসাফিরের নামাজ)", "The Prayer of Travelers"),
+                    Pair("কিতাবুল জুমু'আ (জুমার নামাজ)", "The Book of Friday Prayer"),
+                    Pair("কিতাবু সালাতিল ঈদাইন (ঈদের নামাজ)", "The Book of Eid Prayers"),
+                    Pair("কিতাবু সালাতিল ইসতিসকা (বৃষ্টির জন্য প্রার্থনা)", "Prayer for Rain"),
+                    Pair("কিতাবু সালাতিল কুসুফ (সূর্যগ্রহণের নামাজ)", "Prayer during Eclipses"),
+                    Pair("কিতাবুল জানায়েজ (জানাযা ও কাফন-দাফন)", "The Book of Funerals"),
+                    Pair("কিতাবুয যাকাত (যাকাত ও সদকা)", "The Book of Zakat"),
+                    Pair("কিতাবুস সিয়াম (রোজা ও সিয়াম সাধনা)", "The Book of Fasting"),
+                    Pair("কিতাবুল ই'তিকাফ (ইতিকাফ ও শবে কদর)", "The Book of I'tikaf"),
+                    Pair("কিতাবুল হজ্ব (হজ ও ওমরাহর আহকাম)", "The Book of Hajj"),
+                    Pair("কিতাবুন নিকাহ (বিবাহ ও মোহরানা)", "The Book of Marriage"),
+                    Pair("কিতাবুর রিদ্বা (দুগ্ধপান সম্পর্ক)", "The Book of Suckling"),
+                    Pair("কিতাবুত ত্বালাক (তালাকের বিধান)", "The Book of Divorce"),
+                    Pair("কিতাবুল লি'আন (লি'আন ও অভিসম্পাত)", "The Book of Li'an"),
+                    Pair("কিতাবুল ইতক (দাসমুক্তি ও মর্যাদা)", "The Book of Emancipation"),
+                    Pair("কিতাবুল বুয়ু' (ব্যবসা-বাণিজ্য ও লেনদেন)", "The Book of Transactions"),
+                    Pair("কিতাবুল মুসাকাত (বর্গা ও কৃষি চুক্তি)", "The Book of Sharecropping"),
+                    Pair("কিতাবুল ফারায়েজ (উত্তরাধিকার ও মিরাস)", "The Book of Inheritance"),
+                    Pair("কিতাবুল হিবাহ (দান ও উপহার)", "The Book of Gifts"),
+                    Pair("কিতাবুল ওসিয়াত (ওসিয়ত ও উত্তরাধিকার)", "The Book of Wills"),
+                    Pair("কিতাবুন নুজুর (মানত ও পূরণ)", "The Book of Vows"),
+                    Pair("কিতাবুল আইমান (শপথ ও কাফফারা)", "The Book of Oaths"),
+                    Pair("কিতাবুল কাসামাহ ওয়াল কিসাস (রক্তপণ ও কিসাস)", "The Book of Retaliation"),
+                    Pair("কিতাবুল হুদুদ (দণ্ডবিধি ও হদ)", "The Book of Punishments"),
+                    Pair("কিতাবুল আকদ্বিয়াহ (বিচার ও ফায়সালা)", "The Book of Judicial Decisions"),
+                    Pair("কিতাবুল লুকাতাহ (হারানো প্রাপ্ত বস্তু)", "The Book of Lost Property"),
+                    Pair("কিতাবুল জিহাদ ওয়াস সিয়ার (জিহাদ ও যুদ্ধনীতি)", "The Book of Jihad & Expeditions"),
+                    Pair("কিতাবুল ইমারাহ (নেতৃত্ব ও শাসন ব্যবস্থা)", "The Book of Government"),
+                    Pair("কিতাবুয যবাইহ ওয়াস সয়িদ (শিকার ও জবেহ)", "The Book of Hunting & Slaughter"),
+                    Pair("কিতাবুল উদহিয়াহ (কোরবানি ও বিধান)", "The Book of Sacrifices"),
+                    Pair("কিতাবুল আশরিবাহ (পানীয় ও খাদ্যদ্রব্য)", "The Book of Drinks"),
+                    Pair("কিতাবুল লিবাস ওয়ায যীনাহ (পোশাক ও সৌন্দর্য)", "The Book of Clothes & Ornaments"),
+                    Pair("কিতাবুল আদব (শিষ্টাচার ও চরিত্র)", "The Book of Manners"),
+                    Pair("কিতাবুস সালাম (সালাম ও সৌজন্যবোধ)", "The Book of Greetings"),
+                    Pair("কিতাবুল আলফাজ মিনাল আদব (কথাবার্তার শিষ্টাচার)", "The Book of Courtesy Words"),
+                    Pair("কিতাবুশ শি'র (কবিতা ও সাহিত্য)", "The Book of Poetry"),
+                    Pair("কিতাবুর রু'ইয়া (স্বপ্ন ও তার ব্যাখ্যা)", "The Book of Dreams"),
+                    Pair("কিতাবুল ফাদ্বায়েল (রাসূল ﷺ-এর ফজিলত)", "Virtues of the Prophet (PBUH)"),
+                    Pair("কিতাবু ফাদ্বায়েলিস সাহাবাহ (সাহাবিদের মর্যাদা)", "Virtues of the Companions"),
+                    Pair("কিতাবুল বিররি ওয়াস সিলাহ (আত্মীয়তার সম্পর্ক)", "Virtue & Kinship"),
+                    Pair("কিতাবুল ক্বদর (তকদীর ও ভাগ্য)", "The Book of Destiny"),
+                    Pair("কিতাবুল ইলম (দ্বীনি ইলম ও প্রচার)", "The Book of Knowledge"),
+                    Pair("কিতাবুয যিকর ওয়াদ দু'আ (যিকর ও দোয়া)", "Remembrance & Supplications"),
+                    Pair("কিতাবুত তাওবাহ (তওবা ও ইস্তিগফার)", "The Book of Repentance"),
+                    Pair("কিতাবু সিফাতিল কিয়ামাহ (কিয়ামতের বিবরণ)", "Description of Judgment Day"),
+                    Pair("কিতাবু সিফাতিল জান্নাহ (জান্নাত ও নিয়ামত)", "Description of Paradise"),
+                    Pair("কিতাবু সিফাতিন নার (জাহান্নামের ভয়াবহতা)", "Description of Hellfire"),
+                    Pair("কিতাবুল জুহদ ওয়ার রকায়িক (দুনিয়াবিমুখতা ও খোদাভীতি)", "Asceticism & Softening"),
+                    Pair("কিতাবুত তাফসির (কোরআনের তাফসির)", "Quranic Commentary"),
+                    Pair("কিতাবুল ফিতান (ফেতনা ও কিয়ামতের আলামত)", "Tribulations & Signs of Hour"),
+                    Pair("কিতাবুল খাইর ওয়াস সালামাহ (কল্যাণ ও শান্তি)", "Goodness & Peace")
+                )
+                muslimChapters.mapIndexed { idx, (bn, en) ->
                     HadithChapter(
-                        chapterId = idx,
-                        titleBn = when (idx) {
-                            1 -> "ঈমান ও তাওহীদ অধ্যায়"; 2 -> "পবিত্রতা ও সুন্নাত অধ্যায়"; 3 -> "হায়েজ ও তাহারাত অধ্যায়"; 4 -> "সালাতের মাসায়েল অধ্যায়"; 5 -> "মসজিদ ও নামাজের স্থান"
-                            else -> "অধ্যায় $idx: ইসলামী শরিয়ত ও সুন্নাত"
-                        },
-                        titleEn = "Chapter $idx",
-                        hadithCount = 35 + ((idx * 11) % 48)
+                        chapterId = idx + 1,
+                        titleBn = "অধ্যায় ${idx + 1} : $bn",
+                        titleEn = "Chapter ${idx + 1} : $en",
+                        hadithCount = 35 + (((idx + 1) * 11) % 48)
                     )
                 }
             }
@@ -377,7 +432,38 @@ object HadithRepository {
             "tirmidhi" -> (1..50).map { idx -> HadithChapter(idx, "অধ্যায় $idx: জামে মাসায়েল ও মান", "Chapter $idx", 30 + ((idx * 7) % 45)) }
             "nasai" -> (1..52).map { idx -> HadithChapter(idx, "অধ্যায় $idx: সুনান ও সুক্ষ্ম সনদ", "Chapter $idx", 35 + ((idx * 9) % 45)) }
             "ibnmajah" -> (1..37).map { idx -> HadithChapter(idx, "অধ্যায় $idx: ফিকহি বিন্যাস ও সুন্নাহ", "Chapter $idx", 30 + ((idx * 7) % 40)) }
-            "riyad" -> (1..19).map { idx -> HadithChapter(idx, "অধ্যায় $idx: রিয়াদুস সালেহীন নীতি", "Chapter $idx", 40 + ((idx * 15) % 48)) }
+            "riyad" -> {
+                val riyadChapters = listOf(
+                    Pair("কিতাবুল মুকাদ্দামাত (ইখলাস, তওবা ও ধৈর্য)", "The Book of Miscellany (Sincerity, Repentance & Patience)"),
+                    Pair("কিতাবুল আদব (শিষ্টাচার ও সদ্ব্যবহার)", "The Book of Good Manners"),
+                    Pair("কিতাবু আদাবিত ত্বা'আম (খাবার ও পানাহারের আদব)", "The Book about the Etiquette of Eating"),
+                    Pair("কিতাবুল লিবাস (পোশাক ও পরিচ্ছদের বিধান)", "The Book of Dress"),
+                    Pair("কিতাবু আদাবিন নাওম (ঘুমানো ও বিশ্রামের আদব)", "The Book of the Etiquette of Sleeping & Sitting"),
+                    Pair("কিতাবুস সালাম (সালাম ও অভিবাদনের নিয়ম)", "The Book of Greetings"),
+                    Pair("কিতাবু ইয়াদাতিল মারীদ্ব (রোগী সেবা ও জানাজা)", "The Book of Visiting the Sick & Funeral"),
+                    Pair("কিতাবু আদাবিস সাফার (ভ্রমণের শিষ্টাচার)", "The Book of Etiquette of Traveling"),
+                    Pair("কিতাবুল ফাদ্বায়েল (আমল ও ইবাদতের ফজিলত)", "The Book of Virtues"),
+                    Pair("কিতাবুল ই'তিকাফ (ই'তিকাফ ও লাইলাতুল কদর)", "The Book of I'tikaf"),
+                    Pair("কিতাবুল হজ্ব (হজ ও ওমরার বিধান)", "The Book of Hajj"),
+                    Pair("কিতাবুল জিহাদ (আল্লাহর পথে সংগ্রাম ও ত্যাগ)", "The Book of Jihad"),
+                    Pair("কিতাবুল ইলম (দ্বীনি জ্ঞানার্জনের ফজিলত)", "The Book of Knowledge"),
+                    Pair("কিতাবু হামদিল্লাহি ওয়া শুকরিহ (আল্লাহর প্রশংসা ও কৃতজ্ঞতা)", "The Book of Praise and Gratitude to Allah"),
+                    Pair("কিতাবুস সালাতি আলান্নাবী (রাসূল ﷺ-এর ওপর দরূদ)", "The Book of Supplicating Blessings upon the Prophet (PBUH)"),
+                    Pair("কিতাবুল আজকার (যিকর ও আল্লাহর স্মরণ)", "The Book of Remembrance of Allah (Dhikr)"),
+                    Pair("কিতাবুদ দা'ওয়াত (দোয়া ও মোনাজাত)", "The Book of Du'a (Supplications)"),
+                    Pair("কিতাবুল উমূরিল মানহিয়্যাহ (নিষিদ্ধ বিষয় পরিহার)", "The Book of Forbidden Actions"),
+                    Pair("কিতাবুল মানছূরাতু ওয়াল মুলাহ (বিবিধ মূল্যবান হাদিস ও ক্ষমা)", "The Book of Miscellaneous Ahadith & Forgiveness")
+                )
+                val counts = listOf(55, 70, 85, 68, 52, 110, 84, 65, 145, 55, 95, 120, 80, 60, 88, 160, 140, 255, 109)
+                riyadChapters.mapIndexed { idx, (bn, en) ->
+                    HadithChapter(
+                        chapterId = idx + 1,
+                        titleBn = "অধ্যায় ${idx + 1} : $bn",
+                        titleEn = "Chapter ${idx + 1} : $en",
+                        hadithCount = counts.getOrElse(idx) { 40 + (((idx + 1) * 15) % 48) }
+                    )
+                }
+            }
             else -> (1..10).map { idx -> HadithChapter(idx, "অধ্যায় $idx: ঈমান ও ইবাদত", "Chapter $idx", 30) }
         }
     }

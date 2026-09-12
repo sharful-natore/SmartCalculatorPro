@@ -620,7 +620,12 @@ object AuthenticHadithDatabase {
             "tirmidhi" -> 30 + ((chapterId * 7) % 45)
             "nasai" -> 35 + ((chapterId * 9) % 45)
             "ibnmajah" -> 30 + ((chapterId * 7) % 40)
-            "riyad" -> 40 + ((chapterId * 15) % 48)
+            "riyad" -> when (chapterId) {
+                1 -> 55; 2 -> 70; 3 -> 85; 4 -> 68; 5 -> 52; 6 -> 110; 7 -> 84; 8 -> 65
+                9 -> 145; 10 -> 55; 11 -> 95; 12 -> 120; 13 -> 80; 14 -> 60; 15 -> 88
+                16 -> 160; 17 -> 140; 18 -> 255; 19 -> 109
+                else -> 40 + ((chapterId * 15) % 48)
+            }
             else -> 30
         }
 
