@@ -1,5 +1,7 @@
 package com.example.ui.screens.tools
 
+import android.content.ClipboardManager
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
@@ -447,6 +449,8 @@ fun CvLiveEditPanel(
     var showCustomCategoryDialog by remember { mutableStateOf(false) }
     var customCategoryInput by remember { mutableStateOf("") }
     var deleteConfirmDialogState by remember { mutableStateOf<DeleteConfirmState?>(null) }
+    var showBulkSkillDialog by remember { mutableStateOf(false) }
+    var editingSkillId by remember { mutableStateOf<String?>(null) }
 
     if (deleteConfirmDialogState != null) {
         AlertDialog(
@@ -1599,6 +1603,22 @@ fun CvLiveEditPanel(
                         Spacer(modifier = Modifier.weight(1f))
 
                         Surface(
+                            onClick = { showBulkSkillDialog = true },
+                            shape = RoundedCornerShape(12.dp),
+                            color = Color(0xFF10B981).copy(alpha = 0.15f),
+                            border = BorderStroke(1.dp, Color(0xFF10B981).copy(alpha = 0.5f))
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(imageVector = Icons.Default.ContentPaste, contentDescription = null, tint = Color(0xFF10B981), modifier = Modifier.size(13.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(text = if (isBn) "স্মার্ট পেস্ট" else "Smart Paste", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = Color(0xFF10B981))
+                            }
+                        }
+
+                        Surface(
                             onClick = {
                                 val prompt = "Target Job: '${localData.jobTitle.ifBlank { "Professional" }}'. Suggest top 8 in-demand industry skills as comma-separated items."
                                 onRequestAiPrompt(
@@ -1668,6 +1688,21 @@ fun CvLiveEditPanel(
                     )
                 }
 
+                if (showBulkSkillDialog) {
+                    CvSkillBulkPasteDialog(
+                        isBn = isBn,
+                        themeColors = themeColors,
+                        currentSkillCount = localData.skills.size,
+                        onDismiss = { showBulkSkillDialog = false },
+                        onApplySkills = { newSkills, replaceAll ->
+                            val updated = if (replaceAll) newSkills else (localData.skills + newSkills)
+                            localData = localData.copy(skills = updated)
+                            commitAndRefresh(localData)
+                            Toast.makeText(context, if (isBn) "${newSkills.size}টি স্কিল সিভিতে যুক্ত হয়েছে!" else "Added ${newSkills.size} skills to CV!", Toast.LENGTH_SHORT).show()
+                        }
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(14.dp))
 
                 val activeCategories = (localData.skills.map {
@@ -1695,13 +1730,17 @@ fun CvLiveEditPanel(
                             fontWeight = FontWeight.Medium,
                             color = themeColors.displayText.copy(alpha = 0.6f)
                         )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = if (isBn) "ওপরে থাকা '+ ক্যাটাগরি' বাটনে ক্লিক করে ক্যাটাগরি যোগ করুন।" else "Click the '+ Category' button above to add a category.",
-                            fontSize = 11.sp,
-                            color = themeColors.displayText.copy(alpha = 0.4f),
-                            textAlign = TextAlign.Center
-                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Button(
+                            onClick = { showBulkSkillDialog = true },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
+                            shape = RoundedCornerShape(8.dp),
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+                        ) {
+                            Icon(Icons.Default.ContentPaste, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(if (isBn) "জেমিনি বা টেক্সট থেকে পেস্ট করুন" else "Paste from Gemini / Text", fontSize = 11.5.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                        }
                     }
                 } else {
                     activeCategories.forEach { cat ->
@@ -1869,7 +1908,8 @@ fun CvLiveEditPanel(
                                                         )
                                                         Spacer(modifier = Modifier.width(6.dp))
 
-                                                        if (sk.name.isBlank()) {
+                                                        val isEditingThisSkill = editingSkillId == sk.id || sk.name.isBlank()
+                                                        if (isEditingThisSkill) {
                                                             OutlinedTextField(
                                                                 value = sk.name,
                                                                 onValueChange = { text ->
@@ -1879,30 +1919,47 @@ fun CvLiveEditPanel(
                                                                 },
                                                                 placeholder = { Text(if (isBn) "স্কিল টাইটেল লিখুন" else "Enter Skill Title", fontSize = 11.sp) },
                                                                 singleLine = true,
+                                                                trailingIcon = {
+                                                                    IconButton(
+                                                                        onClick = { editingSkillId = null },
+                                                                        modifier = Modifier.size(24.dp)
+                                                                    ) {
+                                                                        Icon(Icons.Default.Check, contentDescription = "Done", tint = Color(0xFF10B981), modifier = Modifier.size(14.dp))
+                                                                    }
+                                                                },
                                                                 colors = OutlinedTextFieldDefaults.colors(
                                                                     focusedBorderColor = themeColors.buttonEqualBg,
-                                                                    unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.15f),
+                                                                    unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.25f),
                                                                     focusedTextColor = themeColors.displayText,
                                                                     unfocusedTextColor = themeColors.displayText
                                                                 ),
                                                                 shape = RoundedCornerShape(6.dp),
                                                                 modifier = Modifier
                                                                     .fillMaxWidth()
-                                                                    .height(40.dp),
+                                                                    .height(42.dp),
                                                                 textStyle = TextStyle(fontSize = 11.sp)
                                                             )
                                                         } else {
-                                                            Text(
-                                                                text = sk.name,
-                                                                fontSize = 11.sp,
-                                                                fontWeight = FontWeight.Bold,
-                                                                color = themeColors.displayText,
-                                                                modifier = Modifier.clickable {
-                                                                    val newList = localData.skills.toMutableList()
-                                                                    newList[originalIdx] = sk.copy(name = "")
-                                                                    localData = localData.copy(skills = newList)
-                                                                }
-                                                            )
+                                                            Row(
+                                                                verticalAlignment = Alignment.CenterVertically,
+                                                                modifier = Modifier
+                                                                    .clickable { editingSkillId = sk.id }
+                                                                    .padding(vertical = 3.dp)
+                                                            ) {
+                                                                Text(
+                                                                    text = sk.name,
+                                                                    fontSize = 11.5.sp,
+                                                                    fontWeight = FontWeight.Bold,
+                                                                    color = themeColors.displayText
+                                                                )
+                                                                Spacer(modifier = Modifier.width(6.dp))
+                                                                Icon(
+                                                                    imageVector = Icons.Default.Edit,
+                                                                    contentDescription = "Edit Skill",
+                                                                    tint = themeColors.displayText.copy(alpha = 0.35f),
+                                                                    modifier = Modifier.size(11.dp)
+                                                                )
+                                                            }
                                                         }
                                                     }
 
@@ -2468,6 +2525,466 @@ fun CvLiveEditPanel(
             }
         }
     }
+}
+
+// ================= SMART SKILL PARSER & BULK PASTE DIALOG =================
+
+fun parseRawSkillsText(
+    rawText: String,
+    forcedCategory: String = ""
+): List<CvSkillItem> {
+    if (rawText.isBlank()) return emptyList()
+
+    val result = mutableListOf<CvSkillItem>()
+    val lines = rawText.lines().map { it.trim() }.filter { it.isNotBlank() }
+
+    val filteredLines = lines.filter { line ->
+        val lower = line.lowercase()
+        !lower.startsWith("here is") &&
+        !lower.startsWith("here are") &&
+        !lower.startsWith("sure,") &&
+        !lower.startsWith("certainly") &&
+        !lower.startsWith("hope this helps") &&
+        !lower.startsWith("these skills") &&
+        !lower.startsWith("recommended skills")
+    }
+
+    var currentCategory = forcedCategory.ifBlank { "" }
+
+    for (rawLine in filteredLines) {
+        var line = rawLine
+            .removePrefix("•")
+            .removePrefix("-")
+            .removePrefix("*")
+            .removePrefix("▪")
+            .removePrefix("—")
+            .replace(Regex("^\\d+[\\.\\)]\\s*"), "")
+            .trim()
+
+        line = line.replace("**", "").replace("__", "").trim()
+        if (line.isBlank()) continue
+
+        // Check if line is "Category: Skill1, Skill2..." or "Skill: Description"
+        if (line.contains(":")) {
+            val parts = line.split(":", limit = 2)
+            val prefix = parts[0].trim()
+            val suffix = parts.getOrNull(1)?.trim() ?: ""
+
+            val isLikelyCategory = (prefix.length <= 35 && prefix.split(" ").size <= 5 && !prefix.contains(",")) &&
+                    (suffix.isBlank() || suffix.contains(",") || suffix.contains(";") || suffix.split(" ").size > 4)
+
+            if (isLikelyCategory && (suffix.contains(",") || suffix.contains(";") || suffix.isBlank())) {
+                val detectedCat = prefix
+                currentCategory = if (forcedCategory.isNotBlank()) forcedCategory else detectedCat
+
+                if (suffix.isNotBlank()) {
+                    val subSkills = suffix.split(Regex("[,;]")).map { it.trim() }.filter { it.isNotBlank() }
+                    for (sk in subSkills) {
+                        val cleanSk = sk.removePrefix("•").removePrefix("-").removePrefix("*").trim()
+                        if (cleanSk.isNotBlank()) {
+                            val cat = if (currentCategory.isNotBlank()) currentCategory else findBestCategoryForSkill(cleanSk)
+                            result.add(CvSkillItem(name = cleanSk, category = normalizeCategoryName(cat)))
+                        }
+                    }
+                }
+                continue
+            } else if (suffix.length > 15 && !suffix.contains(",")) {
+                // "Skill Name: Description"
+                val skillName = prefix
+                val skillDesc = suffix
+                val cat = if (forcedCategory.isNotBlank()) forcedCategory else if (currentCategory.isNotBlank()) currentCategory else findBestCategoryForSkill(skillName)
+                result.add(CvSkillItem(name = skillName, description = skillDesc, category = normalizeCategoryName(cat)))
+                continue
+            }
+        }
+
+        // Comma or semicolon separated list
+        if (line.contains(",") || line.contains(";")) {
+            val items = line.split(Regex("[,;]")).map { it.trim() }.filter { it.isNotBlank() }
+            for (item in items) {
+                val clean = item.removePrefix("•").removePrefix("-").removePrefix("*").trim()
+                if (clean.isNotBlank()) {
+                    val cat = if (forcedCategory.isNotBlank()) forcedCategory else if (currentCategory.isNotBlank()) currentCategory else findBestCategoryForSkill(clean)
+                    result.add(CvSkillItem(name = clean, category = normalizeCategoryName(cat)))
+                }
+            }
+        } else {
+            // Single skill per line
+            val cat = if (forcedCategory.isNotBlank()) forcedCategory else if (currentCategory.isNotBlank()) currentCategory else findBestCategoryForSkill(line)
+            result.add(CvSkillItem(name = line, category = normalizeCategoryName(cat)))
+        }
+    }
+
+    // Deduplicate by name case-insensitively
+    val seen = mutableSetOf<String>()
+    return result.filter {
+        val key = it.name.trim().lowercase()
+        key.isNotBlank() && seen.add(key)
+    }
+}
+
+@Composable
+fun CvSkillBulkPasteDialog(
+    isBn: Boolean,
+    themeColors: CalculatorThemeColors,
+    currentSkillCount: Int,
+    onDismiss: () -> Unit,
+    onApplySkills: (newSkills: List<CvSkillItem>, replaceAll: Boolean) -> Unit
+) {
+    val context = LocalContext.current
+    var rawText by remember { mutableStateOf("") }
+    var selectedCategoryOption by remember { mutableStateOf("AUTO") }
+    var replaceAll by remember { mutableStateOf(false) }
+
+    val forcedCat = when (selectedCategoryOption) {
+        "AUTO" -> ""
+        else -> selectedCategoryOption
+    }
+
+    val parsedSkills = remember(rawText, forcedCat) {
+        parseRawSkillsText(rawText, forcedCat)
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.ContentPaste,
+                    contentDescription = null,
+                    tint = Color(0xFF10B981),
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = if (isBn) "স্মার্ট স্কিল পেস্ট ও বাল্ক ইমপোর্ট" else "Smart Skills Paste & Bulk Import",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = themeColors.displayText
+                )
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+            ) {
+                Text(
+                    text = if (isBn)
+                        "জেমিনি (Gemini), চ্যাটজিপিটি বা লিঙ্কডইন থেকে কপি করা টেক্সট সরাসরি এখানে পেস্ট করুন। কমা (,), বুলেট (•), কোলন (:) বা তালিকা—সব ফরম্যাট স্বয়ংক্রিয়ভাবে সাজিয়ে নেওয়া হবে।"
+                    else
+                        "Paste raw skills copied directly from Gemini, ChatGPT, or job circulars. Comma-separated, bullet lists, or category headers are parsed automatically.",
+                    fontSize = 11.sp,
+                    color = themeColors.displayText.copy(alpha = 0.7f),
+                    lineHeight = 15.sp
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Quick Action Bar
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    // Clipboard paste button
+                    Surface(
+                        onClick = {
+                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                            val clip = clipboard?.primaryClip
+                            if (clip != null && clip.itemCount > 0) {
+                                val pasted = clip.getItemAt(0).text?.toString() ?: ""
+                                if (pasted.isNotBlank()) {
+                                    rawText = pasted
+                                    Toast.makeText(context, if (isBn) "ক্লিপবোর্ড থেকে পেস্ট করা হয়েছে!" else "Pasted from clipboard!", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    Toast.makeText(context, if (isBn) "ক্লিপবোর্ডে কোনো টেক্সট পাওয়া যায়নি" else "Clipboard is empty", Toast.LENGTH_SHORT).show()
+                                }
+                            } else {
+                                Toast.makeText(context, if (isBn) "ক্লিপবোর্ডে কোনো টেক্সট পাওয়া যায়নি" else "Clipboard is empty", Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        shape = RoundedCornerShape(8.dp),
+                        color = Color(0xFF10B981).copy(alpha = 0.12f),
+                        border = BorderStroke(1.dp, Color(0xFF10B981).copy(alpha = 0.3f)),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(vertical = 6.dp, horizontal = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(Icons.Default.ContentPaste, contentDescription = null, tint = Color(0xFF10B981), modifier = Modifier.size(13.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(if (isBn) "ক্লিপবোর্ড পেস্ট" else "Paste Clip", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF10B981))
+                        }
+                    }
+
+                    // Sample template button
+                    Surface(
+                        onClick = {
+                            rawText = """
+Technical & Software: Kotlin, Jetpack Compose, Room Database, Coroutines, Flow, Retrofit
+Tools & Platforms: Git, GitHub, Android Studio, Firebase, Figma
+Soft Skills: Problem Solving, Team Collaboration, Time Management
+                            """.trimIndent()
+                        },
+                        shape = RoundedCornerShape(8.dp),
+                        color = themeColors.buttonEqualBg.copy(alpha = 0.1f),
+                        border = BorderStroke(1.dp, themeColors.buttonEqualBg.copy(alpha = 0.25f)),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(vertical = 6.dp, horizontal = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = themeColors.buttonEqualBg, modifier = Modifier.size(13.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(if (isBn) "নমুনা দেখুন" else "Sample", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = themeColors.buttonEqualBg)
+                        }
+                    }
+
+                    if (rawText.isNotBlank()) {
+                        Surface(
+                            onClick = { rawText = "" },
+                            shape = RoundedCornerShape(8.dp),
+                            color = Color.Red.copy(alpha = 0.08f),
+                            border = BorderStroke(1.dp, Color.Red.copy(alpha = 0.2f))
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(vertical = 6.dp, horizontal = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.Clear, contentDescription = null, tint = Color.Red, modifier = Modifier.size(13.dp))
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                OutlinedTextField(
+                    value = rawText,
+                    onValueChange = { rawText = it },
+                    placeholder = {
+                        Text(
+                            text = if (isBn)
+                                "এখানে জেমিনি থেকে কপি করা স্কিল পেস্ট করুন...\n\nউদাহরণ ১ (কমা দিয়ে):\nKotlin, Java, Compose, Room, MVVM, Git\n\nউদাহরণ ২ (বুলেট পয়েন্ট):\n• Mobile App Development\n• REST APIs & Networking\n\nউদাহরণ ৩ (ক্যাটাগরি সহ):\nTechnical: Kotlin, Compose\nSoft Skills: Leadership, Agile"
+                            else
+                                "Paste skills copied from Gemini here...\n\nExample 1 (Comma-separated):\nKotlin, Java, Compose, Room, MVVM, Git\n\nExample 2 (Bullet points):\n• Mobile App Development\n• REST APIs & Networking\n\nExample 3 (With categories):\nTechnical: Kotlin, Compose\nSoft Skills: Leadership, Agile",
+                            fontSize = 10.5.sp,
+                            color = themeColors.displayText.copy(alpha = 0.4f),
+                            lineHeight = 15.sp
+                        )
+                    },
+                    minLines = 6,
+                    maxLines = 10,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color(0xFF10B981),
+                        unfocusedBorderColor = themeColors.displayText.copy(alpha = 0.2f),
+                        focusedTextColor = themeColors.displayText,
+                        unfocusedTextColor = themeColors.displayText
+                    ),
+                    textStyle = TextStyle(fontSize = 11.5.sp, lineHeight = 16.sp)
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Mode Selection: Append vs Replace
+                Text(
+                    text = if (isBn) "যোগ করার ধরন:" else "Insertion Mode:",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = themeColors.displayText
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Surface(
+                        onClick = { replaceAll = false },
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (!replaceAll) themeColors.buttonEqualBg.copy(alpha = 0.15f) else themeColors.displayText.copy(alpha = 0.05f),
+                        border = BorderStroke(
+                            1.dp,
+                            if (!replaceAll) themeColors.buttonEqualBg else themeColors.displayText.copy(alpha = 0.1f)
+                        ),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(vertical = 6.dp, horizontal = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = !replaceAll,
+                                onClick = { replaceAll = false },
+                                colors = RadioButtonDefaults.colors(selectedColor = themeColors.buttonEqualBg),
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = if (isBn) "যুক্ত করুন (+)" else "Append (+)",
+                                fontSize = 11.sp,
+                                fontWeight = if (!replaceAll) FontWeight.Bold else FontWeight.Normal,
+                                color = themeColors.displayText
+                            )
+                        }
+                    }
+
+                    Surface(
+                        onClick = { replaceAll = true },
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (replaceAll) Color.Red.copy(alpha = 0.1f) else themeColors.displayText.copy(alpha = 0.05f),
+                        border = BorderStroke(
+                            1.dp,
+                            if (replaceAll) Color.Red else themeColors.displayText.copy(alpha = 0.1f)
+                        ),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(vertical = 6.dp, horizontal = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = replaceAll,
+                                onClick = { replaceAll = true },
+                                colors = RadioButtonDefaults.colors(selectedColor = Color.Red),
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = if (isBn) "সব প্রতিস্থাপন (Replace)" else "Replace All",
+                                fontSize = 11.sp,
+                                fontWeight = if (replaceAll) FontWeight.Bold else FontWeight.Normal,
+                                color = themeColors.displayText
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Live Preview Box
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = themeColors.displayText.copy(alpha = 0.03f),
+                    border = BorderStroke(0.5.dp, themeColors.displayText.copy(alpha = 0.1f)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(8.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = if (isBn) "চিহ্নিত স্কিলসমূহ (${parsedSkills.size} টি)" else "Parsed Skills (${parsedSkills.size})",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (parsedSkills.isNotEmpty()) Color(0xFF10B981) else themeColors.displayText.copy(alpha = 0.5f)
+                            )
+                            if (parsedSkills.isNotEmpty()) {
+                                Text(
+                                    text = if (replaceAll)
+                                        (if (isBn) "সিভিতে মোট হবে: ${parsedSkills.size}" else "Total in CV: ${parsedSkills.size}")
+                                    else
+                                        (if (isBn) "সিভিতে মোট হবে: ${currentSkillCount + parsedSkills.size}" else "Total in CV: ${currentSkillCount + parsedSkills.size}"),
+                                    fontSize = 10.sp,
+                                    color = themeColors.displayText.copy(alpha = 0.6f)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        if (parsedSkills.isEmpty()) {
+                            Text(
+                                text = if (isBn) "ওপরে টেক্সট পেস্ট করলে এখানে স্কিলগুলোর লাইভ প্রিভিউ দেখতে পাবেন।" else "Paste text above to preview parsed skills here.",
+                                fontSize = 10.sp,
+                                color = themeColors.displayText.copy(alpha = 0.4f),
+                                fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                            )
+                        } else {
+                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                parsedSkills.take(12).chunked(3).forEach { rowSkills ->
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        rowSkills.forEach { sk ->
+                                            Surface(
+                                                shape = RoundedCornerShape(6.dp),
+                                                color = themeColors.cardBg,
+                                                border = BorderStroke(0.5.dp, Color(0xFF10B981).copy(alpha = 0.3f))
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Icon(Icons.Default.Check, contentDescription = null, tint = Color(0xFF10B981), modifier = Modifier.size(9.dp))
+                                                    Spacer(modifier = Modifier.width(3.dp))
+                                                    Text(
+                                                        text = sk.name,
+                                                        fontSize = 10.sp,
+                                                        fontWeight = FontWeight.Medium,
+                                                        color = themeColors.displayText,
+                                                        maxLines = 1
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                if (parsedSkills.size > 12) {
+                                    Text(
+                                        text = if (isBn) "+ আরও ${parsedSkills.size - 12} টি স্কিল..." else "+ ${parsedSkills.size - 12} more skills...",
+                                        fontSize = 9.5.sp,
+                                        color = themeColors.displayText.copy(alpha = 0.5f)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (parsedSkills.isNotEmpty()) {
+                        onApplySkills(parsedSkills, replaceAll)
+                        onDismiss()
+                    }
+                },
+                enabled = parsedSkills.isNotEmpty(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF10B981),
+                    disabledContainerColor = Color(0xFF10B981).copy(alpha = 0.3f)
+                ),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Icon(Icons.Default.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
+                Spacer(modifier = Modifier.width(5.dp))
+                Text(
+                    text = if (isBn) "সিভিতে যুক্ত করুন (${parsedSkills.size})" else "Apply to CV (${parsedSkills.size})",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = if (isBn) "বাতিল" else "Cancel", color = themeColors.displayText.copy(alpha = 0.7f), fontSize = 12.sp)
+            }
+        },
+        containerColor = themeColors.cardBg,
+        shape = RoundedCornerShape(14.dp)
+    )
 }
 
 

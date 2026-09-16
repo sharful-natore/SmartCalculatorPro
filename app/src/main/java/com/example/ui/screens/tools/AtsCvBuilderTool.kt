@@ -9461,6 +9461,7 @@ private fun EducationAndSkillsTab(
         var showAddCategoryMenu by remember { mutableStateOf(false) }
         var showCustomCategoryDialog by remember { mutableStateOf(false) }
         var customCategoryInput by remember { mutableStateOf("") }
+        var showBulkSkillDialog by remember { mutableStateOf(false) }
 
         Column(modifier = Modifier.fillMaxWidth()) {
             Row(
@@ -9555,6 +9556,22 @@ private fun EducationAndSkillsTab(
                 Spacer(modifier = Modifier.weight(1f))
 
                 Surface(
+                    onClick = { showBulkSkillDialog = true },
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color(0xFF10B981).copy(alpha = 0.15f),
+                    border = BorderStroke(1.dp, Color(0xFF10B981).copy(alpha = 0.5f))
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(imageVector = Icons.Default.ContentPaste, contentDescription = null, tint = Color(0xFF10B981), modifier = Modifier.size(13.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(text = if (isBn) "স্মার্ট পেস্ট" else "Smart Paste", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = Color(0xFF10B981))
+                    }
+                }
+
+                Surface(
                     onClick = {
                         onRequestAiPrompt(
                             if (isBn) "কী স্কিল এআই দিয়ে জেনারেট করুন" else "Generate Key Skills with AI",
@@ -9623,6 +9640,20 @@ private fun EducationAndSkillsTab(
             )
         }
 
+        if (showBulkSkillDialog) {
+            CvSkillBulkPasteDialog(
+                isBn = isBn,
+                themeColors = themeColors,
+                currentSkillCount = cvData.skills.size,
+                onDismiss = { showBulkSkillDialog = false },
+                onApplySkills = { newSkills, replaceAll ->
+                    val updated = if (replaceAll) newSkills else (cvData.skills + newSkills)
+                    onCvDataChange(cvData.copy(skills = updated))
+                    Toast.makeText(context, if (isBn) "${newSkills.size}টি স্কিল সিভিতে যুক্ত হয়েছে!" else "Added ${newSkills.size} skills to CV!", Toast.LENGTH_SHORT).show()
+                }
+            )
+        }
+
         Spacer(modifier = Modifier.height(10.dp))
 
         Text(
@@ -9657,13 +9688,17 @@ private fun EducationAndSkillsTab(
                     fontWeight = FontWeight.Medium,
                     color = themeColors.displayText.copy(alpha = 0.6f)
                 )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = if (isBn) "ওপরে থাকা '+ ক্যাটাগরি' বাটনে ক্লিক করে ক্যাটাগরি যোগ করুন।" else "Click the '+ Category' button above to add a category.",
-                    fontSize = 11.sp,
-                    color = themeColors.displayText.copy(alpha = 0.4f),
-                    textAlign = TextAlign.Center
-                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Button(
+                    onClick = { showBulkSkillDialog = true },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
+                    shape = RoundedCornerShape(8.dp),
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+                ) {
+                    Icon(Icons.Default.ContentPaste, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(if (isBn) "জেমিনি বা টেক্সট থেকে পেস্ট করুন" else "Paste from Gemini / Text", fontSize = 11.5.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                }
             }
         } else {
             activeCategories.forEach { cat ->
