@@ -1783,23 +1783,18 @@ internal fun applyIndividualAtsImprovement(cv: CvData, category: String, value: 
         category.equals("references", ignoreCase = true) -> cv.copy(references = value)
         category.equals("skills", ignoreCase = true) -> {
             val updatedSkills = cv.skills.toMutableList()
-            // proposedValue can be comma separated skills or a list of "Skill: Description"
-            val rawSkills = value.split(",", "\n")
-            rawSkills.forEach { raw ->
-                val clean = raw.removePrefix("•").removePrefix("-").removePrefix("*").trim()
-                if (clean.isNotBlank()) {
-                    val skillItem = if (clean.contains(":")) {
-                        val parts = clean.split(":", limit = 2)
-                        CvSkillItem(name = parts[0].trim(), description = parts[1].trim())
-                    } else {
-                        CvSkillItem(name = clean, description = "Experienced in applying $clean effectively in professional environments.")
-                    }
-                    if (updatedSkills.none { it.name.equals(skillItem.name, ignoreCase = true) || (clean.contains(":") && it.name.equals(clean.substringBefore(":").trim(), ignoreCase = true)) }) {
-                        updatedSkills.add(skillItem)
-                    }
+            val parsed = parseRawSkillsText(value)
+            parsed.forEach { skillItem ->
+                if (updatedSkills.none { it.name.equals(skillItem.name, ignoreCase = true) }) {
+                    updatedSkills.add(skillItem)
                 }
             }
-            cv.copy(skills = updatedSkills)
+            val hasDesc = updatedSkills.any { it.description.isNotBlank() }
+            cv.copy(
+                skills = updatedSkills,
+                showSkillDescriptions = if (hasDesc) true else cv.showSkillDescriptions,
+                skillDisplayStyle = if (hasDesc && cv.skillDisplayStyle == "GROUPED_COMMA") "BULLET_WITH_DESC" else cv.skillDisplayStyle
+            )
         }
         category.startsWith("experience_", ignoreCase = true) -> {
             val idx = category.substringAfter("experience_").toIntOrNull() ?: -1
@@ -4700,7 +4695,15 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
             "SKILLS" -> {
                 if (data.skills.isNotEmpty()) {
                     drawSectionHeader("KEY SKILLS & COMPETENCIES", "⚡")
-                    when (data.skillDisplayStyle) {
+                    val hasDetailedSkills = data.skills.any {
+                        it.description.isNotBlank() || (it.name.contains(":") && it.name.substringAfter(":").trim().length > 10)
+                    }
+                    val effectiveSkillStyle = if (hasDetailedSkills && data.skillDisplayStyle == "GROUPED_COMMA") {
+                        "BULLET_WITH_DESC"
+                    } else {
+                        data.skillDisplayStyle
+                    }
+                    when (effectiveSkillStyle) {
                         "GROUPED_COMMA" -> {
                             val grouped = data.skills.groupBy {
                                 val resolvedCat = it.category.ifBlank { findBestCategoryForSkill(it.name) }
@@ -4747,29 +4750,33 @@ private fun generateCvPdfFile(context: Context, data: CvData): File {
                                     val sb = SpannableStringBuilder()
                                     sb.append(bulletPrefix)
 
-                                    val hasDesc = data.showSkillDescriptions && (sk.description.isNotBlank() || sk.name.contains(":"))
+                                    val hasColon = sk.name.contains(":")
+                                    val hasDesc = sk.description.isNotBlank() || hasColon
                                     val titleText = if (hasDesc) {
-                                        if (sk.description.isNotBlank()) "${sk.name}: " else "${sk.name.substringBefore(":")}: "
+                                        val rawTitle = if (sk.description.isNotBlank()) {
+                                            if (hasColon) sk.name.substringBefore(":") else sk.name
+                                        } else {
+                                            sk.name.substringBefore(":")
+                                        }
+                                        "${rawTitle.trim()}: "
                                     } else {
-                                        if (sk.name.contains(":")) sk.name.substringBefore(":") else sk.name
+                                        sk.name.trim()
                                     }
 
-                                    val descText = if (data.showSkillDescriptions) {
-                                        if (sk.description.isNotBlank()) {
-                                            sk.description
-                                        } else if (sk.name.contains(":")) {
-                                            sk.name.substringAfter(":").trim()
-                                        } else {
-                                            if (sk.level.isNotBlank() && sk.level != "Proficient") "(${sk.level})" else ""
-                                        }
+                                    val descText = if (sk.description.isNotBlank()) {
+                                        sk.description.trim()
+                                    } else if (hasColon) {
+                                        sk.name.substringAfter(":").trim()
                                     } else {
-                                        ""
+                                        if (data.showSkillDescriptions && sk.level.isNotBlank() && sk.level != "Proficient") "(${sk.level})" else ""
                                     }
 
                                     val titleStart = sb.length
                                     sb.append(titleText)
                                     val titleEnd = sb.length
-                                    sb.setSpan(StyleSpan(Typeface.BOLD), titleStart, titleEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                                    if (hasDesc) {
+                                        sb.setSpan(StyleSpan(Typeface.BOLD), titleStart, titleEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                                    }
 
                                     if (descText.isNotBlank()) {
                                         sb.append(descText)

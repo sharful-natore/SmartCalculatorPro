@@ -1696,7 +1696,12 @@ fun CvLiveEditPanel(
                         onDismiss = { showBulkSkillDialog = false },
                         onApplySkills = { newSkills, replaceAll ->
                             val updated = if (replaceAll) newSkills else (localData.skills + newSkills)
-                            localData = localData.copy(skills = updated)
+                            val hasAnyDesc = updated.any { it.description.isNotBlank() }
+                            localData = localData.copy(
+                                skills = updated,
+                                showSkillDescriptions = if (hasAnyDesc) true else localData.showSkillDescriptions,
+                                skillDisplayStyle = if (hasAnyDesc && localData.skillDisplayStyle == "GROUPED_COMMA") "BULLET_WITH_DESC" else localData.skillDisplayStyle
+                            )
                             commitAndRefresh(localData)
                             Toast.makeText(context, if (isBn) "${newSkills.size}টি স্কিল সিভিতে যুক্ত হয়েছে!" else "Added ${newSkills.size} skills to CV!", Toast.LENGTH_SHORT).show()
                         }
@@ -2551,7 +2556,29 @@ fun parseRawSkillsText(
 
     var currentCategory = forcedCategory.ifBlank { "" }
 
+    val descIndicators = listOf(
+        "capable of", "proficient in", "strong ", "good command", "pleasant",
+        "experience in", "experienced in", "responsible for", "skilled in",
+        "ability to", "knowledge of", "to ensure", "handling", "delivering",
+        "managing", "greeting", "addressing", "providing", "demonstrated",
+        "familiar with", "proven track record", "sound knowledge", "expertise in",
+        "extensive experience", "adept in", "exceptional", "hands-on",
+        "certified in", "expert in", "effective", "support", "maintaining"
+    )
+
+    val knownCategoryWords = listOf(
+        "technical skills", "hard skills", "soft skills", "languages", "tools",
+        "platforms", "technologies", "frameworks", "libraries", "databases",
+        "operating systems", "core competencies", "key skills", "functional skills",
+        "functional & core competencies", "interpersonal skills"
+    )
+
     for (rawLine in filteredLines) {
+        val trimmedRaw = rawLine.trim()
+        val hadBullet = trimmedRaw.startsWith("•") || trimmedRaw.startsWith("-") ||
+                        trimmedRaw.startsWith("*") || trimmedRaw.startsWith("▪") ||
+                        trimmedRaw.startsWith("—") || trimmedRaw.matches(Regex("^\\d+[\\.\\)]\\s*.*"))
+
         var line = rawLine
             .removePrefix("•")
             .removePrefix("-")
@@ -2570,30 +2597,56 @@ fun parseRawSkillsText(
             val prefix = parts[0].trim()
             val suffix = parts.getOrNull(1)?.trim() ?: ""
 
-            val isLikelyCategory = (prefix.length <= 35 && prefix.split(" ").size <= 5 && !prefix.contains(",")) &&
-                    (suffix.isBlank() || suffix.contains(",") || suffix.contains(";") || suffix.split(" ").size > 4)
+            if (suffix.isBlank()) {
+                val detectedCat = prefix
+                currentCategory = if (forcedCategory.isNotBlank()) forcedCategory else detectedCat
+                continue
+            }
 
-            if (isLikelyCategory && (suffix.contains(",") || suffix.contains(";") || suffix.isBlank())) {
+            val suffixTrim = suffix.trim()
+            val suffixLower = suffixTrim.lowercase()
+            val hasDescIndicator = descIndicators.any { suffixLower.contains(it) }
+            val endsWithPeriod = suffixTrim.endsWith(".")
+
+            val commaItems = suffixTrim.split(Regex("[,;]")).map { it.trim() }.filter { it.isNotBlank() }
+            val avgWords = if (commaItems.isNotEmpty()) commaItems.sumOf { it.split(Regex("\\s+")).size }.toDouble() / commaItems.size else 0.0
+            val anyLongCommaItem = commaItems.any { it.split(Regex("\\s+")).size >= 5 || it.length >= 30 }
+
+            val prefixLower = prefix.lowercase().trim()
+            val isExplicitCategoryHeader = knownCategoryWords.any { prefixLower == it || prefixLower.startsWith("$it ") }
+
+            val isSkillDescription = when {
+                isExplicitCategoryHeader && !hasDescIndicator && !endsWithPeriod && !anyLongCommaItem -> false
+                hasDescIndicator -> true
+                endsWithPeriod -> true
+                anyLongCommaItem -> true
+                hadBullet && (suffixTrim.length > 20 || suffixTrim.split(Regex("\\s+")).size >= 4) -> {
+                    !(commaItems.size >= 3 && avgWords <= 2.5 && !endsWithPeriod && !hasDescIndicator)
+                }
+                suffixTrim.length > 35 && suffixTrim.split(Regex("\\s+")).size >= 5 -> true
+                commaItems.size <= 1 && suffixTrim.length > 15 -> true
+                else -> false
+            }
+
+            if (isSkillDescription) {
+                // "Skill Name: Description"
+                val skillName = prefix
+                val skillDesc = suffixTrim
+                val cat = if (forcedCategory.isNotBlank()) forcedCategory else if (currentCategory.isNotBlank()) currentCategory else findBestCategoryForSkill(skillName)
+                result.add(CvSkillItem(name = skillName, description = skillDesc, category = normalizeCategoryName(cat)))
+                continue
+            } else {
+                // "Category: Skill1, Skill2, Skill3..."
                 val detectedCat = prefix
                 currentCategory = if (forcedCategory.isNotBlank()) forcedCategory else detectedCat
 
-                if (suffix.isNotBlank()) {
-                    val subSkills = suffix.split(Regex("[,;]")).map { it.trim() }.filter { it.isNotBlank() }
-                    for (sk in subSkills) {
-                        val cleanSk = sk.removePrefix("•").removePrefix("-").removePrefix("*").trim()
-                        if (cleanSk.isNotBlank()) {
-                            val cat = if (currentCategory.isNotBlank()) currentCategory else findBestCategoryForSkill(cleanSk)
-                            result.add(CvSkillItem(name = cleanSk, category = normalizeCategoryName(cat)))
-                        }
+                for (sk in commaItems) {
+                    val cleanSk = sk.removePrefix("•").removePrefix("-").removePrefix("*").trim()
+                    if (cleanSk.isNotBlank()) {
+                        val cat = if (currentCategory.isNotBlank()) currentCategory else findBestCategoryForSkill(cleanSk)
+                        result.add(CvSkillItem(name = cleanSk, category = normalizeCategoryName(cat)))
                     }
                 }
-                continue
-            } else if (suffix.length > 15 && !suffix.contains(",")) {
-                // "Skill Name: Description"
-                val skillName = prefix
-                val skillDesc = suffix
-                val cat = if (forcedCategory.isNotBlank()) forcedCategory else if (currentCategory.isNotBlank()) currentCategory else findBestCategoryForSkill(skillName)
-                result.add(CvSkillItem(name = skillName, description = skillDesc, category = normalizeCategoryName(cat)))
                 continue
             }
         }

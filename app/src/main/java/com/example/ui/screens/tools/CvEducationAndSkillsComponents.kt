@@ -632,7 +632,14 @@ fun CvSkillsSection(
             onDismiss = { showBulkSkillDialog = false },
             onApplySkills = { newSkills, replaceAll ->
                 val updated = if (replaceAll) newSkills else (cvData.skills + newSkills)
-                onCvDataChange(cvData.copy(skills = updated))
+                val hasAnyDesc = updated.any { it.description.isNotBlank() }
+                onCvDataChange(
+                    cvData.copy(
+                        skills = updated,
+                        showSkillDescriptions = if (hasAnyDesc) true else cvData.showSkillDescriptions,
+                        skillDisplayStyle = if (hasAnyDesc && cvData.skillDisplayStyle == "GROUPED_COMMA") "BULLET_WITH_DESC" else cvData.skillDisplayStyle
+                    )
+                )
                 Toast.makeText(context, if (isBn) "${newSkills.size}টি স্কিল সিভিতে যুক্ত হয়েছে!" else "Added ${newSkills.size} skills to CV!", Toast.LENGTH_SHORT).show()
             }
         )
