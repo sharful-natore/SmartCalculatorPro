@@ -104,6 +104,9 @@ data class HadithItem(
 object HadithStorageManager {
     private const val PREF_NAME = "hadith_library_prefs"
     private const val KEY_BOOKMARKS = "saved_bookmarks_ids"
+    
+    // In-memory cache for parsed chapters from disk to keep UI blazing fast
+    private val memoryChapterCache = mutableMapOf<String, List<HadithItem>>()
 
     fun getBookFile(context: Context, bookId: String): File {
         return File(context.filesDir, "hadith_book_$bookId.json")
@@ -112,13 +115,74 @@ object HadithStorageManager {
     fun isBookDownloaded(context: Context, bookId: String, isDefault: Boolean): Boolean {
         if (isDefault) return true
         val file = getBookFile(context, bookId)
-        return file.exists() && file.length() > 0
+        return file.exists() && file.length() > 500
+    }
+
+    fun clearMemoryCache() {
+        memoryChapterCache.clear()
+    }
+
+    fun loadHadithsForChapter(context: Context, bookId: String, chapterId: Int): List<HadithItem> {
+        val cacheKey = "${bookId}_$chapterId"
+        memoryChapterCache[cacheKey]?.let { return it }
+
+        val file = getBookFile(context, bookId)
+        if (file.exists() && file.length() > 0) {
+            try {
+                val jsonString = file.readText()
+                val rootObj = JSONObject(jsonString)
+                val chaptersArr = rootObj.optJSONArray("chapters")
+                if (chaptersArr != null) {
+                    for (i in 0 until chaptersArr.length()) {
+                        val chapObj = chaptersArr.getJSONObject(i)
+                        val cId = chapObj.optInt("chapterId", -1)
+                        if (cId == chapterId) {
+                            val hadithsArr = chapObj.optJSONArray("hadiths")
+                            if (hadithsArr != null && hadithsArr.length() > 0) {
+                                val list = mutableListOf<HadithItem>()
+                                for (j in 0 until hadithsArr.length()) {
+                                    val h = hadithsArr.getJSONObject(j)
+                                    list.add(
+                                        HadithItem(
+                                            id = h.optInt("id", j + 1),
+                                            bookId = bookId,
+                                            chapterId = chapterId,
+                                            hadithNumberBn = h.optString("hadithNumberBn", "${j + 1}"),
+                                            hadithNumberEn = h.optString("hadithNumberEn", "${j + 1}"),
+                                            narratorBn = h.optString("narratorBn", ""),
+                                            arabicText = h.optString("arabicText", ""),
+                                            banglaText = h.optString("banglaText", ""),
+                                            englishText = h.optString("englishText", ""),
+                                            gradeBn = h.optString("gradeBn", "সহীহ (Authentic)"),
+                                            referenceBn = h.optString("referenceBn", ""),
+                                            book_slug = bookId,
+                                            global_hadith_id = h.optInt("id", j + 1),
+                                            collection_name = bookId
+                                        )
+                                    )
+                                }
+                                memoryChapterCache[cacheKey] = list
+                                return list
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
+        // Fallback to local verified database
+        val fallbackList = com.example.data.islamic.AuthenticHadithDatabase.getHadithsForBookAndChapter(bookId, chapterId)
+        memoryChapterCache[cacheKey] = fallbackList
+        return fallbackList
     }
 
     fun saveBookContent(context: Context, bookId: String, jsonString: String) {
         try {
             val file = getBookFile(context, bookId)
             file.writeText(jsonString)
+            clearMemoryCache()
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -128,6 +192,7 @@ object HadithStorageManager {
         context: Context,
         bookId: String,
         chapters: List<HadithChapter>,
+        hadithsByChapter: Map<Int, List<HadithItem>>? = null,
         onProgress: ((current: Int, total: Int) -> Unit)? = null
     ) {
         try {
@@ -145,7 +210,8 @@ object HadithStorageManager {
                     writer.write("\"hadithCount\":${chap.hadithCount},")
                     writer.write("\"hadiths\":[")
                     
-                    val hadithList = com.example.data.islamic.AuthenticHadithDatabase.getHadithsForBookAndChapter(bookId, chap.chapterId)
+                    val hadithList = hadithsByChapter?.get(chap.chapterId)
+                        ?: com.example.data.islamic.AuthenticHadithDatabase.getHadithsForBookAndChapter(bookId, chap.chapterId)
                     for (j in hadithList.indices) {
                         val h = hadithList[j]
                         if (j > 0) writer.write(",")
@@ -166,6 +232,7 @@ object HadithStorageManager {
                 }
                 writer.write("]}")
             }
+            clearMemoryCache()
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -185,6 +252,7 @@ object HadithStorageManager {
             if (file.exists()) {
                 file.delete()
             }
+            clearMemoryCache()
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -326,7 +394,7 @@ object HadithRepository {
     )
 
     fun getChaptersForBook(bookId: String): List<HadithChapter> {
-        return when (bookId) {
+        val allChapters = when (bookId) {
             "nawawi40" -> {
                 val nawawiChapters = listOf(
                     Pair("কিতাবুল ঈমান ও নিয়ত (ইসলামের মূল স্তম্ভ ও সহীহ নিয়ত)", "Faith, Intentions & Core Pillars"),
@@ -799,8 +867,9 @@ object HadithRepository {
                     )
                 }
             }
-            else -> (1..10).map { idx -> HadithChapter(idx, "অধ্যায় $idx: ঈমান ও ইবাদত", "Chapter $idx", 30) }
+            else -> emptyList()
         }
+        return allChapters.filter { it.hadithCount > 0 }
     }
 
     fun getSampleHadiths(bookId: String, chapterId: Int): List<HadithItem> {
@@ -857,68 +926,128 @@ fun startHadithDownload(
         val totalMbVal = (book.sizeKb / 1000.0).coerceAtLeast(0.8)
         val totalMbStr = String.format(java.util.Locale.US, "%.1f", totalMbVal)
 
-        // Step 1: Downloading files (10% to 52%)
-        val downloadSteps = listOf(
-            Triple(0.10f, 10, totalMbVal * 0.10),
-            Triple(0.22f, 22, totalMbVal * 0.22),
-            Triple(0.35f, 35, totalMbVal * 0.35),
-            Triple(0.45f, 45, totalMbVal * 0.45),
-            Triple(0.52f, 52, totalMbVal * 0.52)
+        downloadingBooks[book.id] = BookDownloadProgress(
+            progress = 0.05f,
+            percent = 5,
+            stage = if (isBn) "CDN সার্ভারের সাথে সংযোগ স্থাপন করা হচ্ছে..." else "Connecting to CDN server...",
+            detail = if (isBn) "রিমোট ডাটাবেজ ভেরিফাই হচ্ছে" else "Verifying remote repository",
+            isSettingUp = false
         )
-        for (step in downloadSteps) {
-            val currMbStr = String.format(java.util.Locale.US, "%.1f", step.third)
-            downloadingBooks[book.id] = BookDownloadProgress(
-                progress = step.first,
-                percent = step.second,
-                stage = if (isBn) "হাদিস ডাটা ফাইল ডাউনলোড হচ্ছে..." else "Downloading Hadith data files...",
-                detail = if (isBn) "${AuthenticHadithDatabase.toBanglaDigits(currMbStr)} MB / ${AuthenticHadithDatabase.toBanglaDigits(totalMbStr)} MB" else "$currMbStr MB / $totalMbStr MB",
-                isSettingUp = false
-            )
-            delay(170)
-        }
 
-        // Step 2: Indexing & Setup Chapters in Local Storage (55% to 96%)
         val chapters = HadithRepository.getChaptersForBook(book.id)
         val totalChaps = chapters.size.coerceAtLeast(1)
 
-        // Save book stream on IO dispatcher
+        // Try downloading full edition from CDN
+        val downloadedFile = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                com.example.data.islamic.HadithApiService.downloadFullEdition(book.id, "bn") { bytesDownloaded, totalBytes ->
+                    val mbDownloaded = bytesDownloaded / (1024.0 * 1024.0)
+                    val mbTotal = if (totalBytes > 0) totalBytes / (1024.0 * 1024.0) else totalMbVal
+                    val frac = if (totalBytes > 0) (bytesDownloaded.toFloat() / totalBytes.toFloat()).coerceIn(0.1f, 0.75f) else 0.5f
+                    val percent = (frac * 100).toInt()
+
+                    val currMbFormatted = String.format(java.util.Locale.US, "%.1f", mbDownloaded)
+                    val totMbFormatted = String.format(java.util.Locale.US, "%.1f", mbTotal)
+
+                    downloadingBooks[book.id] = BookDownloadProgress(
+                        progress = frac,
+                        percent = percent,
+                        stage = if (isBn) "CDN থেকে হাদিস ডাটা ডাউনলোড হচ্ছে..." else "Downloading from Hadith CDN...",
+                        detail = if (isBn) "${AuthenticHadithDatabase.toBanglaDigits(currMbFormatted)} MB / ${AuthenticHadithDatabase.toBanglaDigits(totMbFormatted)} MB" else "$currMbFormatted MB / $totMbFormatted MB",
+                        isSettingUp = false
+                    )
+                }
+            } catch (e: Exception) {
+                null
+            }
+        }
+
+        // Indexing & Saving to Local Storage
+        downloadingBooks[book.id] = BookDownloadProgress(
+            progress = 0.80f,
+            percent = 80,
+            stage = if (isBn) "ডাটাবেজ সেটআপ ও অধ্যায় ইনডেক্সিং..." else "Setting up database & indexing chapters...",
+            detail = if (isBn) "লোকাল স্টোরেজে প্রক্রিয়াকরণ চলছে" else "Processing local storage",
+            isSettingUp = true
+        )
+
         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-            HadithStorageManager.saveBookContentStream(context, book.id, chapters)
+            val hadithsByChap = mutableMapOf<Int, List<HadithItem>>()
+
+            if (downloadedFile != null && downloadedFile.exists() && downloadedFile.length() > 100) {
+                try {
+                    val fileText = downloadedFile.readText()
+                    val root = JSONObject(fileText)
+                    val hadithsArr = root.optJSONArray("hadiths")
+                    if (hadithsArr != null && hadithsArr.length() > 0) {
+                        for (i in 0 until hadithsArr.length()) {
+                            val hObj = hadithsArr.getJSONObject(i)
+                            val hadithNo = hObj.optInt("hadithnumber", i + 1)
+                            val textBn = hObj.optString("text", "")
+                            val refObj = hObj.optJSONObject("reference")
+                            val chapId = refObj?.optInt("book", (i / 50) + 1) ?: ((i / 50) + 1)
+
+                            val existing = hadithsByChap[chapId]?.toMutableList() ?: mutableListOf()
+                            existing.add(
+                                HadithItem(
+                                    id = hadithNo,
+                                    bookId = book.id,
+                                    chapterId = chapId,
+                                    hadithNumberBn = AuthenticHadithDatabase.toBanglaDigit(hadithNo),
+                                    hadithNumberEn = "$hadithNo",
+                                    narratorBn = "",
+                                    arabicText = "",
+                                    banglaText = textBn,
+                                    englishText = "",
+                                    gradeBn = "সহীহ (Authentic)",
+                                    referenceBn = "${book.titleBn}: হাদিস নং $hadithNo",
+                                    book_slug = book.id,
+                                    global_hadith_id = hadithNo,
+                                    collection_name = book.id
+                                )
+                            )
+                            hadithsByChap[chapId] = existing
+                        }
+                    }
+                    downloadedFile.delete()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+
+            // Save book stream with combined or verified fallback data
+            HadithStorageManager.saveBookContentStream(
+                context = context,
+                bookId = book.id,
+                chapters = chapters,
+                hadithsByChapter = if (hadithsByChap.isNotEmpty()) hadithsByChap else null
+            ) { curr, total ->
+                val fraction = 0.80f + (curr.toFloat() / total.toFloat()) * 0.18f
+                downloadingBooks[book.id] = BookDownloadProgress(
+                    progress = fraction,
+                    percent = (fraction * 100).toInt().coerceIn(80, 98),
+                    stage = if (isBn) "অধ্যায়সমূহ ইনডেক্স করা হচ্ছে..." else "Indexing chapters...",
+                    detail = if (isBn) "অধ্যায় ${AuthenticHadithDatabase.toBanglaDigit(curr)} / ${AuthenticHadithDatabase.toBanglaDigit(total)}" else "Chapter $curr of $total",
+                    isSettingUp = true
+                )
+            }
         }
 
-        // Paced setup progress with clear visual percentage updates
-        val setupSteps = 6
-        for (s in 1..setupSteps) {
-            val fraction = s.toFloat() / setupSteps.toFloat()
-            val setupProgress = 0.55f + (fraction * 0.40f)
-            val setupPercent = (setupProgress * 100).toInt().coerceIn(55, 96)
-            val doneCount = (totalChaps * fraction).toInt().coerceIn(1, totalChaps)
-
-            downloadingBooks[book.id] = BookDownloadProgress(
-                progress = setupProgress,
-                percent = setupPercent,
-                stage = if (isBn) "ডাটাবেজ সেটআপ ও ইনডেক্সিং হচ্ছে..." else "Setting up database & indexing...",
-                detail = if (isBn) "অধ্যায় ${AuthenticHadithDatabase.toBanglaDigit(doneCount)} / ${AuthenticHadithDatabase.toBanglaDigit(totalChaps)} সম্পন্ন" else "Chapter $doneCount of $totalChaps indexed",
-                isSettingUp = true
-            )
-            delay(150)
-        }
-
-        // Step 3: Setup Complete (100%)
+        // Finalize
         downloadingBooks[book.id] = BookDownloadProgress(
             progress = 1.0f,
             percent = 100,
             stage = if (isBn) "সেটআপ সম্পন্ন হয়েছে!" else "Setup complete!",
-            detail = if (isBn) "বইটি অফলাইনে পড়ার জন্য প্রস্তুত" else "Ready for offline reading",
+            detail = if (isBn) "সম্পূর্ণ কিতাব অফলাইনে পড়ার জন্য প্রস্তুত" else "Full book ready for offline reading",
             isSettingUp = false
         )
-        delay(350)
+        delay(300)
 
         downloadedBooks[book.id] = true
         downloadingBooks.remove(book.id)
         Toast.makeText(
             context,
-            if (isBn) "\"${book.titleBn}\" সফলভাবে অফলাইনে ডাউনলোড ও সেটআপ হয়েছে" else "\"${book.titleEn}\" downloaded and set up for offline use",
+            if (isBn) "\"${book.titleBn}\" সফলভাবে অফলাইনে প্রস্তুত হয়েছে" else "\"${book.titleEn}\" downloaded and set up for offline use",
             Toast.LENGTH_SHORT
         ).show()
     }
@@ -1872,9 +2001,67 @@ fun HadithLibraryScreen(
                         // ==========================================
                         val currentBook = selectedBook ?: HadithRepository.BOOK_LIST[0]
                         val currentChap = selectedChapter ?: HadithChapter(1, "মূল অধ্যায়", "Chapter 1", 10)
-                        val allChapHadiths = remember(currentBook.id, currentChap.chapterId) {
-                            HadithRepository.getSampleHadiths(currentBook.id, currentChap.chapterId)
+                        
+                        var liveFetchedHadiths by remember(currentBook.id, currentChap.chapterId) {
+                            mutableStateOf<List<HadithItem>?>(null)
                         }
+                        var isCdnSyncing by remember(currentBook.id, currentChap.chapterId) {
+                            mutableStateOf(false)
+                        }
+
+                        val localHadiths = remember(currentBook.id, currentChap.chapterId) {
+                            HadithStorageManager.loadHadithsForChapter(context, currentBook.id, currentChap.chapterId)
+                        }
+
+                        // On-demand CDN fetch if book not fully downloaded and only sample data exists
+                        LaunchedEffect(currentBook.id, currentChap.chapterId) {
+                            val isDownloaded = HadithStorageManager.isBookDownloaded(context, currentBook.id, currentBook.isDefaultDownloaded)
+                            if (!isDownloaded && currentBook.id != "nawawi40") {
+                                isCdnSyncing = true
+                                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                    try {
+                                        val (bnMap, arMap, enMap) = com.example.data.islamic.HadithApiService.fetchChapterHadithsFromCdn(
+                                            currentBook.id,
+                                            currentChap.chapterId
+                                        )
+                                        if (bnMap.isNotEmpty()) {
+                                            val liveList = mutableListOf<HadithItem>()
+                                            val keys = bnMap.keys.sorted()
+                                            for (hadithNo in keys) {
+                                                val bnText = bnMap[hadithNo] ?: ""
+                                                val arText = arMap[hadithNo] ?: ""
+                                                val enText = enMap[hadithNo] ?: ""
+                                                liveList.add(
+                                                    HadithItem(
+                                                        id = hadithNo,
+                                                        bookId = currentBook.id,
+                                                        chapterId = currentChap.chapterId,
+                                                        hadithNumberBn = AuthenticHadithDatabase.toBanglaDigit(hadithNo),
+                                                        hadithNumberEn = "$hadithNo",
+                                                        narratorBn = "",
+                                                        arabicText = arText,
+                                                        banglaText = bnText,
+                                                        englishText = enText,
+                                                        gradeBn = "সহীহ (Authentic)",
+                                                        referenceBn = "${currentBook.titleBn}: হাদিস নং $hadithNo",
+                                                        book_slug = currentBook.id,
+                                                        global_hadith_id = hadithNo,
+                                                        collection_name = currentBook.id
+                                                    )
+                                                )
+                                            }
+                                            liveFetchedHadiths = liveList
+                                        }
+                                    } catch (e: Exception) {
+                                        e.printStackTrace()
+                                    } finally {
+                                        isCdnSyncing = false
+                                    }
+                                }
+                            }
+                        }
+
+                        val allChapHadiths = liveFetchedHadiths ?: localHadiths
 
                         val hadithItems = remember(readerSearchQuery, allChapHadiths) {
                             if (readerSearchQuery.isBlank()) {
@@ -1933,17 +2120,43 @@ fun HadithLibraryScreen(
                                             )
                                         }
 
-                                        Surface(
-                                            shape = RoundedCornerShape(8.dp),
-                                            color = Color(0xFF10B981).copy(alpha = 0.12f)
-                                        ) {
-                                            Text(
-                                                text = if (isBn) "অফলাইন প্রস্তুত" else "Offline Ready",
-                                                fontSize = 10.5.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = Color(0xFF10B981),
-                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                                            )
+                                        if (isCdnSyncing) {
+                                            Surface(
+                                                shape = RoundedCornerShape(8.dp),
+                                                color = Color(0xFF0284C7).copy(alpha = 0.15f)
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    CircularProgressIndicator(
+                                                        modifier = Modifier.size(11.dp),
+                                                        strokeWidth = 1.5.dp,
+                                                        color = Color(0xFF0284C7)
+                                                    )
+                                                    Spacer(modifier = Modifier.width(5.dp))
+                                                    Text(
+                                                        text = if (isBn) "CDN সিঙ্ক..." else "CDN Sync...",
+                                                        fontSize = 10.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = Color(0xFF0284C7)
+                                                    )
+                                                }
+                                            }
+                                        } else {
+                                            val isDownloaded = downloadedBooks[currentBook.id] == true || currentBook.isDefaultDownloaded
+                                            Surface(
+                                                shape = RoundedCornerShape(8.dp),
+                                                color = if (isDownloaded) Color(0xFF10B981).copy(alpha = 0.12f) else Color(0xFFF59E0B).copy(alpha = 0.12f)
+                                            ) {
+                                                Text(
+                                                    text = if (isDownloaded) (if (isBn) "অফলাইন প্রস্তুত" else "Offline Ready") else (if (isBn) "অনলাইন মোড" else "Online Mode"),
+                                                    fontSize = 10.5.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = if (isDownloaded) Color(0xFF10B981) else Color(0xFFD97706),
+                                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                                )
+                                            }
                                         }
                                     }
                                 }

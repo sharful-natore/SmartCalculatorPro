@@ -1142,6 +1142,111 @@ object AuthenticHadithDatabase {
                 gradeBn = "সহীহ নাসায়ী",
                 referenceBn = "সুনান আন-নাসায়ী: কিতাব ১ (তাহারাত), হাদিস নং ৮৭ [আন্তর্জাতিক সূচক: Sunan an-Nasa'i 87]"
             )
+        ),
+        5 to listOf(
+            HadithItem(
+                id = 448,
+                bookId = "nasai",
+                chapterId = 5,
+                hadithNumberBn = "৪৪৮",
+                hadithNumberEn = "448",
+                narratorBn = "হযরত মালিক ইবনুল হুওয়াইরিস (রাঃ) থেকে বর্ণিত:",
+                arabicText = "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: «صَلُّوا كَمَا رَأَيْتُمُونِي أُصَلِّي».",
+                banglaText = "রাসুলুল্লাহ (সাঃ) বলেছেন: 'তোমরা ঠিক সেভাবে সালাত আদায় করো যেভাবে আমাকে সালাত আদায় করতে দেখেছ।'",
+                englishText = "The Messenger of Allah said: 'Pray as you have seen me praying.'",
+                gradeBn = "সহীহ নাসায়ী",
+                referenceBn = "সুনান আন-নাসায়ী: কিতাব ৫ (সালাত), হাদিস নং ৪৪৮ [আন্তর্জাতিক সূচক: Sunan an-Nasa'i 448]"
+            )
+        ),
+        6 to listOf(
+            HadithItem(
+                id = 494,
+                bookId = "nasai",
+                chapterId = 6,
+                hadithNumberBn = "৪৯৪",
+                hadithNumberEn = "494",
+                narratorBn = "হযরত আবদুল্লাহ ইবনে মাসউদ (রাঃ) থেকে বর্ণিত:",
+                arabicText = "سَأَلْتُ رَسُولَ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: أَيُّ الْعَمَلِ أَفْضَلُ؟ قَالَ: «الصَّلاَةُ لِوَقْتِهَا».",
+                banglaText = "আমি রাসুলুল্লাহ (সাঃ)-কে জিজ্ঞেস করলাম: আল্লাহর নিকট কোন আমলটি সর্বাধিক প্রিয়? তিনি বললেন: 'যথাযথ ওয়াক্তে সালাত আদায় করা।'",
+                englishText = "I asked the Messenger of Allah: 'Which deed is the best?' He said: 'Prayer at its proper time.'",
+                gradeBn = "সহীহ নাসায়ী",
+                referenceBn = "সুনান আন-নাসায়ী: কিতাব ৬ (সালাতের ওয়াক্ত), হাদিস নং ৪৯৪ [আন্তর্জাতিক সূচক: Sunan an-Nasa'i 494]"
+            )
+        ),
+        7 to listOf(
+            HadithItem(
+                id = 671,
+                bookId = "nasai",
+                chapterId = 7,
+                hadithNumberBn = "৬৭১",
+                hadithNumberEn = "671",
+                narratorBn = "হযরত আবু হুরায়রা (রাঃ) থেকে বর্ণিত:",
+                arabicText = "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: «الْمُؤَذِّنُ يُغْفَرُ لَهُ مَدَّ صَوْتِهِ، وَيَشْهَدُ لَهُ كُلُّ رَطْبٍ وَيَابِسٍ».",
+                banglaText = "রাসুলুল্লাহ (সাঃ) বলেছেন: 'মুয়াজ্জিনের কণ্ঠস্বর যতদূর পৌঁছায় ততদূর পর্যন্ত তাকে ক্ষমা করে দেওয়া হয়, এবং প্রতিটি সিক্ত ও শুষ্ক বস্তু তার পক্ষে সাক্ষ্য প্রদান করবে।'",
+                englishText = "The Messenger of Allah said: 'The Mu'adhdhin is forgiven as far as his voice reaches, and whatever is wet or dry bears witness for him.'",
+                gradeBn = "সহীহ নাসায়ী",
+                referenceBn = "সুনান আন-নাসায়ী: কিতাব ৭ (আযান), হাদিস নং ৬৭১ [আন্তর্জাতিক সূচক: Sunan an-Nasa'i 671]"
+            )
+        ),
+        22 to listOf(
+            HadithItem(
+                id = 2217,
+                bookId = "nasai",
+                chapterId = 22,
+                hadithNumberBn = "২২১৭",
+                hadithNumberEn = "2217",
+                narratorBn = "হযরত উসমান ইবনে আবিল আস (রাঃ) থেকে বর্ণিত:",
+                arabicText = "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: «الصِّيَامُ جُنَّةٌ مِنَ النَّارِ كَجُنَّةِ أَحَدِكُمْ مِنَ الْقِتَالِ».",
+                banglaText = "রাসুলুল্লাহ (সাঃ) বলেছেন: 'রোজা হলো জাহান্নামের আগুন থেকে বাঁচার সুদৃঢ় ঢাল, যেমন যুদ্ধক্ষেত্রে তোমাদের কোনো যোদ্ধার কাছে আত্মরক্ষার ঢাল থাকে।'",
+                englishText = "The Messenger of Allah said: 'Fasting is a shield against the Fire, just like the shield of one of you in battle.'",
+                gradeBn = "সহীহ নাসায়ী",
+                referenceBn = "সুনান আন-নাসায়ী: কিতাব ২২ (সিয়াম), হাদিস নং ২২১৭ [আন্তর্জাতিক সূচক: Sunan an-Nasa'i 2217]"
+            )
+        ),
+        24 to listOf(
+            HadithItem(
+                id = 2442,
+                bookId = "nasai",
+                chapterId = 24,
+                hadithNumberBn = "২৪৪২",
+                hadithNumberEn = "2442",
+                narratorBn = "হযরত জারীর ইবনে আবদুল্লাহ (রাঃ) থেকে বর্ণিত:",
+                arabicText = "قَالَ: «بَايَعْتُ رَسُولَ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ عَلَى إِقَامِ الصَّلاَةِ، وَإِيتَاءِ الزَّكَاةِ، وَالنُّصْحِ لِكُلِّ مُسْلِمٍ».",
+                banglaText = "হযরত জারীর (রাঃ) বলেন: 'আমি রাসুলুল্লাহ (সাঃ)-এর হাতে বায়আত গ্রহণ করেছি সালাত কায়েম করার, যাকাত প্রদান করার এবং প্রত্যেক মুসলিমের সাথে অকপট শুভকামনা বজায় রাখার ওপর।'",
+                englishText = "I pledged allegiance to Allah's Messenger to establish prayer, pay zakat, and give sincere advice to every Muslim.",
+                gradeBn = "সহীহ নাসায়ী",
+                referenceBn = "সুনান আন-নাসায়ী: কিতাব ২৪ (যাকাত), হাদিস নং ২৪৪২ [আন্তর্জাতিক সূচক: Sunan an-Nasa'i 2442]"
+            )
+        ),
+        25 to listOf(
+            HadithItem(
+                id = 2623,
+                bookId = "nasai",
+                chapterId = 25,
+                hadithNumberBn = "২৬২৩",
+                hadithNumberEn = "2623",
+                narratorBn = "হযরত আবু হুরায়রা (রাঃ) থেকে বর্ণিত:",
+                arabicText = "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: «الْعُمْرَةُ إِلَى الْعُمْرَةِ كَفَّارَةٌ لِمَا بَيْنَهُمَا، وَالْحَجُّ الْمَبْرُورُ لَيْسَ لَهُ جَزَاءٌ إِلاَّ الْجَنَّةُ».",
+                banglaText = "রাসুলুল্লাহ (সাঃ) বলেছেন: 'এক উমরাহ থেকে পরবর্তী উমরাহ—উভয়ের মধ্যবর্তী সময়ের পাপসমূহের জন্য কাফফারাস্বরূপ; আর মাবরুর হজের একমাত্র প্রতিদান হলো জান্নাত।'",
+                englishText = "The Prophet said: 'From one Umrah to another is an expiation for sins between them, and the accepted Hajj has no reward other than Paradise.'",
+                gradeBn = "সহীহ নাসায়ী",
+                referenceBn = "সুনান আন-নাসায়ী: কিতাব ২৫ (মানাসিক ও হজ), হাদিস নং ২৬২৩ [আন্তর্জাতিক সূচক: Sunan an-Nasa'i 2623]"
+            )
+        ),
+        49 to listOf(
+            HadithItem(
+                id = 5046,
+                bookId = "nasai",
+                chapterId = 49,
+                hadithNumberBn = "৫০৪৬",
+                hadithNumberEn = "5046",
+                narratorBn = "হযরত আবদুল্লাহ ইবনে মাসউদ (রাঃ) থেকে বর্ণিত:",
+                arabicText = "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: «لاَ يَدْخُلُ الْجَنَّةَ مَنْ كَانَ فِي قَلْبِهِ مِثْقَالُ ذَرَّةٍ مِنْ كِبْرٍ».",
+                banglaText = "রাসুলুল্লাহ (সাঃ) বলেছেন: 'যার অন্তরে অণু পরিমাণ অহংকার থাকবে, সে জান্নাতে প্রবেশ করতে পারবে না।'",
+                englishText = "The Prophet said: 'He will not enter Paradise who has in his heart the weight of a mustard seed of arrogance.'",
+                gradeBn = "সহীহ নাসায়ী",
+                referenceBn = "সুনান আন-নাসায়ী: কিতাব ৪৯ (পোশাক ও শিষ্টাচার), হাদিস নং ৫০৪৬ [আন্তর্জাতিক সূচক: Sunan an-Nasa'i 5046]"
+            )
         )
     )
 
@@ -1179,17 +1284,195 @@ object AuthenticHadithDatabase {
         ),
         2 to listOf(
             HadithItem(
-                id = 667,
+                id = 289,
                 bookId = "ibnmajah",
                 chapterId = 2,
-                hadithNumberBn = "৬৬৭",
-                hadithNumberEn = "667",
+                hadithNumberBn = "২৮৯",
+                hadithNumberEn = "289",
+                narratorBn = "হযরত আবু হুরায়রা (রাঃ) থেকে বর্ণিত:",
+                arabicText = "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: «لَوْلاَ أَنْ أَشُقَّ عَلَى أُمَّتِي لأَمَرْتُهُمْ بِالسِّوَاكِ عِنْدَ كُلِّ صَلاَةٍ».",
+                banglaText = "রাসুলুল্লাহ (সাঃ) বলেছেন: 'যদি না আমি আমার উম্মতের ওপর কষ্টদায়ক মনে করতাম, তবে প্রত্যেক সালাতের প্রাক্কালে তাদের মেসওয়াক করার হুকুম দিতাম।'",
+                englishText = "The Messenger of Allah said: 'Were it not that I would impose hardship upon my nation, I would have ordered them to use the tooth-stick with every prayer.'",
+                gradeBn = "সহীহ ইবনে মাজাহ",
+                referenceBn = "সুনান ইবনে মাজাহ: কিতাব ১ (তাহারাত ও এর সুন্নাহ), হাদিস নং ২৮৯ [আন্তর্জাতিক সূচক: Sunan Ibn Majah 289]"
+            )
+        ),
+        3 to listOf(
+            HadithItem(
+                id = 1078,
+                bookId = "ibnmajah",
+                chapterId = 3,
+                hadithNumberBn = "১০৭৮",
+                hadithNumberEn = "1078",
                 narratorBn = "হযরত জাবির ইবনে আবদুল্লাহ (রাঃ) থেকে বর্ণিত:",
                 arabicText = "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: «بَيْنَ الْعَبْدِ وَبَيْنَ الْكُفْرِ تَرْكُ الصَّلاَةِ».",
                 banglaText = "রাসুলুল্লাহ (সাঃ) বলেছেন: 'বান্দা এবং কুফরের মাঝে সীমারেখা হলো সালাত পরিত্যাগ করা।'",
                 englishText = "The Prophet said: 'Between a servant and disbelief is the abandonment of prayer.'",
                 gradeBn = "সহীহ ইবনে মাজাহ",
-                referenceBn = "সুনান ইবনে মাজাহ: কিতাব ২ (সালাত), হাদিস নং ৬৬৭ [আন্তর্জাতিক সূচক: Sunan Ibn Majah 667]"
+                referenceBn = "সুনান ইবনে মাজাহ: কিতাব ৫ (সালাত), হাদিস নং ১০৭৮ [আন্তর্জাতিক সূচক: Sunan Ibn Majah 1078]"
+            ),
+            HadithItem(
+                id = 1413,
+                bookId = "ibnmajah",
+                chapterId = 3,
+                hadithNumberBn = "১৪১৩",
+                hadithNumberEn = "1413",
+                narratorBn = "হযরত আবু উমামা (রাঃ) থেকে বর্ণিত:",
+                arabicText = "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: «الصَّلاَةُ نُورُ الْمُؤْمِنِ».",
+                banglaText = "রাসুলুল্লাহ (সাঃ) বলেছেন: 'সালাত হলো মুমিনের জন্য এক জ্যোতি ও আলোকবর্তিকা।'",
+                englishText = "The Messenger of Allah said: 'Prayer is a light for the believer.'",
+                gradeBn = "সহীহ",
+                referenceBn = "সুনান ইবনে মাজাহ: কিতাব ৫ (সালাত), হাদিস নং ১৪১৩ [আন্তর্জাতিক সূচক: Sunan Ibn Majah 1413]"
+            )
+        ),
+        4 to listOf(
+            HadithItem(
+                id = 720,
+                bookId = "ibnmajah",
+                chapterId = 4,
+                hadithNumberBn = "৭২০",
+                hadithNumberEn = "720",
+                narratorBn = "হযরত আবু সাঈদ আল-খুদরী (রাঃ) থেকে বর্ণিত:",
+                arabicText = "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: «إِذَا سَمِعْتُمُ الْمُؤَذِّنَ فَقُولُوا مِثْلَ مَا يَقُولُ».",
+                banglaText = "রাসুলুল্লাহ (সাঃ) বলেছেন: 'যখন তোমরা মুয়াজ্জিনের আযান শুনতে পাও, তখন মুয়াজ্জিন যা বলে তোমরাও তার অনুরূপ বলো।'",
+                englishText = "The Messenger of Allah said: 'When you hear the caller, say the like of what he says.'",
+                gradeBn = "সহীহ ইবনে মাজাহ",
+                referenceBn = "সুনান ইবনে মাজাহ: কিতাব ৩ (আযান), হাদিস নং ৭২০ [আন্তর্জাতিক সূচক: Sunan Ibn Majah 720]"
+            )
+        ),
+        5 to listOf(
+            HadithItem(
+                id = 738,
+                bookId = "ibnmajah",
+                chapterId = 5,
+                hadithNumberBn = "৭৩৮",
+                hadithNumberEn = "738",
+                narratorBn = "হযরত জাবির ইবনে আবদুল্লাহ (রাঃ) থেকে বর্ণিত:",
+                arabicText = "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: «مَنْ بَنَى مَسْجِدًا لِلَّهِ كَمَفْحَصِ قَطَاةٍ أَوْ أَصْغَرَ بَنَى اللَّهُ لَهُ بَيْتًا فِي الْجَنَّةِ».",
+                banglaText = "রাসুলুল্লাহ (সাঃ) বলেছেন: 'যে ব্যক্তি আল্লাহর সন্তুষ্টির উদ্দেশ্যে পাখির ডিম পাড়ার বাসার সমান কিংবা তার চেয়েও ক্ষুদ্র একটি মসজিদ তৈরি করবে, আল্লাহ তাআলা তার জন্য জান্নাতে একটি প্রাসাদ নির্মাণ করবেন।'",
+                englishText = "The Prophet said: 'Whoever builds a mosque for Allah, though it be like a bird's nest or even smaller, Allah will build for him a house in Paradise.'",
+                gradeBn = "সহীহ ইবনে মাজাহ",
+                referenceBn = "সুনান ইবনে মাজাহ: কিতাব ৪ (মসজিদ), হাদিস নং ৭৩৮ [আন্তর্জাতিক সূচক: Sunan Ibn Majah 738]"
+            )
+        ),
+        7 to listOf(
+            HadithItem(
+                id = 1444,
+                bookId = "ibnmajah",
+                chapterId = 7,
+                hadithNumberBn = "১৪৪৪",
+                hadithNumberEn = "1444",
+                narratorBn = "হযরত আবু হুরায়রা (রাঃ) থেকে বর্ণিত:",
+                arabicText = "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: «أَكْثِرُوا مِنْ ذِكْرِ هَاذِمِ اللَّذَّاتِ: الْمَوْتِ».",
+                banglaText = "রাসুলুল্লাহ (সাঃ) বলেছেন: 'তোমরা জীবনের সকল স্বাদ বিনষ্টকারী বিষয়—মৃত্যুকে—অধিক পরিমাণে স্মরণ করো।'",
+                englishText = "The Messenger of Allah said: 'Increase in remembrance of the destroyer of pleasures: death.'",
+                gradeBn = "সহীহ ইবনে মাজাহ",
+                referenceBn = "সুনান ইবনে মাজাহ: কিতাব ৬ (জানাযা), হাদিস নং ১৪৪৪ [আন্তর্জাতিক সূচক: Sunan Ibn Majah 1444]"
+            )
+        ),
+        8 to listOf(
+            HadithItem(
+                id = 1780,
+                bookId = "ibnmajah",
+                chapterId = 8,
+                hadithNumberBn = "১৭৮০",
+                hadithNumberEn = "1780",
+                narratorBn = "হযরত আবু হুরায়রা (রাঃ) থেকে বর্ণিত:",
+                arabicText = "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: «مَا نَقَصَتْ صَدَقَةٌ مِنْ مَالٍ، وَمَا زَادَ اللَّهُ عَبْدًا بِعَفْوٍ إِلاَّ عِزًّا».",
+                banglaText = "রাসুলুল্লাহ (সাঃ) বলেছেন: 'সাদাকাহ প্রদানে কখনো কোনো সম্পদ কমে যায় না, আর বান্দার ক্ষমাশীলতায় আল্লাহ কেবল তার মর্যাদা ও সম্মানই বৃদ্ধি করেন।'",
+                englishText = "The Prophet said: 'Charity does not decrease wealth, and Allah increases the honor of a servant who forgives.'",
+                gradeBn = "সহীহ ইবনে মাজাহ",
+                referenceBn = "সুনান ইবনে মাজাহ: কিতাব ৮ (যাকাত), হাদিস নং ১৭৮০ [আন্তর্জাতিক সূচক: Sunan Ibn Majah 1780]"
+            )
+        ),
+        9 to listOf(
+            HadithItem(
+                id = 1690,
+                bookId = "ibnmajah",
+                chapterId = 9,
+                hadithNumberBn = "১৬৯০",
+                hadithNumberEn = "1690",
+                narratorBn = "হযরত আবু হুরায়রা (রাঃ) থেকে বর্ণিত:",
+                arabicText = "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: «رُبَّ صَائِمٍ لَيْسَ لَهُ مِنْ صِيَامِهِ إِلاَّ الْجُوعُ، وَرُبَّ قَائِمٍ لَيْسَ لَهُ مِنْ قِيَامِهِ إِلاَّ السَّهَرُ».",
+                banglaText = "রাসুলুল্লাহ (সাঃ) বলেছেন: 'কত রোজাদার এমন আছে যাদের রোজা থেকে ক্ষুধা ও তৃষ্ণা ছাড়া আর কিছুই লাভ হয় না; আর কত নামাজি আছে যাদের সালাত থেকে রাত জাগরণ ছাড়া আর কোনো প্রতিদান অর্জিত হয় না।'",
+                englishText = "The Prophet said: 'Many a fasting person gains nothing from his fast except hunger, and many a praying person gains nothing from his night prayer except wakefulness.'",
+                gradeBn = "সহীহ ইবনে মাজাহ",
+                referenceBn = "সুনান ইবনে মাজাহ: কিতাব ৭ (রোজা), হাদিস নং ১৬৯০ [আন্তর্জাতিক সূচক: Sunan Ibn Majah 1690]"
+            )
+        ),
+        10 to listOf(
+            HadithItem(
+                id = 2139,
+                bookId = "ibnmajah",
+                chapterId = 10,
+                hadithNumberBn = "২১৩৯",
+                hadithNumberEn = "2139",
+                narratorBn = "হযরত আবু সাঈদ আল-খুদরী (রাঃ) থেকে বর্ণিত:",
+                arabicText = "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: «التَّاجِرُ الأَمِينُ الصَّدُوقُ مَعَ النَّبِيِّينَ وَالصِّدِّيقِينَ وَالشُّهَدَاءِ».",
+                banglaText = "রাসুলুল্লাহ (সাঃ) বলেছেন: 'আমানতদার ও পরম সত্যবাদী ব্যবসায়ী কিয়ামতের দিন নবীগণ, সিদ্দীকগণ ও শহীদগণের সান্নিধ্যে থাকবে।'",
+                englishText = "The Messenger of Allah said: 'The trustworthy, honest trader will be with the prophets, the truthful, and the martyrs.'",
+                gradeBn = "সহীহ ইবনে মাজাহ",
+                referenceBn = "সুনান ইবনে মাজাহ: কিতাব ১২ (ব্যবসা-বাণিজ্য), হাদিস নং ২১৩৯ [আন্তর্জাতিক সূচক: Sunan Ibn Majah 2139]"
+            )
+        ),
+        11 to listOf(
+            HadithItem(
+                id = 1846,
+                bookId = "ibnmajah",
+                chapterId = 11,
+                hadithNumberBn = "১৮৪৬",
+                hadithNumberEn = "1846",
+                narratorBn = "উম্মুল মু'মিনীন হযরত আয়েশা (রাঃ) থেকে বর্ণিত:",
+                arabicText = "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: «النِّكَاحُ مِنْ سُنَّتِي فَمَنْ لَمْ يَعْمَلْ بِسُنَّتِي فَلَيْسَ مِنِّي».",
+                banglaText = "রাসুলুল্লাহ (সাঃ) বলেছেন: 'বিবাহ আমার সুন্নাত; অতএব যে আমার সুন্নাত অনুযায়ী আমল করে না সে আমার আদর্শের অনুসারী নয়।'",
+                englishText = "The Prophet said: 'Marriage is of my Sunnah, so whoever does not act according to my Sunnah is not of me.'",
+                gradeBn = "সহীহ ইবনে মাজাহ",
+                referenceBn = "সুনান ইবনে মাজাহ: কিতাব ৯ (নিকাহ), হাদিস নং ১৮৪৬ [আন্তর্জাতিক সূচক: Sunan Ibn Majah 1846]"
+            )
+        ),
+        31 to listOf(
+            HadithItem(
+                id = 3671,
+                bookId = "ibnmajah",
+                chapterId = 31,
+                hadithNumberBn = "৩৬৭১",
+                hadithNumberEn = "3671",
+                narratorBn = "হযরত আবু হুরায়রা (রাঃ) থেকে বর্ণিত:",
+                arabicText = "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: «أَكْمَلُ الْمُؤْمِنِينَ إِيمَانًا أَحْسَنُهُمْ خُلُقًا».",
+                banglaText = "রাসুলুল্লাহ (সাঃ) বলেছেন: 'মুমিনদের মাঝে সেই ব্যক্তি সর্বাধিক পূর্ণাঙ্গ ঈমানের অধিকারী, যে চরিত্রের দিক দিয়ে তাদের মধ্যে সর্বোত্তম।'",
+                englishText = "The Prophet said: 'The most complete of believers in faith is the one with the best character.'",
+                gradeBn = "সহীহ ইবনে মাজাহ",
+                referenceBn = "সুনান ইবনে মাজাহ: কিতাব ৩৩ (আদব), হাদিস নং ৩৬৭১ [আন্তর্জাতিক সূচক: Sunan Ibn Majah 3671]"
+            )
+        ),
+        32 to listOf(
+            HadithItem(
+                id = 3828,
+                bookId = "ibnmajah",
+                chapterId = 32,
+                hadithNumberBn = "৩৮২৮",
+                hadithNumberEn = "3828",
+                narratorBn = "হযরত নুমান ইবনে বাশীর (রাঃ) থেকে বর্ণিত:",
+                arabicText = "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: «الدُّعَاءُ هُوَ الْعِبَادَةُ».",
+                banglaText = "রাসুলুল্লাহ (সাঃ) বলেছেন: 'দোয়াই হলো মূল ইবাদত।' অতঃপর তিনি তিলাওয়াত করলেন: {তোমাদের পালনকর্তা বলেন, তোমরা আমাকে ডাকো, আমি তোমাদের ডাকে সাড়া দেব।}",
+                englishText = "The Prophet said: 'Supplication is the essence of worship.' Then he recited: 'And your Lord says: Call upon Me; I will respond to you.'",
+                gradeBn = "সহীহ ইবনে মাজাহ",
+                referenceBn = "সুনান ইবনে মাজাহ: কিতাব ৩৪ (দু'আ), হাদিস নং ৩৮২৮ [আন্তর্জাতিক সূচক: Sunan Ibn Majah 3828]"
+            )
+        ),
+        34 to listOf(
+            HadithItem(
+                id = 4102,
+                bookId = "ibnmajah",
+                chapterId = 34,
+                hadithNumberBn = "৪১০২",
+                hadithNumberEn = "4102",
+                narratorBn = "হযরত সাহল ইবনে সা'দ আস-সাঈদী (রাঃ) থেকে বর্ণিত:",
+                arabicText = "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: «ازْهَدْ فِي الدُّنْيَا يُحِبَّكَ اللَّهُ، وَازْهَدْ فِيمَا فِي أَيْدِي النَّاسِ يُحِبَّكَ النَّاسُ».",
+                banglaText = "রাসুলুল্লাহ (সাঃ) বলেছেন: 'দুনিয়ার মোহের প্রতি অনাসক্ত হও, তবে আল্লাহ তোমাকে ভালোবাসবেন। আর মানুষের ধন-সম্পদের প্রতি লোভহীন হও, তবে মানুষও তোমাকে ভালোবাসবে।'",
+                englishText = "The Prophet said: 'Be indifferent towards the world, and Allah will love you. Be indifferent towards that which is in people's hands, and people will love you.'",
+                gradeBn = "সহীহ ইবনে মাজাহ",
+                referenceBn = "সুনান ইবনে মাজাহ: কিতাব ৩৭ (যুহদ), হাদিস নং ৪১০২ [আন্তর্জাতিক সূচক: Sunan Ibn Majah 4102]"
             )
         )
     )
