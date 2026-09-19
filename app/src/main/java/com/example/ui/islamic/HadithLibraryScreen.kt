@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -68,6 +69,14 @@ data class HadithChapter(
     val titleBn: String,
     val titleEn: String,
     val hadithCount: Int
+)
+
+data class BookDownloadProgress(
+    val progress: Float,
+    val percent: Int,
+    val stage: String,
+    val detail: String,
+    val isSettingUp: Boolean = false
 )
 
 data class HadithItem(
@@ -115,12 +124,18 @@ object HadithStorageManager {
         }
     }
 
-    fun saveBookContentStream(context: Context, bookId: String, chapters: List<HadithChapter>) {
+    fun saveBookContentStream(
+        context: Context,
+        bookId: String,
+        chapters: List<HadithChapter>,
+        onProgress: ((current: Int, total: Int) -> Unit)? = null
+    ) {
         try {
             val file = getBookFile(context, bookId)
             file.bufferedWriter().use { writer ->
                 writer.write("{\"bookId\":\"$bookId\",\"downloadedAt\":${System.currentTimeMillis()},\"chapters\":[")
                 for (i in chapters.indices) {
+                    onProgress?.invoke(i + 1, chapters.size)
                     val chap = chapters[i]
                     if (i > 0) writer.write(",")
                     writer.write("{")
@@ -312,126 +327,445 @@ object HadithRepository {
 
     fun getChaptersForBook(bookId: String): List<HadithChapter> {
         return when (bookId) {
-            "nawawi40" -> listOf(
-                HadithChapter(1, "ঈমান, নিয়ত ও ইসলামের মূলনীতি", "Faith & Intentions", 10),
-                HadithChapter(2, "পবিত্রতা ও সালাত", "Purity & Prayer", 8),
-                HadithChapter(3, "হালাল-হারাম ও তাকওয়া", "Halal, Haram & Piety", 8),
-                HadithChapter(4, "উত্তম চরিত্র ও ভাইভাব", "Good Character & Brotherhood", 8),
-                HadithChapter(5, "আল্লাহর জিকির ও দোয়া", "Remembrance of Allah & Supplication", 8)
-            )
+            "nawawi40" -> {
+                val nawawiChapters = listOf(
+                    Pair("কিতাবুল ঈমান ও নিয়ত (ইসলামের মূল স্তম্ভ ও সহীহ নিয়ত)", "Faith, Intentions & Core Pillars"),
+                    Pair("কিতাবুত তাহারাত ও সালাত (পবিত্রতা ও নামাযের বিধান)", "Purification, Prayer & Worship"),
+                    Pair("কিতাবুল হালাল ওয়াল হারাম ও তাকওয়া (সন্দেহ পরিহার ও তাকওয়া)", "Halal, Haram & Piety"),
+                    Pair("কিতাবুল আদব ও সদ্ব্যবহার (উত্তম চরিত্র, ভ্রাতৃত্ববোধ ও মানবসেবা)", "Good Character & Brotherhood"),
+                    Pair("কিতাবুয যিকর ওয়াত তাওবাহ (আল্লাহর স্মরণ, ক্ষমা ও নেক দোয়া)", "Remembrance of Allah, Repentance & Du'a")
+                )
+                nawawiChapters.mapIndexed { idx, (bn, en) ->
+                    val cId = idx + 1
+                    val count = AuthenticHadithDatabase.getHadithCountForChapter("nawawi40", cId)
+                    HadithChapter(
+                        chapterId = cId,
+                        titleBn = "অধ্যায় $cId : $bn",
+                        titleEn = "Chapter $cId : $en",
+                        hadithCount = count
+                    )
+                }
+            }
             "bukhari" -> {
                 val bukhariTitles = listOf(
-                    "ওহীর সূচনা অধ্যায়", "ঈমান (বিশ্বাস) অধ্যায়", "ইলম বা দ্বীনি জ্ঞান অধ্যায়", "ওজু ও তাহারাত অধ্যায়", "গোসল অধ্যায়",
-                    "হায়েজ ও ঋতুস্রাব অধ্যায়", "তায়াম্মুম অধ্যায়", "সালাত বা নামাজ অধ্যায়", "সালাতের সময়সূচী অধ্যায়", "আযান ও জামাত অধ্যায়",
-                    "জুমুআ অধ্যায়", "ভয়কালীন সালাত অধ্যায়", "দুই ঈদের সালাত অধ্যায়", "বিতর সালাত অধ্যায়", "বৃষ্টি প্রার্থনার সালাত (ইস্তিসকা)",
-                    "সূর্যগ্রহণ ও চন্দ্রগ্রহণের সালাত", "সেজদা অধ্যায়", "কসর সালাত অধ্যায়", "তাহাজ্জুদ ও নফল সালাত", "মক্কার মসজিদের ফজিলত",
-                    "সালাতে কাজ ও আমল", "সেহু সেজদা অধ্যায়", "জাজানা ও জানাজা সালাত", "যাকাত অধ্যায়", "হজ অধ্যায়",
-                    "উমরাহ অধ্যায়", "হজের বাঁধা ও কাজা", "শিকারের দণ্ড ও এহরাম", "মদীনার ফজিলত অধ্যায়", "সাওম বা রোজা অধ্যায়",
-                    "তারাবীহ ও ই'তিকাফ", "ক্রয়-বিক্রয় ও ব্যবসা", "সলম ও অগ্রিম কেনাবেচা", "শুফ'আ অধ্যায়", "ইজারা ও ভাড়া অধ্যায়",
-                    "হাওয়ালা ও ঋণ স্থানান্তর", "জামানত বা কফালত", "ওয়াকালাত বা প্রতিনিধিত্ব", "চাষাবাদ ও বর্গা", "পানি সেচ ও বণ্টন",
-                    "ঋণ গ্রহণ ও পরিশোধ", "ঝগড়া ও বিবাদ মীমাংসা", "হারানো বস্তু ও লোকপ্রাপ্তি", "জুলুম ও কিসাস", "অংশীদারিত্ব বা শিরকাত",
-                    "বন্ধক ও রেহান", "দাসমুক্তি ও আযাদী", "হিবা ও উপহার অধ্যায়", "সাক্ষ্য ও সাক্ষ্যদান", "আপোষ ও সন্ধি",
-                    "শর্তাবলী অধ্যায়", "অসিয়ত ও ওসীয়তনামা", "জিহাদ ও গাজওয়া", "সৃষ্টির সূচনা অধ্যায়", "নবীগণের বিবরণ",
-                    "সাহাবিগণের ফজিলত", "রাসুলুল্লাহ (সাঃ) এর সাহাবিগণ", "আনসারগণের ফজিলত", "মাগাজী ও যুদ্ধসমূহ", "তাফসীরুল কুরআন",
-                    "কুরআনের ফজিলত", "বিবাহ ও নিকাহ অধ্যায়", "তালাক ও বিচ্ছেদ অধ্যায়", "ভরণ-পোষণ ও নফকা", "খাদ্য ও খাবার অধ্যায়",
-                    "আকীকা অধ্যায়", "জবেহ ও শিকার অধ্যায়", "কুরবানী অধ্যায়", "পানীয় ও শরাব অধ্যায়", "রোগী ও চিকিৎসা অধ্যায়",
-                    "লেবাস ও পোশাক অধ্যায়", "শিষ্টাচার ও আদব অধ্যায়", "অনুমতি প্রার্থনা অধ্যায়", "দোয়া ও মোনাজাত অধ্যায়", "রিকাক বা আত্মশুদ্ধি",
-                    "তাকদীর ও ভাগ্য অধ্যায়", "কসম ও মানত অধ্যায়", "কসমের কাফফারা", "ফরায়েজ ও উত্তরাধিকার", "হুদুদ ও দণ্ডবিধি",
-                    "রক্তপণ ও কিসাস", "মুরতাদ ও বিদ্রোহী", "ইকরাহ বা বাধ্যকরণ", "হিলহ বাহানা অধ্যায়", "স্বপ্নের ব্যাখ্যা অধ্যায়",
-                    "ফেতনা ও দুর্যোগ অধ্যায়", "আহকাম ও বিচার অধ্যায়", "তামান্না ও আকাক্সক্ষা", "খবর বা সংবাদ অধ্যায়", "সুন্নাহ অবলম্বন",
-                    "তাওহীদ ও একাত্ববাদ অধ্যায়", "আল্লাহর সিফাত ও গুণাবলী", "রহমত ও মাগফিরাত", "আখিরাত ও হাশর", "জান্নাত ও জাহান্নাম",
-                    "শাফায়াত অধ্যায়", "সর্বশেষ উপদেশ অধ্যায়"
+                    "ওহীর সূচনা অধ্যায়",
+                    "ঈমান (বিশ্বাস) অধ্যায়",
+                    "ইলম বা দ্বীনি জ্ঞান অধ্যায়",
+                    "ওযু ও তাহারাত অধ্যায়",
+                    "গোসল অধ্যায়",
+                    "হায়েয ও তাহারাত অধ্যায়",
+                    "তায়াম্মুম অধ্যায়",
+                    "সালাত বা নামায অধ্যায়",
+                    "সালাতের ওয়াক্ত ও সময়সূচি অধ্যায়",
+                    "আযান ও জামাত অধ্যায়",
+                    "জুমুআ অধ্যায়",
+                    "ভয়কালীন সালাত অধ্যায়",
+                    "দুই ঈদের সালাত অধ্যায়",
+                    "বিতর সালাত অধ্যায়",
+                    "বৃষ্টি প্রার্থনার সালাত (ইস্তিসকা) অধ্যায়",
+                    "সূর্যগ্রহণ ও চন্দ্রগ্রহণের সালাত (কুসূফ) অধ্যায়",
+                    "তিলাওয়াতে সিজদা অধ্যায়",
+                    "সালাত কসর (মুসাফিরের নামায) অধ্যায়",
+                    "তাহাজ্জুদ ও রাতের নফল সালাত অধ্যায়",
+                    "মক্কার মসজিদুল হারামের ফযিলত অধ্যায়",
+                    "সালাতে সাধারণ ক্রিয়াকর্ম ও আমল অধ্যায়",
+                    "সাহু সিজদা (ভুল সংশোধন) অধ্যায়",
+                    "জানাযা ও কাফন-দাফন অধ্যায়",
+                    "যাকাত ও সাদাকাহ অধ্যায়",
+                    "হজ্ব অধ্যায়",
+                    "উমরাহ অধ্যায়",
+                    "মুহসার বা অবরুদ্ধের বিধান অধ্যায়",
+                    "ইহরাম অবস্থায় শিকারের দণ্ড অধ্যায়",
+                    "মদিনার ফযিলত ও মর্যাদা অধ্যায়",
+                    "সাওম বা রোজা অধ্যায়",
+                    "তারাবীহর সালাত ও কিয়ামুল লাইল অধ্যায়",
+                    "লাইলাতুল কদর ও ই'তিকাফ অধ্যায়",
+                    "ই'তিকাফ অধ্যায়",
+                    "ক্রয়-বিক্রয় ও ব্যবসা-বাণিজ্য অধ্যায়",
+                    "সালাম বা অগ্রিম ক্রয়-বিক্রয় অধ্যায়",
+                    "শুফআ (অগ্রক্রয়াধিকার) অধ্যায়",
+                    "ইজারা বা ভাড়া অধ্যায়",
+                    "হাওয়ালা বা ঋণ হস্তান্তর অধ্যায়",
+                    "জামানত বা কাফালা অধ্যায়",
+                    "ওয়াকালাত বা প্রতিনিধিত্ব অধ্যায়",
+                    "চাষাবাদ ও বর্গাচাষ অধ্যায়",
+                    "পানি সেচ ও পানীয় বণ্টন অধ্যায়",
+                    "ঋণ গ্রহণ ও দেনা পরিশোধ অধ্যায়",
+                    "ঝগড়া ও বিবাদ মীমাংসা অধ্যায়",
+                    "লুকাতাহ বা প্রাপ্ত হারানো মাল অধ্যায়",
+                    "জুলুম ও কিসাস অধ্যায়",
+                    "শিরকাত বা অংশীদারি কারবার অধ্যায়",
+                    "বন্ধক ও রেহান অধ্যায়",
+                    "দাসমুক্তি ও আযাদী অধ্যায়",
+                    "মুকাতাব বা চুক্তিবদ্ধ দাস অধ্যায়",
+                    "হিবা ও উপহার অধ্যায়",
+                    "সাক্ষ্য ও শাহাদাত অধ্যায়",
+                    "আপস-মীমাংসা ও সন্ধি অধ্যায়",
+                    "শর্তাবলি ও অঙ্গীকার অধ্যায়",
+                    "অসিয়ত ও ওসীয়তনামা অধ্যায়",
+                    "জিহাদ ও যুদ্ধাভিযান অধ্যায়",
+                    "খুমুস বা এক-পঞ্চমাংশ গণিমত অধ্যায়",
+                    "জিজিয়া ও সন্ধিচুক্তি অধ্যায়",
+                    "সৃষ্টির সূচনা অধ্যায়",
+                    "নবী-রাসূলগণের বিবরণ অধ্যায়",
+                    "সাহাবিগণের ফযিলত ও মর্যাদা অধ্যায়",
+                    "রাসূলুল্লাহ ﷺ এর পরিবার ও সাহাবিগণ অধ্যায়",
+                    "আনসারগণের ফযিলত অধ্যায়",
+                    "মাগাযী বা ঐতিহাসিক যুদ্ধাভিযান অধ্যায়",
+                    "তাফসিরুল কুরআন অধ্যায়",
+                    "কুরআনের ফযিলত অধ্যায়",
+                    "বিবাহ ও দাম্পত্য জীবন অধ্যায়",
+                    "তালাক ও বিবাহবিচ্ছেদ অধ্যায়",
+                    "ভরণ-পোষণ ও নফকা অধ্যায়",
+                    "খাদ্য ও আহারের আদব অধ্যায়",
+                    "আকীকা অধ্যায়",
+                    "পশু জবেহ ও শিকার অধ্যায়",
+                    "কুরবানি অধ্যায়",
+                    "পানীয় ও শরবত অধ্যায়",
+                    "রোগ ও চিকিৎসা অধ্যায়",
+                    "পোশাক-পরিচ্ছদ ও বেশভূষা অধ্যায়",
+                    "শিষ্টাচার ও সচ্চরিত্র অধ্যায়",
+                    "অনুমতি প্রার্থনা ও আদব অধ্যায়",
+                    "দোয়া ও মোনাজাত অধ্যায়",
+                    "রিকাক বা আত্মশুদ্ধি ও পরকাল ভাবনা অধ্যায়",
+                    "তকদীর ও ভাগ্যলিপি অধ্যায়",
+                    "শপথ ও কসম অধ্যায়",
+                    "কাফফারা অধ্যায়",
+                    "ফারায়েয বা উত্তরাধিকার বণ্টন অধ্যায়",
+                    "হুদুদ বা শরয়ী দণ্ডবিধি অধ্যায়",
+                    "দিয়াত বা রক্তপণ ও কিসাস অধ্যায়",
+                    "মুরতাদ ও বিদ্রোহী দমন অধ্যায়",
+                    "ইকরাহ বা বলপ্রয়োগ ও বাধ্যকরণ অধ্যায়",
+                    "হিলা ও ছলচাতুরী বর্জন অধ্যায়",
+                    "স্বপ্নের ব্যাখ্যা ও তাৎপর্য অধ্যায়",
+                    "ফিতনা ও মহাবিপর্যয় অধ্যায়",
+                    "আহকাম বা বিচারিক ফায়সালা অধ্যায়",
+                    "তামান্না বা উত্তম আকাঙ্ক্ষা অধ্যায়",
+                    "খবরে ওয়াহিদ বা বিশ্বস্ত একক সংবাদ অধ্যায়",
+                    "কুরআন ও সুন্নাহকে আঁকড়ে ধরা অধ্যায়",
+                    "তাওহীদ ও একত্ববাদ অধ্যায়",
+                    "আল্লাহর সিফাত ও আসমাউল হুসনা অধ্যায়",
+                    "জান্নাত, জাহান্নাম ও শাফাআত অধ্যায়"
                 )
                 bukhariTitles.mapIndexed { idx, title ->
+                    val cId = idx + 1
+                    val count = AuthenticHadithDatabase.getHadithCountForChapter("bukhari", cId)
                     HadithChapter(
-                        chapterId = idx + 1,
-                        titleBn = title,
-                        titleEn = "Chapter ${idx + 1}",
-                        hadithCount = when (bookId) {
-                            "bukhari" -> if (idx == 0) 7 else if (idx == 1) 8 else 35 + (((idx + 1) * 13) % 50)
-                            "muslim" -> 35 + (((idx + 1) * 11) % 48)
-                            "abudawood" -> 30 + (((idx + 1) * 9) % 45)
-                            "tirmidhi" -> 30 + (((idx + 1) * 7) % 45)
-                            "nasai" -> 35 + (((idx + 1) * 9) % 45)
-                            "ibnmajah" -> 30 + (((idx + 1) * 7) % 40)
-                            "riyad" -> 40 + (((idx + 1) * 15) % 48)
-                            else -> 30
-                        }
+                        chapterId = cId,
+                        titleBn = "অধ্যায় $cId : $title",
+                        titleEn = "Chapter $cId : $title",
+                        hadithCount = count
                     )
                 }
             }
             "muslim" -> {
                 val muslimChapters = listOf(
-                    Pair("কিতাবুল ঈমান (ঈমান ও তাওহীদ)", "The Book of Faith"),
-                    Pair("কিতাবুত তাহারাত (পবিত্রতা ও ওযু)", "The Book of Purification"),
-                    Pair("কিতাবুল হায়িজ (ঋতুস্রাব ও তাহারাত)", "The Book of Menstruation"),
-                    Pair("কিতাবুস সালাত (সালাত ও নামাজের বিধান)", "The Book of Prayer"),
-                    Pair("কিতাবুল মাসাজিদ (মসজিদ ও নামাজের স্থান)", "The Book of Mosques"),
-                    Pair("কিতাবু সালাতিল মুসাফিরীন (মুসাফিরের নামাজ)", "The Prayer of Travelers"),
-                    Pair("কিতাবুল জুমু'আ (জুমার নামাজ)", "The Book of Friday Prayer"),
-                    Pair("কিতাবু সালাতিল ঈদাইন (ঈদের নামাজ)", "The Book of Eid Prayers"),
-                    Pair("কিতাবু সালাতিল ইসতিসকা (বৃষ্টির জন্য প্রার্থনা)", "Prayer for Rain"),
-                    Pair("কিতাবু সালাতিল কুসুফ (সূর্যগ্রহণের নামাজ)", "Prayer during Eclipses"),
-                    Pair("কিতাবুল জানায়েজ (জানাযা ও কাফন-দাফন)", "The Book of Funerals"),
-                    Pair("কিতাবুয যাকাত (যাকাত ও সদকা)", "The Book of Zakat"),
-                    Pair("কিতাবুস সিয়াম (রোজা ও সিয়াম সাধনা)", "The Book of Fasting"),
-                    Pair("কিতাবুল ই'তিকাফ (ইতিকাফ ও শবে কদর)", "The Book of I'tikaf"),
-                    Pair("কিতাবুল হজ্ব (হজ ও ওমরাহর আহকাম)", "The Book of Hajj"),
-                    Pair("কিতাবুন নিকাহ (বিবাহ ও মোহরানা)", "The Book of Marriage"),
-                    Pair("কিতাবুর রিদ্বা (দুগ্ধপান সম্পর্ক)", "The Book of Suckling"),
-                    Pair("কিতাবুত ত্বালাক (তালাকের বিধান)", "The Book of Divorce"),
-                    Pair("কিতাবুল লি'আন (লি'আন ও অভিসম্পাত)", "The Book of Li'an"),
-                    Pair("কিতাবুল ইতক (দাসমুক্তি ও মর্যাদা)", "The Book of Emancipation"),
-                    Pair("কিতাবুল বুয়ু' (ব্যবসা-বাণিজ্য ও লেনদেন)", "The Book of Transactions"),
-                    Pair("কিতাবুল মুসাকাত (বর্গা ও কৃষি চুক্তি)", "The Book of Sharecropping"),
-                    Pair("কিতাবুল ফারায়েজ (উত্তরাধিকার ও মিরাস)", "The Book of Inheritance"),
-                    Pair("কিতাবুল হিবাহ (দান ও উপহার)", "The Book of Gifts"),
-                    Pair("কিতাবুল ওসিয়াত (ওসিয়ত ও উত্তরাধিকার)", "The Book of Wills"),
-                    Pair("কিতাবুন নুজুর (মানত ও পূরণ)", "The Book of Vows"),
-                    Pair("কিতাবুল আইমান (শপথ ও কাফফারা)", "The Book of Oaths"),
-                    Pair("কিতাবুল কাসামাহ ওয়াল কিসাস (রক্তপণ ও কিসাস)", "The Book of Retaliation"),
-                    Pair("কিতাবুল হুদুদ (দণ্ডবিধি ও হদ)", "The Book of Punishments"),
-                    Pair("কিতাবুল আকদ্বিয়াহ (বিচার ও ফায়সালা)", "The Book of Judicial Decisions"),
-                    Pair("কিতাবুল লুকাতাহ (হারানো প্রাপ্ত বস্তু)", "The Book of Lost Property"),
-                    Pair("কিতাবুল জিহাদ ওয়াস সিয়ার (জিহাদ ও যুদ্ধনীতি)", "The Book of Jihad & Expeditions"),
-                    Pair("কিতাবুল ইমারাহ (নেতৃত্ব ও শাসন ব্যবস্থা)", "The Book of Government"),
-                    Pair("কিতাবুয যবাইহ ওয়াস সয়িদ (শিকার ও জবেহ)", "The Book of Hunting & Slaughter"),
-                    Pair("কিতাবুল উদহিয়াহ (কোরবানি ও বিধান)", "The Book of Sacrifices"),
-                    Pair("কিতাবুল আশরিবাহ (পানীয় ও খাদ্যদ্রব্য)", "The Book of Drinks"),
-                    Pair("কিতাবুল লিবাস ওয়ায যীনাহ (পোশাক ও সৌন্দর্য)", "The Book of Clothes & Ornaments"),
-                    Pair("কিতাবুল আদব (শিষ্টাচার ও চরিত্র)", "The Book of Manners"),
-                    Pair("কিতাবুস সালাম (সালাম ও সৌজন্যবোধ)", "The Book of Greetings"),
-                    Pair("কিতাবুল আলফাজ মিনাল আদব (কথাবার্তার শিষ্টাচার)", "The Book of Courtesy Words"),
-                    Pair("কিতাবুশ শি'র (কবিতা ও সাহিত্য)", "The Book of Poetry"),
-                    Pair("কিতাবুর রু'ইয়া (স্বপ্ন ও তার ব্যাখ্যা)", "The Book of Dreams"),
-                    Pair("কিতাবুল ফাদ্বায়েল (রাসূল ﷺ-এর ফজিলত)", "Virtues of the Prophet (PBUH)"),
-                    Pair("কিতাবু ফাদ্বায়েলিস সাহাবাহ (সাহাবিদের মর্যাদা)", "Virtues of the Companions"),
-                    Pair("কিতাবুল বিররি ওয়াস সিলাহ (আত্মীয়তার সম্পর্ক)", "Virtue & Kinship"),
-                    Pair("কিতাবুল ক্বদর (তকদীর ও ভাগ্য)", "The Book of Destiny"),
-                    Pair("কিতাবুল ইলম (দ্বীনি ইলম ও প্রচার)", "The Book of Knowledge"),
-                    Pair("কিতাবুয যিকর ওয়াদ দু'আ (যিকর ও দোয়া)", "Remembrance & Supplications"),
-                    Pair("কিতাবুত তাওবাহ (তওবা ও ইস্তিগফার)", "The Book of Repentance"),
-                    Pair("কিতাবু সিফাতিল কিয়ামাহ (কিয়ামতের বিবরণ)", "Description of Judgment Day"),
-                    Pair("কিতাবু সিফাতিল জান্নাহ (জান্নাত ও নিয়ামত)", "Description of Paradise"),
-                    Pair("কিতাবু সিফাতিন নার (জাহান্নামের ভয়াবহতা)", "Description of Hellfire"),
-                    Pair("কিতাবুল জুহদ ওয়ার রকায়িক (দুনিয়াবিমুখতা ও খোদাভীতি)", "Asceticism & Softening"),
-                    Pair("কিতাবুত তাফসির (কোরআনের তাফসির)", "Quranic Commentary"),
-                    Pair("কিতাবুল ফিতান (ফেতনা ও কিয়ামতের আলামত)", "Tribulations & Signs of Hour"),
-                    Pair("কিতাবুল খাইর ওয়াস সালামাহ (কল্যাণ ও শান্তি)", "Goodness & Peace")
+                    Pair("কিতাবুল ঈমান (ঈমান, ইসলাম ও ইহসান)", "The Book of Faith"),
+                    Pair("কিতাবুত তাহারাত (পবিত্রতা ও ওযুর সুন্নাত)", "The Book of Purification"),
+                    Pair("কিতাবুল হায়েয (ঋতুস্রাব, ইস্তিহাযা ও তাহারাত)", "The Book of Menstruation"),
+                    Pair("কিতাবুস সালাত (নামাযের ফরজিয়াত ও আদায় পদ্ধতি)", "The Book of Prayer"),
+                    Pair("কিতাবুল মাসাজিদ ওয়া মাওয়াদি'ইস সালাত (মসজিদের মর্যাদা ও স্থান)", "The Book of Mosques & Places of Prayer"),
+                    Pair("কিতাবু সালাতিল মুসাফিরীন ওয়া কসরিহা (মুসাফিরের সালাত ও কসর)", "The Prayer of Travelers"),
+                    Pair("কিতাবুল জুমুআ (জুমার দিনের ফজিলত ও সালাত)", "The Book of Friday Prayer"),
+                    Pair("কিতাবু সালাতিল ঈদাইন (ঈদুল ফিতর ও ঈদুল আযহার সালাত)", "The Book of Eid Prayers"),
+                    Pair("কিতাবু সালাতিল ইসতিসকা (বৃষ্টি প্রার্থনার সালাত ও খুতবা)", "Prayer for Rain"),
+                    Pair("কিতাবু সালাতিল কুসূফ (সূর্যগ্রহণ ও চন্দ্রগ্রহণের সালাত)", "Prayer during Eclipses"),
+                    Pair("কিতাবু সালাতিল খাওফ (যুদ্ধ ও ভয়ের সময় সালাত)", "The Prayer of Fear"),
+                    Pair("কিতাবুল জানায়েয (জানাযা, কাফন-দাফন ও কবর যিয়ারত)", "The Book of Funerals"),
+                    Pair("কিতাবুয যাকাত (ফরজ যাকাত ও নফল সাদাকাহ)", "The Book of Zakat"),
+                    Pair("কিতাবুস সিয়াম (রমযানের রোজা ও নফল সিয়াম)", "The Book of Fasting"),
+                    Pair("কিতাবুল ই'তিকাফ (ই'তিকাফ ও লাইলাতুল কদর অন্বেষণ)", "The Book of I'tikaf"),
+                    Pair("কিতাবুল হজ্ব (হজ্ব ও ওমরার যাবতীয় আহকাম ও তালবিয়া)", "The Book of Hajj"),
+                    Pair("কিতাবুন নিকাহ (বিবাহের শর্তাবলি ও মোহরানা)", "The Book of Marriage"),
+                    Pair("কিতাবুর রিদা'আ (দুগ্ধপান সম্পর্কীয় হুকুম ও আত্মীয়তা)", "The Book of Suckling"),
+                    Pair("কিতাবুত তালাক (তালাকের শর্ত ও ইদ্দতের বিধান)", "The Book of Divorce"),
+                    Pair("কিতাবুল লি'আন (স্বামী-স্ত্রীর শপথ ও লি'আন)", "The Book of Li'an"),
+                    Pair("কিতাবুল ইতক (দাসমুক্তি ও মুকাতাব চুক্তি)", "The Book of Emancipation"),
+                    Pair("কিতাবুল বুয়ু' (ব্যবসা-বাণিজ্য, সুদ বর্জন ও লেনদেন)", "The Book of Transactions"),
+                    Pair("কিতাবুল মুসাকাত ওয়াল মুখাবারাহ (গাছপালার সেচ ও কৃষি বর্গা)", "The Book of Sharecropping & Irrigation"),
+                    Pair("কিতাবুল ফারায়েয (ওয়ারিশগণের মধ্যে সম্পত্তি বণ্টন)", "The Book of Inheritance"),
+                    Pair("কিতাবুল হিবাহ (দান, উপহার ও হাদিয়া)", "The Book of Gifts"),
+                    Pair("কিতাবুল অসিয়াহ (উইল বা ওসীয়তনামার শরয়ী নিয়ম)", "The Book of Wills"),
+                    Pair("কিতাবুন নুজুর (আল্লাহর নামে মানত ও তা পূরণ)", "The Book of Vows"),
+                    Pair("কিতাবুল আইমান (শপথ, কসম ও শপথের কাফফারা)", "The Book of Oaths"),
+                    Pair("কিতাবুল কাসামাহ ওয়াল মুহারিবীন (রক্তপণ, দাঙ্গা ও কিসাস)", "Oaths, Retaliation & Blood Money"),
+                    Pair("কিতাবুল হুদুদ (ব্যভিচার, অপবাদ ও চুরির শরয়ী হদ)", "The Book of Prescribed Punishments"),
+                    Pair("কিতাবুল আকদিয়াহ (বিচারিক ফায়সালা ও আদালতের সাক্ষ্য)", "Judicial Decisions & Evidence"),
+                    Pair("কিতাবুল লুকাতাহ (কুড়িয়ে পাওয়া বস্তু ও আমানত রক্ষা)", "The Book of Lost Property"),
+                    Pair("কিতাবুল জিহাদ ওয়াস সিয়ার (আল্লাহর পথে সংগ্রাম ও গণিমত)", "The Book of Jihad & Expeditions"),
+                    Pair("কিতাবুল ইমারাহ (রাষ্ট্র পরিচালনা, ন্যায়বিচার ও আনুগত্য)", "The Book of Government & Leadership"),
+                    Pair("কিতাবুয সায়িদ ওয়ায যাবায়িহ (শিকার ও হালাল পশু জবেহ)", "Hunting and Slaughtering"),
+                    Pair("কিতাবুল আদাহী (কুরবানির পশু ও দিনসমূহের বিধান)", "The Book of Sacrifices"),
+                    Pair("কিতাবুল আশরিবাহ (মদ ও যাবতীয় নেশাদ্রব্য নিষিদ্ধকরণ)", "The Book of Drinks"),
+                    Pair("কিতাবুল লিবাস ওয়ায যীনাহ (পোশাক, স্বর্ণ ও রৌপ্যের অলঙ্কার)", "The Book of Clothing & Ornaments"),
+                    Pair("কিতাবুল আদাব (উত্তম চরিত্র, বিনয় ও শিষ্টাচার)", "The Book of Manners & Etiquette"),
+                    Pair("কিতাবুস সালাম (সালামের প্রচার ও মুসাফাহা)", "The Book of Greetings"),
+                    Pair("কিতাবুল আলফায মিনাল আদাব (শব্দ চয়ন ও শিষ্ট ভাষা ব্যবহার)", "The Book of Virtuous Speech"),
+                    Pair("কিতাবুশ শি'র (কবিতা ও কবিতার বৈধ সীমা)", "The Book of Poetry"),
+                    Pair("কিতাবুর রু'ইয়া (সত্য স্বপ্ন ও তার সঠিক তাবীর)", "The Book of Dreams"),
+                    Pair("কিতাবুল ফাদায়িল (রাসূলুল্লাহ ﷺ-এর মহোচ্চ গুণাবলি ও মুজিজা)", "The Virtues of the Prophet (PBUH)"),
+                    Pair("কিতাবু ফাদায়িলিস সাহাবাহ (সাহাবায়ে কেরামের অনন্য মর্যাদা)", "Virtues of the Companions"),
+                    Pair("কিতাবুল বিররি ওয়াস সিলাহ ওয়াল আদাব (পিতা-মাতার সেবা ও আত্মীয়তা)", "Virtue, Kinship & Manners"),
+                    Pair("কিতাবুল ক্বদর (তকদীরে বিশ্বাস ও আল্লাহর পূর্বনির্ধারণ)", "The Book of Destiny (Qadr)"),
+                    Pair("কিতাবুল ইলম (দ্বীনি ইলম অন্বেষণ ও প্রচারের গুরুত্ব)", "The Book of Knowledge"),
+                    Pair("কিতাবুয যিকর ওয়াদ দু'আ ওয়াত তাওবাহ (আল্লাহর স্মরণ, দোয়া ও তওবা)", "Remembrance, Supplication & Repentance"),
+                    Pair("কিতাবুর রিকাক (অন্তর নরমকারী বিষয় ও দুনিয়াবিমুখতা)", "Heart-Softening Traditions"),
+                    Pair("কিতাবুত তাওবাহ (খালেস তওবা ও আল্লাহর অপার ক্ষমা)", "The Book of Repentance"),
+                    Pair("কিতাবু সিফাতিল মুনাফিকীন (মুনাফিকদের স্বভাব ও কুফরির লক্ষণ)", "Characteristics of Hypocrites"),
+                    Pair("কিতাবু সিফাতিল কিয়ামাহ ওয়াল জান্নাত ওয়ান নার (কিয়ামতের বিভীষিকা ও হাশর)", "Day of Judgment & Resurrection"),
+                    Pair("কিতাবুল জান্নাহ ওয়া নাঈমিহা (জান্নাত ও জান্নাতিদের অফুরন্ত নেয়ামত)", "Paradise and Its Blessings"),
+                    Pair("কিতাবু সিফাতিন নার (জাহান্নামের ভয়াবহ আযাব ও শাস্তি)", "Description of Hellfire"),
+                    Pair("কিতাবুল ফিতান ওয়া আশরাতিস সা'আহ (শেষ যামানার মহাবিপর্যয় ও কিয়ামতের আলামত)", "Tribulations & Signs of the Hour")
                 )
                 muslimChapters.mapIndexed { idx, (bn, en) ->
+                    val cId = idx + 1
+                    val count = AuthenticHadithDatabase.getHadithCountForChapter("muslim", cId)
                     HadithChapter(
-                        chapterId = idx + 1,
-                        titleBn = "অধ্যায় ${idx + 1} : $bn",
-                        titleEn = "Chapter ${idx + 1} : $en",
-                        hadithCount = 35 + (((idx + 1) * 11) % 48)
+                        chapterId = cId,
+                        titleBn = "অধ্যায় $cId : $bn",
+                        titleEn = "Chapter $cId : $en",
+                        hadithCount = count
                     )
                 }
             }
-            "abudawood" -> (1..43).map { idx -> HadithChapter(idx, "অধ্যায় $idx: সুনান ও মাসায়েল", "Chapter $idx", 30 + ((idx * 9) % 45)) }
-            "tirmidhi" -> (1..50).map { idx -> HadithChapter(idx, "অধ্যায় $idx: জামে মাসায়েল ও মান", "Chapter $idx", 30 + ((idx * 7) % 45)) }
-            "nasai" -> (1..52).map { idx -> HadithChapter(idx, "অধ্যায় $idx: সুনান ও সুক্ষ্ম সনদ", "Chapter $idx", 35 + ((idx * 9) % 45)) }
-            "ibnmajah" -> (1..37).map { idx -> HadithChapter(idx, "অধ্যায় $idx: ফিকহি বিন্যাস ও সুন্নাহ", "Chapter $idx", 30 + ((idx * 7) % 40)) }
+            "abudawood" -> {
+                val abudawoodChapters = listOf(
+                    Pair("কিতাবুত তাহারাত (পবিত্রতা, ওজু, গোসল ও মেসওয়াক)", "The Book of Purification"),
+                    Pair("কিতাবুস সালাত (নামাযের ফরজ ও সুন্নাত হুকুম-আহকাম)", "The Book of Prayer"),
+                    Pair("কিতাবু সালাতিস সাফার (সফরে সালাত কসর ও জমা করা)", "The Prayer of the Traveler"),
+                    Pair("কিতাবুত তাতাব্বু' (তাহাজ্জুদ ও নফল নামাযের ফজিলত)", "Voluntary & Night Prayers"),
+                    Pair("কিতাবুয যাকাত (যাকাত, উশর ও সদকাতুল ফিতর)", "The Book of Zakat"),
+                    Pair("কিতাবুল লুকাতাহ (হারানো প্রাপ্ত বস্তু ও আমানতের হুকুম)", "The Book of Lost Property"),
+                    Pair("কিতাবুল মানাসিক (হজ্ব ও ওমরার ধারাবাহিক কার্যাবলি)", "The Rites of Hajj"),
+                    Pair("কিতাবুন নিকাহ (বিবাহের প্রস্তাব, খুতবা ও মোহরানা)", "The Book of Marriage"),
+                    Pair("কিতাবুত তালাক (তালাকের প্রকারভেদ ও ইদ্দতের নিয়ম)", "The Book of Divorce"),
+                    Pair("কিতাবুস সিয়াম (রমযান ও নফল রোযার আহকাম)", "The Book of Fasting"),
+                    Pair("কিতাবুল জিহাদ (আল্লাহর দ্বীন রক্ষায় সংগ্রাম ও গণিমত)", "The Book of Jihad"),
+                    Pair("কিতাবুল আদাহী (কুরবানি ও জবাইকৃত পশুর বয়স)", "The Book of Sacrifices"),
+                    Pair("কিতাবুয সায়িদ (শিকারের নিয়ম ও শিকারি কুকুর)", "The Book of Hunting"),
+                    Pair("কিতাবুল ওয়াসায়া (ওসিয়তনামা লেখার নিয়ম ও পরিমাণ)", "The Book of Wills"),
+                    Pair("কিতাবুল ফারায়েয (উত্তরাধিকার সম্পত্তি বণ্টনের নিয়ম)", "The Book of Inheritance"),
+                    Pair("কিতাবুল খারাজ ওয়াল ফায় ও ইমারাহ (ভূমি কর ও বায়তুল মাল)", "Tribute, Spoils & Governance"),
+                    Pair("কিতাবুল জানায়েয (মৃত্যু, জানাযার নামায ও কবর খনন)", "The Book of Funerals"),
+                    Pair("কিতাবুল বুয়ু' (বৈধ ও অবৈধ ব্যবসায়িক লেনদেন)", "Commercial Transactions"),
+                    Pair("কিতাবুল ইজারা (ভাড়া, ইজারা ও শ্রমিকের পারিশ্রমিক)", "Wages and Leases"),
+                    Pair("কিতাবুল আকদিয়াহ (বিচারিক পদ ও বিচারকের ন্যায়পরায়ণতা)", "The Office of the Judge"),
+                    Pair("কিতাবুল ইলম (দ্বীনি ইলম শিক্ষা ও হাদিস বর্ণনা)", "The Book of Knowledge"),
+                    Pair("কিতাবুল আশরিবাহ (মাদক বর্জন ও পানীয়ের আদব)", "The Book of Drinks"),
+                    Pair("কিতাবুল আত'ইমাহ (হালাল আহার ও দস্তরখানের শিষ্টাচার)", "The Book of Foods"),
+                    Pair("কিতাবুত তিব্ব (চিকিৎসা, ওষুধ ও শিফা)", "The Book of Medicine"),
+                    Pair("কিতাবুল কাফফারা ওয়াল আইমান (কসম ও কাফফারা আদায়)", "Oaths & Expiations"),
+                    Pair("কিতাবুল হুরুফ ওয়াল কিরাআত (কুরআন পাঠ ও তিলাওয়াত রীতি)", "Dialects & Readings of the Quran"),
+                    Pair("কিতাবুল হাম্মাম (পাবলিক গোসলখানা ও সতর ঢাকা)", "Public Baths & Modesty"),
+                    Pair("কিতাবুল লিবাস (সুন্নতি পোশাক ও কাপড়ের রঙ)", "The Book of Clothing"),
+                    Pair("কিতাবুত তারাযযুল (চুল আঁচড়ানো, তেল লাগানো ও দাড়ি রাখা)", "Combing the Hair & Grooming"),
+                    Pair("কিতাবুল খাওয়াতিম (রৌপ্যের আংটি ও মোহর)", "The Book of Signet-Rings"),
+                    Pair("কিতাবুল ফিতান (উম্মতের মধ্যকার ফিতনা ও বিভেদ)", "Trials & Tribulations"),
+                    Pair("কিতাবুল মাহদী (ইমাম মাহদীর আবির্ভাবের ভবিষ্যৎবাণী)", "The Promised Deliverer / Mahdi"),
+                    Pair("কিতাবুল মালাহিম (শেষ যামানার মহাযুদ্ধসমূহ)", "Battles of the End Times"),
+                    Pair("কিতাবুল হুদুদ (চুরি, যেনা ও মদ্যপানের দণ্ডবিধি)", "Prescribed Punishments"),
+                    Pair("কিতাবুদ দিয়াত (খুনের বদলা, রক্তপণ ও অঙ্গহানি)", "Types of Blood-Wit"),
+                    Pair("কিতাবুস সুন্নাহ (সুন্নাত অনুসরণ ও বিদআত বর্জন)", "Model Behavior of the Prophet"),
+                    Pair("কিতাবুল আদব (বিনয়, সত্যবাদিতা ও আচরণবিধি)", "General Behavior & Manners"),
+                    Pair("কিতাবুস সালাম (সালাম ও কুশল বিনিময়ের শিষ্টাচার)", "Greetings and Salutations"),
+                    Pair("কিতাবুন নাওম (ঘুমানোর সুন্নাত ও শোয়ার নিয়ম)", "Sleep and Rest"),
+                    Pair("কিতাবুত তাসবীহ ওয়াদ দু'আ (যিকর, তাসবীহ ও বিশেষ মুনাজাত)", "Praise and Supplications"),
+                    Pair("কিতাবুর রুকইয়াহ (ঝাড়ফুঁক ও মাসনূন দু'আ)", "Ruqyah and Invocations"),
+                    Pair("কিতাবুল মাগাযী (নবী করীম ﷺ-এর ঐতিহাসিক যুদ্ধাভিযান)", "Historical Military Campaigns"),
+                    Pair("কিতাবুয জুহদ (দুনিয়ার মোহমুক্তি ও আখেরাতের পাথেয়)", "Asceticism & Softening of Hearts")
+                )
+                abudawoodChapters.mapIndexed { idx, (bn, en) ->
+                    val cId = idx + 1
+                    val count = AuthenticHadithDatabase.getHadithCountForChapter("abudawood", cId)
+                    HadithChapter(
+                        chapterId = cId,
+                        titleBn = "অধ্যায় $cId : $bn",
+                        titleEn = "Chapter $cId : $en",
+                        hadithCount = count
+                    )
+                }
+            }
+            "tirmidhi" -> {
+                val tirmidhiChapters = listOf(
+                    Pair("কিতাবুত তাহারাত (পবিত্রতা ও ওযু)", "The Book of Purification"),
+                    Pair("কিতাবুস সালাত (নামাজ ও সালাতের সময়সূচী)", "The Book of Prayer"),
+                    Pair("কিতাবুল বিতর (বিতর সালাত ও নফল)", "The Book of Witr"),
+                    Pair("কিতাবু সালাতিল জুমু'আ (জুমার নামাজ)", "The Book of Friday Prayer"),
+                    Pair("কিতাবু সালাতিল ঈদাইন (দুই ঈদের নামাজ)", "The Book of the Two Eids"),
+                    Pair("কিতাবু সালাতিস সাফার (মুসাফিরের নামাজ)", "The Prayer of the Traveler"),
+                    Pair("কিতাবুয যাকাত (যাকাত ও দান-সদকা)", "The Book of Zakat"),
+                    Pair("কিতাবুস সাওম (রোজা ও সিয়াম সাধনা)", "The Book of Fasting"),
+                    Pair("কিতাবুল হজ্ব (হজ ও ওমরাহর আহকাম)", "The Book of Hajj"),
+                    Pair("কিতাবুল জানায়েজ (জানাযা ও দাফন)", "The Book of Funerals"),
+                    Pair("কিতাবুন নিকাহ (বিবাহ ও মোহরানা)", "The Book of Marriage"),
+                    Pair("কিতাবুর রিদ্বা (দুগ্ধপান ও বংশমর্যাদা)", "The Book of Suckling"),
+                    Pair("কিতাবুত তালাক ওয়াল লি'আন (তালাক ও লি'আন)", "The Book of Divorce & Curse"),
+                    Pair("কিতাবুল বুয়ু' (ব্যবসা-বাণিজ্য ও কেনাবেচা)", "The Book of Business Transactions"),
+                    Pair("কিতাবুল আহকাম (বিচার ও বিচারিক রায়)", "The Book of Judgments"),
+                    Pair("কিতাবুদ দিয়াত (রক্তপণ ও কিসাস)", "The Book of Blood Money"),
+                    Pair("কিতাবুল হুদুদ (শরয়ী দণ্ডবিধি)", "The Book of Prescribed Punishments"),
+                    Pair("কিতাবু সয়িদ ও শিকার (শিকার ও জবেহ)", "The Book of Hunting"),
+                    Pair("কিতাবুল আদাহী (কোরবানি ও পশু জবেহ)", "The Book of Sacrifices"),
+                    Pair("কিতাবুন নুজুর ওয়াল আইমান (মানত ও শপথ)", "The Book of Vows & Oaths"),
+                    Pair("কিতাবুস সিয়ার ওয়াল জিহাদ (যুদ্ধ ও যুদ্ধনীতি)", "The Book of Military Expeditions"),
+                    Pair("কিতাবু ফাদায়িলিল জিহাদ (জিহাদের ফজিলত)", "Virtues of Jihad"),
+                    Pair("কিতাবুল জিহাদ (আল্লাহর পথে আত্মনিয়োগ)", "The Book of Jihad"),
+                    Pair("কিতাবুল লিবাস (পোশাক ও অলঙ্কার)", "The Book of Clothing"),
+                    Pair("কিতাবুল আত'ইমাহ (খাদ্যদ্রব্য ও আহারের নিয়ম)", "The Book of Foods"),
+                    Pair("কিতাবুল আশরিবাহ (পানীয় ও শরবত)", "The Book of Drinks"),
+                    Pair("কিতাবুল বিররি ওয়াস সিলাহ (সদ্ব্যবহার ও আত্মীয়তা)", "Righteousness & Kinship"),
+                    Pair("কিতাবুত তিব্ব (চিকিৎসা ও প্রতিষেধক)", "The Book of Medicine"),
+                    Pair("কিতাবুল ফারায়েজ (উত্তরাধিকার আইন)", "The Book of Inheritance"),
+                    Pair("কিতাবুল ওয়াসায়া (ওসিয়তনামা ও উইল)", "The Book of Wills"),
+                    Pair("কিতাবুল ওয়ালা ওয়াল হিবাহ (মিত্রতা ও দান-উপহার)", "Loyalty and Gifts"),
+                    Pair("কিতাবুল ক্বদর (তকদীর ও ভাগ্যলিপি)", "The Book of Destiny"),
+                    Pair("কিতাবুল ফিতান (ফেতনা ও বিপর্যয়)", "The Book of Tribulations"),
+                    Pair("কিতাবুর রু'ইয়া (স্বপ্ন ও স্বপ্নের ব্যাখ্যা)", "The Book of Dreams"),
+                    Pair("কিতাবুশ শাহাদাত (সাক্ষ্য ও সাক্ষ্যগ্রহণ)", "The Book of Witnesses"),
+                    Pair("কিতাবুয জুহদ (দুনিয়াত্যাগ ও পরকালমুখিতা)", "The Book of Asceticism"),
+                    Pair("কিতাবু সিফাতিল কিয়ামাহ ওয়ার রিকাক (কিয়ামতের বিবরণ ও মনের কোমলতা)", "Resurrection & Softening"),
+                    Pair("কিতাবু সিফাতিল জান্নাহ (জান্নাত ও এর নেয়ামতসমূহ)", "Description of Paradise"),
+                    Pair("কিতাবু সিফাতিন নার (জাহান্নাম ও এর আযাব)", "Description of Hellfire"),
+                    Pair("কিতাবুল ঈমান (ঈমান ও ইসলামের ভিত্তি)", "The Book of Faith"),
+                    Pair("কিতাবুল ইলম (দ্বীনি ইলম ও জ্ঞান অন্বেষণ)", "The Book of Knowledge"),
+                    Pair("কিতাবুল ইসতি'যান (অনুমতি প্রার্থনা ও শিষ্টাচার)", "Seeking Permission"),
+                    Pair("কিতাবুল আদব (শিষ্টাচার ও সচ্চরিত্র)", "The Book of Manners"),
+                    Pair("কিতাবুল আমছাল (দৃষ্টান্ত ও রূপক)", "The Book of Parables"),
+                    Pair("কিতাবু ফাদায়িলিল কুরআন (কুরআনের অনন্য ফজিলত)", "Virtues of the Quran"),
+                    Pair("কিতাবুল কিরাআত (কুরআনের কেরাত ও তেলাওয়াত)", "Recitation of the Quran"),
+                    Pair("কিতাবুত তাফসীর (কুরআনের তাফসীর)", "Quranic Commentary"),
+                    Pair("কিতাবুদ দা'ওয়াত (দোয়া ও আল্লাহর নিকট প্রার্থনা)", "Supplications"),
+                    Pair("কিতাবুল মানাকিব (রাসূল ﷺ ও সাহাবিদের মর্যাদা)", "Virtues and Merits"),
+                    Pair("কিতাবুল ইলাল (হাদিসের সনদ ও সূক্ষ্ম ত্রুটি বিশ্লেষণ)", "Analysis of Hadith Narrations")
+                )
+                tirmidhiChapters.mapIndexed { idx, (bn, en) ->
+                    val cId = idx + 1
+                    val count = AuthenticHadithDatabase.getHadithCountForChapter("tirmidhi", cId)
+                    HadithChapter(
+                        chapterId = cId,
+                        titleBn = "অধ্যায় $cId : $bn",
+                        titleEn = "Chapter $cId : $en",
+                        hadithCount = count
+                    )
+                }
+            }
+            "nasai" -> {
+                val nasaiChapters = listOf(
+                    Pair("কিতাবুত তাহারাত (পবিত্রতা ও তাহারাত)", "The Book of Purification"),
+                    Pair("কিতাবুল মিয়াাহ (পানি ও পবিত্রতার উপকরণ)", "The Book of Water"),
+                    Pair("কিতাবুল হায়িজ ওয়াল ইস্তিহাদাহ (ঋতুস্রাব ও তাহারাত)", "Menstruation & Irregular Bleeding"),
+                    Pair("কিতাবুল গোসল ওয়াত তায়াম্মুম (গোসল ও তায়াম্মুম)", "Ghusl and Tayammum"),
+                    Pair("কিতাবুস সালাত (নামাজ ও এর ফরজ বিধান)", "The Book of Prayer"),
+                    Pair("কিতাবু মাওয়াকিতিস সালাত (নামাজের সময়সূচী ও ওয়াক্ত)", "The Times of Prayer"),
+                    Pair("কিতাবুল আযান (আযান ও ইকামত)", "The Call to Prayer"),
+                    Pair("কিতাবুল মাসাজিদ (মসজিদ ও নামাজের স্থান)", "The Book of Mosques"),
+                    Pair("কিতাবুল কিবলাহ (কিবলা ও নামাজের দিকনির্ণয়)", "The Direction of Prayer (Qiblah)"),
+                    Pair("কিতাবুল ইমামাহ (ইমামতি ও জামাত)", "The Book of Leadership in Prayer"),
+                    Pair("কিতাবুল ইফতিজাহ (সালাত শুরু করার নিয়ম)", "Opening the Prayer"),
+                    Pair("কিতাবুত তাতবীক (রুকু ও সেজদা)", "Kneeling and Prostration"),
+                    Pair("কিতাবুস সাহু (ভুল সংশোধন ও সাজদায়ে সাহু)", "Forgetfulness in Prayer"),
+                    Pair("কিতাবু সালাতিল জুমু'আ (জুমার নামাজ)", "The Friday Prayer"),
+                    Pair("কিতাবু তাকসিরিস সালাতি ফিস সাফার (সফরে নামাজ সংক্ষেপণ)", "Shortening Prayer on Travel"),
+                    Pair("কিতাবু সালাতিল কুসুফ (সূর্যগ্রহণের নামাজ)", "The Eclipse Prayer"),
+                    Pair("কিতাবু সালাতিল ইসতিসকা (বৃষ্টি প্রার্থনার নামাজ)", "Prayer for Rain"),
+                    Pair("কিতাবু সালাতিল খাওফ (ভয়কালীন নামাজ)", "The Fear Prayer"),
+                    Pair("কিতাবু সালাতিল ঈদাইন (ঈদের নামাজ)", "The Prayer of the Two Eids"),
+                    Pair("কিতাবু কিয়ামিল লাইল ও নফল (তাহাজ্জুদ ও রাতের নামাজ)", "Qiyam al-Layl & Voluntary Prayers"),
+                    Pair("কিতাবুল জানায়েজ (জানাযা ও দাফন-কাফন)", "The Book of Funerals"),
+                    Pair("কিতাবুস সিয়াম (রোজা ও তার ফজিলত)", "The Book of Fasting"),
+                    Pair("কিতাবু কিয়ামু শাহরি রমাদান (রমজানের রাত জাগরণ ও তারাবীহ)", "Night Prayers of Ramadan"),
+                    Pair("কিতাবুয যাকাত (যাকাত ও ফিতরা)", "The Book of Zakat"),
+                    Pair("কিতাবুল মানাসিক (হজ ও ওমরাহর আহকাম)", "Rites of Hajj"),
+                    Pair("কিতাবুল জিহাদ (জিহাদ ও আল্লাহর পথে ত্যাগ)", "The Book of Jihad"),
+                    Pair("কিতাবুন নিকাহ (বিবাহ ও পরিবার)", "The Book of Marriage"),
+                    Pair("কিতাবুত তালাক (তালাকের আহকাম)", "The Book of Divorce"),
+                    Pair("কিতাবুল খিল' (খোলা তালাক ও বিচ্ছেদ)", "The Book of Khul'"),
+                    Pair("কিতাবুল ইশরাতিন নিসা (নারীদের সাথে সুন্দর আচরণ)", "Kind Treatment of Women"),
+                    Pair("কিতাবুল ওয়াকফ (ওয়াকফ ও আল্লাহর পথে উৎসর্গ)", "Endowments"),
+                    Pair("কিতাবুল ওয়াসায়া (ওসিয়তনামা ও উপদেশ)", "The Book of Wills"),
+                    Pair("কিতাবুন নুহলা ওয়াল হিবাহ (উপহার ও বিশেষ দান)", "Gifts and Grants"),
+                    Pair("কিতাবুর রুকবা ওয়াল উমরা (জীবনস্বত্ব ও অনুদান)", "Life-Grant Gifts"),
+                    Pair("কিতাবুল আইমান ওয়ান নুজুর (শপথ ও মানত)", "Oaths and Vows"),
+                    Pair("কিতাবুল মুজায়ারা'আ (বর্গাচাষ ও কৃষিচুক্তি)", "Agricultural Partnerships"),
+                    Pair("কিতাবুত তাহারুম (রক্তপাত ও হত্যা নিষিদ্ধকরণ)", "Sanctity of Human Life"),
+                    Pair("কিতাবুল কাসামাহ (কাসামাহ ও রক্তপণ)", "The Oath System & Blood Money"),
+                    Pair("কিতাবু কতয়িস সারিক (চুরির দণ্ড ও বিচার)", "Punishment of Theft"),
+                    Pair("কিতাবুল হুদুদ (শরয়ী দণ্ডবিধি)", "Legal Penalties"),
+                    Pair("কিতাবুল ইমারাহ (নেতৃত্ব ও রাষ্ট্রশাসন)", "Governance and Rulership"),
+                    Pair("কিতাবুল আকিকাহ (আকিকা ও নবজাতকের হক)", "The Book of Aqiqa"),
+                    Pair("কিতাবুল ফারা' ওয়াল আতিরাহ (জাহেলি যুগের প্রথা বর্জন)", "Rejection of Pagan Sacrifices"),
+                    Pair("কিতাবু সয়িদ ওয়ায যাবাইহ (শিকার ও জবেহকৃত পশু)", "Hunting and Slaughter"),
+                    Pair("কিতাবুল আদাহী (কোরবানি ও পশুর বিবরণ)", "The Book of Sacrifices"),
+                    Pair("কিতাবুল বুয়ু' (ব্যবসা ও বৈধ কেনাবেচা)", "The Book of Trade"),
+                    Pair("কিতাবুল কিসামা (সম্পদ ও মালামাল বণ্টন)", "Distribution of Property"),
+                    Pair("কিতাবুল আশরিবাহ (পানীয় ও মাদক বর্জন)", "The Book of Drinks"),
+                    Pair("কিতাবুল জীনাহ মিনাস সুনান (পোশাক ও সৌন্দর্যচর্চা)", "Adornment and Appearance"),
+                    Pair("কিতাবু আদাবিল কুদাত (বিচারকের গুণাবলী ও আদালত)", "Etiquette of the Judge"),
+                    Pair("কিতাবুল ইসতি'আযাহ (আল্লাহর নিকট আশ্রয় প্রার্থনা)", "Seeking Refuge with Allah"),
+                    Pair("কিতাবু ফাযাইলিল কুরআন (কুরআনের মর্যাদা ও কেরাত)", "Virtues of the Quran")
+                )
+                nasaiChapters.mapIndexed { idx, (bn, en) ->
+                    val cId = idx + 1
+                    val count = AuthenticHadithDatabase.getHadithCountForChapter("nasai", cId)
+                    HadithChapter(
+                        chapterId = cId,
+                        titleBn = "অধ্যায় $cId : $bn",
+                        titleEn = "Chapter $cId : $en",
+                        hadithCount = count
+                    )
+                }
+            }
+            "ibnmajah" -> {
+                val ibnmajahChapters = listOf(
+                    Pair("কিতাবুল মুকাদ্দামাহ (সুন্নাহর মর্যাদা, সাহাবিগণের ফজিলত ও ঈমান)", "The Book of the Sunnah"),
+                    Pair("কিতাবুত তাহারাত ওয়া সুনানুহা (পবিত্রতা ও এর সুন্নাহসমূহ)", "Purification and its Sunnah"),
+                    Pair("কিতাবুস সালাত (নামাজ ও সালাতের আহকাম)", "The Book of Prayer"),
+                    Pair("কিতাবুল আযান ওয়াস সুন্নাতু ফীহা (আযান ও জামাতের নিয়ম)", "The Call to Prayer & Sunnah"),
+                    Pair("কিতাবুল ইকামাতিস সালাত ওয়াস সুন্নাতু ফীহা (ইকামত ও সালাতের সুন্নাহ)", "Establishing Prayer & its Sunnah"),
+                    Pair("কিতাবুল জানায়েজ (জানাযা ও কাফন-দাফন)", "The Book of Funerals"),
+                    Pair("কিতাবুস সিয়াম (রোজা ও সিয়াম সাধনা)", "The Book of Fasting"),
+                    Pair("কিতাবুয যাকাত (যাকাত ও সাদাকাতুল ফিতর)", "The Book of Zakat"),
+                    Pair("কিতাবুন নিকাহ (বিবাহ ও পরিবার গঠন)", "The Book of Marriage"),
+                    Pair("কিতাবুত তালাক (তালাক ও এর বিধান)", "The Book of Divorce"),
+                    Pair("কিতাবুল কাফফারা (শপথের কাফফারা ও প্রায়শ্চিত্ত)", "The Book of Expiations"),
+                    Pair("কিতাবুত তিজারাত (ব্যবসা-বাণিজ্য ও রুজির অন্বেষণ)", "The Book of Business Transactions"),
+                    Pair("কিতাবুল আহকাম (আইন ও বিচারিক ফায়সালা)", "The Book of Rulings"),
+                    Pair("কিতাবুল হিবাত (দান ও উপহারের বিধান)", "The Book of Gifts"),
+                    Pair("কিতাবুর রুহুন (বন্ধক ও ঋণ নিরাপত্তা)", "The Book of Pledges / Mortgages"),
+                    Pair("কিতাবুল শুফ'আ (শুফ'আ বা অগ্রক্রয়াধিকার)", "The Book of Pre-emption"),
+                    Pair("কিতাবুল লুকাতাহ (কুড়িয়ে পাওয়া ধন-সম্পদ)", "The Book of Lost Property"),
+                    Pair("কিতাবুল ইতক (দাসমুক্তি ও মানবতার মর্যাদা)", "The Book of Emancipation"),
+                    Pair("কিতাবুল হুদুদ (শরয়ী দণ্ডবিধি ও শাস্তি)", "The Book of Prescribed Penalties"),
+                    Pair("কিতাবুদ দিয়াত (রক্তপণ ও ক্ষতিপূরণ)", "The Book of Blood Money"),
+                    Pair("কিতাবুল ওয়াসায়া (ওসিয়তনামা ও দানপত্র)", "The Book of Wills"),
+                    Pair("কিতাবুল ফারায়েজ (উত্তরাধিকার আইন ও অংশীদারিত্ব)", "The Book of Inheritance"),
+                    Pair("কিতাবুল জিহাদ (আল্লাহর পথে জিহাদ ও কুরবানি)", "The Book of Jihad"),
+                    Pair("কিতাবুল মানাসিক (হজ ও ওমরাহর আহকাম)", "The Book of Hajj Rituals"),
+                    Pair("কিতাবুয যবাইহ (পশু জবেহ ও হালাল খাদ্য)", "The Book of Slaughtering"),
+                    Pair("কিতাবু সায়িদ (শিকার ও তার শর্তাবলী)", "The Book of Hunting"),
+                    Pair("কিতাবুল আত'ইমাহ (খাবার ও ভোজন শিষ্টাচার)", "The Book of Foods"),
+                    Pair("কিতাবুল আশরিবাহ (পানীয় ও মাদকদ্রব্য বর্জন)", "The Book of Drinks"),
+                    Pair("কিতাবুত তিব্ব (চিকিৎসা, ওষধ ও রুকইয়াহ)", "The Book of Medicine"),
+                    Pair("কিতাবুল লিবাস (পোশাক ও বেশভূষা)", "The Book of Dress"),
+                    Pair("কিতাবুল আদব (শিষ্টাচার, সৌজন্য ও সচ্চরিত্র)", "The Book of Etiquette"),
+                    Pair("কিতাবুদ দু'আ (দোয়া, মোনাজাত ও আশ্রয় প্রার্থনা)", "The Book of Supplication"),
+                    Pair("কিতাবু তা'বীরির রু'ইয়া (স্বপ্নের তাৎপর্য ও ব্যাখ্যা)", "Interpretation of Dreams"),
+                    Pair("কিতাবুল ফিতান (ফেতনা, দুর্যোগ ও কিয়ামতের পূর্বলক্ষণ)", "The Book of Tribulations"),
+                    Pair("কিতাবুয জুহদ (দুনিয়াবিমুখতা, আখিরাত ভাবনা ও তাকওয়া)", "The Book of Asceticism"),
+                    Pair("কিতাবুর রকায়িক (অন্তরগলানো হাদিস ও আল্লাহর স্মরণ)", "Heart-Melting Traditions"),
+                    Pair("কিতাবুল জান্নাহ ওয়ান নার (জান্নাতের নিয়ামত ও জাহান্নামের ভয়াবহতা)", "Paradise and Hell")
+                )
+                ibnmajahChapters.mapIndexed { idx, (bn, en) ->
+                    val cId = idx + 1
+                    val count = AuthenticHadithDatabase.getHadithCountForChapter("ibnmajah", cId)
+                    HadithChapter(
+                        chapterId = cId,
+                        titleBn = "অধ্যায় $cId : $bn",
+                        titleEn = "Chapter $cId : $en",
+                        hadithCount = count
+                    )
+                }
+            }
             "riyad" -> {
                 val riyadChapters = listOf(
                     Pair("কিতাবুল মুকাদ্দামাত (ইখলাস, তওবা ও ধৈর্য)", "The Book of Miscellany (Sincerity, Repentance & Patience)"),
@@ -454,13 +788,14 @@ object HadithRepository {
                     Pair("কিতাবুল উমূরিল মানহিয়্যাহ (নিষিদ্ধ বিষয় পরিহার)", "The Book of Forbidden Actions"),
                     Pair("কিতাবুল মানছূরাতু ওয়াল মুলাহ (বিবিধ মূল্যবান হাদিস ও ক্ষমা)", "The Book of Miscellaneous Ahadith & Forgiveness")
                 )
-                val counts = listOf(55, 70, 85, 68, 52, 110, 84, 65, 145, 55, 95, 120, 80, 60, 88, 160, 140, 255, 109)
                 riyadChapters.mapIndexed { idx, (bn, en) ->
+                    val cId = idx + 1
+                    val count = AuthenticHadithDatabase.getHadithCountForChapter("riyad", cId)
                     HadithChapter(
-                        chapterId = idx + 1,
-                        titleBn = "অধ্যায় ${idx + 1} : $bn",
-                        titleEn = "Chapter ${idx + 1} : $en",
-                        hadithCount = counts.getOrElse(idx) { 40 + (((idx + 1) * 15) % 48) }
+                        chapterId = cId,
+                        titleBn = "অধ্যায় $cId : $bn",
+                        titleEn = "Chapter $cId : $en",
+                        hadithCount = count
                     )
                 }
             }
@@ -506,6 +841,86 @@ object HadithRepository {
         }
         rootObj.put("chapters", chaptersArr)
         return rootObj.toString()
+    }
+}
+
+fun startHadithDownload(
+    book: HadithBookMeta,
+    coroutineScope: kotlinx.coroutines.CoroutineScope,
+    context: Context,
+    downloadingBooks: androidx.compose.runtime.snapshots.SnapshotStateMap<String, BookDownloadProgress>,
+    downloadedBooks: androidx.compose.runtime.snapshots.SnapshotStateMap<String, Boolean>,
+    isBn: Boolean
+) {
+    if (downloadingBooks.containsKey(book.id)) return
+    coroutineScope.launch {
+        val totalMbVal = (book.sizeKb / 1000.0).coerceAtLeast(0.8)
+        val totalMbStr = String.format(java.util.Locale.US, "%.1f", totalMbVal)
+
+        // Step 1: Downloading files (10% to 52%)
+        val downloadSteps = listOf(
+            Triple(0.10f, 10, totalMbVal * 0.10),
+            Triple(0.22f, 22, totalMbVal * 0.22),
+            Triple(0.35f, 35, totalMbVal * 0.35),
+            Triple(0.45f, 45, totalMbVal * 0.45),
+            Triple(0.52f, 52, totalMbVal * 0.52)
+        )
+        for (step in downloadSteps) {
+            val currMbStr = String.format(java.util.Locale.US, "%.1f", step.third)
+            downloadingBooks[book.id] = BookDownloadProgress(
+                progress = step.first,
+                percent = step.second,
+                stage = if (isBn) "হাদিস ডাটা ফাইল ডাউনলোড হচ্ছে..." else "Downloading Hadith data files...",
+                detail = if (isBn) "${AuthenticHadithDatabase.toBanglaDigits(currMbStr)} MB / ${AuthenticHadithDatabase.toBanglaDigits(totalMbStr)} MB" else "$currMbStr MB / $totalMbStr MB",
+                isSettingUp = false
+            )
+            delay(170)
+        }
+
+        // Step 2: Indexing & Setup Chapters in Local Storage (55% to 96%)
+        val chapters = HadithRepository.getChaptersForBook(book.id)
+        val totalChaps = chapters.size.coerceAtLeast(1)
+
+        // Save book stream on IO dispatcher
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            HadithStorageManager.saveBookContentStream(context, book.id, chapters)
+        }
+
+        // Paced setup progress with clear visual percentage updates
+        val setupSteps = 6
+        for (s in 1..setupSteps) {
+            val fraction = s.toFloat() / setupSteps.toFloat()
+            val setupProgress = 0.55f + (fraction * 0.40f)
+            val setupPercent = (setupProgress * 100).toInt().coerceIn(55, 96)
+            val doneCount = (totalChaps * fraction).toInt().coerceIn(1, totalChaps)
+
+            downloadingBooks[book.id] = BookDownloadProgress(
+                progress = setupProgress,
+                percent = setupPercent,
+                stage = if (isBn) "ডাটাবেজ সেটআপ ও ইনডেক্সিং হচ্ছে..." else "Setting up database & indexing...",
+                detail = if (isBn) "অধ্যায় ${AuthenticHadithDatabase.toBanglaDigit(doneCount)} / ${AuthenticHadithDatabase.toBanglaDigit(totalChaps)} সম্পন্ন" else "Chapter $doneCount of $totalChaps indexed",
+                isSettingUp = true
+            )
+            delay(150)
+        }
+
+        // Step 3: Setup Complete (100%)
+        downloadingBooks[book.id] = BookDownloadProgress(
+            progress = 1.0f,
+            percent = 100,
+            stage = if (isBn) "সেটআপ সম্পন্ন হয়েছে!" else "Setup complete!",
+            detail = if (isBn) "বইটি অফলাইনে পড়ার জন্য প্রস্তুত" else "Ready for offline reading",
+            isSettingUp = false
+        )
+        delay(350)
+
+        downloadedBooks[book.id] = true
+        downloadingBooks.remove(book.id)
+        Toast.makeText(
+            context,
+            if (isBn) "\"${book.titleBn}\" সফলভাবে অফলাইনে ডাউনলোড ও সেটআপ হয়েছে" else "\"${book.titleEn}\" downloaded and set up for offline use",
+            Toast.LENGTH_SHORT
+        ).show()
     }
 }
 
@@ -562,7 +977,7 @@ fun HadithLibraryScreen(
     }
 
     // Download Progress tracking state for books
-    val downloadingBooks = remember { mutableStateMapOf<String, Float>() }
+    val downloadingBooks = remember { mutableStateMapOf<String, BookDownloadProgress>() }
     val downloadedBooks = remember {
         mutableStateMapOf<String, Boolean>().apply {
             HadithRepository.BOOK_LIST.forEach { book ->
@@ -918,27 +1333,14 @@ fun HadithLibraryScreen(
                                             activeViewMode = 1
                                         },
                                         onDownloadClick = {
-                                            coroutineScope.launch {
-                                                downloadingBooks[book.id] = 0.1f
-                                                delay(300)
-                                                downloadingBooks[book.id] = 0.45f
-                                                delay(350)
-                                                downloadingBooks[book.id] = 0.85f
-                                                delay(250)
-
-                                                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                                                    val chapters = HadithRepository.getChaptersForBook(book.id)
-                                                    HadithStorageManager.saveBookContentStream(context, book.id, chapters)
-                                                }
-
-                                                downloadedBooks[book.id] = true
-                                                downloadingBooks.remove(book.id)
-                                                Toast.makeText(
-                                                    context,
-                                                    if (isBn) "\"${book.titleBn}\" সফলভাবে অফলাইনে ডাউনলোড হয়েছে" else "\"${book.titleEn}\" downloaded for offline use",
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                            }
+                                            startHadithDownload(
+                                                book = book,
+                                                coroutineScope = coroutineScope,
+                                                context = context,
+                                                downloadingBooks = downloadingBooks,
+                                                downloadedBooks = downloadedBooks,
+                                                isBn = isBn
+                                            )
                                         },
                                         onDeleteClick = {
                                             HadithStorageManager.deleteBook(context, book.id)
@@ -1061,27 +1463,14 @@ fun HadithLibraryScreen(
                                                 activeViewMode = 1
                                             },
                                             onDownloadClick = {
-                                                coroutineScope.launch {
-                                                    downloadingBooks[book.id] = 0.1f
-                                                    delay(300)
-                                                    downloadingBooks[book.id] = 0.45f
-                                                    delay(350)
-                                                    downloadingBooks[book.id] = 0.85f
-                                                    delay(250)
-
-                                                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                                                        val chapters = HadithRepository.getChaptersForBook(book.id)
-                                                        HadithStorageManager.saveBookContentStream(context, book.id, chapters)
-                                                    }
-
-                                                    downloadedBooks[book.id] = true
-                                                    downloadingBooks.remove(book.id)
-                                                    Toast.makeText(
-                                                        context,
-                                                        if (isBn) "\"${book.titleBn}\" সফলভাবে অফলাইনে ডাউনলোড হয়েছে" else "\"${book.titleEn}\" downloaded for offline use",
-                                                        Toast.LENGTH_SHORT
-                                                    ).show()
-                                                }
+                                                startHadithDownload(
+                                                    book = book,
+                                                    coroutineScope = coroutineScope,
+                                                    context = context,
+                                                    downloadingBooks = downloadingBooks,
+                                                    downloadedBooks = downloadedBooks,
+                                                    isBn = isBn
+                                                )
                                             },
                                             onDeleteClick = {
                                                 HadithStorageManager.deleteBook(context, book.id)
@@ -2002,7 +2391,7 @@ fun HadithLibraryScreen(
 fun HadithBookCardItem(
     book: HadithBookMeta,
     isDownloaded: Boolean,
-    downloadProgress: Float?,
+    downloadProgress: BookDownloadProgress?,
     isBn: Boolean,
     themeColors: CalculatorThemeColors,
     onReadClick: () -> Unit,
@@ -2061,13 +2450,25 @@ fun HadithBookCardItem(
 
                         Surface(
                             shape = RoundedCornerShape(8.dp),
-                            color = if (isDownloaded) Color(0xFF10B981).copy(alpha = 0.12f) else themeColors.buttonEqualBg.copy(alpha = 0.12f)
+                            color = when {
+                                downloadProgress != null -> if (downloadProgress.isSettingUp) Color(0xFFF59E0B).copy(alpha = 0.15f) else Color(book.badgeColor).copy(alpha = 0.15f)
+                                isDownloaded -> Color(0xFF10B981).copy(alpha = 0.12f)
+                                else -> themeColors.buttonEqualBg.copy(alpha = 0.12f)
+                            }
                         ) {
                             Text(
-                                text = if (isDownloaded) (if (isBn) "অফলাইন প্রস্তুত" else "Ready") else (if (isBn) "${book.sizeKb / 1000.0} MB" else "${book.sizeKb / 1000.0} MB"),
+                                text = when {
+                                    downloadProgress != null -> if (isBn) "${AuthenticHadithDatabase.toBanglaDigits(downloadProgress.percent.toString())}%" else "${downloadProgress.percent}%"
+                                    isDownloaded -> if (isBn) "অফলাইন প্রস্তুত" else "Ready"
+                                    else -> "${book.sizeKb / 1000.0} MB"
+                                },
                                 fontSize = 10.5.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (isDownloaded) Color(0xFF10B981) else themeColors.buttonEqualBg,
+                                color = when {
+                                    downloadProgress != null -> if (downloadProgress.isSettingUp) Color(0xFFD97706) else Color(book.badgeColor)
+                                    isDownloaded -> Color(0xFF10B981)
+                                    else -> themeColors.buttonEqualBg
+                                },
                                 modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
                             )
                         }
@@ -2094,107 +2495,203 @@ fun HadithBookCardItem(
                 color = themeColors.displayText.copy(alpha = 0.75f)
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.FormatListNumbered,
-                        contentDescription = null,
-                        tint = themeColors.displayText.copy(alpha = 0.5f),
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = if (isBn) "${book.totalHadiths} টি হাদিস" else "${book.totalHadiths} Hadiths",
-                        fontSize = 11.5.sp,
-                        color = themeColors.displayText.copy(alpha = 0.65f)
-                    )
-                }
-
-                if (downloadProgress != null) {
-                    // Downloading State
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        CircularProgressIndicator(
-                            progress = { downloadProgress },
-                            modifier = Modifier.size(16.dp),
-                            color = themeColors.buttonEqualBg,
-                            strokeWidth = 2.dp
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = if (isBn) "ডাউনলোড হচ্ছে..." else "Downloading...",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = themeColors.buttonEqualBg
-                        )
-                    }
-                } else if (isDownloaded) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        if (!book.isDefaultDownloaded) {
-                            IconButton(
-                                onClick = onDeleteClick,
-                                modifier = Modifier.size(36.dp)
+            if (downloadProgress != null) {
+                // ========================================================
+                // MODERN PROGRESS & SETUP INDICATOR (DOWNLOAD & INDEXING)
+                // ========================================================
+                Spacer(modifier = Modifier.height(10.dp))
+                Surface(
+                    color = themeColors.displayText.copy(alpha = 0.04f),
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(
+                        1.dp,
+                        (if (downloadProgress.isSettingUp) Color(0xFFF59E0B) else Color(book.badgeColor)).copy(alpha = 0.35f)
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(10.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.weight(1f, fill = false)
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.DeleteOutline,
-                                    contentDescription = "Delete Storage",
-                                    tint = Color(0xFFEF4444),
-                                    modifier = Modifier.size(20.dp)
+                                val pulseInfinite = rememberInfiniteTransition(label = "pulse")
+                                val pulseScale by pulseInfinite.animateFloat(
+                                    initialValue = 0.8f,
+                                    targetValue = 1.25f,
+                                    animationSpec = infiniteRepeatable(
+                                        animation = tween(650, easing = LinearEasing),
+                                        repeatMode = RepeatMode.Reverse
+                                    ),
+                                    label = "scale"
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .size(9.dp)
+                                        .graphicsLayer {
+                                            scaleX = pulseScale
+                                            scaleY = pulseScale
+                                        }
+                                        .background(
+                                            color = if (downloadProgress.isSettingUp) Color(0xFFF59E0B) else Color(book.badgeColor),
+                                            shape = CircleShape
+                                        )
+                                )
+                                Spacer(modifier = Modifier.width(7.dp))
+                                Text(
+                                    text = downloadProgress.stage,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = themeColors.displayText,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(8.dp))
+
+                            Surface(
+                                color = (if (downloadProgress.isSettingUp) Color(0xFFF59E0B) else Color(book.badgeColor)).copy(alpha = 0.15f),
+                                shape = RoundedCornerShape(6.dp)
+                            ) {
+                                Text(
+                                    text = if (isBn) "${AuthenticHadithDatabase.toBanglaDigits(downloadProgress.percent.toString())}%" else "${downloadProgress.percent}%",
+                                    fontSize = 11.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (downloadProgress.isSettingUp) Color(0xFFD97706) else Color(book.badgeColor),
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                 )
                             }
                         }
 
-                        Button(
-                            onClick = onReadClick,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(book.badgeColor),
-                                contentColor = Color.White
-                            ),
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        val animatedProgress by animateFloatAsState(
+                            targetValue = downloadProgress.progress,
+                            animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing),
+                            label = "animatedDownloadProgress"
+                        )
+                        LinearProgressIndicator(
+                            progress = { animatedProgress },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(6.dp)
+                                .clip(RoundedCornerShape(3.dp)),
+                            color = if (downloadProgress.isSettingUp) Color(0xFFF59E0B) else Color(book.badgeColor),
+                            trackColor = themeColors.displayText.copy(alpha = 0.1f)
+                        )
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = downloadProgress.detail,
+                                fontSize = 11.sp,
+                                color = themeColors.displayText.copy(alpha = 0.7f)
+                            )
+                            Text(
+                                text = if (downloadProgress.isSettingUp) (if (isBn) "সেটআপ হচ্ছে" else "Setting up") else (if (isBn) "ডাউনলোড হচ্ছে" else "Downloading"),
+                                fontSize = 10.5.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (downloadProgress.isSettingUp) Color(0xFFD97706) else Color(book.badgeColor)
+                            )
+                        }
+                    }
+                }
+            } else {
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.FormatListNumbered,
+                            contentDescription = null,
+                            tint = themeColors.displayText.copy(alpha = 0.5f),
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = if (isBn) "${book.totalHadiths} টি হাদিস" else "${book.totalHadiths} Hadiths",
+                            fontSize = 11.5.sp,
+                            color = themeColors.displayText.copy(alpha = 0.65f)
+                        )
+                    }
+
+                    if (isDownloaded) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            if (!book.isDefaultDownloaded) {
+                                IconButton(
+                                    onClick = onDeleteClick,
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.DeleteOutline,
+                                        contentDescription = "Delete Storage",
+                                        tint = Color(0xFFEF4444),
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+
+                            Button(
+                                onClick = onReadClick,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(book.badgeColor),
+                                    contentColor = Color.White
+                                ),
+                                shape = RoundedCornerShape(10.dp),
+                                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+                                modifier = Modifier.height(36.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.MenuBook,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = if (isBn) "পড়ুন" else "Read",
+                                    color = Color.White,
+                                    fontSize = 12.5.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    } else {
+                        OutlinedButton(
+                            onClick = onDownloadClick,
                             shape = RoundedCornerShape(10.dp),
-                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+                            border = BorderStroke(1.dp, themeColors.buttonEqualBg),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                             modifier = Modifier.height(36.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Default.MenuBook,
+                                imageVector = Icons.Default.Download,
                                 contentDescription = null,
-                                tint = Color.White,
+                                tint = themeColors.buttonEqualBg,
                                 modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = if (isBn) "পড়ুন" else "Read",
-                                color = Color.White,
-                                fontSize = 12.5.sp,
-                                fontWeight = FontWeight.Bold
+                                text = if (isBn) "ডাউনলোড করুন" else "Download",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColors.buttonEqualBg
                             )
                         }
-                    }
-                } else {
-                    OutlinedButton(
-                        onClick = onDownloadClick,
-                        shape = RoundedCornerShape(10.dp),
-                        border = BorderStroke(1.dp, themeColors.buttonEqualBg),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                        modifier = Modifier.height(36.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Download,
-                            contentDescription = null,
-                            tint = themeColors.buttonEqualBg,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = if (isBn) "ডাউনলোড করুন" else "Download",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = themeColors.buttonEqualBg
-                        )
                     }
                 }
             }
