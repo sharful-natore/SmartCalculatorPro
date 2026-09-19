@@ -2814,6 +2814,15 @@ How can I help you today?"""
     var selectedToolCategoryFilter by mutableStateOf<com.example.data.model.ToolCategory?>(null)
     var toolSearchQuery by mutableStateOf("")
 
+    var lastUsedToolKey by mutableStateOf(sharedPrefs.getString("last_used_tool_key", "HADITH_LIBRARY") ?: "HADITH_LIBRARY")
+        private set
+
+    fun setLastUsedTool(key: String) {
+        val cleanKey = if (key.startsWith("TOOL_")) key.removePrefix("TOOL_") else key
+        lastUsedToolKey = cleanKey
+        sharedPrefs.edit().putString("last_used_tool_key", cleanKey).apply()
+    }
+
     fun openTool(type: com.example.data.model.ToolType) {
         if (activeTab != 0) {
             if (tabHistoryStack.lastOrNull() != activeTab) {
@@ -2823,6 +2832,7 @@ How can I help you today?"""
         previousToolType = null
         selectedToolType = type
         recordToolUsage("TOOL_${type.name}")
+        setLastUsedTool(type.name)
         activeTab = 0
     }
 
@@ -3918,6 +3928,7 @@ How can I help you today?"""
         converterInput = "1"
         calculateConverter()
         recordToolUsage("CONV_${type.name}")
+        setLastUsedTool("CONV_${type.name}")
         activeTab = 1
     }
 

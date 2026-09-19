@@ -90,6 +90,7 @@ import com.example.ui.theme.themeCardShadow
 import com.example.ui.theme.getToolIconGradient
 import com.example.ui.viewmodel.CalculatorViewModel
 import com.example.util.LanguageManager
+import com.example.ui.components.PopularToolsArcDock
 
 val ScallopedBadgeShape = GenericShape { size, _ ->
     val cx = size.width / 2f
@@ -1305,7 +1306,94 @@ fun DashboardCategoriesView(
                 rawFavoriteItems.take(10)
             }
 
-            val currentDisplayList = if (activeDashboardTab == "FEATURED") topFeaturedList else topFavoritesList
+            val defaultEssentialKeys = remember {
+                listOf(
+                    "BMI",
+                    "STOPWATCH_TIMER",
+                    "PRAYER_TIMES",
+                    "AGE",
+                    "HADITH_LIBRARY",
+                    "QIBLA_COMPASS",
+                    "CONV_CURRENCY",
+                    "WEATHER",
+                    "ZAKAT"
+                )
+            }
+
+            val popularArcDockItems = remember(
+                allAvailableDashboardItems,
+                usageMap,
+                viewModel.lastUsedToolKey,
+                viewModel.featuredRemovedKeys
+            ) {
+                val lastKey = viewModel.lastUsedToolKey
+                val centerCandidate = allAvailableDashboardItems.firstOrNull { item ->
+                    !viewModel.featuredRemovedKeys.contains(item.key) && (
+                        item.key == lastKey ||
+                        (item.isTool && item.toolType?.name == lastKey) ||
+                        (item.converterType != null && ("CONV_${item.converterType.name}" == lastKey || item.converterType.name == lastKey))
+                    )
+                } ?: allAvailableDashboardItems.firstOrNull { it.key == "HADITH_LIBRARY" || it.toolType == ToolType.HADITH_LIBRARY }
+                  ?: allAvailableDashboardItems.first()
+
+                val otherCandidates = allAvailableDashboardItems.filter { item ->
+                    item.key != centerCandidate.key &&
+                    item.toolType != centerCandidate.toolType &&
+                    !viewModel.featuredRemovedKeys.contains(item.key)
+                }.sortedWith(
+                    compareByDescending<FeaturedDashboardItem> { item ->
+                        if (item.isTool && item.toolType != null) {
+                            (usageMap["TOOL_${item.toolType.name}"] ?: usageMap[item.toolType.name] ?: 0) as Int
+                        } else if (item.converterType != null) {
+                            (usageMap["CONV_${item.converterType.name}"] ?: usageMap[item.converterType.name] ?: 0) as Int
+                        } else 0
+                    }.thenBy { it.titleEn }
+                )
+
+                val usedCandidates = otherCandidates.filter { item ->
+                    val count = if (item.isTool && item.toolType != null) {
+                        (usageMap["TOOL_${item.toolType.name}"] ?: usageMap[item.toolType.name] ?: 0) as Int
+                    } else if (item.converterType != null) {
+                        (usageMap["CONV_${item.converterType.name}"] ?: usageMap[item.converterType.name] ?: 0) as Int
+                    } else 0
+                    count > 0
+                }.toMutableList()
+
+                defaultEssentialKeys.forEach { defKey ->
+                    if (usedCandidates.size < 8 && defKey != centerCandidate.key && defKey != centerCandidate.toolType?.name) {
+                        val matchingDef = allAvailableDashboardItems.firstOrNull { item ->
+                            item.key == defKey || item.toolType?.name == defKey ||
+                            (item.converterType != null && ("CONV_${item.converterType.name}" == defKey || item.converterType.name == defKey))
+                        }
+                        if (matchingDef != null && !usedCandidates.any { it.key == matchingDef.key }) {
+                            usedCandidates.add(matchingDef)
+                        }
+                    }
+                }
+
+                otherCandidates.forEach { cand ->
+                    if (usedCandidates.size < 8 && !usedCandidates.any { it.key == cand.key }) {
+                        usedCandidates.add(cand)
+                    }
+                }
+
+                val top8 = usedCandidates.take(8)
+
+                val result = arrayOfNulls<FeaturedDashboardItem>(9)
+                result[4] = centerCandidate
+                if (top8.size > 0) result[5] = top8[0]
+                if (top8.size > 1) result[3] = top8[1]
+                if (top8.size > 2) result[6] = top8[2]
+                if (top8.size > 3) result[2] = top8[3]
+                if (top8.size > 4) result[7] = top8[4]
+                if (top8.size > 5) result[1] = top8[5]
+                if (top8.size > 6) result[8] = top8[6]
+                if (top8.size > 7) result[0] = top8[7]
+
+                result.mapNotNull { it }
+            }
+
+            val currentDisplayList = if (activeDashboardTab == "FEATURED") popularArcDockItems else topFavoritesList
             val combinedList = currentDisplayList
 
             Row(
@@ -1339,7 +1427,7 @@ fun DashboardCategoriesView(
                                 modifier = Modifier.size(15.dp)
                             )
                             Spacer(modifier = Modifier.width(5.dp))
-                            val featuredCount = topFeaturedList.size
+                            val featuredCount = popularArcDockItems.size
                             Text(
                                 text = if (isBn) "জনপ্রিয় ($featuredCount)" else "Featured ($featuredCount)",
                                 fontSize = 12.5.sp,
@@ -1417,106 +1505,21 @@ fun DashboardCategoriesView(
                 },
                 label = "BannerSlideInAnimation"
             ) { tabState ->
-                if (tabState == "FEATURED" && topFeaturedList.isEmpty()) {
-                    // Empty Featured State - Elegant Banner Card
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp)
-                            .border(
-                                width = 1.dp,
-                                color = themeColors.buttonEqualBg.copy(alpha = 0.20f),
-                                shape = RoundedCornerShape(18.dp)
-                            ),
-                        shape = RoundedCornerShape(18.dp),
-                        colors = CardDefaults.cardColors(containerColor = themeColors.cardBg)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(
-                                    Brush.linearGradient(
-                                        colors = listOf(
-                                            themeColors.cardBg,
-                                            Color(0xFFFF6D00).copy(alpha = 0.08f),
-                                            themeColors.cardBg
-                                        ),
-                                        start = Offset(0f, 0f),
-                                        end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
-                                    )
-                                )
-                                .padding(horizontal = 16.dp, vertical = 14.dp)
-                        ) {
-                            // Background watermark icon
-                            Icon(
-                                imageVector = Icons.Default.Whatshot,
-                                contentDescription = null,
-                                tint = Color(0xFFFF6D00).copy(alpha = 0.12f),
-                                modifier = Modifier
-                                    .size(150.dp)
-                                    .align(Alignment.CenterEnd)
-                                    .offset(x = (-10).dp, y = 0.dp)
-                            )
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .padding(end = 12.dp)
-                                ) {
-                                    Surface(
-                                        shape = RoundedCornerShape(6.dp),
-                                        color = Color(0xFFFF6D00).copy(alpha = 0.15f)
-                                    ) {
-                                        Text(
-                                            text = if (isBn) "পয়েন্ট গাইড" else "Smart Feature",
-                                            fontSize = 10.sp,
-                                            fontWeight = FontWeight.ExtraBold,
-                                            color = Color(0xFFFF6D00),
-                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.height(6.dp))
-                                    Text(
-                                        text = if (isBn) "কোনো জনপ্রিয় টুল যুক্ত হয়নি" else "No Featured Tools Yet",
-                                        fontSize = 15.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = themeColors.displayText
-                                    )
-                                    Spacer(modifier = Modifier.height(3.dp))
-                                    Text(
-                                        text = if (isBn) "আপনার সবচেয়ে বেশি ব্যবহৃত (৩+ বার) টুলগুলো এখানে স্বয়ংক্রিয়ভাবে ফিচার্ড হয়ে স্ক্রল ব্যানারে সাজানো থাকবে।" else "Tools & converters used 3+ times will automatically show up here as featured slides.",
-                                        fontSize = 11.5.sp,
-                                        color = themeColors.displayText.copy(alpha = 0.65f),
-                                        lineHeight = 15.sp
-                                    )
-                                }
-
-                                Box(
-                                    modifier = Modifier
-                                        .size(52.dp)
-                                        .clip(RoundedCornerShape(16.dp))
-                                        .background(getToolIconGradient(Color(0xFFFF6D00)))
-                                        .border(
-                                            width = 1.5.dp,
-                                            color = Color.White.copy(alpha = 0.35f),
-                                            shape = RoundedCornerShape(16.dp)
-                                        ),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Whatshot,
-                                        contentDescription = null,
-                                        tint = Color.White,
-                                        modifier = Modifier.size(26.dp)
-                                    )
-                                }
+                if (tabState == "FEATURED") {
+                    PopularToolsArcDock(
+                        items = popularArcDockItems,
+                        themeColors = themeColors,
+                        language = viewModel.selectedLanguage,
+                        onItemClick = { item ->
+                            if (item.isTool && item.toolType != null) {
+                                viewModel.openTool(item.toolType)
+                            } else if (item.converterType != null) {
+                                viewModel.openConverter(item.converterType)
+                            } else if (item.isSpecialDay && item.specialEvent != null) {
+                                selectedSpecialEventDialog = item.specialEvent
                             }
                         }
-                    }
+                    )
                 } else if (tabState == "FAVORITES" && topFavoritesList.isEmpty()) {
                     // Empty Favorites State - Elegant Banner Card
                     Card(
