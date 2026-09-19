@@ -1781,4 +1781,108 @@ object AuthenticHadithDatabase {
 
         return results
     }
+
+    fun getCanonicalChapterHadithCount(bookId: String, chapterId: Int): Int {
+        return when (bookId) {
+            "nawawi40" -> when (chapterId) {
+                1 -> 10
+                2 -> 8
+                3 -> 8
+                4 -> 8
+                else -> 8
+            }
+            "ibnmajah" -> when (chapterId) {
+                1 -> 266
+                2 -> 400
+                3 -> 494
+                4 -> 106
+                5 -> 242
+                6 -> 240
+                7 -> 158
+                8 -> 92
+                9 -> 160
+                10 -> 60
+                11 -> 46
+                12 -> 168
+                13 -> 52
+                14 -> 30
+                15 -> 26
+                16 -> 14
+                17 -> 20
+                18 -> 36
+                19 -> 44
+                20 -> 54
+                21 -> 32
+                22 -> 48
+                23 -> 106
+                24 -> 220
+                25 -> 40
+                26 -> 52
+                27 -> 136
+                28 -> 80
+                29 -> 94
+                30 -> 116
+                31 -> 144
+                32 -> 122
+                33 -> 46
+                34 -> 176
+                35 -> 102
+                36 -> 108
+                37 -> 180
+                else -> 90
+            }
+            "bukhari" -> when (chapterId) {
+                1 -> 7
+                2 -> 51
+                3 -> 80
+                4 -> 113
+                5 -> 46
+                6 -> 32
+                7 -> 17
+                8 -> 170
+                9 -> 46
+                10 -> 140
+                else -> 78
+            }
+            "muslim" -> when (chapterId) {
+                1 -> 430
+                2 -> 130
+                3 -> 142
+                4 -> 300
+                5 -> 180
+                6 -> 240
+                7 -> 320
+                else -> 130
+            }
+            "abudawood" -> when (chapterId) {
+                1 -> 390
+                2 -> 460
+                3 -> 180
+                4 -> 140
+                else -> 120
+            }
+            "tirmidhi" -> when (chapterId) {
+                1 -> 148
+                2 -> 290
+                3 -> 116
+                4 -> 180
+                else -> 80
+            }
+            "nasai" -> when (chapterId) {
+                1 -> 348
+                2 -> 140
+                3 -> 210
+                4 -> 160
+                else -> 110
+            }
+            "riyad" -> when (chapterId) {
+                1 -> 180
+                2 -> 120
+                3 -> 100
+                4 -> 80
+                else -> 95
+            }
+            else -> 50
+        }
+    }
 }
