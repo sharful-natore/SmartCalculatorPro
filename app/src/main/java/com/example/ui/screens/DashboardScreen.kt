@@ -1323,22 +1323,10 @@ fun DashboardCategoriesView(
             val popularArcDockItems = remember(
                 allAvailableDashboardItems,
                 usageMap,
-                viewModel.lastUsedToolKey,
                 viewModel.featuredRemovedKeys
             ) {
-                val lastKey = viewModel.lastUsedToolKey
-                val centerCandidate = allAvailableDashboardItems.firstOrNull { item ->
-                    !viewModel.featuredRemovedKeys.contains(item.key) && (
-                        item.key == lastKey ||
-                        (item.isTool && item.toolType?.name == lastKey) ||
-                        (item.converterType != null && ("CONV_${item.converterType.name}" == lastKey || item.converterType.name == lastKey))
-                    )
-                } ?: allAvailableDashboardItems.firstOrNull { it.key == "HADITH_LIBRARY" || it.toolType == ToolType.HADITH_LIBRARY }
-                  ?: allAvailableDashboardItems.first()
-
-                val otherCandidates = allAvailableDashboardItems.filter { item ->
-                    item.key != centerCandidate.key &&
-                    item.toolType != centerCandidate.toolType &&
+                // Rank all available items strictly by usage count
+                val allRankedCandidates = allAvailableDashboardItems.filter { item ->
                     !viewModel.featuredRemovedKeys.contains(item.key)
                 }.sortedWith(
                     compareByDescending<FeaturedDashboardItem> { item ->
@@ -1349,6 +1337,13 @@ fun DashboardCategoriesView(
                         } else 0
                     }.thenBy { it.titleEn }
                 )
+
+                val centerCandidate = allRankedCandidates.firstOrNull()
+                    ?: allAvailableDashboardItems.first()
+
+                val otherCandidates = allRankedCandidates.filter { item ->
+                    item.key != centerCandidate.key && item.toolType != centerCandidate.toolType
+                }
 
                 val usedCandidates = otherCandidates.filter { item ->
                     val count = if (item.isTool && item.toolType != null) {

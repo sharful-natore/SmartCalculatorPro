@@ -66,11 +66,14 @@ import com.example.util.AppLanguage
 import com.example.ui.screens.FeaturedDashboardItem
 import com.example.ui.theme.CalculatorThemeColors
 
+import com.example.ui.theme.getToolIconGradient
+import androidx.compose.foundation.layout.BoxWithConstraints
+
 /**
  * 9-Tool Focal Crest Arc Dock:
- * - Center item (index 4) is the Last Used Tool, with the largest size and an animated AI Chat FAB rotating brush border.
- * - Flanking 4 tools on the left and 4 tools on the right gradually decrease in size.
- * - Non-center tools are sorted by usage frequency (most used adjacent to center, tapering to outer edges).
+ * - Center item (index 4) is the Last Used Tool, with the largest size and an animated AI Chat rotating brush border.
+ * - Flanking tools gracefully span across the screen width with balanced, easily-tappable sizes (40dp minimum).
+ * - Theme-harmonized gradients matching the active app theme.
  * - Cascading stacked discs with crisp borders, drop shadows, and zero touch-collision.
  */
 @Composable
@@ -130,19 +133,9 @@ fun PopularToolsArcDock(
         }
     }
 
-    // Color gradient palette for each slot in the dock
-    val slotGradients = remember {
-        listOf(
-            Brush.linearGradient(listOf(Color(0xFF0F766E), Color(0xFF14B8A6))), // 0 (left edge)
-            Brush.linearGradient(listOf(Color(0xFF1E3A8A), Color(0xFF3B82F6))), // 1
-            Brush.linearGradient(listOf(Color(0xFF4C1D95), Color(0xFF8B5CF6))), // 2
-            Brush.linearGradient(listOf(Color(0xFF831843), Color(0xFFEC4899))), // 3 (left flank)
-            Brush.linearGradient(listOf(Color(0xFF0F172A), Color(0xFF1E293B))), // 4 (center)
-            Brush.linearGradient(listOf(Color(0xFF7C2D12), Color(0xFFF97316))), // 5 (right flank)
-            Brush.linearGradient(listOf(Color(0xFF14532D), Color(0xFF22C55E))), // 6
-            Brush.linearGradient(listOf(Color(0xFF0369A1), Color(0xFF06B6D4))), // 7
-            Brush.linearGradient(listOf(Color(0xFF701A75), Color(0xFFD946EF)))  // 8 (right edge)
-        )
+    // Theme harmonized gradient brush for non-center items
+    val themeGradientBrush = remember(themeColors.buttonEqualBg) {
+        getToolIconGradient(themeColors.buttonEqualBg)
     }
 
     Column(
@@ -151,47 +144,39 @@ fun PopularToolsArcDock(
             .padding(vertical = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Stacked Arc Layout Container
-        Box(
+        // Stacked Arc Layout Container using BoxWithConstraints for full-width responsive positioning
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(64.dp)
+                .height(66.dp)
                 .padding(vertical = 2.dp),
             contentAlignment = Alignment.Center
         ) {
-            val centeredXOffsets = remember {
-                listOf(
-                    (-129).dp, // 0 (left edge)
-                    (-105).dp, // 1
-                    (-76).dp,  // 2
-                    (-42).dp,  // 3 (left flank)
-                    0.dp,      // 4 (center)
-                    42.dp,     // 5 (right flank)
-                    76.dp,     // 6
-                    105.dp,    // 7
-                    129.dp     // 8 (right edge)
-                )
-            }
+            val totalWidth = maxWidth
+            // Calculate step so the full 9 items neatly fill the width between edges
+            val horizontalPadding = 20.dp
+            val availableSpan = (totalWidth - horizontalPadding * 2).coerceAtLeast(280.dp)
+            val halfSpan = availableSpan / 2
 
             items.forEachIndexed { index, item ->
                 val distFromCenter = kotlin.math.abs(index - centerIndex)
                 val isCenter = distFromCenter == 0
 
-                // Dynamic sizing tapering from center (58dp) down to edges (32dp)
+                // Balanced sizing: center is 56dp, tapering gently down to 40dp at the edges
                 val circleSize = when (distFromCenter) {
-                    0 -> 58.dp
-                    1 -> 48.dp
-                    2 -> 42.dp
-                    3 -> 37.dp
-                    else -> 32.dp
+                    0 -> 56.dp
+                    1 -> 49.dp
+                    2 -> 45.dp
+                    3 -> 42.dp
+                    else -> 40.dp
                 }
 
                 val iconSize = when (distFromCenter) {
-                    0 -> 28.dp
-                    1 -> 23.dp
-                    2 -> 20.dp
-                    3 -> 17.dp
-                    else -> 15.dp
+                    0 -> 27.dp
+                    1 -> 24.dp
+                    2 -> 22.dp
+                    3 -> 20.dp
+                    else -> 19.dp
                 }
 
                 // Elevation and Z-Index ensure cascading overlap
@@ -204,6 +189,17 @@ fun PopularToolsArcDock(
                     else -> 2.dp
                 }
 
+                // Non-linear horizontal distribution for harmonic curve across full width
+                val sign = if (index < centerIndex) -1f else if (index > centerIndex) 1f else 0f
+                val fraction = when (distFromCenter) {
+                    1 -> 0.28f
+                    2 -> 0.54f
+                    3 -> 0.78f
+                    4 -> 1.0f
+                    else -> 0f
+                }
+                val xOffset = halfSpan * fraction * sign
+
                 val isFocused = focusedItem == item || (focusedItem == null && isCenter)
                 val scaleFactor by animateFloatAsState(
                     targetValue = if (isFocused && !isCenter) 1.08f else 1.0f,
@@ -215,23 +211,15 @@ fun PopularToolsArcDock(
 
                 Box(
                     modifier = Modifier
-                        .offset(x = centeredXOffsets.getOrElse(index) { 0.dp })
+                        .offset(x = xOffset)
                         .zIndex(zIndexVal)
                         .size(circleSize)
                         .scale(scaleFactor)
-                        .shadow(
-                            elevation = elevationVal,
-                            shape = CircleShape,
-                            clip = false
-                        )
                         .clip(CircleShape)
                         .then(
                             if (isCenter) {
                                 Modifier
-                                    .background(
-                                        if (themeColors.isDark) Color(0xFF0F172A)
-                                        else Color(0xFF1E293B)
-                                    )
+                                    .background(Color.White)
                                     .border(
                                         width = 2.8.dp,
                                         brush = animatedAiGradientBrush,
@@ -239,14 +227,10 @@ fun PopularToolsArcDock(
                                     )
                             } else {
                                 Modifier
-                                    .background(
-                                        slotGradients.getOrElse(index) {
-                                            Brush.linearGradient(listOf(themeColors.buttonEqualBg, themeColors.buttonEqualBg))
-                                        }
-                                    )
+                                    .background(themeGradientBrush)
                                     .border(
                                         width = 1.6.dp,
-                                        color = if (themeColors.isDark) Color(0xFF1E293B) else Color.White,
+                                        color = Color.White,
                                         shape = CircleShape
                                     )
                             }
@@ -263,7 +247,7 @@ fun PopularToolsArcDock(
                     Icon(
                         imageVector = item.icon,
                         contentDescription = if (isBn) item.titleBn else item.titleEn,
-                        tint = if (isCenter) Color(0xFF67E8F9) else Color.White,
+                        tint = if (isCenter) themeColors.buttonEqualBg else Color.White,
                         modifier = Modifier.size(iconSize)
                     )
                 }
@@ -287,10 +271,10 @@ fun PopularToolsArcDock(
                 color = themeColors.cardBg,
                 border = androidx.compose.foundation.BorderStroke(
                     1.dp,
-                    if (isCurrentCenter) Color(0xFF4285F4).copy(alpha = 0.45f)
+                    if (isCurrentCenter) themeColors.buttonEqualBg.copy(alpha = 0.45f)
                     else themeColors.displayText.copy(alpha = 0.12f)
                 ),
-                shadowElevation = 1.dp
+                shadowElevation = 0.dp
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp),
@@ -301,7 +285,7 @@ fun PopularToolsArcDock(
                         Icon(
                             imageVector = Icons.Default.AutoAwesome,
                             contentDescription = null,
-                            tint = Color(0xFF4285F4),
+                            tint = themeColors.buttonEqualBg,
                             modifier = Modifier.size(13.dp)
                         )
                     } else {
@@ -315,7 +299,7 @@ fun PopularToolsArcDock(
 
                     Text(
                         text = if (isCurrentCenter) {
-                            if (isBn) "সর্বশেষ: ${currentItem.titleBn}" else "Last used: ${currentItem.titleEn}"
+                            if (isBn) "শীর্ষ ব্যবহৃত: ${currentItem.titleBn}" else "Top Used: ${currentItem.titleEn}"
                         } else {
                             if (isBn) currentItem.titleBn else currentItem.titleEn
                         },
