@@ -1320,15 +1320,37 @@ fun DashboardCategoriesView(
                 )
             }
 
+            val lastUsedItemCandidate = remember(allAvailableDashboardItems, viewModel.lastUsedToolKey) {
+                val lastKey = viewModel.lastUsedToolKey
+                allAvailableDashboardItems.firstOrNull { item ->
+                    item.key == lastKey ||
+                    (item.isTool && item.toolType?.name == lastKey) ||
+                    (item.converterType != null && ("CONV_${item.converterType.name}" == lastKey || item.converterType.name == lastKey))
+                } ?: allAvailableDashboardItems.firstOrNull { it.key == "HADITH_LIBRARY" || it.toolType == ToolType.HADITH_LIBRARY }
+                  ?: allAvailableDashboardItems.firstOrNull()
+            }
+
             val popularArcDockItems = remember(
                 allAvailableDashboardItems,
                 usageMap,
+                viewModel.lastUsedToolKey,
                 viewModel.featuredRemovedKeys
             ) {
-                // Rank all available items strictly by usage count
-                val allRankedCandidates = allAvailableDashboardItems.filter { item ->
+                val lastKey = viewModel.lastUsedToolKey
+                // Filter out removed items
+                val availableItems = allAvailableDashboardItems.filter { item ->
                     !viewModel.featuredRemovedKeys.contains(item.key)
-                }.sortedWith(
+                }
+
+                // Identify the last used tool if available, or fall back to most used
+                val lastUsedCandidate = availableItems.firstOrNull { item ->
+                    item.key == lastKey ||
+                    (item.isTool && item.toolType?.name == lastKey) ||
+                    (item.converterType != null && ("CONV_${item.converterType.name}" == lastKey || item.converterType.name == lastKey))
+                }
+
+                // Rank all items by usage frequency
+                val rankedByUsage = availableItems.sortedWith(
                     compareByDescending<FeaturedDashboardItem> { item ->
                         if (item.isTool && item.toolType != null) {
                             (usageMap["TOOL_${item.toolType.name}"] ?: usageMap[item.toolType.name] ?: 0) as Int
@@ -1338,54 +1360,16 @@ fun DashboardCategoriesView(
                     }.thenBy { it.titleEn }
                 )
 
-                val centerCandidate = allRankedCandidates.firstOrNull()
-                    ?: allAvailableDashboardItems.first()
+                // Build a list with the last-used (or top-used) item at the center or starting focus
+                val centerItem = lastUsedCandidate ?: rankedByUsage.firstOrNull() ?: availableItems.first()
+                val remainingItems = rankedByUsage.filter { it.key != centerItem.key && it.toolType != centerItem.toolType }
 
-                val otherCandidates = allRankedCandidates.filter { item ->
-                    item.key != centerCandidate.key && item.toolType != centerCandidate.toolType
-                }
+                // Include essential defaults first, then the rest
+                val combinedList = mutableListOf<FeaturedDashboardItem>()
+                combinedList.add(centerItem)
+                combinedList.addAll(remainingItems)
 
-                val usedCandidates = otherCandidates.filter { item ->
-                    val count = if (item.isTool && item.toolType != null) {
-                        (usageMap["TOOL_${item.toolType.name}"] ?: usageMap[item.toolType.name] ?: 0) as Int
-                    } else if (item.converterType != null) {
-                        (usageMap["CONV_${item.converterType.name}"] ?: usageMap[item.converterType.name] ?: 0) as Int
-                    } else 0
-                    count > 0
-                }.toMutableList()
-
-                defaultEssentialKeys.forEach { defKey ->
-                    if (usedCandidates.size < 8 && defKey != centerCandidate.key && defKey != centerCandidate.toolType?.name) {
-                        val matchingDef = allAvailableDashboardItems.firstOrNull { item ->
-                            item.key == defKey || item.toolType?.name == defKey ||
-                            (item.converterType != null && ("CONV_${item.converterType.name}" == defKey || item.converterType.name == defKey))
-                        }
-                        if (matchingDef != null && !usedCandidates.any { it.key == matchingDef.key }) {
-                            usedCandidates.add(matchingDef)
-                        }
-                    }
-                }
-
-                otherCandidates.forEach { cand ->
-                    if (usedCandidates.size < 8 && !usedCandidates.any { it.key == cand.key }) {
-                        usedCandidates.add(cand)
-                    }
-                }
-
-                val top8 = usedCandidates.take(8)
-
-                val result = arrayOfNulls<FeaturedDashboardItem>(9)
-                result[4] = centerCandidate
-                if (top8.size > 0) result[5] = top8[0]
-                if (top8.size > 1) result[3] = top8[1]
-                if (top8.size > 2) result[6] = top8[2]
-                if (top8.size > 3) result[2] = top8[3]
-                if (top8.size > 4) result[7] = top8[4]
-                if (top8.size > 5) result[1] = top8[5]
-                if (top8.size > 6) result[8] = top8[6]
-                if (top8.size > 7) result[0] = top8[7]
-
-                result.mapNotNull { it }
+                combinedList
             }
 
             val currentDisplayList = if (activeDashboardTab == "FEATURED") popularArcDockItems else topFavoritesList
@@ -1503,6 +1487,7 @@ fun DashboardCategoriesView(
                 if (tabState == "FEATURED") {
                     PopularToolsArcDock(
                         items = popularArcDockItems,
+                        lastUsedItem = lastUsedItemCandidate,
                         themeColors = themeColors,
                         language = viewModel.selectedLanguage,
                         onItemClick = { item ->
