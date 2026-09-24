@@ -1,10 +1,8 @@
 package com.example.ui.components
 
-import android.graphics.Matrix
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
@@ -17,7 +15,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
@@ -52,22 +49,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.Shader
-import androidx.compose.ui.graphics.ShaderBrush
-import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.SweepGradientShader
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.screens.FeaturedDashboardItem
@@ -77,66 +68,6 @@ import com.example.util.AppLanguage
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
-
-/**
- * Seamless Speech Bubble Shape with integrated downward pointer arrow.
- * Creates a continuous outline so background, border, and elevation cast seamlessly.
- */
-class SpeechBubbleShape(
-    val cornerRadius: Dp = 14.dp,
-    val arrowWidth: Dp = 11.dp,
-    val arrowHeight: Dp = 5.dp
-) : Shape {
-    override fun createOutline(
-        size: Size,
-        layoutDirection: LayoutDirection,
-        density: Density
-    ): Outline {
-        val cr = with(density) { cornerRadius.toPx() }.coerceAtMost(size.height / 2f)
-        val aw = with(density) { arrowWidth.toPx() }
-        val ah = with(density) { arrowHeight.toPx() }
-        val bubbleHeight = (size.height - ah).coerceAtLeast(0f)
-        val path = Path().apply {
-            moveTo(cr, 0f)
-            lineTo(size.width - cr, 0f)
-            arcTo(
-                rect = Rect(size.width - 2 * cr, 0f, size.width, 2 * cr),
-                startAngleDegrees = 270f,
-                sweepAngleDegrees = 90f,
-                forceMoveTo = false
-            )
-            lineTo(size.width, bubbleHeight - cr)
-            arcTo(
-                rect = Rect(size.width - 2 * cr, bubbleHeight - 2 * cr, size.width, bubbleHeight),
-                startAngleDegrees = 0f,
-                sweepAngleDegrees = 90f,
-                forceMoveTo = false
-            )
-            val arrowLeft = (size.width - aw) / 2f
-            val arrowRight = (size.width + aw) / 2f
-            val arrowTip = size.width / 2f
-            lineTo(arrowRight, bubbleHeight)
-            lineTo(arrowTip, size.height)
-            lineTo(arrowLeft, bubbleHeight)
-            lineTo(cr, bubbleHeight)
-            arcTo(
-                rect = Rect(0f, bubbleHeight - 2 * cr, 2 * cr, bubbleHeight),
-                startAngleDegrees = 90f,
-                sweepAngleDegrees = 90f,
-                forceMoveTo = false
-            )
-            lineTo(0f, cr)
-            arcTo(
-                rect = Rect(0f, 0f, 2 * cr, 2 * cr),
-                startAngleDegrees = 180f,
-                sweepAngleDegrees = 90f,
-                forceMoveTo = false
-            )
-            close()
-        }
-        return Outline.Generic(path)
-    }
-}
 
 private fun getPositiveMod(value: Int, mod: Int): Int {
     if (mod <= 0) return 0
@@ -170,48 +101,31 @@ fun PopularToolsArcDock(
     // Slot spacing tuned to keep items closely nested without gaps
     val slotWidthDp = 40.dp
     val slotWidthPx = with(density) { slotWidthDp.toPx() }
-    val carouselHeightDp = 58.dp
+    val carouselHeightDp = 64.dp
 
     // Continuous scroll offset in pixels
     val scrollOffset = remember { Animatable(0f) }
 
-    // Gemini Rotating Gradient Animation for the center item
-    val infiniteTransition = rememberInfiniteTransition(label = "dock_ai_border_rotation")
-    val rotationAngle by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
+    // Smooth Theme Color Pulse Animation for the center item
+    val infiniteTransition = rememberInfiniteTransition(label = "dock_center_pulse")
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 1.0f,
+        targetValue = 1.20f,
         animationSpec = infiniteRepeatable(
-            animation = tween(2400, easing = LinearEasing),
+            animation = tween(1300, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Restart
         ),
-        label = "aiRotationAngle"
+        label = "pulseScale"
     )
-
-    val geminiColors = remember {
-        listOf(
-            Color(0xFF4285F4), // Blue
-            Color(0xFF9B51E0), // Purple
-            Color(0xFFEA4335), // Red/Pink
-            Color(0xFFFBBC05), // Yellow
-            Color(0xFF34A853), // Green
-            Color(0xFF4285F4)  // Loop
-        )
-    }
-
-    val animatedAiGradientBrush = remember(rotationAngle) {
-        object : ShaderBrush() {
-            override fun createShader(size: Size): Shader {
-                val shader = SweepGradientShader(
-                    center = Offset(size.width / 2f, size.height / 2f),
-                    colors = geminiColors
-                )
-                val matrix = Matrix()
-                matrix.postRotate(rotationAngle, size.width / 2f, size.height / 2f)
-                shader.setLocalMatrix(matrix)
-                return shader
-            }
-        }
-    }
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.60f,
+        targetValue = 0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1300, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "pulseAlpha"
+    )
 
     val themeGradientBrush = remember(themeColors.buttonEqualBg) {
         getToolIconGradient(themeColors.buttonEqualBg)
@@ -248,32 +162,75 @@ fun PopularToolsArcDock(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 2.dp),
+            .padding(top = 1.dp, bottom = 2.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // 1. Seamless Speech Bubble Tooltip with Integrated Pointer Arrow
-        Surface(
-            onClick = { onItemClick(activeCenterItem) },
-            shape = SpeechBubbleShape(
-                cornerRadius = 14.dp,
-                arrowWidth = 11.dp,
-                arrowHeight = 5.dp
-            ),
-            color = themeColors.cardBg,
-            border = androidx.compose.foundation.BorderStroke(
-                1.2.dp,
-                themeColors.buttonEqualBg.copy(alpha = 0.70f)
-            ),
-            shadowElevation = 2.5.dp
+        // 1. Compact & Seamless Speech Bubble Tooltip with Integrated Pointer Arrow
+        val tooltipInteractionSource = remember { MutableInteractionSource() }
+        Box(
+            modifier = Modifier
+                .clickable(
+                    interactionSource = tooltipInteractionSource,
+                    indication = null
+                ) { onItemClick(activeCenterItem) }
+                .drawBehind {
+                    val arrowWidthPx = 9.dp.toPx()
+                    val arrowHeightPx = 4.dp.toPx()
+                    val bubbleHeight = (size.height - arrowHeightPx).coerceAtLeast(0f)
+                    val r = (bubbleHeight / 2f).coerceAtLeast(0f)
+
+                    val path = Path().apply {
+                        // Top horizontal line
+                        moveTo(r, 0f)
+                        lineTo((size.width - r).coerceAtLeast(r), 0f)
+                        // Right semicircle
+                        arcTo(
+                            rect = Rect(size.width - 2 * r, 0f, size.width, bubbleHeight),
+                            startAngleDegrees = -90f,
+                            sweepAngleDegrees = 180f,
+                            forceMoveTo = false
+                        )
+                        // Bottom line right of pointer
+                        val arrowRight = (size.width + arrowWidthPx) / 2f
+                        val arrowLeft = (size.width - arrowWidthPx) / 2f
+                        val arrowTip = size.width / 2f
+                        lineTo(arrowRight, bubbleHeight)
+                        // Pointer tip
+                        lineTo(arrowTip, size.height)
+                        // Pointer back to left
+                        lineTo(arrowLeft, bubbleHeight)
+                        lineTo(r, bubbleHeight)
+                        // Left semicircle
+                        arcTo(
+                            rect = Rect(0f, 0f, 2 * r, bubbleHeight),
+                            startAngleDegrees = 90f,
+                            sweepAngleDegrees = 180f,
+                            forceMoveTo = false
+                        )
+                        close()
+                    }
+
+                    // Background fill
+                    drawPath(
+                        path = path,
+                        color = themeColors.cardBg
+                    )
+                    // Border outline
+                    drawPath(
+                        path = path,
+                        color = themeColors.buttonEqualBg.copy(alpha = 0.70f),
+                        style = Stroke(width = 1.2.dp.toPx())
+                    )
+                }
+                .padding(start = 10.dp, end = 10.dp, top = 2.5.dp, bottom = 6.5.dp)
         ) {
             Row(
-                modifier = Modifier.padding(start = 12.dp, end = 12.dp, top = 3.5.dp, bottom = 8.5.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(5.dp)
             ) {
                 Box(
                     modifier = Modifier
-                        .size(6.dp)
+                        .size(5.dp)
                         .clip(CircleShape)
                         .background(themeColors.buttonEqualBg)
                 )
@@ -286,7 +243,7 @@ fun PopularToolsArcDock(
                 ) { targetItem ->
                     Text(
                         text = if (isBn) targetItem.titleBn else targetItem.titleEn,
-                        fontSize = 11.5.sp,
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = themeColors.displayText,
                         maxLines = 1
@@ -385,26 +342,6 @@ fun PopularToolsArcDock(
                         .offset(x = slotLeftDp, y = slotTopDp)
                         .size(circleSize)
                         .aspectRatio(1f)
-                        .clip(CircleShape)
-                        .then(
-                            if (isCenter) {
-                                Modifier
-                                    .background(Color.White)
-                                    .border(
-                                        width = 2.8.dp,
-                                        brush = animatedAiGradientBrush,
-                                        shape = CircleShape
-                                    )
-                            } else {
-                                Modifier
-                                    .background(themeGradientBrush)
-                                    .border(
-                                        width = 1.6.dp,
-                                        color = Color.White,
-                                        shape = CircleShape
-                                    )
-                            }
-                        )
                         .clickable(
                             interactionSource = interactionSource,
                             indication = null
@@ -420,6 +357,57 @@ fun PopularToolsArcDock(
                                     )
                                 }
                             }
+                        }
+                        .drawBehind {
+                            val center = Offset(size.width / 2f, size.height / 2f)
+                            val baseRadius = size.minDimension / 2f
+
+                            if (isCenter) {
+                                // 1. Outer Pulse Ring expanding outwards with fading alpha
+                                if (pulseAlpha > 0.01f) {
+                                    val pulseRadius = baseRadius * pulseScale
+                                    drawCircle(
+                                        color = themeColors.buttonEqualBg.copy(alpha = pulseAlpha),
+                                        radius = pulseRadius,
+                                        center = center,
+                                        style = Stroke(width = 2.dp.toPx())
+                                    )
+                                }
+
+                                // 2. Solid White Disc Background
+                                drawCircle(
+                                    color = Color.White,
+                                    radius = baseRadius,
+                                    center = center
+                                )
+
+                                // 3. Solid Theme Color Border (inward so it stays razor-sharp)
+                                val strokeWidth = 2.5.dp.toPx()
+                                drawCircle(
+                                    color = themeColors.buttonEqualBg,
+                                    radius = baseRadius - (strokeWidth / 2f),
+                                    center = center,
+                                    style = Stroke(width = strokeWidth)
+                                )
+                            } else {
+                                // Side items:
+                                // 1. Solid Theme Gradient Disc Fill
+                                drawCircle(
+                                    brush = themeGradientBrush,
+                                    radius = baseRadius,
+                                    center = center
+                                )
+
+                                // 2. Pure Solid White Border drawn cleanly on inner edge
+                                // No clip, no grey fringe, 100% solid white
+                                val strokeWidth = 1.6.dp.toPx()
+                                drawCircle(
+                                    color = Color.White,
+                                    radius = baseRadius - (strokeWidth / 2f),
+                                    center = center,
+                                    style = Stroke(width = strokeWidth)
+                                )
+                            }
                         },
                     contentAlignment = Alignment.Center
                 ) {
@@ -434,7 +422,7 @@ fun PopularToolsArcDock(
         }
 
         // 3. Clear spacing before bottom capsule (prevents collision)
-        Spacer(modifier = Modifier.height(7.dp))
+        Spacer(modifier = Modifier.height(5.dp))
 
         // 4. Bottom Capsule: Strictly displays the actual last used tool, fixed and independent of scrolling
         val actualLastUsed = lastUsedItem ?: items.firstOrNull()
