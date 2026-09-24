@@ -1315,36 +1315,17 @@ fun DashboardCategoriesView(
                 )
             }
 
-            val lastUsedItemCandidate = remember(allAvailableDashboardItems, viewModel.lastUsedToolKey) {
-                val lastKey = viewModel.lastUsedToolKey
-                allAvailableDashboardItems.firstOrNull { item ->
-                    item.key == lastKey ||
-                    (item.isTool && item.toolType?.name == lastKey) ||
-                    (item.converterType != null && ("CONV_${item.converterType.name}" == lastKey || item.converterType.name == lastKey))
-                } ?: allAvailableDashboardItems.firstOrNull { it.key == "HADITH_LIBRARY" || it.toolType == ToolType.HADITH_LIBRARY }
-                  ?: allAvailableDashboardItems.firstOrNull()
-            }
-
             val popularArcDockItems = remember(
                 allAvailableDashboardItems,
                 usageMap,
-                viewModel.lastUsedToolKey,
                 viewModel.featuredRemovedKeys
             ) {
-                val lastKey = viewModel.lastUsedToolKey
                 // Filter out removed items
                 val availableItems = allAvailableDashboardItems.filter { item ->
                     !viewModel.featuredRemovedKeys.contains(item.key)
                 }
 
-                // Identify the last used tool if available, or fall back to most used
-                val lastUsedCandidate = availableItems.firstOrNull { item ->
-                    item.key == lastKey ||
-                    (item.isTool && item.toolType?.name == lastKey) ||
-                    (item.converterType != null && ("CONV_${item.converterType.name}" == lastKey || item.converterType.name == lastKey))
-                }
-
-                // Rank all items by usage frequency
+                // Strictly rank all items by usage frequency descending (most used first)
                 val rankedByUsage = availableItems.sortedWith(
                     compareByDescending<FeaturedDashboardItem> { item ->
                         if (item.isTool && item.toolType != null) {
@@ -1355,34 +1336,46 @@ fun DashboardCategoriesView(
                     }.thenBy { it.titleEn }
                 )
 
-                // Build a list with the last-used (or top-used) item at the center or starting focus
-                val centerItem = lastUsedCandidate ?: rankedByUsage.firstOrNull() ?: availableItems.first()
-                val remainingItems = rankedByUsage.filter { it.key != centerItem.key && it.toolType != centerItem.toolType }
+                // Arrange symmetrically around center (slot 0):
+                // Index 0: #1 Most used tool (right at Center slot 0)
+                // Index 1: #2 Most used tool (immediate right, slot +1)
+                // Index last: #3 Most used tool (immediate left, slot -1)
+                // Index 2: #4 Most used tool (slot +2)
+                // Index last-1: #5 Most used tool (slot -2)...
+                if (rankedByUsage.isNotEmpty()) {
+                    val combined = arrayOfNulls<FeaturedDashboardItem>(rankedByUsage.size)
+                    var leftIdx = rankedByUsage.size - 1
+                    var rightIdx = 1
+                    combined[0] = rankedByUsage[0]
 
-                // Include essential defaults first, then the rest
-                val combinedList = mutableListOf<FeaturedDashboardItem>()
-                combinedList.add(centerItem)
-                combinedList.addAll(remainingItems)
-
-                combinedList
+                    for (i in 1 until rankedByUsage.size) {
+                        if (i % 2 == 1) {
+                            combined[rightIdx++] = rankedByUsage[i]
+                        } else {
+                            combined[leftIdx--] = rankedByUsage[i]
+                        }
+                    }
+                    combined.filterNotNull()
+                } else {
+                    rankedByUsage
+                }
             }
 
             // Rotary Arc Carousel of Popular Tools
             PopularToolsArcDock(
-                        items = popularArcDockItems,
-                        lastUsedItem = lastUsedItemCandidate,
-                        themeColors = themeColors,
-                        language = viewModel.selectedLanguage,
-                        onItemClick = { item ->
-                            if (item.isTool && item.toolType != null) {
-                                viewModel.openTool(item.toolType)
-                            } else if (item.converterType != null) {
-                                viewModel.openConverter(item.converterType)
-                            } else if (item.isSpecialDay && item.specialEvent != null) {
-                                selectedSpecialEventDialog = item.specialEvent
-                            }
-                        }
-                    )
+                items = popularArcDockItems,
+                themeColors = themeColors,
+                language = viewModel.selectedLanguage,
+                onItemClick = { item ->
+                    if (item.isTool && item.toolType != null) {
+                        viewModel.openTool(item.toolType)
+                    } else if (item.converterType != null) {
+                        viewModel.openConverter(item.converterType)
+                    } else if (item.isSpecialDay && item.specialEvent != null) {
+                        selectedSpecialEventDialog = item.specialEvent
+                    }
+                }
+            )
         }
 
         // Special Day / Historic Event Overview Dialog

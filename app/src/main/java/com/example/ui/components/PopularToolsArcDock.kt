@@ -33,34 +33,26 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import com.example.ui.screens.FeaturedDashboardItem
 import com.example.ui.theme.CalculatorThemeColors
 import com.example.ui.theme.getToolIconGradient
@@ -76,17 +68,14 @@ private fun getPositiveMod(value: Int, mod: Int): Int {
 }
 
 /**
- * Scrollable Rotary Arc Dock with Speech Bubble Tooltip & Focal Layering:
- * - Persistent Speech Bubble Tooltip with Downward Pointer Arrow sitting directly atop the center tool.
- * - Center item is a true 1:1 circular disc, layered ON TOP of all adjacent discs.
- * - Flanking items decrease gently in size (54dp -> 50dp -> 47dp -> 44dp -> 42dp) with tight, gapless spacing.
- * - Carousel has ample top/bottom clearance so circles are never clipped or colliding with bottom pill.
- * - Bottom capsule permanently displays the user's actual Last Used Tool ("সর্বশেষ ব্যবহৃত").
+ * Rotary Arc Carousel of Popular Tools with Seamless Speech Bubble Tooltip.
+ * - Center slot is strictly on top (zIndex 10f) with a pulse animation that is fully visible and unclipped.
+ * - Items are strictly ranked by usage count.
+ * - Seamless infinite scroll loop via modular indexing.
  */
 @Composable
 fun PopularToolsArcDock(
     items: List<FeaturedDashboardItem>,
-    lastUsedItem: FeaturedDashboardItem?,
     themeColors: CalculatorThemeColors,
     language: AppLanguage,
     onItemClick: (FeaturedDashboardItem) -> Unit,
@@ -101,7 +90,7 @@ fun PopularToolsArcDock(
     // Slot spacing tuned to keep items closely nested without gaps
     val slotWidthDp = 40.dp
     val slotWidthPx = with(density) { slotWidthDp.toPx() }
-    val carouselHeightDp = 64.dp
+    val carouselHeightDp = 70.dp
 
     // Continuous scroll offset in pixels
     val scrollOffset = remember { Animatable(0f) }
@@ -110,7 +99,7 @@ fun PopularToolsArcDock(
     val infiniteTransition = rememberInfiniteTransition(label = "dock_center_pulse")
     val pulseScale by infiniteTransition.animateFloat(
         initialValue = 1.0f,
-        targetValue = 1.20f,
+        targetValue = 1.22f,
         animationSpec = infiniteRepeatable(
             animation = tween(1300, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Restart
@@ -118,7 +107,7 @@ fun PopularToolsArcDock(
         label = "pulseScale"
     )
     val pulseAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.60f,
+        initialValue = 0.65f,
         targetValue = 0f,
         animationSpec = infiniteRepeatable(
             animation = tween(1300, easing = FastOutSlowInEasing),
@@ -140,29 +129,10 @@ fun PopularToolsArcDock(
         items.getOrNull(actualIdx) ?: items.first()
     }
 
-    // Smoothly animate to lastUsedItem when it updates externally
-    LaunchedEffect(lastUsedItem?.key) {
-        if (lastUsedItem != null) {
-            val targetLocalIdx = items.indexOfFirst { it.key == lastUsedItem.key }
-            if (targetLocalIdx >= 0) {
-                val currentSlot = (-scrollOffset.value / slotWidthPx).roundToInt()
-                val currentMod = getPositiveMod(currentSlot, items.size)
-                var diff = targetLocalIdx - currentMod
-                if (diff > items.size / 2) diff -= items.size
-                if (diff < -items.size / 2) diff += items.size
-                val targetSlot = currentSlot + diff
-                scrollOffset.animateTo(
-                    targetValue = -targetSlot * slotWidthPx,
-                    animationSpec = tween(350, easing = FastOutSlowInEasing)
-                )
-            }
-        }
-    }
-
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(top = 1.dp, bottom = 2.dp),
+            .padding(top = 1.dp, bottom = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // 1. Compact & Seamless Speech Bubble Tooltip with Integrated Pointer Arrow
@@ -252,15 +222,14 @@ fun PopularToolsArcDock(
             }
         }
 
-        // Tiny 1dp gap between indicator tip and center circle top
-        Spacer(modifier = Modifier.height(1.dp))
+        // Small 2dp gap between indicator tip and center circle top
+        Spacer(modifier = Modifier.height(2.dp))
 
-        // 2. Rotary Arc Carousel Container
+        // 2. Rotary Arc Carousel Container (no clipping to let pulse wave breathe fully)
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(carouselHeightDp)
-                .clipToBounds()
                 .draggable(
                     state = rememberDraggableState { delta ->
                         coroutineScope.launch {
@@ -332,7 +301,7 @@ fun PopularToolsArcDock(
                 val slotCenterFromMidScreenPx = (slotIdx * slotWidthPx) + scrollOffset.value
                 val slotCenterXDp = halfScreenWidth + with(density) { slotCenterFromMidScreenPx.toDp() }
                 val slotLeftDp = slotCenterXDp - (circleSize / 2)
-                // Center vertically within the 58dp carousel height
+                // Center vertically within the carousel height
                 val slotTopDp = (carouselHeightDp - circleSize) / 2
 
                 val interactionSource = remember { MutableInteractionSource() }
@@ -342,6 +311,7 @@ fun PopularToolsArcDock(
                         .offset(x = slotLeftDp, y = slotTopDp)
                         .size(circleSize)
                         .aspectRatio(1f)
+                        .zIndex(if (isCenter) 10f else (5f - distFromCenter).coerceAtLeast(0f))
                         .clickable(
                             interactionSource = interactionSource,
                             indication = null
@@ -363,7 +333,7 @@ fun PopularToolsArcDock(
                             val baseRadius = size.minDimension / 2f
 
                             if (isCenter) {
-                                // 1. Outer Pulse Ring expanding outwards with fading alpha
+                                // 1. Outer Pulse Ring expanding outwards with fading alpha (fully on top, never obscured)
                                 if (pulseAlpha > 0.01f) {
                                     val pulseRadius = baseRadius * pulseScale
                                     drawCircle(
@@ -416,53 +386,6 @@ fun PopularToolsArcDock(
                         contentDescription = if (isBn) item.titleBn else item.titleEn,
                         tint = if (isCenter) themeColors.buttonEqualBg else Color.White,
                         modifier = Modifier.size(iconSize)
-                    )
-                }
-            }
-        }
-
-        // 3. Clear spacing before bottom capsule (prevents collision)
-        Spacer(modifier = Modifier.height(5.dp))
-
-        // 4. Bottom Capsule: Strictly displays the actual last used tool, fixed and independent of scrolling
-        val actualLastUsed = lastUsedItem ?: items.firstOrNull()
-        if (actualLastUsed != null) {
-            Surface(
-                onClick = { onItemClick(actualLastUsed) },
-                shape = RoundedCornerShape(20.dp),
-                color = themeColors.cardBg,
-                border = androidx.compose.foundation.BorderStroke(
-                    1.dp,
-                    themeColors.buttonEqualBg.copy(alpha = 0.45f)
-                ),
-                shadowElevation = 0.dp
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.History,
-                        contentDescription = null,
-                        tint = themeColors.buttonEqualBg,
-                        modifier = Modifier.size(14.dp)
-                    )
-
-                    Text(
-                        text = if (isBn) "সর্বশেষ ব্যবহৃত: ${actualLastUsed.titleBn}" else "Last used: ${actualLastUsed.titleEn}",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = themeColors.displayText,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = null,
-                        tint = themeColors.displayText.copy(alpha = 0.5f),
-                        modifier = Modifier.size(11.dp)
                     )
                 }
             }
