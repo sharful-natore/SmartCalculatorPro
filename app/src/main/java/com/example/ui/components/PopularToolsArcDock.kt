@@ -90,7 +90,7 @@ fun PopularToolsArcDock(
     // Slot spacing tuned to keep items closely nested without gaps
     val slotWidthDp = 40.dp
     val slotWidthPx = with(density) { slotWidthDp.toPx() }
-    val carouselHeightDp = 70.dp
+    val carouselHeightDp = 58.dp
 
     // Continuous scroll offset in pixels
     val scrollOffset = remember { Animatable(0f) }
@@ -132,13 +132,14 @@ fun PopularToolsArcDock(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(top = 1.dp, bottom = 4.dp),
+            .padding(top = 1.dp, bottom = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // 1. Compact & Seamless Speech Bubble Tooltip with Integrated Pointer Arrow
         val tooltipInteractionSource = remember { MutableInteractionSource() }
         Box(
             modifier = Modifier
+                .zIndex(20f)
                 .clickable(
                     interactionSource = tooltipInteractionSource,
                     indication = null
@@ -221,9 +222,6 @@ fun PopularToolsArcDock(
                 }
             }
         }
-
-        // Small 2dp gap between indicator tip and center circle top
-        Spacer(modifier = Modifier.height(2.dp))
 
         // 2. Rotary Arc Carousel Container (no clipping to let pulse wave breathe fully)
         BoxWithConstraints(
