@@ -454,6 +454,34 @@ fun MainContent(
                                     )
                                 }
 
+                                // Favorites Action Button in Title Bar
+                                val totalFavoritesCount = viewModel.favoriteTools.size + viewModel.favoriteConverters.size
+                                IconButton(onClick = { viewModel.showFavoritesDialog = true }) {
+                                    Box(contentAlignment = Alignment.TopEnd) {
+                                        Icon(
+                                            imageVector = Icons.Default.Star,
+                                            contentDescription = "Favorites",
+                                            tint = if (totalFavoritesCount > 0) Color(0xFFFFD700) else Color.White.copy(alpha = 0.9f)
+                                        )
+                                        if (totalFavoritesCount > 0) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .offset(x = 6.dp, y = (-3).dp)
+                                                    .clip(RoundedCornerShape(8.dp))
+                                                    .background(Color(0xFFFF3D00))
+                                                    .padding(horizontal = 4.dp, vertical = 0.5.dp)
+                                            ) {
+                                                Text(
+                                                    text = "$totalFavoritesCount",
+                                                    color = Color.White,
+                                                    fontSize = 9.sp,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+
                                 IconButton(onClick = { showVisualThemesDialog = true }) {
                                     Icon(
                                         imageVector = Icons.Default.Palette,

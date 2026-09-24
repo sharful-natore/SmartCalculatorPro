@@ -53,14 +53,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shader
 import androidx.compose.ui.graphics.ShaderBrush
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SweepGradientShader
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.screens.FeaturedDashboardItem
@@ -70,6 +77,66 @@ import com.example.util.AppLanguage
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
+
+/**
+ * Seamless Speech Bubble Shape with integrated downward pointer arrow.
+ * Creates a continuous outline so background, border, and elevation cast seamlessly.
+ */
+class SpeechBubbleShape(
+    val cornerRadius: Dp = 14.dp,
+    val arrowWidth: Dp = 11.dp,
+    val arrowHeight: Dp = 5.dp
+) : Shape {
+    override fun createOutline(
+        size: Size,
+        layoutDirection: LayoutDirection,
+        density: Density
+    ): Outline {
+        val cr = with(density) { cornerRadius.toPx() }.coerceAtMost(size.height / 2f)
+        val aw = with(density) { arrowWidth.toPx() }
+        val ah = with(density) { arrowHeight.toPx() }
+        val bubbleHeight = (size.height - ah).coerceAtLeast(0f)
+        val path = Path().apply {
+            moveTo(cr, 0f)
+            lineTo(size.width - cr, 0f)
+            arcTo(
+                rect = Rect(size.width - 2 * cr, 0f, size.width, 2 * cr),
+                startAngleDegrees = 270f,
+                sweepAngleDegrees = 90f,
+                forceMoveTo = false
+            )
+            lineTo(size.width, bubbleHeight - cr)
+            arcTo(
+                rect = Rect(size.width - 2 * cr, bubbleHeight - 2 * cr, size.width, bubbleHeight),
+                startAngleDegrees = 0f,
+                sweepAngleDegrees = 90f,
+                forceMoveTo = false
+            )
+            val arrowLeft = (size.width - aw) / 2f
+            val arrowRight = (size.width + aw) / 2f
+            val arrowTip = size.width / 2f
+            lineTo(arrowRight, bubbleHeight)
+            lineTo(arrowTip, size.height)
+            lineTo(arrowLeft, bubbleHeight)
+            lineTo(cr, bubbleHeight)
+            arcTo(
+                rect = Rect(0f, bubbleHeight - 2 * cr, 2 * cr, bubbleHeight),
+                startAngleDegrees = 90f,
+                sweepAngleDegrees = 90f,
+                forceMoveTo = false
+            )
+            lineTo(0f, cr)
+            arcTo(
+                rect = Rect(0f, 0f, 2 * cr, 2 * cr),
+                startAngleDegrees = 180f,
+                sweepAngleDegrees = 90f,
+                forceMoveTo = false
+            )
+            close()
+        }
+        return Outline.Generic(path)
+    }
+}
 
 private fun getPositiveMod(value: Int, mod: Int): Int {
     if (mod <= 0) return 0
@@ -184,75 +251,47 @@ fun PopularToolsArcDock(
             .padding(vertical = 2.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // 1. Integrated Speech Bubble Tooltip with Downward Indicator Arrow (Zero-gap connection)
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(bottom = 0.dp)
+        // 1. Seamless Speech Bubble Tooltip with Integrated Pointer Arrow
+        Surface(
+            onClick = { onItemClick(activeCenterItem) },
+            shape = SpeechBubbleShape(
+                cornerRadius = 14.dp,
+                arrowWidth = 11.dp,
+                arrowHeight = 5.dp
+            ),
+            color = themeColors.cardBg,
+            border = androidx.compose.foundation.BorderStroke(
+                1.2.dp,
+                themeColors.buttonEqualBg.copy(alpha = 0.70f)
+            ),
+            shadowElevation = 2.5.dp
         ) {
-            Surface(
-                onClick = { onItemClick(activeCenterItem) },
-                shape = RoundedCornerShape(50), // Fully rounded pill capsule
-                color = themeColors.cardBg,
-                border = androidx.compose.foundation.BorderStroke(
-                    1.2.dp,
-                    themeColors.buttonEqualBg.copy(alpha = 0.65f)
-                ),
-                shadowElevation = 2.dp
+            Row(
+                modifier = Modifier.padding(start = 12.dp, end = 12.dp, top = 3.5.dp, bottom = 8.5.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(5.dp)
             ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 3.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(5.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(6.dp)
-                            .clip(CircleShape)
-                            .background(themeColors.buttonEqualBg)
+                Box(
+                    modifier = Modifier
+                        .size(6.dp)
+                        .clip(CircleShape)
+                        .background(themeColors.buttonEqualBg)
+                )
+                AnimatedContent(
+                    targetState = activeCenterItem,
+                    transitionSpec = {
+                        fadeIn(tween(140)) togetherWith fadeOut(tween(140))
+                    },
+                    label = "CenterTooltipContent"
+                ) { targetItem ->
+                    Text(
+                        text = if (isBn) targetItem.titleBn else targetItem.titleEn,
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColors.displayText,
+                        maxLines = 1
                     )
-                    AnimatedContent(
-                        targetState = activeCenterItem,
-                        transitionSpec = {
-                            fadeIn(tween(140)) togetherWith fadeOut(tween(140))
-                        },
-                        label = "CenterTooltipContent"
-                    ) { targetItem ->
-                        Text(
-                            text = if (isBn) targetItem.titleBn else targetItem.titleEn,
-                            fontSize = 11.5.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = themeColors.displayText,
-                            maxLines = 1
-                        )
-                    }
                 }
-            }
-
-            // Downward Pointer Arrow directly pointing at the center circle
-            Canvas(
-                modifier = Modifier
-                    .size(width = 12.dp, height = 5.dp)
-                    .offset(y = (-1).dp)
-            ) {
-                val path = androidx.compose.ui.graphics.Path().apply {
-                    moveTo(0f, 0f)
-                    lineTo(size.width, 0f)
-                    lineTo(size.width / 2f, size.height)
-                    close()
-                }
-                drawPath(path, color = themeColors.cardBg)
-                drawLine(
-                    color = themeColors.buttonEqualBg.copy(alpha = 0.65f),
-                    start = Offset(0f, 0f),
-                    end = Offset(size.width / 2f, size.height),
-                    strokeWidth = 1.2f * density.density
-                )
-                drawLine(
-                    color = themeColors.buttonEqualBg.copy(alpha = 0.65f),
-                    start = Offset(size.width, 0f),
-                    end = Offset(size.width / 2f, size.height),
-                    strokeWidth = 1.2f * density.density
-                )
             }
         }
 
