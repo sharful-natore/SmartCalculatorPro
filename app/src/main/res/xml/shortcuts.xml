@@ -8,7 +8,7 @@
         android:shortcutLongLabel="@string/shortcut_calculator">
         <intent
             android:action="android.intent.action.VIEW"
-            android:targetPackage="com.vibestudio.toolsmate"
+            android:targetPackage="com.fantasix.toolsmate"
             android:targetClass="com.example.QuickCalculatorActivity" />
     </shortcut>
 
@@ -20,7 +20,7 @@
         android:shortcutLongLabel="@string/shortcut_calendar">
         <intent
             android:action="android.intent.action.VIEW"
-            android:targetPackage="com.vibestudio.toolsmate"
+            android:targetPackage="com.fantasix.toolsmate"
             android:targetClass="com.example.QuickCalendarActivity" />
     </shortcut>
 
@@ -32,7 +32,7 @@
         android:shortcutLongLabel="@string/shortcut_market">
         <intent
             android:action="android.intent.action.VIEW"
-            android:targetPackage="com.vibestudio.toolsmate"
+            android:targetPackage="com.fantasix.toolsmate"
             android:targetClass="com.example.QuickMarketActivity" />
     </shortcut>
 
@@ -44,7 +44,7 @@
         android:shortcutLongLabel="@string/shortcut_prayer">
         <intent
             android:action="android.intent.action.VIEW"
-            android:targetPackage="com.vibestudio.toolsmate"
+            android:targetPackage="com.fantasix.toolsmate"
             android:targetClass="com.example.QuickPrayerActivity" />
     </shortcut>
 
@@ -56,7 +56,7 @@
         android:shortcutLongLabel="@string/shortcut_quran">
         <intent
             android:action="android.intent.action.VIEW"
-            android:targetPackage="com.vibestudio.toolsmate"
+            android:targetPackage="com.fantasix.toolsmate"
             android:targetClass="com.example.QuickQuranActivity" />
     </shortcut>
 </shortcuts>
